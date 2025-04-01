@@ -75,12 +75,42 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         instance.metadata._updated = False
 
+    @patch('sdv.single_table.base._check_regex_format')
+    def test__validate_regex_format(self, mock_check_regex_format):
+        """Test the ``_validate_regex_format`` method."""
+        # Setup
+        instance = Mock()
+        metadata = Mock()
+        metadata.get_column_names.return_value = ['id_1', 'id_2']
+        columns = {
+            'id_1': {'sdtype': 'id', 'regex_format': '[0-9]+'},
+            'id_2': {'sdtype': 'id', 'regex_format': '[a-z]{3}'},
+        }
+        metadata.tables = {}
+        metadata.tables['table_1'] = Mock()
+        metadata.tables['table_1'].columns = columns
+
+        instance.metadata = metadata
+        instance._table_name = 'table_1'
+
+        # Run
+        BaseSingleTableSynthesizer._validate_regex_format(instance)
+
+        # Assert
+        mock_check_regex_format.assert_has_calls([
+            call('table_1', 'id_1', '[0-9]+'),
+            call('table_1', 'id_2', '[a-z]{3}'),
+        ])
+        assert mock_check_regex_format.call_count == 2
+
     @patch('sdv.single_table.base.datetime')
     @patch('sdv.single_table.base.generate_synthesizer_id')
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.BaseSingleTableSynthesizer._check_metadata_updated')
+    @patch('sdv.single_table.base.BaseSingleTableSynthesizer._validate_regex_format')
     def test___init___l(
         self,
+        mock_validate_regex_format,
         mock_check_metadata_updated,
         mock_data_processor,
         mock_generate_synthesizer_id,
@@ -264,7 +294,7 @@ class TestBaseSingleTableSynthesizer:
         result = instance.get_metadata()
 
         # Assert
-        assert result == metadata
+        assert result.to_dict() == metadata.to_dict()
 
     def test_auto_assign_transformers(self):
         """Test that the ``DataProcessor.prepare_for_fitting`` is being called."""

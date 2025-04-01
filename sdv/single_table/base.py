@@ -21,6 +21,7 @@ from copulas.multivariate import GaussianMultivariate
 
 from sdv import version
 from sdv._utils import (
+    _check_regex_format,
     _groupby_list,
     check_sdv_versions_and_warn,
     check_synthesizer_version,
@@ -108,6 +109,15 @@ class BaseSynthesizer:
                 ' in future SDV versions.'
             )
 
+    def _validate_regex_format(self):
+        if self.metadata.tables:
+            id_columns = self.metadata.get_column_names(table_name=self._table_name, sdtype='id')
+            for column_name in id_columns:
+                regex = (
+                    self.metadata.tables[self._table_name].columns[column_name].get('regex_format')
+                )
+                _check_regex_format(self._table_name, column_name, regex)
+
     def __init__(
         self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=['en_US']
     ):
@@ -132,6 +142,7 @@ class BaseSynthesizer:
             enforce_min_max_values=self.enforce_min_max_values,
             locales=self.locales,
         )
+        self._validate_regex_format()
         self._original_columns = pd.Index([])
         self._fitted = False
         self._random_state_set = False
@@ -160,7 +171,10 @@ class BaseSynthesizer:
         """Validate that the data follows the metadata."""
         errors = []
         try:
-            self.metadata.validate_data({self._table_name: data})
+            if isinstance(self.metadata, Metadata):
+                self.metadata.validate_data({self._table_name: data})
+            else:
+                self.metadata.validate_data(data)
         except InvalidDataError as error:
             errors += error.errors
 
@@ -186,7 +200,10 @@ class BaseSynthesizer:
         return []
 
     def _get_table_metadata(self):
-        return self.metadata.tables.get(self._table_name, SingleTableMetadata())
+        if isinstance(self.metadata, Metadata):
+            return self.metadata.tables.get(self._table_name, SingleTableMetadata())
+
+        return self.metadata
 
     def _validate_primary_key(self, data):
         primary_key = self._get_table_metadata().primary_key
@@ -622,7 +639,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         super().__init__(metadata, enforce_min_max_values, enforce_rounding, locales)
         self._chained_patterns = []  # chain of patterns used to preprocess the data
         self._reject_sampling_patterns = []  # patterns used only for reject sampling
-        self._original_metadata = self.metadata
+        self._original_metadata = deepcopy(self.metadata)
 
     def add_cag(self, patterns):
         """Add the list of constraint-augmented generation patterns to the synthesizer.
@@ -672,7 +689,10 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 f"Unrecognized version '{version}', please use 'original' or 'modified'."
             )
 
-        return self._original_metadata if version == 'original' else self.metadata
+        if hasattr(self, '_original_metadata') and version == 'original':
+            return self._original_metadata
+
+        return super().get_metadata()
 
     def _transform_helper(self, data):
         """Validate and transform all CAG patterns during preprocessing.
@@ -834,14 +854,15 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 )
                 sampled = pd.concat([sampled, raw_sampled[missing_cols]], axis=1)
 
-            for pattern in reversed(self._chained_patterns):
-                sampled = pattern.reverse_transform(sampled)
-                valid_rows = pattern.is_valid(sampled)
-                sampled = sampled[valid_rows]
+            if hasattr(self, '_chained_patterns') and hasattr(self, '_reject_sampling_patterns'):
+                for pattern in reversed(self._chained_patterns):
+                    sampled = pattern.reverse_transform(sampled)
+                    valid_rows = pattern.is_valid(sampled)
+                    sampled = sampled[valid_rows]
 
-            for pattern in reversed(self._reject_sampling_patterns):
-                valid_rows = pattern.is_valid(sampled)
-                sampled = sampled[valid_rows]
+                for pattern in reversed(self._reject_sampling_patterns):
+                    valid_rows = pattern.is_valid(sampled)
+                    sampled = sampled[valid_rows]
 
             if previous_rows is not None:
                 sampled = pd.concat([previous_rows, sampled], ignore_index=True)
