@@ -21,6 +21,7 @@ from copulas.multivariate import GaussianMultivariate
 
 from sdv import version
 from sdv._utils import (
+    _check_regex_format,
     _groupby_list,
     check_sdv_versions_and_warn,
     check_synthesizer_version,
@@ -108,6 +109,15 @@ class BaseSynthesizer:
                 ' in future SDV versions.'
             )
 
+    def _validate_regex_format(self):
+        if self.metadata.tables:
+            id_columns = self.metadata.get_column_names(table_name=self._table_name, sdtype='id')
+            for column_name in id_columns:
+                regex = (
+                    self.metadata.tables[self._table_name].columns[column_name].get('regex_format')
+                )
+                _check_regex_format(self._table_name, column_name, regex)
+
     def __init__(
         self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=['en_US']
     ):
@@ -132,6 +142,7 @@ class BaseSynthesizer:
             enforce_min_max_values=self.enforce_min_max_values,
             locales=self.locales,
         )
+        self._validate_regex_format()
         self._original_columns = pd.Index([])
         self._fitted = False
         self._random_state_set = False

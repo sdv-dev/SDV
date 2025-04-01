@@ -10,6 +10,7 @@ import pytest
 
 from sdv import version
 from sdv._utils import (
+    _check_regex_format,
     _compare_versions,
     _convert_to_timedelta,
     _create_unique_name,
@@ -789,3 +790,23 @@ def test__is_numerical_string():
     # Assert
     assert str_result is False
     assert datetime_result is False
+
+
+@patch('sdv._utils.strings_from_regex')
+def test__check_regex_format(mock_strings_from_regex):
+    """Test the ``_check_regex_format``."""
+    # Setup
+    regex = '[a-z]{3}'
+    mock_strings_from_regex.side_effect = KeyError('regex')
+    expected_error = re.escape(
+        'SDV synthesizers do not currently support complex regex formats such as '
+        f"'{regex}', which you have provided for table 'table_name', column 'column_name'."
+        ' Please use a simplified format or update to a different sdtype.'
+    )
+
+    # Run
+    with pytest.raises(SynthesizerInputError, match=expected_error):
+        _check_regex_format('table_name', 'column_name', regex)
+
+    # Assert
+    mock_strings_from_regex.assert_called_once_with(regex)
