@@ -32,6 +32,7 @@ Currently implemented constraints are:
 
 import operator
 import uuid
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -656,6 +657,11 @@ class ScalarInequality(Constraint):
             raise ValueError('Datetime must be represented as a string.')
 
     def __init__(self, column_name, relation, value):
+        deprecation_msg = (
+            f'Warning: The `{self.__class__.__name__}` constraint is deprecated. '
+            'Please use the `enforce_min_max_values` parameter instead.'
+        )
+        warnings.warn(deprecation_msg, FutureWarning)
         self._validate_init_inputs(column_name, value, relation)
         self._value = cast_to_datetime64(value) if _is_datetime_type(value) else value
         self._column_name = column_name
@@ -1130,6 +1136,11 @@ class ScalarRange(Constraint):
             )
 
     def __init__(self, column_name, low_value, high_value, strict_boundaries=True):
+        deprecation_msg = (
+            f'Warning: The `{self.__class__.__name__}` constraint is deprecated. '
+            'Please use the `enforce_min_max_values` parameter instead.'
+        )
+        warnings.warn(deprecation_msg, FutureWarning)
         self.constraint_columns = (column_name,)
         self._column_name = column_name
         self._validate_init_inputs(low_value, high_value)
