@@ -2655,3 +2655,34 @@ def test_no_deprecation_warning_single_table_metadata_sampling():
 
     # Assert
     assert len(captured_warnings) == 0
+
+
+def test__unsupported_regex_format():
+    """Test that ``HMA`` raises an error if the regex format is not supported."""
+    # Setup
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table_1': {
+                'columns': {
+                    'id': {'sdtype': 'id', 'regex_format': '(10|20|30)[0-9]{4}'},
+                    'A': {'sdtype': 'numerical'},
+                }
+            },
+            'table_2': {
+                'columns': {
+                    'col_A': {'sdtype': 'numerical'},
+                    'col_B': {'sdtype': 'categorical'},
+                }
+            },
+        }
+    })
+
+    expected_error = re.escape(
+        'SDV synthesizers do not currently support complex regex formats such as '
+        "'(10|20|30)[0-9]{4}', which you have provided for table 'table_1', column 'id'. Please use"
+        ' a simplified format or update to a different sdtype.'
+    )
+
+    # Run and Assert
+    with pytest.raises(SynthesizerInputError, match=expected_error):
+        HMASynthesizer(metadata)

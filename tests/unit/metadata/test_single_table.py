@@ -74,7 +74,7 @@ class TestSingleTableMetadata:
                 "Invalid values '(anonymization, order_by)' for phone_number column 'phone'."
             ),
         ),
-    ]  # noqa: JS102
+    ]
 
     @pytest.fixture
     def data(self):

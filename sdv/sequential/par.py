@@ -34,8 +34,8 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
     to be passed into PAR.
 
     Args:
-        metadata (sdv.metadata.SingleTableMetadata):
-            Single table metadata representing the data that this synthesizer will be used for.
+        metadata (sdv.metadata.Metadata):
+            Metadata representing the data that this synthesizer will be used for.
         enforce_min_max_values (bool):
             Specify whether or not to clip the data returned by ``reverse_transform`` of
             the numerical transformer, ``FloatFormatter``, to the min and max values seen
@@ -78,8 +78,9 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         for column, column_metadata in self._extra_context_columns.items():
             context_columns_dict[column] = column_metadata
 
+        table_metadata = self._get_table_metadata()
         for column in context_columns:
-            context_columns_dict[column] = self.metadata.columns[column]
+            context_columns_dict[column] = table_metadata.columns[column]
 
         context_columns_dict = self._update_context_column_dict(context_columns_dict)
         context_metadata_dict = {'columns': context_columns_dict}
@@ -97,8 +98,9 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
                 Updated context column metadata.
         """
         default_transformers_by_sdtype = deepcopy(self._data_processor._transformers_by_sdtype)
+        table_metadata = self._get_table_metadata()
         for column in self.context_columns:
-            column_metadata = self.metadata.columns[column]
+            column_metadata = table_metadata.columns[column]
             if default_transformers_by_sdtype.get(column_metadata['sdtype']):
                 context_columns_dict[column] = {'sdtype': 'numerical'}
 
@@ -107,8 +109,9 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
     def _get_context_columns_for_processing(self):
         columns_to_be_processed = []
         default_transformers_by_sdtype = deepcopy(self._data_processor._transformers_by_sdtype)
+        table_metadata = self._get_table_metadata()
         for column in self.context_columns:
-            if default_transformers_by_sdtype.get(self.metadata.columns[column]['sdtype']):
+            if default_transformers_by_sdtype.get(table_metadata.columns[column]['sdtype']):
                 columns_to_be_processed.append(column)
 
         return columns_to_be_processed
@@ -136,7 +139,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             locales=locales,
         )
 
-        sequence_key = self.metadata.sequence_key
+        sequence_key = self._get_table_metadata().sequence_key
         self._sequence_key = list(_cast_to_iterable(sequence_key)) if sequence_key else None
         if not self._sequence_key:
             raise SynthesizerInputError(
@@ -144,7 +147,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
                 'sequence key. Your metadata does not include a sequence key.'
             )
 
-        self._sequence_index = self.metadata.sequence_index
+        self._sequence_index = self._get_table_metadata().sequence_index
         self.context_columns = context_columns or []
         self._validate_sequence_key_and_context_columns()
         self._extra_context_columns = {}
@@ -415,13 +418,14 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         )
         data_types = []
         context_types = []
+        table_metadata = self._get_table_metadata()
         for field in self._output_columns:
             dtype = timeseries_data[field].dtype
             kind = dtype.kind
             if kind in ('i', 'f'):
                 data_type = 'continuous'
                 # Check if metadata overrides this data type
-                if self.metadata.columns.get(field, {}).get('sdtype', None) == 'categorical':
+                if table_metadata.columns.get(field, {}).get('sdtype', None) == 'categorical':
                     data_type = 'categorical'
             elif kind in ('O', 'b'):
                 data_type = 'categorical'
