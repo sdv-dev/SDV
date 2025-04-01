@@ -972,6 +972,26 @@ class MultiTableMetadata:
 
         return MultiTableMetadata.load_from_dict(anonymized_metadata)
 
+    def _get_table_info(self, table_name, show_table_details):
+        node_info = {}
+        table_meta = self.tables[table_name]
+
+        if show_table_details in ['full', 'summarized']:
+            node_info['primary_key'] = f'Primary key: {table_meta.primary_key}'
+            if table_meta.sequence_key:
+                node_info['sequence_key'] = f'Sequence key: {table_meta.sequence_key}'
+            if table_meta.sequence_index:
+                node_info['sequence_index'] = f'Sequence index: {table_meta.sequence_index}'
+
+        if show_table_details == 'full':
+            node_info['columns'] = create_columns_node(table_meta.columns)
+        elif show_table_details == 'summarized':
+            node_info['columns'] = create_summarized_columns_node(table_meta.columns)
+        elif show_table_details is None:
+            return
+
+        return node_info
+
     def visualize(
         self, show_table_details='full', show_relationship_labels=True, output_filepath=None
     ):
@@ -1017,22 +1037,9 @@ class MultiTableMetadata:
 
         nodes = {}
         edges = []
-        if show_table_details == 'full':
-            for table_name, table_meta in self.tables.items():
-                nodes[table_name] = {
-                    'columns': create_columns_node(table_meta.columns),
-                    'primary_key': f'Primary key: {table_meta.primary_key}',
-                }
 
-        elif show_table_details == 'summarized':
-            for table_name, table_meta in self.tables.items():
-                nodes[table_name] = {
-                    'columns': create_summarized_columns_node(table_meta.columns),
-                    'primary_key': f'Primary key: {table_meta.primary_key}',
-                }
-
-        elif show_table_details is None:
-            nodes = {table_name: None for table_name in self.tables}
+        for table_name in self.tables.keys():
+            nodes[table_name] = self._get_table_info(table_name, show_table_details)
 
         for relationship in self.relationships:
             parent = relationship.get('parent_table_name')
@@ -1053,11 +1060,18 @@ class MultiTableMetadata:
         for table, info in nodes.items():
             if show_table_details:
                 foreign_keys = r'\l'.join(info.get('foreign_keys', []))
-                keys = r'\l'.join([info['primary_key'], foreign_keys])
-                if foreign_keys:
-                    label = rf'{{{table}|{info["columns"]}\l|{keys}\l}}'
-                else:
-                    label = rf'{{{table}|{info["columns"]}\l|{keys}}}'
+                keys = r'\l'.join(
+                    filter(
+                        bool,
+                        [
+                            info.get('primary_key'),
+                            info.get('sequence_key'),
+                            info.get('sequence_index'),
+                            foreign_keys,
+                        ],
+                    )
+                )
+                label = rf'{{{table}|{info["columns"]}\l|{keys}\l}}'
 
             else:
                 label = f'{table}'

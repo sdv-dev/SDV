@@ -826,3 +826,36 @@ class TestMetadataClass:
         # Assert
         metadata._get_anonymized_dict.assert_called_once()
         mock_load_from_dict.assert_called_once_with({})
+
+    @patch('sdv.metadata.multi_table.visualize_graph')
+    def test_visualize_with_sequence_key_and_index(self, visualize_graph_mock):
+        """Test the ``visualize`` method with sequence key and index"""
+        # Setup
+        metadata_dict = {
+            'tables': {
+                'nasdaq100_2019': {
+                    'columns': {
+                        'Symbol': {'sdtype': 'id', 'regex_format': '[A-Z]{4}'},
+                        'Date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                    },
+                    'sequence_index': 'Date',
+                    'sequence_key': 'Symbol',
+                }
+            },
+            'relationships': [],
+            'METADATA_SPEC_VERSION': 'V1',
+        }
+        metadata = Metadata.load_from_dict(metadata_dict)
+
+        # Run
+        metadata.visualize('full', True)
+
+        # Assert
+        expected_label = (
+            '{nasdaq100_2019|Symbol : id\\lDate : datetime\\l|Primary key: None\\l'
+            'Sequence key: Symbol\\lSequence index: Date\\l}'
+        )
+        expected_nodes = {
+            'nasdaq100_2019': expected_label,
+        }
+        visualize_graph_mock.assert_called_once_with(expected_nodes, [], None)
