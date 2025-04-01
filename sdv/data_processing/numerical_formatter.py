@@ -64,7 +64,7 @@ class NumericalFormatter:
             self._max_value = column.max()
 
         if self.enforce_rounding:
-            self._rounding_digits = learn_rounding_digits(column)
+            self._rounding_digits = learn_rounding_digits(column.astype(float))
 
     def format_data(self, column):
         """Format a column according to the learned format.
