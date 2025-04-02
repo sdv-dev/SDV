@@ -37,19 +37,28 @@ class TestBaseLocalHandler:
         assert isinstance(metadata, Metadata)
         assert metadata.to_dict() == {
             'METADATA_SPEC_VERSION': 'V1',
-            'relationships': [],
+            'relationships': [
+                {
+                    'child_foreign_key': 'hotel_id',
+                    'child_table_name': 'guests',
+                    'parent_primary_key': 'hotel_id',
+                    'parent_table_name': 'hotel',
+                },
+            ],
             'tables': {
                 'guests': {
                     'columns': {
-                        'guest_id': {'sdtype': 'numerical'},
-                        'hotel_id': {'sdtype': 'numerical'},
-                    }
+                        'guest_id': {'sdtype': 'id'},
+                        'hotel_id': {'sdtype': 'id'},
+                    },
+                    'primary_key': 'guest_id',
                 },
                 'hotel': {
                     'columns': {
-                        'hotel_id': {'sdtype': 'numerical'},
+                        'hotel_id': {'sdtype': 'id'},
                         'stars': {'sdtype': 'numerical'},
-                    }
+                    },
+                    'primary_key': 'hotel_id',
                 },
             },
         }

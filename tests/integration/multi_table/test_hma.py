@@ -2428,8 +2428,6 @@ def test_hma_synthesizer_with_fixed_combinations():
     metadata.update_column('location_id', 'locations', sdtype='id')
     metadata.set_primary_key('user_id', 'users')
     metadata.set_primary_key('location_id', 'locations')
-    metadata.add_relationship('users', 'records', 'user_id', 'user_id')
-    metadata.add_relationship('locations', 'records', 'location_id', 'location_id')
 
     # Adding FixedCombinations to HMASynthesizer
     synthesizer = HMASynthesizer(metadata)
@@ -2583,8 +2581,10 @@ def test__estimate_num_columns_to_be_modeled_various_sdtypes():
     for table_name, table in tables.items():
         # Subract all the id columns present in the data, as those are not estimated
         num_table_cols = len(table.columns)
-        if table_name in {'parent', 'grandparent'}:
+        if table_name == 'grandparent':
             num_table_cols -= 3
+        if table_name == 'parent':
+            num_table_cols -= 2
         if table_name in {'root1', 'root2'}:
             num_table_cols -= 1
 
