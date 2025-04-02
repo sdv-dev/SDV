@@ -2581,8 +2581,10 @@ def test__estimate_num_columns_to_be_modeled_various_sdtypes():
     for table_name, table in tables.items():
         # Subract all the id columns present in the data, as those are not estimated
         num_table_cols = len(table.columns)
-        if table_name in {'parent', 'grandparent'}:
+        if table_name == 'grandparent':
             num_table_cols -= 3
+        if table_name == 'parent':
+            num_table_cols -= 2
         if table_name in {'root1', 'root2'}:
             num_table_cols -= 1
 

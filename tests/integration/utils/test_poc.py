@@ -84,7 +84,7 @@ def test_simplify_schema(capsys):
     expected_message_after = re.compile(
         r'Success! The schema has been simplified\.\s+'
         r'Table Name\s*#\s*Columns \(Before\)\s*#\s*Columns \(After\)\s*'
-        r'match_stats\s*28\s*4\s*'
+        r'match_stats\s*28\s*3\s*'
         r'matches\s*42\s*21\s*'
         r'players\s*6\s*0\s*'
         r'teams\s*2\s*2'
