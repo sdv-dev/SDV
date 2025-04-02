@@ -70,10 +70,12 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
     _model_sdtype_transformers = {'categorical': None, 'numerical': None, 'boolean': None}
 
     def _get_context_metadata(self):
+        context_metadata_dict = {}
         context_columns_dict = {}
         context_columns = self.context_columns.copy() if self.context_columns else []
         if self._sequence_key:
             context_columns += self._sequence_key
+            context_metadata_dict['primary_key'] = self._sequence_key[0]
 
         for column, column_metadata in self._extra_context_columns.items():
             context_columns_dict[column] = column_metadata
@@ -81,8 +83,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         for column in context_columns:
             context_columns_dict[column] = self.metadata.columns[column]
 
-        context_columns_dict = self._update_context_column_dict(context_columns_dict)
-        context_metadata_dict = {'columns': context_columns_dict}
+        context_metadata_dict['columns'] = self._update_context_column_dict(context_columns_dict)
         return SingleTableMetadata.load_from_dict(context_metadata_dict)
 
     def _update_context_column_dict(self, context_columns_dict):
@@ -136,6 +137,8 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             locales=locales,
         )
 
+        # Cast the sequence key to an iterable. While the metadata only supports a single sequence
+        # key, but PAR is set up to handle composite sequence keys
         sequence_key = self.metadata.sequence_key
         self._sequence_key = list(_cast_to_iterable(sequence_key)) if sequence_key else None
         if not self._sequence_key:

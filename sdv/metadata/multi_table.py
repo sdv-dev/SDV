@@ -241,6 +241,10 @@ class MultiTableMetadata:
 
         return foreign_keys
 
+    def _get_all_keys(self, table_name):
+        foreign_keys = self._get_all_foreign_keys(table_name)
+        return set(foreign_keys).union(self.tables[table_name]._get_primary_and_alternate_keys())
+
     def add_relationship(
         self, parent_table_name, child_table_name, parent_primary_key, child_foreign_key
     ):
