@@ -206,6 +206,7 @@ def compare_and_store_results_in_gdrive():
     for col in summary.columns:
         if col not in data_type_columns:
             summary[col] = summary[col].apply(lambda x: f'{x}%')
+            summary[col] = summary[col].replace(to_replace='nan%', value=None)
 
     summary = summary[data_type_columns + measurement_prefixes]
 
