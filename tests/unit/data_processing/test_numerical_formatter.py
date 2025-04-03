@@ -79,21 +79,21 @@ class TestNumericalFormatter:
         If the ``enforce_rounding`` parameter is set to ``True``, ``learn_format`` should
         learn the ``_rounding_digits`` to be the max number of decimal places seen in the data.
         The max amount of decimals that floats can be accurately compared with is 15.
-        If the input data has values with more than 14 decimals, we will not be able to
+        If the input data has values with more than 15 decimals, we will not be able to
         accurately learn the number of decimal places required, so we do not round.
 
         Input:
-            - Series with a value that has 15 decimals
+            - Series with a value that has 16 decimals
         """
         # Setup
-        data = pd.Series([0.000000000000001])
+        data = pd.Series([0.0000000000000001])
         formatter = NumericalFormatter(enforce_rounding=True)
 
         # Run
         formatter.learn_format(data)
 
         # Asserts
-        assert formatter._rounding_digits == 15
+        assert formatter._rounding_digits is None
 
     def test_learn_format_enforce_rounding_true_inf(self):
         """Test ``learn_format`` with ``enforce_rounding`` set to ``True``.
