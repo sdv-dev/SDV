@@ -9,8 +9,8 @@ EXCLUDED_DATA_TYPES = {
     ('np.object', 'numerical'),
     ('np.string', 'numerical'),
     ('np.unicode', 'numerical'),
-    ('pd.datetime64', 'numerical')
-    ('np.datetime64', 'numerical')
+    ('pd.datetime64', 'numerical'),
+    ('np.datetime64', 'numerical'),
     ('pd.boolean', 'datetime'),
     ('pd.timedelta64', 'datetime'),
     ('pd.Period', 'datetime'),
