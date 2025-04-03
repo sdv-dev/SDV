@@ -214,6 +214,7 @@ def compare_and_store_results_in_gdrive():
     for name, current_results_df in results.items():
         for sdtype, group in current_results_df.groupby('sdtype'):
             group.insert(2, 'version', name)
+            group = group.dropna(axis=1, how='all')
 
             if sdtype not in sorted_results:
                 sorted_results[sdtype] = group
