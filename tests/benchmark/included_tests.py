@@ -1,4 +1,4 @@
-INCLUDED_CONSTRAINT_TESTS =[
+INCLUDED_CONSTRAINT_TESTS = [
     ('numerical', 'FixedIncrements'),
     ('categorical', 'FixedCombinations'),
     ('boolean', 'FixedCombinations'),
