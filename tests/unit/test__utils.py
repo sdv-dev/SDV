@@ -7,6 +7,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 import pytest
+from rdt.transformers.numerical import FloatFormatter
 
 from sdv import version
 from sdv._utils import (
@@ -16,6 +17,7 @@ from sdv._utils import (
     _get_chars_for_option,
     _get_datetime_format,
     _get_root_tables,
+    _get_transformer_init_kwargs,
     _is_datetime_type,
     _is_numerical,
     _validate_foreign_keys_not_null,
@@ -788,3 +790,23 @@ def test__is_numerical_string():
     # Assert
     assert str_result is False
     assert datetime_result is False
+
+
+def test__get_transformer_init_kwargs():
+    # Setup
+    transformer = FloatFormatter(
+        missing_value_replacement=None,
+        learn_rounding_scheme=True,
+        computer_representation='Float64',
+        enforce_min_max_values=False,
+    )
+
+    # Run
+    transformer_kwarg_dict = _get_transformer_init_kwargs(transformer)
+
+    # Assert
+    transformer_kwarg_dict == {
+        'missing_value_replacement': None,
+        'learn_rounding_scheme': True,
+        'computer_representation': 'Float64',
+    }
