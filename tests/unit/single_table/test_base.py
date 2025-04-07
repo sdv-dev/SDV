@@ -86,9 +86,7 @@ class TestBaseSingleTableSynthesizer:
             'id_1': {'sdtype': 'id', 'regex_format': '[0-9]+'},
             'id_2': {'sdtype': 'id', 'regex_format': '[a-z]{3}'},
         }
-        metadata.tables = {}
-        metadata.tables['table_1'] = Mock()
-        metadata.tables['table_1'].columns = columns
+        metadata.columns = columns
 
         instance.metadata = metadata
         instance._table_name = 'table_1'
@@ -208,7 +206,8 @@ class TestBaseSingleTableSynthesizer:
     def test___init__custom(self, mock_data_processor):
         """Test that instantiating with custom parameters are properly stored in the instance."""
         # Setup
-        metadata = Mock()
+        metadata = SingleTableMetadata()
+        metadata.validate = Mock()
 
         # Run
         instance = BaseSingleTableSynthesizer(
@@ -267,7 +266,7 @@ class TestBaseSingleTableSynthesizer:
     def test_get_parameters(self, mock_data_processor):
         """Test that it returns every ``init`` parameter without the ``metadata``."""
         # Setup
-        metadata = Mock()
+        metadata = SingleTableMetadata()
         instance = BaseSingleTableSynthesizer(
             metadata, enforce_min_max_values=False, enforce_rounding=False, locales='en_CA'
         )
@@ -288,7 +287,8 @@ class TestBaseSingleTableSynthesizer:
     def test_get_metadata(self, mock_load_from_dict, _):
         """Test that it returns the ``metadata`` object."""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Metadata()
+        metadata.get_column_names = Mock(return_value=[])
         instance = BaseSingleTableSynthesizer(
             metadata, enforce_min_max_values=False, enforce_rounding=False
         )
@@ -475,7 +475,7 @@ class TestBaseSingleTableSynthesizer:
     def test__fit(self, mock_data_processor):
         """Test that ``NotImplementedError`` is being raised."""
         # Setup
-        metadata = Mock()
+        metadata = SingleTableMetadata()
         data = Mock()
         instance = BaseSingleTableSynthesizer(metadata)
 
@@ -698,10 +698,13 @@ class TestBaseSingleTableSynthesizer:
         """
         # Setup
         data = pd.DataFrame({'key': [1, 2, 3], 'info': ['a', 'b', 'c']})
-        metadata = Mock()
+        metadata = SingleTableMetadata()
         metadata.primary_key = 'key'
         metadata.column_relationships = []
-        metadata.columns = {'key': {'sdtype': 'id', 'regex_format': '[0-9]{3,4}'}}
+        metadata.columns = {
+            'key': {'sdtype': 'id', 'regex_format': '[0-9]{3,4}'},
+            'info': {'sdtype': 'categorical'},
+        }
         instance = BaseSingleTableSynthesizer(metadata)
 
         # Run and Assert
@@ -721,6 +724,7 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         data = pd.DataFrame({'key': [1, 2, 3], 'info': ['a', 'b', 'c']})
         metadata = Mock()
+        metadata.get_column_names.return_value = ['key']
         metadata.primary_key = 'key'
         metadata.column_relationships = []
         metadata.columns = {'key': {'sdtype': 'id', 'regex_format': '[1-9]{3,4}'}}
@@ -898,7 +902,7 @@ class TestBaseSingleTableSynthesizer:
         """
         # Setup
         rng_seed = Mock()
-        metadata = Mock()
+        metadata = SingleTableMetadata()
         instance = BaseSingleTableSynthesizer(metadata)
         instance._model = Mock()
 
@@ -1801,7 +1805,7 @@ class TestBaseSingleTableSynthesizer:
         removed.
         """
         # Setup
-        metadata = Mock()
+        metadata = SingleTableMetadata()
         instance = BaseSingleTableSynthesizer(metadata)
         conditions = [Condition({'name': 'John Doe'})]
         mock_validate_file_path.return_value = '.sample.csv.temp'
@@ -1861,7 +1865,7 @@ class TestBaseSingleTableSynthesizer:
     ):
         """Test the this method calls ``_sample_with_conditions`` with the ``known_column."""
         # Setup
-        metadata = Mock()
+        metadata = SingleTableMetadata()
         instance = BaseSingleTableSynthesizer(metadata)
         known_columns = pd.DataFrame({'name': ['Johanna Doe']})
 
@@ -1898,7 +1902,7 @@ class TestBaseSingleTableSynthesizer:
         This should properly handle the errors with the ``handle_sampling_error`` function.
         """
         # Setup
-        metadata = Mock()
+        metadata = SingleTableMetadata()
         instance = BaseSingleTableSynthesizer(metadata)
         known_columns = pd.DataFrame({'name': ['Johanna Doe']})
 
