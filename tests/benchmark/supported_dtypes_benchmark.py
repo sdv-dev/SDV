@@ -74,7 +74,7 @@ MULTI_COLUMN_PREDEFINED_CONSTRAINTS = {
 
 METADATA_SDTYPES = (
     {'sdtype': 'numerical'},
-    {'sdytpe': 'id'},
+    {'sdtype': 'id'},
     {'sdtype': 'datetime', 'datetime_format': '%Y%m%d'},
     {'sdtype': 'categorical'},
 )
