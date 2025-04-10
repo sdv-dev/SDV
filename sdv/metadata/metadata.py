@@ -67,7 +67,13 @@ class Metadata(MultiTableMetadata):
             raise ValueError("'infer_sdtypes' must be a boolean value.")
 
     @classmethod
-    def detect_from_dataframes(cls, data, infer_sdtypes=True, infer_keys='primary_and_foreign'):
+    def detect_from_dataframes(
+        cls,
+        data,
+        infer_sdtypes=True,
+        infer_keys='primary_and_foreign',
+        foreign_key_inference_algorithm='column_name_match',
+    ):
         """Detect the metadata for all tables in a dictionary of dataframes.
 
         This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrames``.
@@ -88,6 +94,9 @@ class Metadata(MultiTableMetadata):
                     - 'primary_only': Infer only the primary keys of each table
                     - None: Do not infer any keys
                 Defaults to 'primary_and_foreign'.
+            foreign_key_inference_algorithm (str):
+                Which algorithm to use for detecting foreign keys. Currently only one option,
+                'column_name_match'. Defaults to 'column_name_match'.
 
         Returns:
             Metadata:
@@ -108,7 +117,7 @@ class Metadata(MultiTableMetadata):
             )
 
         if infer_keys == 'primary_and_foreign':
-            metadata._detect_relationships(data)
+            metadata._detect_relationships(data, foreign_key_inference_algorithm)
 
         return metadata
 
