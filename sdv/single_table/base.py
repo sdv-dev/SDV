@@ -10,6 +10,7 @@ import os
 import uuid
 import warnings
 from collections import defaultdict
+from copy import deepcopy
 
 import cloudpickle
 import copulas
@@ -27,6 +28,7 @@ from sdv._utils import (
     generate_synthesizer_id,
     get_possible_chars,
 )
+from sdv.cag._errors import PatternNotMetError
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import (
@@ -100,39 +102,42 @@ class BaseSynthesizer:
                 self._data_processor._update_transformers_by_sdtypes(sdtype, transformer)
 
     def _check_metadata_updated(self):
-        if self.metadata._updated:
-            self.metadata._updated = False
+        if self.metadata._check_updated_flag():
+            self.metadata._reset_updated_flag()
             warnings.warn(
                 "We strongly recommend saving the metadata using 'save_to_json' for replicability"
                 ' in future SDV versions.'
             )
 
     def _validate_regex_format(self):
-        id_columns = self.metadata.get_column_names(sdtype='id')
-        for column_name in id_columns:
-            regex = self.metadata.columns[column_name].get('regex_format')
-            _check_regex_format(self._table_name, column_name, regex)
+        if self.metadata.tables:
+            id_columns = self.metadata.get_column_names(table_name=self._table_name, sdtype='id')
+            for column_name in id_columns:
+                regex = (
+                    self.metadata.tables[self._table_name].columns[column_name].get('regex_format')
+                )
+                _check_regex_format(self._table_name, column_name, regex)
 
     def __init__(
         self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=['en_US']
     ):
         self._validate_inputs(enforce_min_max_values, enforce_rounding)
-        self.metadata = metadata
-        self._table_name = Metadata.DEFAULT_SINGLE_TABLE_NAME
         if isinstance(metadata, Metadata):
             self._table_name = metadata._get_single_table_name()
-            self.metadata = metadata._convert_to_single_table()
-        elif isinstance(metadata, SingleTableMetadata):
+            self.metadata = metadata
+        else:
             warnings.warn(DEPRECATION_MSG, FutureWarning)
+            self._table_name = Metadata.DEFAULT_SINGLE_TABLE_NAME
+            self.metadata = Metadata.load_from_dict(metadata.to_dict(), self._table_name)
+            self.metadata.tables[self._table_name]._updated = metadata._updated
 
-        self._validate_inputs(enforce_min_max_values, enforce_rounding)
         self.metadata.validate()
         self._check_metadata_updated()
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
         self.locales = locales
         self._data_processor = DataProcessor(
-            metadata=self.metadata,
+            metadata=self.metadata._convert_to_single_table(),
             enforce_rounding=self.enforce_rounding,
             enforce_min_max_values=self.enforce_min_max_values,
             locales=self.locales,
@@ -166,7 +171,10 @@ class BaseSynthesizer:
         """Validate that the data follows the metadata."""
         errors = []
         try:
-            self.metadata.validate_data(data)
+            if isinstance(self.metadata, Metadata):
+                self.metadata.validate_data({self._table_name: data})
+            else:
+                self.metadata.validate_data(data)
         except InvalidDataError as error:
             errors += error.errors
 
@@ -191,10 +199,16 @@ class BaseSynthesizer:
         """
         return []
 
+    def _get_table_metadata(self):
+        if isinstance(self.metadata, Metadata):
+            return self.metadata.tables.get(self._table_name, SingleTableMetadata())
+
+        return self.metadata
+
     def _validate_primary_key(self, data):
-        primary_key = self.metadata.primary_key
+        primary_key = self._get_table_metadata().primary_key
         is_int = primary_key and pd.api.types.is_integer_dtype(data[primary_key])
-        regex = self.metadata.columns.get(primary_key, {}).get('regex_format')
+        regex = self._get_table_metadata().columns.get(primary_key, {}).get('regex_format')
         if is_int and regex:
             possible_characters = get_possible_chars(regex, 1)
             if '0' in possible_characters:
@@ -233,8 +247,8 @@ class BaseSynthesizer:
             raise InvalidDataError(synthesizer_errors)
 
     def _validate_transformers(self, column_name_to_transformer):
-        primary_and_alternate_keys = self.metadata._get_primary_and_alternate_keys()
-        sequence_keys = self.metadata._get_set_of_sequence_keys()
+        primary_and_alternate_keys = self._get_table_metadata()._get_primary_and_alternate_keys()
+        sequence_keys = self._get_table_metadata()._get_set_of_sequence_keys()
         keys = primary_and_alternate_keys | sequence_keys
         for column, transformer in column_name_to_transformer.items():
             if transformer is None:
@@ -259,8 +273,9 @@ class BaseSynthesizer:
             column_name_to_transformer (dict):
                 Dict mapping column names to transformers to be used for that column.
         """
+        table_metadata = self._get_table_metadata()
         for column in column_name_to_transformer:
-            sdtype = self.metadata.columns.get(column, {}).get('sdtype')
+            sdtype = table_metadata.columns.get(column, {}).get('sdtype')
             if sdtype in {'categorical', 'boolean'}:
                 warnings.warn(
                     f"Replacing the default transformer for column '{column}' "
@@ -312,8 +327,10 @@ class BaseSynthesizer:
 
     def get_metadata(self):
         """Return the ``Metadata`` for this synthesizer."""
-        table_name = getattr(self, '_table_name', None)
-        return Metadata.load_from_dict(self.metadata.to_dict(), table_name)
+        if isinstance(self.metadata, SingleTableMetadata):
+            table_name = getattr(self, '_table_name', None)
+            return Metadata.load_from_dict(self.metadata.to_dict(), table_name)
+        return self.metadata
 
     def load_custom_constraint_classes(self, filepath, class_names):
         """Load a custom constraint class for the current synthesizer.
@@ -395,9 +412,10 @@ class BaseSynthesizer:
             )
 
         # Order the output to match metadata
+        table_metadata = self._get_table_metadata()
         ordered_field_transformers = {
             column_name: field_transformers.get(column_name)
-            for column_name in self.metadata.columns
+            for column_name in table_metadata.columns
             if column_name in field_transformers
         }
 
@@ -611,6 +629,121 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
     for all single-table synthesizers.
     """
 
+    def __init__(
+        self,
+        metadata,
+        enforce_min_max_values=True,
+        enforce_rounding=True,
+        locales=['en_US'],
+    ):
+        super().__init__(metadata, enforce_min_max_values, enforce_rounding, locales)
+        self._chained_patterns = []  # chain of patterns used to preprocess the data
+        self._reject_sampling_patterns = []  # patterns used only for reject sampling
+        self._original_metadata = deepcopy(self.metadata)
+
+    def add_cag(self, patterns):
+        """Add the list of constraint-augmented generation patterns to the synthesizer.
+
+        Args:
+            patterns (list):
+                A list of CAG patterns to apply to the synthesizer.
+        """
+        for pattern in patterns:
+            try:
+                self.metadata = pattern.get_updated_metadata(self.metadata)
+                self._chained_patterns.append(pattern)
+            except PatternNotMetError as e:
+                LOGGER.info(
+                    'Enforcing pattern %s using reject sampling.', pattern.__class__.__name__
+                )
+
+                try:
+                    pattern.get_updated_metadata(self._original_metadata)
+                    self._reject_sampling_patterns.append(pattern)
+                except PatternNotMetError:
+                    raise e
+
+        self._data_processor = DataProcessor(
+            metadata=self.metadata._convert_to_single_table(),
+            enforce_rounding=self.enforce_rounding,
+            enforce_min_max_values=self.enforce_min_max_values,
+            locales=self.locales,
+        )
+
+    def get_cag(self):
+        """Get a list of constraint-augmented generation patterns applied to the synthesizer."""
+        return deepcopy(self._chained_patterns + self._reject_sampling_patterns)
+
+    def get_metadata(self, version='original'):
+        """Get the metadata, either original or modified after applying CAG patterns.
+
+        Args:
+            version (str, optional):
+                The version of metadata to return, must be one of 'original' or 'modified'. If
+                'original', will return the original metadata used to instantiate the
+                synthesizer. If 'modified', will return the modified metadata after applying this
+                synthesizer's CAG patterns. Defaults to 'original'.
+        """
+        if version not in ('original', 'modified'):
+            raise ValueError(
+                f"Unrecognized version '{version}', please use 'original' or 'modified'."
+            )
+
+        if hasattr(self, '_original_metadata') and version == 'original':
+            return self._original_metadata
+
+        return super().get_metadata()
+
+    def _transform_helper(self, data):
+        """Validate and transform all CAG patterns during preprocessing.
+
+        Args:
+            data (dict[str, pd.DataFrame]):
+                The data dictionary.
+        """
+        if self._fitted:
+            for pattern in self._chained_patterns:
+                data = pattern.transform(data)
+            return data
+
+        metadata = self._original_metadata
+        original_data = data
+        for pattern in self._chained_patterns:
+            pattern.fit(data, metadata)
+            metadata = pattern.get_updated_metadata(metadata)
+            data = pattern.transform(data)
+
+        for pattern in self._reject_sampling_patterns:
+            pattern.fit(original_data, self._original_metadata)
+
+        return data
+
+    def preprocess(self, data):
+        """Transform the raw data to numerical space.
+
+        Args:
+            data (pandas.DataFrame):
+                The raw data to be transformed.
+
+        Returns:
+            pandas.DataFrame:
+                The preprocessed data.
+        """
+        if self._fitted:
+            warnings.warn(
+                'This model has already been fitted. To use the new preprocessed data, '
+                "please refit the model using 'fit' or 'fit_processed_data'."
+            )
+
+        is_converted = self._store_and_convert_original_cols(data)
+        data = self._transform_helper(data)
+        preprocess_data = self._preprocess(data)
+
+        if is_converted:
+            data.columns = self._original_columns
+
+        return preprocess_data
+
     def _set_random_state(self, random_state):
         """Set the random state of the model's random number generator.
 
@@ -720,6 +853,16 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     set(raw_sampled.columns) - set(input_columns) - set(sampled.columns)
                 )
                 sampled = pd.concat([sampled, raw_sampled[missing_cols]], axis=1)
+
+            if hasattr(self, '_chained_patterns') and hasattr(self, '_reject_sampling_patterns'):
+                for pattern in reversed(self._chained_patterns):
+                    sampled = pattern.reverse_transform(sampled)
+                    valid_rows = pattern.is_valid(sampled)
+                    sampled = sampled[valid_rows]
+
+                for pattern in reversed(self._reject_sampling_patterns):
+                    valid_rows = pattern.is_valid(sampled)
+                    sampled = sampled[valid_rows]
 
             if previous_rows is not None:
                 sampled = pd.concat([previous_rows, sampled], ignore_index=True)
