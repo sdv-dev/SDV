@@ -86,7 +86,9 @@ class TestBaseSingleTableSynthesizer:
             'id_1': {'sdtype': 'id', 'regex_format': '[0-9]+'},
             'id_2': {'sdtype': 'id', 'regex_format': '[a-z]{3}'},
         }
-        metadata.columns = columns
+        metadata.tables = {}
+        metadata.tables['table_1'] = Mock()
+        metadata.tables['table_1'].columns = columns
 
         instance.metadata = metadata
         instance._table_name = 'table_1'
