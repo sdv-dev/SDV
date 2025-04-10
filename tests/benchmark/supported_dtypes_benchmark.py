@@ -72,7 +72,12 @@ MULTI_COLUMN_PREDEFINED_CONSTRAINTS = {
 }
 
 
-METADATA_SDTYPES = ('numerical', 'id', {'sdtype': 'datetime', 'datetime_format': '%Y%m%d'}, 'categorical')
+METADATA_SDTYPES = (
+    {'sdtype': 'numerical'},
+    {'sdytpe': 'id'},
+    {'sdtype': 'datetime', 'datetime_format': '%Y%m%d'},
+    {'sdtype': 'categorical'},
+)
 
 
 EXPECTED_METADATA_SDTYPES = {
@@ -171,15 +176,9 @@ def prevent_tqdm_output():
         tqdm.__init__ = partialmethod(tqdm.__init__, disable=False)
 
 
-def _get_metadata_for_dtype_and_sdtype(dtype, sdtype):
+def _get_metadata_for_dtype_and_sdtype(dtype, sdtype_dict):
     """Return the expected metadata."""
-    if isinstance(sdtype, dict):
-        sdtype_dict = sdtype
-    else:
-        sdtype_dict = {'sdtype': sdtype}
-
     metadata = SingleTableMetadata.load_from_dict({'columns': {dtype: sdtype_dict}})
-
     return metadata
 
 
@@ -189,8 +188,8 @@ def skip_if_unsupported(dtype, sdtype):
 
 
 @pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES}.items())
-@pytest.mark.parametrize('sdtype', METADATA_SDTYPES)
-def test_fit_and_sample_synthesizer(dtype, data, sdtype):
+@pytest.mark.parametrize('sdtype_dict', METADATA_SDTYPES)
+def test_fit_and_sample_synthesizer(dtype, data, sdtype_dict):
     """Test fitting and sampling a synthesizer for different data types.
 
     This test evaluates the `GaussianCopulaSynthesizer` to fit and
@@ -217,13 +216,11 @@ def test_fit_and_sample_synthesizer(dtype, data, sdtype):
         3. Using the synthesizer to sample data, compare the synthetic data types if they match the
            input.
     """
+    sdtype = sdtype_dict['sdtype']
     skip_if_unsupported(dtype, sdtype)
 
-    metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype)
+    metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype_dict)
     synthesizer = GaussianCopulaSynthesizer(metadata)
-
-    if isinstance(sdtype, dict):
-        sdtype = sdtype['sdtype']
 
     previous_fit_result, _ = get_previous_dtype_result(dtype, sdtype, 'SYNTHESIZER_FIT')
     previous_sample_result, _ = get_previous_dtype_result(dtype, sdtype, 'SYNTHESIZER_SAMPLE')
@@ -257,10 +254,11 @@ def test_fit_and_sample_synthesizer(dtype, data, sdtype):
 
 
 @pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES}.items())
-@pytest.mark.parametrize('sdtype', METADATA_SDTYPES)
+@pytest.mark.parametrize('sdtype_dict', METADATA_SDTYPES)
 @pytest.mark.parametrize('transformer, transformer_kwargs', TRANSFORMERS.items())
-def test_transformer(dtype, data, sdtype, transformer, transformer_kwargs):
+def test_transformer(dtype, data, sdtype_dict, transformer, transformer_kwargs):
     """Test using a transformer with different data types."""
+    sdtype = sdtype_dict['sdtype']
     skip_if_unsupported(dtype, sdtype)
 
     _transformer = transformer(**transformer_kwargs)
@@ -421,8 +419,10 @@ def _create_multi_column_constraint_data_and_metadata(constraint, data, dtype, s
     'constraint_name, constraint', SINGLE_COLUMN_PREDEFINED_CONSTRAINTS.items()
 )
 @pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES}.items())
-@pytest.mark.parametrize('sdtype', METADATA_SDTYPES)
-def test_fit_and_sample_single_column_constraints(constraint_name, constraint, dtype, data, sdtype):
+@pytest.mark.parametrize('sdtype_dict', METADATA_SDTYPES)
+def test_fit_and_sample_single_column_constraints(
+    constraint_name, constraint, dtype, data, sdtype_dict
+):
     """Test fitting and sampling with single-column constraints for various data types.
 
     This test evaluates the `GaussianCopulaSynthesizer` to fit data and
@@ -451,10 +451,11 @@ def test_fit_and_sample_single_column_constraints(constraint_name, constraint, d
         3. Adding the constraint to the synthesizer, fitting the data, and verifying the fit result.
         4. Sampling synthetic data and checking that the dtype matches the original.
     """
+    sdtype = sdtype_dict['sdtype']
     skip_if_unsupported(dtype, sdtype)
 
     if (sdtype, constraint_name) in INCLUDED_CONSTRAINT_TESTS:
-        metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype)
+        metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype_dict)
         synthesizer = GaussianCopulaSynthesizer(metadata)
         sdtype = metadata.columns[dtype].get('sdtype')
         previous_fit_result, _ = get_previous_dtype_result(
@@ -510,8 +511,10 @@ def test_fit_and_sample_single_column_constraints(constraint_name, constraint, d
 
 @pytest.mark.parametrize('constraint_name, constraint', MULTI_COLUMN_PREDEFINED_CONSTRAINTS.items())
 @pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES}.items())
-@pytest.mark.parametrize('sdtype', METADATA_SDTYPES)
-def test_fit_and_sample_multi_column_constraints(constraint_name, constraint, dtype, data, sdtype):
+@pytest.mark.parametrize('sdtype_dict', METADATA_SDTYPES)
+def test_fit_and_sample_multi_column_constraints(
+    constraint_name, constraint, dtype, data, sdtype_dict
+):
     """Test fitting and sampling with multi-column constraints for various data types.
 
     This test evaluates the `GaussianCopulaSynthesizer` to fit data and
@@ -540,10 +543,11 @@ def test_fit_and_sample_multi_column_constraints(constraint_name, constraint, dt
         3. Adding the multi-column constraints to the synthesizer and fitting the data.
         4. Sampling synthetic data and ensuring the synthetic data types match the original.
     """
+    sdtype = sdtype_dict['sdtype']
     skip_if_unsupported(dtype, sdtype)
 
     if (sdtype, constraint_name) in INCLUDED_CONSTRAINT_TESTS:
-        metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype)
+        metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype_dict)
         sdtype = metadata.columns[dtype].get('sdtype')
         previous_fit_result, _ = get_previous_dtype_result(
             dtype, sdtype, f'CONSTRAINT_{constraint_name}_FIT'
