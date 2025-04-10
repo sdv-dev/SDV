@@ -29,7 +29,7 @@ from sdv.metadata import SingleTableMetadata
 from sdv.single_table import GaussianCopulaSynthesizer
 from tests.benchmark.excluded_tests import EXCLUDED_DATA_TYPES
 from tests.benchmark.included_tests import INCLUDED_CONSTRAINT_TESTS
-from tests.benchmark.numpy_dtypes import NUMPY_DTYPES
+from tests.benchmark.numpy_dtypes import NUMPY_DTYPES, NUMPY_TIME_DTYPES
 from tests.benchmark.pandas_dtypes import PANDAS_DTYPES
 from tests.benchmark.utils import get_previous_dtype_result, save_results_to_json
 
@@ -187,7 +187,7 @@ def skip_if_unsupported(dtype, sdtype):
         pytest.skip(f"unsupported data type combination '{dtype}' and '{sdtype}'")
 
 
-@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES}.items())
+@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES, **NUMPY_TIME_DTYPES}.items())
 @pytest.mark.parametrize('sdtype_dict', METADATA_SDTYPES)
 def test_fit_and_sample_synthesizer(dtype, data, sdtype_dict):
     """Test fitting and sampling a synthesizer for different data types.
@@ -253,7 +253,7 @@ def test_fit_and_sample_synthesizer(dtype, data, sdtype_dict):
         assert sample_result == previous_sample_result, sample_assertion_message
 
 
-@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES}.items())
+@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES, **NUMPY_TIME_DTYPES}.items())
 @pytest.mark.parametrize('sdtype_dict', METADATA_SDTYPES)
 @pytest.mark.parametrize('transformer, transformer_kwargs', TRANSFORMERS.items())
 def test_transformer(dtype, data, sdtype_dict, transformer, transformer_kwargs):
@@ -418,7 +418,7 @@ def _create_multi_column_constraint_data_and_metadata(constraint, data, dtype, s
 @pytest.mark.parametrize(
     'constraint_name, constraint', SINGLE_COLUMN_PREDEFINED_CONSTRAINTS.items()
 )
-@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES}.items())
+@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES, **NUMPY_TIME_DTYPES}.items())
 @pytest.mark.parametrize('sdtype_dict', METADATA_SDTYPES)
 def test_fit_and_sample_single_column_constraints(
     constraint_name, constraint, dtype, data, sdtype_dict
@@ -510,7 +510,7 @@ def test_fit_and_sample_single_column_constraints(
 
 
 @pytest.mark.parametrize('constraint_name, constraint', MULTI_COLUMN_PREDEFINED_CONSTRAINTS.items())
-@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES}.items())
+@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES, **NUMPY_TIME_DTYPES}.items())
 @pytest.mark.parametrize('sdtype_dict', METADATA_SDTYPES)
 def test_fit_and_sample_multi_column_constraints(
     constraint_name, constraint, dtype, data, sdtype_dict
