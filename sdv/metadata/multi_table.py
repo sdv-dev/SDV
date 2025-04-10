@@ -548,37 +548,6 @@ class MultiTableMetadata:
         if foreign_key_inference_algorithm == 'column_name_match':
             self._detect_foreign_keys_by_column_name(data)
 
-    def _detect_relationships(self, data=None):
-        """Automatically detect relationships between tables.
-
-        Args:
-            data (dict):
-                Dictionary of table names to dataframes.
-                NOTE: this is only used in SDV-Enterprise.
-        """
-        for parent_candidate in self.tables.keys():
-            primary_key = self.tables[parent_candidate].primary_key
-            for child_candidate in self.tables.keys() - {parent_candidate}:
-                child_meta = self.tables[child_candidate]
-                if primary_key in child_meta.columns.keys():
-                    try:
-                        original_foreign_key_sdtype = child_meta.columns[primary_key]['sdtype']
-                        if original_foreign_key_sdtype != 'id':
-                            self.update_column(
-                                table_name=child_candidate, column_name=primary_key, sdtype='id'
-                            )
-
-                        self.add_relationship(
-                            parent_candidate, child_candidate, primary_key, primary_key
-                        )
-                    except InvalidMetadataError:
-                        self.update_column(
-                            table_name=child_candidate,
-                            column_name=primary_key,
-                            sdtype=original_foreign_key_sdtype,
-                        )
-                        continue
-
     def detect_table_from_dataframe(
         self, table_name, data, infer_sdtypes=True, infer_keys='primary_only'
     ):

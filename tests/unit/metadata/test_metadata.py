@@ -599,7 +599,9 @@ class TestMetadataClass:
         mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
             'hotels', hotels_table, True, 'primary_only'
         )
-        mock_metadata.return_value._detect_relationships.assert_called_once_with(data)
+        mock_metadata.return_value._detect_relationships.assert_called_once_with(
+            data, 'column_name_match'
+        )
         assert metadata == mock_metadata.return_value
 
     @patch('sdv.metadata.metadata.Metadata')
@@ -624,6 +626,26 @@ class TestMetadataClass:
         )
         mock_metadata.return_value._detect_relationships.assert_not_called()
         assert metadata == mock_metadata.return_value
+
+    @patch('sdv.metadata.metadata.Metadata')
+    def test_detect_from_dataframes_bad_foreign_key_inference_algorithm(self, mock_metadata):
+        """Test ``detect_from_dataframes`` with infer_keys set to None."""
+        # Setup
+        mock_metadata.detect_table_from_dataframe = Mock()
+        mock_metadata._detect_relationships = Mock()
+        guests_table = pd.DataFrame()
+        hotels_table = pd.DataFrame()
+        data = {'guests': guests_table, 'hotels': hotels_table}
+
+        # Run and Assert
+        msg = "'foreign_key_inference_algorithm' must be one of: column_name_match"
+        with pytest.raises(ValueError, match=msg):
+            Metadata.detect_from_dataframes(
+                data=data,
+                infer_sdtypes=False,
+                infer_keys=None,
+                foreign_key_inference_algorithm='fake',
+            )
 
     @patch('sdv.metadata.metadata.Metadata')
     def test_detect_from_dataframes_infer_keys_primary_only(self, mock_metadata):
