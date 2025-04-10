@@ -76,6 +76,44 @@ class TestSingleTableMetadata:
         ),
     ]  # noqa: JS102
 
+    @pytest.fixture
+    def data(self):
+        return pd.DataFrame({
+            'id': ['id1', 'id2', 'id3', 'id4', 'id5', 'id6', 'id7', 'id8', 'id9', 'id10', 'id11'],
+            'numerical': [1, 2, 3, 2, 5, 6, 7, 8, 9, 10, 11],
+            'datetime': [
+                '2022-01-01',
+                '2022-02-01',
+                '2022-03-01',
+                '2022-04-01',
+                '2022-05-01',
+                '2022-06-01',
+                '2022-07-01',
+                '2022-08-01',
+                '2022-09-01',
+                '2022-10-01',
+                '2022-11-01',
+            ],
+            'alternate_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            'alternate_id_string': ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+            'categorical': ['a', 'b', 'a', 'a', 'b', 'b', 'a', 'b', 'a', 'b', 'a'],
+            'bool': [True, False, True, False, True, False, True, False, True, False, True],
+            'unknown': ['a', 'b', 'c', 'c', 1, 2.2, np.nan, None, 'd', 'e', 'f'],
+            'first_name': [
+                'John',
+                'Jane',
+                'John',
+                'Jane',
+                'John',
+                'Jane',
+                'John',
+                'Jane',
+                'John',
+                'Jane',
+                'John',
+            ],
+        })
+
     def test___init__(self):
         """Test creating an instance of ``SingleTableMetadata``."""
         # Run
@@ -1111,46 +1149,10 @@ class TestSingleTableMetadata:
         # Assert
         assert sdtype == 'categorical'
 
-    def test__detect_columns(self):
+    def test__detect_columns(self, data):
         """Test the ``_detect_columns`` method."""
         # Setup
         instance = SingleTableMetadata()
-        data = pd.DataFrame({
-            'id': ['id1', 'id2', 'id3', 'id4', 'id5', 'id6', 'id7', 'id8', 'id9', 'id10', 'id11'],
-            'numerical': [1, 2, 3, 2, 5, 6, 7, 8, 9, 10, 11],
-            'datetime': [
-                '2022-01-01',
-                '2022-02-01',
-                '2022-03-01',
-                '2022-04-01',
-                '2022-05-01',
-                '2022-06-01',
-                '2022-07-01',
-                '2022-08-01',
-                '2022-09-01',
-                '2022-10-01',
-                '2022-11-01',
-            ],
-            'alternate_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-            'alternate_id_string': ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
-            'categorical': ['a', 'b', 'a', 'a', 'b', 'b', 'a', 'b', 'a', 'b', 'a'],
-            'bool': [True, False, True, False, True, False, True, False, True, False, True],
-            'unknown': ['a', 'b', 'c', 'c', 1, 2.2, np.nan, None, 'd', 'e', 'f'],
-            'first_name': [
-                'John',
-                'Jane',
-                'John',
-                'Jane',
-                'John',
-                'Jane',
-                'John',
-                'Jane',
-                'John',
-                'Jane',
-                'John',
-            ],
-        })
-
         expected_datetime_format = '%Y-%m-%d'
 
         # Run
@@ -1277,9 +1279,8 @@ class TestSingleTableMetadata:
 
         expected_error_message = re.escape(
             "Unsupported data type for column 'complex_dtype' (kind: c)."
-            "The valid data types are: 'object', 'int', 'float', 'datetime', 'bool'."
+            " The valid data types are: 'object', 'int', 'float', 'datetime', 'bool'."
         )
-
         with pytest.raises(InvalidMetadataError, match=expected_error_message):
             instance._detect_columns(non_supported_data)
 
@@ -1295,6 +1296,72 @@ class TestSingleTableMetadata:
         instance._determine_sdtype_for_numbers.assert_called_once()
         instance._determine_sdtype_for_objects.assert_called_once()
         mock__get_datetime_format.assert_called_once()
+
+    def test__detect_columns_invalid_data_format(self):
+        """Test the ``_detect_columns`` method with an invalid data format."""
+        # Setup
+        instance = SingleTableMetadata()
+        dict_data = [
+            {
+                'key1': i,
+                'key2': f'string_{i}',
+                'key3': np.random.random(),  # random float
+            }
+            for i in range(100)
+        ]
+        data = pd.DataFrame({
+            'dict_column': dict_data,
+            'numerical': [1.2] * 100,
+        })
+        expected_error_message = re.escape(
+            "Unable to detect metadata for column 'dict_column' due to an invalid data format."
+            "\n TypeError: unhashable type: 'dict'"
+        )
+
+        # Run and Assert
+        with pytest.raises(InvalidMetadataError, match=expected_error_message):
+            instance._detect_columns(data)
+
+    def test__detect_columns_without_infer_sdtypes(self, data):
+        """Test the _detect_columns when infer_sdtypes is False."""
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run
+        instance._detect_columns(data, infer_sdtypes=False)
+
+        # Assert
+        for column in data.columns:
+            assert instance.columns[column]['sdtype'] == 'unknown'
+            assert instance.columns[column]['pii'] is True
+
+        assert instance.primary_key is None
+        assert instance._updated is True
+
+    def test__detect_columns_without_infer_keys(self, data):
+        """Test the _detect_columns when infer_keys is False."""
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run
+        instance._detect_columns(data, infer_keys=None)
+
+        # Assert
+        assert instance.columns['id']['sdtype'] == 'id'
+        assert instance.columns['numerical']['sdtype'] == 'numerical'
+        assert instance.columns['datetime']['sdtype'] == 'datetime'
+        assert instance.columns['datetime']['datetime_format'] == '%Y-%m-%d'
+        assert instance.columns['alternate_id']['sdtype'] == 'id'
+        assert instance.columns['alternate_id_string']['sdtype'] == 'id'
+        assert instance.columns['categorical']['sdtype'] == 'categorical'
+        assert instance.columns['unknown']['sdtype'] == 'unknown'
+        assert instance.columns['unknown']['pii'] is True
+        assert instance.columns['bool']['sdtype'] == 'categorical'
+        assert instance.columns['first_name']['sdtype'] == 'first_name'
+        assert instance.columns['first_name']['pii'] is True
+
+        assert instance.primary_key is None
+        assert instance._updated is True
 
     def test__detect_primary_key_missing_sdtypes(self):
         """The method should raise an error if not all sdtypes were detected."""
@@ -2937,11 +3004,11 @@ class TestSingleTableMetadata:
         assert instance._version == 'SINGLE_TABLE_V1'
 
     @patch('sdv.metadata.utils.Path')
-    def test_save_to_json_file_exists(self, mock_path):
+    def test_save_to_json_file_exists_write(self, mock_path):
         """Test the ``save_to_json`` method.
 
         Test that when attempting to write over a file that already exists, the method
-        raises a ``ValueError``.
+        raises a ``ValueError`` when using the mode 'write'.
 
         Setup:
             - instance of ``SingleTableMetadata``.
@@ -2962,7 +3029,61 @@ class TestSingleTableMetadata:
             'a different filename.'
         )
         with pytest.raises(ValueError, match=error_msg):
-            instance.save_to_json('filepath.json')
+            instance.save_to_json('filepath.json', 'write')
+
+    def test_save_to_json_file_exists_overwrite(self, tmp_path):
+        """Test the ``save_to_json`` method using 'overwrite' mode.
+
+        Test that when attempting to write over a file that already exists, the method
+        works as expected with the mode 'overwrite'`.
+
+        Setup:
+            - instance of ``SingleTableMetadata``.
+            - save file to tmp path
+
+        Assert:
+            - Running save_to_json to the same path does not raise a ValueError
+            - The data in the value matches the second run of save_to_json
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        file_name = tmp_path / 'singlefilepathtable.json'
+        instance.save_to_json(file_name, 'write')
+        with open(file_name, 'rb') as single_table_file:
+            saved_metadata = json.load(single_table_file)
+            assert saved_metadata == instance.to_dict()
+
+        # Run
+        new_col = 'col1'
+        instance.add_column(new_col, sdtype='id')
+        instance.save_to_json(file_name, 'overwrite')
+
+        # Assert
+        with open(file_name, 'rb') as single_table_file:
+            new_saved_metadata = json.load(single_table_file)
+            assert new_col in new_saved_metadata['columns']
+            assert new_saved_metadata == instance.to_dict()
+
+    def test_save_to_json_file_check_mode(self, tmp_path):
+        """Test the ``save_to_json`` method with invalid modes.
+
+        Test that invalid modes raise an error.
+
+        Setup:
+            - instance of ``SingleTableMetadata``.
+
+        Side Effects:
+            - Raise ``ValueError``saying mode is invalid.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        bad_mode = 'bad_mode'
+        file_name = tmp_path / 'singlefilepathtable.json'
+        error_msg = re.escape(f"Mode '{bad_mode}' must be in ['write', 'overwrite'].")
+
+        # Assert
+        with pytest.raises(ValueError, match=error_msg):
+            instance.save_to_json(file_name, bad_mode)
 
     @patch('sdv.metadata.single_table.datetime')
     def test_save_to_json(self, mock_datetime, tmp_path, caplog):

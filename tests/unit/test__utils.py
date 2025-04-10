@@ -7,15 +7,18 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 import pytest
+from rdt.transformers.numerical import FloatFormatter
 
 from sdv import version
 from sdv._utils import (
+    _check_regex_format,
     _compare_versions,
     _convert_to_timedelta,
     _create_unique_name,
     _get_chars_for_option,
     _get_datetime_format,
     _get_root_tables,
+    _get_transformer_init_kwargs,
     _is_datetime_type,
     _is_numerical,
     _validate_foreign_keys_not_null,
@@ -788,3 +791,43 @@ def test__is_numerical_string():
     # Assert
     assert str_result is False
     assert datetime_result is False
+
+
+def test__get_transformer_init_kwargs():
+    # Setup
+    transformer = FloatFormatter(
+        missing_value_replacement=None,
+        learn_rounding_scheme=True,
+        computer_representation='Float64',
+        enforce_min_max_values=False,
+    )
+
+    # Run
+    transformer_kwarg_dict = _get_transformer_init_kwargs(transformer)
+
+    # Assert
+    transformer_kwarg_dict == {
+        'missing_value_replacement': None,
+        'learn_rounding_scheme': True,
+        'computer_representation': 'Float64',
+    }
+
+
+@patch('sdv._utils.strings_from_regex')
+def test__check_regex_format(mock_strings_from_regex):
+    """Test the ``_check_regex_format``."""
+    # Setup
+    regex = '[a-z]{3}'
+    mock_strings_from_regex.side_effect = KeyError('regex')
+    expected_error = re.escape(
+        'SDV synthesizers do not currently support complex regex formats such as '
+        f"'{regex}', which you have provided for table 'table_name', column 'column_name'."
+        ' Please use a simplified format or update to a different sdtype.'
+    )
+
+    # Run
+    with pytest.raises(SynthesizerInputError, match=expected_error):
+        _check_regex_format('table_name', 'column_name', regex)
+
+    # Assert
+    mock_strings_from_regex.assert_called_once_with(regex)

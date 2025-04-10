@@ -1,6 +1,59 @@
 # Release Notes
 
-### v1.17.3 - 2024-12-17
+## v1.19.0 - 2025-03-12
+
+### New Features
+
+* Allow re-writes to metadata JSON files - Issue [#2392](https://github.com/sdv-dev/SDV/issues/2392) by @lajohn4747
+
+### Bugs Fixed
+
+* GaussianCopula is not reporting the correct distribution name in the case of a fallback - Issue [#2394](https://github.com/sdv-dev/SDV/issues/2394) by @fealho
+
+### Internal
+
+* Only Notify Slack on dtype Support Additions or Removals - Issue [#2406](https://github.com/sdv-dev/SDV/issues/2406) by @pvk-developer
+
+### Maintenance
+
+* Support Python 3.13 - Issue [#2270](https://github.com/sdv-dev/SDV/issues/2270) by @rwedge
+
+## v1.18.0 - 2025-02-14
+
+### New Features
+
+* When detecting metadata from dataframes, allow me the option to turn on/off sdtype and relationship detection - Issue [#2341](https://github.com/sdv-dev/SDV/issues/2341) by @fealho
+* Surface more detailed error info when detecting metadata from dataframes - Issue [#2327](https://github.com/sdv-dev/SDV/issues/2327) by @R-Palazzo
+
+### Bugs Fixed
+
+* Conditional sampling error when using a datetime column as a context column with PAR Synthesizer - Issue [#2187](https://github.com/sdv-dev/SDV/issues/2187) by @pvk-developer
+* PARSynthesizer is synthesizing integers for the `sequence_key` column when source data is text - Issue [#1880](https://github.com/sdv-dev/SDV/issues/1880) by @fealho
+
+### Maintenance
+
+* Update our upload-artifact github action version - Issue [#2370](https://github.com/sdv-dev/SDV/issues/2370) by @amontanez24
+
+## v1.17.4 - 2025-01-20
+
+### New Features
+
+* Update the warning that's displayed when using HMA on complex schemas - Issue [#2277](https://github.com/sdv-dev/SDV/issues/2277) by @R-Palazzo
+
+### Bugs Fixed
+
+* Release Notes generator is creating new notes incorrectly - Issue [#2348](https://github.com/sdv-dev/SDV/issues/2348) by @amontanez24
+* Support the ability to pass in `None` for both `get_column_plot` and `get_column_pair_plot` - Issue [#2343](https://github.com/sdv-dev/SDV/issues/2343) by @R-Palazzo
+* Metadata `anonymize` doesn't produce the right `METADATA_SPEC_VERSION` - Issue [#2304](https://github.com/sdv-dev/SDV/issues/2304) by @R-Palazzo
+* GaussianCopula `get_learned_distributions` crashes if nothing was learned - Issue [#2297](https://github.com/sdv-dev/SDV/issues/2297) by @R-Palazzo
+* Sampling with HMA Synthesizer generates many `SingleTableMetadata` deprecation warnings - Issue [#2290](https://github.com/sdv-dev/SDV/issues/2290) by @R-Palazzo
+
+### Maintenance
+
+* Include stack trace when sampling errors are surfaced - Issue [#2326](https://github.com/sdv-dev/SDV/issues/2326) by @amontanez24
+* Combine  `static_code_analysis.yml` with `release_notes.yml` - Issue [#2305](https://github.com/sdv-dev/SDV/issues/2305) by @R-Palazzo
+
+## v1.17.3 - 2024-12-17
 
 ### Maintenance
 

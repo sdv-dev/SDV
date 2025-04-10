@@ -13,6 +13,7 @@ from pandas.errors import IntCastingNaNError
 from rdt.transformers import AnonymizedFaker, get_default_transformers
 from rdt.transformers.pii.anonymization import get_anonymized_transformer
 
+from sdv._utils import _get_transformer_init_kwargs
 from sdv.constraints import Constraint
 from sdv.constraints.base import get_subclasses
 from sdv.constraints.errors import (
@@ -512,7 +513,8 @@ class DataProcessor:
 
         if kwargs and transformer is not None:
             transformer_class = transformer.__class__
-            return transformer_class(**kwargs)
+            default_transformer_kwargs = _get_transformer_init_kwargs(transformer)
+            return transformer_class(**{**default_transformer_kwargs, **kwargs})
 
         return deepcopy(transformer)
 

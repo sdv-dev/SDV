@@ -19,6 +19,7 @@ from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
 from sdv.errors import SamplingError, SynthesizerInputError, VersionError
 from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, get_column_plot
+from sdv.metadata import MultiTableMetadata
 from sdv.metadata.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint
@@ -2637,3 +2638,51 @@ def test_column_order():
     assert table_1_column != list(data['table_1'].columns)
     assert table_1_column == ['col_1', 'col_2', 'col_3']
     assert list(synthetic_data['table_2'].columns) == ['col_A', 'col_B', 'col_C']
+
+
+def test_no_deprecation_warning_single_table_metadata_sampling():
+    """Test that no single-table metadata deprecation warning raises with `MultiTableMetadata`."""
+    # Setup
+    data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    multi_metadata = MultiTableMetadata()
+    multi_metadata.detect_from_dataframes(data)
+    synthesizer = HMASynthesizer(multi_metadata)
+    synthesizer.fit(data)
+
+    # Run
+    with warnings.catch_warnings(record=True) as captured_warnings:
+        synthesizer.sample()
+
+    # Assert
+    assert len(captured_warnings) == 0
+
+
+def test__unsupported_regex_format():
+    """Test that ``HMA`` raises an error if the regex format is not supported."""
+    # Setup
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table_1': {
+                'columns': {
+                    'id': {'sdtype': 'id', 'regex_format': '(10|20|30)[0-9]{4}'},
+                    'A': {'sdtype': 'numerical'},
+                }
+            },
+            'table_2': {
+                'columns': {
+                    'col_A': {'sdtype': 'numerical'},
+                    'col_B': {'sdtype': 'categorical'},
+                }
+            },
+        }
+    })
+
+    expected_error = re.escape(
+        'SDV synthesizers do not currently support complex regex formats such as '
+        "'(10|20|30)[0-9]{4}', which you have provided for table 'table_1', column 'id'. Please use"
+        ' a simplified format or update to a different sdtype.'
+    )
+
+    # Run and Assert
+    with pytest.raises(SynthesizerInputError, match=expected_error):
+        HMASynthesizer(metadata)

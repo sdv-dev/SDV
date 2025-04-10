@@ -2499,7 +2499,9 @@ class TestMultiTableMetadata:
         metadata.detect_table_from_dataframe('table', data)
 
         # Assert
-        single_table_mock.return_value._detect_columns.assert_called_once_with(data)
+        single_table_mock.return_value._detect_columns.assert_called_once_with(
+            data, 'table', True, 'primary_only'
+        )
         assert metadata.tables == {'table': single_table_mock.return_value}
 
         expected_log_calls = call(
@@ -2841,11 +2843,11 @@ class TestMultiTableMetadata:
         assert instance.tables['table1']._version == 'SINGLE_TABLE_V1'
 
     @patch('sdv.metadata.utils.Path')
-    def test_save_to_json_file_exists(self, mock_path):
+    def test_save_to_json_file_exists_write(self, mock_path):
         """Test the ``save_to_json`` method.
 
         Test that when attempting to write over a file that already exists, the method
-        raises a ``ValueError``.
+        raises a ``ValueError`` when using the mode 'write'.
 
         Setup:
             - instance of ``MultiTableMetadata``.
@@ -2866,7 +2868,64 @@ class TestMultiTableMetadata:
             'a different filename.'
         )
         with pytest.raises(ValueError, match=error_msg):
-            instance.save_to_json('filepath.json')
+            instance.save_to_json('filepath.json', 'write')
+
+    def test_save_to_json_file_exists_overwrite(self, tmp_path):
+        """Test the ``save_to_json`` method using 'overwrite' mode.
+
+        Test that when attempting to write over a file that already exists, the method
+        works as expected with the mode 'overwrite'`.
+
+        Setup:
+            - instance of ``MultiTableMetadata``.
+            - save file to tmp path
+
+        Assert:
+            - Running save_to_json to the same path does not raise a ValueError
+            - The data in the value matches the second run of save_to_json
+        """
+        # Setup
+        instance = MultiTableMetadata()
+        file_name = tmp_path / 'multitable.json'
+        instance.save_to_json(file_name, 'write')
+        with open(file_name, 'rb') as multi_table_file:
+            saved_metadata = json.load(multi_table_file)
+            assert saved_metadata == instance.to_dict()
+
+        # Run
+        new_table = 'table'
+        new_col = 'col1'
+        instance.add_table(new_table)
+        instance.add_column(new_table, new_col, sdtype='id')
+        instance.save_to_json(file_name, 'overwrite')
+
+        # Assert
+        with open(file_name, 'rb') as multi_table_file:
+            new_saved_metadata = json.load(multi_table_file)
+            assert new_table in new_saved_metadata['tables']
+            assert new_col in new_saved_metadata['tables'][new_table]['columns']
+            assert new_saved_metadata == instance.to_dict()
+
+    def test_save_to_json_file_check_mode(self, tmp_path):
+        """Test the ``save_to_json`` method with invalid modes.
+
+        Test that invalid modes raise an error.
+
+        Setup:
+            - instance of ``MultiTableMetadata``.
+
+        Side Effects:
+            - Raise ``ValueError``saying mode is invalid.
+        """
+        # Setup
+        instance = MultiTableMetadata()
+        bad_mode = 'bad_mode'
+        file_name = tmp_path / 'multitable.json'
+        error_msg = re.escape(f"Mode '{bad_mode}' must be in ['write', 'overwrite'].")
+
+        # Assert
+        with pytest.raises(ValueError, match=error_msg):
+            instance.save_to_json(file_name, bad_mode)
 
     @patch('sdv.metadata.multi_table.datetime')
     def test_save_to_json(self, mock_datetime, tmp_path, caplog):
@@ -3160,6 +3219,86 @@ class TestMultiTableMetadata:
             'child_foreign_key': 'col2',
         }
 
+    def test__get_anonymized_dict(self):
+        """Test the ``_get_anonymized_dict`` method."""
+        # Setup
+        metadata_dict = {
+            'tables': {
+                'real_table1': {
+                    'columns': {
+                        'table1_primary_key': {'sdtype': 'id', 'regex_format': 'ID_[0-9]{3}'},
+                        'table1_column2': {'sdtype': 'categorical'},
+                    },
+                    'primary_key': 'table1_primary_key',
+                },
+                'real_table2': {
+                    'columns': {
+                        'table2_primary_key': {'sdtype': 'email'},
+                        'table2_foreign_key': {'sdtype': 'id', 'regex_format': 'ID_[0-9]{3}'},
+                    },
+                    'primary_key': 'table2_primary_key',
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'real_table1',
+                    'parent_primary_key': 'table1_primary_key',
+                    'child_table_name': 'real_table2',
+                    'child_foreign_key': 'table2_foreign_key',
+                }
+            ],
+        }
+        metadata = MultiTableMetadata.load_from_dict(metadata_dict)
+
+        # Run
+        anonymized_dict = metadata._get_anonymized_dict()
+
+        # Assert
+        expected_anonymized_dict = {
+            'tables': {
+                'table1': {
+                    'columns': {
+                        'col1': {'sdtype': 'id', 'regex_format': 'ID_[0-9]{3}'},
+                        'col2': {'sdtype': 'categorical'},
+                    },
+                    'primary_key': 'col1',
+                    'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+                },
+                'table2': {
+                    'columns': {
+                        'col1': {'sdtype': 'email'},
+                        'col2': {'sdtype': 'id', 'regex_format': 'ID_[0-9]{3}'},
+                    },
+                    'primary_key': 'col1',
+                    'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'table1',
+                    'child_table_name': 'table2',
+                    'child_foreign_key': 'col2',
+                    'parent_primary_key': 'col1',
+                }
+            ],
+        }
+        assert anonymized_dict == expected_anonymized_dict
+
+    @patch('sdv.metadata.metadata.MultiTableMetadata.load_from_dict')
+    def test_anonymize_mock(self, mock_load_from_dict):
+        """Test that the `anonymize` method."""
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._get_anonymized_dict = Mock(return_value={})
+        metadata.load_from_dict = Mock()
+
+        # Run
+        metadata.anonymize()
+
+        # Assert
+        metadata._get_anonymized_dict.assert_called_once()
+        mock_load_from_dict.assert_called_once_with({})
+
     def test_update_columns_no_list_error(self):
         """Test that ``update_columns`` only takes in list and that an error is thrown."""
         # Setup
@@ -3198,3 +3337,35 @@ class TestMultiTableMetadata:
         # Run and Assert
         with pytest.raises(InvalidMetadataError, match=error_msg):
             metadata.validate_data(data)
+
+    @patch('sdv.metadata.multi_table.create_summarized_columns_node')
+    @patch('sdv.metadata.multi_table.create_columns_node')
+    def test__get_table_info(self, mock_columns_node, mock_summarized_columns_node):
+        """Test that the `_get_table_info` method."""
+        # Setup
+        mock_columns_node.return_value = 'column'
+        mock_summarized_columns_node.return_value = 'column'
+        metadata = MultiTableMetadata()
+        table = Mock()
+        table.primary_key = 'primary_key'
+        table.sequence_key = None
+        table.sequence_index = None
+        table_all = Mock()
+        table_all.primary_key = 'primary_key'
+        table_all.sequence_index = 'sequence_index'
+        table_all.sequence_key = 'sequence_key'
+        metadata.tables = {'table': table, 'table_all': table_all}
+
+        # Run
+        result = metadata._get_table_info('table', show_table_details='full')
+        result_all = metadata._get_table_info('table_all', show_table_details='summarized')
+        result_no_info = metadata._get_table_info('table_all', show_table_details=None)
+
+        # Assert
+        assert result['primary_key'] == 'Primary key: primary_key'
+        assert 'sequence_index' not in result
+        assert 'sequence_key' not in result
+        assert result_all['primary_key'] == 'Primary key: primary_key'
+        assert result_all['sequence_key'] == 'Sequence key: sequence_key'
+        assert result_all['sequence_index'] == 'Sequence index: sequence_index'
+        assert result_no_info is None

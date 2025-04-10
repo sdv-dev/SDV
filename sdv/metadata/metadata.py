@@ -61,8 +61,13 @@ class Metadata(MultiTableMetadata):
         instance._set_metadata_dict(metadata_dict, single_table_name)
         return instance
 
+    @staticmethod
+    def _validate_infer_sdtypes(infer_sdtypes):
+        if not isinstance(infer_sdtypes, bool):
+            raise ValueError("'infer_sdtypes' must be a boolean value.")
+
     @classmethod
-    def detect_from_dataframes(cls, data):
+    def detect_from_dataframes(cls, data, infer_sdtypes=True, infer_keys='primary_and_foreign'):
         """Detect the metadata for all tables in a dictionary of dataframes.
 
         This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrames``.
@@ -71,6 +76,18 @@ class Metadata(MultiTableMetadata):
         Args:
             data (dict):
                 Dictionary of table names to dataframes.
+            infer_sdtypes (bool):
+                A boolean describing whether to infer the sdtypes of each column.
+                If True it infers the sdtypes based on the data.
+                If False it does not infer the sdtypes and all columns are marked as unknown.
+                Defaults to True.
+            infer_keys (str):
+                A string describing whether to infer the primary and/or foreign keys. Options are:
+                    - 'primary_and_foreign': Infer the primary keys in each table,
+                       and the foreign keys in other tables that refer to them
+                    - 'primary_only': Infer only the primary keys of each table
+                    - None: Do not infer any keys
+                Defaults to 'primary_and_foreign'.
 
         Returns:
             Metadata:
@@ -78,16 +95,31 @@ class Metadata(MultiTableMetadata):
         """
         if not data or not all(isinstance(df, pd.DataFrame) for df in data.values()):
             raise ValueError('The provided dictionary must contain only pandas DataFrame objects.')
+        if infer_keys not in ['primary_and_foreign', 'primary_only', None]:
+            raise ValueError(
+                "'infer_keys' must be one of: 'primary_and_foreign', 'primary_only', None."
+            )
+        cls._validate_infer_sdtypes(infer_sdtypes)
 
         metadata = Metadata()
         for table_name, dataframe in data.items():
-            metadata.detect_table_from_dataframe(table_name, dataframe)
+            metadata.detect_table_from_dataframe(
+                table_name, dataframe, infer_sdtypes, None if infer_keys is None else 'primary_only'
+            )
 
-        metadata._detect_relationships(data)
+        if infer_keys == 'primary_and_foreign':
+            metadata._detect_relationships(data)
+
         return metadata
 
     @classmethod
-    def detect_from_dataframe(cls, data, table_name=DEFAULT_SINGLE_TABLE_NAME):
+    def detect_from_dataframe(
+        cls,
+        data,
+        table_name=DEFAULT_SINGLE_TABLE_NAME,
+        infer_sdtypes=True,
+        infer_keys='primary_only',
+    ):
         """Detect the metadata for a DataFrame.
 
         This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrame``.
@@ -96,6 +128,16 @@ class Metadata(MultiTableMetadata):
         Args:
             data (pandas.DataFrame):
                 Dictionary of table names to dataframes.
+            infer_sdtypes (bool):
+                A boolean describing whether to infer the sdtypes of each column.
+                If True it infers the sdtypes based on the data.
+                If False it does not infer the sdtypes and all columns are marked as unknown.
+                Defaults to True.
+            infer_keys (str):
+                A string describing whether to infer the primary keys. Options are:
+                    - 'primary_only': Infer only the primary keys of each table
+                    - None: Do not infer any keys
+                Defaults to 'primary_only'.
 
         Returns:
             Metadata:
@@ -103,9 +145,12 @@ class Metadata(MultiTableMetadata):
         """
         if not isinstance(data, pd.DataFrame):
             raise ValueError('The provided data must be a pandas DataFrame object.')
+        if infer_keys not in ['primary_only', None]:
+            raise ValueError("'infer_keys' must be one of: 'primary_only', None.")
+        cls._validate_infer_sdtypes(infer_sdtypes)
 
         metadata = Metadata()
-        metadata.detect_table_from_dataframe(table_name, data)
+        metadata.detect_table_from_dataframe(table_name, data, infer_sdtypes, infer_keys)
         return metadata
 
     def _set_metadata_dict(self, metadata, single_table_name=None):
@@ -288,3 +333,14 @@ class Metadata(MultiTableMetadata):
         table_name = self._handle_table_name(table_name)
         table_metadata = super().get_table_metadata(table_name)
         return Metadata.load_from_dict(table_metadata.to_dict(), single_table_name=table_name)
+
+    def anonymize(self):
+        """Anonymize metadata by obfuscating column names.
+
+        Returns:
+            MultiTableMetadata:
+                An anonymized MultiTableMetadata instance.
+        """
+        anonymized_metadata = self._get_anonymized_dict()
+
+        return Metadata.load_from_dict(anonymized_metadata)

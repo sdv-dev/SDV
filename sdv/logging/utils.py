@@ -3,6 +3,7 @@
 import contextlib
 import logging
 import shutil
+import tempfile
 from pathlib import Path
 
 import pandas as pd
@@ -19,7 +20,9 @@ def get_sdv_logger_config():
     if (store_path / 'sdv_logger_config.yml').exists():
         config_path = store_path / 'sdv_logger_config.yml'
     else:
-        shutil.copyfile(config_path, store_path / 'sdv_logger_config.yml')
+        tmp_path = tempfile.mktemp(dir=store_path, suffix='.yml')
+        shutil.copyfile(config_path, tmp_path)
+        shutil.move(tmp_path, store_path / 'sdv_logger_config.yml')
 
     with open(config_path, 'r') as f:
         logger_conf = yaml.safe_load(f)

@@ -16,7 +16,7 @@ from sdv.logging import get_sdv_logger
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.single_table import SingleTableMetadata
-from sdv.metadata.utils import read_json, validate_file_does_not_exist
+from sdv.metadata.utils import _validate_file_mode, read_json, validate_file_does_not_exist
 from sdv.metadata.visualization import (
     create_columns_node,
     create_summarized_columns_node,
@@ -530,7 +530,9 @@ class MultiTableMetadata:
                         )
                         continue
 
-    def detect_table_from_dataframe(self, table_name, data):
+    def detect_table_from_dataframe(
+        self, table_name, data, infer_sdtypes=True, infer_keys='primary_only'
+    ):
         """Detect the metadata for a table from a dataframe.
 
         This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrame``,
@@ -541,10 +543,20 @@ class MultiTableMetadata:
                 Name of the table to detect.
             data (pandas.DataFrame):
                 ``pandas.DataFrame`` to detect the metadata from.
+            infer_sdtypes (bool):
+                A boolean describing whether to infer the sdtypes of each column.
+                If True it infers the sdtypes based on the data.
+                If False it does not infer the sdtypes and all columns are marked as unknown.
+                Defaults to True.
+            infer_keys (str):
+                A string describing whether to infer the primary keys. Options are:
+                    - 'primary_only': Infer only the primary keys of each table
+                    - None: Do not infer any keys
+                Defaults to 'primary_only'.
         """
         self._validate_table_not_detected(table_name)
         table = SingleTableMetadata()
-        table._detect_columns(data)
+        table._detect_columns(data, table_name, infer_sdtypes, infer_keys)
         self.tables[table_name] = table
         self._log_detected_table(table)
 
@@ -914,13 +926,7 @@ class MultiTableMetadata:
         self._validate_table_exists(table_name)
         return deepcopy(self.tables[table_name])
 
-    def anonymize(self):
-        """Anonymize metadata by obfuscating column names.
-
-        Returns:
-            MultiTableMetadata:
-                An anonymized MultiTableMetadata instance.
-        """
+    def _get_anonymized_dict(self):
         anonymized_metadata = {'tables': {}, 'relationships': []}
         anonymized_table_map = {}
         counter = 1
@@ -953,7 +959,38 @@ class MultiTableMetadata:
                 'parent_primary_key': anonymized_primary_key,
             })
 
+        return anonymized_metadata
+
+    def anonymize(self):
+        """Anonymize metadata by obfuscating column names.
+
+        Returns:
+            MultiTableMetadata:
+                An anonymized MultiTableMetadata instance.
+        """
+        anonymized_metadata = self._get_anonymized_dict()
+
         return MultiTableMetadata.load_from_dict(anonymized_metadata)
+
+    def _get_table_info(self, table_name, show_table_details):
+        node_info = {}
+        table_meta = self.tables[table_name]
+
+        if show_table_details in ['full', 'summarized']:
+            node_info['primary_key'] = f'Primary key: {table_meta.primary_key}'
+            if table_meta.sequence_key:
+                node_info['sequence_key'] = f'Sequence key: {table_meta.sequence_key}'
+            if table_meta.sequence_index:
+                node_info['sequence_index'] = f'Sequence index: {table_meta.sequence_index}'
+
+        if show_table_details == 'full':
+            node_info['columns'] = create_columns_node(table_meta.columns)
+        elif show_table_details == 'summarized':
+            node_info['columns'] = create_summarized_columns_node(table_meta.columns)
+        elif show_table_details is None:
+            return
+
+        return node_info
 
     def visualize(
         self, show_table_details='full', show_relationship_labels=True, output_filepath=None
@@ -1000,22 +1037,9 @@ class MultiTableMetadata:
 
         nodes = {}
         edges = []
-        if show_table_details == 'full':
-            for table_name, table_meta in self.tables.items():
-                nodes[table_name] = {
-                    'columns': create_columns_node(table_meta.columns),
-                    'primary_key': f'Primary key: {table_meta.primary_key}',
-                }
 
-        elif show_table_details == 'summarized':
-            for table_name, table_meta in self.tables.items():
-                nodes[table_name] = {
-                    'columns': create_summarized_columns_node(table_meta.columns),
-                    'primary_key': f'Primary key: {table_meta.primary_key}',
-                }
-
-        elif show_table_details is None:
-            nodes = {table_name: None for table_name in self.tables}
+        for table_name in self.tables.keys():
+            nodes[table_name] = self._get_table_info(table_name, show_table_details)
 
         for relationship in self.relationships:
             parent = relationship.get('parent_table_name')
@@ -1036,11 +1060,18 @@ class MultiTableMetadata:
         for table, info in nodes.items():
             if show_table_details:
                 foreign_keys = r'\l'.join(info.get('foreign_keys', []))
-                keys = r'\l'.join([info['primary_key'], foreign_keys])
-                if foreign_keys:
-                    label = rf'{{{table}|{info["columns"]}\l|{keys}\l}}'
-                else:
-                    label = rf'{{{table}|{info["columns"]}\l|{keys}}}'
+                keys = r'\l'.join(
+                    filter(
+                        bool,
+                        [
+                            info.get('primary_key'),
+                            info.get('sequence_key'),
+                            info.get('sequence_index'),
+                            foreign_keys,
+                        ],
+                    )
+                )
+                label = rf'{{{table}|{info["columns"]}\l|{keys}\l}}'
 
             else:
                 label = f'{table}'
@@ -1093,17 +1124,23 @@ class MultiTableMetadata:
         instance._set_metadata_dict(metadata_dict)
         return instance
 
-    def save_to_json(self, filepath):
+    def save_to_json(self, filepath, mode='write'):
         """Save the current ``MultiTableMetadata`` in to a ``json`` file.
 
         Args:
             filepath (str):
                 String that represent the ``path`` to the ``json`` file to be written.
+            mode (str):
+                String that determines the mode of the function. Defaults to ``write``.
+                'write' mode will create and write a file if it does not exist.
+                'overwrite' mode will overwrite a file if that file does exist.
 
         Raises:
-            Raises a ``ValueError`` if the path already exists.
+            Raises a ``ValueError`` if the path already exists and the mode is 'write'.
         """
-        validate_file_does_not_exist(filepath)
+        _validate_file_mode(mode)
+        if mode == 'write':
+            validate_file_does_not_exist(filepath)
         metadata = self.to_dict()
         total_columns = 0
         for table in self.tables.values():

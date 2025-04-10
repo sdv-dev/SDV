@@ -73,9 +73,6 @@ class SDVVersionWarning(UserWarning):
     synthesizer and the current version of the SDV software.
     """
 
-    def __init__(self, *args, **kwargs):
-        self.__class__.__name__ = 'SDV Version Warning'
-
 
 class VersionError(ValueError):
     """Raised when loading a synthesizer from a newer version into an older one."""

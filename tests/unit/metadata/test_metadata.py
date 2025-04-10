@@ -594,15 +594,63 @@ class TestMetadataClass:
 
         # Assert
         mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
-            'guests', guests_table
+            'guests', guests_table, True, 'primary_only'
         )
         mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
-            'hotels', hotels_table
+            'hotels', hotels_table, True, 'primary_only'
         )
         mock_metadata.return_value._detect_relationships.assert_called_once_with(data)
         assert metadata == mock_metadata.return_value
 
-    def test_detect_from_dataframes_bad_input(self):
+    @patch('sdv.metadata.metadata.Metadata')
+    def test_detect_from_dataframes_infer_keys_none(self, mock_metadata):
+        """Test ``detect_from_dataframes`` with infer_keys set to None."""
+        # Setup
+        mock_metadata.detect_table_from_dataframe = Mock()
+        mock_metadata._detect_relationships = Mock()
+        guests_table = pd.DataFrame()
+        hotels_table = pd.DataFrame()
+        data = {'guests': guests_table, 'hotels': hotels_table}
+
+        # Run
+        metadata = Metadata.detect_from_dataframes(data, infer_sdtypes=False, infer_keys=None)
+
+        # Assert
+        mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
+            'guests', guests_table, False, None
+        )
+        mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
+            'hotels', hotels_table, False, None
+        )
+        mock_metadata.return_value._detect_relationships.assert_not_called()
+        assert metadata == mock_metadata.return_value
+
+    @patch('sdv.metadata.metadata.Metadata')
+    def test_detect_from_dataframes_infer_keys_primary_only(self, mock_metadata):
+        """Test ``detect_from_dataframes`` with infer_keys set to 'primary_only'."""
+        # Setup
+        mock_metadata.detect_table_from_dataframe = Mock()
+        mock_metadata._detect_relationships = Mock()
+        guests_table = pd.DataFrame()
+        hotels_table = pd.DataFrame()
+        data = {'guests': guests_table, 'hotels': hotels_table}
+
+        # Run
+        metadata = Metadata.detect_from_dataframes(
+            data, infer_sdtypes=False, infer_keys='primary_only'
+        )
+
+        # Assert
+        mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
+            'guests', guests_table, False, 'primary_only'
+        )
+        mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
+            'hotels', hotels_table, False, 'primary_only'
+        )
+        mock_metadata.return_value._detect_relationships.assert_not_called()
+        assert metadata == mock_metadata.return_value
+
+    def test_detect_from_dataframes_bad_input_data(self):
         """Test that an error is raised if the dictionary contains something other than DataFrames.
 
         If the data contains values that aren't pandas.DataFrames, it should error.
@@ -614,6 +662,30 @@ class TestMetadataClass:
         expected_message = 'The provided dictionary must contain only pandas DataFrame objects.'
         with pytest.raises(ValueError, match=expected_message):
             Metadata.detect_from_dataframes(data)
+
+    def test_detect_from_dataframes_bad_input_infer_sdtypes(self):
+        """Test that an error is raised if the infer_sdtypes is not a boolean."""
+        # Setup
+        data = {'guests': pd.DataFrame(), 'hotels': pd.DataFrame()}
+        infer_sdtypes = 'not_a_boolean'
+
+        # Run and Assert
+        expected_message = "'infer_sdtypes' must be a boolean value."
+        with pytest.raises(ValueError, match=expected_message):
+            Metadata.detect_from_dataframes(data, infer_sdtypes=infer_sdtypes)
+
+    def test_detect_from_dataframes_bad_input_infer_keys(self):
+        """Test that an error is raised if the infer_keys is not a correct string."""
+        # Setup
+        data = {'guests': pd.DataFrame(), 'hotels': pd.DataFrame()}
+        infer_keys = 'incorrect_string'
+
+        # Run and Assert
+        expected_message = re.escape(
+            "'infer_keys' must be one of: 'primary_and_foreign', 'primary_only', None."
+        )
+        with pytest.raises(ValueError, match=expected_message):
+            Metadata.detect_from_dataframes(data, infer_keys=infer_keys)
 
     @patch('sdv.metadata.metadata.Metadata')
     def test_detect_from_dataframe(self, mock_metadata):
@@ -630,7 +702,7 @@ class TestMetadataClass:
 
         # Assert
         mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
-            Metadata.DEFAULT_SINGLE_TABLE_NAME, DataFrameMatcher(data)
+            Metadata.DEFAULT_SINGLE_TABLE_NAME, DataFrameMatcher(data), True, 'primary_only'
         )
         assert metadata == mock_metadata.return_value
 
@@ -640,6 +712,28 @@ class TestMetadataClass:
         expected_message = 'The provided data must be a pandas DataFrame object.'
         with pytest.raises(ValueError, match=expected_message):
             Metadata.detect_from_dataframe(Mock())
+
+    def test_detect_from_dataframe_bad_input_infer_sdtypes(self):
+        """Test that an error is raised if the infer_sdtypes is not a boolean."""
+        # Setup
+        data = pd.DataFrame()
+        infer_sdtypes = 'not_a_boolean'
+
+        # Run and Assert
+        expected_message = "'infer_sdtypes' must be a boolean value."
+        with pytest.raises(ValueError, match=expected_message):
+            Metadata.detect_from_dataframe(data, infer_sdtypes=infer_sdtypes)
+
+    def test_detect_from_dataframe_bad_input_infer_keys(self):
+        """Test that an error is raised if the infer_keys is not a correct string."""
+        # Setup
+        data = pd.DataFrame()
+        infer_keys = 'primary_and_foreign'
+
+        # Run and Assert
+        expected_message = re.escape("'infer_keys' must be one of: 'primary_only', None.")
+        with pytest.raises(ValueError, match=expected_message):
+            Metadata.detect_from_dataframe(data, infer_keys=infer_keys)
 
     def test__handle_table_name(self):
         """Test the ``_handle_table_name`` method."""
@@ -717,3 +811,51 @@ class TestMetadataClass:
         error_msg = 'Metadata does not contain any tables. No columns can be added.'
         with pytest.raises(ValueError, match=error_msg):
             instance._handle_table_name(None)
+
+    @patch('sdv.metadata.metadata.Metadata.load_from_dict')
+    def test_anonymize(self, mock_load_from_dict):
+        """Test that the `anonymize` method."""
+        # Setup
+        metadata = Metadata()
+        metadata._get_anonymized_dict = Mock(return_value={})
+        metadata.load_from_dict = Mock()
+
+        # Run
+        metadata.anonymize()
+
+        # Assert
+        metadata._get_anonymized_dict.assert_called_once()
+        mock_load_from_dict.assert_called_once_with({})
+
+    @patch('sdv.metadata.multi_table.visualize_graph')
+    def test_visualize_with_sequence_key_and_index(self, visualize_graph_mock):
+        """Test the ``visualize`` method with sequence key and index"""
+        # Setup
+        metadata_dict = {
+            'tables': {
+                'nasdaq100_2019': {
+                    'columns': {
+                        'Symbol': {'sdtype': 'id', 'regex_format': '[A-Z]{4}'},
+                        'Date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                    },
+                    'sequence_index': 'Date',
+                    'sequence_key': 'Symbol',
+                }
+            },
+            'relationships': [],
+            'METADATA_SPEC_VERSION': 'V1',
+        }
+        metadata = Metadata.load_from_dict(metadata_dict)
+
+        # Run
+        metadata.visualize('full', True)
+
+        # Assert
+        expected_label = (
+            '{nasdaq100_2019|Symbol : id\\lDate : datetime\\l|Primary key: None\\l'
+            'Sequence key: Symbol\\lSequence index: Date\\l}'
+        )
+        expected_nodes = {
+            'nasdaq100_2019': expected_label,
+        }
+        visualize_graph_mock.assert_called_once_with(expected_nodes, [], None)
