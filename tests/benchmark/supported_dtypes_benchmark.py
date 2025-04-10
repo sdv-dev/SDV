@@ -72,7 +72,7 @@ MULTI_COLUMN_PREDEFINED_CONSTRAINTS = {
 }
 
 
-METADATA_SDTYPES = ('numerical', 'id', 'datetime', 'categorical')
+METADATA_SDTYPES = ('numerical', 'id', {'sdtype': 'datetime', 'datetime_format': '%Y%m%d'}, 'categorical')
 
 
 EXPECTED_METADATA_SDTYPES = {
@@ -173,7 +173,13 @@ def prevent_tqdm_output():
 
 def _get_metadata_for_dtype_and_sdtype(dtype, sdtype):
     """Return the expected metadata."""
-    metadata = SingleTableMetadata.load_from_dict({'columns': {dtype: {'sdtype': sdtype}}})
+    if isinstance(sdtype, dict):
+        sdtype_dict = sdtype
+    else:
+        sdtype_dict = {'sdtype': sdtype}
+
+    metadata = SingleTableMetadata.load_from_dict({'columns': {dtype: sdtype_dict}})
+
     return metadata
 
 
@@ -215,6 +221,10 @@ def test_fit_and_sample_synthesizer(dtype, data, sdtype):
 
     metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype)
     synthesizer = GaussianCopulaSynthesizer(metadata)
+
+    if isinstance(sdtype, dict):
+        sdtype = sdtype['sdtype']
+
     previous_fit_result, _ = get_previous_dtype_result(dtype, sdtype, 'SYNTHESIZER_FIT')
     previous_sample_result, _ = get_previous_dtype_result(dtype, sdtype, 'SYNTHESIZER_SAMPLE')
     fit_result = False
