@@ -645,6 +645,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             pandas.DataFrame:
                 Rows from the sampled data that match the conditions.
         """
+        if sampled.empty:
+            return sampled
         for column, value in conditions.items():
             column_values = sampled[column]
             if column_values.dtype.kind == 'f':
