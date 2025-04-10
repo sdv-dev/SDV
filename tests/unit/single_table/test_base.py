@@ -138,16 +138,16 @@ class TestBaseSingleTableSynthesizer:
         """Test the ``_validate_regex_format`` method."""
         # Setup
         instance = Mock()
-        single_table_metadata = Mock()
-        single_table_metadata.get_column_names.return_value = ['id_1', 'id_2']
         metadata = Mock()
-        metadata._convert_to_single_table.return_value = single_table_metadata
+        metadata.get_column_names.return_value = ['id_1', 'id_2']
 
         columns = {
             'id_1': {'sdtype': 'id', 'regex_format': '[0-9]+'},
             'id_2': {'sdtype': 'id', 'regex_format': '[a-z]{3}'},
         }
-        single_table_metadata.columns = columns
+        metadata.tables = {}
+        metadata.tables['table_1'] = Mock()
+        metadata.tables['table_1'].columns = columns
 
         instance.metadata = metadata
         instance._table_name = 'table_1'
