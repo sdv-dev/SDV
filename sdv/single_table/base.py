@@ -128,13 +128,13 @@ class BaseSynthesizer:
             )
 
     def _validate_regex_format(self):
-        # Using SingleTableMetadata because `get_column_names` raises an error
-        # if the metadata is empty
-        single_table_metadata = self.metadata._convert_to_single_table()
-        id_columns = single_table_metadata.get_column_names(sdtype='id')
-        for column_name in id_columns:
-            regex = single_table_metadata.columns[column_name].get('regex_format')
-            _check_regex_format(self._table_name, column_name, regex)
+        if self.metadata.tables:
+            id_columns = self.metadata.get_column_names(table_name=self._table_name, sdtype='id')
+            for column_name in id_columns:
+                regex = (
+                    self.metadata.tables[self._table_name].columns[column_name].get('regex_format')
+                )
+                _check_regex_format(self._table_name, column_name, regex)
 
     def __init__(
         self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=['en_US']
@@ -656,7 +656,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         super().__init__(metadata, enforce_min_max_values, enforce_rounding, locales)
         self._chained_patterns = []  # chain of patterns used to preprocess the data
         self._reject_sampling_patterns = []  # patterns used only for reject sampling
-        self._original_metadata = deepcopy(self.metadata)
 
     def add_cag(self, patterns):
         """Add the list of constraint-augmented generation patterns to the synthesizer.
