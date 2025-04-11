@@ -72,6 +72,34 @@ class Metadata(MultiTableMetadata):
             raise ValueError("'foreign_key_inference_algorithm' must be 'column_name_match'")
 
     @classmethod
+    def _detect_from_dataframes(
+        cls,
+        data,
+        infer_sdtypes=True,
+        infer_keys='primary_and_foreign',
+        foreign_key_inference_algorithm='column_name_match',
+    ):
+        if not data or not all(isinstance(df, pd.DataFrame) for df in data.values()):
+            raise ValueError('The provided dictionary must contain only pandas DataFrame objects.')
+        if infer_keys not in ['primary_and_foreign', 'primary_only', None]:
+            raise ValueError(
+                "'infer_keys' must be one of: 'primary_and_foreign', 'primary_only', None."
+            )
+        cls._validate_foreign_key_inference_algorithm(foreign_key_inference_algorithm)
+        cls._validate_infer_sdtypes(infer_sdtypes)
+
+        metadata = Metadata()
+        for table_name, dataframe in data.items():
+            metadata.detect_table_from_dataframe(
+                table_name, dataframe, infer_sdtypes, None if infer_keys is None else 'primary_only'
+            )
+
+        if infer_keys == 'primary_and_foreign':
+            metadata._detect_relationships(data, foreign_key_inference_algorithm)
+
+        return metadata
+
+    @classmethod
     def detect_from_dataframes(
         cls,
         data,
@@ -107,25 +135,12 @@ class Metadata(MultiTableMetadata):
             Metadata:
                 A new metadata object with the sdtypes detected from the data.
         """
-        if not data or not all(isinstance(df, pd.DataFrame) for df in data.values()):
-            raise ValueError('The provided dictionary must contain only pandas DataFrame objects.')
-        if infer_keys not in ['primary_and_foreign', 'primary_only', None]:
-            raise ValueError(
-                "'infer_keys' must be one of: 'primary_and_foreign', 'primary_only', None."
-            )
-        cls._validate_foreign_key_inference_algorithm(foreign_key_inference_algorithm)
-        cls._validate_infer_sdtypes(infer_sdtypes)
-
-        metadata = Metadata()
-        for table_name, dataframe in data.items():
-            metadata.detect_table_from_dataframe(
-                table_name, dataframe, infer_sdtypes, None if infer_keys is None else 'primary_only'
-            )
-
-        if infer_keys == 'primary_and_foreign':
-            metadata._detect_relationships(data, foreign_key_inference_algorithm)
-
-        return metadata
+        return cls._detect_from_dataframes(
+            data=data,
+            infer_sdtypes=infer_sdtypes,
+            infer_keys=infer_keys,
+            foreign_key_inference_algorithm=foreign_key_inference_algorithm,
+        )
 
     @classmethod
     def detect_from_dataframe(
