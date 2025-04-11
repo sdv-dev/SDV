@@ -1,9 +1,8 @@
 name: Dtypes Tests
 
 on:
-  push:
-  pull_request:
-    types: [opened, reopened]
+  schedule:
+    - cron: '0 3 * * 1'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
