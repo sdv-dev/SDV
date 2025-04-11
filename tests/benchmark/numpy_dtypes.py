@@ -89,7 +89,7 @@ NUMPY_DTYPES = {
     }),
 }
 
-NUMPY_TIME_DTYPES = {
+NUMPY_DATETIME_DTYPES = {
     'np.int8 - datetime': pd.DataFrame({
         'np.int8 - datetime': pd.Series([np.int8(1), np.int8(-1), np.int8(127)], dtype='int8')
     }),
