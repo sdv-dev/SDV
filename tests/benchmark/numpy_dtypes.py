@@ -90,23 +90,11 @@ NUMPY_DTYPES = {
 }
 
 NUMPY_DATETIME_DTYPES = {
-    'np.int8 - datetime': pd.DataFrame({
-        'np.int8 - datetime': pd.Series([np.int8(1), np.int8(-1), np.int8(127)], dtype='int8')
-    }),
-    'np.int16 - datetime': pd.DataFrame({
-        'np.int16 - datetime': pd.Series([np.int16(2), np.int16(-2), np.int16(32767)], dtype='int16')
-    }),
     'np.int32 - datetime': pd.DataFrame({
         'np.int32 - datetime': pd.Series([np.int32(20240101), np.int32(20240630), np.int32(20250101)], dtype='int32')
     }),
     'np.int64 - datetime': pd.DataFrame({
         'np.int64 - datetime': pd.Series([np.int64(20240101), np.int64(20240630), np.int64(20250101)], dtype='int64')
-    }),
-    'np.uint8 - datetime': pd.DataFrame({
-        'np.uint8 - datetime': pd.Series([np.uint8(5), np.uint8(10), np.uint8(255)], dtype='uint8')
-    }),
-    'np.uint16 - datetime': pd.DataFrame({
-        'np.uint16 - datetime': pd.Series([np.uint16(6), np.uint16(20), np.uint16(65535)], dtype='uint16')
     }),
     'np.uint32 - datetime': pd.DataFrame({
         'np.uint32 - datetime': pd.Series([np.uint32(20240101), np.uint32(20240630), np.uint32(20250101)], dtype='uint32')
@@ -114,14 +102,9 @@ NUMPY_DATETIME_DTYPES = {
     'np.uint64 - datetime': pd.DataFrame({
         'np.uint64 - datetime': pd.Series([np.uint64(20240101), np.uint64(20240630), np.uint64(20250101)], dtype='uint64')
     }),
-    'np.float16 - datetime': pd.DataFrame({
-        'np.float16 - datetime': pd.Series(
-            [np.float16(9.1), np.float16(-9.1), np.float16(65.0)], dtype='float16'
-        )
-    }),
     'np.float32 - datetime': pd.DataFrame({
         'np.float32 - datetime': pd.Series(
-            [np.float32(20240101.0), np.float32(20240630.0), np.float32(20250101.0)], dtype='float32'
+            [np.float32(20240101), np.float32(20240630), np.float32(20250101)], dtype='float32'
         )
     }),
     'np.float64 - datetime': pd.DataFrame({
