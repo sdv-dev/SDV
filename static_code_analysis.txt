@@ -1,15 +1,15 @@
-Run started:2025-03-11 16:57:54.895830
+Run started:2025-04-11 20:32:59.006745
 
 Test results:
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b110_try_except_pass.html
-   Location: ./sdv/_utils.py:329:8
-328	
-329	        except Exception:
-330	            pass
-331	
+   Location: ./sdv/_utils.py:330:8
+329	
+330	        except Exception:
+331	            pass
+332	
 
 --------------------------------------------------
 >> Issue: [B105:hardcoded_password_string] Possible hardcoded password: '#'
@@ -42,44 +42,54 @@ Test results:
 24	        shutil.copyfile(config_path, tmp_path)
 
 --------------------------------------------------
->> Issue: [B110:try_except_pass] Try, Except, Pass detected.
-   Severity: Low   Confidence: High
-   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
-   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b110_try_except_pass.html
-   Location: ./sdv/metadata/single_table.py:538:12
-537	
-538	            except Exception:
-539	                pass
-540	
+>> Issue: [B105:hardcoded_password_string] Possible hardcoded password: 'id'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b105_hardcoded_password_string.html
+   Location: ./sdv/metadata/single_table.py:494:24
+493	        for token in tokens:
+494	            if token == 'id':
+495	                return 'id'
 
 --------------------------------------------------
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b110_try_except_pass.html
-   Location: ./sdv/multi_table/hma.py:355:12
-354	                    index.append(foreign_key_value)
-355	            except Exception:
-356	                # Skip children rows subsets that fail
-357	                pass
-358	
+   Location: ./sdv/metadata/single_table.py:550:12
+549	
+550	            except Exception:
+551	                pass
+552	
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b110_try_except_pass.html
+   Location: ./sdv/multi_table/hma.py:361:12
+360	                    index.append(foreign_key_value)
+361	            except Exception:
+362	                # Skip children rows subsets that fail
+363	                pass
+364	
 
 --------------------------------------------------
 
 Code scanned:
-	Total lines of code: 13447
+	Total lines of code: 13593
 	Total lines skipped (#nosec): 0
 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
 
 Run metrics:
 	Total issues (by severity):
 		Undefined: 0
-		Low: 5
+		Low: 6
 		Medium: 1
 		High: 0
 	Total issues (by confidence):
 		Undefined: 0
 		Low: 0
-		Medium: 1
+		Medium: 2
 		High: 5
 Files skipped (0):
