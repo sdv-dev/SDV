@@ -503,8 +503,8 @@ class MultiTableMetadata:
                 f'The relationships in the dataset are disjointed. {table_msg}'
             )
 
-    def _detect_relationships(self, data=None):
-        """Automatically detect relationships between tables.
+    def _detect_foreign_keys_by_column_name(self, data):
+        """Detect the foreign keys based on if a column name matches a primary key.
 
         Args:
             data (dict):
@@ -533,6 +533,20 @@ class MultiTableMetadata:
                             sdtype=original_foreign_key_sdtype,
                         )
                         continue
+
+    def _detect_relationships(self, data=None, foreign_key_inference_algorithm='column_name_match'):
+        """Automatically detect relationships between tables.
+
+        Args:
+            data (dict):
+                Dictionary of table names to dataframes.
+                NOTE: this is only used in SDV-Enterprise.
+            foreign_key_inference_algorithm (str):
+                Which algorithm to use for detecting foreign keys. Currently only one option,
+                'column_name_match'.
+        """
+        if foreign_key_inference_algorithm == 'column_name_match':
+            self._detect_foreign_keys_by_column_name(data)
 
     def detect_table_from_dataframe(
         self, table_name, data, infer_sdtypes=True, infer_keys='primary_only'
