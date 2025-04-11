@@ -41,23 +41,55 @@ PANDAS_DTYPES = {
 }
 
 PANDAS_DATETIME_DTYPES = {
-    'pd.Int32 - datetime': pd.DataFrame({'pd.Int32 - datetime': pd.Series([20240101, 20240630, 20250101, None, 20250601, 20260101], dtype='Int32')}),
-    'pd.Int64 - datetime': pd.DataFrame({'pd.Int64 - datetime': pd.Series([20240101, 20240630, 20250101, None, 20250601, 20260101], dtype='Int64')}),
-    'pd.UInt32 - datetime': pd.DataFrame({'pd.UInt32 - datetime': pd.Series([20240101, 20240630, 20250101, None, 20250601, 20260101], dtype='UInt32')}),
-    'pd.UInt64 - datetime': pd.DataFrame({'pd.UInt64 - datetime': pd.Series([20240101, 20240630, 20250101, None, 20250601, 20260101], dtype='UInt64')}),
+    'pd.Int32 - datetime': pd.DataFrame({
+        'pd.Int32 - datetime': pd.Series(
+            [20240101, 20240630, 20250101, None, 20250601, 20260101], dtype='Int32'
+        )
+    }),
+    'pd.Int64 - datetime': pd.DataFrame({
+        'pd.Int64 - datetime': pd.Series(
+            [20240101, 20240630, 20250101, None, 20250601, 20260101], dtype='Int64'
+        )
+    }),
+    'pd.UInt32 - datetime': pd.DataFrame({
+        'pd.UInt32 - datetime': pd.Series(
+            [20240101, 20240630, 20250101, None, 20250601, 20260101], dtype='UInt32'
+        )
+    }),
+    'pd.UInt64 - datetime': pd.DataFrame({
+        'pd.UInt64 - datetime': pd.Series(
+            [20240101, 20240630, 20250101, None, 20250601, 20260101], dtype='UInt64'
+        )
+    }),
     'pd.Float32 - datetime': pd.DataFrame({
-        'pd.Float32 - datetime': pd.Series([20240101, 20240630, 20250101, None, 20250601, 20260101], dtype='Float32')
+        'pd.Float32 - datetime': pd.Series(
+            [20240101, 20240630, 20250101, None, 20250601, 20260101], dtype='Float32'
+        )
     }),
     'pd.Float64 - datetime': pd.DataFrame({
-        'pd.Float64 - datetime': pd.Series([20240101.0, 20240630.0, 20250101.0, None, 20250601.0, 20260101.0], dtype='Float64')
+        'pd.Float64 - datetime': pd.Series(
+            [20240101.0, 20240630.0, 20250101.0, None, 20250601.0, 20260101.0], dtype='Float64'
+        )
     }),
-    'pd.object - datetime': pd.DataFrame({'pd.object - datetime': pd.Series(['20240101', '20240630', '20250101', None, '20250601', '20260101'], dtype='object')}),
-    'pd.string - datetime': pd.DataFrame({'pd.string - datetime': pd.Series(['20240101', '20240630', '20250101', None, '20250601', '20260101'], dtype='string')}),
+    'pd.object - datetime': pd.DataFrame({
+        'pd.object - datetime': pd.Series(
+            ['20240101', '20240630', '20250101', None, '20250601', '20260101'], dtype='object'
+        )
+    }),
+    'pd.string - datetime': pd.DataFrame({
+        'pd.string - datetime': pd.Series(
+            ['20240101', '20240630', '20250101', None, '20250601', '20260101'], dtype='string'
+        )
+    }),
     'pd.category - datetime': pd.DataFrame({
-        'pd.category - datetime': pd.Series(['20240101', '20240630', '20250101', None, '20250601', '20260101'], dtype='category')
+        'pd.category - datetime': pd.Series(
+            ['20240101', '20240630', '20250101', None, '20250601', '20260101'], dtype='category'
+        )
     }),
     'pd.datetime64 - datetime': pd.DataFrame({
-        'pd.datetime64 - datetime': pd.Series(pd.date_range('2023-01-01', periods=3), dtype='datetime64[ns]')
+        'pd.datetime64 - datetime': pd.Series(
+            pd.date_range('2023-01-01', periods=3), dtype='datetime64[ns]'
+        )
     }),
     'pd.Period - datetime': pd.DataFrame({
         'pd.Period - datetime': pd.Series(pd.period_range('2023-01-01', periods=3, freq='D')),
