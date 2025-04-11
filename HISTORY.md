@@ -12,7 +12,7 @@
 
 ### Bugs Fixed
 
-* Metadata visualization doesn't indicate which columns are sequence key or sequence index - Issue [#2411](https://github.com/sdv-dev/SDV/issues/2411) by @npatki
+* Metadata visualization doesn't indicate which columns are sequence key or sequence index - Issue [#2411](https://github.com/sdv-dev/SDV/issues/2411) by @lajohn4747
 
 ### Internal
 
