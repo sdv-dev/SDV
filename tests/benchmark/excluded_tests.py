@@ -13,15 +13,6 @@ EXCLUDED_DATA_TYPES = {
     ('np.unicode', 'numerical'),
     ('pd.datetime64', 'numerical'),
     ('np.datetime64', 'numerical'),
-    ('pd.boolean', 'datetime'),
-    ('pd.timedelta64', 'datetime'),
-    ('pd.Period', 'datetime'),
-    ('pd.Complex', 'datetime'),
-    ('np.complex64', 'datetime'),
-    ('np.complex128', 'datetime'),
-    ('np.bool', 'datetime'),
-    ('np.unicode', 'datetime'),
-    ('np.timedelta64', 'datetime'),
 }
 
 for dtypes in (NUMPY_DTYPES, PANDAS_DTYPES):
