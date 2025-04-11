@@ -1,6 +1,7 @@
 """Excluded test combinations."""
-from tests.benchmark.numpy_dtypes import NUMPY_DTYPES, NUMPY_DATETIME_DTYPES
-from tests.benchmark.pandas_dtypes import PANDAS_DTYPES, PANDAS_DATETIME_DTYPES
+
+from tests.benchmark.numpy_dtypes import NUMPY_DATETIME_DTYPES, NUMPY_DTYPES
+from tests.benchmark.pandas_dtypes import PANDAS_DATETIME_DTYPES, PANDAS_DTYPES
 
 EXCLUDED_DATA_TYPES = {
     ('pd.boolean', 'numerical'),
