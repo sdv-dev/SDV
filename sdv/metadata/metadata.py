@@ -15,7 +15,6 @@ class Metadata(MultiTableMetadata):
 
     METADATA_SPEC_VERSION = 'V1'
     DEFAULT_SINGLE_TABLE_NAME = 'table'
-    VALID_FOREIGN_KEY_ALGORITHMS = ['column_name_match']
 
     @classmethod
     def load_from_json(cls, filepath, single_table_name=None):
@@ -67,6 +66,11 @@ class Metadata(MultiTableMetadata):
         if not isinstance(infer_sdtypes, bool):
             raise ValueError("'infer_sdtypes' must be a boolean value.")
 
+    @staticmethod
+    def _validate_foreign_key_inference_algorithm(foreign_key_inference_algorithm):
+        if foreign_key_inference_algorithm != 'column_name_match':
+            raise ValueError("'foreign_key_inference_algorithm' must be 'column_name_match'")
+
     @classmethod
     def detect_from_dataframes(
         cls,
@@ -109,11 +113,7 @@ class Metadata(MultiTableMetadata):
             raise ValueError(
                 "'infer_keys' must be one of: 'primary_and_foreign', 'primary_only', None."
             )
-        if foreign_key_inference_algorithm not in cls.VALID_FOREIGN_KEY_ALGORITHMS:
-            raise ValueError(
-                "'foreign_key_inference_algorithm' must be one of: "
-                f'{", ".join(cls.VALID_FOREIGN_KEY_ALGORITHMS)}.'
-            )
+        cls._validate_foreign_key_inference_algorithm(foreign_key_inference_algorithm)
         cls._validate_infer_sdtypes(infer_sdtypes)
 
         metadata = Metadata()

@@ -638,7 +638,7 @@ class TestMetadataClass:
         data = {'guests': guests_table, 'hotels': hotels_table}
 
         # Run and Assert
-        msg = "'foreign_key_inference_algorithm' must be one of: column_name_match"
+        msg = "'foreign_key_inference_algorithm' must be 'column_name_match'"
         with pytest.raises(ValueError, match=msg):
             Metadata.detect_from_dataframes(
                 data=data,
