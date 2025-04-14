@@ -13,6 +13,7 @@ from pandas.errors import IntCastingNaNError
 from rdt.transformers import AnonymizedFaker, get_default_transformers
 from rdt.transformers.pii.anonymization import get_anonymized_transformer
 
+from sdv._utils import _get_transformer_init_kwargs
 from sdv.constraints import Constraint
 from sdv.constraints.base import get_subclasses
 from sdv.constraints.errors import (
@@ -488,7 +489,7 @@ class DataProcessor:
         regex_format = column_metadata.get('regex_format', default_regex_format)
         transformer = rdt.transformers.RegexGenerator(
             regex_format=regex_format,
-            enforce_uniqueness=(column_name in self._keys),
+            cardinality_rule='unique',
             generation_order='scrambled',
         )
 
@@ -512,7 +513,8 @@ class DataProcessor:
 
         if kwargs and transformer is not None:
             transformer_class = transformer.__class__
-            return transformer_class(**kwargs)
+            default_transformer_kwargs = _get_transformer_init_kwargs(transformer)
+            return transformer_class(**{**default_transformer_kwargs, **kwargs})
 
         return deepcopy(transformer)
 
@@ -572,8 +574,7 @@ class DataProcessor:
                         column, sdtype, column_metadata, is_numeric
                     )
                     sdtypes[column] = 'text'
-
-                else:
+                elif column in self._keys:
                     if is_numeric:
                         function_name = 'random_int'
                         column_dtype = str(column_dtype).lower()
@@ -598,6 +599,9 @@ class DataProcessor:
                     )
 
                     sdtypes[column] = 'pii' if column_metadata.get('pii') else 'text'
+                else:
+                    transformers[column] = rdt.transformers.categorical.UniformEncoder()
+                    sdtypes[column] = 'id'
 
             elif sdtype == 'unknown':
                 sdtypes[column] = 'pii'

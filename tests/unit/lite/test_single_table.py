@@ -68,6 +68,7 @@ class TestSingleTablePreset:
         """Test that it returns every ``init`` parameter without the ``metadata``."""
         # Setup
         metadata = Mock()
+        metadata.get_column_names.return_value = []
         instance = SingleTablePreset(metadata, name='FAST_ML')
 
         # Run
@@ -83,6 +84,7 @@ class TestSingleTablePreset:
         metadata = Mock(spec=SingleTableMetadata)
         metadata._updated = False
         metadata.columns = {}
+        metadata.get_column_names.return_value = []
         metadata.to_dict.return_value = {'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'}
         instance = SingleTablePreset(metadata, 'FAST_ML')
 

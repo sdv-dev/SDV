@@ -255,7 +255,7 @@ def test_validate_unknown_sdtype():
             'city': {'sdtype': 'city', 'pii': True},
             'state': {'sdtype': 'administrative_unit', 'pii': True},
             'rating': {'sdtype': 'numerical'},
-            'classification': {'sdtype': 'unknown', 'pii': True},
+            'classification': {'sdtype': 'categorical'},
         },
         'primary_key': 'hotel_id',
     }

@@ -599,7 +599,9 @@ class TestMetadataClass:
         mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
             'hotels', hotels_table, True, 'primary_only'
         )
-        mock_metadata.return_value._detect_relationships.assert_called_once_with(data)
+        mock_metadata.return_value._detect_relationships.assert_called_once_with(
+            data, 'column_name_match'
+        )
         assert metadata == mock_metadata.return_value
 
     @patch('sdv.metadata.metadata.Metadata')
@@ -624,6 +626,23 @@ class TestMetadataClass:
         )
         mock_metadata.return_value._detect_relationships.assert_not_called()
         assert metadata == mock_metadata.return_value
+
+    def test_detect_from_dataframes_bad_foreign_key_inference_algorithm(self):
+        """Test error message when 'foreign_key_inference_algorithm' is invalid."""
+        # Setup
+        guests_table = pd.DataFrame()
+        hotels_table = pd.DataFrame()
+        data = {'guests': guests_table, 'hotels': hotels_table}
+
+        # Run and Assert
+        msg = "'foreign_key_inference_algorithm' must be 'column_name_match'"
+        with pytest.raises(ValueError, match=msg):
+            Metadata.detect_from_dataframes(
+                data=data,
+                infer_sdtypes=False,
+                infer_keys=None,
+                foreign_key_inference_algorithm='fake',
+            )
 
     @patch('sdv.metadata.metadata.Metadata')
     def test_detect_from_dataframes_infer_keys_primary_only(self, mock_metadata):
@@ -826,3 +845,36 @@ class TestMetadataClass:
         # Assert
         metadata._get_anonymized_dict.assert_called_once()
         mock_load_from_dict.assert_called_once_with({})
+
+    @patch('sdv.metadata.multi_table.visualize_graph')
+    def test_visualize_with_sequence_key_and_index(self, visualize_graph_mock):
+        """Test the ``visualize`` method with sequence key and index"""
+        # Setup
+        metadata_dict = {
+            'tables': {
+                'nasdaq100_2019': {
+                    'columns': {
+                        'Symbol': {'sdtype': 'id', 'regex_format': '[A-Z]{4}'},
+                        'Date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                    },
+                    'sequence_index': 'Date',
+                    'sequence_key': 'Symbol',
+                }
+            },
+            'relationships': [],
+            'METADATA_SPEC_VERSION': 'V1',
+        }
+        metadata = Metadata.load_from_dict(metadata_dict)
+
+        # Run
+        metadata.visualize('full', True)
+
+        # Assert
+        expected_label = (
+            '{nasdaq100_2019|Symbol : id\\lDate : datetime\\l|Primary key: None\\l'
+            'Sequence key: Symbol\\lSequence index: Date\\l}'
+        )
+        expected_nodes = {
+            'nasdaq100_2019': expected_label,
+        }
+        visualize_graph_mock.assert_called_once_with(expected_nodes, [], None)

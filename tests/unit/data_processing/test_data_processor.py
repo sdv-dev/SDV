@@ -896,7 +896,7 @@ class TestDataProcessor:
         # Assert
         assert output == mock_rdt.transformers.RegexGenerator.return_value
         mock_rdt.transformers.RegexGenerator.assert_called_once_with(
-            regex_format='ID_00', enforce_uniqueness=True, generation_order='scrambled'
+            regex_format='ID_00', cardinality_rule='unique', generation_order='scrambled'
         )
 
     @patch('sdv.data_processing.data_processor.get_anonymized_transformer')
@@ -1033,6 +1033,29 @@ class TestDataProcessor:
         assert isinstance(result, FloatFormatter)
         assert result.computer_representation == 'Int32'
 
+    def test__get_transformer_instance_passes_kwargs_from_default(self):
+        """Test the ``_get_transformer_instance`` uses the default transformers kwargs.
+
+        Test than when the default transformer has custom kwargs, they are also used
+        when creating a new instance of a transformer.
+        """
+        # Setup
+        dp = DataProcessor(SingleTableMetadata())
+        dp._transformers_by_sdtype['numerical'] = FloatFormatter(
+            missing_value_replacement='random',
+            missing_value_generation='from_column',
+            learn_rounding_scheme=False,
+        )
+
+        # Run
+        result = dp._get_transformer_instance('numerical', {'computer_representation': 'Int32'})
+
+        # Assert
+        assert isinstance(result, FloatFormatter)
+        assert result.missing_value_replacement == 'random'
+        assert result.missing_value_generation == 'from_column'
+        assert result.learn_rounding_scheme is False
+
     @patch('sdv.data_processing.data_processor.LOGGER')
     @patch('sdv.data_processing.data_processor.rdt')
     def test__update_constraint_transformers(self, mock_rdt, mock_log):
@@ -1135,7 +1158,8 @@ class TestDataProcessor:
             'created_categorical': ['d', 'e', 'f'],
             'email': ['a@aol.com', 'b@gmail.com', 'c@gmx.com'],
             'first_name': ['John', 'Doe', 'Johanna'],
-            'id': ['ID_001', 'ID_002', 'ID_003'],
+            'id_regex_key': ['ID_001', 'ID_002', 'ID_003'],
+            'id_regex': ['ID_001', 'ID_002', 'ID_003'],
             'id_no_regex': ['ID_001', 'ID_002', 'ID_003'],
             'id_numeric_int8': pd.Series([1, 2, 3], dtype='Int8'),
             'id_numeric_int16': pd.Series([1, 2, 3], dtype='Int16'),
@@ -1152,10 +1176,16 @@ class TestDataProcessor:
         dp.create_regex_generator = Mock()
         dp.create_anonymized_transformer.return_value = 'AnonymizedFaker'
         dp.create_regex_generator.return_value = 'RegexGenerator'
-        dp.metadata.primary_key = 'id'
+        dp.metadata.primary_key = 'id_regex_key'
         dp.metadata.alternate_keys = ['id_no_regex', 'id_numeric_int8']
-        dp._primary_key = 'id'
-        dp._keys = ['id', 'id_no_regex', 'id_numeric_int8']
+        dp._primary_key = 'id_regex_key'
+        dp._keys = [
+            'id_regex_key',
+            'id_no_regex',
+            'id_numeric_int8',
+            'id_numeric_int16',
+            'id_numeric_int32',
+        ]
         dp.metadata.columns = {
             'int': {'sdtype': 'numerical'},
             'float': {'sdtype': 'numerical'},
@@ -1163,7 +1193,8 @@ class TestDataProcessor:
             'categorical': {'sdtype': 'categorical'},
             'email': {'sdtype': 'email', 'pii': True},
             'first_name': {'sdtype': 'first_name'},
-            'id': {'sdtype': 'id', 'regex_format': 'ID_\\d{3}[0-9]'},
+            'id_regex_key': {'sdtype': 'id', 'regex_format': 'ID_\\d{3}[0-9]'},
+            'id_regex': {'sdtype': 'id', 'regex_format': 'ID_\\d{3}[0-9]'},
             'id_no_regex': {'sdtype': 'id'},
             'id_numeric_int8': {'sdtype': 'id'},
             'id_numeric_int16': {'sdtype': 'id'},
@@ -1190,12 +1221,13 @@ class TestDataProcessor:
             'created_categorical': 'categorical',
             'email': 'pii',
             'first_name': 'pii',
-            'id': 'text',
+            'id_regex_key': 'text',
+            'id_regex': 'text',
             'id_no_regex': 'text',
             'id_numeric_int8': 'text',
             'id_numeric_int16': 'text',
             'id_numeric_int32': 'text',
-            'id_column': 'text',
+            'id_column': 'id',
             'date': 'datetime',
             'unknown': 'pii',
             'address': 'categorical',
@@ -1222,7 +1254,10 @@ class TestDataProcessor:
         anonymized_transformer = config['transformers']['email']
         assert anonymized_transformer == 'AnonymizedFaker'
 
-        primary_regex_generator = config['transformers']['id']
+        primary_regex_generator = config['transformers']['id_regex_key']
+        assert primary_regex_generator == 'RegexGenerator'
+
+        primary_regex_generator = config['transformers']['id_regex']
         assert primary_regex_generator == 'RegexGenerator'
 
         first_name_transformer = config['transformers']['first_name']
@@ -1234,7 +1269,7 @@ class TestDataProcessor:
         assert datetime_transformer.missing_value_generation == 'random'
         assert datetime_transformer.datetime_format == '%Y-%m-%d'
         assert datetime_transformer.enforce_min_max_values is True
-        assert dp._primary_key == 'id'
+        assert dp._primary_key == 'id_regex_key'
 
         id_no_regex_transformer = config['transformers']['id_no_regex']
         assert isinstance(id_no_regex_transformer, AnonymizedFaker)
@@ -1261,18 +1296,24 @@ class TestDataProcessor:
             'max': 16777216,
         }
 
-        id_column_transformer = config['transformers']['id_column']
-        assert isinstance(id_column_transformer, AnonymizedFaker)
-        assert id_column_transformer.function_name == 'bothify'
-        assert id_column_transformer.function_kwargs == {'text': 'sdv-id-??????'}
-        assert id_column_transformer.cardinality_rule is None
+        assert isinstance(config['transformers']['id_column'], UniformEncoder)
 
-        dp.create_anonymized_transformer.calls == [
-            call('email', {'sdtype': 'email', 'pii': True, 'locales': locales}),
-            call('first_name', {'sdtype': 'first_name', 'locales': locales}),
-        ]
-        dp.create_regex_generator.assert_called_once_with(
-            'id', 'id', {'sdtype': 'id', 'regex_format': 'ID_\\d{3}[0-9]'}, False
+        dp.create_anonymized_transformer.assert_has_calls(
+            [
+                call('email', {'sdtype': 'email', 'pii': True}, None, locales),
+                call('first_name', {'sdtype': 'first_name'}, None, locales),
+            ],
+            any_order=True,
+        )
+
+        dp.create_regex_generator.assert_has_calls(
+            [
+                call('id_regex', 'id', {'sdtype': 'id', 'regex_format': 'ID_\\d{3}[0-9]'}, False),
+                call(
+                    'id_regex_key', 'id', {'sdtype': 'id', 'regex_format': 'ID_\\d{3}[0-9]'}, False
+                ),
+            ],
+            any_order=True,
         )
 
         expected_kwargs = {
@@ -1308,8 +1349,6 @@ class TestDataProcessor:
             'example_pii_false': [7, 8, 9],
             'unknown_pii_true': ['a', 'b', 'c'],
             'unknown_pii_false': ['a', 'b', 'c'],
-            'id_pii_true': ['ID_001', 'ID_002', 'ID_003'],
-            'id_pii_false': ['ID_001', 'ID_002', 'ID_003'],
         })
         metadata = SingleTableMetadata().load_from_dict({
             'columns': {
@@ -1321,8 +1360,6 @@ class TestDataProcessor:
                 'example_pii_false': {'sdtype': 'example', 'pii': False},
                 'unknown_pii_true': {'sdtype': 'unknown', 'pii': True},
                 'unknown_pii_false': {'sdtype': 'unknown', 'pii': False},
-                'id_pii_true': {'sdtype': 'id', 'pii': True},
-                'id_pii_false': {'sdtype': 'id', 'pii': False},
             },
         })
         dp = DataProcessor(metadata)
@@ -1337,10 +1374,8 @@ class TestDataProcessor:
             'unknown_pii_true': 'pii',
             'phone_pii': 'pii',
             'name_pii': 'pii',
-            'id_pii_true': 'pii',
             'example_pii_false': 'example',
             'unknown_pii_false': 'pii',
-            'id_pii_false': 'text',
             'example_pii_true': 'example',
             'city_categorical': 'categorical',
         }
@@ -1349,10 +1384,8 @@ class TestDataProcessor:
             'unknown_pii_true': AnonymizedFaker,
             'phone_pii': AnonymizedFaker,
             'name_pii': AnonymizedFaker,
-            'id_pii_true': AnonymizedFaker,
             'example_pii_false': FloatFormatter,
             'unknown_pii_false': AnonymizedFaker,
-            'id_pii_false': AnonymizedFaker,
             'example_pii_true': FloatFormatter,
             'city_categorical': UniformEncoder,
         }
@@ -1361,8 +1394,6 @@ class TestDataProcessor:
             'unknown_pii_true': 'bothify',
             'phone_pii': 'phone_number',
             'name_pii': 'name',
-            'id_pii_true': 'bothify',
-            'id_pii_false': 'bothify',
         }
 
         for column, transformer in config['transformers'].items():

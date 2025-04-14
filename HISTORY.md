@@ -1,5 +1,23 @@
 # Release Notes
 
+## v1.20.0 - 2025-04-14
+
+### New Features
+
+* When auto-detecting metadata, add a parameter to control the foreign key detection algorithm - Issue [#2456](https://github.com/sdv-dev/SDV/issues/2456) by @amontanez24
+* Provide a more descriptive error message when Regex is is not supported - Issue [#2434](https://github.com/sdv-dev/SDV/issues/2434) by @R-Palazzo
+* Update transformer assignment for `id` columns - Issue [#2416](https://github.com/sdv-dev/SDV/issues/2416) by @frances-h
+* When in doubt, metadata auto-detection should mark columns as sdtype `categorical` - Issue [#2413](https://github.com/sdv-dev/SDV/issues/2413) by @lajohn4747
+* Metadata auto-detection should find `id` columns that are not primary/foreign keys - Issue [#2412](https://github.com/sdv-dev/SDV/issues/2412) by @amontanez24
+
+### Bugs Fixed
+
+* Metadata visualization doesn't indicate which columns are sequence key or sequence index - Issue [#2411](https://github.com/sdv-dev/SDV/issues/2411) by @lajohn4747
+
+### Internal
+
+* Store metadata as `Metadata` for `BaseSynthesizer` - Issue [#2445](https://github.com/sdv-dev/SDV/issues/2445) by @fealho
+
 ## v1.19.0 - 2025-03-12
 
 ### New Features

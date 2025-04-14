@@ -241,6 +241,10 @@ class MultiTableMetadata:
 
         return foreign_keys
 
+    def _get_all_keys(self, table_name):
+        foreign_keys = self._get_all_foreign_keys(table_name)
+        return set(foreign_keys).union(self.tables[table_name]._get_primary_and_alternate_keys())
+
     def add_relationship(
         self, parent_table_name, child_table_name, parent_primary_key, child_foreign_key
     ):
@@ -499,8 +503,8 @@ class MultiTableMetadata:
                 f'The relationships in the dataset are disjointed. {table_msg}'
             )
 
-    def _detect_relationships(self, data=None):
-        """Automatically detect relationships between tables.
+    def _detect_foreign_keys_by_column_name(self, data):
+        """Detect the foreign keys based on if a column name matches a primary key.
 
         Args:
             data (dict):
@@ -529,6 +533,20 @@ class MultiTableMetadata:
                             sdtype=original_foreign_key_sdtype,
                         )
                         continue
+
+    def _detect_relationships(self, data=None, foreign_key_inference_algorithm='column_name_match'):
+        """Automatically detect relationships between tables.
+
+        Args:
+            data (dict):
+                Dictionary of table names to dataframes.
+                NOTE: this is only used in SDV-Enterprise.
+            foreign_key_inference_algorithm (str):
+                Which algorithm to use for detecting foreign keys. Currently only one option,
+                'column_name_match'.
+        """
+        if foreign_key_inference_algorithm == 'column_name_match':
+            self._detect_foreign_keys_by_column_name(data)
 
     def detect_table_from_dataframe(
         self, table_name, data, infer_sdtypes=True, infer_keys='primary_only'
@@ -972,6 +990,26 @@ class MultiTableMetadata:
 
         return MultiTableMetadata.load_from_dict(anonymized_metadata)
 
+    def _get_table_info(self, table_name, show_table_details):
+        node_info = {}
+        table_meta = self.tables[table_name]
+
+        if show_table_details in ['full', 'summarized']:
+            node_info['primary_key'] = f'Primary key: {table_meta.primary_key}'
+            if table_meta.sequence_key:
+                node_info['sequence_key'] = f'Sequence key: {table_meta.sequence_key}'
+            if table_meta.sequence_index:
+                node_info['sequence_index'] = f'Sequence index: {table_meta.sequence_index}'
+
+        if show_table_details == 'full':
+            node_info['columns'] = create_columns_node(table_meta.columns)
+        elif show_table_details == 'summarized':
+            node_info['columns'] = create_summarized_columns_node(table_meta.columns)
+        elif show_table_details is None:
+            return
+
+        return node_info
+
     def visualize(
         self, show_table_details='full', show_relationship_labels=True, output_filepath=None
     ):
@@ -1017,22 +1055,9 @@ class MultiTableMetadata:
 
         nodes = {}
         edges = []
-        if show_table_details == 'full':
-            for table_name, table_meta in self.tables.items():
-                nodes[table_name] = {
-                    'columns': create_columns_node(table_meta.columns),
-                    'primary_key': f'Primary key: {table_meta.primary_key}',
-                }
 
-        elif show_table_details == 'summarized':
-            for table_name, table_meta in self.tables.items():
-                nodes[table_name] = {
-                    'columns': create_summarized_columns_node(table_meta.columns),
-                    'primary_key': f'Primary key: {table_meta.primary_key}',
-                }
-
-        elif show_table_details is None:
-            nodes = {table_name: None for table_name in self.tables}
+        for table_name in self.tables.keys():
+            nodes[table_name] = self._get_table_info(table_name, show_table_details)
 
         for relationship in self.relationships:
             parent = relationship.get('parent_table_name')
@@ -1053,11 +1078,18 @@ class MultiTableMetadata:
         for table, info in nodes.items():
             if show_table_details:
                 foreign_keys = r'\l'.join(info.get('foreign_keys', []))
-                keys = r'\l'.join([info['primary_key'], foreign_keys])
-                if foreign_keys:
-                    label = rf'{{{table}|{info["columns"]}\l|{keys}\l}}'
-                else:
-                    label = rf'{{{table}|{info["columns"]}\l|{keys}}}'
+                keys = r'\l'.join(
+                    filter(
+                        bool,
+                        [
+                            info.get('primary_key'),
+                            info.get('sequence_key'),
+                            info.get('sequence_index'),
+                            foreign_keys,
+                        ],
+                    )
+                )
+                label = rf'{{{table}|{info["columns"]}\l|{keys}\l}}'
 
             else:
                 label = f'{table}'

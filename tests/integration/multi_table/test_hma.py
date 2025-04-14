@@ -2428,8 +2428,6 @@ def test_hma_synthesizer_with_fixed_combinations():
     metadata.update_column('location_id', 'locations', sdtype='id')
     metadata.set_primary_key('user_id', 'users')
     metadata.set_primary_key('location_id', 'locations')
-    metadata.add_relationship('users', 'records', 'user_id', 'user_id')
-    metadata.add_relationship('locations', 'records', 'location_id', 'location_id')
 
     # Adding FixedCombinations to HMASynthesizer
     synthesizer = HMASynthesizer(metadata)
@@ -2583,8 +2581,10 @@ def test__estimate_num_columns_to_be_modeled_various_sdtypes():
     for table_name, table in tables.items():
         # Subract all the id columns present in the data, as those are not estimated
         num_table_cols = len(table.columns)
-        if table_name in {'parent', 'grandparent'}:
+        if table_name == 'grandparent':
             num_table_cols -= 3
+        if table_name == 'parent':
+            num_table_cols -= 2
         if table_name in {'root1', 'root2'}:
             num_table_cols -= 1
 
@@ -2655,3 +2655,34 @@ def test_no_deprecation_warning_single_table_metadata_sampling():
 
     # Assert
     assert len(captured_warnings) == 0
+
+
+def test__unsupported_regex_format():
+    """Test that ``HMA`` raises an error if the regex format is not supported."""
+    # Setup
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table_1': {
+                'columns': {
+                    'id': {'sdtype': 'id', 'regex_format': '(10|20|30)[0-9]{4}'},
+                    'A': {'sdtype': 'numerical'},
+                }
+            },
+            'table_2': {
+                'columns': {
+                    'col_A': {'sdtype': 'numerical'},
+                    'col_B': {'sdtype': 'categorical'},
+                }
+            },
+        }
+    })
+
+    expected_error = re.escape(
+        'SDV synthesizers do not currently support complex regex formats such as '
+        "'(10|20|30)[0-9]{4}', which you have provided for table 'table_1', column 'id'. Please use"
+        ' a simplified format or update to a different sdtype.'
+    )
+
+    # Run and Assert
+    with pytest.raises(SynthesizerInputError, match=expected_error):
+        HMASynthesizer(metadata)
