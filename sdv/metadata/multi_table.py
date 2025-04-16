@@ -304,9 +304,6 @@ class MultiTableMetadata:
         self._validate_relationship_does_not_exist(
             parent_table_name, parent_primary_key, child_table_name, child_foreign_key
         )
-        self._validate_foreign_key_is_not_reused(
-            parent_table_name, parent_primary_key, child_table_name, child_foreign_key
-        )
         self._validate_child_map_circular_relationship(child_map)
 
         self.relationships.append({
