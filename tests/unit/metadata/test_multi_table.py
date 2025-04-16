@@ -384,32 +384,32 @@ class TestMultiTableMetadata:
                 child_foreign_key='session_id',
             )
 
-    def test__validate_relationship_does_not_exist_fk_already_exists(self):
+    def test__validate_foreign_key_is_not_reused(self):
         """Test the method raises an error if a foreign key is already assigned to another table."""
         # Setup
         metadata = MultiTableMetadata()
         metadata.relationships = [
             {
                 'parent_table_name': 'users',
-                'child_table_name': 'sessions',
                 'parent_primary_key': 'id',
+                'child_table_name': 'sessions',
                 'child_foreign_key': 'user_id',
             },
             {
                 'parent_table_name': 'sessions',
-                'child_table_name': 'transactions',
                 'parent_primary_key': 'id',
+                'child_table_name': 'transactions',
                 'child_foreign_key': 'session_id',
             },
         ]
 
         # Run and Assert
-        error_msg = (
-            "The foreign key 'session_id' for table 'transactions' is already being used in a "
-            'relationship.'
+        error_msg = re.escape(
+            'Relationship between tables (users, transactions) uses a foreign key column '
+            "('session_id') that is already used in another relationship."
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
-            metadata._validate_relationship_does_not_exist(
+            metadata._validate_foreign_key_is_not_reused(
                 parent_table_name='users',
                 parent_primary_key='id',
                 child_table_name='transactions',

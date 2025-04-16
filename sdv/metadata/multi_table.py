@@ -170,6 +170,25 @@ class MultiTableMetadata:
                 'with a non-primary key.'
             )
 
+    def _validate_foreign_key_is_not_reused(
+        self, parent_table_name, parent_primary_key, child_table_name, child_foreign_key
+    ):
+        for relationship in self.relationships:
+            foreign_key_already_exists = (
+                relationship['child_table_name'] == child_table_name
+                and relationship['child_foreign_key'] == child_foreign_key
+            )
+            parent_matches = (
+                relationship['parent_table_name'] == parent_table_name
+                and relationship['parent_primary_key'] == parent_primary_key
+            )
+            if foreign_key_already_exists and not parent_matches:
+                raise InvalidMetadataError(
+                    f'Relationship between tables ({parent_table_name}, {child_table_name}) uses '
+                    f"a foreign key column ('{child_foreign_key}') that is already used in another "
+                    'relationship.'
+                )
+
     def _validate_relationship_does_not_exist(
         self, parent_table_name, parent_primary_key, child_table_name, child_foreign_key
     ):
@@ -180,18 +199,8 @@ class MultiTableMetadata:
                 and relationship['child_table_name'] == child_table_name
                 and relationship['child_foreign_key'] == child_foreign_key
             )
-            foreign_key_already_exists = (
-                relationship['child_table_name'] == child_table_name
-                and relationship['child_foreign_key'] == child_foreign_key
-            )
             if already_exists:
                 raise InvalidMetadataError('This relationship has already been added.')
-
-            if foreign_key_already_exists:
-                raise InvalidMetadataError(
-                    f"The foreign key '{child_foreign_key}' for table '{child_table_name}' is "
-                    'already being used in a relationship.'
-                )
 
     def _validate_relationship(
         self, parent_table_name, child_table_name, parent_primary_key, child_foreign_key
@@ -210,6 +219,9 @@ class MultiTableMetadata:
         self._validate_foreign_child_key(child_table_name, parent_table_name, child_foreign_key)
 
         self._validate_relationship_sdtypes(
+            parent_table_name, parent_primary_key, child_table_name, child_foreign_key
+        )
+        self._validate_foreign_key_is_not_reused(
             parent_table_name, parent_primary_key, child_table_name, child_foreign_key
         )
 
@@ -290,6 +302,9 @@ class MultiTableMetadata:
         child_map = self._get_child_map()
         child_map[parent_table_name].add(child_table_name)
         self._validate_relationship_does_not_exist(
+            parent_table_name, parent_primary_key, child_table_name, child_foreign_key
+        )
+        self._validate_foreign_key_is_not_reused(
             parent_table_name, parent_primary_key, child_table_name, child_foreign_key
         )
         self._validate_child_map_circular_relationship(child_map)
