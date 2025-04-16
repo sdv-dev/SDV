@@ -180,8 +180,18 @@ class MultiTableMetadata:
                 and relationship['child_table_name'] == child_table_name
                 and relationship['child_foreign_key'] == child_foreign_key
             )
+            foreign_key_already_exists = (
+                relationship['child_table_name'] == child_table_name
+                and relationship['child_foreign_key'] == child_foreign_key
+            )
             if already_exists:
                 raise InvalidMetadataError('This relationship has already been added.')
+
+            if foreign_key_already_exists:
+                raise InvalidMetadataError(
+                    f"The foreign key '{child_foreign_key}' for table '{child_table_name}' is "
+                    'already being used in a relationship.'
+                )
 
     def _validate_relationship(
         self, parent_table_name, child_table_name, parent_primary_key, child_foreign_key

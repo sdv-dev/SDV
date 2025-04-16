@@ -384,6 +384,38 @@ class TestMultiTableMetadata:
                 child_foreign_key='session_id',
             )
 
+    def test__validate_relationship_does_not_exist_fk_already_exists(self):
+        """Test the method raises an error if a foreign key is already assigned to another table."""
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata.relationships = [
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'sessions',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'user_id',
+            },
+            {
+                'parent_table_name': 'sessions',
+                'child_table_name': 'transactions',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'session_id',
+            },
+        ]
+
+        # Run and Assert
+        error_msg = (
+            "The foreign key 'session_id' for table 'transactions' is already being used in a "
+            'relationship.'
+        )
+        with pytest.raises(InvalidMetadataError, match=error_msg):
+            metadata._validate_relationship_does_not_exist(
+                parent_table_name='users',
+                parent_primary_key='id',
+                child_table_name='transactions',
+                child_foreign_key='session_id',
+            )
+
     def test__validate_circular_relationships(self):
         """Test the ``_validate_circular_relationships`` method of ``MultiTableMetadata``.
 
@@ -1442,34 +1474,61 @@ class TestMultiTableMetadata:
         Besides the cycle, the other relationships are: B->A, C->A, D->A.
         """
         # Setup
-        metadata = MultiTableMetadata()
-        metadata.add_table('A')
-        metadata.add_column('A', 'id', sdtype='id')
-        metadata.add_column('A', 'fk', sdtype='id')
-        metadata.set_primary_key('A', 'id')
+        metadata_dict = {
+            'tables': {
+                'A': {
+                    'primary_key': 'id',
+                    'columns': {'id': {'sdtype': 'id'}, 'fk': {'sdtype': 'id'}},
+                },
+                'B': {
+                    'primary_key': 'id',
+                    'columns': {'id': {'sdtype': 'id'}, 'fk': {'sdtype': 'id'}},
+                },
+                'C': {
+                    'primary_key': 'id',
+                    'columns': {'id': {'sdtype': 'id'}, 'fk': {'sdtype': 'id'}},
+                },
+                'D': {
+                    'primary_key': 'id',
+                    'columns': {'id': {'sdtype': 'id'}, 'fk': {'sdtype': 'id'}},
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'B',
+                    'child_table_name': 'C',
+                    'parent_primary_key': 'id',
+                    'child_foreign_key': 'fk',
+                },
+                {
+                    'parent_table_name': 'B',
+                    'child_table_name': 'A',
+                    'parent_primary_key': 'id',
+                    'child_foreign_key': 'fk',
+                },
+                {
+                    'parent_table_name': 'C',
+                    'child_table_name': 'D',
+                    'parent_primary_key': 'id',
+                    'child_foreign_key': 'fk',
+                },
+                {
+                    'parent_table_name': 'C',
+                    'child_table_name': 'A',
+                    'parent_primary_key': 'id',
+                    'child_foreign_key': 'fk',
+                },
+                {
+                    'parent_table_name': 'D',
+                    'child_table_name': 'A',
+                    'parent_primary_key': 'id',
+                    'child_foreign_key': 'fk',
+                },
+            ],
+            'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
+        }
 
-        metadata.add_table('B')
-        metadata.add_column('B', 'id', sdtype='id')
-        metadata.add_column('B', 'fk', sdtype='id')
-        metadata.set_primary_key('B', 'id')
-
-        metadata.add_table('C')
-        metadata.add_column('C', 'id', sdtype='id')
-        metadata.add_column('C', 'fk', sdtype='id')
-        metadata.set_primary_key('C', 'id')
-
-        metadata.add_table('D')
-        metadata.add_column('D', 'id', sdtype='id')
-        metadata.add_column('D', 'fk', sdtype='id')
-        metadata.set_primary_key('D', 'id')
-
-        metadata.add_relationship('B', 'C', 'id', 'fk')
-        metadata.add_relationship('B', 'A', 'id', 'fk')
-
-        metadata.add_relationship('C', 'D', 'id', 'fk')
-        metadata.add_relationship('C', 'A', 'id', 'fk')
-
-        metadata.add_relationship('D', 'A', 'id', 'fk')
+        metadata = MultiTableMetadata.load_from_dict(metadata_dict)
 
         # Run and Assert
         error_msg = re.escape(
@@ -1486,42 +1545,77 @@ class TestMultiTableMetadata:
         Besides the cycle, the other relationships are: C->B, D->B, E->B, E->A, A->B.
         """
         # Setup
-        metadata = MultiTableMetadata()
-        metadata.add_table('A')
-        metadata.add_column('A', 'id', sdtype='id')
-        metadata.add_column('A', 'fk', sdtype='id')
-        metadata.set_primary_key('A', 'id')
+        metadata_dict = {
+            'tables': {
+                'A': {
+                    'columns': {'id': {'sdtype': 'id'}, 'fk': {'sdtype': 'id'}},
+                    'primary_key': 'id',
+                },
+                'B': {
+                    'columns': {'id': {'sdtype': 'id'}, 'fk': {'sdtype': 'id'}},
+                    'primary_key': 'id',
+                },
+                'C': {
+                    'columns': {'id': {'sdtype': 'id'}, 'fk': {'sdtype': 'id'}},
+                    'primary_key': 'id',
+                },
+                'D': {
+                    'columns': {'id': {'sdtype': 'id'}, 'fk': {'sdtype': 'id'}},
+                    'primary_key': 'id',
+                },
+                'E': {
+                    'columns': {'id': {'sdtype': 'id'}, 'fk': {'sdtype': 'id'}},
+                    'primary_key': 'id',
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'C',
+                    'child_table_name': 'B',
+                    'parent_primary_key': 'id',
+                    'child_foreign_key': 'fk',
+                },
+                {
+                    'parent_table_name': 'C',
+                    'child_table_name': 'E',
+                    'parent_primary_key': 'id',
+                    'child_foreign_key': 'fk',
+                },
+                {
+                    'parent_table_name': 'D',
+                    'child_table_name': 'B',
+                    'parent_primary_key': 'id',
+                    'child_foreign_key': 'fk',
+                },
+                {
+                    'parent_table_name': 'D',
+                    'child_table_name': 'C',
+                    'parent_primary_key': 'id',
+                    'child_foreign_key': 'fk',
+                },
+                {
+                    'parent_table_name': 'A',
+                    'child_table_name': 'B',
+                    'parent_primary_key': 'id',
+                    'child_foreign_key': 'fk',
+                },
+                {
+                    'parent_table_name': 'E',
+                    'child_table_name': 'A',
+                    'parent_primary_key': 'id',
+                    'child_foreign_key': 'fk',
+                },
+                {
+                    'parent_table_name': 'E',
+                    'child_table_name': 'B',
+                    'parent_primary_key': 'id',
+                    'child_foreign_key': 'fk',
+                },
+            ],
+            'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
+        }
 
-        metadata.add_table('B')
-        metadata.add_column('B', 'id', sdtype='id')
-        metadata.add_column('B', 'fk', sdtype='id')
-        metadata.set_primary_key('B', 'id')
-
-        metadata.add_table('C')
-        metadata.add_column('C', 'id', sdtype='id')
-        metadata.add_column('C', 'fk', sdtype='id')
-        metadata.set_primary_key('C', 'id')
-
-        metadata.add_table('D')
-        metadata.add_column('D', 'id', sdtype='id')
-        metadata.add_column('D', 'fk', sdtype='id')
-        metadata.set_primary_key('D', 'id')
-
-        metadata.add_table('E')
-        metadata.add_column('E', 'id', sdtype='id')
-        metadata.add_column('E', 'fk', sdtype='id')
-        metadata.set_primary_key('E', 'id')
-
-        metadata.add_relationship('C', 'B', 'id', 'fk')
-        metadata.add_relationship('C', 'E', 'id', 'fk')
-
-        metadata.add_relationship('D', 'B', 'id', 'fk')
-        metadata.add_relationship('D', 'C', 'id', 'fk')
-
-        metadata.add_relationship('A', 'B', 'id', 'fk')
-
-        metadata.add_relationship('E', 'A', 'id', 'fk')
-        metadata.add_relationship('E', 'B', 'id', 'fk')
+        metadata = MultiTableMetadata.load_from_dict(metadata_dict)
 
         # Run and Assert
         error_msg = re.escape(
