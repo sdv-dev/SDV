@@ -2,6 +2,7 @@ import os
 import re
 from copy import deepcopy
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -878,3 +879,41 @@ def test_detect_from_dataframes_invalid_format():
     # Run and Assert
     with pytest.raises(InvalidMetadataError, match=expected_error):
         Metadata.detect_from_dataframes(data)
+
+
+def test_no_duplicated_foreign_key_relationships_are_generated():
+    # Setup
+    parent_a = pd.DataFrame(
+        data={
+            'id': ['id-' + str(i) for i in range(100)],
+            'col1': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=100)],
+        }
+    )
+    parent_b = pd.DataFrame(
+        data={
+            'id': ['id-' + str(i) for i in range(100)],
+            'col2': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=100)],
+        }
+    )
+
+    child_c = pd.DataFrame(
+        data={
+            'id': ['id-' + str(i) for i in np.random.randint(0, 100, size=1000)],
+            'col3': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=1000)],
+        }
+    )
+
+    data = {'parent_a': parent_a, 'parent_b': parent_b, 'child_c': child_c}
+
+    # Run
+    metadata = Metadata.detect_from_dataframes(data)
+
+    # Assert
+    assert metadata.relationships == [
+        {
+            'parent_table_name': 'parent_a',
+            'child_table_name': 'child_c',
+            'parent_primary_key': 'id',
+            'child_foreign_key': 'id',
+        }
+    ]
