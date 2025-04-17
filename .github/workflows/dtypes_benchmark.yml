@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - issue-2365-improve-dtypes-benchmark
 
 jobs:
   run_dtypes_benchmark:
