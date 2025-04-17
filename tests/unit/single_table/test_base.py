@@ -562,7 +562,7 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor.reset_sampling.assert_called_once_with()
         instance.preprocess.assert_called_once_with(data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
-        instance._check_metadata_updated.assert_called_once()
+        instance._check_original_metadata_updated.assert_called_once()
         assert caplog.messages[0] == str({
             'EVENT': 'Fit',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',
@@ -596,6 +596,26 @@ class TestBaseSingleTableSynthesizer:
         )
         with pytest.raises(VersionError, match=error_msg):
             BaseSingleTableSynthesizer.fit(instance, data)
+
+    def test_fit_raises_warning_if_metadata_updated(self):
+        """Test that ``fit`` raisesa a warning if the original metadata was updated."""
+        # Setup
+        metadata = SingleTableMetadata()
+        instance = BaseSingleTableSynthesizer(metadata)
+        instance._fit = Mock()
+
+        data = pd.DataFrame({'column_a': [1, 2, 3]})
+        instance._random_state_set = True
+        instance._fitted = True
+        metadata.add_column('column_a', sdtype='numerical')
+
+        # Run and Assert
+        warn_msg = (
+            'Your metadata has been modified. Metadata modifications cannot be applied to an '
+            'existing synthesizer. Please create a new synthesizer with the modified metadata.'
+        )
+        with pytest.warns(UserWarning, match=warn_msg):
+            instance.fit(data)
 
     def test__validate_constraints(self):
         """Test that ``_validate_constraints`` calls ``fit`` and returns any errors."""
@@ -1621,6 +1641,7 @@ class TestBaseSingleTableSynthesizer:
         instance._sample_with_progress_bar.assert_called_once_with(
             10, 50, 5, 'temp.csv', show_progress_bar=True
         )
+        instance._check_original_metadata_updated.assert_called_once_with()
         pd.testing.assert_frame_equal(result, pd.DataFrame({'col': [1, 2, 3]}))
         assert caplog.messages[0] == str({
             'EVENT': 'Sample',
@@ -1631,6 +1652,25 @@ class TestBaseSingleTableSynthesizer:
             'TOTAL NUMBER OF ROWS': 3,
             'TOTAL NUMBER OF COLUMNS': 1,
         })
+
+    @patch('sdv.single_table.base.datetime')
+    def test_sample_warns_if_metadata_updated(self, mock_datetime, caplog):
+        """Test that if we call sample with updated metadata a warning will be shown."""
+        # Setup
+        metadata = SingleTableMetadata()
+        instance = BaseSingleTableSynthesizer(metadata)
+        instance._sample_with_progress_bar = Mock(return_value=pd.DataFrame())
+
+        instance._fitted = True
+        metadata.add_column('column_a', sdtype='numerical')
+
+        # Run and Assert
+        warn_msg = (
+            'Your metadata has been modified. Metadata modifications cannot be applied to an '
+            'existing synthesizer. Please create a new synthesizer with the modified metadata.'
+        )
+        with pytest.warns(UserWarning, match=warn_msg):
+            instance.sample(5)
 
     def test__validate_conditions_unseen_columns(self):
         """Test that conditions are within the ``data_processor`` fields."""
