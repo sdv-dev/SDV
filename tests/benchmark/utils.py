@@ -49,7 +49,7 @@ def _load_temp_results(filename):
     df.iloc[:, 2:] = df.groupby(['dtype', 'sdtype']).transform(lambda x: x.ffill().bfill())
     for column in df.columns:
         if column not in ('sdtype', 'dtype'):
-            df[column] = df[column].astype(bool)
+            df[column] = df[column].astype('float')
 
     return df.drop_duplicates().reset_index(drop=True)
 
@@ -86,7 +86,7 @@ def compare_previous_result_with_current():
                     python_version,
                 )
 
-                if current_value and not stored_value:
+                if current_value == 1.0 and stored_value != 1.0:
                     new_supported_dtypes.append({
                         'dtype': dtype,
                         'sdtype': sdtype,
@@ -94,7 +94,7 @@ def compare_previous_result_with_current():
                         'python_version': python_version,
                     })
 
-                elif not current_value and stored_value:
+                elif current_value != 1.0 and stored_value == 1.0:
                     unsupported_dtypes.append({
                         'dtype': dtype,
                         'sdtype': sdtype,
@@ -149,11 +149,11 @@ def save_results_to_json(results, filename=None):
             json.dump(json_data, file, indent=4)
 
 
-def calculate_support_percentage(df):
+def calculate_support_percentage(df, startswith):
     """Calculate the percentage of supported features (True) for each dtype in a DataFrame."""
-    feature_columns = df.drop(columns=['dtype', 'sdtype'])
+    feature_columns = [col for col in df.columns if col.startswith(startswith)]
     # Calculate percentage of TRUE values for each row (dtype)
-    percentage_support = feature_columns.mean(axis=1) * 100
+    percentage_support = df[feature_columns].mean(axis=1) * 100
 
     df = pd.DataFrame({
         'dtype': df['dtype'],
@@ -186,20 +186,41 @@ def compare_and_store_results_in_gdrive():
     }
 
     # Compute the summary
+    measurement_prefixes = ['SYNTHESIZER_FIT', 'SYNTHESIZER_SAMPLE', 'RDT', 'CONSTRAINT']
+    data_type_columns = ['dtype', 'sdtype']
+
     summary = pd.DataFrame()
     for name, current_results_df in results.items():
-        current_results_df = calculate_support_percentage(current_results_df)
-        if summary.empty:
-            summary = current_results_df.rename(columns={'percentage_supported': name})
-        else:
-            summary[name] = current_results_df['percentage_supported']
+        for startswith in measurement_prefixes:
+            supported_df = calculate_support_percentage(current_results_df, startswith)
+            column_name = f'{name} {startswith}'
+            if summary.empty:
+                summary = supported_df.rename(columns={'percentage_supported': column_name})
+            else:
+                summary[column_name] = supported_df['percentage_supported']
 
-    summary['average'] = summary[list(results)].mean(axis=1).round(2)
+    for startswith in measurement_prefixes:
+        measurement_columns = [f'{name} {startswith}' for name in results]
+        summary[startswith] = summary[measurement_columns].mean(axis=1).round(2)
+
     for col in summary.columns:
-        if col not in ('sdtype', 'dtype'):
+        if col not in data_type_columns:
             summary[col] = summary[col].apply(lambda x: f'{x}%')
+            summary[col] = summary[col].replace(to_replace='nan%', value=None)
+
+    summary = summary[data_type_columns + measurement_prefixes]
 
     sorted_results['Summary'] = summary
+
+    for name, current_results_df in results.items():
+        for sdtype, group in current_results_df.groupby('sdtype'):
+            group.insert(2, 'version', name)
+            group = group.dropna(axis=1, how='all')
+
+            if sdtype not in sorted_results:
+                sorted_results[sdtype] = group
+            else:
+                sorted_results[sdtype] = pd.concat([sorted_results[sdtype], group])
 
     slack_messages = []
     mark_results = {}
