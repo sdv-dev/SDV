@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import warnings
 from datetime import date, datetime
 from unittest.mock import ANY, MagicMock, Mock, call, mock_open, patch
 
@@ -74,6 +75,63 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         instance.metadata._updated = False
+
+    def test__check_original_metadata_updated_warns_when_updated(self):
+        """Test the `_check_original_metadata_updated` method raises a warning."""
+        # Setup
+        instance = Mock()
+        metadata_instance = Mock()
+        metadata_instance._convert_to_single_table.return_value = metadata_instance
+        metadata_instance._updated = True
+
+        instance.metadata.to_dict.return_value = {'some': 'data'}
+        instance._original_metadata = metadata_instance
+
+        expected_message = re.escape(
+            'Your metadata has been modified. Metadata modifications cannot be applied to an '
+            'existing synthesizer. Please create a new synthesizer with the modified metadata.'
+        )
+
+        # Run and Assert
+        with pytest.warns(UserWarning, match=expected_message):
+            BaseSynthesizer._check_original_metadata_updated(instance)
+
+    def test__check_original_metadata_updated_does_not_warn_if_not_updated(self):
+        """Test `_check_original_metadata_updated` does not warn if metadata is not updated."""
+        # Setup
+        instance = Mock()
+        metadata_instance = Mock()
+        metadata_instance._convert_to_single_table.return_value = metadata_instance
+        metadata_instance._updated = False
+
+        instance.metadata.to_dict.return_value = {'some': 'data'}
+        instance._original_metadata = metadata_instance
+
+        # Run and Assert
+        with warnings.catch_warnings(record=True) as raised_warnings:
+            BaseSynthesizer._check_original_metadata_updated(instance)
+            assert not raised_warnings
+
+    @patch('sdv.metadata.Metadata.load_from_dict')
+    def test__check_original_metadata_updated_sets_original_metadata_if_missing(
+        self, mock_load_from_dict
+    ):
+        """Test `_check_original_metadata_updated` sets _original_metadata if not present."""
+        # Setup
+        instance = Mock()
+        instance.metadata.to_dict.return_value = {'some': 'data'}
+        del instance._original_metadata
+
+        loaded_metadata = Mock()
+        loaded_metadata._convert_to_single_table.return_value = loaded_metadata
+        loaded_metadata._updated = False
+        mock_load_from_dict.return_value = loaded_metadata
+
+        # Run
+        BaseSynthesizer._check_original_metadata_updated(instance)
+
+        # Assert
+        assert instance._original_metadata == loaded_metadata
 
     @patch('sdv.single_table.base._check_regex_format')
     def test__validate_regex_format(self, mock_check_regex_format):

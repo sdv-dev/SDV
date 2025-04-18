@@ -100,8 +100,13 @@ class BaseSynthesizer:
                 self._data_processor._update_transformers_by_sdtypes(sdtype, transformer)
 
     def _check_original_metadata_updated(self):
+        if not hasattr(self, '_original_metadata'):
+            unified_metadata = Metadata.load_from_dict(self.metadata.to_dict())
+            setattr(self, '_original_metadata', unified_metadata)
+
         if isinstance(self._original_metadata, Metadata):
             metadata = self._original_metadata._convert_to_single_table()
+
         else:
             metadata = self._original_metadata
 
