@@ -8,7 +8,7 @@ from rdt.transformers import (
     AnonymizedFaker,
     CustomLabelEncoder,
     FloatFormatter,
-    IDGenerator,
+    IndexGenerator,
     LabelEncoder,
     PseudoAnonymizedFaker,
 )
@@ -283,7 +283,7 @@ def test_update_transformers_with_id_generator():
     stm.set_primary_key('user_id', 'table')
 
     gc = GaussianCopulaSynthesizer(stm)
-    custom_id = IDGenerator(starting_value=min_value_id)
+    custom_id = IndexGenerator(starting_value=min_value_id)
     gc.auto_assign_transformers(data)
 
     # Run
