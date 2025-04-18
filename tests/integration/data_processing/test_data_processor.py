@@ -11,7 +11,7 @@ from rdt.transformers import (
     AnonymizedFaker,
     BinaryEncoder,
     FloatFormatter,
-    IDGenerator,
+    IndexGenerator,
     UniformEncoder,
     UnixTimestampEncoder,
 )
@@ -383,7 +383,7 @@ class TestDataProcessor:
         metadata.update_column('user_id', sdtype='id')
         metadata.set_primary_key('user_id')
         dp = DataProcessor(metadata)
-        id_gen = IDGenerator(starting_value=5)
+        id_gen = IndexGenerator(starting_value=5)
         dp.fit(data)
 
         # Run
