@@ -839,7 +839,7 @@ class TestBaseSingleTableSynthesizer:
             'Primary key "key" is stored as an int but the Regex allows it to start with '
             '"0". Please remove the Regex or update it to correspond to valid ints.'
         )
-        with pytest.raises(SynthesizerInputError, match=message):
+        with pytest.raises(InvalidDataError, match=message):
             instance.validate(data)
 
     def test_validate_int_primary_key_regex_does_not_start_with_zero(self):

@@ -17,7 +17,7 @@ from sdmetrics.reports.multi_table import DiagnosticReport
 from sdv import version
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
-from sdv.errors import SamplingError, SynthesizerInputError, VersionError
+from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError, VersionError
 from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata import MultiTableMetadata
 from sdv.metadata.metadata import Metadata
@@ -2476,7 +2476,7 @@ def test_fit_int_primary_key_regex_includes_zero(regex):
         'Primary key for table "parent_data" is stored as an int but the Regex allows it to start '
         'with "0". Please remove the Regex or update it to correspond to valid ints.'
     )
-    with pytest.raises(SynthesizerInputError, match=message):
+    with pytest.raises(InvalidDataError, match=message):
         instance.fit(data)
 
 

@@ -26,7 +26,6 @@ from sdv._utils import (
     check_sdv_versions_and_warn,
     check_synthesizer_version,
     generate_synthesizer_id,
-    get_possible_chars,
 )
 from sdv.cag._errors import PatternNotMetError
 from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows
@@ -50,11 +49,6 @@ SYNTHESIZER_LOGGER = get_sdv_logger('SingleTableSynthesizer')
 
 COND_IDX = str(uuid.uuid4())
 FIXED_RNG_SEED = 73251
-INT_REGEX_ZERO_ERROR_MESSAGE = (
-    'is stored as an int but the Regex allows it to start with "0". Please remove the Regex '
-    'or update it to correspond to valid ints.'
-)
-
 DEPRECATION_MSG = (
     "The 'SingleTableMetadata' is deprecated. Please use the new 'Metadata' class for synthesizers."
 )
@@ -246,17 +240,6 @@ class BaseSynthesizer:
 
         return self.metadata
 
-    def _validate_primary_key(self, data):
-        primary_key = self._get_table_metadata().primary_key
-        is_int = primary_key and pd.api.types.is_integer_dtype(data[primary_key])
-        regex = self._get_table_metadata().columns.get(primary_key, {}).get('regex_format')
-        if is_int and regex:
-            possible_characters = get_possible_chars(regex, 1)
-            if '0' in possible_characters:
-                raise SynthesizerInputError(
-                    f'Primary key "{primary_key}" {INT_REGEX_ZERO_ERROR_MESSAGE}'
-                )
-
     def validate(self, data):
         """Validate data.
 
@@ -278,7 +261,6 @@ class BaseSynthesizer:
                     * values of a column don't satisfy their sdtype
         """
         self._validate_metadata(data)
-        self._validate_primary_key(data)
         self._validate_constraints(data)
 
         # Retaining the logic of returning errors and raising them here to maintain consistency

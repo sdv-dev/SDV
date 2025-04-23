@@ -22,10 +22,9 @@ from sdv.errors import (
 )
 from sdv.metadata.metadata import Metadata
 from sdv.metadata.multi_table import MultiTableMetadata
-from sdv.metadata.single_table import SingleTableMetadata
+from sdv.metadata.single_table import INT_REGEX_ZERO_ERROR_MESSAGE, SingleTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.multi_table.hma import HMASynthesizer
-from sdv.single_table.base import INT_REGEX_ZERO_ERROR_MESSAGE
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.ctgan import CTGANSynthesizer
 from tests.utils import catch_sdv_logs, get_multi_table_data, get_multi_table_metadata
@@ -989,7 +988,11 @@ class TestBaseMultiTableSynthesizer:
             "please refit the model using 'fit' or 'fit_processed_data'."
         )
 
-    def test_preprocess_single_table_preprocess_raises_error_0_int_regex(self):
+    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_metadata_matches_data')
+    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_primary_key')
+    def test_preprocess_single_table_preprocess_raises_error_0_int_regex(
+        self, mock_validate_pk, mock_validate
+    ):
         """Test that if the single table synthesizer raises a specific error, it is reformatted.
 
         If a single table synthesizer raises an error about the primary key being an integer
@@ -999,7 +1002,6 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
-        instance.validate = Mock()
         data = {
             'nesreca': pd.DataFrame({
                 'id_nesreca': np.arange(0, 20, 2),
@@ -1017,7 +1019,7 @@ class TestBaseMultiTableSynthesizer:
         synth_nesreca = Mock()
         synth_oseba = Mock()
         synth_upravna_enota = Mock()
-        synth_nesreca._preprocess.side_effect = SynthesizerInputError(INT_REGEX_ZERO_ERROR_MESSAGE)
+        mock_validate_pk.side_effect = [[INT_REGEX_ZERO_ERROR_MESSAGE], None, None]
         instance._table_synthesizers = {
             'nesreca': synth_nesreca,
             'oseba': synth_oseba,
@@ -1026,7 +1028,7 @@ class TestBaseMultiTableSynthesizer:
 
         # Run
         message = f'Primary key for table "nesreca" {INT_REGEX_ZERO_ERROR_MESSAGE}'
-        with pytest.raises(SynthesizerInputError, match=message):
+        with pytest.raises(InvalidDataError, match=message):
             instance.preprocess(data)
 
     def test_preprocess_single_table_preprocess_raises_error(self):
