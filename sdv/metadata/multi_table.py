@@ -190,8 +190,12 @@ class MultiTableMetadata:
                 )
 
     def _validate_foreign_key_uniqueness_across_relationships(
-        self, parent_table_name, parent_primary_key, child_table_name,
-        child_foreign_key, seen_foreign_keys
+        self,
+        parent_table_name,
+        parent_primary_key,
+        child_table_name,
+        child_foreign_key,
+        seen_foreign_keys,
     ):
         key = (child_table_name, child_foreign_key)
         current_relationship = (parent_table_name, parent_primary_key)
@@ -804,7 +808,9 @@ class MultiTableMetadata:
         for relation in self.relationships:
             self._append_relationships_errors(errors, self._validate_relationship, **relation)
             self._append_relationships_errors(
-                errors, self._validate_foreign_key_uniqueness_across_relationships, **relation,
+                errors,
+                self._validate_foreign_key_uniqueness_across_relationships,
+                **relation,
                 seen_foreign_keys=seen_foreign_keys,
             )
 
