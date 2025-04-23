@@ -37,7 +37,6 @@ class MultiTableMetadata:
         self.tables = {}
         self.relationships = []
         self._multi_table_updated = False
-        self._seen_foreign_keys = {}
 
     def _check_updated_flag(self):
         is_single_table_updated = any(table._updated for table in self.tables.values())
@@ -191,13 +190,14 @@ class MultiTableMetadata:
                 )
 
     def _validate_foreign_key_uniqueness_across_relationships(
-        self, parent_table_name, parent_primary_key, child_table_name, child_foreign_key
+        self, parent_table_name, parent_primary_key, child_table_name,
+        child_foreign_key, seen_foreign_keys
     ):
         key = (child_table_name, child_foreign_key)
         current_relationship = (parent_table_name, parent_primary_key)
 
-        if key in self._seen_foreign_keys:
-            existing_relationship = self._seen_foreign_keys[key]
+        if key in seen_foreign_keys:
+            existing_relationship = seen_foreign_keys[key]
             if existing_relationship != current_relationship:
                 raise InvalidMetadataError(
                     f'Relationship between tables ({parent_table_name}, {child_table_name}) uses '
@@ -205,7 +205,7 @@ class MultiTableMetadata:
                     'relationship.'
                 )
         else:
-            self._seen_foreign_keys[key] = current_relationship
+            seen_foreign_keys[key] = current_relationship
 
     def _validate_relationship_does_not_exist(
         self, parent_table_name, parent_primary_key, child_table_name, child_foreign_key
@@ -800,11 +800,12 @@ class MultiTableMetadata:
         """
         errors = []
         self._validate_single_table(errors)
-        self._seen_foreign_keys = {}
+        seen_foreign_keys = {}
         for relation in self.relationships:
             self._append_relationships_errors(errors, self._validate_relationship, **relation)
             self._append_relationships_errors(
-                errors, self._validate_foreign_key_uniqueness_across_relationships, **relation
+                errors, self._validate_foreign_key_uniqueness_across_relationships, **relation,
+                seen_foreign_keys=seen_foreign_keys,
             )
 
         child_map = self._get_child_map()

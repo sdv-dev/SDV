@@ -85,7 +85,6 @@ class TestMultiTableMetadata:
         assert instance.tables == {}
         assert instance.relationships == []
         assert instance._multi_table_updated is False
-        assert instance._seen_foreign_keys == {}
 
     def test__check_metadata_updated_single_metadata_updated(self):
         """Test ``_check_metadata_updated`` when a single table metadata has been updated."""
@@ -421,11 +420,13 @@ class TestMultiTableMetadata:
         """Test the method raises an error if a foreign key is reused with a different parent."""
         # Setup
         metadata = MultiTableMetadata()
+        seen_foreign_keys = {}
         metadata._validate_foreign_key_uniqueness_across_relationships(
             parent_table_name='sessions',
             parent_primary_key='id',
             child_table_name='transactions',
             child_foreign_key='session_id',
+            seen_foreign_keys=seen_foreign_keys,
         )
 
         # Run and Assert
@@ -439,6 +440,7 @@ class TestMultiTableMetadata:
                 parent_primary_key='id',
                 child_table_name='transactions',
                 child_foreign_key='session_id',
+                seen_foreign_keys=seen_foreign_keys,
             )
 
     def test__validate_circular_relationships(self):
