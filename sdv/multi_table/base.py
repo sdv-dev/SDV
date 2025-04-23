@@ -358,6 +358,7 @@ class BaseMultiTableSynthesizer:
         """
         errors = []
         constraints_errors = []
+        cags_errors = []
         self.metadata.validate_data(data)
         for table_name in data:
             if table_name in self._table_synthesizers:
@@ -369,11 +370,21 @@ class BaseMultiTableSynthesizer:
                 # Validate rules specific to each synthesizer
                 errors += self._table_synthesizers[table_name]._validate(data[table_name])
 
+                # Validate single-table cags
+                if hasattr(self._table_synthesizers[table_name], '_validate_cags'):
+                    try:
+                        self._table_synthesizers[table_name]._validate_cags(data[table_name])
+                    except PatternNotMetError as error:
+                        cags_errors.append(error)
+
         if constraints_errors:
             raise ConstraintsNotMetError(constraints_errors)
 
         elif errors:
             raise InvalidDataError(errors)
+
+        elif cags_errors:
+            raise PatternNotMetError(cags_errors)
 
     def _validate_table_name(self, table_name):
         if table_name not in self._table_synthesizers:
