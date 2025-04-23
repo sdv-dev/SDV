@@ -526,7 +526,6 @@ class BaseSynthesizer:
         return data[column_order]
 
     def _preprocess(self, data):
-        self.validate(data)
         self._data_processor.fit(data)
         return self._data_processor.transform(data)
 
@@ -540,6 +539,24 @@ class BaseSynthesizer:
 
         return False
 
+    def _preprocess_helper(self, data):
+        """Preprocess helper method.
+
+        This method:
+        - Validate the data
+        - Warn the user if the model has already been fitted
+        - Store the original columns and convert them to string if needed
+        """
+        is_converted = self._store_and_convert_original_cols(data)
+        self.validate(data)
+        if self._fitted:
+            warnings.warn(
+                'This model has already been fitted. To use the new preprocessed data, '
+                "please refit the model using 'fit' or 'fit_processed_data'."
+            )
+
+        return data, is_converted
+
     def preprocess(self, data):
         """Transform the raw data to numerical space.
 
@@ -551,13 +568,7 @@ class BaseSynthesizer:
             pandas.DataFrame:
                 The preprocessed data.
         """
-        if self._fitted:
-            warnings.warn(
-                'This model has already been fitted. To use the new preprocessed data, '
-                "please refit the model using 'fit' or 'fit_processed_data'."
-            )
-
-        is_converted = self._store_and_convert_original_cols(data)
+        data, is_converted = self._preprocess_helper(data)
         preprocess_data = self._preprocess(data)
         if is_converted:
             data.columns = self._original_columns
@@ -804,31 +815,51 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return data
 
-    def preprocess(self, data):
-        """Transform the raw data to numerical space.
+    def _validate_cags(self, data):
+        """Validate the data against the CAG patterns.
 
         Args:
             data (pandas.DataFrame):
-                The raw data to be transformed.
-
-        Returns:
-            pandas.DataFrame:
-                The preprocessed data.
+                The data to validate.
         """
-        if self._fitted:
-            warnings.warn(
-                'This model has already been fitted. To use the new preprocessed data, '
-                "please refit the model using 'fit' or 'fit_processed_data'."
-            )
+        metadata = self._original_metadata
+        if hasattr(self, '_chained_patterns'):
+            for pattern in self._chained_patterns:
+                pattern.validate(data=data, metadata=metadata)
+                metadata = pattern.get_updated_metadata(metadata)
 
-        is_converted = self._store_and_convert_original_cols(data)
+        if hasattr(self, '_reject_sampling_patterns'):
+            for pattern in self._reject_sampling_patterns:
+                pattern.validate(data=data, metadata=self._original_metadata)
+
+    def validate(self, data):
+        """Validate data.
+
+        This method will validate the data against:
+        - The metadata
+        - The constraints
+        - The CAG patterns
+
+        To make it work with the cags we temporarily set the metadata to the original one
+        and then restore it.
+
+        Args:
+            data (pandas.DataFrame):
+                The data to validate.
+        """
+        metadata = self.metadata
+        if hasattr(self, '_original_metadata'):
+            self.metadata = self._original_metadata
+
+        super().validate(data)
+        self._validate_cags(data)
+        self.metadata = metadata
+
+    def _preprocess_helper(self, data):
+        data, is_converted = super()._preprocess_helper(data)
         data = self._transform_helper(data)
-        preprocess_data = self._preprocess(data)
 
-        if is_converted:
-            data.columns = self._original_columns
-
-        return preprocess_data
+        return data, is_converted
 
     def _set_random_state(self, random_state):
         """Set the random state of the model's random number generator.
