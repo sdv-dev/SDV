@@ -15,7 +15,7 @@ from sdv.errors import InvalidDataError
 from sdv.logging import get_sdv_logger
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
-from sdv.metadata.single_table import SingleTableMetadata
+from sdv.metadata.single_table import INT_REGEX_ZERO_ERROR_MESSAGE, SingleTableMetadata
 from sdv.metadata.utils import _validate_file_mode, read_json, validate_file_does_not_exist
 from sdv.metadata.visualization import (
     create_columns_node,
@@ -844,6 +844,11 @@ class MultiTableMetadata:
                     self.tables[table_name].validate_data(table_data, table_sdtype_warnings)
 
             except InvalidDataError as error:
+                if INT_REGEX_ZERO_ERROR_MESSAGE in str(error) and len(self.tables) > 1:
+                    raise InvalidDataError([
+                        f'Primary key for table "{table_name}" {INT_REGEX_ZERO_ERROR_MESSAGE}'
+                    ])
+
                 error_msg = f'Errors in {table_name}:'
                 for _error in error.errors:
                     error_msg += f'\nError: {_error}'
