@@ -119,6 +119,7 @@ class BaseMultiTableSynthesizer:
         self._table_synthesizers = {}
         self._table_parameters = defaultdict(dict)
         self._original_table_columns = {}
+        self._original_metadata = deepcopy(self.metadata)
         if synthesizer_kwargs is not None:
             warn_message = (
                 'The `synthesizer_kwargs` parameter is deprecated as of SDV 1.2.0 and does not '
@@ -347,6 +348,22 @@ class BaseMultiTableSynthesizer:
 
         return errors
 
+    def _validate_cags(self, data):
+        """Validate the data against the CAG patterns.
+
+        Args:
+            data (pandas.DataFrame):
+                The data to validate.
+        """
+        metadata = self.metadata
+        if hasattr(self, '_original_metadata'):
+            metadata = self._original_metadata
+
+        if hasattr(self, 'patterns'):
+            for pattern in self.patterns:
+                pattern.validate(data=data, metadata=metadata)
+                metadata = pattern.get_updated_metadata(metadata)
+
     def validate(self, data):
         """Validate the data.
 
@@ -358,8 +375,11 @@ class BaseMultiTableSynthesizer:
         """
         errors = []
         constraints_errors = []
-        cags_errors = []
-        self.metadata.validate_data(data)
+        metadata = self.metadata
+        if hasattr(self, '_original_metadata'):
+            metadata = self._original_metadata
+
+        metadata.validate_data(data)
         for table_name in data:
             if table_name in self._table_synthesizers:
                 try:
@@ -370,21 +390,13 @@ class BaseMultiTableSynthesizer:
                 # Validate rules specific to each synthesizer
                 errors += self._table_synthesizers[table_name]._validate(data[table_name])
 
-                # Validate single-table cags
-                if hasattr(self._table_synthesizers[table_name], '_validate_cags'):
-                    try:
-                        self._table_synthesizers[table_name]._validate_cags(data[table_name])
-                    except PatternNotMetError as error:
-                        cags_errors.append(error)
-
         if constraints_errors:
             raise ConstraintsNotMetError(constraints_errors)
 
         elif errors:
             raise InvalidDataError(errors)
 
-        elif cags_errors:
-            raise PatternNotMetError(cags_errors)
+        self._validate_cags(data)
 
     def _validate_table_name(self, table_name):
         if table_name not in self._table_synthesizers:
@@ -486,8 +498,8 @@ class BaseMultiTableSynthesizer:
         """
         list_of_changed_tables = self._store_and_convert_original_cols(data)
 
-        data = self._transform_helper(data)
         self.validate(data)
+        data = self._transform_helper(data)
         if self._fitted:
             warnings.warn(
                 'This model has already been fitted. To use the new preprocessed data, '
