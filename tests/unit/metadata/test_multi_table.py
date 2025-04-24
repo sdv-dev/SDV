@@ -384,7 +384,7 @@ class TestMultiTableMetadata:
                 child_foreign_key='session_id',
             )
 
-    def test__validate_foreign_key_is_not_reused(self):
+    def test__validate_new_foreign_key_is_not_reused(self):
         """Test the method raises an error if a foreign key is already assigned to another table."""
         # Setup
         metadata = MultiTableMetadata()
@@ -409,11 +409,38 @@ class TestMultiTableMetadata:
             "('session_id') that is already used in another relationship."
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
-            metadata._validate_foreign_key_is_not_reused(
+            metadata._validate_new_foreign_key_is_not_reused(
                 parent_table_name='users',
                 parent_primary_key='id',
                 child_table_name='transactions',
                 child_foreign_key='session_id',
+            )
+
+    def test__validate_foreign_key_uniqueness_across_relationships_raises_on_conflict(self):
+        """Test the method raises an error if a foreign key is reused with a different parent."""
+        # Setup
+        metadata = MultiTableMetadata()
+        seen_foreign_keys = {}
+        metadata._validate_foreign_key_uniqueness_across_relationships(
+            parent_table_name='sessions',
+            parent_primary_key='id',
+            child_table_name='transactions',
+            child_foreign_key='session_id',
+            seen_foreign_keys=seen_foreign_keys,
+        )
+
+        # Run and Assert
+        error_msg = re.escape(
+            'Relationship between tables (users, transactions) uses a foreign key column '
+            "('session_id') that is already used in another relationship."
+        )
+        with pytest.raises(InvalidMetadataError, match=error_msg):
+            metadata._validate_foreign_key_uniqueness_across_relationships(
+                parent_table_name='users',
+                parent_primary_key='id',
+                child_table_name='transactions',
+                child_foreign_key='session_id',
+                seen_foreign_keys=seen_foreign_keys,
             )
 
     def test__validate_circular_relationships(self):
