@@ -15,6 +15,8 @@ from rdt.transformers import FloatFormatter
 from sdmetrics.reports.multi_table import DiagnosticReport
 
 from sdv import version
+from sdv.cag import Inequality
+from sdv.cag._errors import PatternNotMetError
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
 from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError, VersionError
@@ -2686,3 +2688,35 @@ def test__unsupported_regex_format():
     # Run and Assert
     with pytest.raises(SynthesizerInputError, match=expected_error):
         HMASynthesizer(metadata)
+
+
+def test_end_to_end_with_cags():
+    """Test HMA with a single-table cag."""
+    # Setup
+    data, metadata = download_demo('multi_table', 'fake_hotels')
+    synthesizer = HMASynthesizer(metadata)
+    pattern = Inequality(
+        low_column_name='checkin_date',
+        high_column_name='checkout_date',
+        strict_boundaries=False,
+        table_name='guests',
+    )
+    synthesizer.add_cag(patterns=[pattern])
+    data_guests = data['guests']
+    clean_data = data_guests[~(data_guests[['checkin_date', 'checkout_date']].isna().any(axis=1))]
+    data_invalid = clean_data.copy()
+    data_invalid.loc[0, 'checkin_date'] = '31 Dec 2020'
+    data['guests'] = clean_data
+    invalid_data = data.copy()
+    invalid_data['guests'] = data_invalid
+    expected_error_msg = re.escape('The inequality requirement is not met for row indices: [0]')
+
+    # Run
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(scale=1.0)
+
+    with pytest.raises(PatternNotMetError, match=expected_error_msg):
+        synthesizer.fit(invalid_data)
+
+    # Assert
+    synthesizer.validate(synthetic_data)

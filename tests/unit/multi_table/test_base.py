@@ -456,15 +456,43 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(PatternNotMetError, match=msg):
             instance.validate_cag(synthetic_data)
 
+    def test__validate_cags(self):
+        """Test the ``_validate_cags`` method."""
+        # Setup
+        data = pd.DataFrame()
+        original_metadata = Metadata()
+        metadata_1 = Metadata()
+        metadata_2 = Metadata()
+        instance = BaseMultiTableSynthesizer(original_metadata)
+        cag_mock_1 = Mock()
+        cag_mock_1.get_updated_metadata = Mock(return_value=metadata_1)
+        cag_mock_2 = Mock()
+        cag_mock_2.get_updated_metadata = Mock(return_value=metadata_2)
+        cag_mock_3 = Mock()
+        instance.patterns = [cag_mock_1, cag_mock_2, cag_mock_3]
+
+        # Run
+        instance._validate_cags(data)
+
+        # Assert
+        cag_mock_1.get_updated_metadata.assert_called_once_with(instance._original_metadata)
+        cag_mock_1.validate.assert_called_once_with(data=data, metadata=instance._original_metadata)
+        cag_mock_2.validate.assert_called_once_with(data=data, metadata=metadata_1)
+        cag_mock_3.validate.assert_called_once_with(data=data, metadata=metadata_2)
+
     def test_validate(self):
         """Test that no error is being raised when the data is valid."""
         # Setup
         metadata = get_multi_table_metadata()
         data = get_multi_table_data()
         instance = BaseMultiTableSynthesizer(metadata)
+        instance._validate_cags = Mock()
 
-        # Run and Assert
+        # Run
         instance.validate(data)
+
+        # Assert
+        instance._validate_cags.assert_called_once_with(data)
 
     def test_validate_missing_table(self):
         """Test that an error is being raised when there is a missing table in the dictionary."""
