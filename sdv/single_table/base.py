@@ -29,6 +29,7 @@ from sdv._utils import (
     get_possible_chars,
 )
 from sdv.cag._errors import PatternNotMetError
+from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import (
@@ -673,6 +674,37 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
     def get_cag(self):
         """Get a list of constraint-augmented generation patterns applied to the synthesizer."""
         return deepcopy(self._chained_patterns + self._reject_sampling_patterns)
+
+    def validate_cag(self, synthetic_data):
+        """Validate synthetic_data aganist the CAG patterns.
+
+        Args:
+            synthetic_data (pd.DataFrame): The synthetic data to validate
+
+        Raises:
+            PatternNotMetError:
+                Raised if synthetic data does not match CAG patterns.
+        """
+        invalid_patterns = {}
+        if hasattr(self, '_chained_patterns'):
+            for pattern in self._chained_patterns:
+                valid = pattern.is_valid(data=synthetic_data)
+                if not valid.all():
+                    invalid_rows_str = _get_invalid_rows(valid)
+                    invalid_patterns[pattern] = invalid_rows_str
+        if hasattr(self, '_reject_sampling_patterns'):
+            for pattern in self._reject_sampling_patterns:
+                valid = pattern.is_valid(data=synthetic_data)
+                if not valid.all():
+                    invalid_rows_str = _get_invalid_rows(valid)
+                    invalid_patterns[pattern] = invalid_rows_str
+        if invalid_patterns:
+            msg = ''
+            for pattern, idx_str in invalid_patterns.items():
+                pattern_name = _convert_to_snake_case(type(pattern).__name__)
+                pattern_name = pattern_name.replace('_', ' ')
+                msg += f'The {pattern_name} requirement is not met for row indices: {idx_str}'
+            raise PatternNotMetError(msg)
 
     def get_metadata(self, version='original'):
         """Get the metadata, either original or modified after applying CAG patterns.

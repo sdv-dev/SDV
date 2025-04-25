@@ -1,7 +1,11 @@
+import re
+
 import numpy as np
 import pandas as pd
+import pytest
 
 from sdv.cag import Range
+from sdv.cag._errors import PatternNotMetError
 from sdv.metadata import Metadata
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from tests.utils import run_pattern
@@ -391,3 +395,69 @@ def test_range_multiple_patterns_different_mid_columns():
     assert all(samples['mid1'] < samples['high1'])
     assert all(samples['low'] < samples['mid2'])
     assert all(samples['mid2'] < samples['high2'])
+
+
+def test_validate_cag():
+    # Setup
+    data = pd.DataFrame({
+        'low': [1, 2, 3, 1, 2, 1],
+        'mid': [5, 6, 7, 8, 9, 9],
+        'high': [10, 20, 30, 10, 20, 10],
+    })
+    metadata = Metadata.load_from_dict({
+        'columns': {
+            'low': {'sdtype': 'numerical'},
+            'mid': {'sdtype': 'numerical'},
+            'high': {'sdtype': 'numerical'},
+        }
+    })
+    pattern = Range(
+        low_column_name='low',
+        middle_column_name='mid',
+        high_column_name='high',
+    )
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(100)
+
+    # Run
+    synthesizer.validate_cag(synthetic_data=synthetic_data)
+
+    # Assert
+    assert all(synthetic_data['low'] < synthetic_data['mid'])
+    assert all(synthetic_data['mid'] < synthetic_data['high'])
+
+
+def test_validate_cag_raises():
+    # Setup
+    data = pd.DataFrame({
+        'low': [1, 2, 3, 1, 2, 1],
+        'mid': [5, 6, 7, 8, 9, 9],
+        'high': [10, 20, 30, 10, 20, 10],
+    })
+    synthetic_data = pd.DataFrame({
+        'low': data['mid'],
+        'mid': data['low'],
+        'high': data['high'],
+    })
+    metadata = Metadata.load_from_dict({
+        'columns': {
+            'low': {'sdtype': 'numerical'},
+            'mid': {'sdtype': 'numerical'},
+            'high': {'sdtype': 'numerical'},
+        }
+    })
+    pattern = Range(
+        low_column_name='low',
+        middle_column_name='mid',
+        high_column_name='high',
+    )
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.fit(data)
+    msg = re.escape('The range requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more')
+
+    # Run
+    with pytest.raises(PatternNotMetError, match=msg):
+        synthesizer.validate_cag(synthetic_data=synthetic_data)

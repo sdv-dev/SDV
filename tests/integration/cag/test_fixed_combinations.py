@@ -1,9 +1,13 @@
 """Integration tests for FixedCombinations CAG pattern."""
 
+import re
+
 import numpy as np
 import pandas as pd
+import pytest
 
 from sdv.cag import FixedCombinations
+from sdv.cag._errors import PatternNotMetError
 from sdv.metadata import Metadata
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from tests.utils import run_pattern
@@ -336,3 +340,58 @@ def test_fixed_combinations_multiple_patterns_three_patterns_reject_sampling():
     assert original_ab_combos == synthetic_ab_combos
     assert original_cd_combos == synthetic_cd_combos
     assert original_ac_combos == synthetic_ac_combos
+
+
+def test_validate_cag():
+    # Setup
+    data = pd.DataFrame({
+        'A': [1, 2, 3, 1, 2, 1],
+        'B': [10, 20, 30, 10, 20, 10],
+    })
+    metadata = Metadata.load_from_dict({
+        'columns': {
+            'A': {'sdtype': 'categorical'},
+            'B': {'sdtype': 'categorical'},
+        }
+    })
+    pattern = FixedCombinations(['A', 'B'])
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(100)
+
+    # Run
+    synthesizer.validate_cag(synthetic_data=synthetic_data)
+
+    # Assert
+    original_ab_combos = set(zip(data['A'], data['B']))
+    synthetic_ab_combos = set(zip(synthetic_data['A'], synthetic_data['B']))
+    assert original_ab_combos == synthetic_ab_combos
+
+
+def test_validate_cag_raises():
+    # Setup
+    data = pd.DataFrame({
+        'A': [1, 2, 3, 1, 2, 1],
+        'B': [10, 20, 30, 10, 20, 10],
+    })
+    synthetic_data = data.copy()
+    synthetic_data['B'] = [11, 21, 31, 11, 21, 11]
+
+    metadata = Metadata.load_from_dict({
+        'columns': {
+            'A': {'sdtype': 'categorical'},
+            'B': {'sdtype': 'categorical'},
+        }
+    })
+    pattern = FixedCombinations(['A', 'B'])
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.fit(data)
+    msg = re.escape(
+        'The fixed combinations requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more'
+    )
+
+    # Run and Assert
+    with pytest.raises(PatternNotMetError, match=msg):
+        synthesizer.validate_cag(synthetic_data=synthetic_data)

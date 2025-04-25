@@ -1,11 +1,15 @@
 """Integration tests for FixedIncrements CAG pattern."""
 
+import re
+
 import numpy as np
 import pandas as pd
 import pytest
 
 from sdv.cag import FixedIncrements
+from sdv.cag._errors import PatternNotMetError
 from sdv.metadata import Metadata
+from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from tests.utils import run_pattern
 
 
@@ -112,3 +116,47 @@ def test_fixed_incremements_with_multi_table():
     assert set(data.keys()) == set(reverse_transformed.keys())
     for table_name, table in data.items():
         pd.testing.assert_frame_equal(table, reverse_transformed[table_name])
+
+
+def test_validate_cag():
+    # Setup
+    increment_value = 10
+    data = pd.DataFrame({'A': [10, 20, 30, 40, 50]})
+    synthetic_data = pd.DataFrame({'A': [100, 200, 300, 400, 500]})
+    metadata = Metadata.load_from_dict({
+        'columns': {
+            'A': {'sdtype': 'numerical'},
+        }
+    })
+    pattern = FixedIncrements(column_name='A', increment_value=increment_value)
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.fit(data)
+
+    # Run
+    synthesizer.validate_cag(synthetic_data=synthetic_data)
+
+    # Assert
+    assert all(data['A'] % increment_value == 0)
+    assert all(synthetic_data['A'] % increment_value == 0)
+
+
+def test_validate_cag_raises():
+    # Setup
+    increment_value = 2
+    data = pd.DataFrame({'A': [2, 4, 6, 8, 10, 12]})
+    synthetic_data = pd.DataFrame({'A': [1, 3, 5, 7, 9, 12]})
+    metadata = Metadata.load_from_dict({
+        'columns': {
+            'A': {'sdtype': 'numerical'},
+        }
+    })
+    pattern = FixedIncrements(column_name='A', increment_value=increment_value)
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.fit(data)
+    msg = re.escape('The fixed increments requirement is not met for row indices: 0, 1, 2, 3, 4')
+
+    # Run and Assert
+    with pytest.raises(PatternNotMetError, match=msg):
+        synthesizer.validate_cag(synthetic_data=synthetic_data)

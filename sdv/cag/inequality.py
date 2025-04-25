@@ -314,5 +314,4 @@ class Inequality(BasePattern):
 
         valid = pd.isna(low) | pd.isna(high) | self._operator(high, low)
         is_valid[table_name] = valid
-
         return is_valid

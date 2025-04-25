@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -791,3 +793,65 @@ def test_inequality_many_patterns():
 
     for i in range(9):
         assert all(samples[i] <= samples[i + 1])
+
+
+def test_validate_cag():
+    # Setup
+    values = np.random.randint(0, 100, size=1000)
+    data = pd.DataFrame({
+        'low': values,
+        'high': values + 1,
+    })
+    metadata = Metadata.load_from_dict({
+        'columns': {
+            'low': {'sdtype': 'numerical'},
+            'high': {'sdtype': 'numerical'},
+        }
+    })
+    pattern = Inequality(
+        low_column_name='low',
+        high_column_name='high',
+    )
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(100)
+
+    # Run
+    synthesizer.validate_cag(synthetic_data=synthetic_data)
+
+    # Assert
+    assert all(synthetic_data['low'] < synthetic_data['high'])
+
+
+def test_validate_cag_raises():
+    # Setup
+    data = pd.DataFrame({
+        'A': [1, 2, 3, 1, 2, 1],
+        'B': [10, 20, 30, 10, 20, 10],
+    })
+    synthetic_data = pd.DataFrame({
+        'A': [10, 20, 30, 10, 20, 10],
+        'B': [1, 2, 3, 1, 2, 1],
+    })
+    assert all(data['A'] < data['B'])
+    assert all(synthetic_data['A'] > synthetic_data['B'])
+
+    metadata = Metadata.load_from_dict({
+        'columns': {
+            'A': {'sdtype': 'numerical'},
+            'B': {'sdtype': 'numerical'},
+        }
+    })
+    pattern = Inequality(
+        low_column_name='A',
+        high_column_name='B',
+    )
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.fit(data)
+    msg = re.escape('The inequality requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more')
+
+    # Run and Assert
+    with pytest.raises(PatternNotMetError, match=msg):
+        synthesizer.validate_cag(synthetic_data=synthetic_data)
