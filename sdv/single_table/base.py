@@ -676,7 +676,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         return deepcopy(self._chained_patterns + self._reject_sampling_patterns)
 
     def validate_cag(self, synthetic_data):
-        """Validate synthetic_data aganist the CAG patterns.
+        """Validate synthetic_data against the CAG patterns.
 
         Args:
             synthetic_data (pd.DataFrame): The synthetic data to validate
@@ -686,24 +686,19 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 Raised if synthetic data does not match CAG patterns.
         """
         invalid_patterns = {}
-        if hasattr(self, '_chained_patterns'):
-            for pattern in self._chained_patterns:
-                valid = pattern.is_valid(data=synthetic_data)
-                if not valid.all():
-                    invalid_rows_str = _get_invalid_rows(valid)
-                    invalid_patterns[pattern] = invalid_rows_str
-        if hasattr(self, '_reject_sampling_patterns'):
-            for pattern in self._reject_sampling_patterns:
-                valid = pattern.is_valid(data=synthetic_data)
-                if not valid.all():
-                    invalid_rows_str = _get_invalid_rows(valid)
-                    invalid_patterns[pattern] = invalid_rows_str
+        for attribute_name in ['_chained_patterns', '_reject_sampling_patterns']:
+            if hasattr(self, attribute_name):
+                for pattern in getattr(self, attribute_name):
+                    valid = pattern.is_valid(data=synthetic_data)
+                    if not valid.all():
+                        invalid_rows_str = _get_invalid_rows(valid)
+                        invalid_patterns[pattern] = invalid_rows_str
         if invalid_patterns:
             msg = ''
             for pattern, idx_str in invalid_patterns.items():
                 pattern_name = _convert_to_snake_case(type(pattern).__name__)
                 pattern_name = pattern_name.replace('_', ' ')
-                msg += f'The {pattern_name} requirement is not met for row indices: {idx_str}'
+                msg += f'The {pattern_name} requirement is not met for row indices: {idx_str}.\n'
             raise PatternNotMetError(msg)
 
     def get_metadata(self, version='original'):

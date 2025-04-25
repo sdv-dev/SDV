@@ -118,17 +118,28 @@ def test_fixed_incremements_with_multi_table():
         pd.testing.assert_frame_equal(table, reverse_transformed[table_name])
 
 
-def test_validate_cag():
-    # Setup
-    increment_value = 10
-    data = pd.DataFrame({'A': [10, 20, 30, 40, 50]})
-    synthetic_data = pd.DataFrame({'A': [100, 200, 300, 400, 500]})
-    metadata = Metadata.load_from_dict({
+@pytest.fixture()
+def data():
+    return pd.DataFrame({'A': [10, 20, 30, 40, 50]})
+
+
+@pytest.fixture()
+def metadata():
+    return Metadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'numerical'},
         }
     })
-    pattern = FixedIncrements(column_name='A', increment_value=increment_value)
+
+
+@pytest.fixture()
+def pattern():
+    return FixedIncrements(column_name='A', increment_value=10)
+
+
+def test_validate_cag(data, metadata, pattern):
+    # Setup
+    synthetic_data = pd.DataFrame({'A': [100, 200, 300, 400, 500]})
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.add_cag(patterns=[pattern])
     synthesizer.fit(data)
@@ -137,21 +148,13 @@ def test_validate_cag():
     synthesizer.validate_cag(synthetic_data=synthetic_data)
 
     # Assert
-    assert all(data['A'] % increment_value == 0)
-    assert all(synthetic_data['A'] % increment_value == 0)
+    assert all(data['A'] % pattern.increment_value == 0)
+    assert all(synthetic_data['A'] % pattern.increment_value == 0)
 
 
-def test_validate_cag_raises():
+def test_validate_cag_raises(data, metadata, pattern):
     # Setup
-    increment_value = 2
-    data = pd.DataFrame({'A': [2, 4, 6, 8, 10, 12]})
     synthetic_data = pd.DataFrame({'A': [1, 3, 5, 7, 9, 12]})
-    metadata = Metadata.load_from_dict({
-        'columns': {
-            'A': {'sdtype': 'numerical'},
-        }
-    })
-    pattern = FixedIncrements(column_name='A', increment_value=increment_value)
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.add_cag(patterns=[pattern])
     synthesizer.fit(data)

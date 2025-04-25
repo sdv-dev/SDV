@@ -11,27 +11,37 @@ from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from tests.utils import run_pattern
 
 
-def test_range_pattern_integers():
-    """Test that Range pattern works with integer columns."""
-    # Setup
-    data = pd.DataFrame({
+@pytest.fixture()
+def data():
+    return pd.DataFrame({
         'A': [1, 2, 3, 1, 2, 1],
         'B': [10, 20, 30, 10, 20, 10],
         'C': [100, 200, 300, 100, 200, 100],
     })
-    metadata = Metadata.load_from_dict({
+
+
+@pytest.fixture()
+def metadata():
+    return Metadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'numerical'},
             'B': {'sdtype': 'numerical'},
             'C': {'sdtype': 'numerical'},
         }
     })
-    pattern = Range(
+
+
+@pytest.fixture()
+def pattern():
+    return Range(
         low_column_name='A',
         middle_column_name='B',
         high_column_name='C',
     )
 
+
+def test_range_pattern_integers(data, metadata, pattern):
+    """Test that Range pattern works with integer columns."""
     # Run
     updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
 
@@ -48,7 +58,7 @@ def test_range_pattern_integers():
     pd.testing.assert_frame_equal(data, reverse_transformed)
 
 
-def test_range_pattern_with_nans():
+def test_range_pattern_with_nans(metadata, pattern):
     """Test that Range pattern works with NaNs."""
     # Setup
     data = pd.DataFrame({
@@ -56,19 +66,6 @@ def test_range_pattern_with_nans():
         'B': [np.nan, 20, 30, 10, 20, None],
         'C': [None, 200, 300, 100, 200, None],
     })
-    metadata = Metadata.load_from_dict({
-        'columns': {
-            'A': {'sdtype': 'numerical'},
-            'B': {'sdtype': 'numerical'},
-            'C': {'sdtype': 'numerical'},
-        }
-    })
-
-    pattern = Range(
-        low_column_name='A',
-        middle_column_name='B',
-        high_column_name='C',
-    )
 
     # Run
     updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
@@ -397,25 +394,8 @@ def test_range_multiple_patterns_different_mid_columns():
     assert all(samples['mid2'] < samples['high2'])
 
 
-def test_validate_cag():
+def test_validate_cag(data, metadata, pattern):
     # Setup
-    data = pd.DataFrame({
-        'low': [1, 2, 3, 1, 2, 1],
-        'mid': [5, 6, 7, 8, 9, 9],
-        'high': [10, 20, 30, 10, 20, 10],
-    })
-    metadata = Metadata.load_from_dict({
-        'columns': {
-            'low': {'sdtype': 'numerical'},
-            'mid': {'sdtype': 'numerical'},
-            'high': {'sdtype': 'numerical'},
-        }
-    })
-    pattern = Range(
-        low_column_name='low',
-        middle_column_name='mid',
-        high_column_name='high',
-    )
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.add_cag(patterns=[pattern])
     synthesizer.fit(data)
@@ -425,34 +405,17 @@ def test_validate_cag():
     synthesizer.validate_cag(synthetic_data=synthetic_data)
 
     # Assert
-    assert all(synthetic_data['low'] < synthetic_data['mid'])
-    assert all(synthetic_data['mid'] < synthetic_data['high'])
+    assert all(synthetic_data['A'] < synthetic_data['B'])
+    assert all(synthetic_data['B'] < synthetic_data['C'])
 
 
-def test_validate_cag_raises():
+def test_validate_cag_raises(data, metadata, pattern):
     # Setup
-    data = pd.DataFrame({
-        'low': [1, 2, 3, 1, 2, 1],
-        'mid': [5, 6, 7, 8, 9, 9],
-        'high': [10, 20, 30, 10, 20, 10],
-    })
     synthetic_data = pd.DataFrame({
-        'low': data['mid'],
-        'mid': data['low'],
-        'high': data['high'],
+        'A': data['B'],
+        'B': data['A'],
+        'C': data['C'],
     })
-    metadata = Metadata.load_from_dict({
-        'columns': {
-            'low': {'sdtype': 'numerical'},
-            'mid': {'sdtype': 'numerical'},
-            'high': {'sdtype': 'numerical'},
-        }
-    })
-    pattern = Range(
-        low_column_name='low',
-        middle_column_name='mid',
-        high_column_name='high',
-    )
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.add_cag(patterns=[pattern])
     synthesizer.fit(data)

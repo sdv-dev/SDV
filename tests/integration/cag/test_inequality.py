@@ -11,24 +11,34 @@ from sdv.single_table import GaussianCopulaSynthesizer
 from tests.utils import run_pattern
 
 
-def test_inequality_pattern_integers():
-    """Test that Inequality pattern works with integer columns."""
-    # Setup
-    data = pd.DataFrame({
+@pytest.fixture()
+def data():
+    return pd.DataFrame({
         'A': [1, 2, 3, 1, 2, 1],
         'B': [10, 20, 30, 10, 20, 10],
     })
-    metadata = Metadata.load_from_dict({
+
+
+@pytest.fixture()
+def metadata():
+    return Metadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'numerical'},
             'B': {'sdtype': 'numerical'},
         }
     })
-    pattern = Inequality(
+
+
+@pytest.fixture()
+def pattern():
+    return Inequality(
         low_column_name='A',
         high_column_name='B',
     )
 
+
+def test_inequality_pattern_integers(data, metadata, pattern):
+    """Test that Inequality pattern works with integer columns."""
     # Run
     updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
 
@@ -44,24 +54,13 @@ def test_inequality_pattern_integers():
     pd.testing.assert_frame_equal(data, reverse_transformed)
 
 
-def test_inequality_pattern_with_nans():
+def test_inequality_pattern_with_nans(metadata, pattern):
     """Test that Inequality pattern works with NaNs."""
     # Setup
     data = pd.DataFrame({
         'A': [None, 2, np.nan, 1, 2, 1],
         'B': [np.nan, 20, 30, 10, 20, None],
     })
-    metadata = Metadata.load_from_dict({
-        'columns': {
-            'A': {'sdtype': 'numerical'},
-            'B': {'sdtype': 'numerical'},
-        }
-    })
-
-    pattern = Inequality(
-        low_column_name='A',
-        high_column_name='B',
-    )
 
     # Run
     updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
@@ -83,7 +82,7 @@ def test_inequality_pattern_with_nans():
     assert pd.isna(reverse_transformed.iloc[2]['A'])
 
 
-def test_inequality_pattern_datetime():
+def test_inequality_pattern_datetime(pattern):
     """Test that Inequality pattern works with datetime columns."""
     # Setup
     data = pd.DataFrame({
@@ -110,10 +109,6 @@ def test_inequality_pattern_datetime():
             'B': {'sdtype': 'datetime'},
         }
     })
-    pattern = Inequality(
-        low_column_name='A',
-        high_column_name='B',
-    )
 
     # Run
     updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
@@ -134,7 +129,7 @@ def test_inequality_pattern_datetime():
         assert (diff.dt.total_seconds() < 1e-6).all()
 
 
-def test_inequality_pattern_datetime_nans():
+def test_inequality_pattern_datetime_nans(pattern):
     """Test that Inequality pattern works with datetime columns with NaNs."""
     # Setup
     data = pd.DataFrame({
@@ -161,10 +156,6 @@ def test_inequality_pattern_datetime_nans():
             'B': {'sdtype': 'datetime'},
         }
     })
-    pattern = Inequality(
-        low_column_name='A',
-        high_column_name='B',
-    )
 
     # Run
     updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
@@ -188,14 +179,11 @@ def test_inequality_pattern_datetime_nans():
     assert (diff.dt.total_seconds() < 1e-6).all()
 
 
-def test_inequality_pattern_with_multi_table():
+def test_inequality_pattern_with_multi_table(data):
     """Test that Inequality pattern works with multi-table data."""
     # Setup
     data = {
-        'table1': pd.DataFrame({
-            'A': [1, 2, 3, 1, 2, 1],
-            'B': [10, 20, 30, 10, 20, 10],
-        }),
+        'table1': data,
         'table2': pd.DataFrame({'id': range(5)}),
     }
     metadata = Metadata.load_from_dict({
@@ -245,23 +233,9 @@ def test_inequality_pattern_with_multi_table():
         pd.testing.assert_frame_equal(table, reverse_transformed[table_name])
 
 
-def test_inequality_with_numerical():
+def test_inequality_with_numerical(data, metadata, pattern):
     """Test it works with numerical columns."""
     # Setup
-    data = pd.DataFrame({
-        'A': [1, 2, 3, 1, 2, 1],
-        'B': [10, 20, 30, 10, 20, 10],
-    })
-    metadata = Metadata.load_from_dict({
-        'columns': {
-            'A': {'sdtype': 'numerical'},
-            'B': {'sdtype': 'numerical'},
-        }
-    })
-    pattern = Inequality(
-        low_column_name='A',
-        high_column_name='B',
-    )
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.add_cag(patterns=[pattern])
 
@@ -795,23 +769,8 @@ def test_inequality_many_patterns():
         assert all(samples[i] <= samples[i + 1])
 
 
-def test_validate_cag():
+def test_validate_cag(data, metadata, pattern):
     # Setup
-    values = np.random.randint(0, 100, size=1000)
-    data = pd.DataFrame({
-        'low': values,
-        'high': values + 1,
-    })
-    metadata = Metadata.load_from_dict({
-        'columns': {
-            'low': {'sdtype': 'numerical'},
-            'high': {'sdtype': 'numerical'},
-        }
-    })
-    pattern = Inequality(
-        low_column_name='low',
-        high_column_name='high',
-    )
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.add_cag(patterns=[pattern])
     synthesizer.fit(data)
@@ -821,32 +780,17 @@ def test_validate_cag():
     synthesizer.validate_cag(synthetic_data=synthetic_data)
 
     # Assert
-    assert all(synthetic_data['low'] < synthetic_data['high'])
+    assert all(synthetic_data['A'] < synthetic_data['B'])
 
 
-def test_validate_cag_raises():
+def test_validate_cag_raises(data, metadata, pattern):
     # Setup
-    data = pd.DataFrame({
-        'A': [1, 2, 3, 1, 2, 1],
-        'B': [10, 20, 30, 10, 20, 10],
-    })
     synthetic_data = pd.DataFrame({
         'A': [10, 20, 30, 10, 20, 10],
         'B': [1, 2, 3, 1, 2, 1],
     })
     assert all(data['A'] < data['B'])
     assert all(synthetic_data['A'] > synthetic_data['B'])
-
-    metadata = Metadata.load_from_dict({
-        'columns': {
-            'A': {'sdtype': 'numerical'},
-            'B': {'sdtype': 'numerical'},
-        }
-    })
-    pattern = Inequality(
-        low_column_name='A',
-        high_column_name='B',
-    )
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.add_cag(patterns=[pattern])
     synthesizer.fit(data)
