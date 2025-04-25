@@ -13,21 +13,31 @@ from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from tests.utils import run_pattern
 
 
-def test_fixed_combinations_integers():
-    """Test that FixedCombinations constraint works with integer columns."""
-    # Setup
-    data = pd.DataFrame({
+@pytest.fixture()
+def data():
+    return pd.DataFrame({
         'A': [1, 2, 3, 1, 2, 1],
         'B': [10, 20, 30, 10, 20, 10],
     })
-    metadata = Metadata.load_from_dict({
+
+
+@pytest.fixture()
+def metadata():
+    return Metadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'categorical'},
             'B': {'sdtype': 'categorical'},
         }
     })
-    pattern = FixedCombinations(['A', 'B'])
 
+
+@pytest.fixture()
+def pattern():
+    return FixedCombinations(['A', 'B'])
+
+
+def test_fixed_combinations_integers(data, metadata, pattern):
+    """Test that FixedCombinations constraint works with integer columns."""
     # Run
     updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
 
@@ -42,21 +52,13 @@ def test_fixed_combinations_integers():
     pd.testing.assert_frame_equal(data, reverse_transformed)
 
 
-def test_fixed_combinations_with_nans():
+def test_fixed_combinations_with_nans(metadata, pattern):
     """Test that FixedCombinations constraint works with NaNs."""
     # Setup
     data = pd.DataFrame({
         'A': pd.Categorical([1, 2, np.nan, 1, 2, 1]),
         'B': pd.Categorical([10, 20, 30, 10, 20, None]),
     })
-    metadata = Metadata.load_from_dict({
-        'columns': {
-            'A': {'sdtype': 'categorical'},
-            'B': {'sdtype': 'categorical'},
-        }
-    })
-
-    pattern = FixedCombinations(['A', 'B'])
 
     # Run
     updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
@@ -342,19 +344,8 @@ def test_fixed_combinations_multiple_patterns_three_patterns_reject_sampling():
     assert original_ac_combos == synthetic_ac_combos
 
 
-def test_validate_cag():
+def test_validate_cag(data, metadata, pattern):
     # Setup
-    data = pd.DataFrame({
-        'A': [1, 2, 3, 1, 2, 1],
-        'B': [10, 20, 30, 10, 20, 10],
-    })
-    metadata = Metadata.load_from_dict({
-        'columns': {
-            'A': {'sdtype': 'categorical'},
-            'B': {'sdtype': 'categorical'},
-        }
-    })
-    pattern = FixedCombinations(['A', 'B'])
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.add_cag(patterns=[pattern])
     synthesizer.fit(data)
@@ -369,22 +360,10 @@ def test_validate_cag():
     assert original_ab_combos == synthetic_ab_combos
 
 
-def test_validate_cag_raises():
+def test_validate_cag_raises(data, metadata, pattern):
     # Setup
-    data = pd.DataFrame({
-        'A': [1, 2, 3, 1, 2, 1],
-        'B': [10, 20, 30, 10, 20, 10],
-    })
     synthetic_data = data.copy()
     synthetic_data['B'] = [11, 21, 31, 11, 21, 11]
-
-    metadata = Metadata.load_from_dict({
-        'columns': {
-            'A': {'sdtype': 'categorical'},
-            'B': {'sdtype': 'categorical'},
-        }
-    })
-    pattern = FixedCombinations(['A', 'B'])
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.add_cag(patterns=[pattern])
     synthesizer.fit(data)
