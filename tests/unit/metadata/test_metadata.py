@@ -528,8 +528,6 @@ class TestMetadataClass:
         # Run and Assert
         error_msg = re.escape(
             'Relationships:\n'
-            "Relationship between tables (users, payments) uses a foreign key column ('user_id') "
-            'that is already used in another relationship.\n'
             'Relationship between tables (transactions, payments) uses a foreign key column '
             "('user_id') that is already used in another relationship."
         )
