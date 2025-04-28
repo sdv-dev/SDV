@@ -696,7 +696,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         if invalid_patterns:
             msg = ''
             for pattern, idx_str in invalid_patterns.items():
-                pattern_name = _convert_to_snake_case(type(pattern).__name__)
+                pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
                 pattern_name = pattern_name.replace('_', ' ')
                 msg += f'The {pattern_name} requirement is not met for row indices: {idx_str}.\n'
             raise PatternNotMetError(msg)
