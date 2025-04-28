@@ -18,6 +18,8 @@ from sdv._utils import (
     check_synthesizer_version,
     generate_synthesizer_id,
 )
+from sdv.cag._errors import PatternNotMetError
+from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows
 from sdv.errors import (
     ConstraintsNotMetError,
     InvalidDataError,
@@ -185,6 +187,34 @@ class BaseMultiTableSynthesizer:
             return deepcopy(self.patterns)
         else:
             return []
+
+    def validate_cag(self, synthetic_data):
+        """Validate synthetic_data against the CAG patterns.
+
+        Args:
+            synthetic_data (pd.DataFrame): The synthetic data to validate
+
+        Raises:
+            PatternNotMetError:
+                Raised if synthetic data does not match CAG patterns.
+        """
+        invalid_patterns = {}
+        for pattern in self.get_cag():
+            valid_data = pattern.is_valid(data=synthetic_data)
+            for table, valid in valid_data.items():
+                if not valid.all():
+                    invalid_rows_str = _get_invalid_rows(valid)
+                    invalid_patterns[(pattern, table)] = invalid_rows_str
+        if invalid_patterns:
+            msg = ''
+            for (pattern, table), idx_str in invalid_patterns.items():
+                pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
+                pattern_name = pattern_name.replace('_', ' ')
+                msg += (
+                    f"Table '{table}': The {pattern_name} requirement is not "
+                    f'met for row indices: {idx_str}.\n'
+                )
+            raise PatternNotMetError(msg)
 
     def get_metadata(self, version='original'):
         """Get the metadata, either original or modified after applying CAG patterns.

@@ -7,6 +7,7 @@ import pytest
 from sdv.cag import Inequality
 from sdv.cag._errors import PatternNotMetError
 from sdv.metadata import Metadata
+from sdv.multi_table import HMASynthesizer
 from sdv.single_table import GaussianCopulaSynthesizer
 from tests.utils import run_pattern
 
@@ -34,6 +35,42 @@ def pattern():
     return Inequality(
         low_column_name='A',
         high_column_name='B',
+    )
+
+
+@pytest.fixture()
+def data_multi(data):
+    return {
+        'table1': data,
+        'table2': pd.DataFrame({'id': range(5)}),
+    }
+
+
+@pytest.fixture()
+def metadata_multi():
+    return Metadata.load_from_dict({
+        'tables': {
+            'table1': {
+                'columns': {
+                    'A': {'sdtype': 'numerical'},
+                    'B': {'sdtype': 'numerical'},
+                }
+            },
+            'table2': {
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                }
+            },
+        }
+    })
+
+
+@pytest.fixture()
+def pattern_multi():
+    return Inequality(
+        low_column_name='A',
+        high_column_name='B',
+        table_name='table1',
     )
 
 
@@ -179,33 +216,12 @@ def test_inequality_pattern_datetime_nans(pattern):
     assert (diff.dt.total_seconds() < 1e-6).all()
 
 
-def test_inequality_pattern_with_multi_table(data):
+def test_inequality_pattern_with_multi_table(data_multi, metadata_multi, pattern_multi):
     """Test that Inequality pattern works with multi-table data."""
     # Setup
-    data = {
-        'table1': data,
-        'table2': pd.DataFrame({'id': range(5)}),
-    }
-    metadata = Metadata.load_from_dict({
-        'tables': {
-            'table1': {
-                'columns': {
-                    'A': {'sdtype': 'numerical'},
-                    'B': {'sdtype': 'numerical'},
-                }
-            },
-            'table2': {
-                'columns': {
-                    'id': {'sdtype': 'id'},
-                }
-            },
-        }
-    })
-    pattern = Inequality(
-        low_column_name='A',
-        high_column_name='B',
-        table_name='table1',
-    )
+    data = data_multi
+    metadata = metadata_multi
+    pattern = pattern_multi
 
     # Run
     updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
@@ -797,6 +813,102 @@ def test_validate_cag_raises(data, metadata, pattern):
     synthesizer.add_cag(patterns=[pattern])
     synthesizer.fit(data)
     msg = re.escape('The inequality requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more')
+
+    # Run and Assert
+    with pytest.raises(PatternNotMetError, match=msg):
+        synthesizer.validate_cag(synthetic_data=synthetic_data)
+
+
+def test_validate_cag_multi(data_multi, metadata_multi, pattern_multi):
+    """Test validate_cag works with multitable synthetic data generated with Inequality."""
+    # Setup
+    data = data_multi
+    metadata = metadata_multi
+    pattern = pattern_multi
+    synthesizer = HMASynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(100)
+
+    # Run
+    synthesizer.validate_cag(synthetic_data=synthetic_data)
+
+    # Assert
+    assert all(synthetic_data['table1']['A'] < synthetic_data['table1']['B'])
+
+
+def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
+    data = data_multi
+    metadata = metadata_multi
+    pattern = pattern_multi
+    synthetic_data = {
+        'table1': pd.DataFrame({
+            'A': data['table1']['B'],
+            'B': data['table1']['A'],
+        }),
+        'table2': pd.DataFrame({'id': range(5)}),
+    }
+    synthesizer = HMASynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.fit(data)
+    msg = re.escape(
+        "Table 'table1': The inequality requirement is not met for "
+        'row indices: 0, 1, 2, 3, 4, +1 more'
+    )
+
+    # Run and Assert
+    with pytest.raises(PatternNotMetError, match=msg):
+        synthesizer.validate_cag(synthetic_data=synthetic_data)
+
+
+def test_validate_cag_multi_raises_multiple():
+    data = {
+        'table1': pd.DataFrame({
+            'low': [1, 2, 3, 1, 2, 1],
+            'high1': [10, 20, 30, 10, 20, 10],
+            'high2': [10, 20, 30, 10, 20, 10],
+        }),
+        'table2': pd.DataFrame({'id': range(5)}),
+    }
+    synthetic_data = {
+        'table1': pd.DataFrame({
+            'low': [10, 20, 30, 10, 20, 10],
+            'high1': [1, 2, 3, 1, 2, 1],
+            'high2': [1, 2, 3, 1, 2, 1],
+        }),
+        'table2': pd.DataFrame({'id': range(5)}),
+    }
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table1': {
+                'columns': {
+                    'low': {'sdtype': 'numerical'},
+                    'high1': {'sdtype': 'numerical'},
+                    'high2': {'sdtype': 'numerical'},
+                }
+            },
+            'table2': {
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                }
+            },
+        }
+    })
+    pattern1 = Inequality(
+        low_column_name='low',
+        high_column_name='high1',
+        table_name='table1',
+    )
+    pattern2 = Inequality(low_column_name='low', high_column_name='high2', table_name='table1')
+    synthesizer = HMASynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern1, pattern2])
+    synthesizer.fit(data)
+    msg = re.escape(
+        "Table 'table1': The inequality requirement is not met for "
+        'row indices: 0, 1, 2, 3, 4, +1 more.\n'
+        "Table 'table1': The inequality requirement is not met for "
+        'row indices: 0, 1, 2, 3, 4, +1 more.\n',
+    )
 
     # Run and Assert
     with pytest.raises(PatternNotMetError, match=msg):

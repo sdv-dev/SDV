@@ -9,6 +9,7 @@ import pytest
 from sdv.cag import FixedCombinations
 from sdv.cag._errors import PatternNotMetError
 from sdv.metadata import Metadata
+from sdv.multi_table import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from tests.utils import run_pattern
 
@@ -34,6 +35,38 @@ def metadata():
 @pytest.fixture()
 def pattern():
     return FixedCombinations(['A', 'B'])
+
+
+@pytest.fixture()
+def data_multi(data):
+    return {
+        'table1': data,
+        'table2': pd.DataFrame({'id': range(5)}),
+    }
+
+
+@pytest.fixture()
+def metadata_multi():
+    return Metadata.load_from_dict({
+        'tables': {
+            'table1': {
+                'columns': {
+                    'A': {'sdtype': 'categorical'},
+                    'B': {'sdtype': 'categorical'},
+                }
+            },
+            'table2': {
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                }
+            },
+        }
+    })
+
+
+@pytest.fixture()
+def pattern_multi():
+    return FixedCombinations(['A', 'B'], table_name='table1')
 
 
 def test_fixed_combinations_integers(data, metadata, pattern):
@@ -74,32 +107,12 @@ def test_fixed_combinations_with_nans(metadata, pattern):
     pd.testing.assert_frame_equal(data, reverse_transformed)
 
 
-def test_fixed_null_combinations_with_multi_table():
+def test_fixed_null_combinations_with_multi_table(data_multi, metadata_multi, pattern_multi):
     """Test that FixedCombinations constraint works with multi-table data."""
     # Setup
-    data = {
-        'table1': pd.DataFrame({
-            'A': [1, 2, 3, 1, 2, 1],
-            'B': [10, 20, 30, 10, 20, 10],
-        }),
-        'table2': pd.DataFrame({'id': range(5)}),
-    }
-    metadata = Metadata.load_from_dict({
-        'tables': {
-            'table1': {
-                'columns': {
-                    'A': {'sdtype': 'categorical'},
-                    'B': {'sdtype': 'categorical'},
-                }
-            },
-            'table2': {
-                'columns': {
-                    'id': {'sdtype': 'id'},
-                }
-            },
-        }
-    })
-    pattern = FixedCombinations(['A', 'B'], table_name='table1')
+    data = data_multi
+    metadata = metadata_multi
+    pattern = pattern_multi
 
     # Run
     updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
@@ -371,6 +384,52 @@ def test_validate_cag_raises(data, metadata, pattern):
     synthesizer.fit(data)
     msg = re.escape(
         'The fixed combinations requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more'
+    )
+
+    # Run and Assert
+    with pytest.raises(PatternNotMetError, match=msg):
+        synthesizer.validate_cag(synthetic_data=synthetic_data)
+
+
+def test_validate_cag_multi(data_multi, metadata_multi, pattern_multi):
+    """Test validate_cag works with multitable data generated with FixedCombinations."""
+    # Setup
+    data = data_multi
+    metadata = metadata_multi
+    pattern = pattern_multi
+    synthesizer = HMASynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(100)
+
+    # Run
+    synthesizer.validate_cag(synthetic_data=synthetic_data)
+
+    # Assert
+    original_ab_combos = set(zip(data['table1']['A'], data['table1']['B']))
+    synthetic_ab_combos = set(zip(synthetic_data['table1']['A'], synthetic_data['table1']['B']))
+    assert original_ab_combos == synthetic_ab_combos
+
+
+def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
+    """Test validate_cag raises an error with bad multitable data with FixedCombinations."""
+    # Setup
+    data = data_multi
+    metadata = metadata_multi
+    pattern = pattern_multi
+    synthetic_data = {
+        'table1': pd.DataFrame({
+            'A': [1, 2, 3, 1, 2, 1],
+            'B': [11, 21, 31, 11, 21, 11],
+        }),
+        'table2': pd.DataFrame({'id': range(5)}),
+    }
+    synthesizer = HMASynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.fit(data)
+    msg = re.escape(
+        "Table 'table1': The fixed combinations requirement is "
+        'not met for row indices: 0, 1, 2, 3, 4, +1 more'
     )
 
     # Run and Assert
