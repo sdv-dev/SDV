@@ -342,8 +342,8 @@ class TestBaseSingleTableSynthesizer:
 
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.Metadata.load_from_dict')
-    def test_get_metadata(self, mock_load_from_dict, _):
-        """Test that it returns the ``metadata`` object."""
+    def test_get_metadata_default(self, mock_load_from_dict, _):
+        """Test that get_metadata returns the 'original' metadata by default."""
         # Setup
         metadata = Metadata()
         metadata.get_column_names = Mock(return_value=[])
@@ -358,6 +358,63 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         assert result == mock_converted_metadata
+        mock_load_from_dict.assert_called_once()
+
+    @patch('sdv.single_table.base.DataProcessor')
+    @patch('sdv.single_table.base.Metadata.load_from_dict')
+    def test_get_metadata_original(self, mock_load_from_dict, _):
+        """Test get_metadata with version='original'."""
+        # Setup
+        metadata = Metadata()
+        metadata.get_column_names = Mock(return_value=[])
+        instance = BaseSingleTableSynthesizer(
+            metadata, enforce_min_max_values=False, enforce_rounding=False
+        )
+        mock_converted_metadata = Mock()
+        mock_load_from_dict.return_value = mock_converted_metadata
+
+        # Run
+        result = instance.get_metadata(version='original')
+
+        # Assert
+        assert result == mock_converted_metadata
+        mock_load_from_dict.assert_called_once()
+
+    @patch('sdv.single_table.base.DataProcessor')
+    @patch('sdv.single_table.base.Metadata.load_from_dict')
+    def test_get_metadata_modified(self, mock_load_from_dict, _):
+        """Test get_metadata with version='modified'."""
+        # Setup
+        metadata = Metadata()
+        metadata.get_column_names = Mock(return_value=[])
+        instance = BaseSingleTableSynthesizer(
+            metadata, enforce_min_max_values=False, enforce_rounding=False
+        )
+        instance.metadata = metadata
+
+        mock_converted_metadata = Mock()
+        mock_load_from_dict.return_value = mock_converted_metadata
+
+        # Run
+        result = instance.get_metadata(version='modified')
+
+        # Assert
+        assert result == mock_converted_metadata
+        mock_load_from_dict.assert_called_once()
+
+    @patch('sdv.single_table.base.DataProcessor')
+    def test_get_metadata_invalid_version(self, _):
+        """Test get_metadata raises ValueError on invalid version."""
+        # Setup
+        metadata = Metadata()
+        metadata.get_column_names = Mock(return_value=[])
+        instance = BaseSingleTableSynthesizer(
+            metadata, enforce_min_max_values=False, enforce_rounding=False
+        )
+
+        # Run and assert
+        with pytest.raises(ValueError, match="Version can only be 'original' or 'modified'."):
+            instance.get_metadata(version='invalid')
 
     def test_auto_assign_transformers(self):
         """Test that the ``DataProcessor.prepare_for_fitting`` is being called."""

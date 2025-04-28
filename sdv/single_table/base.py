@@ -328,9 +328,28 @@ class BaseSynthesizer:
 
         return instantiated_parameters
 
-    def get_metadata(self):
-        """Return the ``Metadata`` for this synthesizer."""
+    def get_metadata(self, version='original'):
+        """Return the ``Metadata`` for this synthesizer.
+
+        Args:
+            version (str): The version of metadata to retrieve.
+                Must be either 'original' or 'modified'. Defaults to 'original'.
+
+        Returns:
+            Metadata:
+                The corresponding Metadata object for the requested version.
+
+        Raises:
+            ValueError:
+                If the specified version is not 'original' or 'modified'.
+        """
+        if version not in ('original', 'modified'):
+            raise ValueError("Version can only be 'original' or 'modified'.")
+
         table_name = getattr(self, '_table_name', None)
+        if version == 'original':
+            return Metadata.load_from_dict(self._original_metadata.to_dict(), table_name)
+
         return Metadata.load_from_dict(self.metadata.to_dict(), table_name)
 
     def load_custom_constraint_classes(self, filepath, class_names):
