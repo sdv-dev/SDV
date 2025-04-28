@@ -345,6 +345,7 @@ def test_fixed_combinations_multiple_patterns_three_patterns_reject_sampling():
 
 
 def test_validate_cag(data, metadata, pattern):
+    """Test validate_cag works with synthetic data generated with FixedCombinations."""
     # Setup
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.add_cag(patterns=[pattern])
@@ -361,6 +362,7 @@ def test_validate_cag(data, metadata, pattern):
 
 
 def test_validate_cag_raises(data, metadata, pattern):
+    """Test validate_cag raises an error with bad synthetic data with FixedCombinations."""
     # Setup
     synthetic_data = data.copy()
     synthetic_data['B'] = [11, 21, 31, 11, 21, 11]

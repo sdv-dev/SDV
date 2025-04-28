@@ -770,6 +770,7 @@ def test_inequality_many_patterns():
 
 
 def test_validate_cag(data, metadata, pattern):
+    """Test validate_cag works with synthetic data generated with Inequality."""
     # Setup
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.add_cag(patterns=[pattern])
@@ -784,6 +785,7 @@ def test_validate_cag(data, metadata, pattern):
 
 
 def test_validate_cag_raises(data, metadata, pattern):
+    """Test validate_cag raises an error with bad synthetic data with Inequality."""
     # Setup
     synthetic_data = pd.DataFrame({
         'A': [10, 20, 30, 10, 20, 10],

@@ -39,6 +39,7 @@ def run_synthesizer(data, metadata):
 
 
 def test_validate_cag(data, metadata):
+    """Test validate_cag works with synthetic data generated with OneHotEncoding."""
     # Setup
     synthesizer = run_synthesizer(data, metadata)
     synthetic_data = synthesizer.sample(100)
@@ -53,6 +54,7 @@ def test_validate_cag(data, metadata):
 
 
 def test_validate_cag_raises(data, metadata):
+    """Test validate_cag raises an error with bad synthetic data with OneHotEncoding."""
     # Setup
     synthetic_data = pd.DataFrame({
         'a': [1, 2, 0],

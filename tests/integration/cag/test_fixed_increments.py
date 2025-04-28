@@ -138,6 +138,7 @@ def pattern():
 
 
 def test_validate_cag(data, metadata, pattern):
+    """Test validate_cag works with synthetic data generated with FixedIncrements."""
     # Setup
     synthetic_data = pd.DataFrame({'A': [100, 200, 300, 400, 500]})
     synthesizer = GaussianCopulaSynthesizer(metadata)
@@ -153,6 +154,7 @@ def test_validate_cag(data, metadata, pattern):
 
 
 def test_validate_cag_raises(data, metadata, pattern):
+    """Test validate_cag raises an error with bad synthetic data with FixedIncrements."""
     # Setup
     synthetic_data = pd.DataFrame({'A': [1, 3, 5, 7, 9, 12]})
     synthesizer = GaussianCopulaSynthesizer(metadata)

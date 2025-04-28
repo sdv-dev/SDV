@@ -395,6 +395,7 @@ def test_range_multiple_patterns_different_mid_columns():
 
 
 def test_validate_cag(data, metadata, pattern):
+    """Test validate_cag works with synthetic data generated with Range."""
     # Setup
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.add_cag(patterns=[pattern])
@@ -410,6 +411,7 @@ def test_validate_cag(data, metadata, pattern):
 
 
 def test_validate_cag_raises(data, metadata, pattern):
+    """Test validate_cag raises an error with bad synthetic data with Range."""
     # Setup
     synthetic_data = pd.DataFrame({
         'A': data['B'],
