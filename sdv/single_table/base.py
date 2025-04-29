@@ -685,22 +685,24 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             PatternNotMetError:
                 Raised if synthetic data does not match CAG patterns.
         """
-        invalid_patterns = {}
+        invalid_pattern = None
         transformed_data = synthetic_data
         for pattern in getattr(self, '_chained_patterns', []):
             valid = pattern.is_valid(data=transformed_data)
             if not valid.all():
                 invalid_rows_str = _get_invalid_rows(valid)
-                invalid_patterns[pattern] = invalid_rows_str
+                invalid_pattern = (pattern, invalid_rows_str)
                 break
             else:
                 transformed_data = pattern.transform(data=transformed_data)
-        if invalid_patterns:
+        if invalid_pattern:
             msg = ''
-            for pattern, idx_str in invalid_patterns.items():
-                pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
-                pattern_name = pattern_name.replace('_', ' ')
-                msg += f'The {pattern_name} requirement is not met for row indices: {idx_str}.\n'
+            pattern, invalid_rows_str = invalid_pattern
+            pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
+            pattern_name = pattern_name.replace('_', ' ')
+            msg += (
+                f'The {pattern_name} requirement is not met for row indices: {invalid_rows_str}.\n'
+            )
             raise PatternNotMetError(msg)
 
     def get_metadata(self, version='original'):

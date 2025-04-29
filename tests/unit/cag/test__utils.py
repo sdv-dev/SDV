@@ -7,6 +7,7 @@ import pytest
 
 from sdv.cag._errors import PatternNotMetError
 from sdv.cag._utils import (
+    _convert_to_snake_case,
     _is_list_of_type,
     _remove_columns_from_metadata,
     _validate_table_and_column_names,
@@ -199,3 +200,9 @@ def test__is_list_of_type():
     assert not _is_list_of_type([1, 2])
     assert not _is_list_of_type(1)
     assert not _is_list_of_type('a')
+
+
+def test__convert_to_snake_case():
+    """Test `_convert_to_snake_case` method"""
+    assert _convert_to_snake_case('camelCaseString') == 'camel_case_string'
+    assert _convert_to_snake_case('PascalCaseString') == 'pascal_case_string'
