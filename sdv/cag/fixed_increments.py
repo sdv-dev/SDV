@@ -7,11 +7,11 @@ from sdv.cag._errors import PatternNotMetError
 from sdv.cag._utils import (
     _get_invalid_rows,
     _get_is_valid_dict,
-    _remove_columns_from_metadata,
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
 )
 from sdv.cag.base import BasePattern
+from sdv.metadata import Metadata
 
 
 class FixedIncrements(BasePattern):
@@ -110,18 +110,19 @@ class FixedIncrements(BasePattern):
             (sdv.metadata.Metadata): The updated Metadata with the pattern applied.
         """
         table_name = self._get_single_table_name(metadata)
-        original_columns = list(metadata.tables[table_name].columns)
         increments_column = _create_unique_name(
             self._fixed_increments_column_name, metadata.tables[table_name].columns.keys()
         )
         metadata = metadata.to_dict()
         metadata['tables'][table_name]['columns'][increments_column] = {'sdtype': 'numerical'}
-        metadata = _remove_columns_from_metadata(
-            metadata,
-            table_name,
-            columns_to_drop=original_columns,
-        )
-        return metadata
+        del metadata['tables'][table_name]['columns'][self.column_name]
+
+        metadata['tables'][table_name]['column_relationships'] = [
+            rel
+            for rel in metadata['tables'][table_name].get('column_relationships', [])
+            if self.column_name not in rel['column_names']
+        ]
+        return Metadata.load_from_dict(metadata)
 
     def _fit(self, data, metadata):
         """Learn the dtype of the column.

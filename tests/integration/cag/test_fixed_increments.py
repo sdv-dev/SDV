@@ -135,6 +135,7 @@ def test_fixed_incremements_with_multi_table(data_multi, metadata_multi, pattern
             'table1': {
                 'columns': {
                     'A#increment': {'sdtype': 'numerical'},
+                    'B': {'sdtype': 'numerical'},
                 }
             },
             'table2': {
@@ -186,32 +187,44 @@ def test_validate_cag_raises(data, metadata, pattern):
 
 def test_validate_cag_multi(data_multi, metadata_multi, pattern_multi):
     """Test validate_cag works with multitable data generated with FixedIncrements."""
-    pass
-    # # Setup
-    # data = data_multi
-    # metadata = metadata_multi
-    # pattern = pattern_multi
-    # synthesizer = HMASynthesizer(metadata)
-    # synthesizer.add_cag(patterns=[pattern])
-    # synthesizer.fit(data)
-    # synthetic_data = synthesizer.sample(100)
+    # Setup
+    data = data_multi
+    metadata = metadata_multi
+    pattern = pattern_multi
+    synthesizer = HMASynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(100)
 
-    # # Run
-    # synthesizer.validate_cag(synthetic_data=synthetic_data)
+    # Run
+    synthesizer.validate_cag(synthetic_data=synthetic_data)
 
-    # # Assert
-    # assert all(data['table1']['A'] % pattern.increment_value == 0)
-    # assert all(synthetic_data['table1']['A'] % pattern.increment_value == 0)
+    # Assert
+    assert all(data['table1']['A'] % pattern.increment_value == 0)
+    assert all(synthetic_data['table1']['A'] % pattern.increment_value == 0)
 
 
-def test_validate_cag_multi_raises(metadata_multi):
+def test_validate_cag_multi_raises():
     """Test validate_cag raises an error with bad multitable data with FixedIncrements."""
     # Setup
     data = {
         'table1': pd.DataFrame({'A': [2, 4, 6, 8, 10]}),
         'table2': pd.DataFrame({'id': range(5)}),
     }
-    metadata = metadata_multi
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table1': {
+                'columns': {
+                    'A': {'sdtype': 'numerical'},
+                }
+            },
+            'table2': {
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                }
+            },
+        }
+    })
     pattern = FixedIncrements(column_name='A', table_name='table1', increment_value=2)
     synthetic_data = {
         'table1': pd.DataFrame({'A': [1, 3, 5, 7, 9, 12]}),
