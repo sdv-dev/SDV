@@ -192,33 +192,27 @@ class BaseMultiTableSynthesizer:
         """Validate synthetic_data against the CAG patterns.
 
         Args:
-            synthetic_data (pd.DataFrame): The synthetic data to validate
+            data (dict[str, pd.DataFrame]): The synthetic data to validate
 
         Raises:
             PatternNotMetError:
                 Raised if synthetic data does not match CAG patterns.
         """
-        invalid_pattern = None
         transformed_data = synthetic_data
         for pattern in self.get_cag():
             valid_data = pattern.is_valid(data=transformed_data)
             table_name = pattern.table_name
             if not valid_data[table_name].all():
                 invalid_rows_str = _get_invalid_rows(valid_data[table_name])
-                invalid_pattern = (pattern, table_name, invalid_rows_str)
-                break
+                pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
+                pattern_name = pattern_name.replace('_', ' ')
+                msg = (
+                    f"Table '{table_name}': The {pattern_name} requirement is not "
+                    f'met for row indices: {invalid_rows_str}.\n'
+                )
+                raise PatternNotMetError(msg)
             else:
                 transformed_data = pattern.transform(data=transformed_data)
-        if invalid_pattern:
-            msg = ''
-            pattern, table_name, invalid_rows_str = invalid_pattern
-            pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
-            pattern_name = pattern_name.replace('_', ' ')
-            msg += (
-                f"Table '{table_name}': The {pattern_name} requirement is not "
-                f'met for row indices: {invalid_rows_str}.\n'
-            )
-            raise PatternNotMetError(msg)
 
     def get_metadata(self, version='original'):
         """Get the metadata, either original or modified after applying CAG patterns.
@@ -363,7 +357,7 @@ class BaseMultiTableSynthesizer:
         Validate that the metadata matches the data and thta every table's constraints are valid.
 
         Args:
-            data (dict):
+            data (dict[str, pd.DataFrame]):
                 A dictionary of table names to pd.DataFrames.
         """
         errors = []
@@ -406,7 +400,7 @@ class BaseMultiTableSynthesizer:
         with the required transformers for the current data.
 
         Args:
-            data (dict):
+            data (dict[str, pd.DataFrame]):
                 Mapping of table name to pandas.DataFrame.
 
         Raises:
@@ -476,7 +470,7 @@ class BaseMultiTableSynthesizer:
         """Transform the raw data to numerical space.
 
         Args:
-            data (dict):
+            data (dict[str, pd.DataFrame]):
                 Dictionary mapping each table name to a ``pandas.DataFrame``.
 
         Returns:

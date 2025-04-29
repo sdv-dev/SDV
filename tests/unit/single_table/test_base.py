@@ -2290,22 +2290,6 @@ class TestBaseSingleTableSynthesizer:
             }
 
     def test_validate_cag(self):
-        """Test the ``_validate_cag`` method."""
-        # Setup
-        synthetic_data = pd.DataFrame()
-        original_metadata = Metadata()
-        instance = BaseSingleTableSynthesizer(original_metadata)
-        cag_mock_1 = Mock()
-        instance._chained_patterns = [cag_mock_1]
-
-        # Run
-        instance.validate_cag(synthetic_data)
-
-        # Assert
-        cag_mock_1.is_valid.assert_called_once_with(data=synthetic_data)
-        cag_mock_1.transform.assert_called_once_with(data=synthetic_data)
-
-    def test_validate_cag_multiple_patterns(self):
         """Test the ``_validate_cag`` method with multiple patterns."""
         # Setup
         synthetic_data = pd.DataFrame()
