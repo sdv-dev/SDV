@@ -199,12 +199,16 @@ class BaseMultiTableSynthesizer:
                 Raised if synthetic data does not match CAG patterns.
         """
         invalid_patterns = {}
+        transformed_data = synthetic_data
         for pattern in self.get_cag():
-            valid_data = pattern.is_valid(data=synthetic_data)
-            for table, valid in valid_data.items():
-                if not valid.all():
-                    invalid_rows_str = _get_invalid_rows(valid)
-                    invalid_patterns[(pattern, table)] = invalid_rows_str
+            valid_data = pattern.is_valid(data=transformed_data)
+            table_name = pattern.table_name
+            if not valid_data[table_name].all():
+                invalid_rows_str = _get_invalid_rows(valid_data[table_name])
+                invalid_patterns[(pattern, table_name)] = invalid_rows_str
+                break
+            else:
+                transformed_data = pattern.transform(data=transformed_data)
         if invalid_patterns:
             msg = ''
             for (pattern, table), idx_str in invalid_patterns.items():

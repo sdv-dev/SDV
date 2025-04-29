@@ -686,13 +686,15 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 Raised if synthetic data does not match CAG patterns.
         """
         invalid_patterns = {}
-        for attribute_name in ['_chained_patterns', '_reject_sampling_patterns']:
-            if hasattr(self, attribute_name):
-                for pattern in getattr(self, attribute_name):
-                    valid = pattern.is_valid(data=synthetic_data)
-                    if not valid.all():
-                        invalid_rows_str = _get_invalid_rows(valid)
-                        invalid_patterns[pattern] = invalid_rows_str
+        transformed_data = synthetic_data
+        for pattern in getattr(self, '_chained_patterns', []):
+            valid = pattern.is_valid(data=transformed_data)
+            if not valid.all():
+                invalid_rows_str = _get_invalid_rows(valid)
+                invalid_patterns[pattern] = invalid_rows_str
+                break
+            else:
+                transformed_data = pattern.transform(data=transformed_data)
         if invalid_patterns:
             msg = ''
             for pattern, idx_str in invalid_patterns.items():
