@@ -649,29 +649,14 @@ def test_inequality_multiple_patterns():
     assert all(samples['low'] <= samples['high2'])
 
 
-def test_inequality_multiple_patterns_reject_sampling():
+def test_inequality_multiple_patterns_reject_sampling(
+    data_reject, metadata_reject, patterns_reject
+):
     """Test that Inequality pattern works with multiple patterns using reject sampling."""
     # Setup
-    data = pd.DataFrame({
-        'low': [1, 2, 3, 1, 2, 1],
-        'low2': [1, 2, 3, 1, 2, 1],
-        'high': [10, 20, 30, 10, 20, 10],
-    })
-    metadata = Metadata.load_from_dict({
-        'columns': {
-            'low': {'sdtype': 'numerical'},
-            'low2': {'sdtype': 'numerical'},
-            'high': {'sdtype': 'numerical'},
-        }
-    })
-    pattern1 = Inequality(
-        low_column_name='low',
-        high_column_name='high',
-    )
-    pattern2 = Inequality(
-        low_column_name='low2',
-        high_column_name='high',
-    )
+    data = data_reject
+    metadata = metadata_reject
+    pattern1, pattern2 = patterns_reject
 
     # Run
     synthesizer = GaussianCopulaSynthesizer(metadata)
@@ -885,6 +870,9 @@ def test_validate_cag_multi_with_reject(data_reject, metadata_reject, patterns_r
 
     # Run
     synthesizer.validate_cag(synthetic_data=synthetic_data)
+
+    # Assert
+    assert all(synthetic_data['low'] <= synthetic_data['high'])
 
 
 def test_validate_cag_multi_with_reject_raises(data_reject, metadata_reject, patterns_reject):

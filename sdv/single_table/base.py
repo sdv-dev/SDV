@@ -695,6 +695,12 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 break
             else:
                 transformed_data = pattern.transform(data=transformed_data)
+        # for pattern in getattr(self, '_reject_sampling_patterns', []):
+        #     valid = pattern.is_valid(data=transformed_data)
+        #     if any(valid):
+        #         invalid_rows_str = _get_invalid_rows(valid)
+        #         invalid_pattern = (pattern, invalid_rows_str)
+        #         break
         if invalid_pattern:
             msg = ''
             pattern, invalid_rows_str = invalid_pattern
