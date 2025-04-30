@@ -877,6 +877,30 @@ def test_validate_cag_multi_with_reject(data_reject, metadata_reject, patterns_r
     assert all(synthetic_data['low'] <= synthetic_data['high'])
 
 
+def test_validate_cag_multi_with_reject_raises(data_reject, metadata_reject, patterns_reject):
+    """Test validate_cag raises an error due reject sampling pattern not matching."""
+    # Setup
+    data = data_reject
+    metadata = metadata_reject
+    pattern1, pattern2 = patterns_reject
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern1, pattern2])
+    synthesizer.fit(data)
+    # pattern 1 matches, but pattern 2 does not
+    synthetic_data = pd.DataFrame({
+        'low': [1, 2, 3, 1, 2, 1],
+        'low2': [10, 20, 30, 10, 20, 10],
+        'high': [5, 4, 6, 7, 8, 9],
+    })
+    msg = re.escape(
+        'The inequality requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more.'
+    )
+
+    # Run and Assert
+    with pytest.raises(PatternNotMetError, match=msg):
+        synthesizer.validate_cag(synthetic_data=synthetic_data)
+
+
 def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
     """Test validate_cag raises an error with multitable data."""
     # Setup

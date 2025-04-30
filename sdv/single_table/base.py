@@ -698,7 +698,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
                     pattern_name = pattern_name.replace('_', ' ')
                     msg = f'The {pattern_name} requirement is not met '
-                    msg += f'for row indices: {invalid_rows_str}.\n'
+                    msg += f'for row indices: {invalid_rows_str}.'
                     raise PatternNotMetError(msg)
                 elif attribute == '_chained_patterns':
                     transformed_data = pattern.transform(data=transformed_data)

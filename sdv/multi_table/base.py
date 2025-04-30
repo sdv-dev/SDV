@@ -209,7 +209,7 @@ class BaseMultiTableSynthesizer:
                     pattern_name = pattern_name.replace('_', ' ')
                     msg = (
                         f"Table '{table_name}': The {pattern_name} requirement is not "
-                        f'met for row indices: {invalid_rows_str}.\n'
+                        f'met for row indices: {invalid_rows_str}.'
                     )
                     raise PatternNotMetError(msg)
             else:
