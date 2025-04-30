@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - issue-2494-dtypes-benchmark-nulls
 
 jobs:
   run_dtypes_benchmark:
