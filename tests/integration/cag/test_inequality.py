@@ -860,6 +860,7 @@ def patterns_reject():
 
 
 def test_validate_cag_multi_with_reject(data_reject, metadata_reject, patterns_reject):
+    """Test validate_cag works with reject sampling."""
     # Setup
     data = data_reject
     metadata = metadata_reject
@@ -877,6 +878,7 @@ def test_validate_cag_multi_with_reject(data_reject, metadata_reject, patterns_r
 
 
 def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
+    """Test validate_cag raises an error with multitable data."""
     # Setup
     data = data_multi
     metadata = metadata_multi
