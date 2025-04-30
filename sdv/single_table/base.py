@@ -685,31 +685,23 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             PatternNotMetError:
                 Raised if synthetic data does not match CAG patterns.
         """
-        invalid_pattern = None
         transformed_data = synthetic_data
-        for pattern in getattr(self, '_chained_patterns', []):
-            valid = pattern.is_valid(data=transformed_data)
-            if not valid.all():
-                invalid_rows_str = _get_invalid_rows(valid)
-                invalid_pattern = (pattern, invalid_rows_str)
-                break
-            else:
-                transformed_data = pattern.transform(data=transformed_data)
-        # for pattern in getattr(self, '_reject_sampling_patterns', []):
-        #     valid = pattern.is_valid(data=transformed_data)
-        #     if any(valid):
-        #         invalid_rows_str = _get_invalid_rows(valid)
-        #         invalid_pattern = (pattern, invalid_rows_str)
-        #         break
-        if invalid_pattern:
-            msg = ''
-            pattern, invalid_rows_str = invalid_pattern
-            pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
-            pattern_name = pattern_name.replace('_', ' ')
-            msg += (
-                f'The {pattern_name} requirement is not met for row indices: {invalid_rows_str}.\n'
-            )
-            raise PatternNotMetError(msg)
+        for attribute in ['_reject_sampling_patterns', '_chained_patterns']:
+            for pattern in getattr(self, attribute, []):
+                if attribute == '_reject_sampling_patterns':
+                    valid = pattern.is_valid(data=synthetic_data)
+                else:
+                    valid = pattern.is_valid(data=transformed_data)
+
+                if not valid.all():
+                    invalid_rows_str = _get_invalid_rows(valid)
+                    pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
+                    pattern_name = pattern_name.replace('_', ' ')
+                    msg = f'The {pattern_name} requirement is not met '
+                    msg += f'for row indices: {invalid_rows_str}.\n'
+                    raise PatternNotMetError(msg)
+                elif attribute == '_chained_patterns':
+                    transformed_data = pattern.transform(data=transformed_data)
 
     def get_metadata(self, version='original'):
         """Get the metadata, either original or modified after applying CAG patterns.

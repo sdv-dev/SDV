@@ -860,6 +860,7 @@ def patterns_reject():
 
 
 def test_validate_cag_multi_with_reject(data_reject, metadata_reject, patterns_reject):
+    # Setup
     data = data_reject
     metadata = metadata_reject
     pattern1, pattern2 = patterns_reject
@@ -875,20 +876,8 @@ def test_validate_cag_multi_with_reject(data_reject, metadata_reject, patterns_r
     assert all(synthetic_data['low'] <= synthetic_data['high'])
 
 
-def test_validate_cag_multi_with_reject_raises(data_reject, metadata_reject, patterns_reject):
-    data = data_reject
-    metadata = metadata_reject
-    pattern1, pattern2 = patterns_reject
-    synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern1, pattern2])
-    synthesizer.fit(data)
-    synthetic_data = synthesizer.sample(100)
-
-    # Run
-    synthesizer.validate_cag(synthetic_data=synthetic_data)
-
-
 def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
+    # Setup
     data = data_multi
     metadata = metadata_multi
     pattern = pattern_multi

@@ -202,15 +202,16 @@ class BaseMultiTableSynthesizer:
         for pattern in self.get_cag():
             valid_data = pattern.is_valid(data=transformed_data)
             table_name = pattern.table_name
-            if not valid_data[table_name].all():
-                invalid_rows_str = _get_invalid_rows(valid_data[table_name])
-                pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
-                pattern_name = pattern_name.replace('_', ' ')
-                msg = (
-                    f"Table '{table_name}': The {pattern_name} requirement is not "
-                    f'met for row indices: {invalid_rows_str}.\n'
-                )
-                raise PatternNotMetError(msg)
+            for table_name, data in valid_data.items():
+                if not valid_data[table_name].all():
+                    invalid_rows_str = _get_invalid_rows(valid_data[table_name])
+                    pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
+                    pattern_name = pattern_name.replace('_', ' ')
+                    msg = (
+                        f"Table '{table_name}': The {pattern_name} requirement is not "
+                        f'met for row indices: {invalid_rows_str}.\n'
+                    )
+                    raise PatternNotMetError(msg)
             else:
                 transformed_data = pattern.transform(data=transformed_data)
 
