@@ -1,6 +1,5 @@
 """Local file handlers."""
 
-import codecs
 import inspect
 import os
 from pathlib import Path
@@ -8,6 +7,10 @@ from pathlib import Path
 import pandas as pd
 
 from sdv.metadata.metadata import Metadata
+
+CSV_DEFAULT_READ_ARGS = {'parse_dates': False, 'low_memory': False, 'on_bad_lines': 'warn'}
+
+UNSUPPORTED_ARGS = frozenset(['filepath_or_buffer', 'path_or_buf'])
 
 
 class BaseLocalHandler:
@@ -52,45 +55,12 @@ class BaseLocalHandler:
 
 
 class CSVHandler(BaseLocalHandler):
-    """A class for handling CSV files.
+    """A class for handling CSV files."""
 
-    Args:
-        sep (str):
-            The separator used for reading and writing CSV files. Defaults to ``,``.
-        encoding (str):
-            The character encoding to use for reading and writing CSV files. Defaults to ``UTF``.
-        decimal (str):
-            The character used to denote the decimal point. Defaults to ``.``.
-        float_format (str or None):
-            The formatting string for floating-point numbers. Optional.
-        quotechar (str):
-            Character used to denote the start and end of a quoted item.
-            Quoted items can include the delimiter and it will be ignored. Defaults to '"'.
-        quoting (int or None):
-            Control field quoting behavior. Default is 0.
+    def __init__(self):
+        pass
 
-    Raises:
-        ValueError:
-            If the provided encoding is not available in the system.
-    """
-
-    def __init__(
-        self, sep=',', encoding='UTF', decimal='.', float_format=None, quotechar='"', quoting=0
-    ):
-        super().__init__(decimal, float_format)
-        try:
-            codecs.lookup(encoding)
-        except LookupError as error:
-            raise ValueError(
-                f"The provided encoding '{encoding}' is not available in your system."
-            ) from error
-
-        self.sep = sep
-        self.encoding = encoding
-        self.quotechar = quotechar
-        self.quoting = quoting
-
-    def read(self, folder_name, file_names=None):
+    def read(self, folder_name, file_names=None, read_csv_parameters=None):
         """Read data from CSV files and return it along with metadata.
 
         Args:
@@ -110,13 +80,23 @@ class CSVHandler(BaseLocalHandler):
         """
         data = {}
         folder_path = Path(folder_name)
+        read_csv_parameters = read_csv_parameters or {}
+        for key, value in CSV_DEFAULT_READ_ARGS.items():
+            read_csv_parameters.setdefault(key, value)
+
+        for key in UNSUPPORTED_ARGS:
+            if key in read_csv_parameters:
+                raise ValueError(
+                    f"The CSVHandler is unable to use the parameter '{key}' "
+                    'because it can read multiple files at once. Please use the '
+                    "'folder_name' and 'file_names' parameters instead."
+                )
 
         if file_names is None:
             # If file_names is None, read all files in the folder ending with ".csv"
             file_paths = folder_path.glob('*.csv')
         else:
             # Validate if the given files exist in the folder
-            file_names = file_names
             missing_files = [file for file in file_names if not (folder_path / file).exists()]
             if missing_files:
                 raise FileNotFoundError(
@@ -126,29 +106,20 @@ class CSVHandler(BaseLocalHandler):
             file_paths = [folder_path / file for file in file_names]
 
         # Read CSV files
-        kwargs = {
-            'sep': self.sep,
-            'encoding': self.encoding,
-            'parse_dates': False,
-            'low_memory': False,
-            'decimal': self.decimal,
-            'on_bad_lines': 'warn',
-            'quotechar': self.quotechar,
-            'quoting': self.quoting,
-        }
-
         args = inspect.getfullargspec(pd.read_csv)
         if 'on_bad_lines' not in args.kwonlyargs:
-            kwargs.pop('on_bad_lines')
-            kwargs['error_bad_lines'] = False
+            read_csv_parameters.pop('on_bad_lines')
+            read_csv_parameters['error_bad_lines'] = False
 
         for file_path in file_paths:
             table_name = file_path.stem  # Remove file extension to get table name
-            data[table_name] = pd.read_csv(file_path, **kwargs)
+            data[table_name] = pd.read_csv(file_path, **read_csv_parameters)
 
         return data
 
-    def write(self, synthetic_data, folder_name, file_name_suffix=None, mode='x'):
+    def write(
+        self, synthetic_data, folder_name, file_name_suffix=None, mode='x', to_csv_parameters=None
+    ):
         """Write synthetic data to CSV files.
 
         Args:
@@ -165,22 +136,17 @@ class CSVHandler(BaseLocalHandler):
                 'a': Append the new CSV rows to any existing files.
         """
         folder_path = Path(folder_name)
+        to_csv_parameters = to_csv_parameters or {}
+        to_csv_parameters.setdefault('index', False)
+        to_csv_parameters['mode'] = mode
+
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
         for table_name, table_data in synthetic_data.items():
             file_name = f'{table_name}{file_name_suffix}' if file_name_suffix else f'{table_name}'
             file_path = f'{folder_path / file_name}.csv'
-            table_data.to_csv(
-                file_path,
-                sep=self.sep,
-                encoding=self.encoding,
-                index=False,
-                float_format=self.float_format,
-                quotechar=self.quotechar,
-                quoting=self.quoting,
-                mode=mode,
-            )
+            table_data.to_csv(file_path, **to_csv_parameters)
 
 
 class ExcelHandler(BaseLocalHandler):

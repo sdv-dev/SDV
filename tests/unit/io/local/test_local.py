@@ -1,6 +1,7 @@
 """Unit tests for local file handlers."""
 
 import os
+import re
 from pathlib import Path
 from unittest.mock import Mock, call, patch
 
@@ -71,34 +72,12 @@ class TestCSVHandler:
         instance = CSVHandler()
 
         # Assert
-        assert instance.decimal == '.'
-        assert instance.float_format is None
-        assert instance.encoding == 'UTF'
-        assert instance.sep == ','
-        assert instance.quotechar == '"'
-        assert instance.quoting == 0
-
-    def test___init___custom(self):
-        """Test custom initialization of the class."""
-        # Run
-        instance = CSVHandler(
-            sep=';', encoding='utf-8', decimal=',', float_format='%.2f', quotechar="'", quoting=2
-        )
-
-        # Assert
-        assert instance.decimal == ','
-        assert instance.float_format == '%.2f'
-        assert instance.encoding == 'utf-8'
-        assert instance.sep == ';'
-        assert instance.quotechar == "'"
-        assert instance.quoting == 2
-
-    def test___init___error_encoding(self):
-        """Test custom initialization of the class."""
-        # Run and Assert
-        error_msg = "The provided encoding 'sdvutf-8' is not available in your system."
-        with pytest.raises(ValueError, match=error_msg):
-            CSVHandler(sep=';', encoding='sdvutf-8', decimal=',', float_format='%.2f')
+        assert not hasattr(instance, 'decimal')
+        assert not hasattr(instance, 'float_format')
+        assert not hasattr(instance, 'encoding')
+        assert not hasattr(instance, 'sep')
+        assert not hasattr(instance, 'quotechar')
+        assert not hasattr(instance, 'quoting')
 
     @patch('sdv.io.local.local.Path.glob')
     @patch('pandas.read_csv')
@@ -167,6 +146,70 @@ class TestCSVHandler:
         error_msg = 'The following files do not exist in the folder: grandchild.csv, parents.csv.'
         with pytest.raises(FileNotFoundError, match=error_msg):
             handler.read(tmpdir, file_names=['grandchild.csv', 'parents.csv'])
+
+    def test_read_files_custom_parameters(self, tmpdir):
+        """Test the read method of CSVHandler class with custom read parameters."""
+        # Setup
+        file_path = Path(tmpdir)
+        read_csv_parameters =  {
+            'encoding': 'latin-1',
+            'nrows': 1,
+            'escapechar': "\\",
+            'quotechar': '"',
+            'sep': ';',
+        }
+        pd.DataFrame({'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']}).to_csv(
+            file_path / 'parent.csv', index=False, sep=';'
+        )
+        pd.DataFrame({'col3': [4, 5, 6], 'col4': ['d', 'e', 'f']}).to_csv(
+            file_path / 'child.csv', index=False, sep=';'
+        )
+
+        handler = CSVHandler()
+
+        # Run
+        data = handler.read(
+            tmpdir,
+            file_names=['parent.csv'],
+            read_csv_parameters=read_csv_parameters
+        )
+
+        # Assert
+        assert 'parent' in data
+        pd.testing.assert_frame_equal(
+            data['parent'], pd.DataFrame({'col1': [1], 'col2': ['a']})
+        )
+
+    def test_read_files_bad_parameters(self, tmpdir):
+        """Test the read method of CSVHandler class with custom read parameters."""
+        # Setup
+        file_path = Path(tmpdir)
+        read_csv_parameters =  {
+            'filepath_or_buffer': 'myfile',
+            'nrows': 1,
+            'sep': ';',
+        }
+        pd.DataFrame({'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']}).to_csv(
+            file_path / 'parent.csv', index=False, sep=';'
+        )
+        pd.DataFrame({'col3': [4, 5, 6], 'col4': ['d', 'e', 'f']}).to_csv(
+            file_path / 'child.csv', index=False, sep=';'
+        )
+
+        handler = CSVHandler()
+
+        # Run and Assert
+        error_msg = re.escape(
+            "The CSVHandler is unable to use the parameter 'filepath_or_buffer' because it can "
+            "read multiple files at once. Please use the 'folder_name' and 'file_names' "
+            'parameters instead.'
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            handler.read(
+                tmpdir,
+                file_names=['parent.csv'],
+                read_csv_parameters=read_csv_parameters
+            )
 
     def test_write(self, tmpdir):
         """Test the write functionality of a CSVHandler."""
