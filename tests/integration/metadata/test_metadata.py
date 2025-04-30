@@ -917,3 +917,84 @@ def test_no_duplicated_foreign_key_relationships_are_generated():
             'child_foreign_key': 'id',
         }
     ]
+
+
+def test_validate_metadata_with_reused_foreign_keys():
+    # Setup
+    metadata_dict = {
+        'tables': {
+            'A1': {
+                'columns': {
+                    'data': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'id': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
+                },
+                'primary_key': 'id',
+            },
+            'A2': {
+                'columns': {
+                    'data': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'id': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
+                    'fk1_A1': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
+                },
+                'primary_key': 'id',
+            },
+            'A3': {
+                'columns': {
+                    'data': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'id': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
+                    'fk1_A1': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
+                    'fk2_A1': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
+                    'fk3_A1_A2': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
+                },
+                'primary_key': 'id',
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'A1',
+                'parent_primary_key': 'id',
+                'child_table_name': 'A2',
+                'child_foreign_key': 'fk1_A1',
+            },
+            {
+                'parent_table_name': 'A1',
+                'parent_primary_key': 'id',
+                'child_table_name': 'A3',
+                'child_foreign_key': 'fk1_A1',
+            },
+            {
+                'parent_table_name': 'A1',
+                'parent_primary_key': 'id',
+                'child_table_name': 'A3',
+                'child_foreign_key': 'fk2_A1',
+            },
+            {
+                'parent_table_name': 'A1',
+                'parent_primary_key': 'id',
+                'child_table_name': 'A3',
+                'child_foreign_key': 'fk3_A1_A2',
+            },
+            {
+                'parent_table_name': 'A2',
+                'parent_primary_key': 'id',
+                'child_table_name': 'A3',
+                'child_foreign_key': 'fk3_A1_A2',
+            },
+            {
+                'parent_table_name': 'A3',
+                'parent_primary_key': 'id',
+                'child_table_name': 'A4',
+                'child_foreign_key': 'fk1_A3',
+            },
+        ],
+    }
+
+    metadata = Metadata.load_from_dict(metadata_dict)
+    # Run and Assert
+    error_msg = re.escape(
+        'Relationships:\n'
+        'Relationship between tables (A2, A3) uses a foreign key column '
+        "('fk3_A1_A2') that is already used in another relationship."
+    )
+    with pytest.raises(InvalidMetadataError, match=error_msg):
+        metadata.validate()
