@@ -43,13 +43,13 @@ NUMPY_DTYPES = {
     }),
     'np.complex64': pd.DataFrame({
         'np.complex64': pd.Series(
-            [np.complex64(12 + 1j), np.complex64(-12 - 1j), np.complex64(3.4e38 + 1j), np.nan],
+            [np.complex64(12 + 1j), np.complex64(-12 - 1j), np.complex64(3.4e38 + 1j), None],
             dtype='complex64',
         )
     }),
     'np.complex128': pd.DataFrame({
         'np.complex128': pd.Series(
-            [np.complex128(13 + 2j), np.complex128(-13 - 2j), np.complex128(1.7e308 + 2j), np.nan],
+            [np.complex128(13 + 2j), np.complex128(-13 - 2j), np.complex128(1.7e308 + 2j), None],
             dtype='complex128',
         )
     }),
