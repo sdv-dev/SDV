@@ -509,6 +509,31 @@ class TestMetadataClass:
         # Run
         metadata_instance.validate()
 
+    def test_validate_invalid_relationship_foreign_key_reused(self, metadata_instance):
+        """Test the method ``validate``.
+
+        Test that when a foreign key is reused in the ``Metadata`` this raises an error.
+
+        Setup:
+            - Update the metadata by adding a duplicated relationship.
+        """
+        # Setup
+        metadata_instance.relationships.append({
+            'parent_table_name': 'transactions',
+            'parent_primary_key': 'transaction_id',
+            'child_table_name': 'payments',
+            'child_foreign_key': 'user_id',
+        })
+
+        # Run and Assert
+        error_msg = re.escape(
+            'Relationships:\n'
+            'Relationship between tables (transactions, payments) uses a foreign key column '
+            "('user_id') that is already used in another relationship."
+        )
+        with pytest.raises(InvalidMetadataError, match=error_msg):
+            metadata_instance.validate()
+
     def test_validate_no_relationships(self, metadata_instance):
         """Test the method ``validate`` without relationships.
 

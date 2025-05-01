@@ -1487,6 +1487,26 @@ class TestDataProcessor:
         # Assert
         assert config['transformers']['numerical_column'].function_kwargs['text'] == '!!%##'
 
+    def test__create_config_with_categorical_id_column(self):
+        """Test the ``_create_config`` method with a non-key, non-regex ID column."""
+        # Setup
+        data = pd.DataFrame({
+            'id_column': ['id1', 'id2', 'id3'],
+        })
+        metadata = SingleTableMetadata().load_from_dict({
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'columns': {'id_column': {'sdtype': 'id'}},
+        })
+        dp = DataProcessor(metadata)
+        dp._get_transformer_instance = Mock()
+
+        # Run
+        config = DataProcessor._create_config(dp, data, set())
+
+        # Assert
+        dp._get_transformer_instance.assert_called_once_with('categorical', {'sdtype': 'id'})
+        assert config['transformers']['id_column'] == dp._get_transformer_instance.return_value
+
     def test_update_transformers_not_fitted(self):
         """Test when ``self._hyper_transformer`` is ``None`` raises a ``NotFittedError``."""
         # Setup
@@ -1544,8 +1564,8 @@ class TestDataProcessor:
             dp.update_transformers({'col1': GaussianNormalizer()})
 
     def test_update_transformers_for_key(self):
-        """Test when ``transformer`` is not ``AnonymizedFaker``, ``IDGenerator,
-        or ``RegexGenerator`` for keys.
+        """Test when ``transformer`` is not ``AnonymizedFaker``, ``IndexGenerator, or
+        ``RegexGenerator`` for keys.
         """
         # Setup
         dp = DataProcessor(SingleTableMetadata())

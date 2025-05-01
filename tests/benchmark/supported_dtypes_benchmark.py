@@ -8,40 +8,34 @@ from functools import partialmethod
 import numpy as np
 import pandas as pd
 import pytest
+from rdt.transformers import (
+    BinaryEncoder,
+    ClusterBasedNormalizer,
+    FloatFormatter,
+    FrequencyEncoder,
+    GaussianNormalizer,
+    IndexGenerator,
+    LabelEncoder,
+    LogitScaler,
+    LogScaler,
+    OneHotEncoder,
+    OptimizedTimestampEncoder,
+    RegexGenerator,
+    UnixTimestampEncoder,
+)
 from tqdm import tqdm
 
 from sdv.metadata import SingleTableMetadata
 from sdv.single_table import GaussianCopulaSynthesizer
-from tests.benchmark.excluded_tests import EXCLUDED_CONSTRAINT_TESTS
-from tests.benchmark.numpy_dtypes import NUMPY_DTYPES
-from tests.benchmark.pandas_dtypes import PANDAS_DTYPES
-from tests.benchmark.pyarrow_dtypes import PYARROW_DTYPES
+from tests.benchmark.excluded_tests import EXCLUDED_DATA_TYPES
+from tests.benchmark.included_tests import INCLUDED_CONSTRAINT_TESTS
+from tests.benchmark.numpy_dtypes import NUMPY_DATETIME_DTYPES, NUMPY_DTYPES
+from tests.benchmark.pandas_dtypes import PANDAS_DATETIME_DTYPES, PANDAS_DTYPES
 from tests.benchmark.utils import get_previous_dtype_result, save_results_to_json
 
 LOGGER = logging.getLogger(__name__)
 
 SINGLE_COLUMN_PREDEFINED_CONSTRAINTS = {
-    'Positive': {
-        'constraint_class': 'Positive',
-        'constraint_parameters': {'column_name': '', 'strict_boundaries': False},
-    },
-    'Negative': {
-        'constraint_class': 'Negative',
-        'constraint_parameters': {'column_name': '', 'strict_boundaries': False},
-    },
-    'ScalarInequality': {
-        'constraint_class': 'ScalarInequality',
-        'constraint_parameters': {'column_name': '', 'relation': '>=', 'value': 0},
-    },
-    'ScalarRange': {
-        'constraint_class': 'ScalarRange',
-        'constraint_parameters': {
-            'column_name': '',
-            'low_value': 0,
-            'high_value': 1,
-            'strict_boundaries': False,
-        },
-    },
     'FixedIncrements': {
         'constraint_class': 'FixedIncrements',
         'constraint_parameters': {
@@ -78,7 +72,12 @@ MULTI_COLUMN_PREDEFINED_CONSTRAINTS = {
 }
 
 
-METADATA_SDTYPES = ('numerical', 'id', 'datetime', 'categorical')
+METADATA_SDTYPES = (
+    {'sdtype': 'numerical'},
+    {'sdtype': 'id'},
+    {'sdtype': 'datetime', 'datetime_format': '%Y%m%d'},
+    {'sdtype': 'categorical'},
+)
 
 
 EXPECTED_METADATA_SDTYPES = {
@@ -150,6 +149,22 @@ EXPECTED_METADATA_SDTYPES = {
     'pa.decimal128': 'numerical',
 }
 
+TRANSFORMERS = {
+    BinaryEncoder: {},
+    ClusterBasedNormalizer: {'max_clusters': 3},
+    FloatFormatter: {},
+    FrequencyEncoder: {},
+    GaussianNormalizer: {},
+    IndexGenerator: {},
+    LabelEncoder: {},
+    LogScaler: {'constant': np.iinfo(np.int8).min},
+    LogitScaler: {'min_value': np.iinfo(np.int64).min, 'max_value': np.iinfo(np.int64).max},
+    OneHotEncoder: {},
+    OptimizedTimestampEncoder: {},
+    RegexGenerator: {},
+    UnixTimestampEncoder: {},
+}
+
 
 @contextlib.contextmanager
 def prevent_tqdm_output():
@@ -161,96 +176,23 @@ def prevent_tqdm_output():
         tqdm.__init__ = partialmethod(tqdm.__init__, disable=False)
 
 
-def _get_metadata_for_dtype_and_sdtype(dtype, sdtype):
+def _get_metadata_for_dtype_and_sdtype(dtype, sdtype_dict):
     """Return the expected metadata."""
-    metadata = SingleTableMetadata.load_from_dict({'columns': {dtype: {'sdtype': sdtype}}})
+    metadata = SingleTableMetadata.load_from_dict({'columns': {dtype: sdtype_dict}})
     return metadata
 
 
-@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES, **PYARROW_DTYPES}.items())
-@pytest.mark.parametrize('sdtype', METADATA_SDTYPES)
-def test_metadata_detection(dtype, data, sdtype):
-    """Test metadata detection for data types using `SingleTableMetadata`.
-
-    This test checks the ability of the `SingleTableMetadata` class to detect
-    metadata from data types coming from `Pandas` and `NumPy`. It compares the
-    detected metadata against expected results.
-
-    Args:
-        dtype (str):
-            The data type to test.
-        data (pd.DataFrame):
-            The data for which metadata detection is performed.
-
-    Raises:
-        AssertionError:
-            If the detected metadata is incorrect or the dtype is no longer supported.
-
-    Test flow:
-        1. Initialize `SingleTableMetadata`.
-        2. Attempt to detect metadata from the provided data.
-        3. Assert if the sdtype matches the expected one.
-    """
-    metadata = SingleTableMetadata()
-    previous_result, _ = get_previous_dtype_result(dtype, sdtype, 'METADATA_DETECTION')
-    result = False
-    try:
-        metadata.detect_from_dataframe(data)
-        column = metadata.columns.get(dtype)
-        detected_sdtype = column.get('sdtype')
-        result = detected_sdtype == EXPECTED_METADATA_SDTYPES.get(dtype)
-    except BaseException as e:
-        LOGGER.debug(f"Error during 'metadata.validate_data' with dtype '{dtype}': {e}")
-
-    assertion_message = f"{dtype} is no longer supported in 'METADATA_DETECTION'."
-    save_results_to_json({'dtype': dtype, 'sdtype': sdtype, 'METADATA_DETECTION': result})
-    if result is False:
-        assert result == previous_result, assertion_message
+def skip_if_unsupported(dtype, sdtype):
+    if (dtype, sdtype) in EXCLUDED_DATA_TYPES:
+        pytest.skip(f"unsupported data type combination '{dtype}' and '{sdtype}'")
 
 
-@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES, **PYARROW_DTYPES}.items())
-@pytest.mark.parametrize('sdtype', METADATA_SDTYPES)
-def test_metadata_validate_data(dtype, data, sdtype):
-    """Test the validation of data using `SingleTableMetadata`.
-
-    This test checks whether the `validate_data` method of the metadata object
-    properly validates the given data for different data types coming from
-    `Pandas` and `NumPy`.
-
-    Args:
-        dtype (str):
-            The data type to test.
-        data (pd.DataFrame):
-            The data for which metadata validation is performed.
-
-    Raises:
-        AssertionError:
-            If the validation result does not match the previously recorded result
-            or if the dtype is no longer supported.
-
-    Test flow:
-        1. Create a predefined `SingleTableMetadata` for the given dtype.
-        2. Attempt to validate the data using `metadata.validate_data` for the provided data.
-        3. Assert if the result is as expected.
-    """
-    metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype)
-    previous_result, _ = get_previous_dtype_result(dtype, sdtype, 'METADATA_VALIDATE_DATA')
-    result = False
-    try:
-        metadata.validate_data(data)
-        result = True
-    except BaseException as e:
-        LOGGER.debug(f"Error during 'metadata.validate_data' with dtype '{dtype}': {e}")
-
-    save_results_to_json({'dtype': dtype, 'sdtype': sdtype, 'METADATA_VALIDATE_DATA': result})
-    if result is False:
-        assertion_message = f"{dtype} is no longer supported by 'METADATA_VALIDATE_DATA'."
-        assert result == previous_result, assertion_message
-
-
-@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES, **PYARROW_DTYPES}.items())
-@pytest.mark.parametrize('sdtype', METADATA_SDTYPES)
-def test_fit_and_sample_synthesizer(dtype, data, sdtype):
+@pytest.mark.parametrize(
+    'dtype, data',
+    {**PANDAS_DTYPES, **NUMPY_DTYPES, **NUMPY_DATETIME_DTYPES, **PANDAS_DATETIME_DTYPES}.items(),
+)
+@pytest.mark.parametrize('sdtype_dict', METADATA_SDTYPES)
+def test_fit_and_sample_synthesizer(dtype, data, sdtype_dict):
     """Test fitting and sampling a synthesizer for different data types.
 
     This test evaluates the `GaussianCopulaSynthesizer` to fit and
@@ -277,8 +219,12 @@ def test_fit_and_sample_synthesizer(dtype, data, sdtype):
         3. Using the synthesizer to sample data, compare the synthetic data types if they match the
            input.
     """
-    metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype)
+    sdtype = sdtype_dict['sdtype']
+    skip_if_unsupported(dtype, sdtype)
+
+    metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype_dict)
     synthesizer = GaussianCopulaSynthesizer(metadata)
+
     previous_fit_result, _ = get_previous_dtype_result(dtype, sdtype, 'SYNTHESIZER_FIT')
     previous_sample_result, _ = get_previous_dtype_result(dtype, sdtype, 'SYNTHESIZER_SAMPLE')
     fit_result = False
@@ -308,6 +254,69 @@ def test_fit_and_sample_synthesizer(dtype, data, sdtype):
     sample_assertion_message = f"{dtype} is no longer supported by 'SYNTHESIZER_SAMPLE'."
     if sample_result is False:
         assert sample_result == previous_sample_result, sample_assertion_message
+
+
+@pytest.mark.parametrize(
+    'dtype, data',
+    {**PANDAS_DTYPES, **NUMPY_DTYPES, **NUMPY_DATETIME_DTYPES, **PANDAS_DATETIME_DTYPES}.items(),
+)
+@pytest.mark.parametrize('sdtype_dict', METADATA_SDTYPES)
+@pytest.mark.parametrize('transformer, transformer_kwargs', TRANSFORMERS.items())
+def test_transformer(dtype, data, sdtype_dict, transformer, transformer_kwargs):
+    """Test using a transformer with different data types."""
+    sdtype = sdtype_dict['sdtype']
+    skip_if_unsupported(dtype, sdtype)
+
+    _transformer = transformer(**transformer_kwargs)
+    transformer_name = _transformer.get_name()
+
+    if sdtype != transformer.INPUT_SDTYPE:
+        pytest.skip("Sdtype does not match transformer's input type, skipping.")
+
+    previous_fit_result, _ = get_previous_dtype_result(dtype, sdtype, f'RDT_{transformer_name}_FIT')
+    previous_transform_result, _ = get_previous_dtype_result(
+        dtype, sdtype, f'RDT_{transformer_name}_TRANSFORM'
+    )
+    previous_reverse_result, _ = get_previous_dtype_result(
+        dtype, sdtype, f'RDT_{transformer_name}_REVERSE'
+    )
+    fit_result = False
+    transform_result = False
+    reverse_result = False
+
+    try:
+        _transformer.fit(data, dtype)
+        fit_result = True
+        transformed_data = _transformer.transform(data)
+        transform_result = True
+        _transformer.reverse_transform(transformed_data)
+        reverse_result = True  # data == reversed_data instead?
+    except BaseException as e:
+        LOGGER.debug(f"Error during fitting/transform/reverse with dtype '{dtype}': {e}")
+
+    save_results_to_json({
+        'dtype': dtype,
+        'sdtype': sdtype,
+        f'RDT_{transformer_name}_FIT': fit_result,
+        f'RDT_{transformer_name}_TRANSFORM': transform_result,
+        f'RDT_{transformer_name}_REVERSE': reverse_result,
+    })
+
+    fit_assertion_message = f"{dtype} is no longer supported by 'RDT_{transformer_name}_FIT'."
+    if fit_result is False:
+        assert fit_result == previous_fit_result, fit_assertion_message
+
+    transform_assertion_message = (
+        f"{dtype} is no longer supported by 'RDT_{transformer_name}_TRANSFORM'."
+    )
+    if transform_result is False:
+        assert transform_result == previous_transform_result, transform_assertion_message
+
+    reverse_assertion_message = (
+        f"{dtype} is no longer supported by 'RDT_{transformer_name}_REVERSE'."
+    )
+    if reverse_result is False:
+        assert reverse_result == previous_reverse_result, reverse_assertion_message
 
 
 def convert_values(value, inequality):
@@ -415,9 +424,14 @@ def _create_multi_column_constraint_data_and_metadata(constraint, data, dtype, s
 @pytest.mark.parametrize(
     'constraint_name, constraint', SINGLE_COLUMN_PREDEFINED_CONSTRAINTS.items()
 )
-@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES, **PYARROW_DTYPES}.items())
-@pytest.mark.parametrize('sdtype', METADATA_SDTYPES)
-def test_fit_and_sample_single_column_constraints(constraint_name, constraint, dtype, data, sdtype):
+@pytest.mark.parametrize(
+    'dtype, data',
+    {**PANDAS_DTYPES, **NUMPY_DTYPES, **NUMPY_DATETIME_DTYPES, **PANDAS_DATETIME_DTYPES}.items(),
+)
+@pytest.mark.parametrize('sdtype_dict', METADATA_SDTYPES)
+def test_fit_and_sample_single_column_constraints(
+    constraint_name, constraint, dtype, data, sdtype_dict
+):
     """Test fitting and sampling with single-column constraints for various data types.
 
     This test evaluates the `GaussianCopulaSynthesizer` to fit data and
@@ -446,13 +460,18 @@ def test_fit_and_sample_single_column_constraints(constraint_name, constraint, d
         3. Adding the constraint to the synthesizer, fitting the data, and verifying the fit result.
         4. Sampling synthetic data and checking that the dtype matches the original.
     """
-    if (sdtype, dtype, constraint_name) not in EXCLUDED_CONSTRAINT_TESTS:
-        metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype)
+    sdtype = sdtype_dict['sdtype']
+    skip_if_unsupported(dtype, sdtype)
+
+    if (sdtype, constraint_name) in INCLUDED_CONSTRAINT_TESTS:
+        metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype_dict)
         synthesizer = GaussianCopulaSynthesizer(metadata)
         sdtype = metadata.columns[dtype].get('sdtype')
-        previous_fit_result, _ = get_previous_dtype_result(dtype, sdtype, f'{constraint_name}_FIT')
+        previous_fit_result, _ = get_previous_dtype_result(
+            dtype, sdtype, f'CONSTRAINT_{constraint_name}_FIT'
+        )
         previous_sample_result, _ = get_previous_dtype_result(
-            dtype, sdtype, f'{constraint_name}_SAMPLE'
+            dtype, sdtype, f'CONSTRAINT_{constraint_name}_SAMPLE'
         )
 
         # Prepare the constraint and data
@@ -483,24 +502,31 @@ def test_fit_and_sample_single_column_constraints(constraint_name, constraint, d
         save_results_to_json({
             'dtype': dtype,
             'sdtype': sdtype,
-            f'{constraint_name}_FIT': fit_result,
-            f'{constraint_name}_SAMPLE': sample_result,
+            f'CONSTRAINT_{constraint_name}_FIT': fit_result,
+            f'CONSTRAINT_{constraint_name}_SAMPLE': sample_result,
         })
         if fit_result is False:
-            fit_assertion_message = f"{dtype} is no longer supported by '{constraint_name}_FIT''."
+            fit_assertion_message = (
+                f"{dtype} is no longer supported by 'CONSTRAINT_{constraint_name}_FIT''."
+            )
             assert fit_result == previous_fit_result, fit_assertion_message
 
         if sample_result is False:
             sample_assertion_message = (
-                f"{dtype} is no longer supported by '{constraint_name}_FIT''."
+                f"{dtype} is no longer supported by 'CONSTRAINT_{constraint_name}_FIT''."
             )
             assert sample_result == previous_sample_result, sample_assertion_message
 
 
 @pytest.mark.parametrize('constraint_name, constraint', MULTI_COLUMN_PREDEFINED_CONSTRAINTS.items())
-@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES, **PYARROW_DTYPES}.items())
-@pytest.mark.parametrize('sdtype', METADATA_SDTYPES)
-def test_fit_and_sample_multi_column_constraints(constraint_name, constraint, dtype, data, sdtype):
+@pytest.mark.parametrize(
+    'dtype, data',
+    {**PANDAS_DTYPES, **NUMPY_DTYPES, **NUMPY_DATETIME_DTYPES, **PANDAS_DATETIME_DTYPES}.items(),
+)
+@pytest.mark.parametrize('sdtype_dict', METADATA_SDTYPES)
+def test_fit_and_sample_multi_column_constraints(
+    constraint_name, constraint, dtype, data, sdtype_dict
+):
     """Test fitting and sampling with multi-column constraints for various data types.
 
     This test evaluates the `GaussianCopulaSynthesizer` to fit data and
@@ -529,12 +555,17 @@ def test_fit_and_sample_multi_column_constraints(constraint_name, constraint, dt
         3. Adding the multi-column constraints to the synthesizer and fitting the data.
         4. Sampling synthetic data and ensuring the synthetic data types match the original.
     """
-    if (sdtype, dtype, constraint_name) not in EXCLUDED_CONSTRAINT_TESTS:
-        metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype)
+    sdtype = sdtype_dict['sdtype']
+    skip_if_unsupported(dtype, sdtype)
+
+    if (sdtype, constraint_name) in INCLUDED_CONSTRAINT_TESTS:
+        metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype_dict)
         sdtype = metadata.columns[dtype].get('sdtype')
-        previous_fit_result, _ = get_previous_dtype_result(dtype, sdtype, f'{constraint_name}_FIT')
+        previous_fit_result, _ = get_previous_dtype_result(
+            dtype, sdtype, f'CONSTRAINT_{constraint_name}_FIT'
+        )
         previous_sample_result, _ = get_previous_dtype_result(
-            dtype, sdtype, f'{constraint_name}_SAMPLE'
+            dtype, sdtype, f'CONSTRAINT_{constraint_name}_SAMPLE'
         )
 
         # Prepare constraints, data required and metadata
@@ -567,13 +598,13 @@ def test_fit_and_sample_multi_column_constraints(constraint_name, constraint, dt
         save_results_to_json({
             'dtype': dtype,
             'sdtype': sdtype,
-            f'{constraint_name}_FIT': fit_result,
-            f'{constraint_name}_SAMPLE': sample_result,
+            f'CONSTRAINT_{constraint_name}_FIT': fit_result,
+            f'CONSTRAINT_{constraint_name}_SAMPLE': sample_result,
         })
         if fit_result is False:
-            fit_message = f"{dtype} failed during '{constraint_name}_FIT'."
+            fit_message = f"{dtype} failed during 'CONSTRAINT_{constraint_name}_FIT'."
             assert fit_result == previous_fit_result, fit_message
 
         if sample_result is False:
-            sample_msg = f"{dtype} failed during '{constraint_name}_SAMPLE'."
+            sample_msg = f"{dtype} failed during 'CONSTRAINT_{constraint_name}_SAMPLE'."
             assert sample_result == previous_sample_result, sample_msg
