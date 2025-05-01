@@ -212,8 +212,7 @@ class BaseMultiTableSynthesizer:
                         f'met for row indices: {invalid_rows_str}.'
                     )
                     raise PatternNotMetError(msg)
-            else:
-                transformed_data = pattern.transform(data=transformed_data)
+            transformed_data = pattern.transform(data=transformed_data)
 
     def get_metadata(self, version='original'):
         """Get the metadata, either original or modified after applying CAG patterns.

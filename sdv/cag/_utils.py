@@ -146,5 +146,5 @@ def _get_is_valid_dict(data, table_name):
 
 
 def _convert_to_snake_case(string):
-    """Convert a string to camel case (words separated by underscores, all lowercase)."""
+    """Convert a string to snake case (words separated by underscores, all lowercase)."""
     return re.sub(r'([a-z])([A-Z])', r'\1_\2', string).lower()
