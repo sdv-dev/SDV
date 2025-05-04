@@ -166,9 +166,6 @@ class BaseMultiTableSynthesizer:
             patterns (list):
                 A list of CAG patterns to apply to the synthesizer.
         """
-        if not hasattr(self, '_original_metadata'):
-            self._original_metadata = self.metadata
-
         metadata = self.metadata
         for pattern in patterns:
             metadata = pattern.get_updated_metadata(metadata)
@@ -355,10 +352,7 @@ class BaseMultiTableSynthesizer:
             data (pandas.DataFrame):
                 The data to validate.
         """
-        metadata = self.metadata
-        if hasattr(self, '_original_metadata'):
-            metadata = self._original_metadata
-
+        metadata = getattr(self, '_original_metadata', self.metadata)
         if hasattr(self, 'patterns'):
             for pattern in self.patterns:
                 pattern.validate(data=data, metadata=metadata)

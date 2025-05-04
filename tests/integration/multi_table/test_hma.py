@@ -2694,18 +2694,28 @@ def test_end_to_end_with_cags():
     """Test HMA with a single-table cag."""
     # Setup
     data, metadata = download_demo('multi_table', 'fake_hotels')
+    data['guests']['amenities_lower'] = data['guests']['amenities_fee'] - np.random.rand(
+        len(data['guests'])
+    )
+    metadata.add_column(
+        table_name='guests',
+        column_name='amenities_lower',
+        sdtype='numerical',
+    )
     synthesizer = HMASynthesizer(metadata)
     pattern = Inequality(
-        low_column_name='checkin_date',
-        high_column_name='checkout_date',
+        low_column_name='amenities_lower',
+        high_column_name='amenities_fee',
         strict_boundaries=False,
         table_name='guests',
     )
     synthesizer.add_cag(patterns=[pattern])
     data_guests = data['guests']
-    clean_data = data_guests[~(data_guests[['checkin_date', 'checkout_date']].isna().any(axis=1))]
+    clean_data = data_guests[
+        ~(data_guests[['amenities_lower', 'amenities_fee']].isna().any(axis=1))
+    ]
     data_invalid = clean_data.copy()
-    data_invalid.loc[0, 'checkin_date'] = '31 Dec 2020'
+    data_invalid.loc[0, 'amenities_lower'] = data_invalid.loc[0, 'amenities_fee'] + 1
     data['guests'] = clean_data
     invalid_data = data.copy()
     invalid_data['guests'] = data_invalid
