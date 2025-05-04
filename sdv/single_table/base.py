@@ -822,7 +822,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             data (pandas.DataFrame):
                 The data to validate.
         """
-        metadata = self._original_metadata
+        metadata = getattr(self, '_original_metadata', self.metadata)
         if hasattr(self, '_chained_patterns'):
             for pattern in self._chained_patterns:
                 pattern.validate(data=data, metadata=metadata)

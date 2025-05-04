@@ -1524,6 +1524,7 @@ class TestBaseMultiTableSynthesizer:
         delattr(instance, 'patterns')
         original_metadata = get_multi_table_metadata()
         instance.metadata = original_metadata
+        instance._original_metadata = original_metadata
         pattern1 = Mock()
         pattern2 = Mock()
         patterns = [pattern1, pattern2]
