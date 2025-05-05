@@ -202,6 +202,10 @@ class TestBaseSingleTableSynthesizer:
         assert len(kwargs) == 4
         assert not args
 
+        assert instance._input_metadata == metadata
+        assert instance._original_metadata != metadata
+        assert instance._original_metadata.to_dict() == metadata.to_dict()
+
         mock_check_metadata_updated.assert_called_once()
         mock_generate_synthesizer_id.assert_called_once_with(instance)
         assert caplog.messages[0] == str({
@@ -212,7 +216,15 @@ class TestBaseSingleTableSynthesizer:
         })
 
     def test__init__with_old_metadata_future_warning(self):
-        """Test that future warning is thrown when using `SingleTableMetadata`"""
+        """Test that future warning is thrown when using `SingleTableMetadata`.
+
+        This test also ensures that the multiple metadata objects stored in the instance are
+        as expected. Where:
+            - `_input_metadata` points to the original input one (id matches).
+            - `metadata` is a new instance of `Metadata`.
+            - `_original_metadata` is a new instance of `Metadata` but the id does not match
+              the `metadata` one.
+        """
         # Setup
         metadata = SingleTableMetadata.load_from_dict({
             'columns': {
@@ -223,9 +235,18 @@ class TestBaseSingleTableSynthesizer:
             "The 'SingleTableMetadata' is deprecated. Please use the new "
             "'Metadata' class for synthesizers."
         )
-        # Run and Assert
+        # Run
         with pytest.warns(FutureWarning, match=warn_msg):
-            BaseSingleTableSynthesizer(metadata)
+            instance = BaseSingleTableSynthesizer(metadata)
+
+        # Assert
+        assert isinstance(instance._input_metadata, SingleTableMetadata)
+        assert isinstance(instance._original_metadata, Metadata)
+        assert isinstance(instance.metadata, Metadata)
+        assert id(instance._input_metadata) == id(metadata)
+        assert id(instance._original_metadata) != id(instance.metadata)
+        assert instance._original_metadata.to_dict() == instance.metadata.to_dict()
+        assert instance._input_metadata.to_dict() != instance.metadata.to_dict()
 
     def test___init__with_unified_metadata(self):
         """Test initialization with unified metadata."""

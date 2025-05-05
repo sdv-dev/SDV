@@ -158,7 +158,7 @@ class BaseSynthesizer:
         self.metadata.validate()
 
         # Points to a metadata object that conserves the initialized status of the synthesizer
-        self._original_metadata = deepcopy(metadata)
+        self._original_metadata = deepcopy(self.metadata)
         self._check_metadata_updated()
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
