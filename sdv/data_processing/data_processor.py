@@ -600,7 +600,9 @@ class DataProcessor:
 
                     sdtypes[column] = 'pii' if column_metadata.get('pii') else 'text'
                 else:
-                    transformers[column] = rdt.transformers.categorical.UniformEncoder()
+                    transformers[column] = self._get_transformer_instance(
+                        'categorical', column_metadata
+                    )
                     sdtypes[column] = 'id'
 
             elif sdtype == 'unknown':
