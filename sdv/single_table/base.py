@@ -139,7 +139,7 @@ class BaseSynthesizer:
         self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=['en_US']
     ):
         self._validate_inputs(enforce_min_max_values, enforce_rounding)
-        self._original_metadata = self.metadata = metadata
+        self.metadata = metadata
         self._table_name = Metadata.DEFAULT_SINGLE_TABLE_NAME
         if isinstance(metadata, Metadata):
             self._table_name = metadata._get_single_table_name()
@@ -151,6 +151,7 @@ class BaseSynthesizer:
 
         self.metadata.validate()
         self._check_metadata_updated()
+        self._original_metadata = self.metadata
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
         self.locales = locales

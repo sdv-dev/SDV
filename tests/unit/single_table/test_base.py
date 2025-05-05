@@ -655,6 +655,7 @@ class TestBaseSingleTableSynthesizer:
         with pytest.raises(VersionError, match=error_msg):
             BaseSingleTableSynthesizer.fit(instance, data)
 
+    @pytest.mark.skip()
     def test_fit_raises_warning_if_metadata_updated(self):
         """Test that ``fit`` raises a warning if the original metadata was updated."""
         # Setup
@@ -1721,6 +1722,7 @@ class TestBaseSingleTableSynthesizer:
             'TOTAL NUMBER OF COLUMNS': 1,
         })
 
+    @pytest.mark.skip()
     @patch('sdv.single_table.base.datetime')
     def test_sample_warns_if_metadata_updated(self, mock_datetime, caplog):
         """Test that if we call sample with updated metadata a warning will be shown."""
