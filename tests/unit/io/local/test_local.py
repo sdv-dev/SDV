@@ -151,10 +151,10 @@ class TestCSVHandler:
         """Test the read method of CSVHandler class with custom read parameters."""
         # Setup
         file_path = Path(tmpdir)
-        read_csv_parameters =  {
+        read_csv_parameters = {
             'encoding': 'latin-1',
             'nrows': 1,
-            'escapechar': "\\",
+            'escapechar': '\\',
             'quotechar': '"',
             'sep': ';',
         }
@@ -169,22 +169,18 @@ class TestCSVHandler:
 
         # Run
         data = handler.read(
-            tmpdir,
-            file_names=['parent.csv'],
-            read_csv_parameters=read_csv_parameters
+            tmpdir, file_names=['parent.csv'], read_csv_parameters=read_csv_parameters
         )
 
         # Assert
         assert 'parent' in data
-        pd.testing.assert_frame_equal(
-            data['parent'], pd.DataFrame({'col1': [1], 'col2': ['a']})
-        )
+        pd.testing.assert_frame_equal(data['parent'], pd.DataFrame({'col1': [1], 'col2': ['a']}))
 
     def test_read_files_bad_parameters(self, tmpdir):
         """Test the read method of CSVHandler class with custom read parameters."""
         # Setup
         file_path = Path(tmpdir)
-        read_csv_parameters =  {
+        read_csv_parameters = {
             'filepath_or_buffer': 'myfile',
             'nrows': 1,
             'sep': ';',
@@ -205,11 +201,7 @@ class TestCSVHandler:
             'parameters instead.'
         )
         with pytest.raises(ValueError, match=error_msg):
-            handler.read(
-                tmpdir,
-                file_names=['parent.csv'],
-                read_csv_parameters=read_csv_parameters
-            )
+            handler.read(tmpdir, file_names=['parent.csv'], read_csv_parameters=read_csv_parameters)
 
     def test_write(self, tmpdir):
         """Test the write functionality of a CSVHandler."""
@@ -287,6 +279,29 @@ class TestCSVHandler:
         dataframe = pd.read_csv(tmpdir / 'synthetic_data' / 'table1.csv')
         expected_dataframe = pd.DataFrame({'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']})
         pd.testing.assert_frame_equal(dataframe, expected_dataframe)
+
+    def test_write_file_with_custom_params(self, tmpdir):
+        """Test the write functionality of a CSVHandler when the mode is ``w``."""
+        # Setup
+        table_one_mock = Mock()
+        table_two_mock = Mock()
+
+        synthetic_data = {'table1': table_one_mock, 'table2': table_two_mock}
+
+        os.makedirs(tmpdir / 'synthetic_data')
+        handler = CSVHandler()
+        write_parameters = {'index': True, 'sep': ';'}
+
+        # Run
+        handler.write(synthetic_data, tmpdir / 'synthetic_data', to_csv_parameters=write_parameters)
+
+        # Assert
+        table_one_mock.to_csv.assert_called_once_with(
+            tmpdir / 'synthetic_data' / 'table1.csv', index=True, sep=';', mode='x'
+        )
+        table_two_mock.to_csv.assert_called_once_with(
+            tmpdir / 'synthetic_data' / 'table2.csv', index=True, sep=';', mode='x'
+        )
 
 
 class TestExcelHandler:

@@ -69,6 +69,11 @@ class CSVHandler(BaseLocalHandler):
             file_names (list of str, optional):
                 The names of CSV files to read. If None, all files ending with '.csv'
                 in the folder are read.
+            read_csv_parameters (dict):
+                A dictionary with additional parameters to use when reading the CSVs.
+                The keys are any of the parameter names of the pandas.read_csv function
+                and the values are your inputs. Defaults to
+                `{'parse_dates': False, 'low_memory': False, 'on_bad_lines': 'warn'}`
 
         Returns:
             dict:
@@ -77,6 +82,10 @@ class CSVHandler(BaseLocalHandler):
         Raises:
             FileNotFoundError:
                 If the specified files do not exist in the folder.
+
+            ValueError:
+                If a provided parameter in `read_csv_parameters` is not supported by the
+                `CSVHandler`.
         """
         data = {}
         folder_path = Path(folder_name)
@@ -134,6 +143,11 @@ class CSVHandler(BaseLocalHandler):
                 'x': Write to new files, raising errors if existing files exist with the same name.
                 'w': Write to new files, clearing any existing files that exist.
                 'a': Append the new CSV rows to any existing files.
+
+            to_csv_parameters (dict):
+                A dictionary with additional parameters to use when writing the CSVs.
+                The keys are any of the parameter names of the pandas.to_csv function and
+                the values are your input. Defaults to `{ 'index': False }`.
         """
         folder_path = Path(folder_name)
         to_csv_parameters = to_csv_parameters or {}
