@@ -76,8 +76,8 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         instance.metadata._updated = False
 
-    def test__check_original_metadata_updated_warns_when_updated(self):
-        """Test the `_check_original_metadata_updated` method raises a warning."""
+    def test__check_input_metadata_updated_warns_when_updated(self):
+        """Test the `_check_input_metadata_updated` method raises a warning."""
         # Setup
         instance = Mock()
         metadata_instance = Mock()
@@ -94,10 +94,10 @@ class TestBaseSingleTableSynthesizer:
 
         # Run and Assert
         with pytest.warns(UserWarning, match=expected_message):
-            BaseSynthesizer._check_original_metadata_updated(instance)
+            BaseSynthesizer._check_input_metadata_updated(instance)
 
-    def test__check_original_metadata_updated_does_not_warn_if_not_updated(self):
-        """Test `_check_original_metadata_updated` does not warn if metadata is not updated."""
+    def test__check_input_metadata_updated_does_not_warn_if_not_updated(self):
+        """Test `_check_input_metadata_updated` does not warn if metadata is not updated."""
         # Setup
         instance = Mock()
         metadata_instance = Mock()
@@ -105,22 +105,22 @@ class TestBaseSingleTableSynthesizer:
         metadata_instance._updated = False
 
         instance.metadata.to_dict.return_value = {'some': 'data'}
-        instance._original_metadata = metadata_instance
+        instance._input_metadata = metadata_instance
 
         # Run and Assert
         with warnings.catch_warnings(record=True) as raised_warnings:
-            BaseSynthesizer._check_original_metadata_updated(instance)
+            BaseSynthesizer._check_input_metadata_updated(instance)
             assert not raised_warnings
 
     @patch('sdv.metadata.Metadata.load_from_dict')
-    def test__check_original_metadata_updated_sets_original_metadata_if_missing(
+    def test__check_input_metadata_updated_sets_original_metadata_if_missing(
         self, mock_load_from_dict
     ):
-        """Test `_check_original_metadata_updated` sets _original_metadata if not present."""
+        """Test `_check_input_metadata_updated` sets _original_metadata if not present."""
         # Setup
         instance = Mock()
         instance.metadata.to_dict.return_value = {'some': 'data'}
-        del instance._original_metadata
+        del instance._input_metadata
 
         loaded_metadata = Mock()
         loaded_metadata._convert_to_single_table.return_value = loaded_metadata
@@ -128,10 +128,10 @@ class TestBaseSingleTableSynthesizer:
         mock_load_from_dict.return_value = loaded_metadata
 
         # Run
-        BaseSynthesizer._check_original_metadata_updated(instance)
+        BaseSynthesizer._check_input_metadata_updated(instance)
 
         # Assert
-        assert instance._original_metadata == loaded_metadata
+        assert instance._input_metadata == loaded_metadata
 
     @patch('sdv.single_table.base._check_regex_format')
     def test__validate_regex_format(self, mock_check_regex_format):
@@ -620,7 +620,7 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor.reset_sampling.assert_called_once_with()
         instance.preprocess.assert_called_once_with(data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
-        instance._check_original_metadata_updated.assert_called_once()
+        instance._check_input_metadata_updated.assert_called_once()
         assert caplog.messages[0] == str({
             'EVENT': 'Fit',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',
@@ -1709,7 +1709,7 @@ class TestBaseSingleTableSynthesizer:
         instance._sample_with_progress_bar.assert_called_once_with(
             10, 50, 5, 'temp.csv', show_progress_bar=True
         )
-        instance._check_original_metadata_updated.assert_called_once_with()
+        instance._check_input_metadata_updated.assert_called_once_with()
         pd.testing.assert_frame_equal(result, pd.DataFrame({'col': [1, 2, 3]}))
         assert caplog.messages[0] == str({
             'EVENT': 'Sample',

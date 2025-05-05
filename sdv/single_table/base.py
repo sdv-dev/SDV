@@ -101,16 +101,16 @@ class BaseSynthesizer:
             for sdtype, transformer in self._model_sdtype_transformers.items():
                 self._data_processor._update_transformers_by_sdtypes(sdtype, transformer)
 
-    def _check_original_metadata_updated(self):
-        if not hasattr(self, '_original_metadata'):
+    def _check_input_metadata_updated(self):
+        if not hasattr(self, '_input_metadata'):
             unified_metadata = Metadata.load_from_dict(self.metadata.to_dict())
-            setattr(self, '_original_metadata', unified_metadata)
+            setattr(self, '_input_metadata', unified_metadata)
 
-        if isinstance(self._original_metadata, Metadata):
-            metadata = self._original_metadata._convert_to_single_table()
+        if isinstance(self._input_metadata, Metadata):
+            metadata = self._input_metadata._convert_to_single_table()
 
         else:
-            metadata = self._original_metadata
+            metadata = self._input_metadata
 
         if metadata._updated:
             warnings.warn(
@@ -139,7 +139,13 @@ class BaseSynthesizer:
         self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=['en_US']
     ):
         self._validate_inputs(enforce_min_max_values, enforce_rounding)
-        self._original_metadata = self.metadata = metadata
+
+        # Points to the input metadata object and allows us to check if user has changed it
+        self._input_metadata = metadata
+
+        # Points to a dynamic metadata object that could be re-created by CAG's
+        self.metadata = metadata
+
         self._table_name = Metadata.DEFAULT_SINGLE_TABLE_NAME
         if isinstance(metadata, Metadata):
             self._table_name = metadata._get_single_table_name()
@@ -150,6 +156,9 @@ class BaseSynthesizer:
             self.metadata.tables[self._table_name]._updated = metadata._updated
 
         self.metadata.validate()
+
+        # Points to a metadata object that conserves the initialized status of the synthesizer
+        self._original_metadata = deepcopy(metadata)
         self._check_metadata_updated()
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
@@ -343,12 +352,26 @@ class BaseSynthesizer:
 
         return instantiated_parameters
 
-    def get_metadata(self):
-        """Return the ``Metadata`` for this synthesizer."""
-        if isinstance(self.metadata, SingleTableMetadata):
-            table_name = getattr(self, '_table_name', None)
-            return Metadata.load_from_dict(self.metadata.to_dict(), table_name)
-        return self.metadata
+    def get_metadata(self, version='original'):
+        """Get the metadata, either original or modified after applying CAG patterns.
+
+        Args:
+            version (str, optional):
+                The version of metadata to return, must be one of 'original' or 'modified'. If
+                'original', will return the original metadata used to instantiate the
+                synthesizer. If 'modified', will return the modified metadata after applying this
+                synthesizer's CAG patterns. Defaults to 'original'.
+        """
+        if version not in ('original', 'modified'):
+            raise ValueError(
+                f"Unrecognized version '{version}', please use 'original' or 'modified'."
+            )
+
+        table_name = getattr(self, '_table_name', None)
+        if hasattr(self, '_original_metadata') and version == 'original':
+            return Metadata.load_from_dict(self._original_metadata.to_dict(), table_name)
+
+        return Metadata.load_from_dict(self.metadata.to_dict(), table_name)
 
     def load_custom_constraint_classes(self, filepath, class_names):
         """Load a custom constraint class for the current synthesizer.
@@ -558,7 +581,7 @@ class BaseSynthesizer:
         })
 
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
-        self._check_original_metadata_updated()
+        self._check_input_metadata_updated()
         self._fitted = False
         self._data_processor.reset_sampling()
         self._random_state_set = False
@@ -688,26 +711,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
     def get_cag(self):
         """Get a list of constraint-augmented generation patterns applied to the synthesizer."""
         return deepcopy(self._chained_patterns + self._reject_sampling_patterns)
-
-    def get_metadata(self, version='original'):
-        """Get the metadata, either original or modified after applying CAG patterns.
-
-        Args:
-            version (str, optional):
-                The version of metadata to return, must be one of 'original' or 'modified'. If
-                'original', will return the original metadata used to instantiate the
-                synthesizer. If 'modified', will return the modified metadata after applying this
-                synthesizer's CAG patterns. Defaults to 'original'.
-        """
-        if version not in ('original', 'modified'):
-            raise ValueError(
-                f"Unrecognized version '{version}', please use 'original' or 'modified'."
-            )
-
-        if hasattr(self, '_original_metadata') and version == 'original':
-            return self._original_metadata
-
-        return super().get_metadata()
 
     def _transform_helper(self, data):
         """Validate and transform all CAG patterns during preprocessing.
@@ -1158,7 +1161,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 ' sampling synthetic data.'
             )
 
-        self._check_original_metadata_updated()
+        self._check_input_metadata_updated()
         sample_timestamp = datetime.datetime.now()
         has_constraints = bool(self._data_processor._constraints)
         has_batches = batch_size is not None and batch_size != num_rows
