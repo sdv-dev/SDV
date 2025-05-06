@@ -655,6 +655,7 @@ class TestBaseSingleTableSynthesizer:
             _fitted_sdv_enterprise_version=None,
             _synthesizer_id='BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         )
+        instance._store_and_convert_original_cols.return_value = False
         data = pd.DataFrame({'column_a': [1, 2, 3], 'name': ['John', 'Doe', 'Johanna']})
         instance._random_state_set = True
         instance._fitted = True
@@ -1099,6 +1100,7 @@ class TestBaseSingleTableSynthesizer:
         data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
         instance = Mock()
         instance._random_state_set = False
+        instance._constraint_col_dtypes = {}
         instance._sample.return_value = pd.DataFrame()
         instance._data_processor.reverse_transform.return_value = data
         instance._data_processor.filter_valid.return_value = data
@@ -1126,6 +1128,7 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe'], 'salary': [90.0, 100.0, 80.0]})
         instance = Mock()
+        instance._constraint_col_dtypes = {}
         instance._sample.return_value = pd.DataFrame()
         instance._data_processor.reverse_transform.return_value = data
         instance._data_processor._hyper_transformer._input_columns = []
@@ -1162,6 +1165,7 @@ class TestBaseSingleTableSynthesizer:
 
         instance = Mock()
         instance._sample.return_value = pd.DataFrame()
+        instance._constraint_col_dtypes = {}
         instance._data_processor._hyper_transformer._input_columns = []
         instance._data_processor.filter_valid = lambda x: x
         instance._data_processor.reverse_transform.return_value = data
@@ -2481,7 +2485,7 @@ class TestBaseSingleTableSynthesizer:
         instance.enforce_rounding = False
         instance.enforce_min_max_values = False
         instance._table_name = 'table'
-        instance._input_metadata = Metadata.load_from_dict({
+        instance._original_metadata = Metadata.load_from_dict({
             'tables': {
                 'table': {
                     'columns': {
@@ -2509,7 +2513,7 @@ class TestBaseSingleTableSynthesizer:
         BaseSingleTableSynthesizer._fit_constraint_column_formatters(instance, data)
 
         # Assert
-        assert instance._dtypes == {
+        assert instance._constraint_col_dtypes == {
             'col1': 'O',
             'col2': 'int64',
             'col3': 'int64',
@@ -2517,24 +2521,26 @@ class TestBaseSingleTableSynthesizer:
             'date_col2': '<M8[ns]',
         }
 
-        assert set(instance._formatters.keys()) == {'col2', 'col3', 'date_col1', 'date_col2'}
+        formatters = instance._constraint_col_formatters
 
-        assert isinstance(instance._formatters['col2'], NumericalFormatter)
-        assert instance._formatters['col2'].enforce_rounding is False
-        assert instance._formatters['col2'].enforce_min_max_values is False
-        assert instance._formatters['col2'].computer_representation == 'Int8'
+        assert set(formatters.keys()) == {'col2', 'col3', 'date_col1', 'date_col2'}
 
-        assert isinstance(instance._formatters['col3'], NumericalFormatter)
-        assert instance._formatters['col3'].enforce_rounding is False
-        assert instance._formatters['col3'].enforce_min_max_values is False
-        assert instance._formatters['col3'].computer_representation == 'Float'
+        assert isinstance(formatters['col2'], NumericalFormatter)
+        assert formatters['col2'].enforce_rounding is False
+        assert formatters['col2'].enforce_min_max_values is False
+        assert formatters['col2'].computer_representation == 'Int8'
 
-        assert isinstance(instance._formatters['date_col1'], DatetimeFormatter)
-        assert isinstance(instance._formatters['date_col2'], DatetimeFormatter)
-        assert instance._formatters['date_col1']._dtype == 'O'
-        assert instance._formatters['date_col1'].datetime_format == '%d-%m-%Y'
-        assert instance._formatters['date_col2']._dtype == '<M8[ns]'
-        assert instance._formatters['date_col2'].datetime_format == '%Y-%m-%d'
+        assert isinstance(formatters['col3'], NumericalFormatter)
+        assert formatters['col3'].enforce_rounding is False
+        assert formatters['col3'].enforce_min_max_values is False
+        assert formatters['col3'].computer_representation == 'Float'
+
+        assert isinstance(formatters['date_col1'], DatetimeFormatter)
+        assert isinstance(formatters['date_col2'], DatetimeFormatter)
+        assert formatters['date_col1']._dtype == 'O'
+        assert formatters['date_col1'].datetime_format == '%d-%m-%Y'
+        assert formatters['date_col2']._dtype == '<M8[ns]'
+        assert formatters['date_col2'].datetime_format == '%Y-%m-%d'
 
     @patch('sdv.single_table.base.LOGGER')
     def test__format_constraint_columns(sel, log_mock):
@@ -2542,7 +2548,7 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         instance = Mock()
         instance._table_name = 'table'
-        instance._input_metadata = Metadata.load_from_dict({
+        instance._original_metadata = Metadata.load_from_dict({
             'tables': {
                 'table': {
                     'columns': {
@@ -2555,7 +2561,7 @@ class TestBaseSingleTableSynthesizer:
                 }
             }
         })
-        instance._dtypes = {
+        instance._constraint_col_dtypes = {
             'overflow_int': 'int64',
             'nan_int': 'int64',
             'int': 'int64',
@@ -2563,25 +2569,26 @@ class TestBaseSingleTableSynthesizer:
             'datetime_col': 'O',
         }
 
-        instance._formatters = {
+        formatters = {
             'overflow_int': Mock(),
             'nan_int': Mock(),
             'int': Mock(return_value=[0, 1, 2]),
             'float': Mock(return_value=[0.1, 1.2, 2.3]),
             'datetime_col': Mock(return_value=['2021-02-15', '2022-05-16', '2023-07-18']),
         }
-        instance._formatters['overflow_int'].format_data.return_value = [
+        formatters['overflow_int'].format_data.return_value = [
             99999999999999999990,
             99999999999999999991,
             99999999999999999992,
         ]
-        instance._formatters['int'].format_data.return_value = [0, 1, 2]
-        instance._formatters['float'].format_data.return_value = [0.1, 1.2, 2.3]
-        instance._formatters['datetime_col'].format_data.return_value = [
+        formatters['int'].format_data.return_value = [0, 1, 2]
+        formatters['float'].format_data.return_value = [0.1, 1.2, 2.3]
+        formatters['datetime_col'].format_data.return_value = [
             '2021-02-15',
             '2022-05-16',
             '2023-07-18',
         ]
+        instance._constraint_col_formatters = formatters
 
         data = pd.DataFrame({
             'overflow_int': [99999999999999999990, 99999999999999999991, 99999999999999999992],
@@ -2595,7 +2602,7 @@ class TestBaseSingleTableSynthesizer:
         formatted_data = BaseSingleTableSynthesizer._format_constraint_columns(instance, data)
 
         # Assert
-        instance._formatters['nan_int'].format_data.assert_not_called()
+        formatters['nan_int'].format_data.assert_not_called()
 
         expected_data = pd.DataFrame({
             'datetime_col': ['2021-02-15', '2022-05-16', '2023-07-18'],

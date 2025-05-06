@@ -184,8 +184,8 @@ class BaseSynthesizer:
             enforce_min_max_values=self.enforce_min_max_values,
             locales=self.locales,
         )
-        self._dtypes = {}
-        self._formatters = {}  # Data formatters for columns not handled by the data processor
+        self._constraint_col_dtypes = {}
+        self._constraint_col_formatters = {}  # Formatters for columns dropped by constraints
         self._validate_regex_format()
         self._original_columns = pd.Index([])
         self._fitted = False
@@ -508,38 +508,41 @@ class BaseSynthesizer:
 
     def _fit_constraint_column_formatters(self, data):
         """Fit formatters for columns that are dropped by constraints before data processing."""
-        self._formatters = {}
-        self._dtypes = {}
+        self._constraint_col_formatters = {}
+        self._constraint_col_dtypes = {}
         primary_key = self.metadata.tables[self._table_name].primary_key
-        input_columns = self._input_metadata.get_column_names()
+        input_columns = self._original_metadata.get_column_names()
         columns_to_format = set(input_columns) - set(self.metadata.get_column_names())
         for column_name in columns_to_format:
-            self._dtypes[column_name] = data[column_name].dtype
-            column_metadata = self._input_metadata.tables[self._table_name].columns.get(column_name)
+            self._constraint_col_dtypes[column_name] = data[column_name].dtype
+            column_metadata = self._original_metadata.tables[self._table_name].columns.get(
+                column_name
+            )
             sdtype = column_metadata.get('sdtype')
             if sdtype == 'numerical' and column_name != primary_key:
                 representation = column_metadata.get('computer_representation', 'Float')
-                self._formatters[column_name] = NumericalFormatter(
+                self._constraint_col_formatters[column_name] = NumericalFormatter(
                     enforce_rounding=self.enforce_rounding,
                     enforce_min_max_values=self.enforce_min_max_values,
                     computer_representation=representation,
                 )
-                self._formatters[column_name].learn_format(data[column_name])
+                self._constraint_col_formatters[column_name].learn_format(data[column_name])
 
             elif sdtype == 'datetime' and column_name != primary_key:
                 datetime_format = column_metadata.get('datetime_format')
-                self._formatters[column_name] = DatetimeFormatter(datetime_format=datetime_format)
-                self._formatters[column_name].learn_format(data[column_name])
+                self._constraint_col_formatters[column_name] = DatetimeFormatter(
+                    datetime_format=datetime_format
+                )
+                self._constraint_col_formatters[column_name].learn_format(data[column_name])
 
     def _format_constraint_columns(self, data):
         """Format columns skipped by the data processor due to being dropped by constraints."""
         column_order = [
-            column for column in self._input_metadata.get_column_names() if column in data
+            column for column in self._original_metadata.get_column_names() if column in data
         ]
-        for column_name in self._dtypes:
+        for column_name, dtype in self._constraint_col_dtypes.items():
             column_data = data[column_name]
 
-            dtype = self._dtypes[column_name]
             if is_integer_dtype(dtype) and is_float_dtype(column_data.dtype):
                 column_data = column_data.round()
 
@@ -564,9 +567,11 @@ class BaseSynthesizer:
                     'and metadata settings.'
                 )
 
-            if column_name in self._formatters:
+            if column_name in self._constraint_col_formatters:
                 data_to_format = data[column_name]
-                data[column_name] = self._formatters[column_name].format_data(data_to_format)
+                data[column_name] = self._constraint_col_formatters[column_name].format_data(
+                    data_to_format
+                )
 
         return data[column_order]
 
@@ -664,11 +669,14 @@ class BaseSynthesizer:
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         self._check_input_metadata_updated()
         self._fitted = False
-        self._fit_constraint_column_formatters(data)
         self._data_processor.reset_sampling()
         self._random_state_set = False
+        is_converted = self._store_and_convert_original_cols(data)
+        self._fit_constraint_column_formatters(data)
         processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)
+        if is_converted:
+            data.columns = self._original_columns
 
     def _validate_fit_before_save(self):
         """Validate that the synthesizer has been fitted before saving."""
@@ -975,12 +983,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 except NotImplementedError:
                     raw_sampled = self._sample(num_rows)
             sampled = self._data_processor.reverse_transform(raw_sampled)
-            if keep_extra_columns:
-                input_columns = self._data_processor._hyper_transformer._input_columns
-                missing_cols = list(
-                    set(raw_sampled.columns) - set(input_columns) - set(sampled.columns)
-                )
-                sampled = pd.concat([sampled, raw_sampled[missing_cols]], axis=1)
 
             if hasattr(self, '_chained_patterns') and hasattr(self, '_reject_sampling_patterns'):
                 for pattern in reversed(self._chained_patterns):
@@ -992,8 +994,15 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     valid_rows = pattern.is_valid(sampled)
                     sampled = sampled[valid_rows]
 
-            if hasattr(self, '_formatters'):
+            if getattr(self, '_constraint_col_dtypes'):
                 sampled = self._format_constraint_columns(sampled)
+
+            if keep_extra_columns:
+                input_columns = self._data_processor._hyper_transformer._input_columns
+                missing_cols = list(
+                    set(raw_sampled.columns) - set(input_columns) - set(sampled.columns)
+                )
+                sampled = pd.concat([sampled, raw_sampled[missing_cols]], axis=1)
 
             if previous_rows is not None:
                 sampled = pd.concat([previous_rows, sampled], ignore_index=True)
