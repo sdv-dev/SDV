@@ -9,6 +9,7 @@ import pandas as pd
 from sdv.metadata.metadata import Metadata
 
 CSV_DEFAULT_READ_ARGS = {'parse_dates': False, 'low_memory': False, 'on_bad_lines': 'warn'}
+CSV_DEFAULT_WRITE_ARGS = {'index': False}
 
 UNSUPPORTED_ARGS = frozenset(['filepath_or_buffer', 'path_or_buf'])
 
@@ -151,9 +152,10 @@ class CSVHandler(BaseLocalHandler):
         """
         folder_path = Path(folder_name)
         to_csv_parameters = to_csv_parameters or {}
-        to_csv_parameters.setdefault('index', False)
-        to_csv_parameters['mode'] = mode
+        for key, value in CSV_DEFAULT_WRITE_ARGS.items():
+            to_csv_parameters.setdefault(key, value)
 
+        to_csv_parameters['mode'] = mode
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
