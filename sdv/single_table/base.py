@@ -152,7 +152,7 @@ class BaseSynthesizer:
         # Points to the input metadata object and allows us to check if user has changed it
         self._input_metadata = metadata
 
-        # Points to a dynamic metadata object that could be re-created by CAG's
+        # Points to a dynamic metadata object that could be modified by constraints
         self.metadata = metadata
 
         self._table_name = Metadata.DEFAULT_SINGLE_TABLE_NAME
