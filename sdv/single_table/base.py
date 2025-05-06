@@ -103,7 +103,7 @@ class BaseSynthesizer:
 
     def _check_input_metadata_updated(self):
         if not hasattr(self, '_input_metadata'):
-            unified_metadata = Metadata.load_from_dict(self.metadata.to_dict())
+            unified_metadata = Metadata.load_from_dict(self._original_metadata.to_dict())
             setattr(self, '_input_metadata', unified_metadata)
 
         if isinstance(self._input_metadata, Metadata):
@@ -125,6 +125,11 @@ class BaseSynthesizer:
                 "We strongly recommend saving the metadata using 'save_to_json' for replicability"
                 ' in future SDV versions.'
             )
+            if hasattr(self, '_input_metadata'):
+                if hasattr(self._input_metadata, '_reset_updated_flag'):
+                    self._input_metadata._reset_updated_flag()
+                else:
+                    self._input_metadata._updated = False
 
     def _validate_regex_format(self):
         if self.metadata.tables:
@@ -156,10 +161,11 @@ class BaseSynthesizer:
             self.metadata.tables[self._table_name]._updated = metadata._updated
 
         self.metadata.validate()
+        self._check_metadata_updated()
 
         # Points to a metadata object that conserves the initialized status of the synthesizer
         self._original_metadata = deepcopy(self.metadata)
-        self._check_metadata_updated()
+
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
         self.locales = locales

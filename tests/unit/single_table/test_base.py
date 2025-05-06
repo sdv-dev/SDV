@@ -63,7 +63,8 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         instance = Mock()
         instance.metadata = Mock()
-        instance.metadata._updated = True
+        instance.metadata._check_updated_flag.return_value = True
+        instance._input_metadata = Mock()
 
         # Run
         expected_message = re.escape(
@@ -74,7 +75,30 @@ class TestBaseSingleTableSynthesizer:
             BaseSingleTableSynthesizer._check_metadata_updated(instance)
 
         # Assert
-        instance.metadata._updated = False
+        instance.metadata._reset_updated_flag.assert_called_once_with()
+        instance.metadata._check_updated_flag.assert_called_once_with()
+        instance._input_metadata._reset_updated_flag.assert_called_once_with()
+
+    def test__check_metadata_updated__input_metadata_is_single_table(self):
+        """Test the ``_check_metadata_updated`` method when input metadata is SingleTable."""
+        # Setup
+        instance = Mock()
+        instance.metadata = Mock()
+        instance.metadata._check_updated_flag.return_value = True
+        instance._input_metadata = SingleTableMetadata()
+
+        # Run
+        expected_message = re.escape(
+            "We strongly recommend saving the metadata using 'save_to_json' for replicability"
+            ' in future SDV versions.'
+        )
+        with pytest.warns(UserWarning, match=expected_message):
+            BaseSingleTableSynthesizer._check_metadata_updated(instance)
+
+        # Assert
+        instance.metadata._reset_updated_flag.assert_called_once_with()
+        instance.metadata._check_updated_flag.assert_called_once_with()
+        assert instance._input_metadata._updated is False
 
     def test__check_input_metadata_updated_warns_when_updated(self):
         """Test the `_check_input_metadata_updated` method raises a warning."""
@@ -85,7 +109,7 @@ class TestBaseSingleTableSynthesizer:
         metadata_instance._updated = True
 
         instance.metadata.to_dict.return_value = {'some': 'data'}
-        instance._original_metadata = metadata_instance
+        instance._input_metadata = metadata_instance
 
         expected_message = re.escape(
             'Your metadata has been modified. Metadata modifications cannot be applied to an '

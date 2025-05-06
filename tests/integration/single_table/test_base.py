@@ -653,10 +653,6 @@ def test_metadata_updated_warning_detect(mock__fit):
         "The 'SingleTableMetadata' is deprecated. "
         "Please use the new 'Metadata' class for synthesizers."
     )
-    expected_input_metadata_updated_message = (
-        'Your metadata has been modified. Metadata modifications cannot be applied to an '
-        'existing synthesizer. Please create a new synthesizer with the modified metadata.'
-    )
 
     # Run
     with warnings.catch_warnings(record=True) as record:
@@ -664,13 +660,11 @@ def test_metadata_updated_warning_detect(mock__fit):
         instance.fit(data)
 
     # Assert
-    assert len(record) == 3
+    assert len(record) == 2
     assert record[0].category is FutureWarning
     assert str(record[0].message) == expected_deprecation_message
     assert record[1].category is UserWarning
     assert str(record[1].message) == expected_user_message
-    assert record[2].category is UserWarning
-    assert str(record[2].message) == expected_input_metadata_updated_message
 
 
 parametrization = [
