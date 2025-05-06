@@ -1,5 +1,18 @@
 # Release Notes
 
+## v1.20.1 - 2025-05-01
+
+### Bugs Fixed
+
+* Show a warning if I'm trying to refit/sample from a synthesizer but the metadata has changed - Issue [#2463](https://github.com/sdv-dev/SDV/issues/2463) by @pvk-developer
+* Metadata auto-detection should not be creating a schema where a foreign key column is reused - Issue [#2454](https://github.com/sdv-dev/SDV/issues/2454) by @pvk-developer
+* Metadata validation does not catch the case where a foreign key is reused - Issue [#2453](https://github.com/sdv-dev/SDV/issues/2453) by @pvk-developer
+
+### Maintenance
+
+* Remove dtypes github action workflow - Issue [#2475](https://github.com/sdv-dev/SDV/issues/2475) by @gsheni
+* Use IndexGenerator instead of IDGenerator from RDT - Issue [#2432](https://github.com/sdv-dev/SDV/issues/2432) by @amontanez24
+
 ## v1.20.0 - 2025-04-14
 
 ### New Features
