@@ -2,7 +2,7 @@
 
 import re
 from datetime import datetime
-from unittest.mock import patch
+from unittest.mock import call, patch, Mock
 
 import numpy as np
 import pandas as pd
@@ -432,6 +432,7 @@ class TestInequality:
                         'low': {'sdtype': 'numerical'},
                         'col': {'sdtype': 'id'},
                         'low#high': {'sdtype': 'numerical'},
+                        'low#high.nan_component': {'sdtype': 'categorical'},
                     },
                     'column_relationships': [
                         {'type': 'relationship', 'column_names': ['low', 'col']},
@@ -456,6 +457,7 @@ class TestInequality:
             }
         })
         instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
+        instance._get_new_column_names = Mock(return_value=('a#b', 'a#b.nan_component'))
 
         # Run
         instance._fit(data, metadata)
@@ -465,6 +467,11 @@ class TestInequality:
         assert instance._dtype == pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
         assert instance._low_datetime_format == '%y %m, %d'
         assert instance._high_datetime_format == '%y %m %d'
+        assert instance._diff_column_name == 'a#b'
+        assert instance._nan_column_name == 'a#b.nan_component'
+        instance._get_new_column_names.assert_called_once_with(
+            metadata, 'a#b', 'table'
+        )
 
     @pytest.mark.parametrize(
         'dtype',
@@ -537,6 +544,7 @@ class TestInequality:
         }
         instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
         instance._diff_column_name = 'a#b'
+        instance._nan_column_name = 'a#b.nan_component'
 
         # Run
         out = instance._transform(table_data)
@@ -547,6 +555,7 @@ class TestInequality:
             'a': [1, 2, 3],
             'c': [7, 8, 9],
             'a#b': [np.log(4)] * 3,
+            'a#b.nan_component': [None] * 3,
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -555,6 +564,7 @@ class TestInequality:
         # Setup
         instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
         instance._diff_column_name = 'a#b'
+        instance._nan_column_name = 'a#b.nan_component'
 
         table_data_with_nans = {
             'table': pd.DataFrame({
@@ -581,30 +591,41 @@ class TestInequality:
         expected_output_without_nans = pd.DataFrame({
             'a': [1, 2, 3],
             'a#b': [np.log(2)] * 3,
+            'a#b.nan_component': [None] * 3,
         })
 
         pd.testing.assert_frame_equal(output_with_nans, expected_output_with_nans)
         pd.testing.assert_frame_equal(output_without_nans, expected_output_without_nans)
 
-    def test_transform_existing_column_name(self):
-        """Test ``_transform`` method when the ``diff_column_name`` already exists in the table."""
+    @patch('sdv.cag.inequality._create_unique_name')
+    def test__get_new_column_names(self, mock_create_unique_name):
+        """Test ``_get_new_column_names`` method."""
         # Setup
+        mock_create_unique_name.side_effect = ['a#b', 'a#b.nan_component']
         instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
-        table_data = {
-            'table': pd.DataFrame({
-                'a': [1, 2, 3],
-                'b': [4, 5, 6],
-                'a#b': ['c', 'd', 'e'],
-            })
-        }
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'a': {'sdtype': 'numerical'},
+                        'b': {'sdtype': 'numerical'},
+                        'c': {'sdtype': 'id'},
+                    },
+                    'column_relationships': [{'type': 'relationship', 'column_names': ['a', 'b']}],
+                }
+            }
+        })
 
         # Run
-        output = instance._transform(table_data)
+        diff_column, nan_column = instance._get_new_column_names(metadata, 'a#b', 'table')
 
         # Assert
-        output = output['table']
-        expected_column_name = ['a', 'a#b', 'a#b_']
-        assert list(output.columns) == expected_column_name
+        assert diff_column == 'a#b'
+        assert nan_column == 'a#b.nan_component'
+        mock_create_unique_name.assert_has_calls([
+            call('a#b', {'a', 'b', 'c'}),
+            call('a#b.nan_component', {'a', 'b', 'c'}),
+        ])
 
     def test__transform_datetime(self):
         """Test it transforms the data correctly when it contains datetimes."""
@@ -618,6 +639,7 @@ class TestInequality:
         }
         instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
         instance._diff_column_name = 'a#b'
+        instance._nan_column_name = 'a#b.nan_component'
         instance._is_datetime = True
 
         # Run
@@ -629,6 +651,7 @@ class TestInequality:
             'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
             'c': [1, 2],
             'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
+            'a#b.nan_component': [None, None],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -644,6 +667,7 @@ class TestInequality:
         }
         instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
         instance._diff_column_name = 'a#b'
+        instance._nan_column_name = 'a#b.nan_component'
         instance._is_datetime = True
         instance._dtype = 'O'
 
@@ -656,6 +680,7 @@ class TestInequality:
             'a': ['2020-01-01T00:00:00', '2020-01-02T00:00:00'],
             'c': [1, 2],
             'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
+            'a#b.nan_component': [None] * 2,
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -667,11 +692,13 @@ class TestInequality:
                 'a': [1, 2, 3],
                 'c': [7, 8, 9],
                 'a#b': [np.log(4)] * 3,
+                'a#b.nan_component': ['None'] * 3,
             })
         }
         instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
         instance._dtype = pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
         instance._diff_column_name = 'a#b'
+        instance._nan_column_name = 'a#b.nan_component'
         instance._original_data_columns = {'table': ['a', 'b', 'c']}
         instance._dtypes = {
             'table': {
@@ -701,11 +728,13 @@ class TestInequality:
                 'a': [1.1, 2.2, 3.3],
                 'c': [7, 8, 9],
                 'a#b': [np.log(4)] * 3,
+                'a#b.nan_component': ['None'] * 3,
             })
         }
         instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
         instance._dtype = np.dtype('float')
         instance._diff_column_name = 'a#b'
+        instance._nan_column_name = 'a#b.nan_component'
         instance._original_data_columns = {'table': ['a', 'b', 'c']}
         instance._dtypes = {
             'table': {
@@ -735,11 +764,13 @@ class TestInequality:
                 'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
                 'c': [1, 2],
                 'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
+                'a#b.nan_component': ['None', 'None'],
             })
         }
         instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
         instance._dtype = np.dtype('<M8[ns]')
         instance._diff_column_name = 'a#b'
+        instance._nan_column_name = 'a#b.nan_component'
         instance._is_datetime = True
         instance._original_data_columns = {'table': ['a', 'b', 'c']}
         instance._dtypes = {
@@ -770,11 +801,13 @@ class TestInequality:
                 'a': ['2020-01-01T00:00:00', '2020-01-02T00:00:00'],
                 'c': [1, 2],
                 'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
+                'a#b.nan_component': ['None', 'None'],
             })
         }
         instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
         instance._dtype = np.dtype('O')
         instance._diff_column_name = 'a#b'
+        instance._nan_column_name = 'a#b.nan_component'
         instance._is_datetime = True
         instance._original_data_columns = {'table': ['a', 'b', 'c']}
         instance._dtypes = {
