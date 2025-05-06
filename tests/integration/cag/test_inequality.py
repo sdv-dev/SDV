@@ -314,10 +314,12 @@ def test_inequality_with_timestamp_and_date():
     synthetic_data = synthesizer.sample(num_rows=10)
 
     # Assert
+    assert synthetic_data['SUBMISSION_TIMESTAMP'].dtype == 'O'
     synthetic_data['SUBMISSION_TIMESTAMP'] = pd.to_datetime(
-        synthetic_data['SUBMISSION_TIMESTAMP'], errors='coerce'
+        synthetic_data['SUBMISSION_TIMESTAMP'], format='%Y-%m-%d %H:%M:%S'
     )
-    synthetic_data['DUE_DATE'] = pd.to_datetime(synthetic_data['DUE_DATE'], errors='coerce')
+    assert synthetic_data['DUE_DATE'].dtype == 'O'
+    synthetic_data['DUE_DATE'] = pd.to_datetime(synthetic_data['DUE_DATE'], format='%Y-%m-%d')
     invalid_rows = synthetic_data[
         synthetic_data['SUBMISSION_TIMESTAMP'].dt.date > synthetic_data['DUE_DATE'].dt.date
     ]
@@ -531,10 +533,12 @@ def test_inequality_pattern_date_less_than_timestamp_no_strict_boundaries():
     synthetic_data = synthesizer.sample(10)
 
     # Assert
+    assert synthetic_data['SUBMISSION_TIMESTAMP'].dtype == 'O'
     synthetic_data['SUBMISSION_TIMESTAMP'] = pd.to_datetime(
-        synthetic_data['SUBMISSION_TIMESTAMP'], errors='coerce'
+        synthetic_data['SUBMISSION_TIMESTAMP'], format='%Y-%m-%d %H:%M:%S'
     )
-    synthetic_data['DUE_DATE'] = pd.to_datetime(synthetic_data['DUE_DATE'], errors='coerce')
+    assert synthetic_data['DUE_DATE'].dtype == 'O'
+    synthetic_data['DUE_DATE'] = pd.to_datetime(synthetic_data['DUE_DATE'], format='%Y-%m-%d')
     invalid_rows = synthetic_data[
         synthetic_data['SUBMISSION_TIMESTAMP'].dt.date > synthetic_data['DUE_DATE'].dt.date
     ]
@@ -591,10 +595,12 @@ def test_inequality_pattern_timestamp_less_than_date_no_strict_boundaries():
     synthetic_data = synthesizer.sample(10)
 
     # Assert
+    assert synthetic_data['SUBMISSION_TIMESTAMP'].dtype == 'O'
     synthetic_data['SUBMISSION_TIMESTAMP'] = pd.to_datetime(
-        synthetic_data['SUBMISSION_TIMESTAMP'], errors='coerce'
+        synthetic_data['SUBMISSION_TIMESTAMP'], format='%Y-%m-%d %H:%M:%S'
     )
-    synthetic_data['DUE_DATE'] = pd.to_datetime(synthetic_data['DUE_DATE'], errors='coerce')
+    assert synthetic_data['DUE_DATE'].dtype == 'O'
+    synthetic_data['DUE_DATE'] = pd.to_datetime(synthetic_data['DUE_DATE'], format='%Y-%m-%d')
     invalid_rows = synthetic_data[
         synthetic_data['SUBMISSION_TIMESTAMP'].dt.date > synthetic_data['DUE_DATE'].dt.date
     ]
