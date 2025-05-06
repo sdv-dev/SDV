@@ -103,7 +103,11 @@ class BaseSynthesizer:
 
     def _check_input_metadata_updated(self):
         if not hasattr(self, '_input_metadata'):
-            unified_metadata = Metadata.load_from_dict(self._original_metadata.to_dict())
+            if hasattr(self, '_original_metadata'):
+                unified_metadata = Metadata.load_from_dict(self._original_metadata.to_dict())
+            else:
+                unified_metadata = Metadata.load_from_dict(self.metadata.to_dict())
+
             setattr(self, '_input_metadata', unified_metadata)
 
         if isinstance(self._input_metadata, Metadata):
