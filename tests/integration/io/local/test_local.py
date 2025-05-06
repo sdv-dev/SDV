@@ -33,6 +33,32 @@ class TestCSVHandler:
         pd.testing.assert_frame_equal(data['table1'], synthetic_data['table1'])
         pd.testing.assert_frame_equal(data['table2'], synthetic_data['table2'])
 
+    def test_integration_write_and_read_with_custom_parameters(self, tmpdir):
+        """Test end to end the write and read methods of ``CSVHandler``."""
+        # Prepare synthetic data
+        synthetic_data = {
+            'table1': pd.DataFrame({'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']}),
+            'table2': pd.DataFrame({'col3': [4, 5, 6], 'col4': ['d', 'e', 'f']}),
+        }
+
+        # Write synthetic data to CSV files
+        handler = CSVHandler()
+        write_params = {'sep': ';', 'index': True}
+        handler.write(synthetic_data, tmpdir, to_csv_parameters=write_params)
+
+        # Read data from CSV files
+        read_params = {'nrows': 1, 'sep': ';', 'index_col': 'Unnamed: 0'}
+        data = handler.read(tmpdir, read_csv_parameters=read_params)
+
+        # Check if data was read correctly
+        assert len(data) == 2
+        assert 'table1' in data
+        assert 'table2' in data
+        assert len(data['table1']) == 1
+        assert len(data['table2']) == 1
+        pd.testing.assert_frame_equal(data['table1'], synthetic_data['table1'].head(1))
+        pd.testing.assert_frame_equal(data['table2'], synthetic_data['table2'].head(1))
+
 
 class TestExcelHandler:
     def test_integration_write_and_read(self, tmpdir):
