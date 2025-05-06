@@ -84,10 +84,11 @@ def test_inequality_pattern_integers(data, metadata, pattern):
         'columns': {
             'A': {'sdtype': 'numerical'},
             'A#B': {'sdtype': 'numerical'},
+            'A#B.nan_component': {'sdtype': 'categorical'},
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-    assert list(transformed.columns) == ['A', 'A#B']
+    assert list(transformed.columns) == ['A', 'A#B', 'A#B.nan_component']
     pd.testing.assert_frame_equal(data, reverse_transformed)
 
 
@@ -107,6 +108,7 @@ def test_inequality_pattern_with_nans(metadata, pattern):
         'columns': {
             'A': {'sdtype': 'numerical'},
             'A#B': {'sdtype': 'numerical'},
+            'A#B.nan_component': {'sdtype': 'categorical'},
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
@@ -155,10 +157,11 @@ def test_inequality_pattern_datetime(pattern):
         'columns': {
             'A': {'sdtype': 'datetime'},
             'A#B': {'sdtype': 'numerical'},
+            'A#B.nan_component': {'sdtype': 'categorical'},
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-    assert list(transformed.columns) == ['A', 'A#B']
+    assert list(transformed.columns) == ['A', 'A#B', 'A#B.nan_component']
 
     # Check that the timestamps are very close to each other
     for col in ['A', 'B']:
@@ -202,6 +205,7 @@ def test_inequality_pattern_datetime_nans(pattern):
         'columns': {
             'A': {'sdtype': 'datetime'},
             'A#B': {'sdtype': 'numerical'},
+            'A#B.nan_component': {'sdtype': 'categorical'},
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
@@ -233,6 +237,7 @@ def test_inequality_pattern_with_multi_table(data_multi, metadata_multi, pattern
                 'columns': {
                     'A': {'sdtype': 'numerical'},
                     'A#B': {'sdtype': 'numerical'},
+                    'A#B.nan_component': {'sdtype': 'categorical'},
                 }
             },
             'table2': {
@@ -243,7 +248,7 @@ def test_inequality_pattern_with_multi_table(data_multi, metadata_multi, pattern
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-    assert list(transformed['table1'].columns) == ['A', 'A#B']
+    assert list(transformed['table1'].columns) == ['A', 'A#B', 'A#B.nan_component']
     assert set(data.keys()) == set(reverse_transformed.keys())
     for table_name, table in data.items():
         pd.testing.assert_frame_equal(table, reverse_transformed[table_name])
@@ -639,6 +644,8 @@ def test_inequality_multiple_patterns():
             'low': {'sdtype': 'numerical'},
             'low#high1': {'sdtype': 'numerical'},
             'low#high2': {'sdtype': 'numerical'},
+            'low#high1.nan_component': {'sdtype': 'categorical'},
+            'low#high2.nan_component': {'sdtype': 'categorical'},
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
@@ -672,6 +679,7 @@ def test_inequality_multiple_patterns_reject_sampling(
             'low': {'sdtype': 'numerical'},
             'low#high': {'sdtype': 'numerical'},
             'low2': {'sdtype': 'numerical'},
+            'low#high.nan_component': {'sdtype': 'categorical'},
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
@@ -720,6 +728,7 @@ def test_inequality_multiple_patterns_one_pattern_invalid_column():
         'columns': {
             'low': {'sdtype': 'numerical'},
             'low#mid': {'sdtype': 'numerical'},
+            'low#mid.nan_component': {'sdtype': 'categorical'},
             'high': {'sdtype': 'numerical'},
         }
     }).to_dict()
@@ -736,8 +745,10 @@ def test_inequality_many_patterns():
     """Test that Inequality pattern works with multiple patterns."""
     # Setup
     values = np.random.randint(0, 100, size=1000)
-    data = pd.DataFrame({i: values + i for i in range(10)})
-    metadata = Metadata.load_from_dict({'columns': {i: {'sdtype': 'numerical'} for i in range(10)}})
+    data = pd.DataFrame({f'{i}': values + i for i in range(10)})
+    metadata = Metadata.load_from_dict({
+        'columns': {f'{i}': {'sdtype': 'numerical'} for i in range(10)}
+    })
     patterns = [Inequality(low_column_name=f'{i}', high_column_name=f'{i + 1}') for i in range(9)]
 
     # Run
@@ -754,23 +765,26 @@ def test_inequality_many_patterns():
         'columns': {
             '0': {'sdtype': 'numerical'},
             '0#1': {'sdtype': 'numerical'},
+            '0#1.nan_component': {'sdtype': 'categorical'},
             '2': {'sdtype': 'numerical'},
             '2#3': {'sdtype': 'numerical'},
+            '2#3.nan_component': {'sdtype': 'categorical'},
             '4': {'sdtype': 'numerical'},
             '4#5': {'sdtype': 'numerical'},
+            '4#5.nan_component': {'sdtype': 'categorical'},
             '6': {'sdtype': 'numerical'},
             '6#7': {'sdtype': 'numerical'},
+            '6#7.nan_component': {'sdtype': 'categorical'},
             '8': {'sdtype': 'numerical'},
             '8#9': {'sdtype': 'numerical'},
+            '8#9.nan_component': {'sdtype': 'categorical'},
         }
     }).to_dict()
 
     assert expected_updated_metadata == updated_metadata.to_dict()
-
     assert original_metadata.to_dict() == metadata.to_dict()
-
     for i in range(9):
-        assert all(samples[i] <= samples[i + 1])
+        assert all(samples[f'{i}'] <= samples[f'{i + 1}'])
 
 
 def test_validate_cag(data, metadata, pattern):

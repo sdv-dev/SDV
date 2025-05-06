@@ -2,7 +2,7 @@
 
 import re
 from datetime import datetime
-from unittest.mock import call, patch, Mock
+from unittest.mock import Mock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -469,9 +469,7 @@ class TestInequality:
         assert instance._high_datetime_format == '%y %m %d'
         assert instance._diff_column_name == 'a#b'
         assert instance._nan_column_name == 'a#b.nan_component'
-        instance._get_new_column_names.assert_called_once_with(
-            metadata, 'a#b', 'table'
-        )
+        instance._get_new_column_names.assert_called_once_with(metadata, 'a#b', 'table')
 
     @pytest.mark.parametrize(
         'dtype',
