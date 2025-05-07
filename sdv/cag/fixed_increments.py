@@ -110,18 +110,14 @@ class FixedIncrements(BasePattern):
             (sdv.metadata.Metadata): The updated Metadata with the pattern applied.
         """
         table_name = self._get_single_table_name(metadata)
-        original_columns = list(metadata.tables[table_name].columns)
         increments_column = _create_unique_name(
             self._fixed_increments_column_name, metadata.tables[table_name].columns.keys()
         )
         metadata = metadata.to_dict()
         metadata['tables'][table_name]['columns'][increments_column] = {'sdtype': 'numerical'}
-        metadata = _remove_columns_from_metadata(
-            metadata,
-            table_name,
-            columns_to_drop=original_columns,
+        return _remove_columns_from_metadata(
+            metadata, table_name, columns_to_drop=[self.column_name]
         )
-        return metadata
 
     def _fit(self, data, metadata):
         """Learn the dtype of the column.
