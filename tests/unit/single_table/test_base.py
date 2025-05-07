@@ -18,6 +18,7 @@ from rdt.transformers import (
 )
 
 from sdv import version
+from sdv.cag._errors import PatternNotMetError
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.errors import (
     ConstraintsNotMetError,
@@ -2433,3 +2434,39 @@ class TestBaseSingleTableSynthesizer:
                 'fitted_sdv_version': '1.0.0',
                 'fitted_sdv_enterprise_version': '1.2.0',
             }
+
+    def test_validate_cag(self):
+        """Test the ``_validate_cag`` method with multiple patterns."""
+        # Setup
+        synthetic_data = pd.DataFrame()
+        transformed_data = pd.DataFrame()
+        original_metadata = Metadata()
+        instance = BaseSingleTableSynthesizer(original_metadata)
+        cag_mock_1 = Mock()
+        cag_mock_1.transform.return_value = transformed_data
+        cag_mock_2 = Mock()
+        instance._chained_patterns = [cag_mock_1, cag_mock_2]
+
+        # Run
+        instance.validate_cag(synthetic_data)
+
+        # Assert
+        cag_mock_1.is_valid.assert_called_once_with(data=synthetic_data)
+        cag_mock_1.transform.assert_called_once_with(data=synthetic_data)
+        cag_mock_2.is_valid.assert_called_once_with(data=transformed_data)
+        cag_mock_2.transform.assert_called_once_with(data=transformed_data)
+
+    def test_validate_cag_raises(self):
+        """Test the ``_validate_cag`` method raises an error."""
+        # Setup
+        synthetic_data = pd.DataFrame()
+        original_metadata = Metadata()
+        instance = BaseSingleTableSynthesizer(original_metadata)
+        cag_mock_1 = Mock()
+        cag_mock_1.is_valid.return_value = pd.Series([False, False])
+        instance._chained_patterns = [cag_mock_1]
+        msg = 'The mock requirement is not met for row indices: 0, 1.'
+
+        # Run and Assert
+        with pytest.raises(PatternNotMetError, match=msg):
+            instance.validate_cag(synthetic_data)

@@ -29,6 +29,7 @@ from sdv._utils import (
     get_possible_chars,
 )
 from sdv.cag._errors import PatternNotMetError
+from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import (
@@ -722,6 +723,34 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
     def get_cag(self):
         """Get a list of constraint-augmented generation patterns applied to the synthesizer."""
         return deepcopy(self._chained_patterns + self._reject_sampling_patterns)
+
+    def validate_cag(self, synthetic_data):
+        """Validate synthetic_data against the CAG patterns.
+
+        Args:
+            synthetic_data (pd.DataFrame): The synthetic data to validate
+
+        Raises:
+            PatternNotMetError:
+                Raised if synthetic data does not match CAG patterns.
+        """
+        transformed_data = synthetic_data
+        for attribute in ['_reject_sampling_patterns', '_chained_patterns']:
+            for pattern in getattr(self, attribute, []):
+                if attribute == '_reject_sampling_patterns':
+                    valid = pattern.is_valid(data=synthetic_data)
+                else:
+                    valid = pattern.is_valid(data=transformed_data)
+
+                if not valid.all():
+                    invalid_rows_str = _get_invalid_rows(valid)
+                    pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
+                    pattern_name = pattern_name.replace('_', ' ')
+                    msg = f'The {pattern_name} requirement is not met '
+                    msg += f'for row indices: {invalid_rows_str}.'
+                    raise PatternNotMetError(msg)
+                elif attribute == '_chained_patterns':
+                    transformed_data = pattern.transform(data=transformed_data)
 
     def _transform_helper(self, data):
         """Validate and transform all CAG patterns during preprocessing.

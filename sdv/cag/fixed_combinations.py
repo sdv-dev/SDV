@@ -10,12 +10,12 @@ from sdv.cag._errors import PatternNotMetError
 from sdv.cag._utils import (
     _get_is_valid_dict,
     _is_list_of_type,
+    _remove_columns_from_metadata,
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
 )
 from sdv.cag.base import BasePattern
 from sdv.constraints.utils import get_mappable_combination
-from sdv.metadata import Metadata
 
 
 class FixedCombinations(BasePattern):
@@ -104,17 +104,9 @@ class FixedCombinations(BasePattern):
 
         metadata = metadata.to_dict()
         metadata['tables'][table_name]['columns'][combination_column] = {'sdtype': 'categorical'}
-        for column in self.column_names:
-            del metadata['tables'][table_name]['columns'][column]
-
-        column_set = set(self.column_names)
-        metadata['tables'][table_name]['column_relationships'] = [
-            rel
-            for rel in metadata['tables'][table_name].get('column_relationships', [])
-            if set(rel['column_names']).isdisjoint(column_set)
-        ]
-
-        return Metadata.load_from_dict(metadata)
+        return _remove_columns_from_metadata(
+            metadata, table_name, columns_to_drop=self.column_names
+        )
 
     def _fit(self, data, metadata):
         """Fit the pattern."""
