@@ -157,7 +157,7 @@ class Inequality(BasePattern):
                 f'The inequality requirement is not met for row indices: [{invalid_rows_str}]'
             )
 
-    def _get_new_column_names(self, metadata, column_name, table_name):
+    def _get_diff_and_nan_column_names(self, metadata, column_name, table_name):
         """Get the column names of the new added columns.
 
         Args:
@@ -177,7 +177,7 @@ class Inequality(BasePattern):
     def _get_updated_metadata(self, metadata):
         """Get the new output metadata after applying the pattern to the input metadata."""
         table_name = self._get_single_table_name(metadata)
-        diff_column, nan_diff_column = self._get_new_column_names(
+        diff_column, nan_diff_column = self._get_diff_and_nan_column_names(
             metadata, self._diff_column_name, table_name
         )
 
@@ -201,7 +201,7 @@ class Inequality(BasePattern):
         table_data = data[table_name]
         self._dtype = table_data[self._high_column_name].dtypes
         self._is_datetime = self._get_is_datetime(metadata, table_name)
-        self._diff_column_name, self._nan_column_name = self._get_new_column_names(
+        self._diff_column_name, self._nan_column_name = self._get_diff_and_nan_column_names(
             metadata, self._diff_column_name, table_name
         )
         if self._is_datetime:

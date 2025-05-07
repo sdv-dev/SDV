@@ -457,7 +457,7 @@ class TestInequality:
             }
         })
         instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
-        instance._get_new_column_names = Mock(return_value=('a#b', 'a#b.nan_component'))
+        instance._get_diff_and_nan_column_names = Mock(return_value=('a#b', 'a#b.nan_component'))
 
         # Run
         instance._fit(data, metadata)
@@ -469,7 +469,7 @@ class TestInequality:
         assert instance._high_datetime_format == '%y %m %d'
         assert instance._diff_column_name == 'a#b'
         assert instance._nan_column_name == 'a#b.nan_component'
-        instance._get_new_column_names.assert_called_once_with(metadata, 'a#b', 'table')
+        instance._get_diff_and_nan_column_names.assert_called_once_with(metadata, 'a#b', 'table')
 
     @pytest.mark.parametrize(
         'dtype',
@@ -597,7 +597,7 @@ class TestInequality:
 
     @patch('sdv.cag.inequality._create_unique_name')
     def test__get_new_column_names(self, mock_create_unique_name):
-        """Test ``_get_new_column_names`` method."""
+        """Test ``_get_diff_and_nan_column_names`` method."""
         # Setup
         mock_create_unique_name.side_effect = ['a#b', 'a#b.nan_component']
         instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
@@ -615,7 +615,7 @@ class TestInequality:
         })
 
         # Run
-        diff_column, nan_column = instance._get_new_column_names(metadata, 'a#b', 'table')
+        diff_column, nan_column = instance._get_diff_and_nan_column_names(metadata, 'a#b', 'table')
 
         # Assert
         assert diff_column == 'a#b'
