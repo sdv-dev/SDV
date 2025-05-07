@@ -206,3 +206,35 @@ def test__remove_columns_from_metadata_raises_pk():
             table_name='parent',
             columns_to_drop=['id'],
         )
+
+
+def test__remove_columns_from_metadata_multiple_duplicate_columns():
+    """Test `_remove_columns_from_metadata` method raises an error if primary key is dropped"""
+    # Setup
+    original_metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'primary_key': 'id',
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'A': {'sdtype': 'numerical'},
+                    'B': {'sdtype': 'numerical'},
+                },
+            },
+        },
+        'relationships': [],
+    })
+    columns_to_drop = ['A', 'A']
+
+    # Run
+    new_metadata = _remove_columns_from_metadata(
+        metadata=original_metadata,
+        table_name='table',
+        columns_to_drop=columns_to_drop,
+    )
+
+    # Assert
+    assert isinstance(new_metadata, Metadata)
+    assert 'A' in original_metadata.tables['table'].columns
+    assert 'A' not in new_metadata.tables['table'].columns
+    assert 'B' in new_metadata.tables['table'].columns

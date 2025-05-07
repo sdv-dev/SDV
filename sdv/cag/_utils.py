@@ -134,13 +134,13 @@ def _remove_columns_from_metadata(metadata, table_name, columns_to_drop):
     """
     if isinstance(metadata, Metadata):
         metadata = metadata.to_dict()
-    for column in columns_to_drop:
-        primary_key = metadata['tables'][table_name].get('primary_key')
+    column_set = set(columns_to_drop)
+    primary_key = metadata['tables'][table_name].get('primary_key')
+    for column in column_set:
         if primary_key and primary_key == column:
             raise ValueError('Cannot remove primary key from Metadata')
         del metadata['tables'][table_name]['columns'][column]
 
-    column_set = set(columns_to_drop)
     metadata['tables'][table_name]['column_relationships'] = [
         rel
         for rel in metadata['tables'][table_name].get('column_relationships', [])
