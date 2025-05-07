@@ -7,6 +7,7 @@ import pytest
 
 from sdv.cag._errors import PatternNotMetError
 from sdv.cag._utils import (
+    _convert_to_snake_case,
     _is_list_of_type,
     _remove_columns_from_metadata,
     _validate_table_and_column_names,
@@ -73,6 +74,21 @@ def test__validate_table_name_if_defined_raises():
     expected_table_name_str_or_none = '`table_name` must be a string or None.'
     with pytest.raises(ValueError, match=expected_table_name_str_or_none):
         _validate_table_name_if_defined(table_name=1)
+
+
+def test__is_list_of_type():
+    """Test `_is_list_of_type` method"""
+    assert _is_list_of_type(['a', 'b'])
+    assert not _is_list_of_type(['a', 1])
+    assert not _is_list_of_type([1, 2])
+    assert not _is_list_of_type(1)
+    assert not _is_list_of_type('a')
+
+
+def test__convert_to_snake_case():
+    """Test `_convert_to_snake_case` method"""
+    assert _convert_to_snake_case('camelCaseString') == 'camel_case_string'
+    assert _convert_to_snake_case('PascalCaseString') == 'pascal_case_string'
 
 
 def test__remove_columns_from_metadata_single():
@@ -192,10 +208,33 @@ def test__remove_columns_from_metadata_raises_pk():
         )
 
 
-def test__is_list_of_type():
-    """Test `_is_list_of_type` method"""
-    assert _is_list_of_type(['a', 'b'])
-    assert not _is_list_of_type(['a', 1])
-    assert not _is_list_of_type([1, 2])
-    assert not _is_list_of_type(1)
-    assert not _is_list_of_type('a')
+def test__remove_columns_from_metadata_multiple_duplicate_columns():
+    """Test `_remove_columns_from_metadata` method raises an error if primary key is dropped"""
+    # Setup
+    original_metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'primary_key': 'id',
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'A': {'sdtype': 'numerical'},
+                    'B': {'sdtype': 'numerical'},
+                },
+            },
+        },
+        'relationships': [],
+    })
+    columns_to_drop = ['A', 'A']
+
+    # Run
+    new_metadata = _remove_columns_from_metadata(
+        metadata=original_metadata,
+        table_name='table',
+        columns_to_drop=columns_to_drop,
+    )
+
+    # Assert
+    assert isinstance(new_metadata, Metadata)
+    assert 'A' in original_metadata.tables['table'].columns
+    assert 'A' not in new_metadata.tables['table'].columns
+    assert 'B' in new_metadata.tables['table'].columns

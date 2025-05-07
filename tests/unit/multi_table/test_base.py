@@ -11,6 +11,7 @@ import pandas as pd
 import pytest
 
 from sdv import version
+from sdv.cag._errors import PatternNotMetError
 from sdv.errors import (
     ConstraintsNotMetError,
     InvalidDataError,
@@ -410,6 +411,51 @@ class TestBaseMultiTableSynthesizer:
         expected_metadata = Metadata.load_from_dict(metadata.to_dict())
         assert type(result) is Metadata
         assert expected_metadata.to_dict() == result.to_dict()
+
+    @patch('sdv.multi_table.base.deepcopy')
+    def test_validate_cag(self, copy_mock):
+        """Test the ``_validate_cag`` method."""
+        # Setup
+        table_name = 'table1'
+        synthetic_data = {table_name: Mock()}
+        transformed_data = {table_name: Mock()}
+        original_metadata = Metadata()
+        instance = BaseMultiTableSynthesizer(original_metadata)
+        cag_mock_1 = Mock()
+        cag_mock_1.table_name = table_name
+        cag_mock_1.is_valid.return_value = {table_name: pd.Series([True])}
+        cag_mock_1.transform.return_value = transformed_data
+        cag_mock_2 = Mock()
+        cag_mock_2.is_valid.return_value = {table_name: pd.Series([True])}
+        cag_mock_2.table_name = table_name
+        instance.patterns = [cag_mock_1, cag_mock_2]
+        copy_mock.return_value = [cag_mock_1, cag_mock_2]
+
+        # Run
+        instance.validate_cag(synthetic_data)
+
+        # Assert
+        cag_mock_1.is_valid.assert_called_once_with(data=synthetic_data)
+        cag_mock_1.transform.assert_called_once_with(data=synthetic_data)
+        cag_mock_2.is_valid.assert_called_once_with(data=transformed_data)
+        cag_mock_2.transform.assert_called_once_with(data=transformed_data)
+
+    def test_validate_cag_raises(self):
+        """Test the ``_validate_cag`` method raises an error."""
+        # Setup
+        table_name = 'table1'
+        synthetic_data = {table_name: Mock()}
+        original_metadata = Metadata()
+        instance = BaseMultiTableSynthesizer(original_metadata)
+        cag_mock_1 = Mock()
+        cag_mock_1.table_name = table_name
+        cag_mock_1.is_valid.return_value = {table_name: pd.Series([False])}
+        instance.patterns = [cag_mock_1]
+        msg = f"Table '{table_name}': The mock requirement is not met for row indices: 0."
+
+        # Run and Assert
+        with pytest.raises(PatternNotMetError, match=msg):
+            instance.validate_cag(synthetic_data)
 
     def test_validate(self):
         """Test that no error is being raised when the data is valid."""
