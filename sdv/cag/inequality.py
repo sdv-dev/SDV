@@ -158,11 +158,11 @@ class Inequality(BasePattern):
             )
 
     def _get_diff_and_nan_column_names(self, metadata, column_name, table_name):
-        """Get the column names of the new added columns.
+        """Get the column names for the difference and NaN columns.
 
         Args:
             metadata (Metadata):
-                The metadata to validate against.
+                The metadata to get the column names from.
             column_name (str):
                 The input name of the column to be added.
             table_name (str):
