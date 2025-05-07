@@ -1569,8 +1569,8 @@ class TestBaseMultiTableSynthesizer:
         patterns_metadata = BaseMultiTableSynthesizer.get_metadata(instance)
 
         # Assert
-        assert no_patterns_metadata == metadata
-        assert patterns_metadata == metadata
+        assert no_patterns_metadata.to_dict() == metadata.to_dict()
+        assert patterns_metadata.to_dict() == metadata.to_dict()
 
     def test_get_metadata_modified(self):
         """Test getting the modified metadata from the synthesizer."""
@@ -1583,7 +1583,7 @@ class TestBaseMultiTableSynthesizer:
         returned_metadata = BaseMultiTableSynthesizer.get_metadata(instance, 'modified')
 
         # Assert
-        assert returned_metadata == metadata
+        assert returned_metadata.to_dict() == metadata.to_dict()
 
     def test_get_metadata_bad_keyword(self):
         """Test passing a bad keyword to ``get_metadata``."""

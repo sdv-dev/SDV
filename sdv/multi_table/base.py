@@ -228,13 +228,10 @@ class BaseMultiTableSynthesizer:
             error_msg = f"Unrecognized version '{version}', please use 'original' or 'modified'."
             raise ValueError(error_msg)
 
-        if version == 'original':
-            original = (
-                self._original_metadata if hasattr(self, '_original_metadata') else self.metadata
-            )
-            return original
-        else:
-            return self.metadata
+        if version == 'original' and hasattr(self, '_original_metadata'):
+            return Metadata.load_from_dict(self._original_metadata.to_dict())
+
+        return Metadata.load_from_dict(self.metadata.to_dict())
 
     def _transform_helper(self, data):
         """Validate and transform all CAG patterns during preprocessing.
