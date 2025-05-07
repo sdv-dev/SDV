@@ -1192,13 +1192,12 @@ class SingleTableMetadata:
 
     def _validate_primary_key(self, data):
         error = []
-        primary_key = self.primary_key
-        is_int = primary_key and pd.api.types.is_integer_dtype(data[primary_key])
-        regex = self.columns.get(primary_key, {}).get('regex_format')
+        is_int = self.primary_key and pd.api.types.is_integer_dtype(data[self.primary_key])
+        regex = self.columns.get(self.primary_key, {}).get('regex_format')
         if is_int and regex:
             possible_characters = get_possible_chars(regex, 1)
             if '0' in possible_characters:
-                error.append(f'Primary key "{primary_key}" {INT_REGEX_ZERO_ERROR_MESSAGE}')
+                error.append(f'Primary key "{self.primary_key}" {INT_REGEX_ZERO_ERROR_MESSAGE}')
 
         return error
 
