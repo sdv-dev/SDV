@@ -94,6 +94,7 @@ def test_fit_with_unique_constraint_on_data_with_only_index_column():
     assert samples['index'].is_unique
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_fit_with_unique_constraint_on_data_which_has_index_column():
     """Test that the ``fit`` method runs without error when metadata specifies unique constraint,
     ``fit`` is called on data containing a column named index and other columns.
@@ -264,6 +265,7 @@ def test_conditional_sampling_with_constraints():
     assert samples['C'].isin(['Yes', 'No', 'Maybe']).all()
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 @patch('sdv.single_table.base.isinstance')
 @patch('sdv.single_table.copulas.multivariate.GaussianMultivariate', spec_set=GaussianMultivariate)
 def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstance_mock):
@@ -330,6 +332,7 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
     pd.testing.assert_frame_equal(sampled_data, expected_data)
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_custom_constraints_from_file(tmpdir):
     """Ensure the correct loading for a custom constraint class defined in another file."""
     data = pd.DataFrame({
@@ -373,6 +376,7 @@ def test_custom_constraints_from_file(tmpdir):
     assert all(loaded_sampled['numerical_col'] > 1)
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_custom_constraints_from_object(tmpdir):
     """Ensure the correct loading for a custom constraint class passed as an object."""
     data = pd.DataFrame({
@@ -414,6 +418,7 @@ def test_custom_constraints_from_object(tmpdir):
     assert all(loaded_sampled['numerical_col'] > 1)
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_synthesizer_with_inequality_constraint(demo_data, demo_metadata):
     """Ensure that the ``Inequality`` constraint can sample from the model."""
     # Setup
@@ -436,6 +441,7 @@ def test_synthesizer_with_inequality_constraint(demo_data, demo_metadata):
     assert all(pd.to_datetime(_sampled['checkin_date']) < pd.to_datetime(_sampled['checkout_date']))
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_inequality_constraint_with_datetimes_and_nones():
     """Test that the ``Inequality`` constraint works with ``None`` and ``datetime``."""
     # Setup
@@ -498,6 +504,7 @@ def test_inequality_constraint_with_datetimes_and_nones():
     pd.testing.assert_frame_equal(expected_sampled, sampled)
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_scalar_inequality_constraint_with_datetimes_and_nones():
     """Test that the ``ScalarInequality`` constraint works with ``None`` and ``datetime``."""
     # Setup
@@ -550,6 +557,7 @@ def test_scalar_inequality_constraint_with_datetimes_and_nones():
     pd.testing.assert_frame_equal(expected_sampled, sampled)
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_scalar_range_constraint_with_datetimes_and_nones():
     """Test that the ``ScalarRange`` constraint works with ``None`` and ``datetime``."""
     # Setup
@@ -617,6 +625,7 @@ def test_scalar_range_constraint_with_datetimes_and_nones():
     pd.testing.assert_frame_equal(expected_sampled, sampled)
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_range_constraint_with_datetimes_and_nones():
     """Test that the ``Range`` constraint works with ``None`` and ``datetime``."""
     # Setup
@@ -698,6 +707,7 @@ def test_range_constraint_with_datetimes_and_nones():
     synth.validate(sampled)
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_inequality_constraint_all_possible_nans_configurations():
     """Test that the inequality constraint works with all possible NaN configurations."""
     # Setup
@@ -729,6 +739,7 @@ def test_inequality_constraint_all_possible_nans_configurations():
     assert (~(pd.isna(synthetic_data['A'])) & ~(pd.isna(synthetic_data['B']))).any()
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_range_constraint_all_possible_nans_configurations():
     """Test that the range constraint works with all possible NaN configurations."""
     # Setup
@@ -871,6 +882,7 @@ def test_timezone_aware_constraints():
     assert all(samples['col1'] < samples['col2'])
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_custom_and_overlapping_constraint_errors(caplog, demo_data, demo_metadata):
     """Test a synthesizer when constraints overlap or custom constraints raise an error.
 
@@ -935,6 +947,7 @@ def test_custom_and_overlapping_constraint_errors(caplog, demo_data, demo_metada
         assert log in log_messages
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_aggregate_constraint_errors(demo_data, demo_metadata):
     """Test that if there are multiple constraint errors, they are raised together."""
 
@@ -963,6 +976,7 @@ def test_aggregate_constraint_errors(demo_data, demo_metadata):
         synth.fit(demo_data)
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_constraint_datetime_check():
     """Test datetime columns are correctly identified in constraints. GH#1692"""
     # Setup

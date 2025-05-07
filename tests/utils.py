@@ -134,7 +134,7 @@ def catch_sdv_logs(caplog, level, logger):
         logger.removeHandler(caplog.handler)
 
 
-def run_pattern(constraint, data, metadata):
+def run_constraint(constraint, data, metadata):
     """Run a constraint."""
     constraint.validate(data, metadata)
     updated_metadata = constraint.get_updated_metadata(metadata)

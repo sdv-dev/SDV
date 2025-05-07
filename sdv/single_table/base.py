@@ -724,26 +724,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         """Get a list of constraint-augmented generation constraints applied to the synthesizer."""
         return deepcopy(self._chained_constraints + self._reject_sampling_constraints)
 
-    def get_metadata(self, version='original'):
-        """Get the metadata, either original or modified after applying CAG constraints.
-
-        Args:
-            version (str, optional):
-                The version of metadata to return, must be one of 'original' or 'modified'. If
-                'original', will return the original metadata used to instantiate the
-                synthesizer. If 'modified', will return the modified metadata after applying this
-                synthesizer's CAG constraints. Defaults to 'original'.
-        """
-        if version not in ('original', 'modified'):
-            raise ValueError(
-                f"Unrecognized version '{version}', please use 'original' or 'modified'."
-            )
-
-        if hasattr(self, '_original_metadata') and version == 'original':
-            return self._original_metadata
-
-        return super().get_metadata()
-
     def validate_cag(self, synthetic_data):
         """Validate synthetic_data against the CAG patterns.
 

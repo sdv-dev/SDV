@@ -7,11 +7,11 @@ import pandas as pd
 import pytest
 
 from sdv.cag import FixedIncrements
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import constraintNotMetError
 from sdv.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
-from tests.utils import run_pattern
+from tests.utils import run_constraint
 
 
 @pytest.fixture()
@@ -29,7 +29,7 @@ def metadata():
 
 
 @pytest.fixture()
-def pattern():
+def constraint():
     return FixedIncrements(column_name='A', increment_value=10)
 
 
@@ -70,7 +70,7 @@ def metadata_multi():
 
 
 @pytest.fixture()
-def pattern_multi():
+def constraint_multi():
     return FixedIncrements(column_name='A', table_name='table1', increment_value=1000)
 
 
@@ -110,7 +110,7 @@ def test_fixed_increments_integers(dtype):
     constraint = FixedIncrements(dtype, increment_value=increment_value)
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(constraint, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -121,13 +121,13 @@ def test_fixed_increments_integers(dtype):
     pd.testing.assert_frame_equal(data, reverse_transformed)
 
 
-def test_fixed_incremements_with_multi_table(data_multi, metadata_multi, pattern_multi):
+def test_fixed_incremements_with_multi_table(data_multi, metadata_multi, constraint_multi):
     """Test that FixedIncrements constraint works with multi-table data."""
     # Run
     data = data_multi
     metadata = metadata_multi
-    pattern = pattern_multi
-    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
+    constraint = constraint_multi
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -152,47 +152,47 @@ def test_fixed_incremements_with_multi_table(data_multi, metadata_multi, pattern
         pd.testing.assert_frame_equal(table, reverse_transformed[table_name])
 
 
-def run_copula(data, metadata, pattern):
+def run_copula(data, metadata, constraint):
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_cag(constraints=[constraint])
     synthesizer.fit(data)
     return synthesizer
 
 
-def test_validate_cag(data, metadata, pattern):
+def test_validate_cag(data, metadata, constraint):
     """Test validate_cag works with synthetic data generated with FixedIncrements."""
     # Setup
-    synthesizer = run_copula(data, metadata, pattern)
+    synthesizer = run_copula(data, metadata, constraint)
     synthetic_data = synthesizer.sample(100)
 
     # Run
     synthesizer.validate_cag(synthetic_data=synthetic_data)
 
     # Assert
-    assert all(data['A'] % pattern.increment_value == 0)
-    assert all(synthetic_data['A'] % pattern.increment_value == 0)
+    assert all(data['A'] % constraint.increment_value == 0)
+    assert all(synthetic_data['A'] % constraint.increment_value == 0)
 
 
-def test_validate_cag_raises(data, metadata, pattern):
+def test_validate_cag_raises(data, metadata, constraint):
     """Test validate_cag raises an error with bad multitable data with FixedIncrements."""
     # Setup
-    synthesizer = run_copula(data, metadata, pattern)
+    synthesizer = run_copula(data, metadata, constraint)
     synthetic_data = pd.DataFrame({'A': [1, 3, 5, 7, 9, 12]})
     msg = re.escape('The fixed increments requirement is not met for row indices: 0, 1, 2, 3, 4')
 
     # Run and Assert
-    with pytest.raises(PatternNotMetError, match=msg):
+    with pytest.raises(constraintNotMetError, match=msg):
         synthesizer.validate_cag(synthetic_data=synthetic_data)
 
 
-def test_validate_cag_multi(data_multi, metadata_multi, pattern_multi):
+def test_validate_cag_multi(data_multi, metadata_multi, constraint_multi):
     """Test validate_cag works with multitable data generated with FixedIncrements."""
     # Setup
     data = data_multi
     metadata = metadata_multi
-    pattern = pattern_multi
+    constraint = constraint_multi
     synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_cag(constraints=[constraint])
     synthesizer.fit(data)
     synthetic_data = synthesizer.sample(100)
 
@@ -200,8 +200,8 @@ def test_validate_cag_multi(data_multi, metadata_multi, pattern_multi):
     synthesizer.validate_cag(synthetic_data=synthetic_data)
 
     # Assert
-    assert all(data['table1']['A'] % pattern.increment_value == 0)
-    assert all(synthetic_data['table1']['A'] % pattern.increment_value == 0)
+    assert all(data['table1']['A'] % constraint.increment_value == 0)
+    assert all(synthetic_data['table1']['A'] % constraint.increment_value == 0)
 
 
 def test_validate_cag_multi_raises():
@@ -231,7 +231,7 @@ def test_validate_cag_multi_raises():
         'table2': pd.DataFrame({'id': range(5)}),
     }
     synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_cag(patterns=[constraint])
+    synthesizer.add_cag(constraints=[constraint])
     synthesizer.fit(data)
     msg = re.escape(
         "Table 'table1': The fixed increments requirement is "
@@ -239,5 +239,5 @@ def test_validate_cag_multi_raises():
     )
 
     # Run and Assert
-    with pytest.raises(PatternNotMetError, match=msg):
+    with pytest.raises(constraintNotMetError, match=msg):
         synthesizer.validate_cag(synthetic_data=synthetic_data)

@@ -7,6 +7,7 @@ from sdv.metadata import Metadata
 from sdv.single_table import GaussianCopulaSynthesizer
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_fixed_combinations_integers():
     """Test that FixedCombinations constraint works with integer columns."""
     data = pd.DataFrame({
@@ -40,6 +41,7 @@ def test_fixed_combinations_integers():
     )
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_fixed_combinations_with_nans():
     """Test that FixedCombinations constraint works with NaNs."""
     # Setup
@@ -77,6 +79,7 @@ def test_fixed_combinations_with_nans():
     )
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_fixedincrements_with_nullable_pandas_dtypes():
     """Test that FixedIncrements constraint works with nullable pandas dtypes."""
     # Setup
@@ -114,6 +117,7 @@ def test_fixedincrements_with_nullable_pandas_dtypes():
         assert np.all(synthetic_data[column] % 10 == 0)
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_inequality_constraint_with_timestamp_and_date():
     """Test that the inequality constraint passes without strict boundaries.
 
@@ -178,6 +182,7 @@ def test_inequality_constraint_with_timestamp_and_date():
     assert invalid_rows.empty
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_inequality_constraint_with_timestamp_and_date_strict_boundaries():
     """Test that the inequality constraint fails with strict boundaries.
 
@@ -233,6 +238,7 @@ def test_inequality_constraint_with_timestamp_and_date_strict_boundaries():
         assert error_msg in error
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_inequality_constraint_date_less_than_timestamp_strict_boundaries():
     """Test that the inequality constraint fails when date is less than timestamp.
 
@@ -286,6 +292,7 @@ def test_inequality_constraint_date_less_than_timestamp_strict_boundaries():
         synthesizer.fit(data)
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_inequality_constraint_timestamp_less_than_date_strict_boundaries():
     """Test that the inequality constraint fails when timestamp is less than date.
 

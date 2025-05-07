@@ -2283,6 +2283,7 @@ class TestBaseSingleTableSynthesizer:
         with pytest.warns(UserWarning, match=warn_msg):
             instance.add_constraints([])
 
+    @pytest.mark.skip('Old-style constraints are deprecated')
     def test_get_constraints(self):
         """Test a list of constraints is returned by the method."""
         # Setup

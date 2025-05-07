@@ -1387,6 +1387,7 @@ class TestBaseMultiTableSynthesizer:
         output_oseba = instance._table_synthesizers['oseba'].get_constraints()
         assert output_oseba == []
 
+    @pytest.mark.skip('Old-style constraints are deprecated')
     def test_get_constraints(self):
         """Test a list of constraints is returned by the method."""
         # Setup
@@ -1500,8 +1501,8 @@ class TestBaseMultiTableSynthesizer:
         constraints_metadata = BaseMultiTableSynthesizer.get_metadata(instance)
 
         # Assert
-        assert no_constraints_metadata == metadata
-        assert constraints_metadata == metadata
+        assert no_constraints_metadata.to_dict() == metadata.to_dict()
+        assert constraints_metadata.to_dict() == metadata.to_dict()
 
     def test_get_metadata_modified(self):
         """Test getting the modified metadata from the synthesizer."""

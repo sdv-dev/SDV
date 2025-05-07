@@ -11,7 +11,7 @@ from sdv.cag._errors import PatternNotMetError
 from sdv.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
-from tests.utils import run_pattern
+from tests.utils import run_constraint
 
 
 @pytest.fixture()
@@ -72,7 +72,7 @@ def pattern_multi():
 def test_fixed_combinations_integers(data, metadata, pattern):
     """Test that FixedCombinations constraint works with integer columns."""
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(constraint, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -102,7 +102,7 @@ def test_fixed_combinations_with_nans(metadata, pattern):
     constraint = FixedCombinations(['A', 'B'])
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(constraint, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -123,7 +123,7 @@ def test_fixed_null_combinations_with_multi_table(data_multi, metadata_multi, pa
     constraint = pattern_multi
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(constraint, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
