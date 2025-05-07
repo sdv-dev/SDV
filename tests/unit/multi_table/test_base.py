@@ -1423,9 +1423,9 @@ class TestBaseMultiTableSynthesizer:
         delattr(instance, 'constraints')
         original_metadata = get_multi_table_metadata()
         instance.metadata = original_metadata
-        pattern1 = Mock()
-        pattern2 = Mock()
-        constraints = [pattern1, pattern2]
+        constraint1 = Mock()
+        constraint2 = Mock()
+        constraints = [constraint1, constraint2]
         validate_constraints_mock.return_value = constraints
 
         # Run
@@ -1433,11 +1433,11 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         assert instance._original_metadata == original_metadata
-        pattern1.get_updated_metadata.assert_called_once_with(original_metadata)
-        pattern2.get_updated_metadata.assert_called_once_with(
-            pattern1.get_updated_metadata.return_value
+        constraint1.get_updated_metadata.assert_called_once_with(original_metadata)
+        constraint2.get_updated_metadata.assert_called_once_with(
+            constraint1.get_updated_metadata.return_value
         )
-        assert instance.metadata == pattern2.get_updated_metadata.return_value
+        assert instance.metadata == constraint2.get_updated_metadata.return_value
         instance._initialize_models.assert_called_once()
         assert instance.constraints == constraints
 
@@ -1451,20 +1451,20 @@ class TestBaseMultiTableSynthesizer:
         original_metadata = Mock()
         instance._original_metadata = original_metadata
         instance.metadata = metadata
-        pattern1 = Mock()
-        pattern2 = Mock()
-        instance.constraints = [pattern1]
-        validate_constraints_mock.return_value = [pattern2]
+        constraint1 = Mock()
+        constraint2 = Mock()
+        instance.constraints = [constraint1]
+        validate_constraints_mock.return_value = [constraint2]
 
         # Run
-        BaseMultiTableSynthesizer.add_constraints(instance, [pattern2])
+        BaseMultiTableSynthesizer.add_constraints(instance, [constraint2])
 
         # Assert
         assert instance._original_metadata == original_metadata
-        pattern2.get_updated_metadata.assert_called_once_with(metadata)
-        assert instance.metadata == pattern2.get_updated_metadata.return_value
+        constraint2.get_updated_metadata.assert_called_once_with(metadata)
+        assert instance.metadata == constraint2.get_updated_metadata.return_value
         instance._initialize_models.assert_called_once()
-        assert instance.constraints == [pattern1, pattern2]
+        assert instance.constraints == [constraint1, constraint2]
 
     @patch('sdv.multi_table.base.deepcopy')
     def test_get_cag(self, copy_mock):
@@ -1472,17 +1472,17 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         instance = Mock()
         delattr(instance, 'constraints')
-        pattern1 = Mock()
-        pattern2 = Mock()
+        constraint1 = Mock()
+        constraint2 = Mock()
 
         # Run
         no_constraints = BaseMultiTableSynthesizer.get_cag(instance)
-        instance.constraints = [pattern1, pattern2]
+        instance.constraints = [constraint1, constraint2]
         constraints = BaseMultiTableSynthesizer.get_cag(instance)
 
         # Assert
         assert no_constraints == []
-        copy_mock.assert_called_once_with([pattern1, pattern2])
+        copy_mock.assert_called_once_with([constraint1, constraint2])
         assert constraints == copy_mock.return_value
 
     def test_get_metadata_original(self):
@@ -1550,43 +1550,43 @@ class TestBaseMultiTableSynthesizer:
         instance = Mock()
         original_metadata = Mock()
         data = {'table1': Mock(), 'table2': Mock()}
-        pattern1 = Mock()
-        pattern2 = Mock()
+        constraint1 = Mock()
+        constraint2 = Mock()
         instance._fitted = False
-        instance.constraints = [pattern1, pattern2]
+        instance.constraints = [constraint1, constraint2]
         instance._original_metadata = original_metadata
 
         # Run
         transformed = BaseMultiTableSynthesizer._transform_helper(instance, data)
 
         # Assert
-        pattern1.fit.assert_called_once_with(data, original_metadata)
-        pattern1.transform.assert_called_once_with(data)
-        pattern2.fit.assert_called_once_with(
-            pattern1.transform.return_value, pattern1.get_updated_metadata.return_value
+        constraint1.fit.assert_called_once_with(data, original_metadata)
+        constraint1.transform.assert_called_once_with(data)
+        constraint2.fit.assert_called_once_with(
+            constraint1.transform.return_value, constraint1.get_updated_metadata.return_value
         )
-        pattern2.transform.assert_called_once_with(pattern1.transform.return_value)
-        assert transformed == pattern2.transform.return_value
+        constraint2.transform.assert_called_once_with(constraint1.transform.return_value)
+        assert transformed == constraint2.transform.return_value
 
     def test__transform_helper_with_constraints(self):
         """Test validating and transforming the data constraints."""
         # Setup
         instance = Mock()
         data = {'table1': Mock(), 'table2': Mock()}
-        pattern1 = Mock()
-        pattern2 = Mock()
+        constraint1 = Mock()
+        constraint2 = Mock()
         instance._fitted = True
-        instance.constraints = [pattern1, pattern2]
+        instance.constraints = [constraint1, constraint2]
 
         # Run
         transformed = BaseMultiTableSynthesizer._transform_helper(instance, data)
 
         # Assert
-        pattern1.fit.assert_not_called()
-        pattern1.transform.assert_called_once_with(data)
-        pattern2.fit.assert_not_called()
-        pattern2.transform.assert_called_once_with(pattern1.transform.return_value)
-        assert transformed == pattern2.transform.return_value
+        constraint1.fit.assert_not_called()
+        constraint1.transform.assert_called_once_with(data)
+        constraint2.fit.assert_not_called()
+        constraint2.transform.assert_called_once_with(constraint1.transform.return_value)
+        assert transformed == constraint2.transform.return_value
 
     def test__reverse_transform_helper_no_constraints(self):
         """Test reverse transforming when no data constraints have been set."""
@@ -1609,21 +1609,23 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         instance = Mock()
         data = {'table1': Mock(), 'table2': Mock()}
-        pattern1 = Mock()
-        pattern2 = Mock()
-        instance.constraints = [pattern1, pattern2]
-        drop_unknown_references.return_value = pattern1.reverse_transform.return_value
+        constraint1 = Mock()
+        constraint2 = Mock()
+        instance.constraints = [constraint1, constraint2]
+        drop_unknown_references.return_value = constraint1.reverse_transform.return_value
 
         # Run
         reverse_transformed = BaseMultiTableSynthesizer._reverse_transform_helper(instance, data)
 
         # Assert
-        pattern2.reverse_transform.assert_called_once_with(data)
-        pattern1.reverse_transform.assert_called_once_with(pattern2.reverse_transform.return_value)
-        drop_unknown_references.assert_called_once_with(
-            pattern1.reverse_transform.return_value, instance._original_metadata, verbose=False
+        constraint2.reverse_transform.assert_called_once_with(data)
+        constraint1.reverse_transform.assert_called_once_with(
+            constraint2.reverse_transform.return_value
         )
-        assert reverse_transformed == pattern1.reverse_transform.return_value
+        drop_unknown_references.assert_called_once_with(
+            constraint1.reverse_transform.return_value, instance._original_metadata, verbose=False
+        )
+        assert reverse_transformed == constraint1.reverse_transform.return_value
 
     def test_load_custom_constraint_classes(self):
         """Test that the method calls the single table synthesizer's version of the method."""

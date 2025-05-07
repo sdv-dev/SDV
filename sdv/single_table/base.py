@@ -364,14 +364,14 @@ class BaseSynthesizer:
         return instantiated_parameters
 
     def get_metadata(self, version='original'):
-        """Get the metadata, either original or modified after applying CAG patterns.
+        """Get the metadata, either original or modified after applying constraints.
 
         Args:
             version (str, optional):
                 The version of metadata to return, must be one of 'original' or 'modified'. If
                 'original', will return the original metadata used to instantiate the
                 synthesizer. If 'modified', will return the modified metadata after applying this
-                synthesizer's CAG patterns. Defaults to 'original'.
+                synthesizer's constraints. Defaults to 'original'.
         """
         if version not in ('original', 'modified'):
             raise ValueError(
@@ -695,7 +695,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         Args:
             constraints (list):
-                A list of CAG constraints to apply to the synthesizer.
+                A list of constraints to apply to the synthesizer.
         """
         constraints = _validate_constraints(constraints, self._fitted)
         for constraint in constraints:
@@ -781,7 +781,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     transformed_data = pattern.transform(data=transformed_data)
 
     def _transform_helper(self, data):
-        """Validate and transform all CAG constraints during preprocessing.
+        """Validate and transform all constraints during preprocessing.
 
         Args:
             data (dict[str, pd.DataFrame]):

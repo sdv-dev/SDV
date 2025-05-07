@@ -1,4 +1,4 @@
-"""FixedCombinations CAG constraint."""
+"""FixedCombinations constraint."""
 
 import uuid
 
@@ -55,7 +55,7 @@ class FixedCombinations(BasePattern):
         self._joint_column = '#'.join(self.column_names)
         self._combinations = None
 
-    def _validate_pattern_with_metadata(self, metadata):
+    def _validate_constraint_with_metadata(self, metadata):
         """Validate the constraint is compatible with the provided metadata.
 
         Validates that:
@@ -88,7 +88,7 @@ class FixedCombinations(BasePattern):
                     'column relationship.'
                 )
 
-    def _validate_pattern_with_data(self, data, metadata):
+    def _validate_constraint_with_data(self, data, metadata):
         """Validate the data is compatible with the constraint.
 
         For FixedCombinations, this is a NOP.

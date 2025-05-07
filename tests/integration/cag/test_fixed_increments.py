@@ -1,4 +1,4 @@
-"""Integration tests for FixedIncrements CAG constraint."""
+"""Integration tests for FixedIncrements constraint."""
 
 import re
 

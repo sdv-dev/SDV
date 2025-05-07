@@ -82,8 +82,8 @@ class TestBasePattern:
         """Test ``validate`` validates data and metadata."""
         # Setup
         instance = BasePattern()
-        instance._validate_pattern_with_data = Mock()
-        instance._validate_pattern_with_metadata = Mock()
+        instance._validate_constraint_with_data = Mock()
+        instance._validate_constraint_with_metadata = Mock()
         expected_msg = re.escape('Pattern must be fit before validating without metadata.')
         data_mock = Mock()
         metadata_mock = Mock()
@@ -95,8 +95,8 @@ class TestBasePattern:
         instance.validate(data_mock, metadata_mock)
 
         # Assert
-        instance._validate_pattern_with_metadata.assert_called_once_with(metadata_mock)
-        instance._validate_pattern_with_data.assert_called_once_with(data_mock, metadata_mock)
+        instance._validate_constraint_with_metadata.assert_called_once_with(metadata_mock)
+        instance._validate_constraint_with_data.assert_called_once_with(data_mock, metadata_mock)
 
     def test_validate_after_fitting(self):
         """Test ``validate`` validates with metadata after being fitted."""
@@ -104,14 +104,14 @@ class TestBasePattern:
         instance = BasePattern()
         instance._fitted = True
         instance.metadata = Mock()
-        instance._validate_pattern_with_data = Mock()
-        instance._validate_pattern_with_metadata = Mock()
+        instance._validate_constraint_with_data = Mock()
+        instance._validate_constraint_with_metadata = Mock()
 
         # Run
         instance.validate()
 
         # Assert
-        instance._validate_pattern_with_metadata.assert_called_once_with(instance.metadata)
+        instance._validate_constraint_with_metadata.assert_called_once_with(instance.metadata)
 
     def test_validate_single_table(self):
         """Test ``validate`` handles single table data."""
@@ -119,8 +119,8 @@ class TestBasePattern:
         instance = BasePattern()
         instance._single_table = True
         instance._table_name = 'table1'
-        instance._validate_pattern_with_data = Mock()
-        instance._validate_pattern_with_metadata = Mock()
+        instance._validate_constraint_with_data = Mock()
+        instance._validate_constraint_with_metadata = Mock()
         data_mock = Mock(spec=pd.DataFrame)
         metadata_mock = Mock()
 
@@ -128,8 +128,8 @@ class TestBasePattern:
         instance.validate(data_mock, metadata_mock)
 
         # Assert
-        instance._validate_pattern_with_metadata.assert_called_once_with(metadata_mock)
-        instance._validate_pattern_with_data.assert_called_once_with(
+        instance._validate_constraint_with_metadata.assert_called_once_with(metadata_mock)
+        instance._validate_constraint_with_data.assert_called_once_with(
             {'table1': data_mock}, metadata_mock
         )
 
@@ -152,8 +152,8 @@ class TestBasePattern:
         """Test ``fit`` method."""
         # Setup
         instance = BasePattern()
-        instance._validate_pattern_with_metadata = Mock()
-        instance._validate_pattern_with_data = Mock()
+        instance._validate_constraint_with_metadata = Mock()
+        instance._validate_constraint_with_data = Mock()
         instance._fit = Mock()
         metadata = Metadata.load_from_dict({
             'tables': {
@@ -169,8 +169,8 @@ class TestBasePattern:
 
         # Assert
         assert instance.metadata == metadata
-        instance._validate_pattern_with_metadata.assert_called_once_with(metadata)
-        instance._validate_pattern_with_data.assert_called_once_with(data, metadata)
+        instance._validate_constraint_with_metadata.assert_called_once_with(metadata)
+        instance._validate_constraint_with_data.assert_called_once_with(data, metadata)
         instance._fit.assert_called_once_with(data, metadata)
         assert instance._dtypes == {
             'table1': {'col1': 'int64', 'col2': 'object', 'col3': 'float64'},
@@ -186,8 +186,8 @@ class TestBasePattern:
         # Setup
         instance = BasePattern()
         instance.table_name = 'table1'
-        instance._validate_pattern_with_metadata = Mock()
-        instance._validate_pattern_with_data = Mock()
+        instance._validate_constraint_with_metadata = Mock()
+        instance._validate_constraint_with_data = Mock()
         instance._fit = Mock()
         metadata = Metadata.load_from_dict({
             'tables': {
@@ -204,8 +204,8 @@ class TestBasePattern:
         assert instance._single_table is True
         assert instance._table_name == 'table1'
         assert instance.metadata == metadata
-        instance._validate_pattern_with_metadata.assert_called_once_with(metadata)
-        instance._validate_pattern_with_data.assert_called_once_with(
+        instance._validate_constraint_with_metadata.assert_called_once_with(metadata)
+        instance._validate_constraint_with_data.assert_called_once_with(
             DataFrameDictMatcher({'table1': data['table1']}), metadata
         )
         instance._fit.assert_called_once_with(

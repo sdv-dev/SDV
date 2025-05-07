@@ -1,4 +1,4 @@
-"""Integration tests for FixedCombinations CAG constraint."""
+"""Integration tests for FixedCombinations constraint."""
 
 import re
 
@@ -164,12 +164,12 @@ def test_fixed_combinations_multiple_constraints():
             'D': {'sdtype': 'categorical'},
         }
     })
-    pattern1 = FixedCombinations(['A', 'B'])
-    pattern2 = FixedCombinations(['C', 'D'])
+    constraint1 = FixedCombinations(['A', 'B'])
+    constraint2 = FixedCombinations(['C', 'D'])
 
     # Run
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_constraints(constraints=[pattern1, pattern2])
+    synthesizer.add_constraints(constraints=[constraint1, constraint2])
     synthesizer.fit(data)
     samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')
@@ -214,12 +214,12 @@ def test_fixed_combinations_multiple_constraints_reject_sampling():
             'C': {'sdtype': 'categorical'},
         }
     })
-    pattern1 = FixedCombinations(['A', 'B'])
-    pattern2 = FixedCombinations(['A', 'C'])
+    constraint1 = FixedCombinations(['A', 'B'])
+    constraint2 = FixedCombinations(['A', 'C'])
 
     # Run
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_constraints(constraints=[pattern1, pattern2])
+    synthesizer.add_constraints(constraints=[constraint1, constraint2])
     synthesizer.fit(data)
     samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')
@@ -266,13 +266,13 @@ def test_fixed_combinations_multiple_constraints_three_constraints():
             'D': {'sdtype': 'categorical'},
         }
     })
-    pattern1 = FixedCombinations(['A', 'B'])
-    pattern2 = FixedCombinations(['C', 'D'])
-    pattern3 = FixedCombinations(['A', 'C'])
+    constraint1 = FixedCombinations(['A', 'B'])
+    constraint2 = FixedCombinations(['C', 'D'])
+    constraint3 = FixedCombinations(['A', 'C'])
 
     # Run
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_constraints(constraints=[pattern1, pattern2, pattern3])
+    synthesizer.add_constraints(constraints=[constraint1, constraint2, constraint3])
     synthesizer.fit(data)
     samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')
@@ -325,13 +325,13 @@ def test_fixed_combinations_multiple_constraints_three_constraints_reject_sampli
             'D': {'sdtype': 'categorical'},
         }
     })
-    pattern1 = FixedCombinations(['A', 'B'])
-    pattern2 = FixedCombinations(['C', 'D'])
-    pattern3 = FixedCombinations(['A', 'C'])
+    constraint1 = FixedCombinations(['A', 'B'])
+    constraint2 = FixedCombinations(['C', 'D'])
+    constraint3 = FixedCombinations(['A', 'C'])
 
     # Run
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_constraints(constraints=[pattern1, pattern3, pattern2])
+    synthesizer.add_constraints(constraints=[constraint1, constraint3, constraint2])
     synthesizer.fit(data)
     samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')

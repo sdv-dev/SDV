@@ -1,4 +1,4 @@
-"""One Hot Encoding CAG constraint."""
+"""One Hot Encoding constraint."""
 
 import numpy as np
 
@@ -42,7 +42,7 @@ class OneHotEncoding(BasePattern):
         self._column_names = column_names
         self.table_name = table_name
 
-    def _validate_pattern_with_metadata(self, metadata):
+    def _validate_constraint_with_metadata(self, metadata):
         """Validate the constraint is compatible with the provided metadata.
 
         Validates that:
@@ -69,7 +69,7 @@ class OneHotEncoding(BasePattern):
 
         return sum_one & max_one & min_zero & no_nans
 
-    def _validate_pattern_with_data(self, data, metadata):
+    def _validate_constraint_with_data(self, data, metadata):
         """Validate the data is compatible with the constraint."""
         table_name = self._get_single_table_name(metadata)
         valid = self._get_valid_table_data(data[table_name])

@@ -2,4 +2,4 @@
 
 
 class ConstraintNotMetError(Exception):
-    """Error to raise when a CAG pattern is not met."""
+    """Error to raise when a constraint is not met."""

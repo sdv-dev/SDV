@@ -19,10 +19,10 @@ class BasePattern:
 
         return metadata._get_single_table_name() if self.table_name is None else self.table_name
 
-    def _validate_pattern_with_metadata(self, metadata):
+    def _validate_constraint_with_metadata(self, metadata):
         raise NotImplementedError()
 
-    def _validate_pattern_with_data(self, data, metadata):
+    def _validate_constraint_with_data(self, data, metadata):
         raise NotImplementedError()
 
     def validate(self, data=None, metadata=None):
@@ -41,7 +41,7 @@ class BasePattern:
 
             metadata = self.metadata
 
-        self._validate_pattern_with_metadata(metadata)
+        self._validate_constraint_with_metadata(metadata)
 
         if isinstance(data, pd.DataFrame):
             if self._single_table:
@@ -51,7 +51,7 @@ class BasePattern:
                 data = {table_name: data}
 
         if data is not None:
-            self._validate_pattern_with_data(data, metadata)
+            self._validate_constraint_with_data(data, metadata)
 
     def _get_updated_metadata(self, metadata):
         return metadata
@@ -78,13 +78,13 @@ class BasePattern:
             metadata (sdv.Metadata):
                 The metadata to fit the constraint on.
         """
-        self._validate_pattern_with_metadata(metadata)
+        self._validate_constraint_with_metadata(metadata)
         if isinstance(data, pd.DataFrame):
             self._single_table = True
             self._table_name = self._get_single_table_name(metadata)
             data = {self._table_name: data}
 
-        self._validate_pattern_with_data(data, metadata)
+        self._validate_constraint_with_data(data, metadata)
         self._fit(data, metadata)
         self.metadata = metadata
 

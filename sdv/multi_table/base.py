@@ -164,7 +164,7 @@ class BaseMultiTableSynthesizer:
 
         Args:
             constraints (list):
-                A list of CAG constraints to apply to the synthesizer.
+                A list of constraints to apply to the synthesizer.
         """
         if not hasattr(self, '_original_metadata'):
             self._original_metadata = self.metadata
@@ -216,14 +216,14 @@ class BaseMultiTableSynthesizer:
             transformed_data = pattern.transform(data=transformed_data)
 
     def get_metadata(self, version='original'):
-        """Get the metadata, either original or modified after applying CAG constraints.
+        """Get the metadata, either original or modified after applying constraints.
 
         Args:
             version (str, optional):
                 The version of metadata to return, must be one of 'original' or 'modified'. If
                 'original', will return the original metadata used to instantiate the
                 synthesizer. If 'modified', will return the modified metadata after applying this
-                synthesizer's CAG constraints. Defaults to 'original'.
+                synthesizer's constraints. Defaults to 'original'.
         """
         if version not in ('original', 'modified'):
             error_msg = f"Unrecognized version '{version}', please use 'original' or 'modified'."
@@ -235,7 +235,7 @@ class BaseMultiTableSynthesizer:
         return Metadata.load_from_dict(self.metadata.to_dict())
 
     def _transform_helper(self, data):
-        """Validate and transform all CAG constraints during preprocessing.
+        """Validate and transform all constraints during preprocessing.
 
         Args:
             data (dict[str, pd.DataFrame]):
@@ -255,7 +255,7 @@ class BaseMultiTableSynthesizer:
         return data
 
     def _reverse_transform_helper(self, sampled_data):
-        """Reverse transform CAG constraints after sampling."""
+        """Reverse transform constraints after sampling."""
         if not hasattr(self, 'constraints'):
             return sampled_data
 
