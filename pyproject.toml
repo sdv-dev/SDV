@@ -38,7 +38,7 @@ dependencies = [
     'copulas>=0.12.1',
     'ctgan>=0.11.0',
     'deepecho>=0.7.0',
-    'rdt @ git+https://github.com/sdv-dev/RDT.git@feature/cardinality-rule',
+    'rdt @ git+https://github.com/sdv-dev/RDT.git@fix-overflow',
     'sdmetrics>=0.20.1',
     'platformdirs>=4.0',
     'pyyaml>=6.0.1',
