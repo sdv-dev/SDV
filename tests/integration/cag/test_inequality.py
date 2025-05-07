@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from sdv.cag import Inequality
-from sdv.cag._errors import constraintNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.datasets.demo import download_demo
 from sdv.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
@@ -377,7 +377,7 @@ def test_inequality_with_timestamp_and_date_strict_boundaries():
 
     # Run and Assert
     error_msg = 'The inequality requirement is not met for row indices: '
-    with pytest.raises(constraintNotMetError) as error:
+    with pytest.raises(ConstraintNotMetError) as error:
         synthesizer.fit(data)
         assert error_msg in error
 
@@ -429,7 +429,7 @@ def test_inequality_constraint_date_less_than_timestamp_strict_boundaries():
 
     # Run and Assert
     error_msg = 'The inequality requirement is not met for row indices: '
-    with pytest.raises(constraintNotMetError) as error:
+    with pytest.raises(ConstraintNotMetError) as error:
         synthesizer.fit(data)
         assert error_msg in error
 
@@ -481,7 +481,7 @@ def test_inequality_constraint_timestamp_less_than_date_strict_boundaries():
 
     # Run and Assert
     err_msg = 'The inequality requirement is not met for row indices: '
-    with pytest.raises(constraintNotMetError) as error:
+    with pytest.raises(ConstraintNotMetError) as error:
         synthesizer.fit(data)
         assert err_msg in error
 

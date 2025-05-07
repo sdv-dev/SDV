@@ -28,7 +28,7 @@ from sdv._utils import (
     generate_synthesizer_id,
     get_possible_chars,
 )
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows, _validate_constraints
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
@@ -702,7 +702,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             try:
                 self.metadata = constraint.get_updated_metadata(self.metadata)
                 self._chained_constraints.append(constraint)
-            except PatternNotMetError as e:
+            except ConstraintNotMetError as e:
                 LOGGER.info(
                     'Enforcing constraint %s using reject sampling.', constraint.__class__.__name__
                 )
@@ -710,7 +710,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 try:
                     constraint.get_updated_metadata(self._original_metadata)
                     self._reject_sampling_constraints.append(constraint)
-                except PatternNotMetError:
+                except ConstraintNotMetError:
                     raise e
 
         self._data_processor = DataProcessor(

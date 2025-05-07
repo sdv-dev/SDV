@@ -3,7 +3,7 @@
 import pandas as pd
 
 from sdv._utils import _create_unique_name
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _get_invalid_rows,
     _get_is_valid_dict,
@@ -70,7 +70,7 @@ class FixedIncrements(BasePattern):
         table_name = self._get_single_table_name(metadata)
         col_sdtype = metadata.tables[table_name].columns[self.column_name]['sdtype']
         if col_sdtype != 'numerical':
-            raise PatternNotMetError(
+            raise ConstraintNotMetError(
                 f"Column '{self.column_name}' has an incompatible sdtype ('{col_sdtype}')."
                 "The column sdtype must be 'numerical'."
             )
@@ -93,7 +93,7 @@ class FixedIncrements(BasePattern):
         )
         if not valid.all():
             invalid_rows_str = _get_invalid_rows(valid)
-            raise PatternNotMetError(
+            raise ConstraintNotMetError(
                 'The fixed increments requirement has not been met because the data is not '
                 f"evenly divisible by '{self.increment_value}' for row indices: "
                 f'[{invalid_rows_str}]'

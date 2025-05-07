@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from sdv._utils import _create_unique_name
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _get_is_valid_dict,
     _is_list_of_type,
@@ -70,7 +70,7 @@ class FixedCombinations(BasePattern):
         for column in self.column_names:
             col_sdtype = metadata.tables[table_name].columns[column]['sdtype']
             if col_sdtype not in ['boolean', 'categorical']:
-                raise PatternNotMetError(
+                raise ConstraintNotMetError(
                     f"Column '{column}' has an incompatible sdtype ('{col_sdtype}'). The column "
                     "sdtype must be either 'boolean' or 'categorical'."
                 )
@@ -83,7 +83,7 @@ class FixedCombinations(BasePattern):
                 or relationship_columns.isdisjoint(column_set)
             ):
                 bad_columns = "', '".join(list(relationship_columns.intersection(column_set)))
-                raise PatternNotMetError(
+                raise ConstraintNotMetError(
                     f"Cannot apply constraint because columns ['{bad_columns}'] are part of a "
                     'column relationship.'
                 )
