@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 import pandas as pd
 
@@ -60,40 +62,6 @@ def _validate_table_name_if_defined(table_name):
         raise ValueError('`table_name` must be a string or None.')
 
 
-def _remove_columns_from_metadata(metadata, table_name, columns_to_drop):
-    """Remove columns from metadata, including column relationships.
-
-        Will raise an error if the primary key is being dropped.
-
-    Args:
-        metadata (dict, sdv.metadata.Metadata): The Metadata which contains
-            the columns to drop.
-
-        table_name (str): Name of the table in the metadata, where the column(s)
-            are located.
-
-        columns_to_drop (list[str]): The list of column names to drop from the
-            Metadata.
-
-    Returns:
-        (sdv.metadata.Metadata): The new Metadata, with the columns removed.
-    """
-    if isinstance(metadata, Metadata):
-        metadata = metadata.to_dict()
-    for column in columns_to_drop:
-        primary_key = metadata['tables'][table_name].get('primary_key')
-        if primary_key and primary_key == column:
-            raise ValueError('Cannot remove primary key from Metadata')
-        del metadata['tables'][table_name]['columns'][column]
-
-    metadata['tables'][table_name]['column_relationships'] = [
-        rel
-        for rel in metadata['tables'][table_name].get('column_relationships', [])
-        if set(rel['column_names']).isdisjoint(columns_to_drop)
-    ]
-    return Metadata.load_from_dict(metadata)
-
-
 def _is_list_of_type(values, type_to_check=str):
     """Checks that 'values' is a list and all elements are of type 'type_to_check'."""
     return isinstance(values, list) and all(isinstance(value, type_to_check) for value in values)
@@ -141,3 +109,41 @@ def _get_is_valid_dict(data, table_name):
         for table, table_data in data.items()
         if table != table_name
     }
+
+
+def _convert_to_snake_case(string):
+    """Convert a string to snake case (words separated by underscores, all lowercase)."""
+    return re.sub(r'([a-z])([A-Z])', r'\1_\2', string).lower()
+
+
+def _remove_columns_from_metadata(metadata, table_name, columns_to_drop):
+    """Remove columns from metadata, including column relationships.
+
+        Will raise an error if the primary key is being dropped.
+
+    Args:
+        metadata (dict, sdv.metadata.Metadata): The Metadata which contains
+            the columns to drop.
+        table_name (str): Name of the table in the metadata, where the column(s)
+            are located.
+        columns_to_drop (list[str]): The list of column names to drop from the
+            Metadata.
+
+    Returns:
+        (sdv.metadata.Metadata): The new Metadata, with the columns removed.
+    """
+    if isinstance(metadata, Metadata):
+        metadata = metadata.to_dict()
+    column_set = set(columns_to_drop)
+    primary_key = metadata['tables'][table_name].get('primary_key')
+    for column in column_set:
+        if primary_key and primary_key == column:
+            raise ValueError('Cannot remove primary key from Metadata')
+        del metadata['tables'][table_name]['columns'][column]
+
+    metadata['tables'][table_name]['column_relationships'] = [
+        rel
+        for rel in metadata['tables'][table_name].get('column_relationships', [])
+        if set(rel['column_names']).isdisjoint(column_set)
+    ]
+    return Metadata.load_from_dict(metadata)
