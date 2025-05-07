@@ -369,10 +369,7 @@ class BaseMultiTableSynthesizer:
         """
         errors = []
         constraints_errors = []
-        metadata = self.metadata
-        if hasattr(self, '_original_metadata'):
-            metadata = self._original_metadata
-
+        metadata = getattr(self, '_original_metadata', self.metadata)
         metadata.validate_data(data)
         for table_name in data:
             if table_name in self._table_synthesizers:
