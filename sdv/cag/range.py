@@ -9,6 +9,7 @@ from sdv._utils import _convert_to_timedelta, _create_unique_name
 from sdv.cag._errors import PatternNotMetError
 from sdv.cag._utils import (
     _get_is_valid_dict,
+    _remove_columns_from_metadata,
     _validate_table_and_column_names,
 )
 from sdv.cag.base import BasePattern
@@ -18,7 +19,6 @@ from sdv.constraints.utils import (
     get_datetime_diff,
     revert_nans_columns,
 )
-from sdv.metadata import Metadata
 
 
 class Range(BasePattern):
@@ -189,17 +189,9 @@ class Range(BasePattern):
         metadata = metadata.to_dict()
         metadata['tables'][table_name]['columns'][low_diff_column] = {'sdtype': 'numerical'}
         metadata['tables'][table_name]['columns'][high_diff_column] = {'sdtype': 'numerical'}
-        del metadata['tables'][table_name]['columns'][self._high_column_name]
-        del metadata['tables'][table_name]['columns'][self._middle_column_name]
-
-        metadata['tables'][table_name]['column_relationships'] = [
-            rel
-            for rel in metadata['tables'][table_name].get('column_relationships', [])
-            if self._high_column_name not in rel['column_names']
-            and self._middle_column_name not in rel['column_names']
-        ]
-
-        return Metadata.load_from_dict(metadata)
+        return _remove_columns_from_metadata(
+            metadata, table_name, columns_to_drop=[self._high_column_name, self._middle_column_name]
+        )
 
     def _get_is_datetime(self, metadata, table_name):
         return metadata.tables[table_name].columns[self._low_column_name]['sdtype'] == 'datetime'

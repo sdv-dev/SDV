@@ -1,33 +1,155 @@
+import re
+
 import numpy as np
 import pandas as pd
+import pytest
 
 from sdv.cag import Range
+from sdv.cag._errors import PatternNotMetError
 from sdv.metadata import Metadata
+from sdv.multi_table import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from tests.utils import run_pattern
 
 
-def test_range_pattern_integers():
-    """Test that Range pattern works with integer columns."""
-    # Setup
-    data = pd.DataFrame({
+@pytest.fixture()
+def data():
+    return pd.DataFrame({
         'A': [1, 2, 3, 1, 2, 1],
         'B': [10, 20, 30, 10, 20, 10],
         'C': [100, 200, 300, 100, 200, 100],
     })
-    metadata = Metadata.load_from_dict({
+
+
+@pytest.fixture()
+def metadata():
+    return Metadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'numerical'},
             'B': {'sdtype': 'numerical'},
             'C': {'sdtype': 'numerical'},
         }
     })
-    pattern = Range(
+
+
+@pytest.fixture()
+def pattern():
+    return Range(
         low_column_name='A',
         middle_column_name='B',
         high_column_name='C',
     )
 
+
+@pytest.fixture()
+def data_datetime():
+    return pd.DataFrame({
+        'A': [
+            pd.Timestamp('2024-01-01'),
+            pd.Timestamp('2024-01-02'),
+            pd.Timestamp('2024-01-03'),
+            pd.Timestamp('2024-01-01'),
+            pd.Timestamp('2024-01-02'),
+            pd.Timestamp('2024-01-01'),
+        ],
+        'B': [
+            pd.Timestamp('2024-01-02'),
+            pd.Timestamp('2024-01-03'),
+            pd.Timestamp('2024-01-04'),
+            pd.Timestamp('2024-01-05'),
+            pd.Timestamp('2024-01-06'),
+            pd.Timestamp('2024-01-07'),
+        ],
+        'C': [
+            pd.Timestamp('2024-01-03'),
+            pd.Timestamp('2024-01-04'),
+            pd.Timestamp('2024-01-05'),
+            pd.Timestamp('2024-01-06'),
+            pd.Timestamp('2024-01-07'),
+            pd.Timestamp('2024-01-08'),
+        ],
+    })
+
+
+@pytest.fixture()
+def metadata_datetime():
+    return Metadata.load_from_dict({
+        'columns': {
+            'A': {'sdtype': 'datetime'},
+            'B': {'sdtype': 'datetime'},
+            'C': {'sdtype': 'datetime'},
+        }
+    })
+
+
+@pytest.fixture()
+def data_multi(data):
+    return {
+        'table1': data,
+        'table2': pd.DataFrame({'id': range(5)}),
+    }
+
+
+@pytest.fixture()
+def metadata_multi():
+    return Metadata.load_from_dict({
+        'tables': {
+            'table1': {
+                'columns': {
+                    'A': {'sdtype': 'numerical'},
+                    'B': {'sdtype': 'numerical'},
+                    'C': {'sdtype': 'numerical'},
+                }
+            },
+            'table2': {
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                }
+            },
+        }
+    })
+
+
+@pytest.fixture()
+def pattern_multi():
+    return Range(
+        low_column_name='A',
+        middle_column_name='B',
+        high_column_name='C',
+        table_name='table1',
+    )
+
+
+@pytest.fixture()
+def data_multi_datetime(data_datetime):
+    return {
+        'table1': data_datetime,
+        'table2': pd.DataFrame({'id': range(5)}),
+    }
+
+
+@pytest.fixture()
+def metadata_multi_datetime():
+    return Metadata.load_from_dict({
+        'tables': {
+            'table1': {
+                'columns': {
+                    'A': {'sdtype': 'datetime'},
+                    'B': {'sdtype': 'datetime'},
+                    'C': {'sdtype': 'datetime'},
+                }
+            },
+            'table2': {
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                }
+            },
+        }
+    })
+
+
+def test_range_pattern_integers(data, metadata, pattern):
+    """Test that Range pattern works with integer columns."""
     # Run
     updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
 
@@ -44,7 +166,7 @@ def test_range_pattern_integers():
     pd.testing.assert_frame_equal(data, reverse_transformed)
 
 
-def test_range_pattern_with_nans():
+def test_range_pattern_with_nans(metadata, pattern):
     """Test that Range pattern works with NaNs."""
     # Setup
     data = pd.DataFrame({
@@ -52,19 +174,6 @@ def test_range_pattern_with_nans():
         'B': [np.nan, 20, 30, 10, 20, None],
         'C': [None, 200, 300, 100, 200, None],
     })
-    metadata = Metadata.load_from_dict({
-        'columns': {
-            'A': {'sdtype': 'numerical'},
-            'B': {'sdtype': 'numerical'},
-            'C': {'sdtype': 'numerical'},
-        }
-    })
-
-    pattern = Range(
-        low_column_name='A',
-        middle_column_name='B',
-        high_column_name='C',
-    )
 
     # Run
     updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
@@ -88,47 +197,11 @@ def test_range_pattern_with_nans():
     assert 100 < reverse_transformed.iloc[2]['C'] < 300
 
 
-def test_range_pattern_datetime():
+def test_range_pattern_datetime(data_datetime, metadata_datetime, pattern):
     """Test that Range pattern works with datetime columns."""
     # Setup
-    data = pd.DataFrame({
-        'A': [
-            pd.Timestamp('2024-01-01'),
-            pd.Timestamp('2024-01-02'),
-            pd.Timestamp('2024-01-03'),
-            pd.Timestamp('2024-01-01'),
-            pd.Timestamp('2024-01-02'),
-            pd.Timestamp('2024-01-01'),
-        ],
-        'B': [
-            pd.Timestamp('2024-01-02'),
-            pd.Timestamp('2024-01-03'),
-            pd.Timestamp('2024-01-04'),
-            pd.Timestamp('2024-01-05'),
-            pd.Timestamp('2024-01-06'),
-            pd.Timestamp('2024-01-07'),
-        ],
-        'C': [
-            pd.Timestamp('2024-01-03'),
-            pd.Timestamp('2024-01-04'),
-            pd.Timestamp('2024-01-05'),
-            pd.Timestamp('2024-01-06'),
-            pd.Timestamp('2024-01-07'),
-            pd.Timestamp('2024-01-08'),
-        ],
-    })
-    metadata = Metadata.load_from_dict({
-        'columns': {
-            'A': {'sdtype': 'datetime'},
-            'B': {'sdtype': 'datetime'},
-            'C': {'sdtype': 'datetime'},
-        }
-    })
-    pattern = Range(
-        low_column_name='A',
-        middle_column_name='B',
-        high_column_name='C',
-    )
+    data = data_datetime
+    metadata = metadata_datetime
 
     # Run
     updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
@@ -150,9 +223,10 @@ def test_range_pattern_datetime():
         assert (diff.dt.total_seconds() < 1e-6).all()
 
 
-def test_range_pattern_datetime_nans():
+def test_range_pattern_datetime_nans(metadata_datetime, pattern):
     """Test that Range pattern works with datetime columns with NaNs."""
     # Setup
+    metadata = metadata_datetime
     data = pd.DataFrame({
         'A': [
             np.nan,
@@ -179,18 +253,6 @@ def test_range_pattern_datetime_nans():
             pd.Timestamp('2024-01-08'),
         ],
     })
-    metadata = Metadata.load_from_dict({
-        'columns': {
-            'A': {'sdtype': 'datetime'},
-            'B': {'sdtype': 'datetime'},
-            'C': {'sdtype': 'datetime'},
-        }
-    })
-    pattern = Range(
-        low_column_name='A',
-        middle_column_name='B',
-        high_column_name='C',
-    )
 
     # Run
     updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
@@ -220,33 +282,14 @@ def test_range_pattern_datetime_nans():
     assert (diff.dt.total_seconds() < 1e-6).all()
 
 
-def test_range_pattern_with_multi_table():
+def test_range_pattern_with_multi_table(
+    data_multi,
+    metadata_multi,
+):
     """Test that Range pattern works with multi-table data."""
     # Setup
-    data = {
-        'table1': pd.DataFrame({
-            'A': [1, 2, 3, 1, 2, 1],
-            'B': [10, 20, 30, 10, 20, 10],
-            'C': [100, 200, 300, 100, 200, 100],
-        }),
-        'table2': pd.DataFrame({'id': range(5)}),
-    }
-    metadata = Metadata.load_from_dict({
-        'tables': {
-            'table1': {
-                'columns': {
-                    'A': {'sdtype': 'numerical'},
-                    'B': {'sdtype': 'numerical'},
-                    'C': {'sdtype': 'numerical'},
-                }
-            },
-            'table2': {
-                'columns': {
-                    'id': {'sdtype': 'id'},
-                }
-            },
-        }
-    })
+    data = data_multi
+    metadata = metadata_multi
     pattern = Range(
         low_column_name='A',
         middle_column_name='B',
@@ -391,3 +434,108 @@ def test_range_multiple_patterns_different_mid_columns():
     assert all(samples['mid1'] < samples['high1'])
     assert all(samples['low'] < samples['mid2'])
     assert all(samples['mid2'] < samples['high2'])
+
+
+def test_validate_cag(data, metadata, pattern):
+    """Test validate_cag works with synthetic data generated with Range."""
+    # Setup
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(100)
+
+    # Run
+    synthesizer.validate_cag(synthetic_data=synthetic_data)
+
+    # Assert
+    assert all(synthetic_data['A'] < synthetic_data['B'])
+    assert all(synthetic_data['B'] < synthetic_data['C'])
+
+
+def test_validate_cag_raises(data, metadata, pattern):
+    """Test validate_cag raises an error with bad synthetic data with Range."""
+    # Setup
+    synthetic_data = pd.DataFrame({
+        'A': data['B'],
+        'B': data['A'],
+        'C': data['C'],
+    })
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.fit(data)
+    msg = re.escape('The range requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more')
+
+    # Run and Assert
+    with pytest.raises(PatternNotMetError, match=msg):
+        synthesizer.validate_cag(synthetic_data=synthetic_data)
+
+
+def test_validate_cag_multi(
+    data_multi,
+    metadata_multi,
+    pattern_multi,
+):
+    """Test validate_cag with synthetic data generated with Range with multitable numerical data."""
+    data = data_multi
+    metadata = metadata_multi
+    pattern = pattern_multi
+    synthesizer = HMASynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(100)
+
+    # Run
+    synthesizer.validate_cag(synthetic_data=synthetic_data)
+
+    # Assert
+    assert all(synthetic_data['table1']['A'] < synthetic_data['table1']['B'])
+    assert all(synthetic_data['table1']['B'] < synthetic_data['table1']['C'])
+
+
+def test_validate_cag_multi_datetime(
+    data_multi_datetime,
+    metadata_multi_datetime,
+    pattern_multi,
+):
+    """Test validate_cag with synthetic data generated with Range with multitable datetime data."""
+    # Setup
+    data = data_multi_datetime
+    metadata = metadata_multi_datetime
+    pattern = pattern_multi
+    synthesizer = HMASynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(100)
+
+    # Run
+    synthesizer.validate_cag(synthetic_data=synthetic_data)
+
+    # Assert
+    assert all(synthetic_data['table1']['A'] < synthetic_data['table1']['B'])
+    assert all(synthetic_data['table1']['B'] < synthetic_data['table1']['C'])
+
+
+def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
+    """Test validate_cag raises an error with bad multitable synthetic data with Range."""
+    # Setup
+    data = data_multi
+    metadata = metadata_multi
+    pattern = pattern_multi
+    synthetic_data = {
+        'table1': {
+            'A': data['table1']['B'],
+            'B': data['table1']['A'],
+            'C': data['table1']['C'],
+        },
+        'table2': pd.DataFrame({'id': range(5)}),
+    }
+    synthesizer = HMASynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.fit(data)
+    msg = re.escape(
+        "Table 'table1': The range requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more"
+    )
+
+    # Run and Assert
+    with pytest.raises(PatternNotMetError, match=msg):
+        synthesizer.validate_cag(synthetic_data=synthetic_data)
