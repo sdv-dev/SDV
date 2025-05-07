@@ -1,4 +1,4 @@
-"""Unit tests for Fixed Increments CAG pattern."""
+"""Unit tests for Fixed Increments CAG constraint."""
 
 import re
 from unittest.mock import patch
@@ -67,7 +67,7 @@ class TestFixedIncremenets:
         self,
         _validate_table_and_column_names_mock,
     ):
-        """Test validating the pattern with metadata."""
+        """Test validating the constraint with metadata."""
         # Setup
         instance = FixedIncrements(column_name='a', increment_value=5)
         metadata = Metadata.load_from_dict({

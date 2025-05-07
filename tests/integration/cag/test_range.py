@@ -5,11 +5,11 @@ import pandas as pd
 import pytest
 
 from sdv.cag import Range
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import constraintNotMetError
 from sdv.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
-from tests.utils import run_pattern
+from tests.utils import run_constraint
 
 
 @pytest.fixture()
@@ -33,7 +33,7 @@ def metadata():
 
 
 @pytest.fixture()
-def pattern():
+def constraint():
     return Range(
         low_column_name='A',
         middle_column_name='B',
@@ -111,7 +111,7 @@ def metadata_multi():
 
 
 @pytest.fixture()
-def pattern_multi():
+def constraint_multi():
     return Range(
         low_column_name='A',
         middle_column_name='B',
@@ -148,10 +148,10 @@ def metadata_multi_datetime():
     })
 
 
-def test_range_pattern_integers(data, metadata, pattern):
-    """Test that Range pattern works with integer columns."""
+def test_range_constraint_integers(data, metadata, constraint):
+    """Test that Range constraint works with integer columns."""
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -166,8 +166,8 @@ def test_range_pattern_integers(data, metadata, pattern):
     pd.testing.assert_frame_equal(data, reverse_transformed)
 
 
-def test_range_pattern_with_nans(metadata, pattern):
-    """Test that Range pattern works with NaNs."""
+def test_range_constraint_with_nans(metadata, constraint):
+    """Test that Range constraint works with NaNs."""
     # Setup
     data = pd.DataFrame({
         'A': [None, 2, np.nan, 1, 2, 1],
@@ -176,7 +176,7 @@ def test_range_pattern_with_nans(metadata, pattern):
     })
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -197,14 +197,14 @@ def test_range_pattern_with_nans(metadata, pattern):
     assert 100 < reverse_transformed.iloc[2]['C'] < 300
 
 
-def test_range_pattern_datetime(data_datetime, metadata_datetime, pattern):
-    """Test that Range pattern works with datetime columns."""
+def test_range_constraint_datetime(data_datetime, metadata_datetime, constraint):
+    """Test that Range constraint works with datetime columns."""
     # Setup
     data = data_datetime
     metadata = metadata_datetime
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -223,8 +223,8 @@ def test_range_pattern_datetime(data_datetime, metadata_datetime, pattern):
         assert (diff.dt.total_seconds() < 1e-6).all()
 
 
-def test_range_pattern_datetime_nans(metadata_datetime, pattern):
-    """Test that Range pattern works with datetime columns with NaNs."""
+def test_range_constraint_datetime_nans(metadata_datetime, constraint):
+    """Test that Range constraint works with datetime columns with NaNs."""
     # Setup
     metadata = metadata_datetime
     data = pd.DataFrame({
@@ -255,7 +255,7 @@ def test_range_pattern_datetime_nans(metadata_datetime, pattern):
     })
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -282,15 +282,15 @@ def test_range_pattern_datetime_nans(metadata_datetime, pattern):
     assert (diff.dt.total_seconds() < 1e-6).all()
 
 
-def test_range_pattern_with_multi_table(
+def test_range_constraint_with_multi_table(
     data_multi,
     metadata_multi,
 ):
-    """Test that Range pattern works with multi-table data."""
+    """Test that Range constraint works with multi-table data."""
     # Setup
     data = data_multi
     metadata = metadata_multi
-    pattern = Range(
+    constraint = Range(
         low_column_name='A',
         middle_column_name='B',
         high_column_name='C',
@@ -298,7 +298,7 @@ def test_range_pattern_with_multi_table(
     )
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -324,8 +324,8 @@ def test_range_pattern_with_multi_table(
         pd.testing.assert_frame_equal(table, reverse_transformed[table_name])
 
 
-def test_range_multiple_patterns():
-    """Test that Range pattern works with multiple patterns."""
+def test_range_multiple_constraints():
+    """Test that Range constraint works with multiple constraints."""
     # Setup
     data = pd.DataFrame({
         'low': [1, 2, 3, 1, 2, 1],
@@ -341,12 +341,12 @@ def test_range_multiple_patterns():
             'high2': {'sdtype': 'numerical'},
         }
     })
-    pattern1 = Range(
+    constraint1 = Range(
         low_column_name='low',
         middle_column_name='mid',
         high_column_name='high1',
     )
-    pattern2 = Range(
+    constraint2 = Range(
         low_column_name='low',
         middle_column_name='mid',
         high_column_name='high2',
@@ -354,7 +354,7 @@ def test_range_multiple_patterns():
 
     # Run
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern1, pattern2])
+    synthesizer.add_constraints(constraints=[constraint1, constraint2])
     synthesizer.fit(data)
     samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')
@@ -378,8 +378,8 @@ def test_range_multiple_patterns():
     assert all(samples['mid'] < samples['high2'])
 
 
-def test_range_multiple_patterns_different_mid_columns():
-    """Test that Range pattern works with multiple patterns."""
+def test_range_multiple_constraints_different_mid_columns():
+    """Test that Range constraint works with multiple constraints."""
     # Setup
     data = pd.DataFrame({
         'low': [1, 2, 3, 1, 2, 1],
@@ -397,12 +397,12 @@ def test_range_multiple_patterns_different_mid_columns():
             'high2': {'sdtype': 'numerical'},
         }
     })
-    pattern1 = Range(
+    constraint1 = Range(
         low_column_name='low',
         middle_column_name='mid1',
         high_column_name='high1',
     )
-    pattern2 = Range(
+    constraint2 = Range(
         low_column_name='low',
         middle_column_name='mid2',
         high_column_name='high2',
@@ -410,7 +410,7 @@ def test_range_multiple_patterns_different_mid_columns():
 
     # Run
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern1, pattern2])
+    synthesizer.add_constraints(constraints=[constraint1, constraint2])
     synthesizer.fit(data)
     samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')
@@ -436,11 +436,11 @@ def test_range_multiple_patterns_different_mid_columns():
     assert all(samples['mid2'] < samples['high2'])
 
 
-def test_validate_cag(data, metadata, pattern):
+def test_validate_cag(data, metadata, constraint):
     """Test validate_cag works with synthetic data generated with Range."""
     # Setup
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_cag(constraints=[constraint])
     synthesizer.fit(data)
     synthetic_data = synthesizer.sample(100)
 
@@ -452,7 +452,7 @@ def test_validate_cag(data, metadata, pattern):
     assert all(synthetic_data['B'] < synthetic_data['C'])
 
 
-def test_validate_cag_raises(data, metadata, pattern):
+def test_validate_cag_raises(data, metadata, constraint):
     """Test validate_cag raises an error with bad synthetic data with Range."""
     # Setup
     synthetic_data = pd.DataFrame({
@@ -461,26 +461,26 @@ def test_validate_cag_raises(data, metadata, pattern):
         'C': data['C'],
     })
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_cag(constraints=[constraint])
     synthesizer.fit(data)
     msg = re.escape('The range requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more')
 
     # Run and Assert
-    with pytest.raises(PatternNotMetError, match=msg):
+    with pytest.raises(constraintNotMetError, match=msg):
         synthesizer.validate_cag(synthetic_data=synthetic_data)
 
 
 def test_validate_cag_multi(
     data_multi,
     metadata_multi,
-    pattern_multi,
+    constraint_multi,
 ):
     """Test validate_cag with synthetic data generated with Range with multitable numerical data."""
     data = data_multi
     metadata = metadata_multi
-    pattern = pattern_multi
+    constraint = constraint_multi
     synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_cag(constraints=[constraint])
     synthesizer.fit(data)
     synthetic_data = synthesizer.sample(100)
 
@@ -495,15 +495,15 @@ def test_validate_cag_multi(
 def test_validate_cag_multi_datetime(
     data_multi_datetime,
     metadata_multi_datetime,
-    pattern_multi,
+    constraint_multi,
 ):
     """Test validate_cag with synthetic data generated with Range with multitable datetime data."""
     # Setup
     data = data_multi_datetime
     metadata = metadata_multi_datetime
-    pattern = pattern_multi
+    constraint = constraint_multi
     synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_cag(constraints=[constraint])
     synthesizer.fit(data)
     synthetic_data = synthesizer.sample(100)
 
@@ -515,12 +515,12 @@ def test_validate_cag_multi_datetime(
     assert all(synthetic_data['table1']['B'] < synthetic_data['table1']['C'])
 
 
-def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
+def test_validate_cag_multi_raises(data_multi, metadata_multi, constraint_multi):
     """Test validate_cag raises an error with bad multitable synthetic data with Range."""
     # Setup
     data = data_multi
     metadata = metadata_multi
-    pattern = pattern_multi
+    constraint = constraint_multi
     synthetic_data = {
         'table1': {
             'A': data['table1']['B'],
@@ -530,12 +530,12 @@ def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
         'table2': pd.DataFrame({'id': range(5)}),
     }
     synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_cag(constraints=[constraint])
     synthesizer.fit(data)
     msg = re.escape(
         "Table 'table1': The range requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more"
     )
 
     # Run and Assert
-    with pytest.raises(PatternNotMetError, match=msg):
+    with pytest.raises(constraintNotMetError, match=msg):
         synthesizer.validate_cag(synthetic_data=synthetic_data)

@@ -1,4 +1,4 @@
-"""Unit tests for Inequality CAG pattern."""
+"""Unit tests for Inequality CAG constraint."""
 
 import re
 from datetime import datetime
@@ -65,7 +65,7 @@ class TestInequality:
 
     @patch('sdv.cag.inequality._validate_table_and_column_names')
     def test__validate_pattern_with_metadata(self, validate_table_and_col_names_mock):
-        """Test validating the pattern with metadata."""
+        """Test validating the constraint with metadata."""
         # Setup
         instance = Inequality(low_column_name='low', high_column_name='high')
         metadata = Metadata.load_from_dict({

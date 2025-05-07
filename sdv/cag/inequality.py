@@ -1,4 +1,4 @@
-"""Inequality CAG pattern."""
+"""Inequality CAG constraint."""
 
 import numpy as np
 import pandas as pd
@@ -72,7 +72,7 @@ class Inequality(BasePattern):
         self._nan_column_name = None
 
     def _validate_pattern_with_metadata(self, metadata):
-        """Validate the pattern is compatible with the provided metadata.
+        """Validate the constraint is compatible with the provided metadata.
 
         Validates that:
         - If no table_name is provided, the metadata contains a single table
@@ -119,7 +119,7 @@ class Inequality(BasePattern):
         return metadata.tables[table_name].columns[column_name].get('datetime_format')
 
     def _validate_pattern_with_data(self, data, metadata):
-        """Validate the data is compatible with the pattern.
+        """Validate the data is compatible with the constraint.
 
         Validate that the inequality requirement is met between the high and low columns.
         """
@@ -175,7 +175,7 @@ class Inequality(BasePattern):
         return diff_column, nan_diff_column
 
     def _get_updated_metadata(self, metadata):
-        """Get the new output metadata after applying the pattern to the input metadata."""
+        """Get the new output metadata after applying the constraint to the input metadata."""
         table_name = self._get_single_table_name(metadata)
         diff_column, nan_diff_column = self._get_diff_and_nan_column_names(
             metadata, self._diff_column_name, table_name
@@ -189,7 +189,7 @@ class Inequality(BasePattern):
         )
 
     def _fit(self, data, metadata):
-        """Fit the pattern.
+        """Fit the constraint.
 
         Args:
             data (dict[str, pd.DataFrame]):

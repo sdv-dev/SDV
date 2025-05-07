@@ -5,12 +5,12 @@ import pandas as pd
 import pytest
 
 from sdv.cag import Inequality
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import constraintNotMetError
 from sdv.datasets.demo import download_demo
 from sdv.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
 from sdv.single_table import GaussianCopulaSynthesizer
-from tests.utils import run_pattern
+from tests.utils import run_constraint
 
 
 @pytest.fixture()
@@ -32,7 +32,7 @@ def metadata():
 
 
 @pytest.fixture()
-def pattern():
+def constraint():
     return Inequality(
         low_column_name='A',
         high_column_name='B',
@@ -67,7 +67,7 @@ def metadata_multi():
 
 
 @pytest.fixture()
-def pattern_multi():
+def constraint_multi():
     return Inequality(
         low_column_name='A',
         high_column_name='B',
@@ -75,10 +75,10 @@ def pattern_multi():
     )
 
 
-def test_inequality_pattern_integers(data, metadata, pattern):
-    """Test that Inequality pattern works with integer columns."""
+def test_inequality_constraint_integers(data, metadata, constraint):
+    """Test that Inequality constraint works with integer columns."""
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -93,8 +93,8 @@ def test_inequality_pattern_integers(data, metadata, pattern):
     pd.testing.assert_frame_equal(data, reverse_transformed)
 
 
-def test_inequality_pattern_with_nans(metadata, pattern):
-    """Test that Inequality pattern works with NaNs."""
+def test_inequality_constraint_with_nans(metadata, constraint):
+    """Test that Inequality constraint works with NaNs."""
     # Setup
     data = pd.DataFrame({
         'A': [None, 2, np.nan, 1, 2, 1],
@@ -102,7 +102,7 @@ def test_inequality_pattern_with_nans(metadata, pattern):
     })
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -122,8 +122,8 @@ def test_inequality_pattern_with_nans(metadata, pattern):
     assert pd.isna(reverse_transformed.iloc[2]['A'])
 
 
-def test_inequality_pattern_datetime(pattern):
-    """Test that Inequality pattern works with datetime columns."""
+def test_inequality_constraint_datetime(constraint):
+    """Test that Inequality constraint works with datetime columns."""
     # Setup
     data = pd.DataFrame({
         'A': [
@@ -151,7 +151,7 @@ def test_inequality_pattern_datetime(pattern):
     })
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -170,8 +170,8 @@ def test_inequality_pattern_datetime(pattern):
         assert (diff.dt.total_seconds() < 1e-6).all()
 
 
-def test_inequality_pattern_datetime_nans(pattern):
-    """Test that Inequality pattern works with datetime columns with NaNs."""
+def test_inequality_constraint_datetime_nans(constraint):
+    """Test that Inequality constraint works with datetime columns with NaNs."""
     # Setup
     data = pd.DataFrame({
         'A': [
@@ -199,7 +199,7 @@ def test_inequality_pattern_datetime_nans(pattern):
     })
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -221,15 +221,15 @@ def test_inequality_pattern_datetime_nans(pattern):
     assert (diff.dt.total_seconds() < 1e-6).all()
 
 
-def test_inequality_pattern_with_multi_table(data_multi, metadata_multi, pattern_multi):
-    """Test that Inequality pattern works with multi-table data."""
+def test_inequality_constraint_with_multi_table(data_multi, metadata_multi, constraint_multi):
+    """Test that Inequality constraint works with multi-table data."""
     # Setup
     data = data_multi
     metadata = metadata_multi
-    pattern = pattern_multi
+    constraint = constraint_multi
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -255,11 +255,11 @@ def test_inequality_pattern_with_multi_table(data_multi, metadata_multi, pattern
         pd.testing.assert_frame_equal(table, reverse_transformed[table_name])
 
 
-def test_inequality_with_numerical(data, metadata, pattern):
+def test_inequality_with_numerical(data, metadata, constraint):
     """Test it works with numerical columns."""
     # Setup
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_constraints(constraints=[constraint])
 
     # Run
     synthesizer.fit(data)
@@ -271,11 +271,11 @@ def test_inequality_with_numerical(data, metadata, pattern):
 
 
 def test_inequality_with_timestamp_and_date():
-    """Test that the inequality pattern passes without strict boundaries.
+    """Test that the inequality constraint passes without strict boundaries.
 
-    This test checks if the `Inequality` pattern can handle two columns
+    This test checks if the `Inequality` constraint can handle two columns
     with different datetime formats when `strict_boundaries` is set to `False`.
-    The pattern allows the `SUBMISSION_TIMESTAMP` column to be less than
+    The constraint allows the `SUBMISSION_TIMESTAMP` column to be less than
     or equal to the `DUE_DATE` column, even when they differ in precision but end
     within the same day.
     """
@@ -307,13 +307,13 @@ def test_inequality_with_timestamp_and_date():
         }
     })
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    pattern = Inequality(
+    constraint = Inequality(
         low_column_name='SUBMISSION_TIMESTAMP',
         high_column_name='DUE_DATE',
         strict_boundaries=False,
     )
 
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_constraints(constraints=[constraint])
 
     # Run
     synthesizer.fit(data)
@@ -331,11 +331,11 @@ def test_inequality_with_timestamp_and_date():
 
 
 def test_inequality_with_timestamp_and_date_strict_boundaries():
-    """Test that the inequality pattern fails with strict boundaries.
+    """Test that the inequality constraint fails with strict boundaries.
 
-    This test evaluates the `Inequality` pattern when `strict_boundaries`
+    This test evaluates the `Inequality` constraint when `strict_boundaries`
     is set to `True`. The `SUBMISSION_TIMESTAMP` column values must be strictly
-    less than the `DUE_DATE` values to satisfy the pattern. If any
+    less than the `DUE_DATE` values to satisfy the constraint. If any
     `SUBMISSION_TIMESTAMP` matches or exceeds the `DUE_DATE`, an error should
     be raised.
     """
@@ -368,28 +368,28 @@ def test_inequality_with_timestamp_and_date_strict_boundaries():
     })
 
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    pattern = Inequality(
+    constraint = Inequality(
         low_column_name='SUBMISSION_TIMESTAMP',
         high_column_name='DUE_DATE',
         strict_boundaries=True,
     )
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_constraints(constraints=[constraint])
 
     # Run and Assert
     error_msg = 'The inequality requirement is not met for row indices: '
-    with pytest.raises(PatternNotMetError) as error:
+    with pytest.raises(constraintNotMetError) as error:
         synthesizer.fit(data)
         assert error_msg in error
 
 
-def test_inequality_pattern_date_less_than_timestamp_strict_boundaries():
-    """Test that the inequality pattern fails when date is less than timestamp.
+def test_inequality_constraint_date_less_than_timestamp_strict_boundaries():
+    """Test that the inequality constraint fails when date is less than timestamp.
 
-    This case evaluates the `Inequality` pattern with
+    This case evaluates the `Inequality` constraint with
     `strict_boundaries=True` when the `DUE_DATE` column contains dates, and the
     `SUBMISSION_TIMESTAMP` contains a timestamp. Since `DUE_DATE` lacks
     time precision, and `SUBMISSION_TIMESTAMP` contains a timestamp, it
-    violates the pattern when the date is less than the timestamp.
+    violates the constraint when the date is less than the timestamp.
     """
     # Setup
     data = pd.DataFrame(
@@ -420,27 +420,27 @@ def test_inequality_pattern_date_less_than_timestamp_strict_boundaries():
     })
 
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    pattern = Inequality(
+    constraint = Inequality(
         low_column_name='DUE_DATE',
         high_column_name='SUBMISSION_TIMESTAMP',
         strict_boundaries=True,
     )
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_constraints(constraints=[constraint])
 
     # Run and Assert
     error_msg = 'The inequality requirement is not met for row indices: '
-    with pytest.raises(PatternNotMetError) as error:
+    with pytest.raises(constraintNotMetError) as error:
         synthesizer.fit(data)
         assert error_msg in error
 
 
-def test_inequality_pattern_timestamp_less_than_date_strict_boundaries():
-    """Test that the inequality pattern fails when timestamp is less than date.
+def test_inequality_constraint_timestamp_less_than_date_strict_boundaries():
+    """Test that the inequality constraint fails when timestamp is less than date.
 
-    This case evaluates the `Inequality` pattern with
+    This case evaluates the `Inequality` constraint with
     `strict_boundaries=True` when the `SUBMISSION_TIMESTAMP` column contains a
     timestamp, and the `DUE_DATE` contains a date. This case should violate the
-    pattern, as the `SUBMISSION_TIMESTAMP` (which includes time) is not
+    constraint, as the `SUBMISSION_TIMESTAMP` (which includes time) is not
     strictly less than the `DUE_DATE` (which has no time).
     """
     # Setup
@@ -472,24 +472,24 @@ def test_inequality_pattern_timestamp_less_than_date_strict_boundaries():
     })
 
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    pattern = Inequality(
+    constraint = Inequality(
         low_column_name='SUBMISSION_TIMESTAMP',
         high_column_name='DUE_DATE',
         strict_boundaries=True,
     )
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_constraints(constraints=[constraint])
 
     # Run and Assert
     err_msg = 'The inequality requirement is not met for row indices: '
-    with pytest.raises(PatternNotMetError) as error:
+    with pytest.raises(constraintNotMetError) as error:
         synthesizer.fit(data)
         assert err_msg in error
 
 
-def test_inequality_pattern_date_less_than_timestamp_no_strict_boundaries():
-    """Test that the inequality pattern passes when date is less than timestamp.
+def test_inequality_constraint_date_less_than_timestamp_no_strict_boundaries():
+    """Test that the inequality constraint passes when date is less than timestamp.
 
-    This case evaluates the `Inequality` pattern with
+    This case evaluates the `Inequality` constraint with
     `strict_boundaries=False`. Since `strict_boundaries` is set to `False`, we
     assume that a date in the `DUE_DATE` column should be treated as the
     beginning of the day,
@@ -525,12 +525,12 @@ def test_inequality_pattern_date_less_than_timestamp_no_strict_boundaries():
     })
 
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    pattern = Inequality(
+    constraint = Inequality(
         low_column_name='DUE_DATE',
         high_column_name='SUBMISSION_TIMESTAMP',
         strict_boundaries=False,
     )
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_constraints(constraints=[constraint])
 
     # Run
     synthesizer.fit(data)
@@ -547,10 +547,10 @@ def test_inequality_pattern_date_less_than_timestamp_no_strict_boundaries():
     assert invalid_rows.empty
 
 
-def test_inequality_pattern_timestamp_less_than_date_no_strict_boundaries():
-    """Test that the inequality pattern passes when timestamp is less than date.
+def test_inequality_constraint_timestamp_less_than_date_no_strict_boundaries():
+    """Test that the inequality constraint passes when timestamp is less than date.
 
-    This case evaluates the `Inequality` pattern with
+    This case evaluates the `Inequality` constraint with
     `strict_boundaries=False`. Since `strict_boundaries` is set to `False`, we
     assume that a date in the `DUE_DATE` column should be treated as the end of
     the day, so there will be no violation if the `SUBMISSION_TIMESTAMP` is
@@ -585,12 +585,12 @@ def test_inequality_pattern_timestamp_less_than_date_no_strict_boundaries():
     })
 
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    pattern = Inequality(
+    constraint = Inequality(
         low_column_name='SUBMISSION_TIMESTAMP',
         high_column_name='DUE_DATE',
         strict_boundaries=False,
     )
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_constraints(constraints=[constraint])
 
     # Run
     synthesizer.fit(data)
@@ -607,8 +607,8 @@ def test_inequality_pattern_timestamp_less_than_date_no_strict_boundaries():
     assert invalid_rows.empty
 
 
-def test_inequality_multiple_patterns():
-    """Test that Inequality pattern works with multiple patterns."""
+def test_inequality_multiple_constraints():
+    """Test that Inequality constraint works with multiple constraints."""
     # Setup
     data = pd.DataFrame({
         'low': [1, 2, 3, 1, 2, 1],
@@ -622,18 +622,18 @@ def test_inequality_multiple_patterns():
             'high2': {'sdtype': 'numerical'},
         }
     })
-    pattern1 = Inequality(
+    constraint1 = Inequality(
         low_column_name='low',
         high_column_name='high1',
     )
-    pattern2 = Inequality(
+    constraint2 = Inequality(
         low_column_name='low',
         high_column_name='high2',
     )
 
     # Run
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern1, pattern2])
+    synthesizer.add_constraints(constraints=[constraint1, constraint2])
     synthesizer.fit(data)
     samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')
@@ -657,18 +657,18 @@ def test_inequality_multiple_patterns():
     assert all(samples['low'] <= samples['high2'])
 
 
-def test_inequality_multiple_patterns_reject_sampling(
-    data_reject, metadata_reject, patterns_reject
+def test_inequality_multiple_constraints_reject_sampling(
+    data_reject, metadata_reject, constraints_reject
 ):
-    """Test that Inequality pattern works with multiple patterns using reject sampling."""
+    """Test that Inequality constraint works with multiple constraints using reject sampling."""
     # Setup
     data = data_reject
     metadata = metadata_reject
-    pattern1, pattern2 = patterns_reject
+    constraint1, constraint2 = constraints_reject
 
     # Run
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern1, pattern2])
+    synthesizer.add_constraints(constraints=[constraint1, constraint2])
     synthesizer.fit(data)
     samples = synthesizer.sample(10)
     updated_metadata = synthesizer.get_metadata('modified')
@@ -690,8 +690,8 @@ def test_inequality_multiple_patterns_reject_sampling(
     assert all(samples['low'] <= samples['high'])
 
 
-def test_inequality_multiple_patterns_one_pattern_invalid_column():
-    """Test that Inequality pattern works with multiple patterns."""
+def test_inequality_multiple_constraints_one_constraint_invalid_column():
+    """Test that Inequality constraint works with multiple constraints."""
     # Setup
     values = np.random.randint(0, 100, size=1000)
     data = pd.DataFrame({
@@ -706,18 +706,18 @@ def test_inequality_multiple_patterns_one_pattern_invalid_column():
             'high': {'sdtype': 'numerical'},
         }
     })
-    pattern1 = Inequality(
+    constraint1 = Inequality(
         low_column_name='low',
         high_column_name='mid',
     )
-    pattern2 = Inequality(
+    constraint2 = Inequality(
         low_column_name='mid',
         high_column_name='high',
     )
 
     # Run
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern1, pattern2])
+    synthesizer.add_constraints(constraints=[constraint1, constraint2])
     synthesizer.fit(data)
     samples = synthesizer.sample(1000000)
 
@@ -742,19 +742,19 @@ def test_inequality_multiple_patterns_one_pattern_invalid_column():
     assert all(samples['mid'] <= samples['high'])
 
 
-def test_inequality_many_patterns():
-    """Test that Inequality pattern works with multiple patterns."""
+def test_inequality_many_constraints():
+    """Test that Inequality constraint works with multiple constraints."""
     # Setup
     values = np.random.randint(0, 100, size=1000)
     data = pd.DataFrame({f'{i}': values + i for i in range(10)})
     metadata = Metadata.load_from_dict({
         'columns': {f'{i}': {'sdtype': 'numerical'} for i in range(10)}
     })
-    patterns = [Inequality(low_column_name=f'{i}', high_column_name=f'{i + 1}') for i in range(9)]
+    constraints = [Inequality(low_column_name=f'{i}', high_column_name=f'{i + 1}') for i in range(9)]
 
     # Run
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=patterns)
+    synthesizer.add_constraints(constraints=constraints)
     synthesizer.fit(data)
     samples = synthesizer.sample(100)
 
@@ -789,7 +789,7 @@ def test_inequality_many_patterns():
 
 
 def test_inequality_with_nan():
-    """Test that Inequality pattern works with NaN values."""
+    """Test that Inequality constraint works with NaN values."""
     # Setup
     data, metadata = download_demo('single_table', 'fake_hotel_guests')
     inequality_cag = Inequality(
@@ -812,11 +812,11 @@ def test_inequality_with_nan():
     )
 
 
-def test_validate_cag(data, metadata, pattern):
+def test_validate_cag(data, metadata, constraint):
     """Test validate_cag works with synthetic data generated with Inequality."""
     # Setup
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_cag(constraints=[constraint])
     synthesizer.fit(data)
     synthetic_data = synthesizer.sample(100)
 
@@ -827,7 +827,7 @@ def test_validate_cag(data, metadata, pattern):
     assert all(synthetic_data['A'] < synthetic_data['B'])
 
 
-def test_validate_cag_raises(data, metadata, pattern):
+def test_validate_cag_raises(data, metadata, constraint):
     """Test validate_cag raises an error with bad synthetic data with Inequality."""
     # Setup
     synthetic_data = pd.DataFrame({
@@ -837,23 +837,23 @@ def test_validate_cag_raises(data, metadata, pattern):
     assert all(data['A'] < data['B'])
     assert all(synthetic_data['A'] > synthetic_data['B'])
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_cag(constraints=[constraint])
     synthesizer.fit(data)
     msg = re.escape('The inequality requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more')
 
     # Run and Assert
-    with pytest.raises(PatternNotMetError, match=msg):
+    with pytest.raises(constraintNotMetError, match=msg):
         synthesizer.validate_cag(synthetic_data=synthetic_data)
 
 
-def test_validate_cag_multi(data_multi, metadata_multi, pattern_multi):
+def test_validate_cag_multi(data_multi, metadata_multi, constraint_multi):
     """Test validate_cag works with multitable synthetic data generated with Inequality."""
     # Setup
     data = data_multi
     metadata = metadata_multi
-    pattern = pattern_multi
+    constraint = constraint_multi
     synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_cag(constraints=[constraint])
     synthesizer.fit(data)
     synthetic_data = synthesizer.sample(100)
 
@@ -885,27 +885,27 @@ def metadata_reject():
 
 
 @pytest.fixture()
-def patterns_reject():
-    # pattern1 drops high column, which pattern2 relies upon
-    pattern1 = Inequality(
+def constraints_reject():
+    # constraint1 drops high column, which constraint2 relies upon
+    constraint1 = Inequality(
         low_column_name='low',
         high_column_name='high',
     )
-    pattern2 = Inequality(
+    constraint2 = Inequality(
         low_column_name='low2',
         high_column_name='high',
     )
-    return pattern1, pattern2
+    return constraint1, constraint2
 
 
-def test_validate_cag_multi_with_reject(data_reject, metadata_reject, patterns_reject):
+def test_validate_cag_multi_with_reject(data_reject, metadata_reject, constraints_reject):
     """Test validate_cag works with reject sampling."""
     # Setup
     data = data_reject
     metadata = metadata_reject
-    pattern1, pattern2 = patterns_reject
+    constraint1, constraint2 = constraints_reject
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern1, pattern2])
+    synthesizer.add_cag(constraints=[constraint1, constraint2])
     synthesizer.fit(data)
     synthetic_data = synthesizer.sample(100)
 
@@ -916,16 +916,16 @@ def test_validate_cag_multi_with_reject(data_reject, metadata_reject, patterns_r
     assert all(synthetic_data['low'] <= synthetic_data['high'])
 
 
-def test_validate_cag_multi_with_reject_raises(data_reject, metadata_reject, patterns_reject):
-    """Test validate_cag raises an error due reject sampling pattern not matching."""
+def test_validate_cag_multi_with_reject_raises(data_reject, metadata_reject, constraints_reject):
+    """Test validate_cag raises an error due reject sampling constraint not matching."""
     # Setup
     data = data_reject
     metadata = metadata_reject
-    pattern1, pattern2 = patterns_reject
+    constraint1, constraint2 = constraints_reject
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern1, pattern2])
+    synthesizer.add_cag(constraints=[constraint1, constraint2])
     synthesizer.fit(data)
-    # pattern 1 matches, but pattern 2 does not
+    # constraint 1 matches, but constraint 2 does not
     synthetic_data = pd.DataFrame({
         'low': [1, 2, 3, 1, 2, 1],
         'low2': [10, 20, 30, 10, 20, 10],
@@ -936,16 +936,16 @@ def test_validate_cag_multi_with_reject_raises(data_reject, metadata_reject, pat
     )
 
     # Run and Assert
-    with pytest.raises(PatternNotMetError, match=msg):
+    with pytest.raises(constraintNotMetError, match=msg):
         synthesizer.validate_cag(synthetic_data=synthetic_data)
 
 
-def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
+def test_validate_cag_multi_raises(data_multi, metadata_multi, constraint_multi):
     """Test validate_cag raises an error with multitable data."""
     # Setup
     data = data_multi
     metadata = metadata_multi
-    pattern = pattern_multi
+    constraint = constraint_multi
     synthetic_data = {
         'table1': pd.DataFrame({
             'A': data['table1']['B'],
@@ -954,7 +954,7 @@ def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
         'table2': pd.DataFrame({'id': range(5)}),
     }
     synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_cag(constraints=[constraint])
     synthesizer.fit(data)
     msg = re.escape(
         "Table 'table1': The inequality requirement is not met for "
@@ -962,5 +962,5 @@ def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
     )
 
     # Run and Assert
-    with pytest.raises(PatternNotMetError, match=msg):
+    with pytest.raises(constraintNotMetError, match=msg):
         synthesizer.validate_cag(synthetic_data=synthetic_data)

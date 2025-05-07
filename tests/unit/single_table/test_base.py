@@ -1100,8 +1100,8 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor.reverse_transform.return_value = data
         instance._data_processor.filter_valid.return_value = data
         instance._data_processor._hyper_transformer._input_columns = []
-        instance._reject_sampling_patterns = []
-        instance._chained_patterns = []
+        instance._reject_sampling_constraints = []
+        instance._chained_constraints = []
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(instance, 3)
@@ -1129,8 +1129,8 @@ class TestBaseSingleTableSynthesizer:
         instance._filter_conditions.return_value = data[data.name == 'John Doe']
         conditions = {'salary': 80.0}
         transformed_conditions = {'salary': 80.0}
-        instance._reject_sampling_patterns = []
-        instance._chained_patterns = []
+        instance._reject_sampling_constraints = []
+        instance._chained_constraints = []
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(
@@ -1162,8 +1162,8 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor._hyper_transformer._input_columns = []
         instance._data_processor.filter_valid = lambda x: x
         instance._data_processor.reverse_transform.return_value = data
-        instance._reject_sampling_patterns = []
-        instance._chained_patterns = []
+        instance._reject_sampling_constraints = []
+        instance._chained_constraints = []
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(
@@ -1190,8 +1190,8 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor.reverse_transform.return_value = data
         instance._data_processor._hyper_transformer._input_columns = []
         instance._filter_conditions.return_value = data[data.name == 'John Doe']
-        instance._reject_sampling_patterns = []
-        instance._chained_patterns = []
+        instance._reject_sampling_constraints = []
+        instance._chained_constraints = []
         conditions = {'salary': 80.0}
         transformed_conditions = {'salary': 80.0}
         instance._sample.side_effect = [NotImplementedError, pd.DataFrame()]
@@ -2282,37 +2282,6 @@ class TestBaseSingleTableSynthesizer:
         warn_msg = "For these constraints to take effect, please refit the synthesizer using 'fit'."
         with pytest.warns(UserWarning, match=warn_msg):
             instance.add_constraints([])
-
-    def test_add_constraints(self):
-        """Test a list of constraints can be added to the synthesizer."""
-        # Setup
-        metadata = Metadata()
-        metadata.add_table('table')
-        metadata.add_column('col', 'table', sdtype='numerical')
-        instance = BaseSingleTableSynthesizer(metadata)
-        positive_constraint = {
-            'constraint_class': 'Positive',
-            'constraint_parameters': {'column_name': 'col', 'strict_boundaries': True},
-        }
-        negative_constraint = {
-            'constraint_class': 'Negative',
-            'constraint_parameters': {'column_name': 'col', 'strict_boundaries': False},
-        }
-
-        # Run
-        instance.add_constraints([positive_constraint, negative_constraint])
-        output = instance.get_constraints()
-
-        # Assert
-        positive_constraint = {
-            'constraint_class': 'Positive',
-            'constraint_parameters': {'column_name': 'col', 'strict_boundaries': True},
-        }
-        negative_constraint = {
-            'constraint_class': 'Negative',
-            'constraint_parameters': {'column_name': 'col', 'strict_boundaries': False},
-        }
-        assert output == [positive_constraint, negative_constraint]
 
     def test_get_constraints(self):
         """Test a list of constraints is returned by the method."""

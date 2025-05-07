@@ -737,8 +737,8 @@ def test_get_possible_chars_handles_max_repeat(mock_get_chars):
     assert possible_chars == [str(i) for i in range(1, 10)]
 
 
-def test_get_possible_chars_num_subpatterns():
-    """Test that only characters for first x subpatterns are returned."""
+def test_get_possible_chars_num_subconstraints():
+    """Test that only characters for first x subconstraints are returned."""
     # Setup
     regex = 'HID_[0-9]{3}_[a-z]{3}'
 

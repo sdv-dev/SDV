@@ -1,4 +1,4 @@
-"""Integration tests for FixedIncrements CAG pattern."""
+"""Integration tests for FixedIncrements CAG constraint."""
 
 import re
 
@@ -107,10 +107,10 @@ def test_fixed_increments_integers(dtype):
             dtype: {'sdtype': 'numerical', 'computer_representation': dtype},
         }
     })
-    pattern = FixedIncrements(dtype, increment_value=increment_value)
+    constraint = FixedIncrements(dtype, increment_value=increment_value)
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_pattern(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -225,13 +225,13 @@ def test_validate_cag_multi_raises():
             },
         }
     })
-    pattern = FixedIncrements(column_name='A', table_name='table1', increment_value=2)
+    constraint = FixedIncrements(column_name='A', table_name='table1', increment_value=2)
     synthetic_data = {
         'table1': pd.DataFrame({'A': [1, 3, 5, 7, 9, 12]}),
         'table2': pd.DataFrame({'id': range(5)}),
     }
     synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_cag(patterns=[constraint])
     synthesizer.fit(data)
     msg = re.escape(
         "Table 'table1': The fixed increments requirement is "

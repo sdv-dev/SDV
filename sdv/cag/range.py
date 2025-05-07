@@ -1,4 +1,4 @@
-"""Range CAG pattern."""
+"""Range CAG constraint."""
 
 import operator
 
@@ -24,7 +24,7 @@ from sdv.constraints.utils import (
 class Range(BasePattern):
     """Ensure that the `middle_column_name` is between `low_column_name` and `high_column_name`.
 
-    The transformation strategy works the same as the Inequality pattern but with two
+    The transformation strategy works the same as the Inequality constraint but with two
     columns instead of one. We compute the difference between the `middle_column_name`
     and the `low_column_name` column and then apply a logarithm to the difference + 1 to ensure
     that the value stays positive when reverted afterwards using an exponential.
@@ -104,7 +104,7 @@ class Range(BasePattern):
         self._nan_column_name = None
 
     def _validate_pattern_with_metadata(self, metadata):
-        """Validate the pattern is compatible with the provided metadata.
+        """Validate the constraint is compatible with the provided metadata.
 
         Validates that:
         - If no table_name is provided the metadata contains a single table
@@ -159,7 +159,7 @@ class Range(BasePattern):
         return low_lt_middle & mid_lt_high & low_lt_high
 
     def _validate_pattern_with_data(self, data, metadata):
-        """Validate the data is compatible with the pattern."""
+        """Validate the data is compatible with the constraint."""
         table_name = self._get_single_table_name(metadata)
         valid = self._get_valid_table_data(data[table_name])
 
@@ -177,7 +177,7 @@ class Range(BasePattern):
             )
 
     def _get_updated_metadata(self, metadata):
-        """Get the new output metadata after applying the pattern to the input metadata."""
+        """Get the new output metadata after applying the constraint to the input metadata."""
         table_name = self._get_single_table_name(metadata)
         low_diff_column = _create_unique_name(
             self._low_diff_column_name, metadata.tables[table_name].columns.keys()
@@ -200,7 +200,7 @@ class Range(BasePattern):
         return metadata.tables[table_name].columns[column_name].get('datetime_format')
 
     def _fit(self, data, metadata):
-        """Fit the pattern.
+        """Fit the constraint.
 
         Args:
             data (dict[str, pd.DataFrame]):

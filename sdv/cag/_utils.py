@@ -1,9 +1,12 @@
 import re
 
+import warnings
+
 import numpy as np
 import pandas as pd
 
 from sdv.cag._errors import PatternNotMetError
+from sdv.cag.base import BasePattern
 from sdv.metadata import Metadata
 
 
@@ -147,3 +150,44 @@ def _remove_columns_from_metadata(metadata, table_name, columns_to_drop):
         if set(rel['column_names']).isdisjoint(column_set)
     ]
     return Metadata.load_from_dict(metadata)
+
+
+def _filter_old_style_constraints(constraints):
+    """Filter out old-style constraints."""
+    result = [constraint for constraint in constraints if isinstance(constraint, BasePattern)]
+    old_style_constraint = [
+        constraint for constraint in constraints if isinstance(constraint, dict)
+    ]
+    if old_style_constraint:
+        warnings.warn(
+            'The `add_constraints` function no longer supports constraints using the older '
+            'dictionary-style definition. Such constraints will be ignored. Please supply '
+            'objects from `sdv.cag` instead.',
+            DeprecationWarning,
+        )
+
+    return result
+
+
+def _validate_constraints(constraints, synthesizer_fitted):
+    """Validate the constraints.
+
+    Args:
+        constraints (list[sdv.cag.BasePattern]):
+            The list of constraints to validate.
+
+        synthesizer_fitted (bool):
+            Whether the synthesizer has been fitted or not.
+
+    Raises:
+        ValueError: If the constraints are not valid.
+    """
+    if not isinstance(constraints, list):
+        raise ValueError('Constraints must be a list of sdv.cag.BasePattern objects.')
+
+    if synthesizer_fitted:
+        warnings.warn(
+            "For these constraints to take effect, please refit the synthesizer using 'fit'."
+        )
+
+    return _filter_old_style_constraints(constraints)

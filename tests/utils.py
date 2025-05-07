@@ -134,12 +134,12 @@ def catch_sdv_logs(caplog, level, logger):
         logger.removeHandler(caplog.handler)
 
 
-def run_pattern(pattern, data, metadata):
-    """Run a pattern."""
-    pattern.validate(data, metadata)
-    updated_metadata = pattern.get_updated_metadata(metadata)
-    pattern.fit(data, metadata)
-    transformed = pattern.transform(data)
-    reverse_transformed = pattern.reverse_transform(transformed)
+def run_pattern(constraint, data, metadata):
+    """Run a constraint."""
+    constraint.validate(data, metadata)
+    updated_metadata = constraint.get_updated_metadata(metadata)
+    constraint.fit(data, metadata)
+    transformed = constraint.transform(data)
+    reverse_transformed = constraint.reverse_transform(transformed)
 
     return updated_metadata, transformed, reverse_transformed

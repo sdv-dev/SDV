@@ -29,7 +29,7 @@ from sdv._utils import (
     get_possible_chars,
 )
 from sdv.cag._errors import PatternNotMetError
-from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows
+from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows, _validate_constraints
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import (
@@ -687,28 +687,29 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         locales=['en_US'],
     ):
         super().__init__(metadata, enforce_min_max_values, enforce_rounding, locales)
-        self._chained_patterns = []  # chain of patterns used to preprocess the data
-        self._reject_sampling_patterns = []  # patterns used only for reject sampling
+        self._chained_constraints = []  # chain of constraints used to preprocess the data
+        self._reject_sampling_constraints = []  # constraints used only for reject sampling
 
-    def add_cag(self, patterns):
-        """Add the list of constraint-augmented generation patterns to the synthesizer.
+    def add_constraints(self, constraints):
+        """Add the list of constraint-augmented generation constraints to the synthesizer.
 
         Args:
-            patterns (list):
-                A list of CAG patterns to apply to the synthesizer.
+            constraints (list):
+                A list of CAG constraints to apply to the synthesizer.
         """
-        for pattern in patterns:
+        constraints = _validate_constraints(constraints, self._fitted)
+        for constraint in constraints:
             try:
-                self.metadata = pattern.get_updated_metadata(self.metadata)
-                self._chained_patterns.append(pattern)
+                self.metadata = constraint.get_updated_metadata(self.metadata)
+                self._chained_constraints.append(constraint)
             except PatternNotMetError as e:
                 LOGGER.info(
-                    'Enforcing pattern %s using reject sampling.', pattern.__class__.__name__
+                    'Enforcing constraint %s using reject sampling.', constraint.__class__.__name__
                 )
 
                 try:
-                    pattern.get_updated_metadata(self._original_metadata)
-                    self._reject_sampling_patterns.append(pattern)
+                    constraint.get_updated_metadata(self._original_metadata)
+                    self._reject_sampling_constraints.append(constraint)
                 except PatternNotMetError:
                     raise e
 
@@ -720,8 +721,56 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         )
 
     def get_cag(self):
-        """Get a list of constraint-augmented generation patterns applied to the synthesizer."""
-        return deepcopy(self._chained_patterns + self._reject_sampling_patterns)
+        """Get a list of constraint-augmented generation constraints applied to the synthesizer."""
+        return deepcopy(self._chained_constraints + self._reject_sampling_constraints)
+
+    def get_metadata(self, version='original'):
+        """Get the metadata, either original or modified after applying CAG constraints.
+
+        Args:
+            version (str, optional):
+                The version of metadata to return, must be one of 'original' or 'modified'. If
+                'original', will return the original metadata used to instantiate the
+                synthesizer. If 'modified', will return the modified metadata after applying this
+                synthesizer's CAG constraints. Defaults to 'original'.
+        """
+        if version not in ('original', 'modified'):
+            raise ValueError(
+                f"Unrecognized version '{version}', please use 'original' or 'modified'."
+            )
+
+        if hasattr(self, '_original_metadata') and version == 'original':
+            return self._original_metadata
+
+        return super().get_metadata()
+
+    def validate_cag(self, synthetic_data):
+        """Validate synthetic_data against the CAG patterns.
+
+        Args:
+            synthetic_data (pd.DataFrame): The synthetic data to validate
+
+        Raises:
+            PatternNotMetError:
+                Raised if synthetic data does not match CAG patterns.
+        """
+        transformed_data = synthetic_data
+        for attribute in ['_reject_sampling_patterns', '_chained_patterns']:
+            for pattern in getattr(self, attribute, []):
+                if attribute == '_reject_sampling_patterns':
+                    valid = pattern.is_valid(data=synthetic_data)
+                else:
+                    valid = pattern.is_valid(data=transformed_data)
+
+                if not valid.all():
+                    invalid_rows_str = _get_invalid_rows(valid)
+                    pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
+                    pattern_name = pattern_name.replace('_', ' ')
+                    msg = f'The {pattern_name} requirement is not met '
+                    msg += f'for row indices: {invalid_rows_str}.'
+                    raise PatternNotMetError(msg)
+                elif attribute == '_chained_patterns':
+                    transformed_data = pattern.transform(data=transformed_data)
 
     def validate_cag(self, synthetic_data):
         """Validate synthetic_data against the CAG patterns.
@@ -752,26 +801,26 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     transformed_data = pattern.transform(data=transformed_data)
 
     def _transform_helper(self, data):
-        """Validate and transform all CAG patterns during preprocessing.
+        """Validate and transform all CAG constraints during preprocessing.
 
         Args:
             data (dict[str, pd.DataFrame]):
                 The data dictionary.
         """
         if self._fitted:
-            for pattern in self._chained_patterns:
-                data = pattern.transform(data)
+            for constraint in self._chained_constraints:
+                data = constraint.transform(data)
             return data
 
         metadata = self._original_metadata
         original_data = data
-        for pattern in self._chained_patterns:
-            pattern.fit(data, metadata)
-            metadata = pattern.get_updated_metadata(metadata)
-            data = pattern.transform(data)
+        for constraint in self._chained_constraints:
+            constraint.fit(data, metadata)
+            metadata = constraint.get_updated_metadata(metadata)
+            data = constraint.transform(data)
 
-        for pattern in self._reject_sampling_patterns:
-            pattern.fit(original_data, self._original_metadata)
+        for constraint in self._reject_sampling_constraints:
+            constraint.fit(original_data, self._original_metadata)
 
         return data
 
@@ -911,14 +960,16 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 )
                 sampled = pd.concat([sampled, raw_sampled[missing_cols]], axis=1)
 
-            if hasattr(self, '_chained_patterns') and hasattr(self, '_reject_sampling_patterns'):
-                for pattern in reversed(self._chained_patterns):
-                    sampled = pattern.reverse_transform(sampled)
-                    valid_rows = pattern.is_valid(sampled)
+            if (hasattr(self, '_chained_constraints')) and (
+                hasattr(self, '_reject_sampling_constraints')
+            ):
+                for constraint in reversed(self._chained_constraints):
+                    sampled = constraint.reverse_transform(sampled)
+                    valid_rows = constraint.is_valid(sampled)
                     sampled = sampled[valid_rows]
 
-                for pattern in reversed(self._reject_sampling_patterns):
-                    valid_rows = pattern.is_valid(sampled)
+                for constraint in reversed(self._reject_sampling_constraints):
+                    valid_rows = constraint.is_valid(sampled)
                     sampled = sampled[valid_rows]
 
             if previous_rows is not None:
