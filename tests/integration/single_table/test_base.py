@@ -216,6 +216,7 @@ def test_sample_keys_are_scrambled():
     pd.testing.assert_series_equal(ids, expected_keys)
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_multiple_fits():
     """Test the synthesizer refits correctly on new data.
 

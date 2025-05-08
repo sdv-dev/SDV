@@ -18,8 +18,8 @@ from sdv._utils import (
     check_synthesizer_version,
     generate_synthesizer_id,
 )
-from sdv.cag._errors import PatternNotMetError
-from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows
+from sdv.cag._errors import ConstraintNotMetError
+from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows, _validate_constraints
 from sdv.errors import (
     ConstraintsNotMetError,
     InvalidDataError,
@@ -132,6 +132,7 @@ class BaseMultiTableSynthesizer:
                 self._table_parameters[table_name] = deepcopy(self.DEFAULT_SYNTHESIZER_KWARGS)
 
         self._initialize_models()
+        self.constraints = []
         self._fitted = False
         self._creation_date = datetime.datetime.today().strftime('%Y-%m-%d')
         self._fitted_date = None
@@ -159,70 +160,71 @@ class BaseMultiTableSynthesizer:
         self._validate_table_name(table_name)
         self._table_synthesizers[table_name].set_address_columns(column_names, anonymization_level)
 
-    def add_cag(self, patterns):
-        """Add the list of constraint-augmented generation patterns to the synthesizer.
+    def add_constraints(self, constraints):
+        """Add the list of constraint-augmented generation constraints to the synthesizer.
 
         Args:
-            patterns (list):
-                A list of CAG patterns to apply to the synthesizer.
+            constraints (list):
+                A list of constraints to apply to the synthesizer.
         """
         if not hasattr(self, '_original_metadata'):
             self._original_metadata = self.metadata
 
         metadata = self.metadata
-        for pattern in patterns:
-            metadata = pattern.get_updated_metadata(metadata)
+        constraints = _validate_constraints(constraints, self._fitted)
+        for constraint in constraints:
+            metadata = constraint.get_updated_metadata(metadata)
 
         self.metadata = metadata
-        if hasattr(self, 'patterns'):
-            self.patterns += patterns
+        if hasattr(self, 'constraints'):
+            self.constraints += constraints
         else:
-            self.patterns = patterns
+            self.constraints = constraints
 
         self._initialize_models()
 
-    def get_cag(self):
-        """Get a list of constraint-augmented generation patterns applied to the synthesizer."""
-        if hasattr(self, 'patterns'):
-            return deepcopy(self.patterns)
+    def get_constraints(self):
+        """Get a list of constraint-augmented generation constraints applied to the synthesizer."""
+        if hasattr(self, 'constraints'):
+            return deepcopy(self.constraints)
         else:
             return []
 
     def validate_cag(self, synthetic_data):
-        """Validate synthetic_data against the CAG patterns.
+        """Validate synthetic_data against the constraints.
 
         Args:
             data (dict[str, pd.DataFrame]): The synthetic data to validate
 
         Raises:
-            PatternNotMetError:
-                Raised if synthetic data does not match CAG patterns.
+            ConstraintNotMetError:
+                Raised if synthetic data does not match constraints.
         """
         transformed_data = synthetic_data
-        for pattern in self.get_cag():
-            valid_data = pattern.is_valid(data=transformed_data)
-            table_name = pattern.table_name
+        for constraint in self.get_constraints():
+            valid_data = constraint.is_valid(data=transformed_data)
+            table_name = constraint.table_name
             for table_name, data in valid_data.items():
                 if not valid_data[table_name].all():
                     invalid_rows_str = _get_invalid_rows(valid_data[table_name])
-                    pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
+                    pattern_name = _convert_to_snake_case(constraint.__class__.__name__)
                     pattern_name = pattern_name.replace('_', ' ')
                     msg = (
                         f"Table '{table_name}': The {pattern_name} requirement is not "
                         f'met for row indices: {invalid_rows_str}.'
                     )
-                    raise PatternNotMetError(msg)
-            transformed_data = pattern.transform(data=transformed_data)
+                    raise ConstraintNotMetError(msg)
+            transformed_data = constraint.transform(data=transformed_data)
 
     def get_metadata(self, version='original'):
-        """Get the metadata, either original or modified after applying CAG patterns.
+        """Get the metadata, either original or modified after applying constraints.
 
         Args:
             version (str, optional):
                 The version of metadata to return, must be one of 'original' or 'modified'. If
                 'original', will return the original metadata used to instantiate the
                 synthesizer. If 'modified', will return the modified metadata after applying this
-                synthesizer's CAG patterns. Defaults to 'original'.
+                synthesizer's constraints. Defaults to 'original'.
         """
         if version not in ('original', 'modified'):
             error_msg = f"Unrecognized version '{version}', please use 'original' or 'modified'."
@@ -234,39 +236,39 @@ class BaseMultiTableSynthesizer:
         return Metadata.load_from_dict(self.metadata.to_dict())
 
     def _transform_helper(self, data):
-        """Validate and transform all CAG patterns during preprocessing.
+        """Validate and transform all constraints during preprocessing.
 
         Args:
             data (dict[str, pd.DataFrame]):
                 The data dictionary.
         """
-        if not hasattr(self, 'patterns'):
+        if not getattr(self, 'constraints', None):
             return data
 
-        metadata = self._original_metadata
-        for pattern in self.patterns:
+        metadata = getattr(self, '_original_metadata', self.metadata)
+        for constraint in self.constraints:
             if not self._fitted:
-                pattern.fit(data, metadata)
-                metadata = pattern.get_updated_metadata(metadata)
+                constraint.fit(data, metadata)
+                metadata = constraint.get_updated_metadata(metadata)
 
-            data = pattern.transform(data)
+            data = constraint.transform(data)
 
         return data
 
     def _reverse_transform_helper(self, sampled_data):
-        """Reverse transform CAG patterns after sampling."""
-        if not hasattr(self, 'patterns'):
+        """Reverse transform constraints after sampling."""
+        if not getattr(self, 'constraints', None):
             return sampled_data
 
-        for pattern in reversed(self.patterns):
-            sampled_data = pattern.reverse_transform(sampled_data)
+        for constraint in reversed(self.constraints):
+            sampled_data = constraint.reverse_transform(sampled_data)
 
         from sdv.utils.utils import (
             drop_unknown_references,  # noqa: F401 Lazy import to fix circular dependency
         )
 
-        # issue
-        sampled_data = drop_unknown_references(sampled_data, self._original_metadata, verbose=False)
+        metadata = getattr(self, '_original_metadata', self.metadata)
+        sampled_data = drop_unknown_references(sampled_data, metadata, verbose=False)
         return sampled_data
 
     def get_table_parameters(self, table_name):
@@ -700,60 +702,6 @@ class BaseMultiTableSynthesizer:
             f"Loss values are not available for table '{table_name}' "
             'because the table does not use a GAN-based model.'
         )
-
-    def _validate_constraints_to_be_added(self, constraints):
-        for constraint_dict in constraints:
-            if 'table_name' not in constraint_dict.keys():
-                raise SynthesizerInputError(
-                    "A constraint is missing required parameter 'table_name'. "
-                    'Please add this parameter to your constraint definition.'
-                )
-
-            if constraint_dict['constraint_class'] == 'Unique':
-                raise SynthesizerInputError(
-                    "The constraint class 'Unique' is not currently supported for multi-table"
-                    ' synthesizers. Please remove the constraint for this synthesizer.'
-                )
-
-        if self._fitted:
-            warnings.warn(
-                "For these constraints to take effect, please refit the synthesizer using 'fit'."
-            )
-
-    def add_constraints(self, constraints):
-        """Add constraints to the synthesizer.
-
-        Args:
-            constraints (list):
-                List of constraints described as dictionaries in the following format:
-                    * ``constraint_class``: Name of the constraint to apply.
-                    * ``table_name``: Name of the table where to apply the constraint.
-                    * ``constraint_parameters``: A dictionary with the constraint parameters.
-
-        Raises:
-            SynthesizerInputError:
-                Raises when the ``Unique`` constraint is passed.
-        """
-        self._validate_constraints_to_be_added(constraints)
-        for constraint in constraints:
-            constraint = deepcopy(constraint)
-            synthesizer = self._table_synthesizers[constraint.pop('table_name')]
-            synthesizer._data_processor.add_constraints([constraint])
-
-    def get_constraints(self):
-        """Get constraints of the synthesizer.
-
-        Returns:
-            list:
-                List of dictionaries describing the constraints of the synthesizer.
-        """
-        constraints = []
-        for table_name, synthesizer in self._table_synthesizers.items():
-            for constraint in synthesizer.get_constraints():
-                constraint['table_name'] = table_name
-                constraints.append(constraint)
-
-        return constraints
 
     def load_custom_constraint_classes(self, filepath, class_names):
         """Load a custom constraint class for each table's synthesizer.

@@ -18,7 +18,7 @@ from rdt.transformers import (
 )
 
 from sdv import version
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.errors import (
     ConstraintsNotMetError,
@@ -1100,8 +1100,8 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor.reverse_transform.return_value = data
         instance._data_processor.filter_valid.return_value = data
         instance._data_processor._hyper_transformer._input_columns = []
-        instance._reject_sampling_patterns = []
-        instance._chained_patterns = []
+        instance._reject_sampling_constraints = []
+        instance._chained_constraints = []
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(instance, 3)
@@ -1129,8 +1129,8 @@ class TestBaseSingleTableSynthesizer:
         instance._filter_conditions.return_value = data[data.name == 'John Doe']
         conditions = {'salary': 80.0}
         transformed_conditions = {'salary': 80.0}
-        instance._reject_sampling_patterns = []
-        instance._chained_patterns = []
+        instance._reject_sampling_constraints = []
+        instance._chained_constraints = []
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(
@@ -1162,8 +1162,8 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor._hyper_transformer._input_columns = []
         instance._data_processor.filter_valid = lambda x: x
         instance._data_processor.reverse_transform.return_value = data
-        instance._reject_sampling_patterns = []
-        instance._chained_patterns = []
+        instance._reject_sampling_constraints = []
+        instance._chained_constraints = []
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(
@@ -1190,8 +1190,8 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor.reverse_transform.return_value = data
         instance._data_processor._hyper_transformer._input_columns = []
         instance._filter_conditions.return_value = data[data.name == 'John Doe']
-        instance._reject_sampling_patterns = []
-        instance._chained_patterns = []
+        instance._reject_sampling_constraints = []
+        instance._chained_constraints = []
         conditions = {'salary': 80.0}
         transformed_conditions = {'salary': 80.0}
         instance._sample.side_effect = [NotImplementedError, pd.DataFrame()]
@@ -2271,7 +2271,7 @@ class TestBaseSingleTableSynthesizer:
             constraint_mock, 'custom'
         )
 
-    def test_add_constraint_warning(self):
+    def test_add_constraints_warning(self):
         """Test a warning is raised when the synthesizer had already been fitted."""
         # Setup
         metadata = Metadata()
@@ -2283,37 +2283,7 @@ class TestBaseSingleTableSynthesizer:
         with pytest.warns(UserWarning, match=warn_msg):
             instance.add_constraints([])
 
-    def test_add_constraints(self):
-        """Test a list of constraints can be added to the synthesizer."""
-        # Setup
-        metadata = Metadata()
-        metadata.add_table('table')
-        metadata.add_column('col', 'table', sdtype='numerical')
-        instance = BaseSingleTableSynthesizer(metadata)
-        positive_constraint = {
-            'constraint_class': 'Positive',
-            'constraint_parameters': {'column_name': 'col', 'strict_boundaries': True},
-        }
-        negative_constraint = {
-            'constraint_class': 'Negative',
-            'constraint_parameters': {'column_name': 'col', 'strict_boundaries': False},
-        }
-
-        # Run
-        instance.add_constraints([positive_constraint, negative_constraint])
-        output = instance.get_constraints()
-
-        # Assert
-        positive_constraint = {
-            'constraint_class': 'Positive',
-            'constraint_parameters': {'column_name': 'col', 'strict_boundaries': True},
-        }
-        negative_constraint = {
-            'constraint_class': 'Negative',
-            'constraint_parameters': {'column_name': 'col', 'strict_boundaries': False},
-        }
-        assert output == [positive_constraint, negative_constraint]
-
+    @pytest.mark.skip('Old-style constraints are deprecated')
     def test_get_constraints(self):
         """Test a list of constraints is returned by the method."""
         # Setup
@@ -2436,7 +2406,7 @@ class TestBaseSingleTableSynthesizer:
             }
 
     def test_validate_cag(self):
-        """Test the ``_validate_cag`` method with multiple patterns."""
+        """Test the ``_validate_cag`` method with multiple constraints."""
         # Setup
         synthetic_data = pd.DataFrame()
         transformed_data = pd.DataFrame()
@@ -2445,7 +2415,7 @@ class TestBaseSingleTableSynthesizer:
         cag_mock_1 = Mock()
         cag_mock_1.transform.return_value = transformed_data
         cag_mock_2 = Mock()
-        instance._chained_patterns = [cag_mock_1, cag_mock_2]
+        instance._chained_constraints = [cag_mock_1, cag_mock_2]
 
         # Run
         instance.validate_cag(synthetic_data)
@@ -2464,9 +2434,9 @@ class TestBaseSingleTableSynthesizer:
         instance = BaseSingleTableSynthesizer(original_metadata)
         cag_mock_1 = Mock()
         cag_mock_1.is_valid.return_value = pd.Series([False, False])
-        instance._chained_patterns = [cag_mock_1]
+        instance._chained_constraints = [cag_mock_1]
         msg = 'The mock requirement is not met for row indices: 0, 1.'
 
         # Run and Assert
-        with pytest.raises(PatternNotMetError, match=msg):
+        with pytest.raises(ConstraintNotMetError, match=msg):
             instance.validate_cag(synthetic_data)

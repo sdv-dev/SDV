@@ -124,6 +124,7 @@ def test_synthesize_table_gaussian_copula(tmp_path):
     assert real_data.shape[1] == simulated_synthetic_data.shape[1]
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_adding_constraints(tmp_path):
     """End to end test for adding constraints to a ``BaseSingleTableSynthesizer``.
 
@@ -299,6 +300,7 @@ def test_update_transformers_with_id_generator():
     assert samples['user_id'].min() == min_value_id
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_validate_with_failing_constraint():
     """Validate that the ``constraint`` are raising errors if there is an error during validate."""
     # Setup
