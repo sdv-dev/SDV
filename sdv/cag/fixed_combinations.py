@@ -14,12 +14,12 @@ from sdv.cag._utils import (
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
 )
-from sdv.cag.base import BasePattern
+from sdv.cag.base import BaseConstraint
 from sdv.constraints.utils import get_mappable_combination
 
 
-class FixedCombinations(BasePattern):
-    """Pattern to ensure that the combinations across multiple columns are fixed.
+class FixedCombinations(BaseConstraint):
+    """Constraint to ensure that the combinations across multiple columns are fixed.
 
     One simple example of this constraint can be found in a table that
     contains the columns `country` and `city`, where each country can

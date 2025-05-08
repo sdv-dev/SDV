@@ -136,6 +136,7 @@ class TestBaseMultiTableSynthesizer:
         assert isinstance(instance._table_synthesizers['oseba'], GaussianCopulaSynthesizer)
         assert isinstance(instance._table_synthesizers['upravna_enota'], GaussianCopulaSynthesizer)
         assert instance._table_parameters == defaultdict(dict)
+        assert instance.constraints == []
         instance.metadata.validate.assert_called_once_with()
         mock_check_metadata_updated.assert_called_once()
         mock_generate_synthesizer_id.assert_called_once_with(instance)
@@ -1342,6 +1343,24 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(SynthesizerInputError, match=msg):
             instance.get_loss_values('nesreca')
 
+    @patch('sdv.multi_table.base._validate_constraints')
+    def test_add_constraints_mock(self, mock_validate_constraints):
+        """Test that ``add_constraints`` calls the appropriate methods."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance._initialize_models = Mock()
+        constraints = [Mock(), Mock()]
+        mock_validate_constraints.return_value = constraints
+
+        # Run
+        instance.add_constraints(constraints)
+
+        # Assert
+        mock_validate_constraints.assert_called_once_with(constraints, False)
+        instance._initialize_models.assert_called_once()
+        assert instance.constraints == constraints
+
     def test_add_constraint_warning(self):
         """Test a warning is raised when the synthesizer had already been fitted."""
         # Setup
@@ -1432,6 +1451,7 @@ class TestBaseMultiTableSynthesizer:
         BaseMultiTableSynthesizer.add_constraints(instance, constraints)
 
         # Assert
+        validate_constraints_mock.assert_called_once_with(constraints, instance._fitted)
         assert instance._original_metadata == original_metadata
         constraint1.get_updated_metadata.assert_called_once_with(original_metadata)
         constraint2.get_updated_metadata.assert_called_once_with(

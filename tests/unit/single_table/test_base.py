@@ -2271,7 +2271,7 @@ class TestBaseSingleTableSynthesizer:
             constraint_mock, 'custom'
         )
 
-    def test_add_constraint_warning(self):
+    def test_add_constraints_warning(self):
         """Test a warning is raised when the synthesizer had already been fitted."""
         # Setup
         metadata = Metadata()

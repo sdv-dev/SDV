@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from sdv.cag._errors import ConstraintNotMetError
-from sdv.cag.base import BasePattern
+from sdv.cag.base import BaseConstraint
 from sdv.metadata import Metadata
 
 
@@ -154,7 +154,7 @@ def _remove_columns_from_metadata(metadata, table_name, columns_to_drop):
 
 def _filter_old_style_constraints(constraints):
     """Filter out old-style constraints."""
-    result = [constraint for constraint in constraints if isinstance(constraint, BasePattern)]
+    result = [constraint for constraint in constraints if isinstance(constraint, BaseConstraint)]
     old_style_constraint = [
         constraint for constraint in constraints if isinstance(constraint, dict)
     ]
@@ -173,7 +173,7 @@ def _validate_constraints(constraints, synthesizer_fitted):
     """Validate the constraints.
 
     Args:
-        constraints (list[sdv.cag.BasePattern]):
+        constraints (list[sdv.cag.BaseConstraint]):
             The list of constraints to validate.
 
         synthesizer_fitted (bool):
@@ -183,7 +183,7 @@ def _validate_constraints(constraints, synthesizer_fitted):
         ValueError: If the constraints are not valid.
     """
     if not isinstance(constraints, list):
-        raise ValueError('Constraints must be a list of sdv.cag.BasePattern objects.')
+        raise ValueError('Constraints must be a list of sdv.cag objects.')
 
     if synthesizer_fitted:
         warnings.warn(

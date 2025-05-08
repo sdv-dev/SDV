@@ -132,6 +132,7 @@ class BaseMultiTableSynthesizer:
                 self._table_parameters[table_name] = deepcopy(self.DEFAULT_SYNTHESIZER_KWARGS)
 
         self._initialize_models()
+        self.constraints = []
         self._fitted = False
         self._creation_date = datetime.datetime.today().strftime('%Y-%m-%d')
         self._fitted_date = None
@@ -241,10 +242,10 @@ class BaseMultiTableSynthesizer:
             data (dict[str, pd.DataFrame]):
                 The data dictionary.
         """
-        if not hasattr(self, 'constraints'):
+        if not getattr(self, 'constraints', None):
             return data
 
-        metadata = self._original_metadata
+        metadata = getattr(self, '_original_metadata', self.metadata)
         for constraint in self.constraints:
             if not self._fitted:
                 constraint.fit(data, metadata)
@@ -256,7 +257,7 @@ class BaseMultiTableSynthesizer:
 
     def _reverse_transform_helper(self, sampled_data):
         """Reverse transform constraints after sampling."""
-        if not hasattr(self, 'constraints'):
+        if not getattr(self, 'constraints', None):
             return sampled_data
 
         for constraint in reversed(self.constraints):
@@ -266,8 +267,8 @@ class BaseMultiTableSynthesizer:
             drop_unknown_references,  # noqa: F401 Lazy import to fix circular dependency
         )
 
-        # issue
-        sampled_data = drop_unknown_references(sampled_data, self._original_metadata, verbose=False)
+        metadata = getattr(self, '_original_metadata', self.metadata)
+        sampled_data = drop_unknown_references(sampled_data, metadata, verbose=False)
         return sampled_data
 
     def get_table_parameters(self, table_name):

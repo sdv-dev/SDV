@@ -1,4 +1,4 @@
-"""Test BasePattern Class."""
+"""Test BaseConstraint Class."""
 
 import re
 from copy import deepcopy
@@ -7,7 +7,7 @@ from unittest.mock import Mock
 import pandas as pd
 import pytest
 
-from sdv.cag.base import BasePattern
+from sdv.cag.base import BaseConstraint
 from sdv.errors import NotFittedError
 from sdv.metadata import Metadata
 from tests.utils import DataFrameDictMatcher
@@ -25,11 +25,11 @@ def data():
     }
 
 
-class TestBasePattern:
+class TestBaseConstraint:
     def test___init__(self):
         """Test the ``__init__`` method."""
         # Setup
-        instance = BasePattern()
+        instance = BaseConstraint()
 
         # Assert
         assert instance._fitted is False
@@ -38,7 +38,7 @@ class TestBasePattern:
     def test__get_single_table_name(self):
         """Test the ``_get_single_table_name`` helper method."""
         # Setup
-        instance = BasePattern()
+        instance = BaseConstraint()
         instance.table_name = None
         single_table_metadata = Metadata.load_from_dict({
             'tables': {
@@ -66,7 +66,7 @@ class TestBasePattern:
     def test__get_single_table_name_errors_if_no_table_name_attr(self):
         """Test ``_get_single_table_name`` errors if ``table_name`` does not exist."""
         # Setup
-        instance = BasePattern()
+        instance = BaseConstraint()
         metadata = Metadata.load_from_dict({
             'tables': {
                 'table1': {'columns': {'col4': {}, 'col5': {}}},
@@ -81,10 +81,10 @@ class TestBasePattern:
     def test_validate(self):
         """Test ``validate`` validates data and metadata."""
         # Setup
-        instance = BasePattern()
+        instance = BaseConstraint()
         instance._validate_constraint_with_data = Mock()
         instance._validate_constraint_with_metadata = Mock()
-        expected_msg = re.escape('Pattern must be fit before validating without metadata.')
+        expected_msg = re.escape('Constraint must be fit before validating without metadata.')
         data_mock = Mock()
         metadata_mock = Mock()
 
@@ -101,7 +101,7 @@ class TestBasePattern:
     def test_validate_after_fitting(self):
         """Test ``validate`` validates with metadata after being fitted."""
         # Setup
-        instance = BasePattern()
+        instance = BaseConstraint()
         instance._fitted = True
         instance.metadata = Mock()
         instance._validate_constraint_with_data = Mock()
@@ -116,7 +116,7 @@ class TestBasePattern:
     def test_validate_single_table(self):
         """Test ``validate`` handles single table data."""
         # Setup
-        instance = BasePattern()
+        instance = BaseConstraint()
         instance._single_table = True
         instance._table_name = 'table1'
         instance._validate_constraint_with_data = Mock()
@@ -136,7 +136,7 @@ class TestBasePattern:
     def test_get_updated_metadata(self):
         """Test method calls private ``_get_updated_metadata`` method."""
         # Setup
-        instance = BasePattern()
+        instance = BaseConstraint()
         metadata = Mock()
         instance._get_updated_metadata = Mock()
         instance.validate = Mock()
@@ -151,7 +151,7 @@ class TestBasePattern:
     def test_fit(self, data):
         """Test ``fit`` method."""
         # Setup
-        instance = BasePattern()
+        instance = BaseConstraint()
         instance._validate_constraint_with_metadata = Mock()
         instance._validate_constraint_with_data = Mock()
         instance._fit = Mock()
@@ -184,7 +184,7 @@ class TestBasePattern:
     def test_fit_single_table(self, data):
         """Test ``fit`` method with a single table."""
         # Setup
-        instance = BasePattern()
+        instance = BaseConstraint()
         instance.table_name = 'table1'
         instance._validate_constraint_with_metadata = Mock()
         instance._validate_constraint_with_data = Mock()
@@ -221,7 +221,7 @@ class TestBasePattern:
     def test_transform(self, data):
         """Test ``transform`` method."""
         # Setup
-        instance = BasePattern()
+        instance = BaseConstraint()
         instance._fitted = True
         instance.validate = Mock()
         instance._transform = Mock()
@@ -238,7 +238,7 @@ class TestBasePattern:
         """Test ``transform`` method with a single table."""
         # Setup
         data = data['table1']
-        instance = BasePattern()
+        instance = BaseConstraint()
         instance._fitted = True
         instance._single_table = True
         instance._table_name = 'table1'
@@ -258,8 +258,8 @@ class TestBasePattern:
     def test_transform_not_fitted(self, data):
         """Test ``transform`` method errors before constraint has been fit."""
         # Setup
-        instance = BasePattern()
-        expected_msg = re.escape('Pattern must be fit using ``fit`` before transforming.')
+        instance = BaseConstraint()
+        expected_msg = re.escape('Constraint must be fit using ``fit`` before transforming.')
 
         # Run and Assert
         with pytest.raises(NotFittedError, match=expected_msg):
@@ -268,7 +268,7 @@ class TestBasePattern:
     def test_reverse_transform(self, data):
         """Test ``reverse_transform`` method."""
         # Setup
-        instance = BasePattern()
+        instance = BaseConstraint()
         instance._dtypes = {
             'table1': {'col1': 'float64', 'col2': 'object', 'col3': 'float64'},
             'table2': {'col4': 'object', 'col5': 'object'},
@@ -301,7 +301,7 @@ class TestBasePattern:
         """Test ``reverse_transform`` method with single table data."""
         # Setup
         data = data['table1']
-        instance = BasePattern()
+        instance = BaseConstraint()
         instance._single_table = True
         instance._table_name = 'table1'
         instance._dtypes = {
@@ -328,9 +328,9 @@ class TestBasePattern:
     def test_is_valid_errors_if_not_fitted(self, data):
         """Test the ``is_valid`` method errors if the CAG has not been fit."""
         # Setup
-        instance = BasePattern()
+        instance = BaseConstraint()
         expected_msg = re.escape(
-            'Pattern must be fit using ``fit`` before determining if data is valid.'
+            'Constraint must be fit using ``fit`` before determining if data is valid.'
         )
 
         # Run and assert
@@ -340,7 +340,7 @@ class TestBasePattern:
     def test_is_valid(self, data):
         """Test ``is_valid`` calls the ``_is_valid`` method and returns its result."""
         # Setup
-        instance = BasePattern()
+        instance = BaseConstraint()
         instance._is_valid = Mock()
         instance._fitted = True
 
@@ -355,7 +355,7 @@ class TestBasePattern:
         """Test ``is_valid`` with single table data."""
         # Setup
         data = data['table1']
-        instance = BasePattern()
+        instance = BaseConstraint()
         instance._single_table = True
         instance._table_name = 'table1'
         instance._is_valid = Mock()

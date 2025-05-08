@@ -11,10 +11,10 @@ from sdv.cag._utils import (
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
 )
-from sdv.cag.base import BasePattern
+from sdv.cag.base import BaseConstraint
 
 
-class FixedIncrements(BasePattern):
+class FixedIncrements(BaseConstraint):
     """Ensure every value in a column is a multiple of the specified increment.
 
     Args:

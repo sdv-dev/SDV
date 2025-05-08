@@ -9,10 +9,10 @@ from sdv.cag._utils import (
     _is_list_of_type,
     _validate_table_and_column_names,
 )
-from sdv.cag.base import BasePattern
+from sdv.cag.base import BaseConstraint
 
 
-class OneHotEncoding(BasePattern):
+class OneHotEncoding(BaseConstraint):
     """Ensure the appropriate columns are one hot encoded.
 
     This constraint allows the user to specify a list of columns where each row
