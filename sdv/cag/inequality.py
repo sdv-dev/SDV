@@ -58,6 +58,7 @@ class Inequality(BasePattern):
         self._low_column_name = low_column_name
         self._high_column_name = high_column_name
         self._diff_column_name = f'{self._low_column_name}#{self._high_column_name}'
+        self._nan_column_name = None
         self._operator = np.greater if strict_boundaries else np.greater_equal
         self.table_name = table_name
 
@@ -156,15 +157,33 @@ class Inequality(BasePattern):
                 f'The inequality requirement is not met for row indices: [{invalid_rows_str}]'
             )
 
+    def _get_diff_and_nan_column_names(self, metadata, column_name, table_name):
+        """Get the column names for the difference and NaN columns.
+
+        Args:
+            metadata (Metadata):
+                The metadata to get the column names from.
+            column_name (str):
+                The input name of the column to be added.
+            table_name (str):
+                The name of the table that contains the columns.
+        """
+        column_names = metadata.tables[table_name].columns.keys()
+        diff_column = _create_unique_name(column_name, column_names)
+        nan_diff_column = _create_unique_name(diff_column + '.nan_component', column_names)
+
+        return diff_column, nan_diff_column
+
     def _get_updated_metadata(self, metadata):
         """Get the new output metadata after applying the pattern to the input metadata."""
         table_name = self._get_single_table_name(metadata)
-        diff_column = _create_unique_name(
-            self._diff_column_name, metadata.tables[table_name].columns.keys()
+        diff_column, nan_diff_column = self._get_diff_and_nan_column_names(
+            metadata, self._diff_column_name, table_name
         )
 
         metadata = metadata.to_dict()
         metadata['tables'][table_name]['columns'][diff_column] = {'sdtype': 'numerical'}
+        metadata['tables'][table_name]['columns'][nan_diff_column] = {'sdtype': 'categorical'}
         return _remove_columns_from_metadata(
             metadata, table_name, columns_to_drop=[self._high_column_name]
         )
@@ -182,6 +201,9 @@ class Inequality(BasePattern):
         table_data = data[table_name]
         self._dtype = table_data[self._high_column_name].dtypes
         self._is_datetime = self._get_is_datetime(metadata, table_name)
+        self._diff_column_name, self._nan_column_name = self._get_diff_and_nan_column_names(
+            metadata, self._diff_column_name, table_name
+        )
         if self._is_datetime:
             self._low_datetime_format = self._get_datetime_format(
                 metadata, table_name, self._low_column_name
@@ -220,21 +242,18 @@ class Inequality(BasePattern):
         else:
             diff_column = high - low
 
-        self._diff_column_name = _create_unique_name(self._diff_column_name, table_data.columns)
         table_data[self._diff_column_name] = np.log(diff_column + 1)
-
         nan_col = compute_nans_column(table_data, [self._low_column_name, self._high_column_name])
-        if nan_col is not None:
-            self._nan_column_name = _create_unique_name(nan_col.name, table_data.columns)
-            table_data[self._nan_column_name] = nan_col
-            if self._is_datetime:
-                mean_value_low = table_data[self._low_column_name].mode()[0]
-            else:
-                mean_value_low = table_data[self._low_column_name].mean()
-            table_data = table_data.fillna({
-                self._low_column_name: mean_value_low,
-                self._diff_column_name: table_data[self._diff_column_name].mean(),
-            })
+        table_data[self._nan_column_name] = nan_col
+        if self._is_datetime:
+            mean_value_low = table_data[self._low_column_name].mode()[0]
+        else:
+            mean_value_low = table_data[self._low_column_name].mean()
+
+        table_data = table_data.fillna({
+            self._low_column_name: mean_value_low,
+            self._diff_column_name: table_data[self._diff_column_name].mean(),
+        })
 
         data[table_name] = table_data.drop(self._high_column_name, axis=1)
 
@@ -270,9 +289,7 @@ class Inequality(BasePattern):
             low = cast_to_datetime64(low)
 
         table_data[self._high_column_name] = pd.Series(diff_column + low).astype(self._dtype)
-
-        if self._nan_column_name and self._nan_column_name in table_data.columns:
-            table_data = revert_nans_columns(table_data, self._nan_column_name)
+        table_data = revert_nans_columns(table_data, self._nan_column_name)
 
         data[table_name] = table_data.drop(self._diff_column_name, axis=1)
 
