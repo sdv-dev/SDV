@@ -1,4 +1,4 @@
-"""Base Multi-Table Constraint."""
+"""Base Constraint."""
 
 import pandas as pd
 

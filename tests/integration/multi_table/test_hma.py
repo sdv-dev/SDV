@@ -1532,7 +1532,7 @@ class TestHMASynthesizer:
         synthetic_data = synthesizer.sample()
 
         # Assert
-        # Check that IDs match the regex constraint
+        # Check that IDs match the regex pattern
         for table_name, table in synthetic_data.items():
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
@@ -1611,7 +1611,7 @@ class TestHMASynthesizer:
             synthetic_data = synthesizer.sample()
 
         # Assert
-        # Check that IDs match the regex constraint
+        # Check that IDs match the regex pattern
         for table_name, table in synthetic_data.items():
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
@@ -1713,7 +1713,7 @@ class TestHMASynthesizer:
             synthetic_data = synthesizer.sample()
 
         # Assert
-        # Check that IDs match the regex constraint
+        # Check that IDs match the regex pattern
         for table_name, table in synthetic_data.items():
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
@@ -1797,7 +1797,7 @@ class TestHMASynthesizer:
             synthetic_data = synthesizer.sample()
 
         # Assert
-        # Check that IDs match the regex constraint
+        # Check that IDs match the regex pattern
         for table_name, table in synthetic_data.items():
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
@@ -1872,7 +1872,7 @@ class TestHMASynthesizer:
             synthetic_data = synthesizer.sample()
 
         # Assert
-        # Check that IDs match the regex constraint
+        # Check that IDs match the regex pattern
         for table_name, table in synthetic_data.items():
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':

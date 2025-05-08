@@ -247,10 +247,10 @@ def test__remove_columns_from_metadata_multiple_duplicate_columns():
 def test__filter_old_style_constraints():
     """Test `_filter_old_style_constraints` method"""
 
-    # Setup
     class DummyConstraint(BaseConstraint):
         pass
 
+    # Setup
     constraint_1 = DummyConstraint()
     constraint_2 = DummyConstraint()
     old_style_constraint = {}
