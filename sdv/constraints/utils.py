@@ -195,7 +195,7 @@ def revert_nans_columns(table_data, nan_column_name):
     """
     combinations = table_data[nan_column_name].unique()
     for combination in combinations:
-        if combination != 'None':
+        if not pd.isna(combination) and combination != 'None':
             column_names = [column_name.strip() for column_name in combination.split(',')]
             table_data.loc[table_data[nan_column_name] == combination, column_names] = np.nan
 
