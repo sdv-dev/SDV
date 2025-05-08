@@ -6,6 +6,7 @@ import pytest
 
 from sdv.cag import Inequality
 from sdv.cag._errors import PatternNotMetError
+from sdv.datasets.demo import download_demo
 from sdv.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
 from sdv.single_table import GaussianCopulaSynthesizer
@@ -785,6 +786,30 @@ def test_inequality_many_patterns():
     assert original_metadata.to_dict() == metadata.to_dict()
     for i in range(9):
         assert all(samples[f'{i}'] <= samples[f'{i + 1}'])
+
+
+def test_inequality_with_nan():
+    """Test that Inequality pattern works with NaN values."""
+    # Setup
+    data, metadata = download_demo('single_table', 'fake_hotel_guests')
+    inequality_cag = Inequality(
+        low_column_name='checkin_date',
+        high_column_name='checkout_date',
+    )
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_cag([inequality_cag])
+
+    # Run
+    synthesizer.fit(data)
+    sampled_data = synthesizer.sample(100)
+
+    # Assert
+    assert data['checkout_date'].isna().sum() > 0
+    assert sampled_data['checkout_date'].isna().sum() > 0
+    valid_dates = sampled_data[['checkin_date', 'checkout_date']].dropna()
+    assert all(
+        pd.to_datetime(valid_dates['checkin_date']) <= pd.to_datetime(valid_dates['checkout_date'])
+    )
 
 
 def test_validate_cag(data, metadata, pattern):
