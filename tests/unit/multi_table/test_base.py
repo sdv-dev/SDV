@@ -1406,33 +1406,6 @@ class TestBaseMultiTableSynthesizer:
         output_oseba = instance._table_synthesizers['oseba'].get_constraints()
         assert output_oseba == []
 
-    @pytest.mark.skip('Old-style constraints are deprecated')
-    def test_get_constraints(self):
-        """Test a list of constraints is returned by the method."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        instance = BaseMultiTableSynthesizer(metadata)
-        metadata.add_column('positive_int', 'nesreca', sdtype='numerical')
-        metadata.add_column('negative_int', 'oseba', sdtype='numerical')
-        positive_constraint = {
-            'constraint_class': 'Positive',
-            'table_name': 'nesreca',
-            'constraint_parameters': {'column_name': 'nesreca_val', 'strict_boundaries': True},
-        }
-        negative_constraint = {
-            'constraint_class': 'Negative',
-            'table_name': 'oseba',
-            'constraint_parameters': {'column_name': 'oseba_val', 'strict_boundaries': False},
-        }
-        constraints = [positive_constraint, negative_constraint]
-        instance.add_constraints(constraints)
-
-        # Run
-        output = instance.get_constraints()
-
-        # Assert
-        assert output == constraints
-
     @patch('sdv.multi_table.base._validate_constraints')
     def test_add_constraints(self, validate_constraints_mock):
         """Test adding constraint to the synthesizer."""
@@ -1487,7 +1460,7 @@ class TestBaseMultiTableSynthesizer:
         assert instance.constraints == [constraint1, constraint2]
 
     @patch('sdv.multi_table.base.deepcopy')
-    def test_get_cag(self, copy_mock):
+    def test_get_constraints(self, copy_mock):
         """Test getting data constraints from the synthesizer."""
         # Setup
         instance = Mock()
@@ -1496,9 +1469,9 @@ class TestBaseMultiTableSynthesizer:
         constraint2 = Mock()
 
         # Run
-        no_constraints = BaseMultiTableSynthesizer.get_cag(instance)
+        no_constraints = BaseMultiTableSynthesizer.get_constraints(instance)
         instance.constraints = [constraint1, constraint2]
-        constraints = BaseMultiTableSynthesizer.get_cag(instance)
+        constraints = BaseMultiTableSynthesizer.get_constraints(instance)
 
         # Assert
         assert no_constraints == []

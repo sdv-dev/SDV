@@ -720,7 +720,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             locales=self.locales,
         )
 
-    def get_cag(self):
+    def get_constraints(self):
         """Get a list of constraint-augmented generation constraints applied to the synthesizer."""
         return deepcopy(self._chained_constraints + self._reject_sampling_constraints)
 

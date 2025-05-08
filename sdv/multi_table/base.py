@@ -183,7 +183,7 @@ class BaseMultiTableSynthesizer:
 
         self._initialize_models()
 
-    def get_cag(self):
+    def get_constraints(self):
         """Get a list of constraint-augmented generation constraints applied to the synthesizer."""
         if hasattr(self, 'constraints'):
             return deepcopy(self.constraints)
@@ -702,21 +702,6 @@ class BaseMultiTableSynthesizer:
             f"Loss values are not available for table '{table_name}' "
             'because the table does not use a GAN-based model.'
         )
-
-    def get_constraints(self):
-        """Get constraints of the synthesizer.
-
-        Returns:
-            list:
-                List of dictionaries describing the constraints of the synthesizer.
-        """
-        constraints = []
-        for table_name, synthesizer in self._table_synthesizers.items():
-            for constraint in synthesizer.get_constraints():
-                constraint['table_name'] = table_name
-                constraints.append(constraint)
-
-        return constraints
 
     def load_custom_constraint_classes(self, filepath, class_names):
         """Load a custom constraint class for each table's synthesizer.
