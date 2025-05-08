@@ -18,7 +18,7 @@ from rdt.transformers import (
 )
 
 from sdv import version
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.errors import (
     ConstraintsNotMetError,
@@ -2406,7 +2406,7 @@ class TestBaseSingleTableSynthesizer:
             }
 
     def test_validate_cag(self):
-        """Test the ``_validate_cag`` method with multiple patterns."""
+        """Test the ``_validate_cag`` method with multiple constraints."""
         # Setup
         synthetic_data = pd.DataFrame()
         transformed_data = pd.DataFrame()
@@ -2415,7 +2415,7 @@ class TestBaseSingleTableSynthesizer:
         cag_mock_1 = Mock()
         cag_mock_1.transform.return_value = transformed_data
         cag_mock_2 = Mock()
-        instance._chained_patterns = [cag_mock_1, cag_mock_2]
+        instance._chained_constraints = [cag_mock_1, cag_mock_2]
 
         # Run
         instance.validate_cag(synthetic_data)
@@ -2434,9 +2434,9 @@ class TestBaseSingleTableSynthesizer:
         instance = BaseSingleTableSynthesizer(original_metadata)
         cag_mock_1 = Mock()
         cag_mock_1.is_valid.return_value = pd.Series([False, False])
-        instance._chained_patterns = [cag_mock_1]
+        instance._chained_constraints = [cag_mock_1]
         msg = 'The mock requirement is not met for row indices: 0, 1.'
 
         # Run and Assert
-        with pytest.raises(PatternNotMetError, match=msg):
+        with pytest.raises(ConstraintNotMetError, match=msg):
             instance.validate_cag(synthetic_data)

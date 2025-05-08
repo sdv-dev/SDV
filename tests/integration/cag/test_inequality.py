@@ -750,7 +750,9 @@ def test_inequality_many_constraints():
     metadata = Metadata.load_from_dict({
         'columns': {f'{i}': {'sdtype': 'numerical'} for i in range(10)}
     })
-    constraints = [Inequality(low_column_name=f'{i}', high_column_name=f'{i + 1}') for i in range(9)]
+    constraints = [
+        Inequality(low_column_name=f'{i}', high_column_name=f'{i + 1}') for i in range(9)
+    ]
 
     # Run
     synthesizer = GaussianCopulaSynthesizer(metadata)
@@ -797,7 +799,7 @@ def test_inequality_with_nan():
         high_column_name='checkout_date',
     )
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag([inequality_cag])
+    synthesizer.add_constraints([inequality_cag])
 
     # Run
     synthesizer.fit(data)
@@ -816,7 +818,7 @@ def test_validate_cag(data, metadata, constraint):
     """Test validate_cag works with synthetic data generated with Inequality."""
     # Setup
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(constraints=[constraint])
+    synthesizer.add_constraints(constraints=[constraint])
     synthesizer.fit(data)
     synthetic_data = synthesizer.sample(100)
 
@@ -837,12 +839,12 @@ def test_validate_cag_raises(data, metadata, constraint):
     assert all(data['A'] < data['B'])
     assert all(synthetic_data['A'] > synthetic_data['B'])
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(constraints=[constraint])
+    synthesizer.add_constraints(constraints=[constraint])
     synthesizer.fit(data)
     msg = re.escape('The inequality requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more')
 
     # Run and Assert
-    with pytest.raises(constraintNotMetError, match=msg):
+    with pytest.raises(ConstraintNotMetError, match=msg):
         synthesizer.validate_cag(synthetic_data=synthetic_data)
 
 
@@ -853,7 +855,7 @@ def test_validate_cag_multi(data_multi, metadata_multi, constraint_multi):
     metadata = metadata_multi
     constraint = constraint_multi
     synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_cag(constraints=[constraint])
+    synthesizer.add_constraints(constraints=[constraint])
     synthesizer.fit(data)
     synthetic_data = synthesizer.sample(100)
 
@@ -905,7 +907,7 @@ def test_validate_cag_multi_with_reject(data_reject, metadata_reject, constraint
     metadata = metadata_reject
     constraint1, constraint2 = constraints_reject
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(constraints=[constraint1, constraint2])
+    synthesizer.add_constraints(constraints=[constraint1, constraint2])
     synthesizer.fit(data)
     synthetic_data = synthesizer.sample(100)
 
@@ -923,7 +925,7 @@ def test_validate_cag_multi_with_reject_raises(data_reject, metadata_reject, con
     metadata = metadata_reject
     constraint1, constraint2 = constraints_reject
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(constraints=[constraint1, constraint2])
+    synthesizer.add_constraints(constraints=[constraint1, constraint2])
     synthesizer.fit(data)
     # constraint 1 matches, but constraint 2 does not
     synthetic_data = pd.DataFrame({
@@ -936,7 +938,7 @@ def test_validate_cag_multi_with_reject_raises(data_reject, metadata_reject, con
     )
 
     # Run and Assert
-    with pytest.raises(constraintNotMetError, match=msg):
+    with pytest.raises(ConstraintNotMetError, match=msg):
         synthesizer.validate_cag(synthetic_data=synthetic_data)
 
 
@@ -954,7 +956,7 @@ def test_validate_cag_multi_raises(data_multi, metadata_multi, constraint_multi)
         'table2': pd.DataFrame({'id': range(5)}),
     }
     synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_cag(constraints=[constraint])
+    synthesizer.add_constraints(constraints=[constraint])
     synthesizer.fit(data)
     msg = re.escape(
         "Table 'table1': The inequality requirement is not met for "
@@ -962,5 +964,5 @@ def test_validate_cag_multi_raises(data_multi, metadata_multi, constraint_multi)
     )
 
     # Run and Assert
-    with pytest.raises(constraintNotMetError, match=msg):
+    with pytest.raises(ConstraintNotMetError, match=msg):
         synthesizer.validate_cag(synthetic_data=synthetic_data)

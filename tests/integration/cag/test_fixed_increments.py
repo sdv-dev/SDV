@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from sdv.cag import FixedIncrements
-from sdv.cag._errors import constraintNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
@@ -154,7 +154,7 @@ def test_fixed_incremements_with_multi_table(data_multi, metadata_multi, constra
 
 def run_copula(data, metadata, constraint):
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(constraints=[constraint])
+    synthesizer.add_constraints(constraints=[constraint])
     synthesizer.fit(data)
     return synthesizer
 
@@ -181,7 +181,7 @@ def test_validate_cag_raises(data, metadata, constraint):
     msg = re.escape('The fixed increments requirement is not met for row indices: 0, 1, 2, 3, 4')
 
     # Run and Assert
-    with pytest.raises(constraintNotMetError, match=msg):
+    with pytest.raises(ConstraintNotMetError, match=msg):
         synthesizer.validate_cag(synthetic_data=synthetic_data)
 
 
@@ -192,7 +192,7 @@ def test_validate_cag_multi(data_multi, metadata_multi, constraint_multi):
     metadata = metadata_multi
     constraint = constraint_multi
     synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_cag(constraints=[constraint])
+    synthesizer.add_constraints(constraints=[constraint])
     synthesizer.fit(data)
     synthetic_data = synthesizer.sample(100)
 
@@ -231,7 +231,7 @@ def test_validate_cag_multi_raises():
         'table2': pd.DataFrame({'id': range(5)}),
     }
     synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_cag(constraints=[constraint])
+    synthesizer.add_constraints(constraints=[constraint])
     synthesizer.fit(data)
     msg = re.escape(
         "Table 'table1': The fixed increments requirement is "
@@ -239,5 +239,5 @@ def test_validate_cag_multi_raises():
     )
 
     # Run and Assert
-    with pytest.raises(constraintNotMetError, match=msg):
+    with pytest.raises(ConstraintNotMetError, match=msg):
         synthesizer.validate_cag(synthetic_data=synthetic_data)

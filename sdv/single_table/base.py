@@ -725,60 +725,32 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         return deepcopy(self._chained_constraints + self._reject_sampling_constraints)
 
     def validate_cag(self, synthetic_data):
-        """Validate synthetic_data against the CAG patterns.
+        """Validate synthetic_data against the constraints.
 
         Args:
             synthetic_data (pd.DataFrame): The synthetic data to validate
 
         Raises:
-            PatternNotMetError:
-                Raised if synthetic data does not match CAG patterns.
+            ConstraintNotMetError:
+                Raised if synthetic data does not match constraints.
         """
         transformed_data = synthetic_data
-        for attribute in ['_reject_sampling_patterns', '_chained_patterns']:
-            for pattern in getattr(self, attribute, []):
-                if attribute == '_reject_sampling_patterns':
-                    valid = pattern.is_valid(data=synthetic_data)
+        for attribute in ['_reject_sampling_constraints', '_chained_constraints']:
+            for constraint in getattr(self, attribute, []):
+                if attribute == '_reject_sampling_constraints':
+                    valid = constraint.is_valid(data=synthetic_data)
                 else:
-                    valid = pattern.is_valid(data=transformed_data)
+                    valid = constraint.is_valid(data=transformed_data)
 
                 if not valid.all():
                     invalid_rows_str = _get_invalid_rows(valid)
-                    pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
+                    pattern_name = _convert_to_snake_case(constraint.__class__.__name__)
                     pattern_name = pattern_name.replace('_', ' ')
                     msg = f'The {pattern_name} requirement is not met '
                     msg += f'for row indices: {invalid_rows_str}.'
-                    raise PatternNotMetError(msg)
-                elif attribute == '_chained_patterns':
-                    transformed_data = pattern.transform(data=transformed_data)
-
-    def validate_cag(self, synthetic_data):
-        """Validate synthetic_data against the CAG patterns.
-
-        Args:
-            synthetic_data (pd.DataFrame): The synthetic data to validate
-
-        Raises:
-            PatternNotMetError:
-                Raised if synthetic data does not match CAG patterns.
-        """
-        transformed_data = synthetic_data
-        for attribute in ['_reject_sampling_patterns', '_chained_patterns']:
-            for pattern in getattr(self, attribute, []):
-                if attribute == '_reject_sampling_patterns':
-                    valid = pattern.is_valid(data=synthetic_data)
-                else:
-                    valid = pattern.is_valid(data=transformed_data)
-
-                if not valid.all():
-                    invalid_rows_str = _get_invalid_rows(valid)
-                    pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
-                    pattern_name = pattern_name.replace('_', ' ')
-                    msg = f'The {pattern_name} requirement is not met '
-                    msg += f'for row indices: {invalid_rows_str}.'
-                    raise PatternNotMetError(msg)
-                elif attribute == '_chained_patterns':
-                    transformed_data = pattern.transform(data=transformed_data)
+                    raise ConstraintNotMetError(msg)
+                elif attribute == '_chained_constraints':
+                    transformed_data = constraint.transform(data=transformed_data)
 
     def _transform_helper(self, data):
         """Validate and transform all constraints during preprocessing.

@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 
 from sdv import version
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.errors import (
     InvalidDataError,
     NotFittedError,
@@ -428,7 +428,7 @@ class TestBaseMultiTableSynthesizer:
         cag_mock_2 = Mock()
         cag_mock_2.is_valid.return_value = {table_name: pd.Series([True])}
         cag_mock_2.table_name = table_name
-        instance.patterns = [cag_mock_1, cag_mock_2]
+        instance.constraints = [cag_mock_1, cag_mock_2]
         copy_mock.return_value = [cag_mock_1, cag_mock_2]
 
         # Run
@@ -450,11 +450,11 @@ class TestBaseMultiTableSynthesizer:
         cag_mock_1 = Mock()
         cag_mock_1.table_name = table_name
         cag_mock_1.is_valid.return_value = {table_name: pd.Series([False])}
-        instance.patterns = [cag_mock_1]
+        instance.constraints = [cag_mock_1]
         msg = f"Table '{table_name}': The mock requirement is not met for row indices: 0."
 
         # Run and Assert
-        with pytest.raises(PatternNotMetError, match=msg):
+        with pytest.raises(ConstraintNotMetError, match=msg):
             instance.validate_cag(synthetic_data)
 
     def test_validate(self):

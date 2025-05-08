@@ -18,7 +18,7 @@ from sdv._utils import (
     check_synthesizer_version,
     generate_synthesizer_id,
 )
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows, _validate_constraints
 from sdv.errors import (
     ConstraintsNotMetError,
@@ -191,30 +191,30 @@ class BaseMultiTableSynthesizer:
             return []
 
     def validate_cag(self, synthetic_data):
-        """Validate synthetic_data against the CAG patterns.
+        """Validate synthetic_data against the constraints.
 
         Args:
             data (dict[str, pd.DataFrame]): The synthetic data to validate
 
         Raises:
-            PatternNotMetError:
-                Raised if synthetic data does not match CAG patterns.
+            ConstraintNotMetError:
+                Raised if synthetic data does not match constraints.
         """
         transformed_data = synthetic_data
-        for pattern in self.get_cag():
-            valid_data = pattern.is_valid(data=transformed_data)
-            table_name = pattern.table_name
+        for constraint in self.get_constraints():
+            valid_data = constraint.is_valid(data=transformed_data)
+            table_name = constraint.table_name
             for table_name, data in valid_data.items():
                 if not valid_data[table_name].all():
                     invalid_rows_str = _get_invalid_rows(valid_data[table_name])
-                    pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
+                    pattern_name = _convert_to_snake_case(constraint.__class__.__name__)
                     pattern_name = pattern_name.replace('_', ' ')
                     msg = (
                         f"Table '{table_name}': The {pattern_name} requirement is not "
                         f'met for row indices: {invalid_rows_str}.'
                     )
-                    raise PatternNotMetError(msg)
-            transformed_data = pattern.transform(data=transformed_data)
+                    raise ConstraintNotMetError(msg)
+            transformed_data = constraint.transform(data=transformed_data)
 
     def get_metadata(self, version='original'):
         """Get the metadata, either original or modified after applying constraints.
