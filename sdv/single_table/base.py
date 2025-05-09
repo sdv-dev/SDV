@@ -26,7 +26,6 @@ from sdv._utils import (
     check_sdv_versions_and_warn,
     check_synthesizer_version,
     generate_synthesizer_id,
-    get_possible_chars,
 )
 from sdv.cag._errors import PatternNotMetError
 from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows
@@ -50,11 +49,6 @@ SYNTHESIZER_LOGGER = get_sdv_logger('SingleTableSynthesizer')
 
 COND_IDX = str(uuid.uuid4())
 FIXED_RNG_SEED = 73251
-INT_REGEX_ZERO_ERROR_MESSAGE = (
-    'is stored as an int but the Regex allows it to start with "0". Please remove the Regex '
-    'or update it to correspond to valid ints.'
-)
-
 DEPRECATION_MSG = (
     "The 'SingleTableMetadata' is deprecated. Please use the new 'Metadata' class for synthesizers."
 )
@@ -246,17 +240,6 @@ class BaseSynthesizer:
 
         return self.metadata
 
-    def _validate_primary_key(self, data):
-        primary_key = self._get_table_metadata().primary_key
-        is_int = primary_key and pd.api.types.is_integer_dtype(data[primary_key])
-        regex = self._get_table_metadata().columns.get(primary_key, {}).get('regex_format')
-        if is_int and regex:
-            possible_characters = get_possible_chars(regex, 1)
-            if '0' in possible_characters:
-                raise SynthesizerInputError(
-                    f'Primary key "{primary_key}" {INT_REGEX_ZERO_ERROR_MESSAGE}'
-                )
-
     def validate(self, data):
         """Validate data.
 
@@ -278,7 +261,6 @@ class BaseSynthesizer:
                     * values of a column don't satisfy their sdtype
         """
         self._validate_metadata(data)
-        self._validate_primary_key(data)
         self._validate_constraints(data)
 
         # Retaining the logic of returning errors and raising them here to maintain consistency
@@ -544,7 +526,6 @@ class BaseSynthesizer:
         return data[column_order]
 
     def _preprocess(self, data):
-        self.validate(data)
         self._data_processor.fit(data)
         return self._data_processor.transform(data)
 
@@ -558,6 +539,24 @@ class BaseSynthesizer:
 
         return False
 
+    def _preprocess_helper(self, data):
+        """Preprocess helper method.
+
+        This method:
+        - Validate the data
+        - Warn the user if the model has already been fitted
+        - Store the original columns and convert them to string if needed
+        """
+        is_converted = self._store_and_convert_original_cols(data)
+        self.validate(data)
+        if self._fitted:
+            warnings.warn(
+                'This model has already been fitted. To use the new preprocessed data, '
+                "please refit the model using 'fit' or 'fit_processed_data'."
+            )
+
+        return data, is_converted
+
     def preprocess(self, data):
         """Transform the raw data to numerical space.
 
@@ -569,13 +568,7 @@ class BaseSynthesizer:
             pandas.DataFrame:
                 The preprocessed data.
         """
-        if self._fitted:
-            warnings.warn(
-                'This model has already been fitted. To use the new preprocessed data, '
-                "please refit the model using 'fit' or 'fit_processed_data'."
-            )
-
-        is_converted = self._store_and_convert_original_cols(data)
+        data, is_converted = self._preprocess_helper(data)
         preprocess_data = self._preprocess(data)
         if is_converted:
             data.columns = self._original_columns
@@ -822,31 +815,52 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return data
 
-    def preprocess(self, data):
-        """Transform the raw data to numerical space.
+    def _validate_cags(self, data):
+        """Validate the data against the CAG patterns.
 
         Args:
             data (pandas.DataFrame):
-                The raw data to be transformed.
-
-        Returns:
-            pandas.DataFrame:
-                The preprocessed data.
+                The data to validate.
         """
-        if self._fitted:
-            warnings.warn(
-                'This model has already been fitted. To use the new preprocessed data, '
-                "please refit the model using 'fit' or 'fit_processed_data'."
-            )
+        metadata = getattr(self, '_original_metadata', self.metadata)
+        if hasattr(self, '_reject_sampling_patterns'):
+            for pattern in self._reject_sampling_patterns:
+                pattern.validate(data=data, metadata=self._original_metadata)
 
-        is_converted = self._store_and_convert_original_cols(data)
+        if hasattr(self, '_chained_patterns'):
+            for pattern in self._chained_patterns:
+                pattern.fit(data=data, metadata=metadata)
+                metadata = pattern.get_updated_metadata(metadata)
+                data = pattern.transform(data)
+
+    def validate(self, data):
+        """Validate data.
+
+        This method will validate the data against:
+        - The metadata
+        - The constraints
+        - The CAG patterns
+
+        To make it work with the cags we temporarily set the metadata to the original one
+        and then restore it.
+
+        Args:
+            data (pandas.DataFrame):
+                The data to validate.
+        """
+        metadata = self.metadata
+        if hasattr(self, '_original_metadata'):
+            self.metadata = self._original_metadata
+
+        super().validate(data)
+        self._validate_cags(data)
+        self.metadata = metadata
+
+    def _preprocess_helper(self, data):
+        data, is_converted = super()._preprocess_helper(data)
         data = self._transform_helper(data)
-        preprocess_data = self._preprocess(data)
 
-        if is_converted:
-            data.columns = self._original_columns
-
-        return preprocess_data
+        return data, is_converted
 
     def _set_random_state(self, random_state):
         """Set the random state of the model's random number generator.

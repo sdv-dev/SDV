@@ -21,6 +21,7 @@ from sdv._utils import (
     _is_numerical_type,
     _load_data_from_csv,
     _validate_datetime_format,
+    get_possible_chars,
 )
 from sdv.errors import InvalidDataError
 from sdv.logging import get_sdv_logger
@@ -35,6 +36,10 @@ from sdv.metadata.visualization import (
 
 LOGGER = logging.getLogger(__name__)
 SINGLETABLEMETADATA_LOGGER = get_sdv_logger('SingleTableMetadata')
+INT_REGEX_ZERO_ERROR_MESSAGE = (
+    'is stored as an int but the Regex allows it to start with "0". Please remove the Regex '
+    'or update it to correspond to valid ints.'
+)
 
 
 class SingleTableMetadata:
@@ -1185,6 +1190,17 @@ class SingleTableMetadata:
 
         return errors
 
+    def _validate_primary_key(self, data):
+        error = []
+        is_int = self.primary_key and pd.api.types.is_integer_dtype(data[self.primary_key])
+        regex = self.columns.get(self.primary_key, {}).get('regex_format')
+        if is_int and regex:
+            possible_characters = get_possible_chars(regex, 1)
+            if '0' in possible_characters:
+                error.append(f'Primary key "{self.primary_key}" {INT_REGEX_ZERO_ERROR_MESSAGE}')
+
+        return error
+
     @staticmethod
     def _get_invalid_column_values(column, validation_function):
         valid = column.apply(validation_function).astype(bool)
@@ -1290,6 +1306,7 @@ class SingleTableMetadata:
         for column in data:
             errors += self._validate_column_data(data[column], sdtype_warnings)
 
+        errors += self._validate_primary_key(data)
         if sdtype_warnings is not None and len(sdtype_warnings):
             df = pd.DataFrame(sdtype_warnings)
             message = (

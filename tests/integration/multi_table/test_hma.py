@@ -15,9 +15,11 @@ from rdt.transformers import FloatFormatter
 from sdmetrics.reports.multi_table import DiagnosticReport
 
 from sdv import version
+from sdv.cag import Inequality
+from sdv.cag._errors import PatternNotMetError
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
-from sdv.errors import SamplingError, SynthesizerInputError, VersionError
+from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError, VersionError
 from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata import MultiTableMetadata
 from sdv.metadata.metadata import Metadata
@@ -2476,7 +2478,7 @@ def test_fit_int_primary_key_regex_includes_zero(regex):
         'Primary key for table "parent_data" is stored as an int but the Regex allows it to start '
         'with "0". Please remove the Regex or update it to correspond to valid ints.'
     )
-    with pytest.raises(SynthesizerInputError, match=message):
+    with pytest.raises(InvalidDataError, match=message):
         instance.fit(data)
 
 
@@ -2686,3 +2688,45 @@ def test__unsupported_regex_format():
     # Run and Assert
     with pytest.raises(SynthesizerInputError, match=expected_error):
         HMASynthesizer(metadata)
+
+
+def test_end_to_end_with_cags():
+    """Test HMA with a single-table cag."""
+    # Setup
+    data, metadata = download_demo('multi_table', 'fake_hotels')
+    data['guests']['amenities_lower'] = data['guests']['amenities_fee'] - np.random.rand(
+        len(data['guests'])
+    )
+    metadata.add_column(
+        table_name='guests',
+        column_name='amenities_lower',
+        sdtype='numerical',
+    )
+    synthesizer = HMASynthesizer(metadata)
+    pattern = Inequality(
+        low_column_name='amenities_lower',
+        high_column_name='amenities_fee',
+        strict_boundaries=False,
+        table_name='guests',
+    )
+    synthesizer.add_cag(patterns=[pattern])
+    data_guests = data['guests']
+    clean_data = data_guests[
+        ~(data_guests[['amenities_lower', 'amenities_fee']].isna().any(axis=1))
+    ]
+    data_invalid = clean_data.copy()
+    data_invalid.loc[0, 'amenities_lower'] = data_invalid.loc[0, 'amenities_fee'] + 1
+    data['guests'] = clean_data
+    invalid_data = data.copy()
+    invalid_data['guests'] = data_invalid
+    expected_error_msg = re.escape('The inequality requirement is not met for row indices: [0]')
+
+    # Run
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(scale=1.0)
+
+    with pytest.raises(PatternNotMetError, match=expected_error_msg):
+        synthesizer.fit(invalid_data)
+
+    # Assert
+    synthesizer.validate(synthetic_data)

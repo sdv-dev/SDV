@@ -29,7 +29,6 @@ from sdv.errors import (
 from sdv.logging import disable_single_table_logger, get_sdv_logger
 from sdv.metadata.metadata import Metadata
 from sdv.metadata.multi_table import MultiTableMetadata
-from sdv.single_table.base import INT_REGEX_ZERO_ERROR_MESSAGE
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 SYNTHESIZER_LOGGER = get_sdv_logger('MultiTableSynthesizer')
@@ -120,6 +119,7 @@ class BaseMultiTableSynthesizer:
         self._table_synthesizers = {}
         self._table_parameters = defaultdict(dict)
         self._original_table_columns = {}
+        self._original_metadata = deepcopy(self.metadata)
         if synthesizer_kwargs is not None:
             warn_message = (
                 'The `synthesizer_kwargs` parameter is deprecated as of SDV 1.2.0 and does not '
@@ -166,9 +166,6 @@ class BaseMultiTableSynthesizer:
             patterns (list):
                 A list of CAG patterns to apply to the synthesizer.
         """
-        if not hasattr(self, '_original_metadata'):
-            self._original_metadata = self.metadata
-
         metadata = self.metadata
         for pattern in patterns:
             metadata = pattern.get_updated_metadata(metadata)
@@ -348,6 +345,20 @@ class BaseMultiTableSynthesizer:
 
         return errors
 
+    def _validate_cags(self, data):
+        """Validate the data against the CAG patterns.
+
+        Args:
+            data (pandas.DataFrame):
+                The data to validate.
+        """
+        metadata = getattr(self, '_original_metadata', self.metadata)
+        if hasattr(self, 'patterns'):
+            for pattern in self.patterns:
+                pattern.fit(data=data, metadata=metadata)
+                metadata = pattern.get_updated_metadata(metadata)
+                data = pattern.transform(data)
+
     def validate(self, data):
         """Validate the data.
 
@@ -359,7 +370,8 @@ class BaseMultiTableSynthesizer:
         """
         errors = []
         constraints_errors = []
-        self.metadata.validate_data(data)
+        metadata = getattr(self, '_original_metadata', self.metadata)
+        metadata.validate_data(data)
         for table_name in data:
             if table_name in self._table_synthesizers:
                 try:
@@ -375,6 +387,8 @@ class BaseMultiTableSynthesizer:
 
         elif errors:
             raise InvalidDataError(errors)
+
+        self._validate_cags(data)
 
     def _validate_table_name(self, table_name):
         if table_name not in self._table_synthesizers:
@@ -476,8 +490,8 @@ class BaseMultiTableSynthesizer:
         """
         list_of_changed_tables = self._store_and_convert_original_cols(data)
 
-        data = self._transform_helper(data)
         self.validate(data)
+        data = self._transform_helper(data)
         if self._fitted:
             warnings.warn(
                 'This model has already been fitted. To use the new preprocessed data, '
@@ -487,17 +501,9 @@ class BaseMultiTableSynthesizer:
         processed_data = {}
         pbar_args = self._get_pbar_args(desc='Preprocess Tables')
         for table_name, table_data in tqdm(data.items(), **pbar_args):
-            try:
-                synthesizer = self._table_synthesizers[table_name]
-                self._assign_table_transformers(synthesizer, table_name, table_data)
-                processed_data[table_name] = synthesizer._preprocess(table_data)
-            except SynthesizerInputError as e:
-                if INT_REGEX_ZERO_ERROR_MESSAGE in str(e):
-                    raise SynthesizerInputError(
-                        f'Primary key for table "{table_name}" {INT_REGEX_ZERO_ERROR_MESSAGE}'
-                    )
-
-                raise e
+            synthesizer = self._table_synthesizers[table_name]
+            self._assign_table_transformers(synthesizer, table_name, table_data)
+            processed_data[table_name] = synthesizer._preprocess(table_data)
 
         for table in list_of_changed_tables:
             data[table] = data[table].rename(columns=self._original_table_columns[table])
