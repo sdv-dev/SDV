@@ -825,8 +825,9 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         metadata = getattr(self, '_original_metadata', self.metadata)
         if hasattr(self, '_chained_patterns'):
             for pattern in self._chained_patterns:
-                pattern.validate(data=data, metadata=metadata)
+                pattern.fit(data=data, metadata=metadata)
                 metadata = pattern.get_updated_metadata(metadata)
+                data = pattern.transform(data)
 
         if hasattr(self, '_reject_sampling_patterns'):
             for pattern in self._reject_sampling_patterns:
