@@ -419,6 +419,10 @@ class BaseSynthesizer:
         """
         return self._data_processor.get_constraints()
 
+    def _transform_helper(self, data):
+        """Helper method to transform the data for the constraints."""
+        return data
+
     def auto_assign_transformers(self, data):
         """Automatically assign the required transformers for the given data and constraints.
 
@@ -430,6 +434,7 @@ class BaseSynthesizer:
                 The raw data (before any transformations) that will be used to fit the model.
         """
         self.validate(data)
+        data = self._transform_helper(data)
         self._data_processor.prepare_for_fitting(data)
 
     def get_transformers(self):
