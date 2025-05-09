@@ -18,6 +18,8 @@ from sdv._utils import (
     check_synthesizer_version,
     generate_synthesizer_id,
 )
+from sdv.cag._errors import PatternNotMetError
+from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows
 from sdv.errors import (
     ConstraintsNotMetError,
     InvalidDataError,
@@ -157,6 +159,116 @@ class BaseMultiTableSynthesizer:
         self._validate_table_name(table_name)
         self._table_synthesizers[table_name].set_address_columns(column_names, anonymization_level)
 
+    def add_cag(self, patterns):
+        """Add the list of constraint-augmented generation patterns to the synthesizer.
+
+        Args:
+            patterns (list):
+                A list of CAG patterns to apply to the synthesizer.
+        """
+        if not hasattr(self, '_original_metadata'):
+            self._original_metadata = self.metadata
+
+        metadata = self.metadata
+        for pattern in patterns:
+            metadata = pattern.get_updated_metadata(metadata)
+
+        self.metadata = metadata
+        if hasattr(self, 'patterns'):
+            self.patterns += patterns
+        else:
+            self.patterns = patterns
+
+        self._initialize_models()
+
+    def get_cag(self):
+        """Get a list of constraint-augmented generation patterns applied to the synthesizer."""
+        if hasattr(self, 'patterns'):
+            return deepcopy(self.patterns)
+        else:
+            return []
+
+    def validate_cag(self, synthetic_data):
+        """Validate synthetic_data against the CAG patterns.
+
+        Args:
+            data (dict[str, pd.DataFrame]): The synthetic data to validate
+
+        Raises:
+            PatternNotMetError:
+                Raised if synthetic data does not match CAG patterns.
+        """
+        transformed_data = synthetic_data
+        for pattern in self.get_cag():
+            valid_data = pattern.is_valid(data=transformed_data)
+            table_name = pattern.table_name
+            for table_name, data in valid_data.items():
+                if not valid_data[table_name].all():
+                    invalid_rows_str = _get_invalid_rows(valid_data[table_name])
+                    pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
+                    pattern_name = pattern_name.replace('_', ' ')
+                    msg = (
+                        f"Table '{table_name}': The {pattern_name} requirement is not "
+                        f'met for row indices: {invalid_rows_str}.'
+                    )
+                    raise PatternNotMetError(msg)
+            transformed_data = pattern.transform(data=transformed_data)
+
+    def get_metadata(self, version='original'):
+        """Get the metadata, either original or modified after applying CAG patterns.
+
+        Args:
+            version (str, optional):
+                The version of metadata to return, must be one of 'original' or 'modified'. If
+                'original', will return the original metadata used to instantiate the
+                synthesizer. If 'modified', will return the modified metadata after applying this
+                synthesizer's CAG patterns. Defaults to 'original'.
+        """
+        if version not in ('original', 'modified'):
+            error_msg = f"Unrecognized version '{version}', please use 'original' or 'modified'."
+            raise ValueError(error_msg)
+
+        if version == 'original' and hasattr(self, '_original_metadata'):
+            return Metadata.load_from_dict(self._original_metadata.to_dict())
+
+        return Metadata.load_from_dict(self.metadata.to_dict())
+
+    def _transform_helper(self, data):
+        """Validate and transform all CAG patterns during preprocessing.
+
+        Args:
+            data (dict[str, pd.DataFrame]):
+                The data dictionary.
+        """
+        if not hasattr(self, 'patterns'):
+            return data
+
+        metadata = self._original_metadata
+        for pattern in self.patterns:
+            if not self._fitted:
+                pattern.fit(data, metadata)
+                metadata = pattern.get_updated_metadata(metadata)
+
+            data = pattern.transform(data)
+
+        return data
+
+    def _reverse_transform_helper(self, sampled_data):
+        """Reverse transform CAG patterns after sampling."""
+        if not hasattr(self, 'patterns'):
+            return sampled_data
+
+        for pattern in reversed(self.patterns):
+            sampled_data = pattern.reverse_transform(sampled_data)
+
+        from sdv.utils.utils import (
+            drop_unknown_references,  # noqa: F401 Lazy import to fix circular dependency
+        )
+
+        # issue
+        sampled_data = drop_unknown_references(sampled_data, self._original_metadata, verbose=False)
+        return sampled_data
+
     def get_table_parameters(self, table_name):
         """Return the parameters for the given table's synthesizer.
 
@@ -214,10 +326,6 @@ class BaseMultiTableSynthesizer:
         )
         self._table_parameters[table_name].update(deepcopy(table_parameters))
 
-    def get_metadata(self):
-        """Return the ``Metadata`` for this synthesizer."""
-        return Metadata.load_from_dict(self.metadata.to_dict())
-
     def _validate_all_tables(self, data):
         """Validate every table of the data has a valid table/metadata pair."""
         errors = []
@@ -246,7 +354,7 @@ class BaseMultiTableSynthesizer:
         Validate that the metadata matches the data and thta every table's constraints are valid.
 
         Args:
-            data (dict):
+            data (dict[str, pd.DataFrame]):
                 A dictionary of table names to pd.DataFrames.
         """
         errors = []
@@ -289,7 +397,7 @@ class BaseMultiTableSynthesizer:
         with the required transformers for the current data.
 
         Args:
-            data (dict):
+            data (dict[str, pd.DataFrame]):
                 Mapping of table name to pandas.DataFrame.
 
         Raises:
@@ -355,15 +463,11 @@ class BaseMultiTableSynthesizer:
 
         return list_of_changed_tables
 
-    def _transform_helper(self, data):
-        """Stub method for transforming data patterns."""
-        return data
-
     def preprocess(self, data):
         """Transform the raw data to numerical space.
 
         Args:
-            data (dict):
+            data (dict[str, pd.DataFrame]):
                 Dictionary mapping each table name to a ``pandas.DataFrame``.
 
         Returns:
@@ -490,10 +594,6 @@ class BaseMultiTableSynthesizer:
 
     def _sample(self, scale):
         raise NotImplementedError()
-
-    def _reverse_transform_helper(self, sampled_data):
-        """Stub method for reverse transforming data patterns."""
-        return sampled_data
 
     def sample(self, scale=1.0):
         """Generate synthetic data for the entire dataset.
