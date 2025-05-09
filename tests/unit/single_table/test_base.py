@@ -805,8 +805,10 @@ class TestBaseSingleTableSynthesizer:
         instance = BaseSingleTableSynthesizer(original_metadata)
         cag_mock_1 = Mock()
         cag_mock_1.get_updated_metadata = Mock(return_value=metadata_1)
+        cag_mock_1.transform = Mock(return_value=data)
         cag_mock_2 = Mock()
         cag_mock_2.get_updated_metadata = Mock(return_value=metadata_2)
+        cag_mock_2.transform = Mock(return_value=data)
         cag_mock_3 = Mock()
         instance._chained_patterns = [cag_mock_1, cag_mock_2]
         instance._reject_sampling_patterns = [cag_mock_3]
@@ -816,8 +818,8 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         cag_mock_1.get_updated_metadata.assert_called_once_with(instance._original_metadata)
-        cag_mock_1.validate.assert_called_once_with(data=data, metadata=instance._original_metadata)
-        cag_mock_2.validate.assert_called_once_with(data=data, metadata=metadata_1)
+        cag_mock_1.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
+        cag_mock_2.fit.assert_called_once_with(data=data, metadata=metadata_1)
         cag_mock_3.validate.assert_called_once_with(data=data, metadata=instance._original_metadata)
 
     def test_validate(self):
