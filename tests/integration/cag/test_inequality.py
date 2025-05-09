@@ -991,3 +991,39 @@ def test_invalid_data():
     synthesizer.fit(clean_data)
     with pytest.raises(PatternNotMetError, match=expected_error_msg):
         synthesizer.fit(data_invalid)
+
+
+def test_auto_assign_transformer():
+    """Test that the Inequality pattern works with auto-assign transformer."""
+    # Setup
+    data, metadata = download_demo('single_table', 'fake_hotel_guests')
+    inequality_cag = Inequality(
+        low_column_name='checkin_date',
+        high_column_name='checkout_date',
+    )
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_cag([inequality_cag])
+
+    # Run
+    synthesizer.auto_assign_transformers(data)
+
+    # Assert
+    expected_transformers = (
+        "{'guest_email': AnonymizedFaker(provider_name='internet', function_name='email',"
+        " locales=['en_US'], cardinality_rule='unique'),"
+        " 'has_rewards': UniformEncoder(),"
+        " 'room_type': UniformEncoder(),"
+        " 'amenities_fee': FloatFormatter(learn_rounding_scheme=True, "
+        'enforce_min_max_values=True),'
+        " 'checkin_date': UnixTimestampEncoder(datetime_format='%d %b %Y',"
+        ' enforce_min_max_values=True),'
+        " 'room_rate': FloatFormatter(learn_rounding_scheme=True, enforce_min_max_values=True),"
+        " 'billing_address': AnonymizedFaker(provider_name='address', function_name='address',"
+        " locales=['en_US']),"
+        " 'credit_card_number': AnonymizedFaker(provider_name='credit_card',"
+        " function_name='credit_card_number', locales=['en_US']),"
+        " 'checkin_date#checkout_date': FloatFormatter(learn_rounding_scheme=True,"
+        ' enforce_min_max_values=True),'
+        " 'checkin_date#checkout_date.nan_component': UniformEncoder()}"
+    )
+    assert str(synthesizer.get_transformers()) == expected_transformers
