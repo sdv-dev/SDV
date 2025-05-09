@@ -684,9 +684,7 @@ def test_inequality_multiple_patterns_reject_sampling(
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-
     assert original_metadata.to_dict() == metadata.to_dict()
-
     assert all(samples['low'] <= samples['high'])
 
 
