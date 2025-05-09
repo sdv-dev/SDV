@@ -355,8 +355,9 @@ class BaseMultiTableSynthesizer:
         metadata = getattr(self, '_original_metadata', self.metadata)
         if hasattr(self, 'patterns'):
             for pattern in self.patterns:
-                pattern.validate(data=data, metadata=metadata)
+                pattern.fit(data=data, metadata=metadata)
                 metadata = pattern.get_updated_metadata(metadata)
+                data = pattern.transform(data)
 
     def validate(self, data):
         """Validate the data.
