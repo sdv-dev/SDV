@@ -18,8 +18,6 @@ import numpy as np
 import pandas as pd
 import tqdm
 from copulas.multivariate import GaussianMultivariate
-from pandas.api.types import is_float_dtype, is_integer_dtype
-from pandas.errors import IntCastingNaNError
 
 from sdv import version
 from sdv._utils import (
@@ -184,7 +182,6 @@ class BaseSynthesizer:
             enforce_min_max_values=self.enforce_min_max_values,
             locales=self.locales,
         )
-        self._constraint_col_dtypes = {}
         self._constraint_col_formatters = {}  # Formatters for columns dropped by constraints
         self._validate_regex_format()
         self._original_columns = pd.Index([])
@@ -509,12 +506,10 @@ class BaseSynthesizer:
     def _fit_constraint_column_formatters(self, data):
         """Fit formatters for columns that are dropped by constraints before data processing."""
         self._constraint_col_formatters = {}
-        self._constraint_col_dtypes = {}
         primary_key = self.metadata.tables[self._table_name].primary_key
         input_columns = self._original_metadata.get_column_names()
         columns_to_format = set(input_columns) - set(self.metadata.get_column_names())
         for column_name in columns_to_format:
-            self._constraint_col_dtypes[column_name] = data[column_name].dtype
             column_metadata = self._original_metadata.tables[self._table_name].columns.get(
                 column_name
             )
@@ -540,38 +535,11 @@ class BaseSynthesizer:
         column_order = [
             column for column in self._original_metadata.get_column_names() if column in data
         ]
-        for column_name, dtype in self._constraint_col_dtypes.items():
+        for column_name, dtype in self._constraint_col_formatters.items():
             column_data = data[column_name]
-
-            if is_integer_dtype(dtype) and is_float_dtype(column_data.dtype):
-                column_data = column_data.round()
-
-            data[column_name] = column_data[column_data.notna()]
-            try:
-                data[column_name] = data[column_name].astype(dtype)
-            except (IntCastingNaNError, ValueError) as e:
-                message = (
-                    f"The real data in '{column_name}' was stored as '{dtype}' but the "
-                    'synthetic data could not be cast back to this type. If this is a '
-                    'problem, please check your input data and metadata settings.'
-                )
-                LOGGER.debug(message)
-                if isinstance(e, IntCastingNaNError):
-                    continue  # Skip numerical formatting if we can't cast to int
-
-            except OverflowError:
-                LOGGER.debug(
-                    f"The real data in '{self._table_name}' and column '{column_name}' was "
-                    f"stored as '{dtype}' but the synthetic data overflowed when casting back "
-                    'to this type. If this is a problem, please check your input data '
-                    'and metadata settings.'
-                )
-
-            if column_name in self._constraint_col_formatters:
-                data_to_format = data[column_name]
-                data[column_name] = self._constraint_col_formatters[column_name].format_data(
-                    data_to_format
-                )
+            data[column_name] = self._constraint_col_formatters[column_name].format_data(
+                column_data
+            )
 
         return data[column_order]
 
@@ -994,7 +962,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     valid_rows = pattern.is_valid(sampled)
                     sampled = sampled[valid_rows]
 
-            if getattr(self, '_constraint_col_dtypes'):
+            if getattr(self, '_constraint_col_formatters'):
                 sampled = self._format_constraint_columns(sampled)
 
             if keep_extra_columns:

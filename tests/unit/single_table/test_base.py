@@ -1100,13 +1100,13 @@ class TestBaseSingleTableSynthesizer:
         data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
         instance = Mock()
         instance._random_state_set = False
-        instance._constraint_col_dtypes = {}
         instance._sample.return_value = pd.DataFrame()
         instance._data_processor.reverse_transform.return_value = data
         instance._data_processor.filter_valid.return_value = data
         instance._data_processor._hyper_transformer._input_columns = []
         instance._reject_sampling_patterns = []
         instance._chained_patterns = []
+        instance._constraint_col_formatters = {}
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(instance, 3)
@@ -1128,7 +1128,6 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe'], 'salary': [90.0, 100.0, 80.0]})
         instance = Mock()
-        instance._constraint_col_dtypes = {}
         instance._sample.return_value = pd.DataFrame()
         instance._data_processor.reverse_transform.return_value = data
         instance._data_processor._hyper_transformer._input_columns = []
@@ -1137,6 +1136,7 @@ class TestBaseSingleTableSynthesizer:
         transformed_conditions = {'salary': 80.0}
         instance._reject_sampling_patterns = []
         instance._chained_patterns = []
+        instance._constraint_col_formatters = {}
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(
@@ -1165,12 +1165,12 @@ class TestBaseSingleTableSynthesizer:
 
         instance = Mock()
         instance._sample.return_value = pd.DataFrame()
-        instance._constraint_col_dtypes = {}
         instance._data_processor._hyper_transformer._input_columns = []
         instance._data_processor.filter_valid = lambda x: x
         instance._data_processor.reverse_transform.return_value = data
         instance._reject_sampling_patterns = []
         instance._chained_patterns = []
+        instance._constraint_col_formatters = {}
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(
@@ -2513,14 +2513,6 @@ class TestBaseSingleTableSynthesizer:
         BaseSingleTableSynthesizer._fit_constraint_column_formatters(instance, data)
 
         # Assert
-        assert instance._constraint_col_dtypes == {
-            'col1': 'O',
-            'col2': 'int64',
-            'col3': 'int64',
-            'date_col1': 'O',
-            'date_col2': '<M8[ns]',
-        }
-
         formatters = instance._constraint_col_formatters
 
         assert set(formatters.keys()) == {'col2', 'col3', 'date_col1', 'date_col2'}
@@ -2553,34 +2545,19 @@ class TestBaseSingleTableSynthesizer:
                 'table': {
                     'columns': {
                         'datetime_col': {'sdtype': 'datetime'},
-                        'overflow_int': {'sdtype': 'numerical'},
                         'int': {'sdtype': 'numerical'},
-                        'nan_int': {'sdtype': 'numerical'},
                         'float': {'sdtype': 'numerical'},
+                        'categorical': {'sdtype': 'categorical'},
                     }
                 }
             }
         })
-        instance._constraint_col_dtypes = {
-            'overflow_int': 'int64',
-            'nan_int': 'int64',
-            'int': 'int64',
-            'float': 'float64',
-            'datetime_col': 'O',
-        }
 
         formatters = {
-            'overflow_int': Mock(),
-            'nan_int': Mock(),
-            'int': Mock(return_value=[0, 1, 2]),
-            'float': Mock(return_value=[0.1, 1.2, 2.3]),
-            'datetime_col': Mock(return_value=['2021-02-15', '2022-05-16', '2023-07-18']),
+            'int': Mock(),
+            'float': Mock(),
+            'datetime_col': Mock(),
         }
-        formatters['overflow_int'].format_data.return_value = [
-            99999999999999999990,
-            99999999999999999991,
-            99999999999999999992,
-        ]
         formatters['int'].format_data.return_value = [0, 1, 2]
         formatters['float'].format_data.return_value = [0.1, 1.2, 2.3]
         formatters['datetime_col'].format_data.return_value = [
@@ -2591,8 +2568,7 @@ class TestBaseSingleTableSynthesizer:
         instance._constraint_col_formatters = formatters
 
         data = pd.DataFrame({
-            'overflow_int': [99999999999999999990, 99999999999999999991, 99999999999999999992],
-            'nan_int': [0, 1, np.nan],
+            'categorical': ['A', 'A', 'C'],
             'int': [0.0, 1.0, 2.0],
             'float': [0.11, 1.21, 2.33],
             'datetime_col': pd.to_datetime(['2021-02-15', '2022-05-16', '2023-07-18']),
@@ -2602,27 +2578,10 @@ class TestBaseSingleTableSynthesizer:
         formatted_data = BaseSingleTableSynthesizer._format_constraint_columns(instance, data)
 
         # Assert
-        formatters['nan_int'].format_data.assert_not_called()
-
         expected_data = pd.DataFrame({
             'datetime_col': ['2021-02-15', '2022-05-16', '2023-07-18'],
-            'overflow_int': [99999999999999999990, 99999999999999999991, 99999999999999999992],
             'int': [0, 1, 2],
-            'nan_int': [0, 1, np.nan],
             'float': [0.1, 1.2, 2.3],
+            'categorical': ['A', 'A', 'C'],
         })
         pd.testing.assert_frame_equal(expected_data, formatted_data)
-
-        expected_log_calls = [
-            call(
-                "The real data in 'table' and column 'overflow_int' was stored as 'int64' "
-                'but the synthetic data overflowed when casting back to this type. If this is a '
-                'problem, please check your input data and metadata settings.'
-            ),
-            call(
-                "The real data in 'nan_int' was stored as 'int64' but the synthetic data "
-                'could not be cast back to this type. If this is a problem, please check your '
-                'input data and metadata settings.'
-            ),
-        ]
-        log_mock.debug.assert_has_calls(expected_log_calls)
