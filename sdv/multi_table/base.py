@@ -197,7 +197,8 @@ class BaseMultiTableSynthesizer:
         """
         metadata = self.metadata
         added_patterns = []
-        for pattern in patterns:
+        multi_table_patterns, single_table_patterns = self._detect_single_table_cag(patterns)
+        for pattern in multi_table_patterns:
             if isinstance(pattern, ProgrammableConstraint):
                 pattern = ProgrammableConstraintHarness(pattern)
 
