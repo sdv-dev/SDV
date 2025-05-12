@@ -137,7 +137,7 @@ class TestOneHotEncoding:
             'table': {
                 'a': np.dtype('float'),
                 'b': np.dtype('float'),
-                'c': np.dtype('int')
+                'c': np.dtype('int64'),
             }
         }
 

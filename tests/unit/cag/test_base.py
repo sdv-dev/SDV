@@ -352,8 +352,7 @@ class TestBasePattern:
 
         # Assert
         assert any(msg in record.message for record in caplog.records)
-        instance._reverse_transform.assert_called_once_with(
-            DataFrameDictMatcher(data))
+        instance._reverse_transform.assert_called_once_with(DataFrameDictMatcher(data))
         assert set(reversed_data.keys()) == {'table1', 'table2'}
         expected_table1 = pd.DataFrame({
             'col3': [0.0, 0.1, 0.2, 0.3, 0.4],
