@@ -171,8 +171,7 @@ class BasePattern:
                 reverse_transformed[table_name] = table.astype(self._dtypes[table_name])
             except pd.errors.IntCastingNaNError:
                 # iterate over the columns and cast individually
-                self._table_as_type_by_col(
-                    reverse_transformed, table, table_name)
+                self._table_as_type_by_col(reverse_transformed, table, table_name)
 
         if self._single_table:
             return reverse_transformed[self._table_name]
