@@ -457,7 +457,7 @@ class TestBaseMultiTableSynthesizer:
             instance.validate_cag(synthetic_data)
 
     def test__validate_cags(self):
-        """Test the ``_validate_cags`` method."""
+        """Test the ``_validate_cag`` method."""
         # Setup
         data = pd.DataFrame()
         original_metadata = Metadata()
@@ -474,7 +474,7 @@ class TestBaseMultiTableSynthesizer:
         instance.patterns = [cag_mock_1, cag_mock_2, cag_mock_3]
 
         # Run
-        instance._validate_cags(data)
+        instance._validate_cag(data)
 
         # Assert
         cag_mock_1.get_updated_metadata.assert_called_once_with(instance._original_metadata)
@@ -488,13 +488,13 @@ class TestBaseMultiTableSynthesizer:
         metadata = get_multi_table_metadata()
         data = get_multi_table_data()
         instance = BaseMultiTableSynthesizer(metadata)
-        instance._validate_cags = Mock()
+        instance._validate_cag = Mock()
 
         # Run
         instance.validate(data)
 
         # Assert
-        instance._validate_cags.assert_called_once_with(data)
+        instance._validate_cag.assert_called_once_with(data)
 
     def test_validate_missing_table(self):
         """Test that an error is being raised when there is a missing table in the dictionary."""

@@ -345,7 +345,7 @@ class BaseMultiTableSynthesizer:
 
         return errors
 
-    def _validate_cags(self, data):
+    def _validate_cag(self, data):
         """Validate the data against the CAG patterns.
 
         Args:
@@ -388,7 +388,7 @@ class BaseMultiTableSynthesizer:
         elif errors:
             raise InvalidDataError(errors)
 
-        self._validate_cags(data)
+        self._validate_cag(data)
 
     def _validate_table_name(self, table_name):
         if table_name not in self._table_synthesizers:

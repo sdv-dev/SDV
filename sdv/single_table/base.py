@@ -815,7 +815,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return data
 
-    def _validate_cags(self, data):
+    def _validate_cag(self, data):
         """Validate the data against the CAG patterns.
 
         Args:
@@ -852,7 +852,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         self.metadata = self._original_metadata
 
         super().validate(data)
-        self._validate_cags(data)
+        self._validate_cag(data)
         self.metadata = metadata
 
     def _preprocess_helper(self, data):

@@ -796,7 +796,7 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor._fit_constraints.assert_called_once_with(data)
 
     def test__validate_cags(self):
-        """Test the ``_validate_cags`` method."""
+        """Test the ``_validate_cag`` method."""
         # Setup
         data = pd.DataFrame()
         original_metadata = Metadata()
@@ -814,7 +814,7 @@ class TestBaseSingleTableSynthesizer:
         instance._reject_sampling_patterns = [cag_mock_3]
 
         # Run
-        instance._validate_cags(data)
+        instance._validate_cag(data)
 
         # Assert
         cag_mock_1.get_updated_metadata.assert_called_once_with(instance._original_metadata)
@@ -834,7 +834,7 @@ class TestBaseSingleTableSynthesizer:
         instance._validate_metadata = Mock()
         instance._validate_constraints = Mock()
         instance._validate = Mock(return_value=[])
-        instance._validate_cags = Mock()
+        instance._validate_cag = Mock()
 
         # Run
         instance.validate(data)
@@ -843,7 +843,7 @@ class TestBaseSingleTableSynthesizer:
         instance._validate_metadata.assert_called_once_with(data)
         instance._validate_constraints.assert_called_once_with(data)
         instance._validate.assert_called_once_with(data)
-        instance._validate_cags.assert_called_once_with(data)
+        instance._validate_cag.assert_called_once_with(data)
 
     def test_validate_raises_constraints_error(self):
         """Test that a ``ConstraintsNotMetError`` is being raised.
