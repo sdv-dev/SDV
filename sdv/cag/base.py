@@ -144,17 +144,14 @@ class BasePattern:
             table = table[self._original_data_columns[table_name]]
             for col in table:
                 try:
-                    reverse_transformed[table_name][col] = table[col].astype(
-                        self._dtypes[table_name][col]
-                    )
+                    table[col] = table[col].astype(self._dtypes[table_name][col])
                 except pd.errors.IntCastingNaNError:
                     LOGGER.info(
                         "Column '%s' is being converted to float because it contains NaNs.", col
                     )
                     self._dtypes[table_name][col] = np.dtype('float64')
-                    reverse_transformed[table_name][col] = table[col].astype(
-                        self._dtypes[table_name][col]
-                    )
+                    table[col] = table[col].astype(self._dtypes[table_name][col])
+            reverse_transformed[table_name] = table
 
         if self._single_table:
             return reverse_transformed[self._table_name]

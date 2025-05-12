@@ -1,8 +1,8 @@
 """Test BasePattern Class."""
 
+import logging
 import re
 from copy import deepcopy
-import logging
 from unittest.mock import Mock
 
 import numpy as np
@@ -356,9 +356,9 @@ class TestBasePattern:
             DataFrameDictMatcher(data))
         assert set(reversed_data.keys()) == {'table1', 'table2'}
         expected_table1 = pd.DataFrame({
-            'col1': [0.0, 1.0, 2.0, 3.0, 4.0],
-            'col2': ['A', 'A', 'A', 'B', 'B'],
             'col3': [0.0, 0.1, 0.2, 0.3, 0.4],
+            'col2': ['A', 'A', 'A', 'B', 'B'],
+            'col1': [0.0, 1.0, 2.0, 3.0, 4.0],
         })
         expected_table2 = pd.DataFrame({
             'col4': [0.5, 0.6, 0.7, 0.8, np.nan],
