@@ -1,12 +1,19 @@
-"""Base Multi-Table Pattern."""
+"""Base CAG constraint pattern."""
 
+import logging
+
+import numpy as np
 import pandas as pd
 
 from sdv.errors import NotFittedError
 
+LOGGER = logging.getLogger(__name__)
+
 
 class BasePattern:
     """Base CAG Pattern Class."""
+
+    _is_single_table = True
 
     def __init__(self):
         self.metadata = None
@@ -135,7 +142,19 @@ class BasePattern:
         reverse_transformed = self._reverse_transform(data)
         for table_name, table in reverse_transformed.items():
             table = table[self._original_data_columns[table_name]]
-            reverse_transformed[table_name] = table.astype(self._dtypes[table_name])
+            for col in table:
+                try:
+                    reverse_transformed[table_name][col] = table[col].astype(
+                        self._dtypes[table_name][col]
+                    )
+                except pd.errors.IntCastingNaNError:
+                    LOGGER.info(
+                        "Column '%s' is being converted to float because it contains NaNs.", col
+                    )
+                    self._dtypes[table_name][col] = np.dtype('float64')
+                    reverse_transformed[table_name][col] = table[col].astype(
+                        self._dtypes[table_name][col]
+                    )
 
         if self._single_table:
             return reverse_transformed[self._table_name]
