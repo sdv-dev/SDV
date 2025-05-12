@@ -1535,7 +1535,18 @@ class TestBaseMultiTableSynthesizer:
         pattern3 = ProgrammableConstraint()
         mock_harness = Mock()
         mock_programmable_constraint_harness.return_value = mock_harness
-        patterns = [pattern1, pattern2, pattern3]
+        pattern4 = Mock()
+        pattern4.table_name = 'table1'
+        instance._table_synthesizers = {
+            'table1': Mock(),
+        }
+        instance._table_synthesizers['table1'].add_cag = Mock()
+        mutli_table_pattern = [pattern1, pattern2, pattern3]
+        single_table_pattern = [pattern4]
+        patterns = mutli_table_pattern + single_table_pattern
+        instance._detect_single_table_cag = Mock(
+            return_value=(mutli_table_pattern, single_table_pattern)
+        )
 
         # Run
         BaseMultiTableSynthesizer.add_cag(instance, patterns)
@@ -1553,6 +1564,7 @@ class TestBaseMultiTableSynthesizer:
         assert instance.metadata == mock_harness.get_updated_metadata.return_value
         instance._initialize_models.assert_called_once()
         expected_patterns = [pattern1, pattern2, mock_harness]
+        instance._table_synthesizers['table1'].add_cag.assert_called_once_with([pattern4])
         assert instance.patterns == expected_patterns
 
     def test_updating_patterns_keeps_original_metadata(self):
@@ -1567,6 +1579,7 @@ class TestBaseMultiTableSynthesizer:
         pattern1 = Mock()
         pattern2 = Mock()
         instance.patterns = [pattern1]
+        instance._detect_single_table_cag = Mock(return_value=([pattern2], None))
 
         # Run
         BaseMultiTableSynthesizer.add_cag(instance, [pattern2])

@@ -122,6 +122,7 @@ class BaseMultiTableSynthesizer:
         self._original_table_columns = {}
         self._original_metadata = deepcopy(self.metadata)
         self.patterns = []
+        self._has_seen_single_table_constraint = False
         if synthesizer_kwargs is not None:
             warn_message = (
                 'The `synthesizer_kwargs` parameter is deprecated as of SDV 1.2.0 and does not '
@@ -162,6 +163,31 @@ class BaseMultiTableSynthesizer:
         self._validate_table_name(table_name)
         self._table_synthesizers[table_name].set_address_columns(column_names, anonymization_level)
 
+    def _detect_single_table_cag(self, patterns):
+        """Filter out single table CAG patterns from the list of patterns.
+
+        Args:
+            patterns (list):
+                A list of CAG patterns to filter.
+        """
+        idx_single_table = None
+        for idx, pattern in enumerate(patterns):
+            if self._has_seen_single_table_constraint and pattern.CONSTRAINT_TYPE == 'mutli_table':
+                raise SynthesizerInputError(
+                    'Cannot apply multi-table constraint after single-table constraint has '
+                    'been applied.'
+                )
+
+            if pattern.CONSTRAINT_TYPE == 'single_table':
+                self._has_seen_single_table_constraint = True
+                idx_single_table = idx
+
+        if idx_single_table is not None:
+            multi_table_patterns = patterns[idx_single_table + 1 :]
+            single_table_patterns = patterns[: idx_single_table + 1]
+
+        return multi_table_patterns, single_table_patterns
+
     def add_cag(self, patterns):
         """Add the list of constraint-augmented generation patterns to the synthesizer.
 
@@ -179,9 +205,14 @@ class BaseMultiTableSynthesizer:
             added_patterns.append(pattern)
 
         self.metadata = metadata
-        self.patterns += added_patterns
+        multi_table_patterns, single_table_patterns = self._detect_single_table_cag(patterns)
+        self.patterns += multi_table_patterns
         self._constraints_fitted = False
         self._initialize_models()
+        if single_table_patterns:
+            for pattern in single_table_patterns:
+                table_name = pattern.table_name
+                self._table_synthesizers[table_name].add_cag([pattern])
 
     def get_cag(self):
         """Get a copy of the list of constraints applied to the synthesizer."""

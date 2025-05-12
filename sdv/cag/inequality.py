@@ -42,6 +42,8 @@ class Inequality(BasePattern):
             data is only a single table. Defaults to None.
     """
 
+    CONSTRAINT_TYPE = 'single_table'
+
     @staticmethod
     def _validate_init_inputs(low_column_name, high_column_name, strict_boundaries, table_name):
         if not (isinstance(low_column_name, str) and isinstance(high_column_name, str)):

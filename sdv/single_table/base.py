@@ -737,6 +737,27 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         self._reject_sampling_patterns = []  # patterns used only for reject sampling
         self._constraints_fitted = False
 
+    def _validate_cag_single_table(self, patterns):
+        """Check if the CAG patterns are single table.
+
+        Args:
+            patterns (list):
+                A list of CAG patterns to check.
+
+        Raises:
+            PatternNotMetError:
+                Raised if the pattern is not compatible with the metadata.
+        """
+        if not isinstance(patterns, list):
+            raise SynthesizerInputError('CAG patterns must be a list of patterns.')
+
+        for pattern in patterns:
+            if pattern.CONSTRAINT_TYPE != 'single_table':
+                raise SynthesizerInputError(
+                    f'Pattern {pattern.__class__.__name__} is not compatible with the '
+                    'single-table synthesizers.'
+                )
+
     def add_cag(self, patterns):
         """Add the list of constraint-augmented generation patterns to the synthesizer.
 
@@ -744,6 +765,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             patterns (list):
                 A list of CAG patterns to apply to the synthesizer.
         """
+        self._validate_cag_single_table(patterns)
         for pattern in patterns:
             if isinstance(pattern, ProgrammableConstraint):
                 pattern = ProgrammableConstraintHarness(pattern)
