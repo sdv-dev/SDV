@@ -1,9 +1,11 @@
 """Test BasePattern Class."""
 
+import logging
 import re
 from copy import deepcopy
 from unittest.mock import Mock
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -324,6 +326,45 @@ class TestBasePattern:
             'col1': [0.0, 1.0, 2.0, 3.0, 4.0],
         })
         pd.testing.assert_frame_equal(reversed_data, expected_table1)
+
+    def test_reverse_transform_cast_fallback(self, data, caplog):
+        """Test ``reverse_transform`` method."""
+        # Setup
+        instance = BasePattern()
+        instance._dtypes = {
+            'table1': {'col1': 'float64', 'col2': 'object', 'col3': 'float64'},
+            'table2': {'col4': 'int64', 'col5': 'object'},
+        }
+        instance._original_data_columns = {
+            'table1': ['col3', 'col2', 'col1'],
+            'table2': ['col4', 'col5'],
+        }
+        instance._reverse_transform = Mock()
+        instance._reverse_transform.return_value = deepcopy(data)
+        instance._reverse_transform.return_value['table2']['col4'] = pd.Series(
+            [0.5, 0.6, 0.7, 0.8, np.nan], dtype='float64'
+        )
+        msg = "Column 'col4' is being converted to float because it contains NaNs."
+
+        # Run
+        with caplog.at_level(logging.INFO):
+            reversed_data = instance.reverse_transform(data)
+
+        # Assert
+        assert any(msg in record.message for record in caplog.records)
+        instance._reverse_transform.assert_called_once_with(DataFrameDictMatcher(data))
+        assert set(reversed_data.keys()) == {'table1', 'table2'}
+        expected_table1 = pd.DataFrame({
+            'col3': [0.0, 0.1, 0.2, 0.3, 0.4],
+            'col2': ['A', 'A', 'A', 'B', 'B'],
+            'col1': [0.0, 1.0, 2.0, 3.0, 4.0],
+        })
+        expected_table2 = pd.DataFrame({
+            'col4': [0.5, 0.6, 0.7, 0.8, np.nan],
+            'col5': ['X', 'Y', 'Z', 'Z', 'X'],
+        })
+        pd.testing.assert_frame_equal(reversed_data['table1'], expected_table1)
+        pd.testing.assert_frame_equal(reversed_data['table2'], expected_table2)
 
     def test_is_valid_errors_if_not_fitted(self, data):
         """Test the ``is_valid`` method errors if the CAG has not been fit."""

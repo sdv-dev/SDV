@@ -133,7 +133,13 @@ class TestOneHotEncoding:
         # Setup
         instance = OneHotEncoding(column_names=['a', 'b'], table_name='table')
         instance._original_data_columns = {'table': ['a', 'b', 'c']}
-        instance._dtypes = {'table': {'a': np.dtype('float'), 'b': np.dtype('float')}}
+        instance._dtypes = {
+            'table': {
+                'a': np.dtype('float'),
+                'b': np.dtype('float'),
+                'c': np.dtype('int64'),
+            }
+        }
 
         # Run
         table_data = pd.DataFrame({'a': [0.1, 0.5, 0.8], 'b': [0.8, 0.1, 0.9], 'c': [1, 2, 3]})
