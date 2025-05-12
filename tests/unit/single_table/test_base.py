@@ -505,7 +505,6 @@ class TestBaseSingleTableSynthesizer:
         instance = Mock()
         instance._fitted = True
         data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
-        instance._store_and_convert_original_cols.return_value = False
 
         # Run
         result = BaseSynthesizer._preprocess_helper(instance, data)
@@ -517,8 +516,7 @@ class TestBaseSingleTableSynthesizer:
         )
         mock_warnings.warn.assert_called_once_with(expected_warning)
         instance.validate.assert_called_once_with(data)
-        pd.testing.assert_frame_equal(result[0], data)
-        assert result[1] is False
+        pd.testing.assert_frame_equal(result, data)
 
     @patch.object(BaseSynthesizer, '_preprocess_helper')
     def test__preprocess_helper(self, mock_preprocess_helper):
@@ -536,14 +534,13 @@ class TestBaseSingleTableSynthesizer:
         instance = BaseSingleTableSynthesizer(metadata)
         data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
         instance._transform_helper = Mock(return_value=data)
-        mock_preprocess_helper.return_value = (data, False)
+        mock_preprocess_helper.return_value = data
 
         # Run
         result = instance._preprocess_helper(data)
 
         # Assert
-        pd.testing.assert_frame_equal(result[0], data)
-        assert result[1] is False
+        pd.testing.assert_frame_equal(result, data)
         instance._transform_helper.assert_called_once_with(data)
 
     def test__preprocess(self):
@@ -569,22 +566,20 @@ class TestBaseSingleTableSynthesizer:
         )
 
     def test_preprocess(self):
-        """Test the preprocess method.
-
-        The preprocess method raises a warning if it was already fitted and then calls
-        ``_preprocess``.
-        """
+        """Test the preprocess method."""
         # Setup
         instance = Mock()
         instance._fitted = True
         data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
-        instance._preprocess_helper.return_value = (data, False)
+        instance._preprocess_helper.return_value = data
+        instance._store_and_convert_original_cols = Mock(return_value=False)
         instance._preprocess.return_value = data
 
         # Run
         result = BaseSingleTableSynthesizer.preprocess(instance, data)
 
         # Assert
+        instance._store_and_convert_original_cols.assert_called_once_with(data)
         instance._preprocess_helper.assert_called_once_with(data)
         instance._preprocess.assert_called_once_with(data)
         pd.testing.assert_frame_equal(result, data)

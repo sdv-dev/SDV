@@ -547,7 +547,6 @@ class BaseSynthesizer:
         - Warn the user if the model has already been fitted
         - Store the original columns and convert them to string if needed
         """
-        is_converted = self._store_and_convert_original_cols(data)
         self.validate(data)
         if self._fitted:
             warnings.warn(
@@ -555,7 +554,7 @@ class BaseSynthesizer:
                 "please refit the model using 'fit' or 'fit_processed_data'."
             )
 
-        return data, is_converted
+        return data
 
     def preprocess(self, data):
         """Transform the raw data to numerical space.
@@ -568,7 +567,8 @@ class BaseSynthesizer:
             pandas.DataFrame:
                 The preprocessed data.
         """
-        data, is_converted = self._preprocess_helper(data)
+        is_converted = self._store_and_convert_original_cols(data)
+        data = self._preprocess_helper(data)
         preprocess_data = self._preprocess(data)
         if is_converted:
             data.columns = self._original_columns
@@ -856,10 +856,10 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         self.metadata = metadata
 
     def _preprocess_helper(self, data):
-        data, is_converted = super()._preprocess_helper(data)
+        data = super()._preprocess_helper(data)
         data = self._transform_helper(data)
 
-        return data, is_converted
+        return data
 
     def _set_random_state(self, random_state):
         """Set the random state of the model's random number generator.
