@@ -352,7 +352,7 @@ class BaseMultiTableSynthesizer:
             data (pandas.DataFrame):
                 The data to validate.
         """
-        metadata = getattr(self, '_original_metadata', self.metadata)
+        metadata = self._original_metadata
         if hasattr(self, 'patterns'):
             for pattern in self.patterns:
                 pattern.fit(data=data, metadata=metadata)
@@ -370,7 +370,7 @@ class BaseMultiTableSynthesizer:
         """
         errors = []
         constraints_errors = []
-        metadata = getattr(self, '_original_metadata', self.metadata)
+        metadata = self._original_metadata
         metadata.validate_data(data)
         for table_name in data:
             if table_name in self._table_synthesizers:

@@ -849,8 +849,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 The data to validate.
         """
         metadata = self.metadata
-        if hasattr(self, '_original_metadata'):
-            self.metadata = self._original_metadata
+        self.metadata = self._original_metadata
 
         super().validate(data)
         self._validate_cags(data)
