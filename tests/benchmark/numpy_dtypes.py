@@ -28,28 +28,28 @@ NUMPY_DTYPES = {
     }),
     'np.float16': pd.DataFrame({
         'np.float16': pd.Series(
-            [np.float16(9.1), np.float16(-9.1), np.float16(65.0)], dtype='float16'
+            [np.float16(9.1), np.float16(-9.1), np.float16(65.0), np.nan], dtype='float16'
         )
     }),
     'np.float32': pd.DataFrame({
         'np.float32': pd.Series(
-            [np.float32(1.2), np.float32(-1.2), np.float32(3.40)], dtype='float32'
+            [np.float32(1.2), np.float32(-1.2), np.float32(3.40), np.nan], dtype='float32'
         )
     }),
     'np.float64': pd.DataFrame({
         'np.float64': pd.Series(
-            [np.float64(1.3), np.float64(-11.3), np.float64(1.7)], dtype='float64'
+            [np.float64(1.3), np.float64(-11.3), np.float64(1.7), np.nan], dtype='float64'
         )
     }),
     'np.complex64': pd.DataFrame({
         'np.complex64': pd.Series(
-            [np.complex64(12 + 1j), np.complex64(-12 - 1j), np.complex64(3.4e38 + 1j)],
+            [np.complex64(12 + 1j), np.complex64(-12 - 1j), np.complex64(3.4e38 + 1j), None],
             dtype='complex64',
         )
     }),
     'np.complex128': pd.DataFrame({
         'np.complex128': pd.Series(
-            [np.complex128(13 + 2j), np.complex128(-13 - 2j), np.complex128(1.7e308 + 2j)],
+            [np.complex128(13 + 2j), np.complex128(-13 - 2j), np.complex128(1.7e308 + 2j), None],
             dtype='complex128',
         )
     }),
@@ -57,21 +57,19 @@ NUMPY_DTYPES = {
         'np.bool': pd.Series([np.bool_(True), np.bool_(False), np.bool_(True)], dtype='bool')
     }),
     'np.object': pd.DataFrame({
-        'np.object': pd.Series(['object1', 'object2', 'object3'], dtype='object')
+        'np.object': pd.Series(['object1', 'object2', 'object3', None], dtype='object')
     }),
     'np.string': pd.DataFrame({
-        'np.string': pd.Series([
-            np.str_('string1'),
-            np.str_('string2'),
-            np.str_('string3'),
-        ])
+        'np.string': pd.Series(
+            [np.str_('string1'), np.str_('string2'), np.str_('string3'), None], dtype='string'
+        )
     }),
     'np.bytes': pd.DataFrame({
         'np.bytes': pd.Series([np.bytes_('bytes1'), np.bytes_('bytes2'), np.bytes_('bytes3')])
     }),
     'np.unicode': pd.DataFrame({
         'np.unicode': pd.Series(
-            [np.str_('unicode1'), np.str_('unicode2'), np.str_('unicode3')],
+            [np.str_('unicode1'), np.str_('unicode2'), np.str_('unicode3'), pd.NA],
             dtype='string',
         )
     }),
@@ -80,11 +78,12 @@ NUMPY_DTYPES = {
             np.datetime64('2023-01-01T00:00:00'),
             np.datetime64('2024-01-01T00:00:00'),
             np.datetime64('2025-01-01T00:00:00'),
+            pd.NaT,
         ])
     }),
     'np.timedelta64': pd.DataFrame({
         'np.timedelta64': pd.Series(
-            [np.timedelta64(1, 'D'), np.timedelta64(2, 'h'), np.timedelta64(3, 'm')],
+            [np.timedelta64(1, 'D'), np.timedelta64(2, 'h'), np.timedelta64(3, 'm'), pd.NaT],
         )
     }),
 }
@@ -112,23 +111,27 @@ NUMPY_DATETIME_DTYPES = {
     }),
     'np.float32 - datetime': pd.DataFrame({
         'np.float32 - datetime': pd.Series(
-            [np.float32(20240101), np.float32(20240630), np.float32(20250101)], dtype='float32'
+            [np.float32(20240101), np.float32(20240630), np.float32(20250101), np.nan],
+            dtype='float32',
         )
     }),
     'np.float64 - datetime': pd.DataFrame({
         'np.float64 - datetime': pd.Series(
-            [np.float64(20240101.0), np.float64(20240630.0), np.float64(20250101.0)],
+            [np.float64(20240101.0), np.float64(20240630.0), np.float64(20250101.0), np.nan],
             dtype='float64',
         )
     }),
     'np.object - datetime': pd.DataFrame({
-        'np.object - datetime': pd.Series(['20240101', '20240630', '20250101'], dtype='object')
+        'np.object - datetime': pd.Series(
+            ['20240101', '20240630', '20250101', None], dtype='object'
+        )
     }),
     'np.string - datetime': pd.DataFrame({
         'np.string - datetime': pd.Series([
             np.str_('20240101'),
             np.str_('20240630'),
             np.str_('20250101'),
+            None,
         ])
     }),
     'np.bytes - datetime': pd.DataFrame({
@@ -143,6 +146,7 @@ NUMPY_DATETIME_DTYPES = {
             np.datetime64('2023-01-01T00:00:00'),
             np.datetime64('2024-01-01T00:00:00'),
             np.datetime64('2025-01-01T00:00:00'),
+            pd.NaT,
         ])
     }),
 }
