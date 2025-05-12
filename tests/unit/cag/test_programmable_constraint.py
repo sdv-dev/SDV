@@ -13,6 +13,7 @@ from sdv.cag.programmable_constraint import (
     SingleTableProgrammableConstraint,
 )
 from sdv.metadata import Metadata
+from tests.utils import DataFrameMatcher
 
 
 class TestProgrammableConstraint:
@@ -74,27 +75,6 @@ class TestProgrammableConstraintHarness:
         # Assert
         assert instance.programmable_constraint == programmable_constraint
 
-    def test__convert_data(self):
-        # Setup
-        instance = ProgrammableConstraintHarness(Mock())
-        data = pd.DataFrame()
-        data.copy = Mock()
-
-        data_dict = {'table': pd.DataFrame()}
-        data_dict['table'].copy = Mock()
-
-        # Run
-        convert_data = instance._convert_data(data, Metadata())
-        convert_data_dict = instance._convert_data(data_dict, Metadata())
-        copied_data = instance._convert_data(data, Metadata(), copy=True)
-        copied_data_dict = instance._convert_data(data_dict, Metadata(), copy=True)
-
-        # Assert
-        pd.testing.assert_frame_equal(convert_data, data)
-        assert convert_data_dict == data_dict
-        assert copied_data == data.copy.return_value
-        assert copied_data_dict == {'table': data_dict['table'].copy.return_value}
-
     def test__validate_pattern(self):
         """Test the ``_validate_pattern`` method."""
         # Setup
@@ -135,17 +115,38 @@ class TestProgrammableConstraintHarness:
         """Test the ``_validate_pattern_with_data`` method."""
         # Setup
         metadata = Metadata().load_from_dict({
-            'tables': {'table': {'columns': {'col_A': {'sdtype': 'numerical'}}}}
+            'tables': {
+                'table_1': {'columns': {'col_A': {'sdtype': 'numerical'}}},
+            }
         })
+        data = {'table': pd.DataFrame({'col_A': range(5)})}
         programmable_constraint = ProgrammableConstraint()
-        programmable_constraint.validate = Mock()
+        programmable_constraint.validate_input_data = Mock()
         instance = ProgrammableConstraintHarness(programmable_constraint)
 
         # Run
-        instance._validate_pattern_with_metadata(metadata)
+        instance._validate_pattern_with_data(data, metadata)
 
         # Assert
-        programmable_constraint.validate.assert_called_once_with(metadata)
+        programmable_constraint.validate_input_data.assert_called_once_with(data)
+
+    def test__validate_pattern_with_data_single_table(self):
+        """Test the method converts the data dictionary to a single dataframe.."""
+        metadata = Metadata().load_from_dict({
+            'tables': {
+                'table': {'columns': {'col_A': {'sdtype': 'numerical'}}},
+            }
+        })
+        data_dict = {'table': pd.DataFrame({'col_A': range(5)})}
+        programmable_constraint = SingleTableProgrammableConstraint()
+        programmable_constraint.validate_input_data = Mock()
+        instance = ProgrammableConstraintHarness(programmable_constraint)
+
+        # Run
+        instance._validate_pattern_with_data(data_dict, metadata)
+
+        # Assert
+        programmable_constraint.validate_input_data.assert_called_once_with(data_dict['table'])
 
     def test__get_updated_metadata(self):
         """Test the ``_get_updated_metadata`` method."""
@@ -169,13 +170,30 @@ class TestProgrammableConstraintHarness:
         metadata = Metadata().load_from_dict({
             'tables': {'table': {'columns': {'col_A': {'sdtype': 'numerical'}}}}
         })
-        data = pd.DataFrame({'col_A': range(5)})
+        data = {'table': pd.DataFrame({'col_A': range(5)})}
         programmable_constraint = ProgrammableConstraint()
         programmable_constraint.fit = Mock()
         instance = ProgrammableConstraintHarness(programmable_constraint)
 
         # Run
-        instance._fit(data, metadata)
+        instance.fit(data, metadata)
+
+        # Assert
+        programmable_constraint.fit.assert_called_once_with(data, metadata)
+
+    def test__fit_single_table(self):
+        """Test the method handles converting the data dictionary to a single dataframe."""
+        # Setup
+        metadata = Metadata().load_from_dict({
+            'tables': {'table': {'columns': {'col_A': {'sdtype': 'numerical'}}}}
+        })
+        data = pd.DataFrame({'col_A': range(5)})
+        programmable_constraint = SingleTableProgrammableConstraint()
+        programmable_constraint.fit = Mock()
+        instance = ProgrammableConstraintHarness(programmable_constraint)
+
+        # Run
+        instance.fit(data, metadata)
 
         # Assert
         programmable_constraint.fit.assert_called_once_with(data, metadata)
@@ -183,7 +201,7 @@ class TestProgrammableConstraintHarness:
     def test__transform(self):
         """Test the ``_transform`` method."""
         # Setup
-        data = pd.DataFrame({'col_A': range(5)})
+        data = {'table': pd.DataFrame({'col_A': range(5)})}
         programmable_constraint = ProgrammableConstraint()
         programmable_constraint.transform = Mock()
         instance = ProgrammableConstraintHarness(programmable_constraint)
@@ -194,10 +212,29 @@ class TestProgrammableConstraintHarness:
         # Assert
         programmable_constraint.transform.assert_called_once_with(data)
 
+    def test__transform_single_table(self):
+        """Test method handles converting the data dictionary to and from a single dataframe."""
+        # Setup
+        data = {'table': pd.DataFrame({'col_A': range(5)})}
+        programmable_constraint = SingleTableProgrammableConstraint()
+        programmable_constraint.transform = Mock()
+        programmable_constraint.transform.return_value = data['table']
+        instance = ProgrammableConstraintHarness(programmable_constraint)
+        instance._table_name = 'table'
+
+        # Run
+        transformed = instance._transform(data)
+
+        # Assert
+        programmable_constraint.transform.assert_called_once_with(DataFrameMatcher(data['table']))
+        assert isinstance(transformed, dict)
+        assert set(transformed.keys()) == {'table'}
+        pd.testing.assert_frame_equal(transformed['table'], data['table'])
+
     def test__reverse_transform(self):
         """Test the ``_reverse_transform`` method."""
         # Setup
-        data = pd.DataFrame({'col_A': range(5)})
+        data = {'table': pd.DataFrame({'col_A': range(5)})}
         programmable_constraint = ProgrammableConstraint()
         programmable_constraint.reverse_transform = Mock()
         instance = ProgrammableConstraintHarness(programmable_constraint)
@@ -208,10 +245,31 @@ class TestProgrammableConstraintHarness:
         # Assert
         programmable_constraint.reverse_transform.assert_called_once_with(data)
 
+    def test__reverse_transform_single_table(self):
+        """Test method handles converting the data dictionary to and from a single dataframe."""
+        # Setup
+        data = {'table': pd.DataFrame({'col_A': range(5)})}
+        programmable_constraint = SingleTableProgrammableConstraint()
+        programmable_constraint.reverse_transform = Mock()
+        programmable_constraint.reverse_transform.return_value = data['table']
+        instance = ProgrammableConstraintHarness(programmable_constraint)
+        instance._table_name = 'table'
+
+        # Run
+        reverse_transformed = instance._reverse_transform(data)
+
+        # Assert
+        programmable_constraint.reverse_transform.assert_called_once_with(
+            DataFrameMatcher(data['table'])
+        )
+        assert isinstance(reverse_transformed, dict)
+        assert set(reverse_transformed.keys()) == {'table'}
+        pd.testing.assert_frame_equal(reverse_transformed['table'], data['table'])
+
     def test__is_valid(self):
         """Test the ``_is_valid`` method."""
         # Setup
-        data = pd.DataFrame({'col_A': range(5)})
+        data = {'table': pd.DataFrame({'col_A': range(5)})}
         programmable_constraint = ProgrammableConstraint()
         programmable_constraint.is_valid = Mock()
         instance = ProgrammableConstraintHarness(programmable_constraint)
@@ -221,3 +279,22 @@ class TestProgrammableConstraintHarness:
 
         # Assert
         programmable_constraint.is_valid.assert_called_once_with(data)
+
+    def test__is_valid_single_table(self):
+        """Test method handles converting the data dictionary to and from a single dataframe."""
+        # Setup
+        data = {'table': pd.DataFrame({'col_A': range(5)})}
+        programmable_constraint = SingleTableProgrammableConstraint()
+        programmable_constraint.is_valid = Mock()
+        programmable_constraint.is_valid.return_value = pd.Series([True] * 5)
+        instance = ProgrammableConstraintHarness(programmable_constraint)
+        instance._table_name = 'table'
+
+        # Run
+        is_valid = instance._is_valid(data)
+
+        # Assert
+        programmable_constraint.is_valid.assert_called_once_with(DataFrameMatcher(data['table']))
+        assert isinstance(is_valid, dict)
+        assert set(is_valid.keys()) == {'table'}
+        pd.testing.assert_series_equal(is_valid['table'], pd.Series([True] * 5))
