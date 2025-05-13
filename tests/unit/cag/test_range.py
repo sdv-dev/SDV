@@ -943,6 +943,46 @@ class TestRange:
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
+    @pytest.mark.skip(reason='Nans are not being reversed correctly.')
+    def test_reverse_transform_nans(self):
+        """Test it reverses the transformation correctly when the data contains nans."""
+        # Setup
+        transformed = {
+            'table': pd.DataFrame({
+                'a': [1.0, 2.0, 3.0, 2.0],
+                'a#b': [np.log(2)] * 4,
+                'b#c': [np.log(2)] * 4,
+                'a#b#c.nan_component': ['b, c', 'a', 'None', 'a, b, c'],
+            })
+        }
+        instance = Range(
+            low_column_name='a',
+            middle_column_name='b',
+            high_column_name='c',
+            table_name='table',
+        )
+        instance._dtype = np.dtype('float')
+        instance._original_data_columns = {'table': ['a', 'b', 'c']}
+        instance._dtypes = {
+            'table': {
+                'a': np.dtype('float'),
+                'b': np.dtype('float'),
+                'c': np.dtype('float'),
+            }
+        }
+
+        # Run
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        out = out['table']
+        expected_out = pd.DataFrame({
+            'a': [1, np.nan, 3, np.nan],
+            'b': [np.nan, 2, 4, np.nan],
+            'c': [np.nan, 3, 5, np.nan],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
     def test_reverse_transform_datetime(self):
         """Test it reverses the transformation correctly when the dtype is datetime."""
         # Setup
@@ -1125,6 +1165,34 @@ class TestRange:
                 'a': ['2020-05-17', '2021-09-01', '2021-09-01'],
                 'b': ['2020-05-18', '2020-09-02', '2021-09-02'],
                 'c': ['2020-05-29', '2021-09-03', '2021-09-03'],
+                'col': [7, 8, 9],
+            })
+        }
+        instance = Range(
+            low_column_name='a',
+            middle_column_name='b',
+            high_column_name='c',
+            table_name='table',
+        )
+        instance._fitted = True
+
+        # Run
+        out = instance.is_valid(table_data)
+
+        # Assert
+        out = out['table']
+        expected_out = [True, False, True]
+        np.testing.assert_array_equal(expected_out, out)
+
+    @pytest.mark.skip(reason='Strings with nans not supported.')
+    def test_is_valid_datetimes_strings_with_nans(self):
+        """Test it checks if the data is valid when it contains datetimes."""
+        # Setup
+        table_data = {
+            'table': pd.DataFrame({
+                'a': ['2020-05-17', '2021-09-01', np.nan],
+                'b': ['2020-05-18', '2020-09-02', '2020-09-02'],
+                'c': ['2020-05-29', '2021-09-03', np.nan],
                 'col': [7, 8, 9],
             })
         }

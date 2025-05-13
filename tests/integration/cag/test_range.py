@@ -3,6 +3,7 @@ import re
 import numpy as np
 import pandas as pd
 import pytest
+from pandas.api.types import is_object_dtype
 
 from sdv.cag import Range
 from sdv.cag._errors import PatternNotMetError
@@ -555,3 +556,59 @@ def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
     # Run and Assert
     with pytest.raises(PatternNotMetError, match=msg):
         synthesizer.validate_cag(synthetic_data=synthetic_data)
+
+
+@pytest.mark.skip(reason='Issue #2275 needs to be implemented for the Range constraint.')
+def test_range_with_timestamp_and_date():
+    """Test that the range pattern passes for different datetime formats."""
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'SUBMISSION_TIMESTAMP': [
+                '2016-07-10 17:04:00',
+                '2016-07-11 13:23:00',
+                '2016-07-12 08:45:30',
+                '2016-07-11 12:00:00',
+                '2016-07-12 10:30:00',
+            ],
+            'DUE_DATE': ['2016-07-10', '2016-07-11', '2016-07-12', '2016-07-13', '2016-07-14'],
+            'DUE_DATE_2': ['2016-07-11', '2016-07-12', '2016-07-13', '2016-07-14', '2016-07-15'],
+        }
+    )
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'columns': {
+                    'SUBMISSION_TIMESTAMP': {
+                        'sdtype': 'datetime',
+                        'datetime_format': '%Y-%m-%d %H:%M:%S',
+                    },
+                    'DUE_DATE': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                    'DUE_DATE_2': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                }
+            }
+        }
+    })
+    pattern = Range(
+        low_column_name='SUBMISSION_TIMESTAMP',
+        middle_column_name='DUE_DATE',
+        high_column_name='DUE_DATE_2',
+        strict_boundaries=False,
+    )
+
+    # Run
+    synthesizer = run_copula(data, metadata, [pattern])
+    synthetic_data = synthesizer.sample(num_rows=10)
+
+    # Assert
+    assert is_object_dtype(synthetic_data['SUBMISSION_TIMESTAMP'].dtype)
+    synthetic_data['SUBMISSION_TIMESTAMP'] = pd.to_datetime(
+        synthetic_data['SUBMISSION_TIMESTAMP'], format='%Y-%m-%d %H:%M:%S'
+    )
+    assert is_object_dtype(synthetic_data['DUE_DATE'].dtype)
+    synthetic_data['DUE_DATE'] = pd.to_datetime(synthetic_data['DUE_DATE'], format='%Y-%m-%d')
+    invalid_rows = synthetic_data[
+        synthetic_data['SUBMISSION_TIMESTAMP'].dt.date > synthetic_data['DUE_DATE'].dt.date
+    ]
+    assert invalid_rows.empty
