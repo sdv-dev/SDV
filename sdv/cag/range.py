@@ -4,6 +4,7 @@ import operator
 
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_object_dtype
 
 from sdv._utils import _convert_to_timedelta, _create_unique_name
 from sdv.cag._errors import PatternNotMetError
@@ -148,7 +149,7 @@ class Range(BasePattern):
         mid = table_data[self._middle_column_name]
         high = table_data[self._high_column_name]
 
-        if self._is_datetime and self._dtype == 'O':
+        if self._is_datetime and is_object_dtype(self._dtype):
             low = cast_to_datetime64(low, self._low_datetime_format)
             mid = cast_to_datetime64(mid, self._middle_datetime_format)
             high = cast_to_datetime64(high, self._high_datetime_format)
@@ -335,7 +336,7 @@ class Range(BasePattern):
             high_diff_column = _convert_to_timedelta(high_diff_column)
 
         low = table_data[self._low_column_name].to_numpy()
-        if self._is_datetime and self._dtype == 'O':
+        if self._is_datetime and is_object_dtype(self._dtype):
             low = cast_to_datetime64(low, self._low_datetime_format)
 
         middle = pd.Series(low_diff_column + low).astype(self._dtype)

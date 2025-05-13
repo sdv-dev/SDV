@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_object_dtype
 
 from sdv._utils import _convert_to_timedelta, _create_unique_name
 from sdv.cag._errors import PatternNotMetError
@@ -127,7 +128,7 @@ class Inequality(BasePattern):
         data = data[table_name]
         low, high = self._get_data(data)
         is_datetime = self._get_is_datetime(metadata, table_name)
-        if is_datetime and data[self._low_column_name].dtypes == 'O':
+        if is_datetime and is_object_dtype(data[self._low_column_name]):
             low_format = self._get_datetime_format(metadata, table_name, self._low_column_name)
             high_format = self._get_datetime_format(metadata, table_name, self._high_column_name)
             low = cast_to_datetime64(low, low_format)
@@ -285,7 +286,7 @@ class Inequality(BasePattern):
             diff_column = _convert_to_timedelta(diff_column)
 
         low = table_data[self._low_column_name].to_numpy()
-        if self._is_datetime and self._dtype == 'O':
+        if self._is_datetime and is_object_dtype(self._dtype):
             low = cast_to_datetime64(low)
 
         table_data[self._high_column_name] = pd.Series(diff_column + low).astype(self._dtype)
@@ -310,7 +311,7 @@ class Inequality(BasePattern):
         is_valid = _get_is_valid_dict(data, table_name)
         table_data = data[table_name]
         low, high = self._get_data(table_data)
-        if self._is_datetime and self._dtype == 'O':
+        if self._is_datetime and is_object_dtype(self._dtype):
             low = cast_to_datetime64(low, self._low_datetime_format)
             high = cast_to_datetime64(high, self._high_datetime_format)
 

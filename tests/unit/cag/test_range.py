@@ -935,13 +935,12 @@ class TestRange:
         # Setup
         table_data = {
             'table': pd.DataFrame({
-                'a': [datetime(2020, 5, 17), datetime(2021, 9, 1), np.nan],
+                'a': ['2020-5-17', '2021-9-1', None],
                 'b': [datetime(2020, 5, 18), datetime(2020, 9, 2), datetime(2020, 9, 2)],
                 'c': [datetime(2020, 5, 29), datetime(2021, 9, 3), np.nan],
                 'col': [7, 8, 9],
             })
         }
-        table_data['table']['a'] = table_data['table']['a'].dt.strftime('%d %b %Y')
 
         instance = Range(
             low_column_name='a',
@@ -950,7 +949,7 @@ class TestRange:
             table_name='table',
         )
         instance._fitted = True
-        instance._low_datetime_format = '%d %b %Y'
+        instance._low_datetime_format = '%Y-%m-%d'
         instance._is_datetime = True
         instance._dtype = 'O'
 
