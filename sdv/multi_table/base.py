@@ -20,6 +20,7 @@ from sdv._utils import (
 )
 from sdv.cag._errors import PatternNotMetError
 from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows
+from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
 from sdv.errors import (
     ConstraintsNotMetError,
     InvalidDataError,
@@ -170,18 +171,29 @@ class BaseMultiTableSynthesizer:
         """
         metadata = self.metadata
         for pattern in patterns:
+            if isinstance(pattern, ProgrammableConstraint):
+                pattern = ProgrammableConstraintHarness(pattern)
+
             metadata = pattern.get_updated_metadata(metadata)
 
         self.metadata = metadata
         self.patterns += patterns
+        self._constraints_fitted = False
         self._initialize_models()
 
     def get_cag(self):
         """Get a list of constraint-augmented generation patterns applied to the synthesizer."""
-        if hasattr(self, 'patterns'):
-            return deepcopy(self.patterns)
-        else:
+        if not hasattr(self, 'patterns'):
             return []
+
+        patterns = []
+        for pattern in self.patterns:
+            if isinstance(pattern, ProgrammableConstraintHarness):
+                patterns.append(deepcopy(pattern.programmable_constraint))
+            else:
+                patterns.append(deepcopy(pattern))
+
+        return patterns
 
     def validate_cag(self, synthetic_data):
         """Validate synthetic_data against the CAG patterns.

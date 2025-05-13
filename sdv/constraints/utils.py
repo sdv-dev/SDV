@@ -312,9 +312,6 @@ def get_lower_precision_format(primary_format, secondary_format):
         str:
             The datetime format string with the lower precision level.
     """
-    if primary_format is None or secondary_format is None:
-        return primary_format if secondary_format is None else secondary_format
-
     primary_level = get_datetime_format_precision(primary_format)
     secondary_level = get_datetime_format_precision(secondary_format)
     if primary_level >= secondary_level:

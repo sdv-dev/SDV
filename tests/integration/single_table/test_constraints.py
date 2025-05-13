@@ -494,8 +494,11 @@ def test_overlapping_constraint_logs(caplog, demo_data, demo_metadata):
     information but not crash.
     """
     # Setup
-    demo_metadata.add_column('billing_date', sdtype='datetime')
+    column_metadata = demo_metadata.tables['fake_hotel_guests'].columns['checkout_date']
+    datetime_format = column_metadata['datetime_format']
+    demo_metadata.add_column('billing_date', sdtype='datetime', datetime_format=datetime_format)
     demo_data['billing_date'] = pd.to_datetime(demo_data['checkout_date']) + pd.Timedelta(5, 'D')
+    demo_data['billing_date'] = demo_data['billing_date'].strftime(datetime_format)
 
     synth = GaussianCopulaSynthesizer(demo_metadata)
 

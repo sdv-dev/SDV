@@ -746,6 +746,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             try:
                 self.metadata = pattern.get_updated_metadata(self.metadata)
                 self._chained_patterns.append(pattern)
+                self._constraints_fitted = False
             except PatternNotMetError as e:
                 LOGGER.info(
                     'Enforcing pattern %s using reject sampling.', pattern.__class__.__name__
@@ -1344,9 +1345,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             condition_df = dataframe.iloc[0].to_frame().T
             if hasattr(self, '_chained_patterns'):
                 try:
-                    transformed_condition = self._validate_transform_constraints(
-                        condition_df
-                    )
+                    transformed_condition = self._validate_transform_constraints(condition_df)
                     transformed_condition = self._data_processor.transform(
                         transformed_condition, is_condition=True
                     )
@@ -1423,7 +1422,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             if hasattr(self, '_original_metadata'):
                 if column not in self._original_metadata.tables[self._table_name].columns:
                     raise ValueError(
-                        f"Unexpected column name '{column}'."
+                        f"Unexpected column name '{column}'. "
                         'Use a column name that was present in the original data.'
                     )
                 if column == self._original_metadata.tables[self._table_name].primary_key:

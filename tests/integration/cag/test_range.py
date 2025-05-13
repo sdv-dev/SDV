@@ -159,10 +159,11 @@ def test_range_pattern_integers(data, metadata, pattern):
             'A': {'sdtype': 'numerical'},
             'A#B': {'sdtype': 'numerical'},
             'B#C': {'sdtype': 'numerical'},
+            'A#B#C.nan_component': {'sdtype': 'categorical'},
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-    assert list(transformed.columns) == ['A', 'A#B', 'B#C']
+    assert list(transformed.columns) == ['A', 'A#B', 'B#C', 'A#B#C.nan_component']
     pd.testing.assert_frame_equal(data, reverse_transformed)
 
 
@@ -184,6 +185,7 @@ def test_range_pattern_with_nans(metadata, pattern):
             'A': {'sdtype': 'numerical'},
             'A#B': {'sdtype': 'numerical'},
             'B#C': {'sdtype': 'numerical'},
+            'A#B#C.nan_component': {'sdtype': 'categorical'},
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
@@ -212,10 +214,11 @@ def test_range_pattern_datetime(data_datetime, metadata_datetime, pattern):
             'A': {'sdtype': 'datetime'},
             'A#B': {'sdtype': 'numerical'},
             'B#C': {'sdtype': 'numerical'},
+            'A#B#C.nan_component': {'sdtype': 'categorical'},
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-    assert list(transformed.columns) == ['A', 'A#B', 'B#C']
+    assert list(transformed.columns) == ['A', 'A#B', 'B#C', 'A#B#C.nan_component']
 
     # Check that the timestamps are very close to each other
     for col in ['A', 'B', 'C']:
@@ -263,6 +266,7 @@ def test_range_pattern_datetime_nans(metadata_datetime, pattern):
             'A': {'sdtype': 'datetime'},
             'A#B': {'sdtype': 'numerical'},
             'B#C': {'sdtype': 'numerical'},
+            'A#B#C.nan_component': {'sdtype': 'categorical'},
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
@@ -308,6 +312,7 @@ def test_range_pattern_with_multi_table(
                     'A': {'sdtype': 'numerical'},
                     'A#B': {'sdtype': 'numerical'},
                     'B#C': {'sdtype': 'numerical'},
+                    'A#B#C.nan_component': {'sdtype': 'categorical'},
                 }
             },
             'table2': {
@@ -318,7 +323,7 @@ def test_range_pattern_with_multi_table(
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-    assert list(transformed['table1'].columns) == ['A', 'A#B', 'B#C']
+    assert list(transformed['table1'].columns) == ['A', 'A#B', 'B#C', 'A#B#C.nan_component']
     assert set(data.keys()) == set(reverse_transformed.keys())
     for table_name, table in data.items():
         pd.testing.assert_frame_equal(table, reverse_transformed[table_name])
@@ -367,6 +372,7 @@ def test_range_multiple_patterns():
             'low#mid': {'sdtype': 'numerical'},
             'mid#high1': {'sdtype': 'numerical'},
             'high2': {'sdtype': 'numerical'},
+            'low#mid#high1.nan_component': {'sdtype': 'categorical'},
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
@@ -424,6 +430,8 @@ def test_range_multiple_patterns_different_mid_columns():
             'mid1#high1': {'sdtype': 'numerical'},
             'mid2#high2': {'sdtype': 'numerical'},
             'low#mid2': {'sdtype': 'numerical'},
+            'low#mid1#high1.nan_component': {'sdtype': 'categorical'},
+            'low#mid2#high2.nan_component': {'sdtype': 'categorical'},
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
