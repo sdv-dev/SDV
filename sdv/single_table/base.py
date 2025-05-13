@@ -30,6 +30,7 @@ from sdv._utils import (
 )
 from sdv.cag._errors import PatternNotMetError
 from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows
+from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
@@ -745,6 +746,9 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 A list of CAG patterns to apply to the synthesizer.
         """
         for pattern in patterns:
+            if isinstance(pattern, ProgrammableConstraint):
+                pattern = ProgrammableConstraintHarness(pattern)
+
             try:
                 self.metadata = pattern.get_updated_metadata(self.metadata)
                 self._chained_patterns.append(pattern)
@@ -768,7 +772,14 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
     def get_cag(self):
         """Get a list of constraint-augmented generation patterns applied to the synthesizer."""
-        return deepcopy(self._chained_patterns + self._reject_sampling_patterns)
+        patterns = []
+        for pattern in self._chained_patterns + self._reject_sampling_patterns:
+            if isinstance(pattern, ProgrammableConstraintHarness):
+                patterns.append(deepcopy(pattern.programmable_constraint))
+            else:
+                patterns.append(deepcopy(pattern))
+
+        return patterns
 
     def validate_cag(self, synthetic_data):
         """Validate synthetic_data against the CAG patterns.
