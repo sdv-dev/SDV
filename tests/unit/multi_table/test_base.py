@@ -428,7 +428,7 @@ class TestBaseMultiTableSynthesizer:
         cag_mock_2.is_valid.return_value = {table_name: pd.Series([True])}
         cag_mock_2.table_name = table_name
         instance.patterns = [cag_mock_1, cag_mock_2]
-        copy_mock.return_value = [cag_mock_1, cag_mock_2]
+        copy_mock.side_effect = [cag_mock_1, cag_mock_2]
 
         # Run
         instance.validate_cag(synthetic_data)
@@ -1584,8 +1584,8 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         assert no_patterns == []
-        copy_mock.assert_called_once_with([pattern1, pattern2])
-        assert patterns == copy_mock.return_value
+        copy_mock.assert_has_calls([call(pattern1), call(pattern2)])
+        assert patterns == [copy_mock.return_value, copy_mock.return_value]
 
     def test_get_metadata_original(self):
         """Test getting the original metadata from the synthesizer."""
