@@ -1521,6 +1521,49 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(SynthesizerInputError, match=err_msg):
             model.add_constraints([constraint])
 
+    def test__detect_single_table_cag(self):
+        """Test the ``_detect_single_table_cag`` method."""
+        # Setup
+        instance = Mock()
+        instance.metadata = get_multi_table_metadata()
+        instance._has_seen_single_table_constraint = False
+        instance._table_synthesizers = {
+            'table1': Mock(),
+            'table2': Mock(),
+        }
+        pattern1 = Mock()
+        pattern1._is_single_table = False
+        pattern2 = Mock()
+        pattern2._is_single_table = False
+        pattern3 = Mock()
+        pattern3._is_single_table = True
+        pattern4 = Mock()
+        pattern4._is_single_table = True
+        expected_error = re.escape(
+            'Cannot apply multi-table constraint after single-table constraint has been applied.'
+        )
+
+        # Run
+        multi_table_cag1, single_table_cag1 = BaseMultiTableSynthesizer._detect_single_table_cag(
+            instance, [pattern1, pattern2, pattern3, pattern4]
+        )
+        multi_table_cag2, single_table_cag2 = BaseMultiTableSynthesizer._detect_single_table_cag(
+            instance, [pattern3, pattern4]
+        )
+        with pytest.raises(SynthesizerInputError, match=expected_error):
+            BaseMultiTableSynthesizer._detect_single_table_cag(instance, [pattern1])
+        instance._has_seen_single_table_constraint = False
+        with pytest.raises(SynthesizerInputError, match=expected_error):
+            BaseMultiTableSynthesizer._detect_single_table_cag(
+                instance, [pattern1, pattern3, pattern2]
+            )
+
+        # Assert
+        assert multi_table_cag1 == [pattern1, pattern2]
+        assert single_table_cag1 == [pattern3, pattern4]
+        assert multi_table_cag2 == []
+        assert single_table_cag2 == [pattern3, pattern4]
+
     @patch('sdv.multi_table.base.ProgrammableConstraintHarness')
     def test_add_cag(self, mock_programmable_constraint_harness):
         """Test adding data patterns to the synthesizer."""

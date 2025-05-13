@@ -749,12 +749,12 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 Raised if the pattern is not compatible with the metadata.
         """
         if not isinstance(patterns, list):
-            raise SynthesizerInputError('CAG patterns must be a list of patterns.')
+            raise SynthesizerInputError('`patterns` must be a list.')
 
         for pattern in patterns:
             if pattern._is_single_table is False:
                 raise SynthesizerInputError(
-                    f'Pattern {pattern.__class__.__name__} is not compatible with the '
+                    f'Pattern `{pattern.__class__.__name__}` is not compatible with the '
                     'single-table synthesizers.'
                 )
 

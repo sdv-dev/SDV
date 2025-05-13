@@ -178,9 +178,9 @@ class BaseMultiTableSynthesizer:
                     'been applied.'
                 )
 
-            if pattern._is_single_table == 'single_table':
+            if pattern._is_single_table:
                 self._has_seen_single_table_constraint = True
-                idx_single_table = idx
+                idx_single_table = idx - 1
 
         if idx_single_table is not None:
             multi_table_patterns = patterns[:idx_single_table]
@@ -209,7 +209,6 @@ class BaseMultiTableSynthesizer:
             added_patterns.append(pattern)
 
         self.metadata = metadata
-        multi_table_patterns, single_table_patterns = self._detect_single_table_cag(patterns)
         self.patterns += multi_table_patterns
         self._constraints_fitted = False
         self._initialize_models()
@@ -243,20 +242,15 @@ class BaseMultiTableSynthesizer:
                 Raised if synthetic data does not match CAG patterns.
         """
         transformed_data = synthetic_data
-        for pattern in self.get_cag():
-            valid_data = pattern.is_valid(data=transformed_data)
-            table_name = pattern.table_name
-            for table_name, data in valid_data.items():
-                if not valid_data[table_name].all():
-                    invalid_rows_str = _get_invalid_rows(valid_data[table_name])
-                    pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
-                    pattern_name = pattern_name.replace('_', ' ')
-                    msg = (
-                        f"Table '{table_name}': The {pattern_name} requirement is not "
-                        f'met for row indices: {invalid_rows_str}.'
-                    )
-                    raise PatternNotMetError(msg)
-            transformed_data = pattern.transform(data=transformed_data)
+        for table_name, table_data in transformed_data.items():
+            synthesizer = self._table_synthesizers[table_name]
+            try:
+                synthesizer.validate_cag(table_data)
+            except PatternNotMetError as error:
+                raise PatternNotMetError(f"Table '{table_name}': {error}") from error
+
+        for pattern in self.patterns:
+            pattern.validate(transformed_data)
 
     def get_metadata(self, version='original'):
         """Get the metadata, either original or modified after applying CAG patterns.
@@ -542,6 +536,7 @@ class BaseMultiTableSynthesizer:
         for table_name, table_data in tqdm(data.items(), **pbar_args):
             synthesizer = self._table_synthesizers[table_name]
             self._assign_table_transformers(synthesizer, table_name, table_data)
+            table_data = synthesizer._validate_transform_constraints(table_data)
             processed_data[table_name] = synthesizer._preprocess(table_data)
 
         for table in list_of_changed_tables:
