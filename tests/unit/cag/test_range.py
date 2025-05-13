@@ -941,6 +941,8 @@ class TestRange:
                 'col': [7, 8, 9],
             })
         }
+        table_data['table']['a'] = table_data['table']['a'].dt.strftime('%d %b %Y')
+
         instance = Range(
             low_column_name='a',
             middle_column_name='b',
@@ -948,6 +950,9 @@ class TestRange:
             table_name='table',
         )
         instance._fitted = True
+        instance._low_datetime_format = '%d %b %Y'
+        instance._is_datetime = True
+        instance._dtype = 'O'
 
         # Run
         out = instance.is_valid(table_data)

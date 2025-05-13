@@ -12,6 +12,7 @@ import pytest
 
 from sdv import version
 from sdv.cag._errors import PatternNotMetError
+from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
 from sdv.errors import (
     ConstraintsNotMetError,
     InvalidDataError,
@@ -1520,7 +1521,8 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(SynthesizerInputError, match=err_msg):
             model.add_constraints([constraint])
 
-    def test_add_cag(self):
+    @patch('sdv.multi_table.base.ProgrammableConstraintHarness')
+    def test_add_cag(self, mock_programmable_constraint_harness):
         """Test adding data patterns to the synthesizer."""
         # Setup
         instance = Mock()
@@ -1530,20 +1532,28 @@ class TestBaseMultiTableSynthesizer:
         instance.patterns = []
         pattern1 = Mock()
         pattern2 = Mock()
-        patterns = [pattern1, pattern2]
+        pattern3 = ProgrammableConstraint()
+        mock_harness = Mock()
+        mock_programmable_constraint_harness.return_value = mock_harness
+        patterns = [pattern1, pattern2, pattern3]
 
         # Run
         BaseMultiTableSynthesizer.add_cag(instance, patterns)
 
         # Assert
+        mock_programmable_constraint_harness.assert_called_once_with(pattern3)
         assert instance._original_metadata == original_metadata
         pattern1.get_updated_metadata.assert_called_once_with(original_metadata)
         pattern2.get_updated_metadata.assert_called_once_with(
             pattern1.get_updated_metadata.return_value
         )
-        assert instance.metadata == pattern2.get_updated_metadata.return_value
+        mock_harness.get_updated_metadata.assert_called_once_with(
+            pattern2.get_updated_metadata.return_value
+        )
+        assert instance.metadata == mock_harness.get_updated_metadata.return_value
         instance._initialize_models.assert_called_once()
-        assert instance.patterns == patterns
+        expected_patterns = [pattern1, pattern2, mock_harness]
+        assert instance.patterns == expected_patterns
 
     def test_updating_patterns_keeps_original_metadata(self):
         """Test adding data patterns to the synthesizer."""
@@ -1576,16 +1586,18 @@ class TestBaseMultiTableSynthesizer:
         delattr(instance, 'patterns')
         pattern1 = Mock()
         pattern2 = Mock()
+        custom_pattern = Mock()
+        pattern3 = ProgrammableConstraintHarness(custom_pattern)
 
         # Run
         no_patterns = BaseMultiTableSynthesizer.get_cag(instance)
-        instance.patterns = [pattern1, pattern2]
+        instance.patterns = [pattern1, pattern2, pattern3]
         patterns = BaseMultiTableSynthesizer.get_cag(instance)
 
         # Assert
         assert no_patterns == []
-        copy_mock.assert_has_calls([call(pattern1), call(pattern2)])
-        assert patterns == [copy_mock.return_value, copy_mock.return_value]
+        copy_mock.assert_has_calls([call(pattern1), call(pattern2), call(custom_pattern)])
+        assert patterns == [copy_mock.return_value, copy_mock.return_value, copy_mock.return_value]
 
     def test_get_metadata_original(self):
         """Test getting the original metadata from the synthesizer."""

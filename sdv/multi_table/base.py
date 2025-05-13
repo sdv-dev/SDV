@@ -170,14 +170,16 @@ class BaseMultiTableSynthesizer:
                 A list of CAG patterns to apply to the synthesizer.
         """
         metadata = self.metadata
+        added_patterns = []
         for pattern in patterns:
             if isinstance(pattern, ProgrammableConstraint):
                 pattern = ProgrammableConstraintHarness(pattern)
 
             metadata = pattern.get_updated_metadata(metadata)
+            added_patterns.append(pattern)
 
         self.metadata = metadata
-        self.patterns += patterns
+        self.patterns += added_patterns
         self._constraints_fitted = False
         self._initialize_models()
 

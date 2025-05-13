@@ -494,6 +494,7 @@ def test_overlapping_constraint_logs(caplog, demo_data, demo_metadata):
     information but not crash.
     """
     # Setup
+    demo_metadata = Metadata.load_from_dict(demo_metadata.to_dict())
     column_metadata = demo_metadata.tables['fake_hotel_guests'].columns['checkout_date']
     datetime_format = column_metadata['datetime_format']
     demo_metadata.add_column('billing_date', sdtype='datetime', datetime_format=datetime_format)

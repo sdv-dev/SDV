@@ -897,11 +897,13 @@ class DataProcessor:
                 }
                 missing_columns = [col for col in missing_columns if col not in conditions]
 
-            anonymized_data = self._hyper_transformer.create_anonymized_columns(
-                num_rows=num_rows, column_names=missing_columns
-            )
-            sampled_columns.extend(missing_columns)
-            reversed_data[anonymized_data.columns] = anonymized_data[anonymized_data.notna()]
+            if missing_columns:
+                anonymized_data = self._hyper_transformer.create_anonymized_columns(
+                    num_rows=num_rows, column_names=missing_columns
+                )
+                sampled_columns.extend(missing_columns)
+                reversed_data[anonymized_data.columns] = anonymized_data[anonymized_data.notna()]
+
             conditional_data = pd.DataFrame(missing_conditions, index=reversed_data.index)
             sampled_columns.extend(list(missing_conditions.keys()))
             reversed_data[conditional_data.columns] = conditional_data
