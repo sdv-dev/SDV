@@ -968,7 +968,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     raw_sampled = self._sample(num_rows, transformed_conditions)
                 except NotImplementedError:
                     raw_sampled = self._sample(num_rows)
-            sampled = self._data_processor.reverse_transform(raw_sampled)
+            sampled = self._data_processor.reverse_transform(raw_sampled, conditions=conditions)
 
             if hasattr(self, '_chained_patterns') and hasattr(self, '_reject_sampling_patterns'):
                 for pattern in reversed(self._chained_patterns):
@@ -1342,14 +1342,31 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
             condition = dict(zip(condition_columns, group))
             condition_df = dataframe.iloc[0].to_frame().T
-            try:
-                transformed_condition = self._data_processor.transform(
-                    condition_df, is_condition=True
-                )
-            except ConstraintsNotMetError as error:
-                raise ConstraintsNotMetError(
-                    'Provided conditions are not valid for the given constraints.'
-                ) from error
+            if hasattr(self, '_chained_patterns'):
+                try:
+                    transformed_condition = self._validate_transform_constraints(
+                        condition_df
+                    )
+                    transformed_condition = self._data_processor.transform(
+                        transformed_condition, is_condition=True
+                    )
+                except PatternNotMetError:
+                    raise PatternNotMetError(
+                        'Provided conditions are not valid for the given constraints.'
+                    )
+                except Exception:
+                    transformed_condition = self._data_processor.transform(
+                        condition_df, is_condition=True
+                    )
+            else:
+                try:
+                    transformed_condition = self._data_processor.transform(
+                        condition_df, is_condition=True
+                    )
+                except ConstraintsNotMetError as error:
+                    raise ConstraintsNotMetError(
+                        'Provided conditions are not valid for the given constraints.'
+                    ) from error
 
             transformed_conditions = pd.concat(
                 [transformed_condition] * len(dataframe), ignore_index=True
@@ -1403,11 +1420,23 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
     def _validate_conditions_unseen_columns(self, conditions):
         """Validate the user-passed conditions."""
         for column in conditions.columns:
-            if column not in self._data_processor.get_sdtypes():
-                raise ValueError(
-                    f"Unexpected column name '{column}'. "
-                    f'Use a column name that was present in the original data.'
-                )
+            if hasattr(self, '_original_metadata'):
+                if column not in self._original_metadata.tables[self._table_name].columns:
+                    raise ValueError(
+                        f"Unexpected column name '{column}'."
+                        'Use a column name that was present in the original data.'
+                    )
+                if column == self._original_metadata.tables[self._table_name].primary_key:
+                    raise ValueError(
+                        f"Cannot condtionally sample column name '{column}' because it is "
+                        'the primary key.'
+                    )
+            else:
+                if column not in self._data_processor.get_sdtypes():
+                    raise ValueError(
+                        f"Unexpected column name '{column}'. "
+                        f'Use a column name that was present in the original data.'
+                    )
 
     @staticmethod
     def _raise_condition_with_nans():

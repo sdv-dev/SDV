@@ -846,7 +846,7 @@ class DataProcessor:
 
         return transformed
 
-    def reverse_transform(self, data, reset_keys=False):
+    def reverse_transform(self, data, reset_keys=False, conditions=None):
         """Reverse the transformed data to the original format.
 
         Args:
@@ -854,6 +854,8 @@ class DataProcessor:
                 Data to be reverse transformed.
             reset_keys (bool):
                 Whether or not to reset the keys generators. Defaults to ``False``.
+            conditions (dict, optional):
+                Dictionary of conditional values to use for generated columns.
 
         Returns:
             pandas.DataFrame
@@ -886,11 +888,23 @@ class DataProcessor:
             if self._hyper_transformer.field_transformers.get(column)
         ]
         if missing_columns and num_rows:
+            missing_conditions = {}
+            if conditions:
+                missing_conditions = {
+                    col: condition
+                    for col, condition in conditions.items()
+                    if col in missing_columns
+                }
+                missing_columns = [col for col in missing_columns if col not in conditions]
+
             anonymized_data = self._hyper_transformer.create_anonymized_columns(
                 num_rows=num_rows, column_names=missing_columns
             )
             sampled_columns.extend(missing_columns)
             reversed_data[anonymized_data.columns] = anonymized_data[anonymized_data.notna()]
+            conditional_data = pd.DataFrame(missing_conditions, index=reversed_data.index)
+            sampled_columns.extend(list(missing_conditions.keys()))
+            reversed_data[conditional_data.columns] = conditional_data
 
         if self._keys and num_rows:
             generated_keys = self.generate_keys(num_rows, reset_keys)
