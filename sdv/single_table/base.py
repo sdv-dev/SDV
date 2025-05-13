@@ -729,6 +729,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         super().__init__(metadata, enforce_min_max_values, enforce_rounding, locales)
         self._chained_patterns = []  # chain of patterns used to preprocess the data
         self._reject_sampling_patterns = []  # patterns used only for reject sampling
+        self._constraints_fitted = False
 
     def add_cag(self, patterns):
         """Add the list of constraint-augmented generation patterns to the synthesizer.
@@ -791,47 +792,36 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 elif attribute == '_chained_patterns':
                     transformed_data = pattern.transform(data=transformed_data)
 
-    def _transform_helper(self, data):
-        """Validate and transform all CAG patterns during preprocessing.
+    def _validate_transform_constraints(self, data):
+        """Validate the data against the constraints and transform it.
 
-        Args:
-            data (dict[str, pd.DataFrame]):
-                The data dictionary.
-        """
-        if self._fitted:
-            for pattern in self._chained_patterns:
-                data = pattern.transform(data)
-            return data
-
-        metadata = self._original_metadata
-        original_data = data
-        for pattern in self._chained_patterns:
-            pattern.fit(data, metadata)
-            metadata = pattern.get_updated_metadata(metadata)
-            data = pattern.transform(data)
-
-        for pattern in self._reject_sampling_patterns:
-            pattern.fit(original_data, self._original_metadata)
-
-        return data
-
-    def _validate_cag(self, data):
-        """Validate the data against the CAG patterns.
+        If the constraints are already fitted, it will only transform the data.
+        If not, it will fit the constraints and then transform the data.
+        The constraints validation is done during the fitting process.
 
         Args:
             data (pandas.DataFrame):
                 The data to validate.
         """
+        if self._constraints_fitted:  # Already fitted, no need to validate again
+            for pattern in self._chained_patterns:
+                data = pattern.transform(data)
+
+            return data
+
         metadata = getattr(self, '_original_metadata', self.metadata)
         if hasattr(self, '_reject_sampling_patterns'):
             for pattern in self._reject_sampling_patterns:
-                pattern.validate(data=data, metadata=self._original_metadata)
+                pattern.fit(data=data, metadata=self._original_metadata)
 
         if hasattr(self, '_chained_patterns'):
             for pattern in self._chained_patterns:
                 pattern.fit(data=data, metadata=metadata)
                 metadata = pattern.get_updated_metadata(metadata)
                 data = pattern.transform(data)
+
+        self._constraints_fitted = True
+        return data
 
     def validate(self, data):
         """Validate data.
@@ -852,12 +842,12 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         self.metadata = self._original_metadata
 
         super().validate(data)
-        self._validate_cag(data)
+        self._validate_transform_constraints(data)
         self.metadata = metadata
 
     def _preprocess_helper(self, data):
         data = super()._preprocess_helper(data)
-        data = self._transform_helper(data)
+        data = self._validate_transform_constraints(data)
 
         return data
 

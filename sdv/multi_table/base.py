@@ -120,6 +120,7 @@ class BaseMultiTableSynthesizer:
         self._table_parameters = defaultdict(dict)
         self._original_table_columns = {}
         self._original_metadata = deepcopy(self.metadata)
+        self.patterns = []
         if synthesizer_kwargs is not None:
             warn_message = (
                 'The `synthesizer_kwargs` parameter is deprecated as of SDV 1.2.0 and does not '
@@ -133,6 +134,7 @@ class BaseMultiTableSynthesizer:
 
         self._initialize_models()
         self._fitted = False
+        self._constraints_fitted = False
         self._creation_date = datetime.datetime.today().strftime('%Y-%m-%d')
         self._fitted_date = None
         self._fitted_sdv_version = None
@@ -171,11 +173,7 @@ class BaseMultiTableSynthesizer:
             metadata = pattern.get_updated_metadata(metadata)
 
         self.metadata = metadata
-        if hasattr(self, 'patterns'):
-            self.patterns += patterns
-        else:
-            self.patterns = patterns
-
+        self.patterns += patterns
         self._initialize_models()
 
     def get_cag(self):
@@ -230,27 +228,29 @@ class BaseMultiTableSynthesizer:
 
         return Metadata.load_from_dict(self.metadata.to_dict())
 
-    def _transform_helper(self, data):
+    def _validate_transform_constraints(self, data):
         """Validate and transform all CAG patterns during preprocessing.
 
         Args:
             data (dict[str, pd.DataFrame]):
                 The data dictionary.
         """
-        if not hasattr(self, 'patterns'):
+        if self._constraints_fitted:  # Constraints already fitted
+            for pattern in self.patterns:
+                data = pattern.transform(data)
+
             return data
 
         metadata = self._original_metadata
         for pattern in self.patterns:
-            if not self._fitted:
-                pattern.fit(data, metadata)
-                metadata = pattern.get_updated_metadata(metadata)
-
+            pattern.fit(data=data, metadata=metadata)
+            metadata = pattern.get_updated_metadata(metadata)
             data = pattern.transform(data)
 
+        self._constraints_fitted = True
         return data
 
-    def _reverse_transform_helper(self, sampled_data):
+    def _reverse_transform_constraints(self, sampled_data):
         """Reverse transform CAG patterns after sampling."""
         if not hasattr(self, 'patterns'):
             return sampled_data
@@ -345,20 +345,6 @@ class BaseMultiTableSynthesizer:
 
         return errors
 
-    def _validate_cag(self, data):
-        """Validate the data against the CAG patterns.
-
-        Args:
-            data (pandas.DataFrame):
-                The data to validate.
-        """
-        metadata = self._original_metadata
-        if hasattr(self, 'patterns'):
-            for pattern in self.patterns:
-                pattern.fit(data=data, metadata=metadata)
-                metadata = pattern.get_updated_metadata(metadata)
-                data = pattern.transform(data)
-
     def validate(self, data):
         """Validate the data.
 
@@ -388,7 +374,7 @@ class BaseMultiTableSynthesizer:
         elif errors:
             raise InvalidDataError(errors)
 
-        self._validate_cag(data)
+        self._validate_transform_constraints(data)
 
     def _validate_table_name(self, table_name):
         if table_name not in self._table_synthesizers:
@@ -491,7 +477,7 @@ class BaseMultiTableSynthesizer:
         list_of_changed_tables = self._store_and_convert_original_cols(data)
 
         self.validate(data)
-        data = self._transform_helper(data)
+        data = self._validate_transform_constraints(data)
         if self._fitted:
             warnings.warn(
                 'This model has already been fitted. To use the new preprocessed data, '
@@ -625,7 +611,7 @@ class BaseMultiTableSynthesizer:
 
         with self._set_temp_numpy_seed(), disable_single_table_logger():
             sampled_data = self._sample(scale=scale)
-            sampled_data = self._reverse_transform_helper(sampled_data)
+            sampled_data = self._reverse_transform_constraints(sampled_data)
 
         total_rows = 0
         total_columns = 0

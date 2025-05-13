@@ -533,7 +533,7 @@ class TestBaseSingleTableSynthesizer:
         })
         instance = BaseSingleTableSynthesizer(metadata)
         data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
-        instance._transform_helper = Mock(return_value=data)
+        instance._validate_transform_constraints = Mock(return_value=data)
         mock_preprocess_helper.return_value = data
 
         # Run
@@ -541,7 +541,7 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         pd.testing.assert_frame_equal(result, data)
-        instance._transform_helper.assert_called_once_with(data)
+        instance._validate_transform_constraints.assert_called_once_with(data)
 
     def test__preprocess(self):
         """Test the method preprocesses the data.
@@ -790,8 +790,8 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         instance._data_processor._fit_constraints.assert_called_once_with(data)
 
-    def test__validate_cags(self):
-        """Test the ``_validate_cag`` method."""
+    def test__validate_transform_constraints(self):
+        """Test the ``_validate_transform_constraints`` method."""
         # Setup
         data = pd.DataFrame()
         original_metadata = Metadata()
@@ -809,13 +809,13 @@ class TestBaseSingleTableSynthesizer:
         instance._reject_sampling_patterns = [cag_mock_3]
 
         # Run
-        instance._validate_cag(data)
+        instance._validate_transform_constraints(data)
 
         # Assert
         cag_mock_1.get_updated_metadata.assert_called_once_with(instance._original_metadata)
         cag_mock_1.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
         cag_mock_2.fit.assert_called_once_with(data=data, metadata=metadata_1)
-        cag_mock_3.validate.assert_called_once_with(data=data, metadata=instance._original_metadata)
+        cag_mock_3.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
 
     def test_validate(self):
         """Test the appropriate methods are called.
@@ -829,7 +829,7 @@ class TestBaseSingleTableSynthesizer:
         instance._validate_metadata = Mock()
         instance._validate_constraints = Mock()
         instance._validate = Mock(return_value=[])
-        instance._validate_cag = Mock()
+        instance._validate_transform_constraints = Mock()
 
         # Run
         instance.validate(data)
@@ -838,7 +838,7 @@ class TestBaseSingleTableSynthesizer:
         instance._validate_metadata.assert_called_once_with(data)
         instance._validate_constraints.assert_called_once_with(data)
         instance._validate.assert_called_once_with(data)
-        instance._validate_cag.assert_called_once_with(data)
+        instance._validate_transform_constraints.assert_called_once_with(data)
 
     def test_validate_raises_constraints_error(self):
         """Test that a ``ConstraintsNotMetError`` is being raised.
@@ -1823,7 +1823,7 @@ class TestBaseSingleTableSynthesizer:
         )
         instance.get_metadata.return_value._constraints = False
         instance._sample_with_progress_bar.return_value = pd.DataFrame({'col': [1, 2, 3]})
-        instance._reverse_transform_helper.return_value = pd.DataFrame({'col': [1, 2, 3]})
+        instance._reverse_transform_constraints.return_value = pd.DataFrame({'col': [1, 2, 3]})
 
         # Run
         with catch_sdv_logs(caplog, logging.INFO, logger='SingleTableSynthesizer'):
@@ -2520,7 +2520,7 @@ class TestBaseSingleTableSynthesizer:
             }
 
     def test_validate_cag(self):
-        """Test the ``_validate_cag`` method with multiple patterns."""
+        """Test the ``validate_cag`` method with multiple patterns."""
         # Setup
         synthetic_data = pd.DataFrame()
         transformed_data = pd.DataFrame()
@@ -2541,7 +2541,7 @@ class TestBaseSingleTableSynthesizer:
         cag_mock_2.transform.assert_called_once_with(data=transformed_data)
 
     def test_validate_cag_raises(self):
-        """Test the ``_validate_cag`` method raises an error."""
+        """Test the ``validate_cag`` method raises an error."""
         # Setup
         synthetic_data = pd.DataFrame()
         original_metadata = Metadata()
