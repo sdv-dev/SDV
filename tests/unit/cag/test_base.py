@@ -37,6 +37,45 @@ class TestBasePattern:
         assert instance._fitted is False
         assert instance.metadata is None
 
+    def test__convert_data_to_dictionary(self):
+        """Test the ``_convert_data_to_dictionary`` method."""
+        # Setup
+        instance = BasePattern()
+        instance.table_name = 'table'
+        data = pd.DataFrame({'colA': range(5)})
+        data.copy = Mock()
+        data.copy.return_value = data
+
+        data_dict = {'table': pd.DataFrame({'colA': range(5)})}
+        data_dict['table'].copy = Mock()
+        data_dict['table'].copy.return_value = data_dict['table']
+
+        metadata = Metadata.load_from_dict({
+            'tables': {'table': {'columns': {'colA': {'sdtype': 'numerical'}}}}
+        })
+
+        # Run
+        single_table_converted = instance._convert_data_to_dictionary(data, metadata, copy=True)
+
+        instance._single_table = True
+        instance._table_name = 'table'
+        fitted_single_table_converted = instance._convert_data_to_dictionary(data, metadata)
+
+        copied_dict = BasePattern._convert_data_to_dictionary(
+            instance, data_dict, metadata, copy=True
+        )
+
+        # Assert
+        data.copy.assert_called_once()
+        data_dict['table'].copy.assert_called_once()
+        assert isinstance(single_table_converted, dict)
+        assert set(single_table_converted.keys()) == {'table'}
+        assert isinstance(fitted_single_table_converted, dict)
+        assert set(fitted_single_table_converted.keys()) == {'table'}
+        pd.testing.assert_frame_equal(single_table_converted['table'], data)
+        pd.testing.assert_frame_equal(fitted_single_table_converted['table'], data)
+        pd.testing.assert_frame_equal(copied_dict['table'], data_dict['table'])
+
     def test__get_single_table_name(self):
         """Test the ``_get_single_table_name`` helper method."""
         # Setup
