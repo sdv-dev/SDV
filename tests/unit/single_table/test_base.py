@@ -408,14 +408,14 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         instance = Mock()
         data = pd.DataFrame({'name': ['John', 'Doe', 'Johanna'], 'salary': [80.0, 90.0, 120.0]})
-        instance._transform_helper = Mock(return_value=data)
+        instance._validate_transform_constraints = Mock(return_value=data)
 
         # Run
         BaseSingleTableSynthesizer.auto_assign_transformers(instance, data)
 
         # Assert
         instance.validate.assert_called_once_with(data)
-        instance._transform_helper.assert_called_once_with(data)
+        instance._validate_transform_constraints.assert_called_once_with(data)
         instance._data_processor.prepare_for_fitting.assert_called_once_with(data)
 
     def test_auto_assign_transformers_with_invalid_data(self):

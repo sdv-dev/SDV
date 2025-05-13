@@ -419,7 +419,7 @@ class BaseSynthesizer:
         """
         return self._data_processor.get_constraints()
 
-    def _transform_helper(self, data):
+    def _validate_transform_constraints(self, data):
         """Helper method to transform the data for the constraints."""
         return data
 
@@ -434,7 +434,7 @@ class BaseSynthesizer:
                 The raw data (before any transformations) that will be used to fit the model.
         """
         self.validate(data)
-        data = self._transform_helper(data)
+        data = self._validate_transform_constraints(data)
         self._data_processor.prepare_for_fitting(data)
 
     def get_transformers(self):
