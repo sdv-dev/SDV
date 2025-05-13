@@ -40,8 +40,6 @@ class FixedCombinations(BasePattern):
             data is only a single table. Defaults to None.
     """
 
-    CONSTRAINT_TYPE = 'single_table'
-
     def __init__(self, column_names, table_name=None):
         super().__init__()
         if not _is_list_of_type(column_names):

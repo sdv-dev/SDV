@@ -28,8 +28,6 @@ class OneHotEncoding(BasePattern):
             data is only a single table. Defaults to None.
     """
 
-    CONSTRAINT_TYPE = 'single_table'
-
     @staticmethod
     def _validate_init_inputs(column_names, table_name):
         if not _is_list_of_type(column_names):

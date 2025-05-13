@@ -28,8 +28,6 @@ class FixedIncrements(BasePattern):
             data is only a single table. Defaults to None.
     """
 
-    CONSTRAINT_TYPE = 'single_table'
-
     @staticmethod
     def _validate_init_inputs(column_name, increment_value, table_name):
         if not isinstance(column_name, str):

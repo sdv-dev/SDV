@@ -752,7 +752,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             raise SynthesizerInputError('CAG patterns must be a list of patterns.')
 
         for pattern in patterns:
-            if pattern.CONSTRAINT_TYPE != 'single_table':
+            if pattern._is_single_table is False:
                 raise SynthesizerInputError(
                     f'Pattern {pattern.__class__.__name__} is not compatible with the '
                     'single-table synthesizers.'

@@ -172,19 +172,22 @@ class BaseMultiTableSynthesizer:
         """
         idx_single_table = None
         for idx, pattern in enumerate(patterns):
-            if self._has_seen_single_table_constraint and pattern.CONSTRAINT_TYPE == 'mutli_table':
+            if self._has_seen_single_table_constraint and pattern._is_single_table is False:
                 raise SynthesizerInputError(
                     'Cannot apply multi-table constraint after single-table constraint has '
                     'been applied.'
                 )
 
-            if pattern.CONSTRAINT_TYPE == 'single_table':
+            if pattern._is_single_table == 'single_table':
                 self._has_seen_single_table_constraint = True
                 idx_single_table = idx
 
         if idx_single_table is not None:
-            multi_table_patterns = patterns[idx_single_table + 1 :]
-            single_table_patterns = patterns[: idx_single_table + 1]
+            multi_table_patterns = patterns[:idx_single_table]
+            single_table_patterns = patterns[idx_single_table:]
+        else:
+            multi_table_patterns = patterns
+            single_table_patterns = None
 
         return multi_table_patterns, single_table_patterns
 
