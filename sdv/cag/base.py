@@ -13,7 +13,7 @@ class BasePattern:
         self._fitted = False
         self._single_table = False
 
-    def _convert_data(self, data, metadata, copy=False):
+    def _convert_data_to_dictionary(self, data, metadata, copy=False):
         """Helper to handle converting single dataframes into dictionaries.
 
         This method takes in data, metadata, and, optionally, a flag indiciating if the
@@ -65,7 +65,7 @@ class BasePattern:
         self._validate_pattern_with_metadata(metadata)
 
         if data is not None:
-            data = self._convert_data(data, metadata)
+            data = self._convert_data_to_dictionary(data, metadata)
             self._validate_pattern_with_data(data, metadata)
 
     def _get_updated_metadata(self, metadata):
@@ -97,7 +97,7 @@ class BasePattern:
         if isinstance(data, pd.DataFrame):
             self._single_table = True
             self._table_name = self._get_single_table_name(metadata)
-            data = self._convert_data(data, metadata)
+            data = self._convert_data_to_dictionary(data, metadata)
 
         self._validate_pattern_with_data(data, metadata)
         self._fit(data, metadata)
@@ -123,7 +123,7 @@ class BasePattern:
             raise NotFittedError('Pattern must be fit using ``fit`` before transforming.')
 
         self.validate(data)
-        data = self._convert_data(data, self.metadata, copy=True)
+        data = self._convert_data_to_dictionary(data, self.metadata, copy=True)
         transformed_data = self._transform(data)
         if self._single_table:
             return transformed_data[self._table_name]
@@ -140,7 +140,7 @@ class BasePattern:
             data (dict[str, pd.DataFrame])
                 The transformed data dictionary to be reverse transformed.
         """
-        data = self._convert_data(data, self.metadata, copy=True)
+        data = self._convert_data_to_dictionary(data, self.metadata, copy=True)
         reverse_transformed = self._reverse_transform(data)
         for table_name, table in reverse_transformed.items():
             table = table[self._original_data_columns[table_name]]
@@ -170,7 +170,7 @@ class BasePattern:
                 'Pattern must be fit using ``fit`` before determining if data is valid.'
             )
 
-        data = self._convert_data(data, self.metadata)
+        data = self._convert_data_to_dictionary(data, self.metadata)
         is_valid_data = self._is_valid(data)
         if self._single_table:
             return is_valid_data[self._table_name]

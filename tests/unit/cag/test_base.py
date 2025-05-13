@@ -35,8 +35,8 @@ class TestBasePattern:
         assert instance._fitted is False
         assert instance.metadata is None
 
-    def test__convert_data(self):
-        """Test the ``_convert_data`` method."""
+    def test__convert_data_to_dictionary(self):
+        """Test the ``_convert_data_to_dictionary`` method."""
         # Setup
         instance = BasePattern()
         instance.table_name = 'table'
@@ -53,13 +53,15 @@ class TestBasePattern:
         })
 
         # Run
-        single_table_converted = instance._convert_data(data, metadata, copy=True)
+        single_table_converted = instance._convert_data_to_dictionary(data, metadata, copy=True)
 
         instance._single_table = True
         instance._table_name = 'table'
-        fitted_single_table_converted = instance._convert_data(data, metadata)
+        fitted_single_table_converted = instance._convert_data_to_dictionary(data, metadata)
 
-        copied_dict = BasePattern._convert_data(instance, data_dict, metadata, copy=True)
+        copied_dict = BasePattern._convert_data_to_dictionary(
+            instance, data_dict, metadata, copy=True
+        )
 
         # Assert
         data.copy.assert_called_once()
