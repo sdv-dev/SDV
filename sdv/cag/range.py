@@ -90,6 +90,12 @@ class Range(BasePattern):
         self._high_column_name = high_column_name
         self._low_diff_column_name = f'{self._low_column_name}#{self._middle_column_name}'
         self._high_diff_column_name = f'{self._middle_column_name}#{self._high_column_name}'
+        joined_columns = '#'.join([
+            self._low_column_name,
+            self._middle_column_name,
+            self._high_column_name,
+        ])
+        self._nan_column_name = f'{joined_columns}.nan_component'
         self._operator = operator.lt if strict_boundaries else operator.le
         self.table_name = table_name
 
@@ -99,9 +105,6 @@ class Range(BasePattern):
         self._low_datetime_format = None
         self._middle_datetime_format = None
         self._high_datetime_format = None
-
-        # Set during transform
-        self._nan_column_name = None
 
     def _validate_pattern_with_metadata(self, metadata):
         """Validate the pattern is compatible with the provided metadata.
@@ -140,21 +143,23 @@ class Range(BasePattern):
                 f", '{mid_column_sdtype}' and '{high_column_sdtype}'."
             )
 
-    def _get_data(self, data):
-        low = data[self._low_column_name].to_numpy()
-        mid = data[self._middle_column_name].to_numpy()
-        high = data[self._high_column_name].to_numpy()
-        return low, mid, high
-
     def _get_valid_table_data(self, table_data):
-        low, mid, high = self._get_data(table_data)
+        low = table_data[self._low_column_name]
+        mid = table_data[self._middle_column_name]
+        high = table_data[self._high_column_name]
+
+        if self._is_datetime and self._dtype == 'O':
+            low = cast_to_datetime64(low, self._low_datetime_format)
+            mid = cast_to_datetime64(mid, self._middle_datetime_format)
+            high = cast_to_datetime64(high, self._high_datetime_format)
+
         low_is_nan = pd.isna(low)
         mid_is_nan = pd.isna(mid)
         high_is_nan = pd.isna(high)
 
-        low_lt_middle = self._operator(low, mid) | low_is_nan | mid_is_nan
-        mid_lt_high = self._operator(mid, high) | mid_is_nan | high_is_nan
-        low_lt_high = self._operator(low, high) | low_is_nan | high_is_nan
+        low_lt_middle = low_is_nan | mid_is_nan | self._operator(low, mid)
+        mid_lt_high = mid_is_nan | high_is_nan | self._operator(mid, high)
+        low_lt_high = low_is_nan | high_is_nan | self._operator(low, high)
 
         return low_lt_middle & mid_lt_high & low_lt_high
 
@@ -176,19 +181,31 @@ class Range(BasePattern):
                 f'The range requirement is not met for row indices: [{invalid_rows_str}]'
             )
 
-    def _get_updated_metadata(self, metadata):
-        """Get the new output metadata after applying the pattern to the input metadata."""
-        table_name = self._get_single_table_name(metadata)
+    def _get_diff_and_nan_column_names(self, metadata, table_name):
+        """Create unique names for the low, high, and nan component columns."""
         low_diff_column = _create_unique_name(
             self._low_diff_column_name, metadata.tables[table_name].columns.keys()
         )
         high_diff_column = _create_unique_name(
             self._high_diff_column_name, metadata.tables[table_name].columns.keys()
         )
+        nan_component_column = _create_unique_name(
+            self._nan_column_name, metadata.tables[table_name].columns.keys()
+        )
+
+        return low_diff_column, high_diff_column, nan_component_column
+
+    def _get_updated_metadata(self, metadata):
+        """Get the new output metadata after applying the pattern to the input metadata."""
+        table_name = self._get_single_table_name(metadata)
+        low_diff_column, high_diff_column, nan_component_column = (
+            self._get_diff_and_nan_column_names(metadata, table_name)
+        )
 
         metadata = metadata.to_dict()
         metadata['tables'][table_name]['columns'][low_diff_column] = {'sdtype': 'numerical'}
         metadata['tables'][table_name]['columns'][high_diff_column] = {'sdtype': 'numerical'}
+        metadata['tables'][table_name]['columns'][nan_component_column] = {'sdtype': 'categorical'}
         return _remove_columns_from_metadata(
             metadata, table_name, columns_to_drop=[self._high_column_name, self._middle_column_name]
         )
@@ -223,11 +240,8 @@ class Range(BasePattern):
                 metadata, table_name, self._high_column_name
             )
 
-        self._low_diff_column_name = _create_unique_name(
-            self._low_diff_column_name, table_data.columns
-        )
-        self._high_diff_column_name = _create_unique_name(
-            self._high_diff_column_name, table_data.columns
+        self._low_diff_column_name, self._high_diff_column_name, self._nan_column_name = (
+            self._get_diff_and_nan_column_names(metadata, table_name)
         )
 
     def _transform(self, data):
@@ -247,7 +261,10 @@ class Range(BasePattern):
         """
         table_name = self._get_single_table_name(self.metadata)
         table_data = data[table_name]
-        low, mid, high = self._get_data(table_data)
+        low = table_data[self._low_column_name].to_numpy()
+        mid = table_data[self._middle_column_name].to_numpy()
+        high = table_data[self._high_column_name].to_numpy()
+
         if self._is_datetime:
             low_diff_column = get_datetime_diff(
                 mid,
@@ -272,19 +289,17 @@ class Range(BasePattern):
 
         list_columns = [self._low_column_name, self._middle_column_name, self._high_column_name]
         nan_column = compute_nans_column(table_data, list_columns)
-        if nan_column is not None:
-            self._nan_column_name = _create_unique_name(nan_column.name, table_data.columns)
-            table_data[self._nan_column_name] = nan_column
-            if self._is_datetime:
-                mean_value_low = table_data[self._low_column_name].mode()[0]
-            else:
-                mean_value_low = table_data[self._low_column_name].mean()
+        table_data[self._nan_column_name] = nan_column
+        if self._is_datetime:
+            mean_value_low = table_data[self._low_column_name].mode()[0]
+        else:
+            mean_value_low = table_data[self._low_column_name].mean()
 
-            table_data = table_data.fillna({
-                self._low_column_name: mean_value_low,
-                self._low_diff_column_name: table_data[self._low_diff_column_name].mean(),
-                self._high_diff_column_name: table_data[self._high_diff_column_name].mean(),
-            })
+        table_data = table_data.fillna({
+            self._low_column_name: mean_value_low,
+            self._low_diff_column_name: table_data[self._low_diff_column_name].mean(),
+            self._high_diff_column_name: table_data[self._high_diff_column_name].mean(),
+        })
 
         data[table_name] = table_data.drop(
             [self._middle_column_name, self._high_column_name], axis=1
@@ -329,8 +344,7 @@ class Range(BasePattern):
             self._dtype
         )
 
-        if self._nan_column_name in table_data.columns:
-            table_data = revert_nans_columns(table_data, self._nan_column_name)
+        table_data = revert_nans_columns(table_data, self._nan_column_name)
 
         data[table_name] = table_data.drop(
             [self._low_diff_column_name, self._high_diff_column_name], axis=1

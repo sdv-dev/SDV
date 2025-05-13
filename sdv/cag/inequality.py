@@ -127,7 +127,7 @@ class Inequality(BasePattern):
         data = data[table_name]
         low, high = self._get_data(data)
         is_datetime = self._get_is_datetime(metadata, table_name)
-        if is_datetime and data[self._high_column_name].dtypes == 'O':
+        if is_datetime and data[self._low_column_name].dtypes == 'O':
             low_format = self._get_datetime_format(metadata, table_name, self._low_column_name)
             high_format = self._get_datetime_format(metadata, table_name, self._high_column_name)
             low = cast_to_datetime64(low, low_format)
