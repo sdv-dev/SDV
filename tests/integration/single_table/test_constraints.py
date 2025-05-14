@@ -236,7 +236,7 @@ def test_synthesizer_with_inequality_constraint(demo_data, demo_metadata):
 
     # Run and Assert
     sampled = synthesizer.sample(num_rows=500)
-    # synthesizer.validate(sampled) # TODO: add back in once validate has been fixed for constraints
+    synthesizer.validate(sampled)
     _sampled = sampled[~sampled['checkout_date'].isna()]
     checkin_dates = pd.to_datetime(_sampled['checkin_date'], format=datetime_format)
     checkout_dates = pd.to_datetime(_sampled['checkout_date'], format=datetime_format)
@@ -263,14 +263,14 @@ def test_inequality_constraint_with_datetimes_and_nones():
     metadata.validate()
     synth = GaussianCopulaSynthesizer(metadata)
     synth.add_cag([Inequality(low_column_name='A', high_column_name='B')])
-    # synth.validate(data)  # TODO: add back in once validate has been fixed
+    synth.validate(data)
 
     # Run
     synth.fit(data)
     sampled = synth.sample(10)
 
     # Assert
-    # synth.validate(sampled)  # TODO: add back in once validate has been fixed
+    synth.validate(sampled)
     expected_sampled = pd.DataFrame({
         'A': [
             '2020-01-02',
@@ -329,7 +329,7 @@ def test_range_constraint_with_datetimes_and_nones():
             strict_boundaries=False,
         )
     ])
-    # synth.validate(data)  # TODO: Add back in once validate is fixed
+    synth.validate(data)
 
     # Run
     synth.fit(data)
@@ -375,7 +375,7 @@ def test_range_constraint_with_datetimes_and_nones():
         ],
     })
     pd.testing.assert_frame_equal(expected_sampled, sampled)
-    # synth.validate(sampled)  # TODO: add back in once validate has been fixed
+    synth.validate(sampled)
 
 
 def test_inequality_constraint_all_possible_nans_configurations():

@@ -14,8 +14,9 @@ from rdt.transformers import (
 )
 
 from sdv.cag import Inequality
+from sdv.cag._errors import PatternNotMetError
 from sdv.datasets.demo import download_demo
-from sdv.errors import ConstraintsNotMetError, SynthesizerInputError
+from sdv.errors import SynthesizerInputError
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata.metadata import Metadata
 from sdv.sampling import Condition
@@ -190,8 +191,8 @@ def test_adding_constraints(tmp_path):
     sampled_data = loaded_synthesizer.sample(100)
     validation = sampled_data[sampled_data['has_rewards']]
     assert validation['amenities_fee'].sum() == 0.0
-    # synthesizer.validate(sampled_data)  # TODO: Add back once validation has been fixed
-    # loaded_synthesizer.validate(sampled_data)  # TODO: add back once validation has been fixed
+    synthesizer.validate(sampled_data)
+    loaded_synthesizer.validate(sampled_data)
 
 
 def test_custom_processing_anonymization():
@@ -292,7 +293,6 @@ def test_update_transformers_with_id_generator():
     assert samples['user_id'].min() == min_value_id
 
 
-@pytest.mark.skip('Need to fix validation for this test to run')
 def test_validate_with_failing_constraint():
     """Validate that the ``constraint`` are raising errors if there is an error during validate."""
     # Setup
@@ -305,14 +305,10 @@ def test_validate_with_failing_constraint():
     )
     gc.add_cag([checkin_lessthan_checkout])
 
-    error_msg = (
-        "Data is not valid for the 'Inequality' constraint:"
-        '\n  checkin_date checkout_date'
-        '\n0  02 Jan 2021   29 Dec 2020'
-    )
+    error_msg = re.escape('The inequality requirement is not met for row indices: [0]')
 
     # Run / Assert
-    with pytest.raises(ConstraintsNotMetError, match=error_msg):
+    with pytest.raises(PatternNotMetError, match=error_msg):
         gc.validate(real_data)
 
 
