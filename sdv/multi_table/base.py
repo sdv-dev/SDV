@@ -242,15 +242,26 @@ class BaseMultiTableSynthesizer:
                 Raised if synthetic data does not match CAG patterns.
         """
         transformed_data = synthetic_data
+        for pattern in self.patterns:
+            valid_data = pattern.is_valid(transformed_data)
+            for table_name, valid_table in valid_data.items():
+                if not valid_table.all():
+                    invalid_rows_str = _get_invalid_rows(valid_table)
+                    pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
+                    pattern_name = pattern_name.replace('_', ' ')
+                    msg = f'The {pattern_name} requirement is not met '
+                    msg += f'for row indices: {invalid_rows_str}.'
+                    raise PatternNotMetError(msg)
+
+            transformed_data = pattern.transform(transformed_data)
+
         for table_name, table_data in transformed_data.items():
             synthesizer = self._table_synthesizers[table_name]
             try:
                 synthesizer.validate_cag(table_data)
+                table_data = synthesizer._validate_transform_constraints(table_data)
             except PatternNotMetError as error:
                 raise PatternNotMetError(f"Table '{table_name}': {error}") from error
-
-        for pattern in self.patterns:
-            pattern.validate(transformed_data)
 
     def get_metadata(self, version='original'):
         """Get the metadata, either original or modified after applying CAG patterns.
@@ -404,6 +415,7 @@ class BaseMultiTableSynthesizer:
         errors = []
         constraints_errors = []
         metadata = self._original_metadata
+        data = {table: df.copy(deep=True) for table, df in data.items()}
         metadata.validate_data(data)
         for table_name in data:
             if table_name in self._table_synthesizers:
@@ -522,7 +534,6 @@ class BaseMultiTableSynthesizer:
                 A dictionary with the preprocessed data.
         """
         list_of_changed_tables = self._store_and_convert_original_cols(data)
-
         self.validate(data)
         data = self._validate_transform_constraints(data)
         if self._fitted:
@@ -605,6 +616,7 @@ class BaseMultiTableSynthesizer:
         """
         total_rows = 0
         total_columns = 0
+        data = {table: df.copy(deep=True) for table, df in data.items()}
         for table in data.values():
             total_rows += len(table)
             total_columns += len(table.columns)

@@ -4,6 +4,7 @@ import pytest
 
 from sdv.cag import FixedCombinations, ProgrammableConstraint, SingleTableProgrammableConstraint
 from sdv.datasets.demo import download_demo
+from sdv.multi_table import HMASynthesizer
 from sdv.single_table import GaussianCopulaSynthesizer
 
 
@@ -92,21 +93,24 @@ def single_table_programmable_constraint():
 
 def test_end_to_end_programmable_constraint(programmable_constraint):
     """Test using a programmable constraint with a synthesizer end-to-end."""
-    data, metadata = download_demo('single_table', 'fake_hotel_guests')
+    data, metadata = download_demo('multi_table', 'fake_hotels')
     my_constraint = programmable_constraint(
-        column_names=['has_rewards', 'room_type'], table_name='fake_hotel_guests'
+        column_names=['has_rewards', 'room_type'], table_name='guests'
     )
-    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer = HMASynthesizer(metadata)
     synthesizer.add_cag([my_constraint])
 
     # Run
     synthesizer.fit(data)
-    sampled_data = synthesizer.sample(1000)
+    sampled_data = synthesizer.sample(scale=1.0)
     constraints = synthesizer.get_cag()
 
     # Assert
-    original_combinations = set(zip(data['has_rewards'], data['room_type']))
-    assert set(zip(sampled_data['has_rewards'], sampled_data['room_type'])) == original_combinations
+    original_combinations = set(zip(data['guests']['has_rewards'], data['guests']['room_type']))
+    assert (
+        set(zip(sampled_data['guests']['has_rewards'], sampled_data['guests']['room_type']))
+        == original_combinations
+    )
     assert isinstance(constraints[0], programmable_constraint)
 
 
