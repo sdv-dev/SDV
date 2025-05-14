@@ -2461,6 +2461,31 @@ class TestSingleTableMetadata:
             {'type': 'relationship_one', 'column_names': ['col1', 'col2']}
         ])
 
+    def test__validate_primary_key(self):
+        """Test that an error is raised if the primary key is an int that can start with 0."""
+        # Setup
+        data = pd.DataFrame({'key': [1, 2, 3], 'info': ['a', 'b', 'c']})
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'key': {'sdtype': 'id', 'regex_format': '[1-9]{3,4}'},
+                'info': {'sdtype': 'categorical'},
+            },
+            'primary_key': 'key',
+        })
+        message = (
+            'Primary key "key" is stored as an int but the Regex allows it to start with '
+            '"0". Please remove the Regex or update it to correspond to valid ints.'
+        )
+
+        # Run
+        output_1 = metadata._validate_primary_key(data)
+        metadata.update_column('key', sdtype='id', regex_format='[0-9]{3,4}')
+        output_2 = metadata._validate_primary_key(data)
+
+        # Assert
+        assert output_1 == []
+        assert output_2 == [message]
+
     def test_validate_data_wrong_type(self):
         """Test error is raised if data is not ``pd.DataFrame``."""
         # Setup
@@ -2541,8 +2566,7 @@ class TestSingleTableMetadata:
         metadata.set_primary_key('pk_col')
         metadata.set_sequence_key('sk_col1')
         metadata.add_alternate_keys(['ak_col1', 'ak_col2', 'ak_col3'])
-
-        # Run and Assert
+        metadata._validate_primary_key = Mock(return_value=[])
         err_msg = re.escape(
             'The provided data does not match the metadata:'
             "\nKey column 'ak_col1' contains missing values."
@@ -2552,8 +2576,13 @@ class TestSingleTableMetadata:
             "\nKey column 'pk_col' contains missing values."
             '\n'
         )
+
+        # Run
         with pytest.raises(InvalidDataError, match=err_msg):
             metadata.validate_data(data)
+
+        # Assert
+        metadata._validate_primary_key.assert_called_once_with(data)
 
     def test_validate_data_keys_with_missing_with_single_sequence_key(self):
         """Test error is raised if keys contain missing values.
