@@ -494,7 +494,9 @@ class TestBaseMultiTableSynthesizer:
         instance.validate(data)
 
         # Assert
-        instance._validate_transform_constraints.assert_called_once_with(data)
+        instance._validate_transform_constraints.assert_called_once_with(
+            data, enforce_constraint_fitting=True
+        )
 
     def test_validate_missing_table(self):
         """Test that an error is being raised when there is a missing table in the dictionary."""
@@ -1641,10 +1643,9 @@ class TestBaseMultiTableSynthesizer:
         instance.patterns = [pattern1, pattern2]
         instance._original_metadata = original_metadata
 
-        # Run
+        # Run and Assert
         transformed = BaseMultiTableSynthesizer._validate_transform_constraints(instance, data)
 
-        # Assert
         pattern1.fit.assert_called_once_with(data=data, metadata=original_metadata)
         pattern1.transform.assert_called_once_with(data)
         pattern2.fit.assert_called_once_with(
@@ -1653,6 +1654,32 @@ class TestBaseMultiTableSynthesizer:
         )
         pattern2.transform.assert_called_once_with(pattern1.transform.return_value)
         assert transformed == pattern2.transform.return_value
+        assert instance._constraints_fitted is True
+
+        # Reset mock call history
+        pattern1.fit.reset_mock()
+        pattern1.transform.reset_mock()
+        pattern2.fit.reset_mock()
+        pattern2.transform.reset_mock()
+
+        # Re-run to check it only transforms when constraints are already fitted
+        BaseMultiTableSynthesizer._validate_transform_constraints(instance, data)
+
+        pattern1.transform.assert_called_once_with(data)
+        pattern2.transform.assert_called_once_with(pattern1.transform.return_value)
+        pattern1.fit.assert_not_called()
+        pattern2.fit.assert_not_called()
+
+        # Check the constraints are fitted again with enforce_constraint_fitting=True
+        BaseMultiTableSynthesizer._validate_transform_constraints(
+            instance, data, enforce_constraint_fitting=True
+        )
+
+        pattern1.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
+        pattern2.fit.assert_called_once_with(
+            data=pattern1.transform.return_value,
+            metadata=pattern1.get_updated_metadata.return_value,
+        )
 
     def test__validate_transform_constraints_with_patterns(self):
         """Test validating and transforming the data patterns."""

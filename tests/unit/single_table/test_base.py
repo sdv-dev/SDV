@@ -808,11 +808,33 @@ class TestBaseSingleTableSynthesizer:
         instance._chained_patterns = [cag_mock_1, cag_mock_2]
         instance._reject_sampling_patterns = [cag_mock_3]
 
-        # Run
+        # Run and Assert
         instance._validate_transform_constraints(data)
 
-        # Assert
         cag_mock_1.get_updated_metadata.assert_called_once_with(instance._original_metadata)
+        cag_mock_1.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
+        cag_mock_2.fit.assert_called_once_with(data=data, metadata=metadata_1)
+        cag_mock_3.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
+        assert instance._constraints_fitted is True
+
+        # Reset mock call history
+        cag_mock_1.fit.reset_mock()
+        cag_mock_1.transform.reset_mock()
+        cag_mock_2.fit.reset_mock()
+        cag_mock_2.transform.reset_mock()
+        cag_mock_3.fit.reset_mock()
+
+        # Re-run to check it only transforms when constraints are already fitted
+        instance._validate_transform_constraints(data)
+
+        cag_mock_1.transform.assert_called_once_with(data)
+        cag_mock_2.transform.assert_called_once_with(data)
+        cag_mock_1.fit.assert_not_called()
+        cag_mock_2.fit.assert_not_called()
+
+        # Check the constraints are fitted again with enforce_constraint_fitting=True
+        instance._validate_transform_constraints(data, enforce_constraint_fitting=True)
+
         cag_mock_1.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
         cag_mock_2.fit.assert_called_once_with(data=data, metadata=metadata_1)
         cag_mock_3.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
@@ -838,7 +860,9 @@ class TestBaseSingleTableSynthesizer:
         instance._validate_metadata.assert_called_once_with(data)
         instance._validate_constraints.assert_called_once_with(data)
         instance._validate.assert_called_once_with(data)
-        instance._validate_transform_constraints.assert_called_once_with(data)
+        instance._validate_transform_constraints.assert_called_once_with(
+            data, enforce_constraint_fitting=True
+        )
 
     def test_validate_raises_constraints_error(self):
         """Test that a ``ConstraintsNotMetError`` is being raised.

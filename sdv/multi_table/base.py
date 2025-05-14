@@ -228,14 +228,18 @@ class BaseMultiTableSynthesizer:
 
         return Metadata.load_from_dict(self.metadata.to_dict())
 
-    def _validate_transform_constraints(self, data):
+    def _validate_transform_constraints(self, data, enforce_constraint_fitting=False):
         """Validate and transform all CAG patterns during preprocessing.
 
         Args:
             data (dict[str, pd.DataFrame]):
                 The data dictionary.
+            enforce_constraint_fitting (bool):
+                Whether to enforce fitting the constraints again. If set to ``True``, the
+                constraints will be fitted again even if they have already been fitted.
+                Defaults to ``False``.
         """
-        if self._constraints_fitted:  # Constraints already fitted
+        if self._constraints_fitted and not enforce_constraint_fitting:
             for pattern in self.patterns:
                 data = pattern.transform(data)
 
@@ -374,7 +378,7 @@ class BaseMultiTableSynthesizer:
         elif errors:
             raise InvalidDataError(errors)
 
-        self._validate_transform_constraints(data)
+        self._validate_transform_constraints(data, enforce_constraint_fitting=True)
 
     def _validate_table_name(self, table_name):
         if table_name not in self._table_synthesizers:

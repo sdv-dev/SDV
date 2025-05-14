@@ -792,7 +792,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 elif attribute == '_chained_patterns':
                     transformed_data = pattern.transform(data=transformed_data)
 
-    def _validate_transform_constraints(self, data):
+    def _validate_transform_constraints(self, data, enforce_constraint_fitting=False):
         """Validate the data against the constraints and transform it.
 
         If the constraints are already fitted, it will only transform the data.
@@ -802,8 +802,12 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         Args:
             data (pandas.DataFrame):
                 The data to validate.
+            enforce_constraint_fitting (bool):
+                Whether to enforce fitting the constraints again. If set to ``True``, the
+                constraints will be fitted again even if they have already been fitted.
+                Defaults to ``False``.
         """
-        if self._constraints_fitted:  # Already fitted, no need to validate again
+        if self._constraints_fitted and not enforce_constraint_fitting:
             for pattern in self._chained_patterns:
                 data = pattern.transform(data)
 
@@ -842,7 +846,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         self.metadata = self._original_metadata
 
         super().validate(data)
-        self._validate_transform_constraints(data)
+        self._validate_transform_constraints(data, enforce_constraint_fitting=True)
         self.metadata = metadata
 
     def _preprocess_helper(self, data):
