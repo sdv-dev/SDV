@@ -26,7 +26,6 @@ from sdv._utils import (
     check_sdv_versions_and_warn,
     check_synthesizer_version,
     generate_synthesizer_id,
-    get_possible_chars,
 )
 from sdv.cag._errors import PatternNotMetError
 from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows
@@ -51,11 +50,6 @@ SYNTHESIZER_LOGGER = get_sdv_logger('SingleTableSynthesizer')
 
 COND_IDX = str(uuid.uuid4())
 FIXED_RNG_SEED = 73251
-INT_REGEX_ZERO_ERROR_MESSAGE = (
-    'is stored as an int but the Regex allows it to start with "0". Please remove the Regex '
-    'or update it to correspond to valid ints.'
-)
-
 DEPRECATION_MSG = (
     "The 'SingleTableMetadata' is deprecated. Please use the new 'Metadata' class for synthesizers."
 )
@@ -247,17 +241,6 @@ class BaseSynthesizer:
 
         return self.metadata
 
-    def _validate_primary_key(self, data):
-        primary_key = self._get_table_metadata().primary_key
-        is_int = primary_key and pd.api.types.is_integer_dtype(data[primary_key])
-        regex = self._get_table_metadata().columns.get(primary_key, {}).get('regex_format')
-        if is_int and regex:
-            possible_characters = get_possible_chars(regex, 1)
-            if '0' in possible_characters:
-                raise SynthesizerInputError(
-                    f'Primary key "{primary_key}" {INT_REGEX_ZERO_ERROR_MESSAGE}'
-                )
-
     def validate(self, data):
         """Validate data.
 
@@ -279,7 +262,6 @@ class BaseSynthesizer:
                     * values of a column don't satisfy their sdtype
         """
         self._validate_metadata(data)
-        self._validate_primary_key(data)
         self._validate_constraints(data)
 
         # Retaining the logic of returning errors and raising them here to maintain consistency
@@ -545,7 +527,6 @@ class BaseSynthesizer:
         return data[column_order]
 
     def _preprocess(self, data):
-        self.validate(data)
         self._data_processor.fit(data)
         return self._data_processor.transform(data)
 
@@ -559,6 +540,23 @@ class BaseSynthesizer:
 
         return False
 
+    def _preprocess_helper(self, data):
+        """Preprocess helper method.
+
+        This method:
+        - Validate the data
+        - Warn the user if the model has already been fitted
+        - Store the original columns and convert them to string if needed
+        """
+        self.validate(data)
+        if self._fitted:
+            warnings.warn(
+                'This model has already been fitted. To use the new preprocessed data, '
+                "please refit the model using 'fit' or 'fit_processed_data'."
+            )
+
+        return data
+
     def preprocess(self, data):
         """Transform the raw data to numerical space.
 
@@ -570,13 +568,8 @@ class BaseSynthesizer:
             pandas.DataFrame:
                 The preprocessed data.
         """
-        if self._fitted:
-            warnings.warn(
-                'This model has already been fitted. To use the new preprocessed data, '
-                "please refit the model using 'fit' or 'fit_processed_data'."
-            )
-
         is_converted = self._store_and_convert_original_cols(data)
+        data = self._preprocess_helper(data)
         preprocess_data = self._preprocess(data)
         if is_converted:
             data.columns = self._original_columns
@@ -737,6 +730,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         super().__init__(metadata, enforce_min_max_values, enforce_rounding, locales)
         self._chained_patterns = []  # chain of patterns used to preprocess the data
         self._reject_sampling_patterns = []  # patterns used only for reject sampling
+        self._constraints_fitted = False
 
     def add_cag(self, patterns):
         """Add the list of constraint-augmented generation patterns to the synthesizer.
@@ -809,55 +803,68 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 elif attribute == '_chained_patterns':
                     transformed_data = pattern.transform(data=transformed_data)
 
-    def _transform_helper(self, data):
-        """Validate and transform all CAG patterns during preprocessing.
+    def _validate_transform_constraints(self, data, enforce_constraint_fitting=False):
+        """Validate the data against the constraints and transform it.
 
-        Args:
-            data (dict[str, pd.DataFrame]):
-                The data dictionary.
-        """
-        if self._fitted:
-            for pattern in self._chained_patterns:
-                data = pattern.transform(data)
-            return data
-
-        metadata = self._original_metadata
-        original_data = data
-        for pattern in self._chained_patterns:
-            pattern.fit(data, metadata)
-            metadata = pattern.get_updated_metadata(metadata)
-            data = pattern.transform(data)
-
-        for pattern in self._reject_sampling_patterns:
-            pattern.fit(original_data, self._original_metadata)
-
-        return data
-
-    def preprocess(self, data):
-        """Transform the raw data to numerical space.
+        If the constraints are already fitted, it will only transform the data.
+        If not, it will fit the constraints and then transform the data.
+        The constraints validation is done during the fitting process.
 
         Args:
             data (pandas.DataFrame):
-                The raw data to be transformed.
-
-        Returns:
-            pandas.DataFrame:
-                The preprocessed data.
+                The data to validate.
+            enforce_constraint_fitting (bool):
+                Whether to enforce fitting the constraints again. If set to ``True``, the
+                constraints will be fitted again even if they have already been fitted.
+                Defaults to ``False``.
         """
-        if self._fitted:
-            warnings.warn(
-                'This model has already been fitted. To use the new preprocessed data, '
-                "please refit the model using 'fit' or 'fit_processed_data'."
-            )
+        if self._constraints_fitted and not enforce_constraint_fitting:
+            for pattern in self._chained_patterns:
+                data = pattern.transform(data)
 
-        is_converted = self._store_and_convert_original_cols(data)
-        data = self._transform_helper(data)
-        preprocess_data = self._preprocess(data)
+            return data
 
-        if is_converted:
-            data.columns = self._original_columns
+        metadata = getattr(self, '_original_metadata', self.metadata)
+        if hasattr(self, '_reject_sampling_patterns'):
+            for pattern in self._reject_sampling_patterns:
+                pattern.fit(data=data, metadata=self._original_metadata)
 
-        return preprocess_data
+        if hasattr(self, '_chained_patterns'):
+            for pattern in self._chained_patterns:
+                pattern.fit(data=data, metadata=metadata)
+                metadata = pattern.get_updated_metadata(metadata)
+                data = pattern.transform(data)
+
+        self._constraints_fitted = True
+        return data
+
+    def validate(self, data):
+        """Validate data.
+
+        This method will validate the data against:
+        - The metadata
+        - The constraints
+        - The CAG patterns
+
+        To make it work with the cags we temporarily set the metadata to the original one
+        and then restore it.
+
+        Args:
+            data (pandas.DataFrame):
+                The data to validate.
+        """
+        metadata = self.metadata
+        self.metadata = self._original_metadata
+
+        super().validate(data)
+        self._validate_transform_constraints(data, enforce_constraint_fitting=True)
+        self.metadata = metadata
+
+    def _preprocess_helper(self, data):
+        data = super()._preprocess_helper(data)
+        data = self._validate_transform_constraints(data)
+
+        return data
 
     def _set_random_state(self, random_state):
         """Set the random state of the model's random number generator.
