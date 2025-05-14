@@ -19,6 +19,7 @@ from rdt.transformers import (
 
 from sdv import version
 from sdv.cag._errors import PatternNotMetError
+from sdv.cag.programmable_constraint import SingleTableProgrammableConstraint
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.numerical_formatter import NumericalFormatter
@@ -1220,7 +1221,7 @@ class TestBaseSingleTableSynthesizer:
         pd.testing.assert_frame_equal(sampled, data)
         instance._sample.assert_called_once_with(3)
         instance._data_processor.reverse_transform.assert_called_once_with(
-            instance._sample.return_value
+            instance._sample.return_value, conditions=None
         )
         instance._data_processor.filter_valid.assert_called_once_with(
             instance._data_processor.reverse_transform.return_value
@@ -1252,7 +1253,7 @@ class TestBaseSingleTableSynthesizer:
         pd.testing.assert_frame_equal(sampled, data[data.name == 'John Doe'])
         instance._sample.assert_called_once_with(3, {'salary': 80.0})
         instance._data_processor.reverse_transform.assert_called_once_with(
-            instance._sample.return_value
+            instance._sample.return_value, conditions=conditions
         )
         instance._data_processor.filter_valid.assert_called_once_with(
             instance._data_processor.reverse_transform.return_value
@@ -1290,7 +1291,7 @@ class TestBaseSingleTableSynthesizer:
         pd.testing.assert_frame_equal(sampled, expected_data)
         instance._sample.assert_called_once_with(3)
         instance._data_processor.reverse_transform.assert_called_once_with(
-            instance._sample.return_value
+            instance._sample.return_value, conditions=None
         )
 
     def test__sample_rows_notimplementederror(self):
@@ -1899,9 +1900,30 @@ class TestBaseSingleTableSynthesizer:
             instance.sample(5)
 
     def test__validate_conditions_unseen_columns(self):
+        """Test that conditions are within the original metadata columns."""
+        # Setup
+        instance = Mock()
+        instance._original_metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'name': {'sdtype': 'categorical'},
+                        'surname': {'sdtype': 'categorical'},
+                    }
+                }
+            }
+        })
+        instance._table_name = 'table'
+        conditions = pd.DataFrame({'name': ['Johanna'], 'surname': ['Doe']})
+
+        # Run and Assert
+        BaseSingleTableSynthesizer._validate_conditions_unseen_columns(instance, conditions)
+
+    def test__validate_conditions_unseen_columns_backwards_compatability(self):
         """Test that conditions are within the ``data_processor`` fields."""
         # Setup
         instance = Mock()
+        delattr(instance, '_original_metadata')
         instance._data_processor.get_sdtypes.return_value = {
             'name': 'categorical',
             'surname': 'categorical',
@@ -1915,9 +1937,35 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor.get_sdtypes.assert_called()
 
     def test__validate_conditions_unseen_columns_raises_error(self):
+        """Test that conditions are not in the original metadata columns."""
+        # Setup
+        instance = Mock()
+        instance._original_metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'name': {'sdtype': 'categorical'},
+                        'surname': {'sdtype': 'categorical'},
+                    }
+                }
+            }
+        })
+        instance._table_name = 'table'
+        conditions = pd.DataFrame({'names': ['Johanna'], 'surname': ['Doe']})
+
+        # Run and Assert
+        error_msg = re.escape(
+            "Unexpected column name 'names'. Use a column name that was present in the "
+            'original data.'
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            BaseSingleTableSynthesizer._validate_conditions_unseen_columns(instance, conditions)
+
+    def test__validate_conditions_unseen_columns_raises_error_backwards_compatability(self):
         """Test that conditions are not in the ``data_processor`` fields."""
         # Setup
         instance = Mock()
+        delattr(instance, '_original_metadata')
         instance._data_processor.get_sdtypes.return_value = {
             'name': 'categorical',
             'surname': 'categorical',
@@ -1928,6 +1976,31 @@ class TestBaseSingleTableSynthesizer:
         error_msg = re.escape(
             "Unexpected column name 'names'. Use a column name that was present in the "
             'original data.'
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            BaseSingleTableSynthesizer._validate_conditions_unseen_columns(instance, conditions)
+
+    def test__validate_conditions_primary_key_raises_error(self):
+        """Test that conditions containing the primary key error."""
+        # Setup
+        instance = Mock()
+        instance._original_metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'name': {'sdtype': 'id'},
+                        'surname': {'sdtype': 'categorical'},
+                    },
+                    'primary_key': 'name',
+                },
+            }
+        })
+        instance._table_name = 'table'
+        conditions = pd.DataFrame({'name': ['Johanna'], 'surname': ['Doe']})
+
+        # Run and Assert
+        error_msg = re.escape(
+            "Cannot condtionally sample column name 'name' because it is the primary key."
         )
         with pytest.raises(ValueError, match=error_msg):
             BaseSingleTableSynthesizer._validate_conditions_unseen_columns(instance, conditions)
@@ -1951,11 +2024,27 @@ class TestBaseSingleTableSynthesizer:
         with pytest.raises(SynthesizerInputError, match=error_msg):
             synthesizer._validate_conditions(conditions)
 
-    def test__sample_with_conditions_constraints_not_met(self):
+    def test__transform_conditions_chained_constraints_constraints_not_met(self):
+        """Test when conditions are not met."""
+        # Setup
+        conditions = pd.DataFrame({'name': ['Johanna'], 'salary': [100.0]})
+        instance = Mock()
+        instance._validate_transform_constraints.side_effect = [PatternNotMetError]
+
+        # Run and Assert
+        error_msg = 'Provided conditions are not valid for the given constraints.'
+        with pytest.raises(PatternNotMetError, match=error_msg):
+            BaseSingleTableSynthesizer._transform_conditions_chained_constraints(
+                instance,
+                conditions,
+            )
+
+    def test__sample_with_conditions_constraints_not_met_backwards_compatability(self):
         """Test when conditions are not met."""
         # Setup
         conditions = pd.DataFrame({'name': ['Johanna', 'Doe'], 'salary': [100.0, 90.0]})
         instance = Mock()
+        delattr(instance, '_chained_patterns')
         instance._data_processor.transform.side_effect = [ConstraintsNotMetError]
 
         # Run and Assert
@@ -1968,12 +2057,12 @@ class TestBaseSingleTableSynthesizer:
                 10,
             )
 
-    def test__sample_with_conditions_transformed_whith_transformed_data(self):
+    def test__sample_with_conditions_transformed_with_transformed_data(self):
         """Test when the condition is transformed, this is being used to conditionally sample."""
         # Setup
         conditions = pd.DataFrame({'name': ['Johanna', 'Doe']})
         instance = Mock()
-        instance._data_processor.transform.side_effect = [
+        instance._transform_conditions_chained_constraints.side_effect = [
             pd.DataFrame({'name': [0.25]}),
             pd.DataFrame({'name': [0.90]}),
         ]
@@ -2020,7 +2109,7 @@ class TestBaseSingleTableSynthesizer:
             'output_file_path': None,
         }
 
-    def test__sample_with_conditions_no_transformed_conditions(self):
+    def test__transform_conditions_chained_constraints_no_transformed_conditions(self):
         """Test when the conditions are not being transformed.
 
         Test that when the conditions are not transformable, this calls the conditional
@@ -2029,6 +2118,7 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         conditions = pd.DataFrame({'name': ['Johanna']})
         instance = Mock()
+        instance._validate_transform_constraints.side_effect = [KeyError]
         instance._data_processor.transform.side_effect = [
             pd.DataFrame(),
             pd.DataFrame(),
@@ -2036,28 +2126,13 @@ class TestBaseSingleTableSynthesizer:
         instance._conditionally_sample_rows.return_value = pd.DataFrame()
 
         # Run
-        result = BaseSingleTableSynthesizer._sample_with_conditions(
+        result = BaseSingleTableSynthesizer._transform_conditions_chained_constraints(
             instance,
             conditions,
-            10,
-            10,
         )
 
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame())
-        sample_call = instance._conditionally_sample_rows.call_args_list[0][1]
-        call_dataframe = sample_call.pop('dataframe')
-        pd.testing.assert_frame_equal(
-            call_dataframe, pd.DataFrame({COND_IDX: [0], 'name': ['Johanna']})
-        )
-        assert sample_call == {
-            'condition': {'name': 'Johanna'},
-            'transformed_condition': None,
-            'max_tries_per_batch': 10,
-            'batch_size': 10,
-            'progress_bar': None,
-            'output_file_path': None,
-        }
 
     @patch('sdv.single_table.base.os')
     @patch('sdv.single_table.base.check_num_rows')
@@ -2367,6 +2442,47 @@ class TestBaseSingleTableSynthesizer:
         # Run and Assert
         with pytest.raises(RuntimeError, match='Error'):
             BaseSingleTableSynthesizer.load('synth.pkl')
+
+    @patch('sdv.single_table.base.DataProcessor')
+    @patch('sdv.single_table.base.ProgrammableConstraintHarness')
+    def test_add_cag(self, mock_programmable_constraint_harness, mock_data_processor):
+        """Test adding constraints to the synthesizer."""
+        # Setup
+        instance = Mock()
+        instance._chained_patterns = []
+        instance._reject_sampling_patterns = []
+
+        pattern1 = Mock()
+        pattern2 = Mock()
+        pattern3 = Mock()
+        pattern3.get_updated_metadata.side_effect = [PatternNotMetError, None]
+        pattern4 = SingleTableProgrammableConstraint()
+        mock_harness = Mock()
+        mock_programmable_constraint_harness.return_value = mock_harness
+
+        # Run
+        BaseSingleTableSynthesizer.add_cag(instance, [pattern1, pattern2])
+        instance._fitted = True
+        BaseSingleTableSynthesizer.add_cag(instance, [pattern3, pattern4])
+
+        # Assert
+        assert instance._chained_patterns == [pattern1, pattern2, mock_harness]
+        assert instance._reject_sampling_patterns == [pattern3]
+        mock_programmable_constraint_harness.assert_called_once_with(pattern4)
+        mock_data_processor.assert_has_calls([
+            call(
+                metadata=pattern2.get_updated_metadata()._convert_to_single_table.return_value,
+                enforce_rounding=instance.enforce_rounding,
+                enforce_min_max_values=instance.enforce_min_max_values,
+                locales=instance.locales,
+            ),
+            call(
+                metadata=mock_harness.get_updated_metadata()._convert_to_single_table.return_value,
+                enforce_rounding=instance.enforce_rounding,
+                enforce_min_max_values=instance.enforce_min_max_values,
+                locales=instance.locales,
+            ),
+        ])
 
     def test_add_custom_constraint_class(self):
         """Test that this method calls the ``DataProcessor``'s method."""

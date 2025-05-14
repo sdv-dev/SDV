@@ -1,57 +1,148 @@
 import pandas as pd
 
-from sdv.constraints import create_custom_constraint_class
+from sdv.cag import ProgrammableConstraint, SingleTableProgrammableConstraint
 
 
-def is_valid(column_names, data):
-    """Validate the constraint."""
-    return pd.Series([value[0] > 1 for value in data[column_names].to_numpy()])
+class MyConstraint(ProgrammableConstraint):
+    def __init__(self, column_names, table_name):
+        self.column_names = column_names
+        self.table_name = table_name
+
+    def fit(self, data, metadata):
+        return
+
+    def transform(self, data):
+        data[self.table_name][self.column_names] = data[self.table_name][self.column_names] ** 2
+        return data
+
+    def reverse_transform(self, transformed_data):
+        table_data = transformed_data[self.table_name]
+        table_data[self.column_names] = table_data[self.column_names] // 2
+        transformed_data[self.table_name] = table_data
+        return transformed_data
+
+    def get_updated_metadata(self, metadata):
+        return metadata
+
+    def is_valid(self, synthetic_data):
+        is_valid = {
+            table_name: pd.Series([True] * len(table_data))
+            for table_name, table_data in synthetic_data.items()
+        }
+        table_data = synthetic_data[self.table_name]
+        is_valid_table = pd.Series([
+            value[0] > 1 for value in table_data[self.column_names].to_numpy()
+        ])
+        is_valid[self.table_name] = is_valid_table
+
+        return is_valid
 
 
-def transform(column_names, data):
-    """Transform the constraint."""
-    data[column_names] = data[column_names] ** 2
-    return data
+class MySingleTableConstraint(SingleTableProgrammableConstraint):
+    def __init__(self, column_names):
+        self.column_names = column_names
+
+    def fit(self, data, metadata):
+        return
+
+    def transform(self, data):
+        data[self.column_names] = data[self.column_names] ** 2
+        return data
+
+    def reverse_transform(self, transformed_data):
+        transformed_data[self.column_names] = transformed_data[self.column_names] // 2
+        return transformed_data
+
+    def get_updated_metadata(self, metadata):
+        return metadata
+
+    def is_valid(self, synthetic_data):
+        return pd.Series([value[0] > 1 for value in synthetic_data[self.column_names].to_numpy()])
 
 
-def reverse_transform(column_names, data):
-    """Reverse transform the constraint."""
-    data[column_names] = data[column_names] // 2
-    return data
+class IfTrueThenZero(ProgrammableConstraint):
+    def __init__(self, column_names, table_name):
+        self.column_names = column_names
+        self.table_name = table_name
+
+    def fit(self, data, metadata):
+        return
+
+    def transform(self, data):
+        table_data = data[self.table_name]
+        boolean_column = self.column_names[0]
+        numerical_column = self.column_names[1]
+        typical_value = data[numerical_column].median()
+        table_data[numerical_column] = data[numerical_column].mask(
+            data[boolean_column], typical_value
+        )
+        data[self.table_name] = table_data
+
+        return data
+
+    def reverse_transform(self, transformed_data):
+        table_data = transformed_data[self.table_name]
+        boolean_column = self.column_names[0]
+        numerical_column = self.column_names[1]
+        table_data[numerical_column] = table_data[numerical_column].mask(
+            table_data[boolean_column], 0.0
+        )
+        transformed_data[self.table_name] = table_data
+
+        return transformed_data
+
+    def get_updated_metadata(self, metadata):
+        return metadata
+
+    def is_valid(self, synthetic_data):
+        is_valid = {
+            table_name: pd.Series([True] * len(table_data))
+            for table_name, table_data in synthetic_data.items()
+        }
+        table_data = synthetic_data[self.table_name]
+        boolean_column = self.column_names[0]
+        numerical_column = self.column_names[1]
+        true_values = (table_data[boolean_column]) & (table_data[numerical_column] == 0.0)
+        false_values = ~table_data[boolean_column]
+        is_valid[self.table_name] = (true_values) | (false_values)
+
+        return is_valid
 
 
-MyConstraint = create_custom_constraint_class(is_valid, transform, reverse_transform)
+class SingleTableIfTrueThenZero(SingleTableProgrammableConstraint):
+    def __init__(self, column_names):
+        self.column_names = column_names
 
+    def fit(self, data, metadata):
+        return
 
-def amenities_is_valid(column_names, data):
-    """Validate that if ``has_rewards`` amenities fee is 0."""
-    boolean_column = column_names[0]
-    numerical_column = column_names[1]
-    true_values = (data[boolean_column]) & (data[numerical_column] == 0.0)
-    false_values = ~data[boolean_column]
+    def transform(self, data):
+        """Transform the data if amenities fee is to be applied."""
+        boolean_column = self.column_names[0]
+        numerical_column = self.column_names[1]
+        typical_value = data[numerical_column].median()
+        data[numerical_column] = data[numerical_column].mask(data[boolean_column], typical_value)
 
-    return (true_values) | (false_values)
+        return data
 
+    def reverse_transform(self, transformed_data):
+        """Reverse the data if amenities fee is to be applied."""
+        boolean_column = self.column_names[0]
+        numerical_column = self.column_names[1]
+        transformed_data[numerical_column] = transformed_data[numerical_column].mask(
+            transformed_data[boolean_column], 0.0
+        )
 
-def amenities_transform(column_names, data):
-    """Transform the data if amenities fee is to be applied."""
-    boolean_column = column_names[0]
-    numerical_column = column_names[1]
-    typical_value = data[numerical_column].median()
-    data[numerical_column] = data[numerical_column].mask(data[boolean_column], typical_value)
+        return transformed_data
 
-    return data
+    def get_updated_metadata(self, metadata):
+        return metadata
 
+    def is_valid(self, synthetic_data):
+        """Validate that if ``has_rewards`` amenities fee is 0."""
+        boolean_column = self.column_names[0]
+        numerical_column = self.column_names[1]
+        true_values = (synthetic_data[boolean_column]) & (synthetic_data[numerical_column] == 0.0)
+        false_values = ~synthetic_data[boolean_column]
 
-def amenities_reverse_transform(column_names, data):
-    """Reverse the data if amenities fee is to be applied."""
-    boolean_column = column_names[0]
-    numerical_column = column_names[1]
-    data[numerical_column] = data[numerical_column].mask(data[boolean_column], 0.0)
-
-    return data
-
-
-IfTrueThenZero = create_custom_constraint_class(
-    amenities_is_valid, amenities_transform, amenities_reverse_transform
-)
+        return (true_values) | (false_values)
