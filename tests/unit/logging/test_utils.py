@@ -42,6 +42,24 @@ def test_get_sdv_logger_config():
     }
 
 
+@patch('sdv.logging.utils.platformdirs.user_data_dir')
+@patch('sdv.logging.utils.Path.mkdir', side_effect=PermissionError)
+@patch('sdv.logging.utils.os.access', return_value=False)
+def test_get_logger_config_no_permissions(mock_os_access, mock_mkdir, mock_data_dir):
+    """Test get_sdv_logger_config when there is no write or read permission.
+
+    Return empty config when both user and default paths are inaccessible.
+    """
+    # Setup
+    mock_data_dir.return_value = '/no_permission/user/config'
+
+    # Run
+    config = get_sdv_logger_config()
+
+    # Assert
+    assert config == {}
+
+
 @patch('sdv.logging.utils.logging.getLogger')
 def test_disable_single_table_logger(mock_getlogger):
     # Setup

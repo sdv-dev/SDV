@@ -41,7 +41,11 @@ from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
 
 LOGGER = logging.getLogger(__name__)
-SYNTHESIZER_LOGGER = get_sdv_logger('SingleTableSynthesizer')
+
+try:
+    SYNTHESIZER_LOGGER = get_sdv_logger('SingleTableSynthesizer')
+except PermissionError:
+    SYNTHESIZER_LOGGER = LOGGER
 
 COND_IDX = str(uuid.uuid4())
 FIXED_RNG_SEED = 73251

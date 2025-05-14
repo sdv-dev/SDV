@@ -49,6 +49,7 @@ class TestCSVFormatter:
 @patch('sdv.logging.logger.logging.getLogger')
 @patch('sdv.logging.logger.get_sdv_logger_config')
 def test_get_sdv_logger(mock_get_sdv_logger_config, mock_getlogger, mock_streamhandler):
+    """Test basic logger setup with StreamHandler from config."""
     # Setup
     mock_logger_conf = {
         'log_registry': 'local',
@@ -76,6 +77,7 @@ def test_get_sdv_logger(mock_get_sdv_logger_config, mock_getlogger, mock_streamh
 def test_get_sdv_logger_csv(
     mock_get_sdv_logger_config, mock_getlogger, mock_filehandler, mock_csvformatter
 ):
+    """Test logger setup with FileHandler and CSVFormatter from config."""
     # Setup
     mock_logger_conf = {
         'log_registry': 'local',
@@ -103,3 +105,16 @@ def test_get_sdv_logger_csv(
     mock_filehandler.assert_called_once_with('logfile.csv')
     mock_filehandler_instance.setLevel.assert_called_once_with(logging.DEBUG)
     mock_filehandler_instance.setFormatter.assert_called_once_with(mock_csvformatter.return_value)
+
+
+@patch('sdv.logging.logger.get_sdv_logger_config', side_effect=PermissionError)
+def test_get_sdv_logger_permission_error(mock_get_sdv_logger_config):
+    """Test fallback to NullHandler when logger config raises PermissionError."""
+    # Setup
+    get_sdv_logger.cache_clear()
+
+    # Run
+    logger = get_sdv_logger('test_logger_csv')
+
+    # Assert
+    assert isinstance(logger.handlers[0], logging.NullHandler)
