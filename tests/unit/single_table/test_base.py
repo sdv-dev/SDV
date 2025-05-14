@@ -2021,21 +2021,19 @@ class TestBaseSingleTableSynthesizer:
         with pytest.raises(SynthesizerInputError, match=error_msg):
             synthesizer._validate_conditions(conditions)
 
-    def test__sample_with_conditions_constraints_not_met(self):
+    def test__transform_conditions_chained_constraints_constraints_not_met(self):
         """Test when conditions are not met."""
         # Setup
-        conditions = pd.DataFrame({'name': ['Johanna', 'Doe'], 'salary': [100.0, 90.0]})
+        conditions = pd.DataFrame({'name': ['Johanna'], 'salary': [100.0]})
         instance = Mock()
         instance._validate_transform_constraints.side_effect = [PatternNotMetError]
 
         # Run and Assert
         error_msg = 'Provided conditions are not valid for the given constraints.'
         with pytest.raises(PatternNotMetError, match=error_msg):
-            BaseSingleTableSynthesizer._sample_with_conditions(
+            BaseSingleTableSynthesizer._transform_conditions_chained_constraints(
                 instance,
                 conditions,
-                10,
-                10,
             )
 
     def test__sample_with_conditions_constraints_not_met_backwards_compatability(self):
@@ -2061,7 +2059,7 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         conditions = pd.DataFrame({'name': ['Johanna', 'Doe']})
         instance = Mock()
-        instance._data_processor.transform.side_effect = [
+        instance._transform_conditions_chained_constraints.side_effect = [
             pd.DataFrame({'name': [0.25]}),
             pd.DataFrame({'name': [0.90]}),
         ]
@@ -2108,7 +2106,7 @@ class TestBaseSingleTableSynthesizer:
             'output_file_path': None,
         }
 
-    def test__sample_with_conditions_no_transformed_conditions(self):
+    def test__transform_conditions_chained_constraints_no_transformed_conditions(self):
         """Test when the conditions are not being transformed.
 
         Test that when the conditions are not transformable, this calls the conditional
@@ -2125,28 +2123,13 @@ class TestBaseSingleTableSynthesizer:
         instance._conditionally_sample_rows.return_value = pd.DataFrame()
 
         # Run
-        result = BaseSingleTableSynthesizer._sample_with_conditions(
+        result = BaseSingleTableSynthesizer._transform_conditions_chained_constraints(
             instance,
             conditions,
-            10,
-            10,
         )
 
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame())
-        sample_call = instance._conditionally_sample_rows.call_args_list[0][1]
-        call_dataframe = sample_call.pop('dataframe')
-        pd.testing.assert_frame_equal(
-            call_dataframe, pd.DataFrame({COND_IDX: [0], 'name': ['Johanna']})
-        )
-        assert sample_call == {
-            'condition': {'name': 'Johanna'},
-            'transformed_condition': None,
-            'max_tries_per_batch': 10,
-            'batch_size': 10,
-            'progress_bar': None,
-            'output_file_path': None,
-        }
 
     @patch('sdv.single_table.base.os')
     @patch('sdv.single_table.base.check_num_rows')

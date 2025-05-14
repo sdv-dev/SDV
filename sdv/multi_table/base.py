@@ -184,7 +184,7 @@ class BaseMultiTableSynthesizer:
         self._initialize_models()
 
     def get_cag(self):
-        """Get a list of constraint-augmented generation patterns applied to the synthesizer."""
+        """Get a copy of the list of constraints applied to the synthesizer."""
         if not hasattr(self, 'patterns'):
             return []
 
