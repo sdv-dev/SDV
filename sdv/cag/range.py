@@ -89,6 +89,7 @@ class Range(BasePattern):
         self._low_column_name = low_column_name
         self._middle_column_name = middle_column_name
         self._high_column_name = high_column_name
+        self._fillna_low_column_name = f'{low_column_name}.fillna'
         self._low_diff_column_name = f'{self._low_column_name}#{self._middle_column_name}'
         self._high_diff_column_name = f'{self._middle_column_name}#{self._high_column_name}'
         joined_columns = '#'.join([
@@ -184,31 +185,35 @@ class Range(BasePattern):
 
     def _get_diff_and_nan_column_names(self, metadata, table_name):
         """Create unique names for the low, high, and nan component columns."""
-        low_diff_column = _create_unique_name(
-            self._low_diff_column_name, metadata.tables[table_name].columns.keys()
-        )
-        high_diff_column = _create_unique_name(
-            self._high_diff_column_name, metadata.tables[table_name].columns.keys()
-        )
-        nan_component_column = _create_unique_name(
-            self._nan_column_name, metadata.tables[table_name].columns.keys()
-        )
+        existing_columns = metadata.tables[table_name].columns.keys()
+        fillna_low_column = _create_unique_name(self._fillna_low_column_name, existing_columns)
+        low_diff_column = _create_unique_name(self._low_diff_column_name, existing_columns)
+        high_diff_column = _create_unique_name(self._high_diff_column_name, existing_columns)
+        nan_component_column = _create_unique_name(self._nan_column_name, existing_columns)
 
-        return low_diff_column, high_diff_column, nan_component_column
+        return fillna_low_column, low_diff_column, high_diff_column, nan_component_column
 
     def _get_updated_metadata(self, metadata):
         """Get the new output metadata after applying the pattern to the input metadata."""
         table_name = self._get_single_table_name(metadata)
-        low_diff_column, high_diff_column, nan_component_column = (
+        fillna_low_column, low_diff_column, high_diff_column, nan_component_column = (
             self._get_diff_and_nan_column_names(metadata, table_name)
         )
 
         metadata = metadata.to_dict()
+        original_col_metadata = metadata['tables'][table_name]['columns'][self._low_column_name]
+        metadata['tables'][table_name]['columns'][fillna_low_column] = original_col_metadata
         metadata['tables'][table_name]['columns'][low_diff_column] = {'sdtype': 'numerical'}
         metadata['tables'][table_name]['columns'][high_diff_column] = {'sdtype': 'numerical'}
         metadata['tables'][table_name]['columns'][nan_component_column] = {'sdtype': 'categorical'}
         return _remove_columns_from_metadata(
-            metadata, table_name, columns_to_drop=[self._high_column_name, self._middle_column_name]
+            metadata,
+            table_name,
+            columns_to_drop=[
+                self._low_column_name,
+                self._high_column_name,
+                self._middle_column_name,
+            ],
         )
 
     def _get_is_datetime(self, metadata, table_name):
@@ -241,9 +246,12 @@ class Range(BasePattern):
                 metadata, table_name, self._high_column_name
             )
 
-        self._low_diff_column_name, self._high_diff_column_name, self._nan_column_name = (
-            self._get_diff_and_nan_column_names(metadata, table_name)
-        )
+        (
+            self._fillna_low_column_name,
+            self._low_diff_column_name,
+            self._high_diff_column_name,
+            self._nan_column_name,
+        ) = self._get_diff_and_nan_column_names(metadata, table_name)
 
     def _transform(self, data):
         """Transform the data.
@@ -300,7 +308,7 @@ class Range(BasePattern):
             self._low_column_name: mean_value_low,
             self._low_diff_column_name: table_data[self._low_diff_column_name].mean(),
             self._high_diff_column_name: table_data[self._high_diff_column_name].mean(),
-        })
+        }).rename(columns={self._low_column_name: self._fillna_low_column_name})
 
         data[table_name] = table_data.drop(
             [self._middle_column_name, self._high_column_name], axis=1
@@ -324,7 +332,9 @@ class Range(BasePattern):
                 Transformed data.
         """
         table_name = self._get_single_table_name(self.metadata)
-        table_data = data[table_name]
+        table_data = data[table_name].rename(
+            columns={self._fillna_low_column_name: self._low_column_name}
+        )
         low_diff_column = np.exp(table_data[self._low_diff_column_name]) - 1
         high_diff_column = np.exp(table_data[self._high_diff_column_name]) - 1
         if self._dtype != np.dtype('float'):
