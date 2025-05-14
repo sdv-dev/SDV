@@ -691,9 +691,7 @@ def test_inequality_multiple_patterns_reject_sampling(
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-
     assert original_metadata.to_dict() == metadata.to_dict()
-
     assert all(samples['low'] <= samples['high'])
 
 
@@ -971,3 +969,25 @@ def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
     # Run and Assert
     with pytest.raises(PatternNotMetError, match=msg):
         synthesizer.validate_cag(synthetic_data=synthetic_data)
+
+
+def test_invalid_data():
+    """Test that the Inequality pattern raises an error with invalid data."""
+    # Setup
+    data, metadata = download_demo('single_table', 'fake_hotel_guests')
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    pattern = Inequality(
+        low_column_name='checkin_date',
+        high_column_name='checkout_date',
+        strict_boundaries=False,
+    )
+    synthesizer.add_cag(patterns=[pattern])
+    clean_data = data[~(data[['checkin_date', 'checkout_date']].isna().any(axis=1))]
+    data_invalid = clean_data.copy()
+    data_invalid.loc[0, 'checkin_date'] = '31 Dec 2020'
+    expected_error_msg = re.escape('The inequality requirement is not met for row indices: [0]')
+
+    # Run and Assert
+    synthesizer.fit(clean_data)
+    with pytest.raises(PatternNotMetError, match=expected_error_msg):
+        synthesizer.fit(data_invalid)

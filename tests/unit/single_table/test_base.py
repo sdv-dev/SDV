@@ -498,6 +498,51 @@ class TestBaseSingleTableSynthesizer:
         with pytest.raises(ValueError, match=error_msg):
             BaseSingleTableSynthesizer.get_transformers(instance)
 
+    @patch('sdv.single_table.base.warnings')
+    def test__preprocess_helper_basesynthesizer(self, mock_warnings):
+        """Test the ``_preprocess_helper`` method of the ``BaseSynthesizer``."""
+        # Setup
+        instance = Mock()
+        instance._fitted = True
+        data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
+
+        # Run
+        result = BaseSynthesizer._preprocess_helper(instance, data)
+
+        # Assert
+        expected_warning = (
+            'This model has already been fitted. To use the new preprocessed data, please '
+            "refit the model using 'fit' or 'fit_processed_data'."
+        )
+        mock_warnings.warn.assert_called_once_with(expected_warning)
+        instance.validate.assert_called_once_with(data)
+        pd.testing.assert_frame_equal(result, data)
+
+    @patch.object(BaseSynthesizer, '_preprocess_helper')
+    def test__preprocess_helper(self, mock_preprocess_helper):
+        """Test the ``_preprocess_helper`` method."""
+        # Setup
+        metadata = Metadata().load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'name': {'sdtype': 'id'},
+                    },
+                },
+            },
+        })
+        instance = BaseSingleTableSynthesizer(metadata)
+        data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
+        instance._validate_transform_constraints = Mock(return_value=data)
+        mock_preprocess_helper.return_value = data
+
+        # Run
+        result = instance._preprocess_helper(data)
+
+        # Assert
+        pd.testing.assert_frame_equal(result, data)
+        instance._validate_transform_constraints.assert_called_once_with(data)
+
     def test__preprocess(self):
         """Test the method preprocesses the data.
 
@@ -513,8 +558,6 @@ class TestBaseSingleTableSynthesizer:
         result = BaseSingleTableSynthesizer._preprocess(instance, data)
 
         # Assert
-        instance.validate.assert_called_once()
-        pd.testing.assert_frame_equal(instance.validate.call_args_list[0][0][0], data)
         assert result == instance._data_processor.transform.return_value
         instance._data_processor.fit.assert_called_once()
         pd.testing.assert_frame_equal(data, instance._data_processor.fit.call_args_list[0][0][0])
@@ -522,30 +565,24 @@ class TestBaseSingleTableSynthesizer:
             data, instance._data_processor.transform.call_args_list[0][0][0]
         )
 
-    @patch('sdv.single_table.base.warnings')
-    def test_preprocess(self, mock_warnings):
-        """Test the preprocess method.
-
-        The preprocess method raises a warning if it was already fitted and then calls
-        ``_preprocess``.
-        """
+    def test_preprocess(self):
+        """Test the preprocess method."""
         # Setup
         instance = Mock()
         instance._fitted = True
-        instance._store_and_convert_original_cols.return_value = False
         data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
-        instance._transform_helper.return_value = data
+        instance._preprocess_helper.return_value = data
+        instance._store_and_convert_original_cols = Mock(return_value=False)
+        instance._preprocess.return_value = data
 
         # Run
-        BaseSingleTableSynthesizer.preprocess(instance, data)
+        result = BaseSingleTableSynthesizer.preprocess(instance, data)
 
         # Assert
-        expected_warning = (
-            'This model has already been fitted. To use the new preprocessed data, please '
-            "refit the model using 'fit' or 'fit_processed_data'."
-        )
-        mock_warnings.warn.assert_called_once_with(expected_warning)
+        instance._store_and_convert_original_cols.assert_called_once_with(data)
+        instance._preprocess_helper.assert_called_once_with(data)
         instance._preprocess.assert_called_once_with(data)
+        pd.testing.assert_frame_equal(result, data)
 
     def test_preprocess_int_columns(self):
         """Test the preprocess method.
@@ -554,7 +591,18 @@ class TestBaseSingleTableSynthesizer:
         preprocess.
         """
         # Setup
-        instance = Mock()
+        metadata = Metadata().load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        1: {'sdtype': 'id'},
+                        2: {'sdtype': 'id'},
+                        'str': {'sdtype': 'id'},
+                    },
+                },
+            },
+        })
+        instance = BaseSingleTableSynthesizer(metadata)
         instance._fitted = False
         instance._original_columns = pd.Index([1, 2, 'str'])
         data = pd.DataFrame({
@@ -564,7 +612,7 @@ class TestBaseSingleTableSynthesizer:
         })
 
         # Run
-        BaseSingleTableSynthesizer.preprocess(instance, data)
+        instance.preprocess(data)
 
         # Assert
         corrected_frame = pd.DataFrame({
@@ -742,6 +790,55 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         instance._data_processor._fit_constraints.assert_called_once_with(data)
 
+    def test__validate_transform_constraints(self):
+        """Test the ``_validate_transform_constraints`` method."""
+        # Setup
+        data = pd.DataFrame()
+        original_metadata = Metadata()
+        metadata_1 = Metadata()
+        metadata_2 = Metadata()
+        instance = BaseSingleTableSynthesizer(original_metadata)
+        cag_mock_1 = Mock()
+        cag_mock_1.get_updated_metadata = Mock(return_value=metadata_1)
+        cag_mock_1.transform = Mock(return_value=data)
+        cag_mock_2 = Mock()
+        cag_mock_2.get_updated_metadata = Mock(return_value=metadata_2)
+        cag_mock_2.transform = Mock(return_value=data)
+        cag_mock_3 = Mock()
+        instance._chained_patterns = [cag_mock_1, cag_mock_2]
+        instance._reject_sampling_patterns = [cag_mock_3]
+
+        # Run and Assert
+        instance._validate_transform_constraints(data)
+
+        cag_mock_1.get_updated_metadata.assert_called_once_with(instance._original_metadata)
+        cag_mock_1.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
+        cag_mock_2.fit.assert_called_once_with(data=data, metadata=metadata_1)
+        cag_mock_3.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
+        assert instance._constraints_fitted is True
+
+        # Reset mock call history
+        cag_mock_1.fit.reset_mock()
+        cag_mock_1.transform.reset_mock()
+        cag_mock_2.fit.reset_mock()
+        cag_mock_2.transform.reset_mock()
+        cag_mock_3.fit.reset_mock()
+
+        # Re-run to check it only transforms when constraints are already fitted
+        instance._validate_transform_constraints(data)
+
+        cag_mock_1.transform.assert_called_once_with(data)
+        cag_mock_2.transform.assert_called_once_with(data)
+        cag_mock_1.fit.assert_not_called()
+        cag_mock_2.fit.assert_not_called()
+
+        # Check the constraints are fitted again with enforce_constraint_fitting=True
+        instance._validate_transform_constraints(data, enforce_constraint_fitting=True)
+
+        cag_mock_1.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
+        cag_mock_2.fit.assert_called_once_with(data=data, metadata=metadata_1)
+        cag_mock_3.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
+
     def test_validate(self):
         """Test the appropriate methods are called.
 
@@ -754,6 +851,7 @@ class TestBaseSingleTableSynthesizer:
         instance._validate_metadata = Mock()
         instance._validate_constraints = Mock()
         instance._validate = Mock(return_value=[])
+        instance._validate_transform_constraints = Mock()
 
         # Run
         instance.validate(data)
@@ -762,6 +860,9 @@ class TestBaseSingleTableSynthesizer:
         instance._validate_metadata.assert_called_once_with(data)
         instance._validate_constraints.assert_called_once_with(data)
         instance._validate.assert_called_once_with(data)
+        instance._validate_transform_constraints.assert_called_once_with(
+            data, enforce_constraint_fitting=True
+        )
 
     def test_validate_raises_constraints_error(self):
         """Test that a ``ConstraintsNotMetError`` is being raised.
@@ -839,7 +940,7 @@ class TestBaseSingleTableSynthesizer:
             'Primary key "key" is stored as an int but the Regex allows it to start with '
             '"0". Please remove the Regex or update it to correspond to valid ints.'
         )
-        with pytest.raises(SynthesizerInputError, match=message):
+        with pytest.raises(InvalidDataError, match=message):
             instance.validate(data)
 
     def test_validate_int_primary_key_regex_does_not_start_with_zero(self):
@@ -1746,7 +1847,7 @@ class TestBaseSingleTableSynthesizer:
         )
         instance.get_metadata.return_value._constraints = False
         instance._sample_with_progress_bar.return_value = pd.DataFrame({'col': [1, 2, 3]})
-        instance._reverse_transform_helper.return_value = pd.DataFrame({'col': [1, 2, 3]})
+        instance._reverse_transform_constraints.return_value = pd.DataFrame({'col': [1, 2, 3]})
 
         # Run
         with catch_sdv_logs(caplog, logging.INFO, logger='SingleTableSynthesizer'):
@@ -2443,7 +2544,7 @@ class TestBaseSingleTableSynthesizer:
             }
 
     def test_validate_cag(self):
-        """Test the ``_validate_cag`` method with multiple patterns."""
+        """Test the ``validate_cag`` method with multiple patterns."""
         # Setup
         synthetic_data = pd.DataFrame()
         transformed_data = pd.DataFrame()
@@ -2464,7 +2565,7 @@ class TestBaseSingleTableSynthesizer:
         cag_mock_2.transform.assert_called_once_with(data=transformed_data)
 
     def test_validate_cag_raises(self):
-        """Test the ``_validate_cag`` method raises an error."""
+        """Test the ``validate_cag`` method raises an error."""
         # Setup
         synthetic_data = pd.DataFrame()
         original_metadata = Metadata()
