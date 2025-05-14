@@ -63,10 +63,10 @@ class TestRange:
         assert instance._high_column_name == 'c'
         assert instance._low_diff_column_name == 'a#b'
         assert instance._high_diff_column_name == 'b#c'
+        assert instance._nan_column_name == 'a#b#c.nan_component'
         assert instance._operator == operator.lt
         assert instance._dtype is None
         assert instance._is_datetime is None
-        assert instance._nan_column_name is None
         assert instance.table_name is None
         assert instance._low_datetime_format is None
         assert instance._middle_datetime_format is None
@@ -404,6 +404,7 @@ class TestRange:
                         'col': {'sdtype': 'id'},
                         'low#middle': {'sdtype': 'numerical'},
                         'middle#high': {'sdtype': 'numerical'},
+                        'low#middle#high.nan_component': {'sdtype': 'categorical'},
                     },
                     'column_relationships': [
                         {'type': 'relationship', 'column_names': ['low', 'col']},
@@ -554,6 +555,7 @@ class TestRange:
             'col': [7, 8, 9],
             'a#b': [np.log(4)] * 3,
             'b#c': [np.log(4)] * 3,
+            'a#b#c.nan_component': [None] * 3,
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -601,6 +603,7 @@ class TestRange:
             'a': [1, 2, 3],
             'a#b': [np.log(2)] * 3,
             'b#c': [np.log(2)] * 3,
+            'a#b#c.nan_component': [None] * 3,
         })
         pd.testing.assert_frame_equal(output_with_nans, expected_output_with_nans)
         pd.testing.assert_frame_equal(output_without_nans, expected_output_without_nans)
@@ -630,7 +633,7 @@ class TestRange:
 
         # Assert
         output = output['table']
-        expected_column_name = ['a', 'col', 'a#b', 'a#b_', 'b#c']
+        expected_column_name = ['a', 'col', 'a#b', 'a#b_', 'b#c', 'a#b#c.nan_component']
         assert list(output.columns) == expected_column_name
 
     def test__transform_datetime(self):
@@ -662,6 +665,7 @@ class TestRange:
             'col': [7, 8],
             'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
             'b#c': [np.log(1_000_000_001), np.log(1_000_000_001)],
+            'a#b#c.nan_component': [None, None],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -695,6 +699,7 @@ class TestRange:
             'col': [1, 2],
             'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
             'b#c': [np.log(1_000_000_001), np.log(1_000_000_001)],
+            'a#b#c.nan_component': [None, None],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -707,6 +712,7 @@ class TestRange:
                 'col': [7, 8, 9],
                 'a#b': [np.log(4)] * 3,
                 'b#c': [np.log(4)] * 3,
+                'a#b#c.nan_component': [None] * 3,
             })
         }
         instance = Range(
@@ -748,6 +754,7 @@ class TestRange:
                 'col': [7, 8, 9],
                 'a#b': [np.log(4)] * 3,
                 'b#c': [np.log(4)] * 3,
+                'a#b#c.nan_component': [None] * 3,
             })
         }
         instance = Range(
@@ -789,6 +796,7 @@ class TestRange:
                 'col': [1, 2],
                 'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
                 'b#c': [np.log(1_000_000_001), np.log(1_000_000_001)],
+                'a#b#c.nan_component': [None] * 2,
             })
         }
         instance = Range(
@@ -831,6 +839,7 @@ class TestRange:
                 'col': [1, 2],
                 'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
                 'b#c': [np.log(1_000_000_001), np.log(1_000_000_001)],
+                'a#b#c.nan_component': [None, None],
             })
         }
         instance = Range(
@@ -926,12 +935,13 @@ class TestRange:
         # Setup
         table_data = {
             'table': pd.DataFrame({
-                'a': [datetime(2020, 5, 17), datetime(2021, 9, 1), np.nan],
+                'a': ['2020-5-17', '2021-9-1', None],
                 'b': [datetime(2020, 5, 18), datetime(2020, 9, 2), datetime(2020, 9, 2)],
                 'c': [datetime(2020, 5, 29), datetime(2021, 9, 3), np.nan],
                 'col': [7, 8, 9],
             })
         }
+
         instance = Range(
             low_column_name='a',
             middle_column_name='b',
@@ -939,6 +949,9 @@ class TestRange:
             table_name='table',
         )
         instance._fitted = True
+        instance._low_datetime_format = '%Y-%m-%d'
+        instance._is_datetime = True
+        instance._dtype = 'O'
 
         # Run
         out = instance.is_valid(table_data)

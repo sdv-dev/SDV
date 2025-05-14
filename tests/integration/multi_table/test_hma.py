@@ -244,15 +244,10 @@ class TestHMASynthesizer:
         # Setup
         parent_data, child_data, metadata = self.get_custom_constraint_data_and_metadata()
         synthesizer = HMASynthesizer(metadata)
-        constraint = {
-            'table_name': 'parent',
-            'constraint_class': 'MyConstraint',
-            'constraint_parameters': {'column_names': ['numerical_col']},
-        }
-        synthesizer.add_custom_constraint_class(MyConstraint, 'MyConstraint')
+        constraint = MyConstraint(column_names=['numerical_col'], table_name='parent')
 
         # Run
-        synthesizer.add_constraints(constraints=[constraint])
+        synthesizer.add_cag([constraint])
         processed_data = synthesizer.preprocess({'parent': parent_data, 'child': child_data})
 
         # Assert Processed Data
@@ -277,21 +272,11 @@ class TestHMASynthesizer:
         parent_data, child_data, metadata = self.get_custom_constraint_data_and_metadata()
         synthesizer = HMASynthesizer(metadata)
 
-        constraint_parent = {
-            'table_name': 'parent',
-            'constraint_class': 'MyConstraint',
-            'constraint_parameters': {'column_names': ['numerical_col']},
-        }
-
-        constraint_child = {
-            'table_name': 'child',
-            'constraint_class': 'MyConstraint',
-            'constraint_parameters': {'column_names': ['numerical_col_2']},
-        }
-        synthesizer.add_custom_constraint_class(MyConstraint, 'MyConstraint')
+        constraint_parent = MyConstraint(column_names=['numerical_col'], table_name='parent')
+        constraint_child = MyConstraint(column_names=['numerical_col_2'], table_name='child')
 
         # Run
-        synthesizer.add_constraints(constraints=[constraint_parent, constraint_child])
+        synthesizer.add_cag([constraint_parent, constraint_child])
         processed_data = synthesizer.preprocess({'parent': parent_data, 'child': child_data})
 
         # Assert Processed Data
@@ -312,37 +297,6 @@ class TestHMASynthesizer:
         assert all(sampled['parent']['numerical_col'] > 1)
         assert all(sampled['child']['numerical_col_2'] > 1)
         assert not all(sampled['child']['numerical_col'] > 1)
-
-    def test_hma_custom_constraint_loaded_from_file(self):
-        """Test an example of using a custom constraint loaded from a file."""
-        # Setup
-        parent_data, child_data, metadata = self.get_custom_constraint_data_and_metadata()
-        synthesizer = HMASynthesizer(metadata)
-        constraint = {
-            'table_name': 'parent',
-            'constraint_class': 'MyConstraint',
-            'constraint_parameters': {'column_names': ['numerical_col']},
-        }
-        synthesizer.load_custom_constraint_classes(
-            'tests/integration/single_table/custom_constraints.py', ['MyConstraint']
-        )
-
-        # Run
-        synthesizer.add_constraints(constraints=[constraint])
-        processed_data = synthesizer.preprocess({'parent': parent_data, 'child': child_data})
-
-        # Assert Processed Data
-        np.testing.assert_equal(
-            processed_data['parent']['numerical_col'].array,
-            (parent_data['numerical_col'] ** 2.0).array,
-        )
-
-        # Run - Fit the model
-        synthesizer.fit_processed_data(processed_data)
-
-        # Run - sample
-        sampled = synthesizer.sample(10)
-        assert all(sampled['parent']['numerical_col'] > 1)
 
     def test_hma_with_inequality_constraint(self):
         """Test that when new columns are created by the constraint this still works."""
