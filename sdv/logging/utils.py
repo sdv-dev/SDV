@@ -61,8 +61,12 @@ def disable_single_table_logger():
     """
     # Logging without ``SingleTableSynthesizer``
     single_table_logger = logging.getLogger('SingleTableSynthesizer')
-    handlers = single_table_logger.handlers
-    single_table_logger.handlers = []
+    if single_table_logger:
+        handlers = single_table_logger.handlers
+        single_table_logger.handlers = []
+    else:
+        handlers = []
+
     try:
         yield
     finally:
