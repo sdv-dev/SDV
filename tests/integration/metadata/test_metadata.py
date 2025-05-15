@@ -998,3 +998,113 @@ def test_validate_metadata_with_reused_foreign_keys():
     )
     with pytest.raises(InvalidMetadataError, match=error_msg):
         metadata.validate()
+
+
+def test_remove_table():
+    """Test that a table and all relationships it has are removed."""
+    # Setup
+    metadata_dict = {
+        'tables': {
+            'users': {
+                'columns': {
+                    'gender': {'sdtype': 'categorical'},
+                    'age': {'sdtype': 'numerical'},
+                    'name': {'sdtype': 'text'},
+                    'user_id': {'sdtype': 'id'},
+                },
+                'primary_key': 'user_id',
+            },
+            'transactions': {
+                'columns': {
+                    'user_id': {'sdtype': 'id'},
+                    'transaction_id': {'sdtype': 'id'},
+                    'product_id': {'sdtype': 'id'},
+                    'amount': {'sdtype': 'numerical'},
+                },
+                'primary_key': 'transaction_id',
+            },
+            'products': {
+                'columns': {
+                    'product_id': {'sdtype': 'id'},
+                    'cost': {'sdtype': 'numerical'},
+                    'weight': {'sdtype': 'numerical'},
+                    'manufacturer': {'sdtype': 'id'},
+                },
+                'primary_key': 'product_id',
+            },
+            'manufacturers': {
+                'columns': {
+                    'country': {'sdtype': 'categorical'},
+                    'address': {'sdtype': 'text'},
+                    'id': {'sdtype': 'id'},
+                },
+                'primary_key': 'id',
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'users',
+                'parent_primary_key': 'user_id',
+                'child_table_name': 'transactions',
+                'child_foreign_key': 'user_id',
+            },
+            {
+                'parent_table_name': 'products',
+                'parent_primary_key': 'product_id',
+                'child_table_name': 'transactions',
+                'child_foreign_key': 'product_id',
+            },
+            {
+                'parent_table_name': 'manufacturers',
+                'parent_primary_key': 'id',
+                'child_table_name': 'products',
+                'child_foreign_key': 'manufacturer',
+            },
+        ],
+    }
+    metadata = Metadata.load_from_dict(metadata_dict)
+
+    # Run
+    metadata.remove_table('products')
+
+    # Assert
+    expected_metadata_dict = {
+        'tables': {
+            'users': {
+                'columns': {
+                    'gender': {'sdtype': 'categorical'},
+                    'age': {'sdtype': 'numerical'},
+                    'name': {'sdtype': 'text'},
+                    'user_id': {'sdtype': 'id'},
+                },
+                'primary_key': 'user_id',
+            },
+            'transactions': {
+                'columns': {
+                    'user_id': {'sdtype': 'id'},
+                    'transaction_id': {'sdtype': 'id'},
+                    'product_id': {'sdtype': 'id'},
+                    'amount': {'sdtype': 'numerical'},
+                },
+                'primary_key': 'transaction_id',
+            },
+            'manufacturers': {
+                'columns': {
+                    'country': {'sdtype': 'categorical'},
+                    'address': {'sdtype': 'text'},
+                    'id': {'sdtype': 'id'},
+                },
+                'primary_key': 'id',
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'users',
+                'parent_primary_key': 'user_id',
+                'child_table_name': 'transactions',
+                'child_foreign_key': 'user_id',
+            },
+        ],
+        'METADATA_SPEC_VERSION': 'V1',
+    }
+    assert expected_metadata_dict == metadata.to_dict()

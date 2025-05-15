@@ -913,3 +913,27 @@ class TestMetadataClass:
             'nasdaq100_2019': expected_label,
         }
         visualize_graph_mock.assert_called_once_with(expected_nodes, [], None)
+
+    def test_remove_table_bad_table_name(self, metadata_instance):
+        """Test an error is raised if the table name does not exist in the metadata."""
+        # Run and Assert
+        expected_message = "The provided 'table_name' is not in the metadata."
+        with pytest.raises(ValueError, match=expected_message):
+            metadata_instance.remove_table('fake_table')
+
+    def test_remove_table_removes_table_and_relationships(self, metadata_instance):
+        """Test that the method removes the table and any relationships it was in."""
+        # Run
+        metadata_instance.remove_table('sessions')
+
+        # Assert
+        assert 'session' not in metadata_instance.tables
+        assert len(metadata_instance.tables) == 3
+        assert metadata_instance.relationships == [
+            {
+                'parent_table_name': 'users',
+                'parent_primary_key': 'id',
+                'child_table_name': 'payments',
+                'child_foreign_key': 'user_id',
+            },
+        ]
