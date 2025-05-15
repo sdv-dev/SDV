@@ -871,6 +871,16 @@ class TestMetadataClass:
         metadata._get_anonymized_dict.assert_called_once()
         mock_load_from_dict.assert_called_once_with({})
 
+    def test_copy(self, metadata_instance):
+        """Test that a copy but different instance is returned."""
+        # Run
+        copied_metadata = metadata_instance.copy()
+
+        # Assert
+        assert metadata_instance != copied_metadata
+        assert isinstance(copied_metadata, Metadata)
+        assert metadata_instance.to_dict() == copied_metadata.to_dict()
+
     @patch('sdv.metadata.multi_table.visualize_graph')
     def test_visualize_with_sequence_key_and_index(self, visualize_graph_mock):
         """Test the ``visualize`` method with sequence key and index"""
