@@ -58,8 +58,9 @@ class Inequality(BasePattern):
         self._validate_init_inputs(low_column_name, high_column_name, strict_boundaries, table_name)
         self._low_column_name = low_column_name
         self._high_column_name = high_column_name
+        self._fillna_low_column_name = f'{low_column_name}.fillna'
         self._diff_column_name = f'{self._low_column_name}#{self._high_column_name}'
-        self._nan_column_name = None
+        self._nan_column_name = f'{self._diff_column_name}.nan_component'
         self._operator = np.greater if strict_boundaries else np.greater_equal
         self.table_name = table_name
 
@@ -68,9 +69,6 @@ class Inequality(BasePattern):
         self._dtype = None
         self._low_datetime_format = None
         self._high_datetime_format = None
-
-        # Set during transform
-        self._nan_column_name = None
 
     def _validate_pattern_with_metadata(self, metadata):
         """Validate the pattern is compatible with the provided metadata.
@@ -170,23 +168,26 @@ class Inequality(BasePattern):
                 The name of the table that contains the columns.
         """
         column_names = metadata.tables[table_name].columns.keys()
+        fillna_low_column = _create_unique_name(f'{self._low_column_name}.fillna', column_names)
         diff_column = _create_unique_name(column_name, column_names)
         nan_diff_column = _create_unique_name(diff_column + '.nan_component', column_names)
 
-        return diff_column, nan_diff_column
+        return fillna_low_column, diff_column, nan_diff_column
 
     def _get_updated_metadata(self, metadata):
         """Get the new output metadata after applying the pattern to the input metadata."""
         table_name = self._get_single_table_name(metadata)
-        diff_column, nan_diff_column = self._get_diff_and_nan_column_names(
+        fillna_low_column, diff_column, nan_diff_column = self._get_diff_and_nan_column_names(
             metadata, self._diff_column_name, table_name
         )
 
         metadata = metadata.to_dict()
+        original_col_metadata = metadata['tables'][table_name]['columns'][self._low_column_name]
+        metadata['tables'][table_name]['columns'][fillna_low_column] = original_col_metadata
         metadata['tables'][table_name]['columns'][diff_column] = {'sdtype': 'numerical'}
         metadata['tables'][table_name]['columns'][nan_diff_column] = {'sdtype': 'categorical'}
         return _remove_columns_from_metadata(
-            metadata, table_name, columns_to_drop=[self._high_column_name]
+            metadata, table_name, columns_to_drop=[self._low_column_name, self._high_column_name]
         )
 
     def _fit(self, data, metadata):
@@ -202,8 +203,8 @@ class Inequality(BasePattern):
         table_data = data[table_name]
         self._dtype = table_data[self._high_column_name].dtypes
         self._is_datetime = self._get_is_datetime(metadata, table_name)
-        self._diff_column_name, self._nan_column_name = self._get_diff_and_nan_column_names(
-            metadata, self._diff_column_name, table_name
+        self._fillna_low_column_name, self._diff_column_name, self._nan_column_name = (
+            self._get_diff_and_nan_column_names(metadata, self._diff_column_name, table_name)
         )
         if self._is_datetime:
             self._low_datetime_format = self._get_datetime_format(
@@ -254,7 +255,7 @@ class Inequality(BasePattern):
         table_data = table_data.fillna({
             self._low_column_name: mean_value_low,
             self._diff_column_name: table_data[self._diff_column_name].mean(),
-        })
+        }).rename(columns={self._low_column_name: self._fillna_low_column_name})
 
         data[table_name] = table_data.drop(self._high_column_name, axis=1)
 
@@ -277,7 +278,9 @@ class Inequality(BasePattern):
                 Transformed data.
         """
         table_name = self._get_single_table_name(self.metadata)
-        table_data = data[table_name]
+        table_data = data[table_name].rename(
+            columns={self._fillna_low_column_name: self._low_column_name}
+        )
         diff_column = np.exp(table_data[self._diff_column_name]) - 1
         if self._dtype != np.dtype('float'):
             diff_column = diff_column.round()
