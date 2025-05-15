@@ -44,7 +44,7 @@ class ProgrammableConstraint:
             data (dict[pd.DataFrame]):
                 The input data to fit on.
         """
-        raise NotImplementedError()
+        return
 
     def transform(self, data):
         """Update the data in order to adhere to the constraint.

@@ -20,7 +20,6 @@ class TestProgrammableConstraint:
     @pytest.mark.parametrize(
         ('method', 'kwargs'),
         [
-            (ProgrammableConstraint.fit, {'data': {}, 'metadata': Metadata()}),
             (ProgrammableConstraint.transform, {'data': {}}),
             (ProgrammableConstraint.get_updated_metadata, {'metadata': Metadata()}),
             (ProgrammableConstraint.reverse_transform, {'transformed_data': {}}),
@@ -28,7 +27,7 @@ class TestProgrammableConstraint:
         ],
     )
     def test_all_required_methods(self, method, kwargs):
-        """Test all methods required to be implemented raise NotImplementedErrors."""
+        """Test all methods except fit, required to be implemented raise NotImplementedErrors."""
         # Setup
         instance = ProgrammableConstraint()
 
