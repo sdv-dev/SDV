@@ -174,12 +174,14 @@ class BasePattern:
         """
         data = self._convert_data_to_dictionary(data, self.metadata, copy=True)
         reverse_transformed = self._reverse_transform(data)
+        missing_columns = []
         for table_name, table in reverse_transformed.items():
             required_columns = self._original_data_columns[table_name]
-            # Add missing columns not sampled yet (foreign key in HMA for instance)
+            # Temporarily add missing columns not sampled yet
             for col in required_columns:
                 if col not in table.columns:
                     table[col] = 0
+                    missing_columns.append(col)
 
             table = table[self._original_data_columns[table_name]]
             try:
@@ -188,6 +190,7 @@ class BasePattern:
                 # iterate over the columns and cast individually
                 self._table_as_type_by_col(reverse_transformed, table, table_name)
 
+            table = table.drop(columns=missing_columns)
         if self._single_table:
             return reverse_transformed[self._table_name]
 
