@@ -364,6 +364,15 @@ class Metadata(MultiTableMetadata):
         table_metadata = super().get_table_metadata(table_name)
         return Metadata.load_from_dict(table_metadata.to_dict(), single_table_name=table_name)
 
+    def copy(self):
+        """Return a copy of the metadata.
+
+        Returns:
+            Metadata:
+                Copy of current metadata.
+        """
+        return Metadata.load_from_dict(self.to_dict())
+
     def anonymize(self):
         """Anonymize metadata by obfuscating column names.
 
