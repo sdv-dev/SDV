@@ -73,7 +73,6 @@ class BaseHierarchicalSampler:
         if num_rows is None:
             num_rows = synthesizer._num_rows
 
-        # breakpoint()
         return synthesizer._sample_batch(round(num_rows), keep_extra_columns=True)
 
     def _add_child_rows(self, child_name, parent_name, parent_row, sampled_data, num_rows=None):
@@ -316,7 +315,6 @@ class BaseHierarchicalSampler:
                 send_min_sample_warning = True
                 num_rows = 1
             synthesizer = self._table_synthesizers[table]
-            # breakpoint()
             LOGGER.info(f'Sampling {num_rows} rows from table {table}')
             sampled_data[table] = self._sample_rows(synthesizer, num_rows)
             self._sample_children(table_name=table, sampled_data=sampled_data, scale=scale)

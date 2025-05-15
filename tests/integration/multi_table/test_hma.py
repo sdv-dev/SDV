@@ -2678,6 +2678,7 @@ def test_end_to_end_with_cags():
     # Run
     synthesizer.fit(data)
     synthetic_data = synthesizer.sample(scale=1.0)
+
     with pytest.raises(PatternNotMetError, match=expected_error_msg):
         synthesizer.fit(invalid_data)
 
