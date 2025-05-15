@@ -334,8 +334,7 @@ class Metadata(MultiTableMetadata):
             table_name (str):
                 The name of the table to remove.
         """
-        if table_name not in self.tables:
-            raise ValueError("The provided 'table_name' is not in the metadata.")
+        self._validate_table_exists(table_name)
 
         # Remove relationships
         updated_relationships = []

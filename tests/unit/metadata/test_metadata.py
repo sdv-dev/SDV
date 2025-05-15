@@ -917,8 +917,8 @@ class TestMetadataClass:
     def test_remove_table_bad_table_name(self, metadata_instance):
         """Test an error is raised if the table name does not exist in the metadata."""
         # Run and Assert
-        expected_message = "The provided 'table_name' is not in the metadata."
-        with pytest.raises(ValueError, match=expected_message):
+        expected_message = re.escape("Unknown table name ('fake_table').")
+        with pytest.raises(InvalidMetadataError, match=expected_message):
             metadata_instance.remove_table('fake_table')
 
     def test_remove_table_removes_table_and_relationships(self, metadata_instance):
