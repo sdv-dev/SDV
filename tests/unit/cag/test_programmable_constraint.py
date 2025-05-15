@@ -50,6 +50,17 @@ class TestProgrammableConstraint:
         # Run and Assert
         assert method(instance, **kwargs) is None
 
+    def test_fit_returns_none(self):
+        """Test that the `fit` method returns `None` and doesn't crash."""
+        # Setup
+        constraint = ProgrammableConstraint()
+
+        # Run
+        result = constraint.fit(object(), object())
+
+        # Assert
+        assert result is None
+
     def test_fix_data(self):
         """Test the ``fix_data`` method returns original data by default"""
         # Setup
