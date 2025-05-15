@@ -7,6 +7,50 @@ from sdv.datasets.demo import download_demo
 from sdv.single_table import GaussianCopulaSynthesizer
 
 
+class SingleTableIfTrueThenZero(SingleTableProgrammableConstraint):
+    """Custom constraint that ensures that if a flag column is True."""
+
+    def __init__(self, target_column, flag_column):
+        self.target_column = target_column
+        self.flag_column = flag_column
+
+    def validate(self, metadata):
+        table_name = metadata._get_single_table_name()
+        assert metadata.tables[table_name].columns[self.target_column]['sdtype'] == 'numerical'
+        assert metadata.tables[table_name].columns[self.flag_column]['sdtype'] == 'boolean'
+
+    def validate_input_data(self, data):
+        return
+
+    def transform(self, data):
+        """Transform the data if amenities fee is to be applied."""
+        typical_value = data[self.target_column].median()
+        data[self.target_column] = data[self.target_column].mask(
+            data[self.flag_column], typical_value
+        )
+
+        return data
+
+    def reverse_transform(self, transformed_data):
+        """Reverse the data if amenities fee is to be applied."""
+        transformed_data[self.target_column] = transformed_data[self.target_column].mask(
+            transformed_data[self.flag_column], 0.0
+        )
+
+        return transformed_data
+
+    def get_updated_metadata(self, metadata):
+        return metadata
+
+    def is_valid(self, synthetic_data):
+        """Validate that if ``has_rewards`` amenities fee is 0."""
+        true_values = (synthetic_data[self.flag_column]) & (
+            synthetic_data[self.target_column] == 0.0
+        )
+        false_values = ~synthetic_data[self.flag_column]
+        return (true_values) | (false_values)
+
+
 @pytest.fixture
 def programmable_constraint():
     class MyConstraint(ProgrammableConstraint):
@@ -128,3 +172,23 @@ def test_end_to_end_single_table_programmable_constraint(single_table_programmab
     original_combinations = set(zip(data['has_rewards'], data['room_type']))
     assert set(zip(sampled_data['has_rewards'], sampled_data['room_type'])) == original_combinations
     assert isinstance(constraints[0], single_table_programmable_constraint)
+
+
+def test_end_to_end_simple_constraint_with_no_fit(programmable_constraint):
+    """Test using a programmable constraint without a fit method."""
+    # Setup
+    data, metadata = download_demo('single_table', 'fake_hotel_guests')
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    custom_constraint = SingleTableIfTrueThenZero(
+        target_column='amenities_fee', flag_column='has_rewards'
+    )
+
+    # Run
+    synthesizer.add_cag([custom_constraint])
+    synthesizer.fit(data)
+    sampled_data = synthesizer.sample(100)
+
+    # Assert
+    true_values = (sampled_data['has_rewards']) & (sampled_data['amenities_fee'] == 0.0)
+    false_values = ~sampled_data['has_rewards']
+    assert all((true_values) | (false_values))
