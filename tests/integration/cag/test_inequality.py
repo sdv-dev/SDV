@@ -84,13 +84,13 @@ def test_inequality_pattern_integers(data, metadata, pattern):
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
         'columns': {
-            'A': {'sdtype': 'numerical'},
+            'A.fillna': {'sdtype': 'numerical'},
             'A#B': {'sdtype': 'numerical'},
             'A#B.nan_component': {'sdtype': 'categorical'},
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-    assert list(transformed.columns) == ['A', 'A#B', 'A#B.nan_component']
+    assert list(transformed.columns) == ['A.fillna', 'A#B', 'A#B.nan_component']
     pd.testing.assert_frame_equal(data, reverse_transformed)
 
 
@@ -108,13 +108,13 @@ def test_inequality_pattern_with_nans(metadata, pattern):
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
         'columns': {
-            'A': {'sdtype': 'numerical'},
+            'A.fillna': {'sdtype': 'numerical'},
             'A#B': {'sdtype': 'numerical'},
             'A#B.nan_component': {'sdtype': 'categorical'},
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-    assert list(transformed.columns) == ['A', 'A#B', 'A#B.nan_component']
+    assert list(transformed.columns) == ['A.fillna', 'A#B', 'A#B.nan_component']
     pd.testing.assert_frame_equal(
         pd.concat([data.iloc[:2], data.iloc[3:]]),
         pd.concat([reverse_transformed.iloc[:2], reverse_transformed.iloc[3:]]),
@@ -157,13 +157,13 @@ def test_inequality_pattern_datetime(pattern):
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
         'columns': {
-            'A': {'sdtype': 'datetime'},
+            'A.fillna': {'sdtype': 'datetime'},
             'A#B': {'sdtype': 'numerical'},
             'A#B.nan_component': {'sdtype': 'categorical'},
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-    assert list(transformed.columns) == ['A', 'A#B', 'A#B.nan_component']
+    assert list(transformed.columns) == ['A.fillna', 'A#B', 'A#B.nan_component']
 
     # Check that the timestamps are very close to each other
     for col in ['A', 'B']:
@@ -205,13 +205,13 @@ def test_inequality_pattern_datetime_nans(pattern):
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
         'columns': {
-            'A': {'sdtype': 'datetime'},
+            'A.fillna': {'sdtype': 'datetime'},
             'A#B': {'sdtype': 'numerical'},
             'A#B.nan_component': {'sdtype': 'categorical'},
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-    assert list(transformed.columns) == ['A', 'A#B', 'A#B.nan_component']
+    assert list(transformed.columns) == ['A.fillna', 'A#B', 'A#B.nan_component']
 
     pd.testing.assert_series_equal(data['A'], reverse_transformed['A'])
     assert pd.Timestamp('2024-01-01') < reverse_transformed['B'][0] < pd.Timestamp('2024-01-07')
@@ -237,7 +237,7 @@ def test_inequality_pattern_with_multi_table(data_multi, metadata_multi, pattern
         'tables': {
             'table1': {
                 'columns': {
-                    'A': {'sdtype': 'numerical'},
+                    'A.fillna': {'sdtype': 'numerical'},
                     'A#B': {'sdtype': 'numerical'},
                     'A#B.nan_component': {'sdtype': 'categorical'},
                 }
@@ -250,7 +250,7 @@ def test_inequality_pattern_with_multi_table(data_multi, metadata_multi, pattern
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-    assert list(transformed['table1'].columns) == ['A', 'A#B', 'A#B.nan_component']
+    assert list(transformed['table1'].columns) == ['A.fillna', 'A#B', 'A#B.nan_component']
     assert set(data.keys()) == set(reverse_transformed.keys())
     for table_name, table in data.items():
         pd.testing.assert_frame_equal(table, reverse_transformed[table_name])
@@ -634,7 +634,7 @@ def test_inequality_multiple_patterns():
         high_column_name='high1',
     )
     pattern2 = Inequality(
-        low_column_name='low',
+        low_column_name='low.fillna',
         high_column_name='high2',
     )
 
@@ -649,11 +649,11 @@ def test_inequality_multiple_patterns():
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
         'columns': {
-            'low': {'sdtype': 'numerical'},
+            'low.fillna.fillna': {'sdtype': 'numerical'},
             'low#high1': {'sdtype': 'numerical'},
-            'low#high2': {'sdtype': 'numerical'},
+            'low.fillna#high2': {'sdtype': 'numerical'},
             'low#high1.nan_component': {'sdtype': 'categorical'},
-            'low#high2.nan_component': {'sdtype': 'categorical'},
+            'low.fillna#high2.nan_component': {'sdtype': 'categorical'},
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
@@ -684,7 +684,7 @@ def test_inequality_multiple_patterns_reject_sampling(
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
         'columns': {
-            'low': {'sdtype': 'numerical'},
+            'low.fillna': {'sdtype': 'numerical'},
             'low#high': {'sdtype': 'numerical'},
             'low2': {'sdtype': 'numerical'},
             'low#high.nan_component': {'sdtype': 'categorical'},
@@ -732,7 +732,7 @@ def test_inequality_multiple_patterns_one_pattern_invalid_column():
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
         'columns': {
-            'low': {'sdtype': 'numerical'},
+            'low.fillna': {'sdtype': 'numerical'},
             'low#mid': {'sdtype': 'numerical'},
             'low#mid.nan_component': {'sdtype': 'categorical'},
             'high': {'sdtype': 'numerical'},
@@ -769,19 +769,19 @@ def test_inequality_many_patterns():
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
         'columns': {
-            '0': {'sdtype': 'numerical'},
+            '0.fillna': {'sdtype': 'numerical'},
             '0#1': {'sdtype': 'numerical'},
             '0#1.nan_component': {'sdtype': 'categorical'},
-            '2': {'sdtype': 'numerical'},
+            '2.fillna': {'sdtype': 'numerical'},
             '2#3': {'sdtype': 'numerical'},
             '2#3.nan_component': {'sdtype': 'categorical'},
-            '4': {'sdtype': 'numerical'},
+            '4.fillna': {'sdtype': 'numerical'},
             '4#5': {'sdtype': 'numerical'},
             '4#5.nan_component': {'sdtype': 'categorical'},
-            '6': {'sdtype': 'numerical'},
+            '6.fillna': {'sdtype': 'numerical'},
             '6#7': {'sdtype': 'numerical'},
             '6#7.nan_component': {'sdtype': 'categorical'},
-            '8': {'sdtype': 'numerical'},
+            '8.fillna': {'sdtype': 'numerical'},
             '8#9': {'sdtype': 'numerical'},
             '8#9.nan_component': {'sdtype': 'categorical'},
         }
@@ -1015,15 +1015,35 @@ def test_auto_assign_transformer():
         " 'room_type': UniformEncoder(),"
         " 'amenities_fee': FloatFormatter(learn_rounding_scheme=True, "
         'enforce_min_max_values=True),'
-        " 'checkin_date': UnixTimestampEncoder(datetime_format='%d %b %Y',"
+        " 'room_rate': FloatFormatter(learn_rounding_scheme=True,"
         ' enforce_min_max_values=True),'
-        " 'room_rate': FloatFormatter(learn_rounding_scheme=True, enforce_min_max_values=True),"
-        " 'billing_address': AnonymizedFaker(provider_name='address', function_name='address',"
-        " locales=['en_US']),"
+        " 'billing_address': AnonymizedFaker(provider_name='address',"
+        " function_name='address', locales=['en_US']),"
         " 'credit_card_number': AnonymizedFaker(provider_name='credit_card',"
         " function_name='credit_card_number', locales=['en_US']),"
+        " 'checkin_date.fillna': UnixTimestampEncoder(datetime_format='%d %b %Y',"
+        ' enforce_min_max_values=True),'
         " 'checkin_date#checkout_date': FloatFormatter(learn_rounding_scheme=True,"
         ' enforce_min_max_values=True),'
         " 'checkin_date#checkout_date.nan_component': UniformEncoder()}"
     )
     assert str(synthesizer.get_transformers()) == expected_transformers
+
+
+def test_low_column_formatting_maintained():
+    """Test that the Inequality pattern works with auto-assign transformer."""
+    # Setup
+    data, metadata = download_demo('single_table', 'fake_hotel_guests')
+    inequality_cag = Inequality(
+        low_column_name='amenities_fee',
+        high_column_name='room_rate',
+    )
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_cag([inequality_cag])
+
+    # Run
+    synthesizer.fit(data)
+    sampled_data = synthesizer.sample(100)
+
+    # Assert
+    assert all(sampled_data['room_rate'].round(2) == sampled_data['room_rate'])

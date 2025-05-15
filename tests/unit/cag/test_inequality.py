@@ -46,11 +46,12 @@ class TestInequality:
         # Asserts
         assert instance._low_column_name == 'a'
         assert instance._high_column_name == 'b'
+        assert instance._fillna_low_column_name == 'a.fillna'
         assert instance._diff_column_name == 'a#b'
+        assert instance._nan_column_name == 'a#b.nan_component'
         assert instance._operator == np.greater_equal
         assert instance._dtype is None
         assert instance._is_datetime is None
-        assert instance._nan_column_name is None
         assert instance.table_name is None
         assert instance._low_datetime_format is None
         assert instance._high_datetime_format is None
@@ -429,14 +430,12 @@ class TestInequality:
             'tables': {
                 'table': {
                     'columns': {
-                        'low': {'sdtype': 'numerical'},
+                        'low.fillna': {'sdtype': 'numerical'},
                         'col': {'sdtype': 'id'},
                         'low#high': {'sdtype': 'numerical'},
                         'low#high.nan_component': {'sdtype': 'categorical'},
                     },
-                    'column_relationships': [
-                        {'type': 'relationship', 'column_names': ['low', 'col']},
-                    ],
+                    'column_relationships': [],
                 }
             }
         }).to_dict()
@@ -457,7 +456,9 @@ class TestInequality:
             }
         })
         instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
-        instance._get_diff_and_nan_column_names = Mock(return_value=('a#b', 'a#b.nan_component'))
+        instance._get_diff_and_nan_column_names = Mock(
+            return_value=('a.fillna', 'a#b', 'a#b.nan_component')
+        )
 
         # Run
         instance._fit(data, metadata)
@@ -550,7 +551,7 @@ class TestInequality:
         # Assert
         out = out['table']
         expected_out = pd.DataFrame({
-            'a': [1, 2, 3],
+            'a.fillna': [1, 2, 3],
             'c': [7, 8, 9],
             'a#b': [np.log(4)] * 3,
             'a#b.nan_component': [None] * 3,
@@ -581,13 +582,13 @@ class TestInequality:
         output_with_nans = output_with_nans['table']
         output_without_nans = output_without_nans['table']
         expected_output_with_nans = pd.DataFrame({
-            'a': [1.0, 2.0, 3.0, 2.0],
+            'a.fillna': [1.0, 2.0, 3.0, 2.0],
             'a#b': [np.log(2)] * 4,
             'a#b.nan_component': ['b', 'a', 'None', 'a, b'],
         })
 
         expected_output_without_nans = pd.DataFrame({
-            'a': [1, 2, 3],
+            'a.fillna': [1, 2, 3],
             'a#b': [np.log(2)] * 3,
             'a#b.nan_component': [None] * 3,
         })
@@ -599,7 +600,7 @@ class TestInequality:
     def test__get_new_column_names(self, mock_create_unique_name):
         """Test ``_get_diff_and_nan_column_names`` method."""
         # Setup
-        mock_create_unique_name.side_effect = ['a#b', 'a#b.nan_component']
+        mock_create_unique_name.side_effect = ['a.fillna', 'a#b', 'a#b.nan_component']
         instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
         metadata = Metadata.load_from_dict({
             'tables': {
@@ -615,12 +616,16 @@ class TestInequality:
         })
 
         # Run
-        diff_column, nan_column = instance._get_diff_and_nan_column_names(metadata, 'a#b', 'table')
+        fillna_low_column, diff_column, nan_column = instance._get_diff_and_nan_column_names(
+            metadata, 'a#b', 'table'
+        )
 
         # Assert
+        assert fillna_low_column == 'a.fillna'
         assert diff_column == 'a#b'
         assert nan_column == 'a#b.nan_component'
         mock_create_unique_name.assert_has_calls([
+            call('a.fillna', {'a', 'b', 'c'}),
             call('a#b', {'a', 'b', 'c'}),
             call('a#b.nan_component', {'a', 'b', 'c'}),
         ])
@@ -646,7 +651,7 @@ class TestInequality:
         # Assert
         out = out['table']
         expected_out = pd.DataFrame({
-            'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
+            'a.fillna': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
             'c': [1, 2],
             'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
             'a#b.nan_component': [None, None],
@@ -675,7 +680,7 @@ class TestInequality:
         # Assert
         out = out['table']
         expected_out = pd.DataFrame({
-            'a': ['2020-01-01T00:00:00', '2020-01-02T00:00:00'],
+            'a.fillna': ['2020-01-01T00:00:00', '2020-01-02T00:00:00'],
             'c': [1, 2],
             'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
             'a#b.nan_component': [None] * 2,
