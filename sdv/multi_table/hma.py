@@ -570,6 +570,10 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             synthesizer = self._null_child_synthesizers[f'__{child_name}__{foreign_key}']
 
         synthesizer._data_processor = self._table_synthesizers[child_name]._data_processor
+        synthesizer._chained_patterns = self._table_synthesizers[child_name]._chained_patterns
+        synthesizer._reject_sampling_patterns = self._table_synthesizers[
+            child_name
+        ]._reject_sampling_patterns
 
         return synthesizer
 

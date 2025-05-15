@@ -175,6 +175,12 @@ class BasePattern:
         data = self._convert_data_to_dictionary(data, self.metadata, copy=True)
         reverse_transformed = self._reverse_transform(data)
         for table_name, table in reverse_transformed.items():
+            required_columns = self._original_data_columns[table_name]
+            # Add missing columns not sampled yet (foreign key in HMA for instance)
+            for col in required_columns:
+                if col not in table.columns:
+                    table[col] = 0
+
             table = table[self._original_data_columns[table_name]]
             try:
                 reverse_transformed[table_name] = table.astype(self._dtypes[table_name])
