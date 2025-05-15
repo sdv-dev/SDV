@@ -1573,10 +1573,10 @@ class TestBaseMultiTableSynthesizer:
         )
 
         # Run
-        multi_table_cag1, single_table_cag1 = BaseMultiTableSynthesizer._detect_single_table_cag(
+        idx_single_table_1 = BaseMultiTableSynthesizer._detect_single_table_cag(
             instance, [pattern1, pattern2, pattern3, pattern4]
         )
-        multi_table_cag2, single_table_cag2 = BaseMultiTableSynthesizer._detect_single_table_cag(
+        idx_single_table_2 = BaseMultiTableSynthesizer._detect_single_table_cag(
             instance, [pattern3, pattern4]
         )
         with pytest.raises(SynthesizerInputError, match=expected_error):
@@ -1588,10 +1588,8 @@ class TestBaseMultiTableSynthesizer:
             )
 
         # Assert
-        assert multi_table_cag1 == [pattern1, pattern2]
-        assert single_table_cag1 == [pattern3, pattern4]
-        assert multi_table_cag2 == []
-        assert single_table_cag2 == [pattern3, pattern4]
+        assert idx_single_table_1 == 2
+        assert idx_single_table_2 == 0
 
     @patch('sdv.multi_table.base.ProgrammableConstraintHarness')
     def test_add_cag(self, mock_programmable_constraint_harness):
@@ -1616,9 +1614,7 @@ class TestBaseMultiTableSynthesizer:
         mutli_table_pattern = [pattern1, pattern2, pattern3]
         single_table_pattern = [pattern4]
         patterns = mutli_table_pattern + single_table_pattern
-        instance._detect_single_table_cag = Mock(
-            return_value=(mutli_table_pattern, single_table_pattern)
-        )
+        instance._detect_single_table_cag = Mock(return_value=3)
 
         # Run
         BaseMultiTableSynthesizer.add_cag(instance, patterns)
@@ -1634,6 +1630,7 @@ class TestBaseMultiTableSynthesizer:
             pattern2.get_updated_metadata.return_value
         )
         assert instance.metadata == mock_harness.get_updated_metadata.return_value
+        instance._detect_single_table_cag.assert_called_once_with(patterns)
         instance._initialize_models.assert_called_once()
         expected_patterns = [pattern1, pattern2, mock_harness]
         instance._table_synthesizers['table1'].add_cag.assert_called_once_with([pattern4])
@@ -1651,7 +1648,7 @@ class TestBaseMultiTableSynthesizer:
         pattern1 = Mock()
         pattern2 = Mock()
         instance.patterns = [pattern1]
-        instance._detect_single_table_cag = Mock(return_value=([pattern2], None))
+        instance._detect_single_table_cag = Mock(return_value=None)
 
         # Run
         BaseMultiTableSynthesizer.add_cag(instance, [pattern2])

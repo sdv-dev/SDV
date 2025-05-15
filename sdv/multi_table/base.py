@@ -171,6 +171,7 @@ class BaseMultiTableSynthesizer:
                 A list of CAG patterns to filter.
         """
         idx_single_table = None
+        seen_single_table = False
         for idx, pattern in enumerate(patterns):
             if self._has_seen_single_table_constraint and pattern._is_single_table is False:
                 raise SynthesizerInputError(
@@ -178,18 +179,12 @@ class BaseMultiTableSynthesizer:
                     'been applied.'
                 )
 
-            if pattern._is_single_table:
+            if pattern._is_single_table and not seen_single_table:
                 self._has_seen_single_table_constraint = True
-                idx_single_table = idx - 1
+                seen_single_table = True
+                idx_single_table = idx
 
-        if idx_single_table is not None:
-            multi_table_patterns = patterns[:idx_single_table]
-            single_table_patterns = patterns[idx_single_table:]
-        else:
-            multi_table_patterns = patterns
-            single_table_patterns = None
-
-        return multi_table_patterns, single_table_patterns
+        return idx_single_table
 
     def add_cag(self, patterns):
         """Add the list of constraint-augmented generation patterns to the synthesizer.
@@ -199,14 +194,19 @@ class BaseMultiTableSynthesizer:
                 A list of CAG patterns to apply to the synthesizer.
         """
         metadata = self.metadata
-        added_patterns = []
-        multi_table_patterns, single_table_patterns = self._detect_single_table_cag(patterns)
-        for pattern in multi_table_patterns:
+        multi_table_patterns = []
+        single_table_patterns = []
+        idx_single_table = self._detect_single_table_cag(patterns)
+        for idx, pattern in enumerate(patterns):
             if isinstance(pattern, ProgrammableConstraint):
                 pattern = ProgrammableConstraintHarness(pattern)
 
+            if idx_single_table is not None and idx >= idx_single_table:
+                single_table_patterns.append(pattern)
+                continue
+
+            multi_table_patterns.append(pattern)
             metadata = pattern.get_updated_metadata(metadata)
-            added_patterns.append(pattern)
 
         self.metadata = metadata
         self.patterns += multi_table_patterns
