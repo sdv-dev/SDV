@@ -1000,9 +1000,8 @@ def test_validate_metadata_with_reused_foreign_keys():
         metadata.validate()
 
 
-def test_remove_table():
-    """Test that a table and all relationships it has are removed."""
-    # Setup
+@pytest.fixture
+def metadata_instance():
     metadata_dict = {
         'tables': {
             'users': {
@@ -1038,6 +1037,15 @@ def test_remove_table():
                     'address': {'sdtype': 'text'},
                     'id': {'sdtype': 'id'},
                 },
+                'column_relationships': [
+                    {
+                        'type': 'address',
+                        'column_names': [
+                            'country',
+                            'address',
+                        ],
+                    },
+                ],
                 'primary_key': 'id',
             },
         },
@@ -1063,9 +1071,12 @@ def test_remove_table():
         ],
     }
     metadata = Metadata.load_from_dict(metadata_dict)
+    return metadata
 
+def test_remove_table(metadata_instance):
+    """Test that a table and all relationships it has are removed."""
     # Run
-    metadata.remove_table('products')
+    metadata_instance.remove_table('products')
 
     # Assert
     expected_metadata_dict = {
@@ -1094,6 +1105,15 @@ def test_remove_table():
                     'address': {'sdtype': 'text'},
                     'id': {'sdtype': 'id'},
                 },
+                'column_relationships': [
+                    {
+                        'type': 'address',
+                        'column_names': [
+                            'country',
+                            'address',
+                        ],
+                    },
+                ],
                 'primary_key': 'id',
             },
         },
@@ -1107,5 +1127,94 @@ def test_remove_table():
         ],
         'METADATA_SPEC_VERSION': 'V1',
     }
-    assert expected_metadata_dict == metadata.to_dict()
-    assert metadata._multi_table_updated
+    assert expected_metadata_dict == metadata_instance.to_dict()
+    assert metadata_instance._multi_table_updated
+
+
+def test_remove_column(metadata_instance):
+    """Test that the column is removed from all relationships and keys."""
+    # Run
+    metadata_instance.remove_column('id', 'manufacturers')
+
+    # Assert
+    expected_metadata_dict = {
+        'tables': {
+            'users': {
+                'columns': {
+                    'gender': {'sdtype': 'categorical'},
+                    'age': {'sdtype': 'numerical'},
+                    'name': {'sdtype': 'text'},
+                    'user_id': {'sdtype': 'id'},
+                },
+                'primary_key': 'user_id',
+            },
+            'transactions': {
+                'columns': {
+                    'user_id': {'sdtype': 'id'},
+                    'transaction_id': {'sdtype': 'id'},
+                    'product_id': {'sdtype': 'id'},
+                    'amount': {'sdtype': 'numerical'},
+                },
+                'primary_key': 'transaction_id',
+            },
+            'products': {
+                'columns': {
+                    'product_id': {'sdtype': 'id'},
+                    'cost': {'sdtype': 'numerical'},
+                    'weight': {'sdtype': 'numerical'},
+                    'manufacturer': {'sdtype': 'id'},
+                },
+                'primary_key': 'product_id',
+            },
+            'manufacturers': {
+                'columns': {
+                    'country': {'sdtype': 'categorical'},
+                    'address': {'sdtype': 'text'},
+                },
+                'column_relationships': [
+                    {
+                        'type': 'address',
+                        'column_names': [
+                            'country',
+                            'address',
+                        ],
+                    },
+                ],
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'users',
+                'parent_primary_key': 'user_id',
+                'child_table_name': 'transactions',
+                'child_foreign_key': 'user_id',
+            },
+            {
+                'parent_table_name': 'products',
+                'parent_primary_key': 'product_id',
+                'child_table_name': 'transactions',
+                'child_foreign_key': 'product_id',
+            },
+        ],
+        'METADATA_SPEC_VERSION': 'V1',
+    }
+    assert expected_metadata_dict == metadata_instance.to_dict()
+    assert metadata_instance._multi_table_updated
+
+
+    def test_remove_column_column_is_sequence_key():
+        """Test that a column is properly removed if it is a sequence key."""
+        # Setup
+        metadata_dict = {
+            'trades': {
+                'columns': {
+                    'ticker': {'sdtype': 'id'},
+                    'cost': {'sdtype': 'numerical'},
+                    'quantity': {'sdtype': 'numerical'},
+                    'time': {'sdtype': 'datetime'},
+                },
+                'primary_key': 'transaction_id',
+                'sequence_key': 'ticker',
+                'sequence_index': 'time'
+            },
+        }

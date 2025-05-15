@@ -376,7 +376,7 @@ class Metadata(MultiTableMetadata):
         table_metadata = self.tables[table_name]
         table_metadata._validate_column_exists(column_name)
         # Remove relationships
-        self._remove_matching_relationships(column_name)
+        self._remove_matching_relationships(column_name, ['parent_primary_key', 'child_foreign_key'])
         updated_column_relationships = []
         for column_relationship in table_metadata.column_relationships:
             if column_name not in column_relationship.get('column_names', []):
@@ -396,6 +396,8 @@ class Metadata(MultiTableMetadata):
         
         if column_name == table_metadata.sequence_index:
             table_metadata.set_sequence_index(None)
+        
+        del table_metadata.columns[column_name]
 
         self._multi_table_updated = True
 
