@@ -1108,3 +1108,4 @@ def test_remove_table():
         'METADATA_SPEC_VERSION': 'V1',
     }
     assert expected_metadata_dict == metadata.to_dict()
+    assert metadata._multi_table_updated

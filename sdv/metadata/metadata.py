@@ -349,6 +349,7 @@ class Metadata(MultiTableMetadata):
         self.relationships = updated_relationships
 
         del self.tables[table_name]
+        self._multi_table_updated = True
 
     def add_column_relationship(
         self,
