@@ -27,7 +27,7 @@ class TestProgrammableConstraint:
         ],
     )
     def test_all_required_methods(self, method, kwargs):
-        """Test all methods except fit, required to be implemented raise NotImplementedErrors."""
+        """Test all methods required to be implemented raise NotImplementedErrors."""
         # Setup
         instance = ProgrammableConstraint()
 
