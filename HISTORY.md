@@ -10,6 +10,10 @@
 * Allow SDV to be used on a readonly filesystem - Issue [#2517](https://github.com/sdv-dev/SDV/issues/2517) by @pvk-developer
 * Allow me to put in additional options when reading multiple CSV files from `CSVHandler` - Issue [#2478](https://github.com/sdv-dev/SDV/issues/2478) by @pvk-developer
 
+### Internal
+
+* Dtypes benchmark should include missing values for any dtypes that support it - Issue [#2494](https://github.com/sdv-dev/SDV/issues/2494) by @rwedge
+
 ## v1.20.1 - 2025-05-01
 
 ### Bugs Fixed
