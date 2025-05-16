@@ -18,9 +18,8 @@ from rdt.transformers import (
 )
 
 from sdv import version
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag.programmable_constraint import SingleTableProgrammableConstraint
-from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.errors import (
@@ -778,22 +777,6 @@ class TestBaseSingleTableSynthesizer:
         with pytest.warns(UserWarning, match=warn_msg):
             instance.fit(data)
 
-    def test__validate_constraints(self):
-        """Test that ``_validate_constraints`` calls ``fit`` and returns any errors."""
-        # Setup
-        instance = Mock()
-        error = ValueError('Invalid data for constraint.')
-        instance._data_processor._fit_constraints.side_effect = AggregateConstraintsError([error])
-        data = object()
-
-        # Run and Assert
-        message = '\nInvalid data for constraint.'
-        with pytest.raises(ConstraintsNotMetError, match=message):
-            BaseSingleTableSynthesizer._validate_constraints(instance, data)
-
-        # Assert
-        instance._data_processor._fit_constraints.assert_called_once_with(data)
-
     def test__validate_transform_constraints(self):
         """Test the ``_validate_transform_constraints`` method."""
         # Setup
@@ -802,46 +785,54 @@ class TestBaseSingleTableSynthesizer:
         metadata_1 = Metadata()
         metadata_2 = Metadata()
         instance = BaseSingleTableSynthesizer(original_metadata)
-        cag_mock_1 = Mock()
-        cag_mock_1.get_updated_metadata = Mock(return_value=metadata_1)
-        cag_mock_1.transform = Mock(return_value=data)
-        cag_mock_2 = Mock()
-        cag_mock_2.get_updated_metadata = Mock(return_value=metadata_2)
-        cag_mock_2.transform = Mock(return_value=data)
-        cag_mock_3 = Mock()
-        instance._chained_patterns = [cag_mock_1, cag_mock_2]
-        instance._reject_sampling_patterns = [cag_mock_3]
+        constraint_mock_1 = Mock()
+        constraint_mock_1.get_updated_metadata = Mock(return_value=metadata_1)
+        constraint_mock_1.transform = Mock(return_value=data)
+        constraint_mock_2 = Mock()
+        constraint_mock_2.get_updated_metadata = Mock(return_value=metadata_2)
+        constraint_mock_2.transform = Mock(return_value=data)
+        constraint_mock_3 = Mock()
+        instance._chained_constraints = [constraint_mock_1, constraint_mock_2]
+        instance._reject_sampling_constraints = [constraint_mock_3]
 
         # Run and Assert
         instance._validate_transform_constraints(data)
 
-        cag_mock_1.get_updated_metadata.assert_called_once_with(instance._original_metadata)
-        cag_mock_1.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
-        cag_mock_2.fit.assert_called_once_with(data=data, metadata=metadata_1)
-        cag_mock_3.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
+        constraint_mock_1.get_updated_metadata.assert_called_once_with(instance._original_metadata)
+        constraint_mock_1.fit.assert_called_once_with(
+            data=data, metadata=instance._original_metadata
+        )
+        constraint_mock_2.fit.assert_called_once_with(data=data, metadata=metadata_1)
+        constraint_mock_3.fit.assert_called_once_with(
+            data=data, metadata=instance._original_metadata
+        )
         assert instance._constraints_fitted is True
 
         # Reset mock call history
-        cag_mock_1.fit.reset_mock()
-        cag_mock_1.transform.reset_mock()
-        cag_mock_2.fit.reset_mock()
-        cag_mock_2.transform.reset_mock()
-        cag_mock_3.fit.reset_mock()
+        constraint_mock_1.fit.reset_mock()
+        constraint_mock_1.transform.reset_mock()
+        constraint_mock_2.fit.reset_mock()
+        constraint_mock_2.transform.reset_mock()
+        constraint_mock_3.fit.reset_mock()
 
         # Re-run to check it only transforms when constraints are already fitted
         instance._validate_transform_constraints(data)
 
-        cag_mock_1.transform.assert_called_once_with(data)
-        cag_mock_2.transform.assert_called_once_with(data)
-        cag_mock_1.fit.assert_not_called()
-        cag_mock_2.fit.assert_not_called()
+        constraint_mock_1.transform.assert_called_once_with(data)
+        constraint_mock_2.transform.assert_called_once_with(data)
+        constraint_mock_1.fit.assert_not_called()
+        constraint_mock_2.fit.assert_not_called()
 
         # Check the constraints are fitted again with enforce_constraint_fitting=True
         instance._validate_transform_constraints(data, enforce_constraint_fitting=True)
 
-        cag_mock_1.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
-        cag_mock_2.fit.assert_called_once_with(data=data, metadata=metadata_1)
-        cag_mock_3.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
+        constraint_mock_1.fit.assert_called_once_with(
+            data=data, metadata=instance._original_metadata
+        )
+        constraint_mock_2.fit.assert_called_once_with(data=data, metadata=metadata_1)
+        constraint_mock_3.fit.assert_called_once_with(
+            data=data, metadata=instance._original_metadata
+        )
 
     def test_validate(self):
         """Test the appropriate methods are called.
@@ -853,7 +844,6 @@ class TestBaseSingleTableSynthesizer:
         metadata = Metadata()
         instance = BaseSingleTableSynthesizer(metadata)
         instance._validate_metadata = Mock()
-        instance._validate_constraints = Mock()
         instance._validate = Mock(return_value=[])
         instance._validate_transform_constraints = Mock()
 
@@ -862,38 +852,10 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         instance._validate_metadata.assert_called_once_with(data)
-        instance._validate_constraints.assert_called_once_with(data)
         instance._validate.assert_called_once_with(data)
         instance._validate_transform_constraints.assert_called_once_with(
             data, enforce_constraint_fitting=True
         )
-
-    def test_validate_raises_constraints_error(self):
-        """Test that a ``ConstraintsNotMetError`` is being raised.
-
-        Make sure that ``ConstraintsNotMetError`` is raised when ``_validate_constraints``
-        fails to validate.
-        """
-        # Setup
-        data = pd.DataFrame()
-        metadata = Metadata()
-        instance = BaseSingleTableSynthesizer(metadata)
-        instance._validate_metadata = Mock(return_value=[])
-        instance._validate_constraints = Mock()
-        instance._validate_constraints.side_effect = ConstraintsNotMetError(
-            '\nThe provided data does not match the constraints.'
-        )
-        instance._validate = Mock(return_value=[])
-
-        # Run and Assert
-        err_msg = 'The provided data does not match the constraints.'
-        with pytest.raises(ConstraintsNotMetError, match=err_msg):
-            instance.validate(data)
-
-        # Assert auxiliary methods are called
-        instance._validate_metadata.assert_called_once_with(data)
-        instance._validate_constraints.assert_called_once_with(data)
-        instance._validate.assert_not_called()
 
     def test_validate_raises_invalid_data_for_metadata(self):
         """Test that if ``metadata`` validation fails we raise an error for it.
@@ -906,20 +868,18 @@ class TestBaseSingleTableSynthesizer:
         metadata = Metadata()
         instance = BaseSingleTableSynthesizer(metadata)
         instance._validate_metadata = Mock(return_value=[])
-        instance._validate_constraints = Mock()
-        instance._validate_constraints.side_effect = ConstraintsNotMetError(
-            '\nThe provided data does not match the constraints.'
+        instance._validate_metadata.side_effect = InvalidMetadataError(
+            '\nThe provided data does not match the metadata.'
         )
         instance._validate = Mock(return_value=[])
 
         # Run and Assert
-        err_msg = 'The provided data does not match the constraints.'
-        with pytest.raises(ConstraintsNotMetError, match=err_msg):
+        err_msg = 'The provided data does not match the metadata.'
+        with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.validate(data)
 
         # Assert auxiliary methods are called
         instance._validate_metadata.assert_called_once_with(data)
-        instance._validate_constraints.assert_called_once_with(data)
         instance._validate.assert_not_called()
 
     def test_validate_int_primary_key_regex_starts_with_zero(self):
@@ -965,28 +925,33 @@ class TestBaseSingleTableSynthesizer:
         # Run and Assert
         instance.validate(data)
 
-    def test__validate_cag_single_table(self):
-        """Test the ``_validate_cag`` method"""
+    @patch('sdv.single_table.base._validate_constraints')
+    def test__validate_constraints_single_table(self, mock_validate_constraints):
+        """Test the ``_validate_constraints`` method"""
         # Setup
         metadata = Metadata()
         instance = BaseSingleTableSynthesizer(metadata)
-        expected_err_list = re.escape('`patterns` must be a list.')
-        pattern_1 = Mock()
-        pattern_1._is_single_table = True
-        pattern_2 = Mock()
-        pattern_2.__class__.__name__ = 'Pattern_Name'
-        pattern_2._is_single_table = False
+        expected_err_list = re.escape('`constraints` must be a list.')
+        constraint_1 = Mock()
+        constraint_1._is_single_table = True
+        constraint_2 = Mock()
+        constraint_2.__class__.__name__ = 'Constraint_Name'
+        constraint_2._is_single_table = False
         expected_err_multi_table = re.escape(
-            'Pattern `Pattern_Name` is not compatible with the single-table synthesizers.'
+            'Constraint `Constraint_Name` is not compatible with the single-table synthesizers.'
         )
+        mock_validate_constraints.side_effect = lambda constraints, _fitted: constraints
 
-        # Run and Assert
-        instance._validate_cag_single_table(patterns=[pattern_1])
+        # Run
+        result = instance._validate_constraints_single_table(constraints=[constraint_1])
         with pytest.raises(SynthesizerInputError, match=expected_err_list):
-            instance._validate_cag_single_table(patterns='pattern')
+            instance._validate_constraints_single_table(constraints='constraint')
 
         with pytest.raises(SynthesizerInputError, match=expected_err_multi_table):
-            instance._validate_cag_single_table(patterns=[pattern_1, pattern_2])
+            instance._validate_constraints_single_table(constraints=[constraint_1, constraint_2])
+
+        # Assert
+        assert result == [constraint_1]
 
     def test_update_transformers_invalid_keys(self):
         """Test error is raised if passed transformer doesn't match key column.
@@ -1232,8 +1197,8 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor.reverse_transform.return_value = data
         instance._data_processor.filter_valid.return_value = data
         instance._data_processor._hyper_transformer._input_columns = []
-        instance._reject_sampling_patterns = []
-        instance._chained_patterns = []
+        instance._reject_sampling_constraints = []
+        instance._chained_constraints = []
         instance._constraint_col_formatters = {}
 
         # Run
@@ -1262,8 +1227,8 @@ class TestBaseSingleTableSynthesizer:
         instance._filter_conditions.return_value = data[data.name == 'John Doe']
         conditions = {'salary': 80.0}
         transformed_conditions = {'salary': 80.0}
-        instance._reject_sampling_patterns = []
-        instance._chained_patterns = []
+        instance._reject_sampling_constraints = []
+        instance._chained_constraints = []
         instance._constraint_col_formatters = {}
 
         # Run
@@ -1296,8 +1261,8 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor._hyper_transformer._input_columns = []
         instance._data_processor.filter_valid = lambda x: x
         instance._data_processor.reverse_transform.return_value = data
-        instance._reject_sampling_patterns = []
-        instance._chained_patterns = []
+        instance._reject_sampling_constraints = []
+        instance._chained_constraints = []
         instance._constraint_col_formatters = {}
 
         # Run
@@ -1325,8 +1290,8 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor.reverse_transform.return_value = data
         instance._data_processor._hyper_transformer._input_columns = []
         instance._filter_conditions.return_value = data[data.name == 'John Doe']
-        instance._reject_sampling_patterns = []
-        instance._chained_patterns = []
+        instance._reject_sampling_constraints = []
+        instance._chained_constraints = []
         conditions = {'salary': 80.0}
         transformed_conditions = {'salary': 80.0}
         instance._sample.side_effect = [NotImplementedError, pd.DataFrame()]
@@ -2052,11 +2017,11 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         conditions = pd.DataFrame({'name': ['Johanna'], 'salary': [100.0]})
         instance = Mock()
-        instance._validate_transform_constraints.side_effect = [PatternNotMetError]
+        instance._validate_transform_constraints.side_effect = [ConstraintNotMetError]
 
         # Run and Assert
         error_msg = 'Provided conditions are not valid for the given constraints.'
-        with pytest.raises(PatternNotMetError, match=error_msg):
+        with pytest.raises(ConstraintNotMetError, match=error_msg):
             BaseSingleTableSynthesizer._transform_conditions_chained_constraints(
                 instance,
                 conditions,
@@ -2067,7 +2032,7 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         conditions = pd.DataFrame({'name': ['Johanna', 'Doe'], 'salary': [100.0, 90.0]})
         instance = Mock()
-        delattr(instance, '_chained_patterns')
+        delattr(instance, '_chained_constraints')
         instance._data_processor.transform.side_effect = [ConstraintsNotMetError]
 
         # Run and Assert
@@ -2468,33 +2433,34 @@ class TestBaseSingleTableSynthesizer:
 
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.ProgrammableConstraintHarness')
-    def test_add_cag(self, mock_programmable_constraint_harness, mock_data_processor):
+    def test_add_constraint(self, mock_programmable_constraint_harness, mock_data_processor):
         """Test adding constraints to the synthesizer."""
         # Setup
         instance = Mock()
-        instance._chained_patterns = []
-        instance._reject_sampling_patterns = []
+        instance._chained_constraints = []
+        instance._reject_sampling_constraints = []
 
-        pattern1 = Mock()
-        pattern2 = Mock()
-        pattern3 = Mock()
-        pattern3.get_updated_metadata.side_effect = [PatternNotMetError, None]
-        pattern4 = SingleTableProgrammableConstraint()
+        constraint1 = Mock()
+        constraint2 = Mock()
+        constraint3 = Mock()
+        instance._validate_constraints_single_table.side_effect = lambda constraint: constraint
+        constraint3.get_updated_metadata.side_effect = [ConstraintNotMetError, None]
+        constraint4 = SingleTableProgrammableConstraint()
         mock_harness = Mock()
         mock_programmable_constraint_harness.return_value = mock_harness
 
         # Run
-        BaseSingleTableSynthesizer.add_cag(instance, [pattern1, pattern2])
+        BaseSingleTableSynthesizer.add_constraint(instance, [constraint1, constraint2])
         instance._fitted = True
-        BaseSingleTableSynthesizer.add_cag(instance, [pattern3, pattern4])
+        BaseSingleTableSynthesizer.add_constraint(instance, [constraint3, constraint4])
 
         # Assert
-        assert instance._chained_patterns == [pattern1, pattern2, mock_harness]
-        assert instance._reject_sampling_patterns == [pattern3]
-        mock_programmable_constraint_harness.assert_called_once_with(pattern4)
+        assert instance._chained_constraints == [constraint1, constraint2, mock_harness]
+        assert instance._reject_sampling_constraints == [constraint3]
+        mock_programmable_constraint_harness.assert_called_once_with(constraint4)
         mock_data_processor.assert_has_calls([
             call(
-                metadata=pattern2.get_updated_metadata()._convert_to_single_table.return_value,
+                metadata=constraint2.get_updated_metadata()._convert_to_single_table.return_value,
                 enforce_rounding=instance.enforce_rounding,
                 enforce_min_max_values=instance.enforce_min_max_values,
                 locales=instance.locales,
@@ -2506,87 +2472,6 @@ class TestBaseSingleTableSynthesizer:
                 locales=instance.locales,
             ),
         ])
-
-    def test_add_custom_constraint_class(self):
-        """Test that this method calls the ``DataProcessor``'s method."""
-        # Setup
-        instance = Mock()
-        constraint_mock = Mock()
-
-        # Run
-        BaseSingleTableSynthesizer.add_custom_constraint_class(instance, constraint_mock, 'custom')
-
-        # Assert
-        instance._data_processor.add_custom_constraint_class.assert_called_once_with(
-            constraint_mock, 'custom'
-        )
-
-    def test_add_constraint_warning(self):
-        """Test a warning is raised when the synthesizer had already been fitted."""
-        # Setup
-        metadata = Metadata()
-        instance = BaseSingleTableSynthesizer(metadata)
-        instance._fitted = True
-
-        # Run and Assert
-        warn_msg = "For these constraints to take effect, please refit the synthesizer using 'fit'."
-        with pytest.warns(UserWarning, match=warn_msg):
-            instance.add_constraints([])
-
-    def test_add_constraints(self):
-        """Test a list of constraints can be added to the synthesizer."""
-        # Setup
-        metadata = Metadata()
-        metadata.add_table('table')
-        metadata.add_column('col', 'table', sdtype='numerical')
-        instance = BaseSingleTableSynthesizer(metadata)
-        positive_constraint = {
-            'constraint_class': 'Positive',
-            'constraint_parameters': {'column_name': 'col', 'strict_boundaries': True},
-        }
-        negative_constraint = {
-            'constraint_class': 'Negative',
-            'constraint_parameters': {'column_name': 'col', 'strict_boundaries': False},
-        }
-
-        # Run
-        instance.add_constraints([positive_constraint, negative_constraint])
-        output = instance.get_constraints()
-
-        # Assert
-        positive_constraint = {
-            'constraint_class': 'Positive',
-            'constraint_parameters': {'column_name': 'col', 'strict_boundaries': True},
-        }
-        negative_constraint = {
-            'constraint_class': 'Negative',
-            'constraint_parameters': {'column_name': 'col', 'strict_boundaries': False},
-        }
-        assert output == [positive_constraint, negative_constraint]
-
-    def test_get_constraints(self):
-        """Test a list of constraints is returned by the method."""
-        # Setup
-        metadata = Metadata()
-        metadata.add_table('table')
-        metadata.add_column('col', 'table', sdtype='numerical')
-        instance = BaseSingleTableSynthesizer(metadata)
-        positive_constraint = {
-            'constraint_class': 'Positive',
-            'constraint_parameters': {'column_name': 'col', 'strict_boundaries': True},
-        }
-        negative_constraint = {
-            'constraint_class': 'Negative',
-            'constraint_parameters': {'column_name': 'col', 'strict_boundaries': False},
-        }
-        constraints = [positive_constraint, negative_constraint]
-        instance.add_constraints(constraints)
-
-        # Run
-        output = instance.get_constraints()
-
-        # Assert
-        assert output == constraints
 
     @patch('sdv.single_table.base.version')
     def test_get_info_no_enterprise(self, mock_sdv_version):
@@ -2685,41 +2570,41 @@ class TestBaseSingleTableSynthesizer:
                 'fitted_sdv_enterprise_version': '1.2.0',
             }
 
-    def test_validate_cag(self):
-        """Test the ``validate_cag`` method with multiple patterns."""
+    def test_validate_constraints(self):
+        """Test the ``validate_constraints`` method with multiple constraints."""
         # Setup
         synthetic_data = pd.DataFrame()
         transformed_data = pd.DataFrame()
         original_metadata = Metadata()
         instance = BaseSingleTableSynthesizer(original_metadata)
-        cag_mock_1 = Mock()
-        cag_mock_1.transform.return_value = transformed_data
-        cag_mock_2 = Mock()
-        instance._chained_patterns = [cag_mock_1, cag_mock_2]
+        constraint_mock_1 = Mock()
+        constraint_mock_1.transform.return_value = transformed_data
+        constraint_mock_2 = Mock()
+        instance._chained_constraints = [constraint_mock_1, constraint_mock_2]
 
         # Run
-        instance.validate_cag(synthetic_data)
+        instance.validate_constraints(synthetic_data)
 
         # Assert
-        cag_mock_1.is_valid.assert_called_once_with(data=synthetic_data)
-        cag_mock_1.transform.assert_called_once_with(data=synthetic_data)
-        cag_mock_2.is_valid.assert_called_once_with(data=transformed_data)
-        cag_mock_2.transform.assert_called_once_with(data=transformed_data)
+        constraint_mock_1.is_valid.assert_called_once_with(data=synthetic_data)
+        constraint_mock_1.transform.assert_called_once_with(data=synthetic_data)
+        constraint_mock_2.is_valid.assert_called_once_with(data=transformed_data)
+        constraint_mock_2.transform.assert_called_once_with(data=transformed_data)
 
-    def test_validate_cag_raises(self):
-        """Test the ``validate_cag`` method raises an error."""
+    def test_validate_constraints_raises(self):
+        """Test the ``validate_constraints`` method raises an error."""
         # Setup
         synthetic_data = pd.DataFrame()
         original_metadata = Metadata()
         instance = BaseSingleTableSynthesizer(original_metadata)
-        cag_mock_1 = Mock()
-        cag_mock_1.is_valid.return_value = pd.Series([False, False])
-        instance._chained_patterns = [cag_mock_1]
+        constraint_mock_1 = Mock()
+        constraint_mock_1.is_valid.return_value = pd.Series([False, False])
+        instance._chained_constraints = [constraint_mock_1]
         msg = 'The mock requirement is not met for row indices: 0, 1.'
 
         # Run and Assert
-        with pytest.raises(PatternNotMetError, match=msg):
-            instance.validate_cag(synthetic_data)
+        with pytest.raises(ConstraintNotMetError, match=msg):
+            instance.validate_constraints(synthetic_data)
 
     def test__fit_constraint_column_formatters(self):
         """Test the `_fit_constraint_column_formatters` fits formatters for dropped columns."""

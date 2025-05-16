@@ -570,13 +570,15 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             synthesizer = self._null_child_synthesizers[f'__{child_name}__{foreign_key}']
 
         synthesizer._data_processor = self._table_synthesizers[child_name]._data_processor
-        if hasattr(self._table_synthesizers[child_name], '_chained_patterns') and hasattr(
-            self._table_synthesizers[child_name], '_reject_sampling_patterns'
+        if hasattr(self._table_synthesizers[child_name], '_chained_constraints') and hasattr(
+            self._table_synthesizers[child_name], '_reject_sampling_constraints'
         ):
-            synthesizer._chained_patterns = self._table_synthesizers[child_name]._chained_patterns
-            synthesizer._reject_sampling_patterns = self._table_synthesizers[
+            synthesizer._chained_constraints = self._table_synthesizers[
                 child_name
-            ]._reject_sampling_patterns
+            ]._chained_constraints
+            synthesizer._reject_sampling_constraints = self._table_synthesizers[
+                child_name
+            ]._reject_sampling_constraints
 
         return synthesizer
 

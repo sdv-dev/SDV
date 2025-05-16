@@ -118,8 +118,8 @@ class TestHMASynthesizer:
 
         # Assert
         get_distributions_mock.assert_called_once()
-        for pattern in key_phrases:
-            match = re.search(pattern, captured.out + captured.err)
+        for constraint in key_phrases:
+            match = re.search(constraint, captured.out + captured.err)
             assert match is not None
 
         # Run
@@ -127,8 +127,8 @@ class TestHMASynthesizer:
         captured = capsys.readouterr()
 
         # Assert that small amount of columns don't trigger the message
-        for pattern in key_phrases:
-            match = re.search(pattern, captured.out + captured.err)
+        for constraint in key_phrases:
+            match = re.search(constraint, captured.out + captured.err)
             assert match is None
 
     def test__get_extension_foreign_key_only(self):

@@ -1,4 +1,4 @@
-"""Base CAG constraint pattern."""
+"""Base constraint."""
 
 import logging
 
@@ -10,8 +10,8 @@ from sdv.errors import NotFittedError
 LOGGER = logging.getLogger(__name__)
 
 
-class BasePattern:
-    """Base CAG Pattern Class."""
+class BaseConstraint:
+    """Base Constraint Class."""
 
     _is_single_table = True
 
@@ -47,43 +47,43 @@ class BasePattern:
 
         return metadata._get_single_table_name() if self.table_name is None else self.table_name
 
-    def _validate_pattern_with_metadata(self, metadata):
+    def _validate_constraint_with_metadata(self, metadata):
         raise NotImplementedError()
 
-    def _validate_pattern_with_data(self, data, metadata):
+    def _validate_constraint_with_data(self, data, metadata):
         raise NotImplementedError()
 
     def validate(self, data=None, metadata=None):
-        """Validate the data/metadata meets the pattern requirements.
+        """Validate the data/metadata meets the constraint requirements.
 
         Args:
             data (dict[str, pd.DataFrame], optional)
                 The data dictionary. If `None`, ``validate`` will skip data validation.
             metadata (sdv.Metadata, optional)
-                The input metadata. If `None`, pattern must have been fitted and ``validate``
+                The input metadata. If `None`, constraint must have been fitted and ``validate``
                 will use the metadata saved during fitting.
         """
         if metadata is None:
             if self.metadata is None:
-                raise NotFittedError('Pattern must be fit before validating without metadata.')
+                raise NotFittedError('Constraint must be fit before validating without metadata.')
 
             metadata = self.metadata
 
-        self._validate_pattern_with_metadata(metadata)
+        self._validate_constraint_with_metadata(metadata)
 
         if data is not None:
             data = self._convert_data_to_dictionary(data, metadata)
-            self._validate_pattern_with_data(data, metadata)
+            self._validate_constraint_with_data(data, metadata)
 
     def _get_updated_metadata(self, metadata):
         return metadata
 
     def get_updated_metadata(self, metadata):
-        """Get the updated metadata after applying the pattern to the input metadata.
+        """Get the updated metadata after applying the constraint to the input metadata.
 
         Args:
             metadata (sdv.Metadata):
-                The input metadata to apply the pattern to.
+                The input metadata to apply the constraint to.
         """
         self.validate(metadata=metadata)
         return self._get_updated_metadata(metadata)
@@ -92,21 +92,21 @@ class BasePattern:
         raise NotImplementedError
 
     def fit(self, data, metadata):
-        """Fit the pattern with data and metadata.
+        """Fit the constraint with data and metadata.
 
         Args:
             data (dict[pd.DataFrame]):
-                The data dictionary to fit the pattern on.
+                The data dictionary to fit the constraint on.
             metadata (sdv.Metadata):
-                The metadata to fit the pattern on.
+                The metadata to fit the constraint on.
         """
-        self._validate_pattern_with_metadata(metadata)
+        self._validate_constraint_with_metadata(metadata)
         if isinstance(data, pd.DataFrame):
             self._single_table = True
             self._table_name = self._get_single_table_name(metadata)
             data = self._convert_data_to_dictionary(data, metadata)
 
-        self._validate_pattern_with_data(data, metadata)
+        self._validate_constraint_with_data(data, metadata)
         self._fit(data, metadata)
         self.metadata = metadata
 
@@ -127,7 +127,7 @@ class BasePattern:
                 The input data dictionary to be transformed.
         """
         if not self._fitted:
-            raise NotFittedError('Pattern must be fit using ``fit`` before transforming.')
+            raise NotFittedError('Constraint must be fit using ``fit`` before transforming.')
 
         self.validate(data)
         data = self._convert_data_to_dictionary(data, self.metadata, copy=True)
@@ -205,11 +205,11 @@ class BasePattern:
 
         Returns:
             pd.Series or dict[pd.Series]:
-                Series of boolean values indicating if the row is valid for the pattern or not.
+                Series of boolean values indicating if the row is valid for the constraint or not.
         """
         if not self._fitted:
             raise NotFittedError(
-                'Pattern must be fit using ``fit`` before determining if data is valid.'
+                'Constraint must be fit using ``fit`` before determining if data is valid.'
             )
 
         data = self._convert_data_to_dictionary(data, self.metadata)

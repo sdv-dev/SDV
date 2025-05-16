@@ -239,19 +239,6 @@ class DataProcessor:
             constraint_class = getattr(module, class_name)
             self._custom_constraint_classes[class_name] = constraint_class
 
-    def add_custom_constraint_class(self, class_object, class_name):
-        """Add a custom constraint class for the synthesizer to use.
-
-        Args:
-            class_object (sdv.constraints.Constraint):
-                A custom constraint class object.
-            class_name (str):
-                The name to assign this custom constraint class. This will be the name to use
-                when writing a constraint dictionary for ``add_constraints``.
-        """
-        self._validate_custom_constraint_name(class_name)
-        self._custom_constraint_classes[class_name] = class_object
-
     def _validate_constraint_dict(self, constraint_dict):
         """Validate a constraint against the single table metadata.
 
@@ -305,47 +292,6 @@ class DataProcessor:
                 )
 
         constraint_class._validate_metadata(**constraint_parameters)
-
-    def add_constraints(self, constraints):
-        """Add constraints to the data processor.
-
-        Args:
-            constraints (list):
-                List of constraints described as dictionaries in the following format:
-                    * ``constraint_class``: Name of the constraint to apply.
-                    * ``constraint_parameters``: A dictionary with the constraint parameters.
-        """
-        errors = []
-        validated_constraints = []
-        for constraint_dict in constraints:
-            constraint_dict = deepcopy(constraint_dict)
-            if 'constraint_parameters' in constraint_dict:
-                constraint_dict['constraint_parameters'].update({'metadata': self.metadata})
-            try:
-                self._validate_constraint_dict(constraint_dict)
-                validated_constraints.append(constraint_dict)
-            except (AggregateConstraintsError, InvalidConstraintsError) as e:
-                reformated_errors = '\n'.join(map(str, e.errors))
-                errors.append(reformated_errors)
-
-        if errors:
-            raise InvalidConstraintsError(errors)
-
-        self._constraints_list.extend(validated_constraints)
-        self._prepared_for_fitting = False
-
-    def get_constraints(self):
-        """Get a list of the current constraints that will be used.
-
-        Returns:
-            list:
-                List of dictionaries describing the constraints for this data processor.
-        """
-        constraints = deepcopy(self._constraints_list)
-        for i in range(len(constraints)):
-            del constraints[i]['constraint_parameters']['metadata']
-
-        return constraints
 
     def _load_constraints(self):
         loaded_constraints = []
@@ -1001,7 +947,7 @@ class DataProcessor:
         constraints_to_reverse = [cnt.to_dict() for cnt in self._constraints_to_reverse]
         return {
             'metadata': deepcopy(self.metadata.to_dict()),
-            'constraints_list': self.get_constraints(),
+            'constraints_list': self._constraints,
             'constraints_to_reverse': constraints_to_reverse,
             'model_kwargs': deepcopy(self._model_kwargs),
         }

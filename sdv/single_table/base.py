@@ -27,10 +27,9 @@ from sdv._utils import (
     check_synthesizer_version,
     generate_synthesizer_id,
 )
-from sdv.cag._errors import PatternNotMetError
-from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows
+from sdv.cag._errors import ConstraintNotMetError
+from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows, _validate_constraints
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
-from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.numerical_formatter import NumericalFormatter
@@ -217,17 +216,6 @@ class BaseSynthesizer:
         if errors:
             raise InvalidDataError(errors)
 
-    def _validate_constraints(self, data):
-        """Validate that the data satisfies the constraints."""
-        errors = []
-        try:
-            self._data_processor._fit_constraints(data)
-        except AggregateConstraintsError as e:
-            errors.append(e)
-
-        if errors:
-            raise ConstraintsNotMetError(errors)
-
     def _validate(self, data):
         """Validate any rules that only apply to specific synthesizers.
 
@@ -262,7 +250,6 @@ class BaseSynthesizer:
                     * values of a column don't satisfy their sdtype
         """
         self._validate_metadata(data)
-        self._validate_constraints(data)
 
         # Retaining the logic of returning errors and raising them here to maintain consistency
         # with the existing workflow with synthesizers
@@ -350,14 +337,14 @@ class BaseSynthesizer:
         return instantiated_parameters
 
     def get_metadata(self, version='original'):
-        """Get the metadata, either original or modified after applying CAG patterns.
+        """Get the metadata, either original or modified after applying constraints.
 
         Args:
             version (str, optional):
                 The version of metadata to return, must be one of 'original' or 'modified'. If
                 'original', will return the original metadata used to instantiate the
                 synthesizer. If 'modified', will return the modified metadata after applying this
-                synthesizer's CAG patterns. Defaults to 'original'.
+                synthesizer's constraints. Defaults to 'original'.
         """
         if version not in ('original', 'modified'):
             raise ValueError(
@@ -381,43 +368,6 @@ class BaseSynthesizer:
                 A list of custom constraint classes to be imported.
         """
         self._data_processor.load_custom_constraint_classes(filepath, class_names)
-
-    def add_custom_constraint_class(self, class_object, class_name):
-        """Add a custom constraint class for the synthesizer to use.
-
-        Args:
-            class_object (sdv.constraints.Constraint):
-                A custom constraint class object.
-            class_name (str):
-                The name to assign this custom constraint class. This will be the name to use
-                when writing a constraint dictionary for ``add_constraints``.
-        """
-        self._data_processor.add_custom_constraint_class(class_object, class_name)
-
-    def add_constraints(self, constraints):
-        """Add constraints to the synthesizer.
-
-        Args:
-            constraints (list):
-                List of constraints described as dictionaries in the following format:
-                    * ``constraint_class``: Name of the constraint to apply.
-                    * ``constraint_parameters``: A dictionary with the constraint parameters.
-        """
-        if self._fitted:
-            warnings.warn(
-                "For these constraints to take effect, please refit the synthesizer using 'fit'."
-            )
-
-        self._data_processor.add_constraints(constraints)
-
-    def get_constraints(self):
-        """Get a list of the current constraints that will be used.
-
-        Returns:
-            list:
-                List of dictionaries describing the constraints for this synthesizer.
-        """
-        return self._data_processor.get_constraints()
 
     def _validate_transform_constraints(self, data):
         """Helper method to transform the data for the constraints."""
@@ -733,56 +683,59 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         locales=['en_US'],
     ):
         super().__init__(metadata, enforce_min_max_values, enforce_rounding, locales)
-        self._chained_patterns = []  # chain of patterns used to preprocess the data
-        self._reject_sampling_patterns = []  # patterns used only for reject sampling
+        self._chained_constraints = []  # chain of constraints used to preprocess the data
+        self._reject_sampling_constraints = []  # constraints used only for reject sampling
         self._constraints_fitted = False
 
-    def _validate_cag_single_table(self, patterns):
-        """Check if the CAG patterns are single table.
+    def _validate_constraints_single_table(self, constraints):
+        """Check if the constraints are single table.
 
         Args:
-            patterns (list):
-                A list of CAG patterns to check.
+            constraints (list):
+                A list of constraints to check.
 
         Raises:
-            PatternNotMetError:
-                Raised if the pattern is not compatible with the metadata.
+            ConstraintNotMetError:
+                Raised if the constraint is not compatible with the metadata.
         """
-        if not isinstance(patterns, list):
-            raise SynthesizerInputError('`patterns` must be a list.')
+        if not isinstance(constraints, list):
+            raise SynthesizerInputError('`constraints` must be a list.')
 
-        for pattern in patterns:
-            if pattern._is_single_table is False:
+        constraints = _validate_constraints(constraints, self._fitted)
+        for constraint in constraints:
+            if constraint._is_single_table is False:
                 raise SynthesizerInputError(
-                    f'Pattern `{pattern.__class__.__name__}` is not compatible with the '
+                    f'Constraint `{constraint.__class__.__name__}` is not compatible with the '
                     'single-table synthesizers.'
                 )
 
-    def add_cag(self, patterns):
-        """Add the list of constraint-augmented generation patterns to the synthesizer.
+        return constraints
+
+    def add_constraint(self, constraints):
+        """Add the list of constraint-augmented generation constraints to the synthesizer.
 
         Args:
-            patterns (list):
-                A list of CAG patterns to apply to the synthesizer.
+            constraints (list):
+                A list of constraints to apply to the synthesizer.
         """
-        self._validate_cag_single_table(patterns)
-        for pattern in patterns:
-            if isinstance(pattern, ProgrammableConstraint):
-                pattern = ProgrammableConstraintHarness(pattern)
+        constraints = self._validate_constraints_single_table(constraints)
+        for constraint in constraints:
+            if isinstance(constraint, ProgrammableConstraint):
+                constraint = ProgrammableConstraintHarness(constraint)
 
             try:
-                self.metadata = pattern.get_updated_metadata(self.metadata)
-                self._chained_patterns.append(pattern)
+                self.metadata = constraint.get_updated_metadata(self.metadata)
+                self._chained_constraints.append(constraint)
                 self._constraints_fitted = False
-            except PatternNotMetError as e:
+            except ConstraintNotMetError as e:
                 LOGGER.info(
-                    'Enforcing pattern %s using reject sampling.', pattern.__class__.__name__
+                    'Enforcing constraint %s using reject sampling.', constraint.__class__.__name__
                 )
 
                 try:
-                    pattern.get_updated_metadata(self._original_metadata)
-                    self._reject_sampling_patterns.append(pattern)
-                except PatternNotMetError:
+                    constraint.get_updated_metadata(self._original_metadata)
+                    self._reject_sampling_constraints.append(constraint)
+                except ConstraintNotMetError:
                     raise e
 
         self._data_processor = DataProcessor(
@@ -792,44 +745,44 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             locales=self.locales,
         )
 
-    def get_cag(self):
-        """Get a list of constraint-augmented generation patterns applied to the synthesizer."""
-        patterns = []
-        for pattern in self._chained_patterns + self._reject_sampling_patterns:
-            if isinstance(pattern, ProgrammableConstraintHarness):
-                patterns.append(deepcopy(pattern.programmable_constraint))
+    def get_constraint(self):
+        """Get a list of constraint-augmented generation constraints applied to the synthesizer."""
+        constraints = []
+        for constraint in self._chained_constraints + self._reject_sampling_constraints:
+            if isinstance(constraint, ProgrammableConstraintHarness):
+                constraints.append(deepcopy(constraint.programmable_constraint))
             else:
-                patterns.append(deepcopy(pattern))
+                constraints.append(deepcopy(constraint))
 
-        return patterns
+        return constraints
 
-    def validate_cag(self, synthetic_data):
-        """Validate synthetic_data against the CAG patterns.
+    def validate_constraints(self, synthetic_data):
+        """Validate synthetic_data against the constraints.
 
         Args:
             synthetic_data (pd.DataFrame): The synthetic data to validate
 
         Raises:
-            PatternNotMetError:
-                Raised if synthetic data does not match CAG patterns.
+            ConstraintNotMetError:
+                Raised if synthetic data does not match constraints.
         """
         transformed_data = synthetic_data
-        for attribute in ['_reject_sampling_patterns', '_chained_patterns']:
-            for pattern in getattr(self, attribute, []):
-                if attribute == '_reject_sampling_patterns':
-                    valid = pattern.is_valid(data=synthetic_data)
+        for attribute in ['_reject_sampling_constraints', '_chained_constraints']:
+            for constraint in getattr(self, attribute, []):
+                if attribute == '_reject_sampling_constraints':
+                    valid = constraint.is_valid(data=synthetic_data)
                 else:
-                    valid = pattern.is_valid(data=transformed_data)
+                    valid = constraint.is_valid(data=transformed_data)
 
                 if not valid.all():
                     invalid_rows_str = _get_invalid_rows(valid)
-                    pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
-                    pattern_name = pattern_name.replace('_', ' ')
-                    msg = f'The {pattern_name} requirement is not met '
+                    constraint_name = _convert_to_snake_case(constraint.__class__.__name__)
+                    constraint_name = constraint_name.replace('_', ' ')
+                    msg = f'The {constraint_name} requirement is not met '
                     msg += f'for row indices: {invalid_rows_str}.'
-                    raise PatternNotMetError(msg)
-                elif attribute == '_chained_patterns':
-                    transformed_data = pattern.transform(data=transformed_data)
+                    raise ConstraintNotMetError(msg)
+                elif attribute == '_chained_constraints':
+                    transformed_data = constraint.transform(data=transformed_data)
 
     def _validate_transform_constraints(self, data, enforce_constraint_fitting=False):
         """Validate the data against the constraints and transform it.
@@ -847,21 +800,21 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 Defaults to ``False``.
         """
         if self._constraints_fitted and not enforce_constraint_fitting:
-            for pattern in self._chained_patterns:
-                data = pattern.transform(data)
+            for constraint in self._chained_constraints:
+                data = constraint.transform(data)
 
             return data
 
         metadata = getattr(self, '_original_metadata', self.metadata)
-        if hasattr(self, '_reject_sampling_patterns'):
-            for pattern in self._reject_sampling_patterns:
-                pattern.fit(data=data, metadata=self._original_metadata)
+        if hasattr(self, '_reject_sampling_constraints'):
+            for constraint in self._reject_sampling_constraints:
+                constraint.fit(data=data, metadata=self._original_metadata)
 
-        if hasattr(self, '_chained_patterns'):
-            for pattern in self._chained_patterns:
-                pattern.fit(data=data, metadata=metadata)
-                metadata = pattern.get_updated_metadata(metadata)
-                data = pattern.transform(data)
+        if hasattr(self, '_chained_constraints'):
+            for constraint in self._chained_constraints:
+                constraint.fit(data=data, metadata=metadata)
+                metadata = constraint.get_updated_metadata(metadata)
+                data = constraint.transform(data)
 
         self._constraints_fitted = True
         return data
@@ -872,7 +825,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         This method will validate the data against:
         - The metadata
         - The constraints
-        - The CAG patterns
+        - The constraints
 
         To make it work with the cags we temporarily set the metadata to the original one
         and then restore it.
@@ -998,14 +951,16 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     raw_sampled = self._sample(num_rows)
             sampled = self._data_processor.reverse_transform(raw_sampled, conditions=conditions)
 
-            if hasattr(self, '_chained_patterns') and hasattr(self, '_reject_sampling_patterns'):
-                for pattern in reversed(self._chained_patterns):
-                    sampled = pattern.reverse_transform(sampled)
-                    valid_rows = pattern.is_valid(sampled)
+            if hasattr(self, '_chained_constraints') and hasattr(
+                self, '_reject_sampling_constraints'
+            ):
+                for constraint in reversed(self._chained_constraints):
+                    sampled = constraint.reverse_transform(sampled)
+                    valid_rows = constraint.is_valid(sampled)
                     sampled = sampled[valid_rows]
 
-                for pattern in reversed(self._reject_sampling_patterns):
-                    valid_rows = pattern.is_valid(sampled)
+                for constraint in reversed(self._reject_sampling_constraints):
+                    valid_rows = constraint.is_valid(sampled)
                     sampled = sampled[valid_rows]
 
             if getattr(self, '_constraint_col_formatters', False):
@@ -1333,8 +1288,10 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             transformed_condition = self._data_processor.transform(
                 transformed_condition, is_condition=True
             )
-        except PatternNotMetError:
-            raise PatternNotMetError('Provided conditions are not valid for the given constraints.')
+        except ConstraintNotMetError:
+            raise ConstraintNotMetError(
+                'Provided conditions are not valid for the given constraints.'
+            )
         except Exception:
             transformed_condition = self._data_processor.transform(condition_df, is_condition=True)
 
@@ -1383,7 +1340,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
             condition = dict(zip(condition_columns, group))
             condition_df = dataframe.iloc[0].to_frame().T
-            if hasattr(self, '_chained_patterns'):
+            if hasattr(self, '_chained_constraints'):
                 transformed_condition = self._transform_conditions_chained_constraints(condition_df)
             else:
                 try:

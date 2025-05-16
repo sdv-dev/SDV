@@ -29,7 +29,6 @@ from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.errors import SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
-from sdv.single_table.base import BaseSynthesizer
 from tests.utils import DataFrameMatcher
 
 
@@ -309,10 +308,6 @@ class TestDataProcessor:
         metadata = SingleTableMetadata()
         metadata.add_column('col', sdtype='numerical')
         instance = DataProcessor(metadata=metadata)
-        constraints = [
-            {'constraint_class': 'Positive', 'constraint_parameters': {'column_name': 'col'}}
-        ]
-        instance.add_constraints(constraints)
         instance._constraints_to_reverse = [Positive('col')]
 
         # Run
@@ -321,11 +316,6 @@ class TestDataProcessor:
         # Assert
         assert instance.metadata.to_dict() == new_instance.metadata.to_dict()
         assert instance._model_kwargs == new_instance._model_kwargs
-        assert len(new_instance._constraints_list) == 1
-        assert new_instance._constraints_list == [
-            {'constraint_class': 'Positive', 'constraint_parameters': {'column_name': 'col'}}
-        ]
-
         assert len(new_instance._constraints_to_reverse) == 1
         assert (
             instance._constraints_to_reverse[0].to_dict()
@@ -355,10 +345,6 @@ class TestDataProcessor:
         metadata = SingleTableMetadata()
         metadata.add_column('col', sdtype='numerical')
         instance = DataProcessor(metadata=metadata)
-        constraints = [
-            {'constraint_class': 'Positive', 'constraint_parameters': {'column_name': 'col'}}
-        ]
-        instance.add_constraints(constraints)
         instance._constraints_to_reverse = [Positive('col')]
 
         # Run
@@ -369,11 +355,6 @@ class TestDataProcessor:
         # Assert
         assert instance.metadata.to_dict() == new_instance.metadata.to_dict()
         assert instance._model_kwargs == new_instance._model_kwargs
-        assert len(new_instance._constraints_list) == 1
-        assert new_instance._constraints_list == [
-            {'constraint_class': 'Positive', 'constraint_parameters': {'column_name': 'col'}}
-        ]
-
         assert len(new_instance._constraints_to_reverse) == 1
         assert (
             instance._constraints_to_reverse[0].to_dict()
@@ -555,20 +536,6 @@ class TestDataProcessor:
             'SimpleCons': simple_constraint_mock,
         }
 
-    def test_add_custom_constraint_class(self):
-        """Test that the class object is added to the ``_custom_constraint_classes`` dict."""
-        # Setup
-        instance = Mock()
-        instance._custom_constraint_classes = {}
-        custom_constraint = Mock()
-
-        # Run
-        DataProcessor.add_custom_constraint_class(instance, custom_constraint, 'custom')
-
-        # Assert
-        instance._validate_custom_constraint_name.assert_called_once_with('custom')
-        assert instance._custom_constraint_classes == {'custom': custom_constraint}
-
     @patch('sdv.data_processing.data_processor.Constraint')
     def test__validate_constraint_dict(self, mock_constraint):
         """Ensure that the validation calls the ``Constraint`` class validation."""
@@ -655,145 +622,6 @@ class TestDataProcessor:
         error_msg = re.escape("Invalid constraint class ('Positive').")
         with pytest.raises(InvalidConstraintsError, match=error_msg):
             dp._validate_constraint_dict(constraint_dict)
-
-    def test_add_constraints(self):
-        """Test that constraints are being added when those are valid."""
-        # Setup
-        constraints = [
-            {'constraint_class': 'Positive', 'constraint_parameters': {'column_name': 'col1'}},
-            {'constraint_class': 'Positive', 'constraint_parameters': {'column_name': 'col2'}},
-        ]
-
-        metadata = SingleTableMetadata()
-        metadata.add_column('col1', sdtype='numerical')
-        metadata.add_column('col2', sdtype='numerical')
-        dp = DataProcessor(metadata)
-
-        # Run
-        dp.add_constraints(constraints)
-
-        # Assert
-        del dp._constraints_list[0]['constraint_parameters']['metadata']
-        del dp._constraints_list[1]['constraint_parameters']['metadata']
-        assert dp._constraints_list == constraints
-        assert id(dp._constraints_list) != id(constraints)
-
-    def test_add_constraints_to_existing_list(self):
-        """Test that constraints are being extended with the current ones when those are valid."""
-        # Setup
-        constraints = [
-            {'constraint_class': 'Positive', 'constraint_parameters': {'column_name': 'col1'}},
-            {'constraint_class': 'Positive', 'constraint_parameters': {'column_name': 'col2'}},
-        ]
-
-        metadata = SingleTableMetadata()
-        metadata.add_column('col1', sdtype='numerical')
-        metadata.add_column('col2', sdtype='numerical')
-        dp = DataProcessor(metadata)
-        dp._constraints_list = [
-            {
-                'constraint_class': 'UniqueCombinations',
-                'constraint_parameters': {'column_names': ['col1', 'col2']},
-            }
-        ]
-        dp._prepared_for_fitting = True
-
-        # Run
-        dp.add_constraints(constraints)
-
-        # Assert
-        del dp._constraints_list[1]['constraint_parameters']['metadata']
-        del dp._constraints_list[2]['constraint_parameters']['metadata']
-        assert dp._constraints_list == [
-            {
-                'constraint_class': 'UniqueCombinations',
-                'constraint_parameters': {'column_names': ['col1', 'col2']},
-            },
-            {'constraint_class': 'Positive', 'constraint_parameters': {'column_name': 'col1'}},
-            {'constraint_class': 'Positive', 'constraint_parameters': {'column_name': 'col2'}},
-        ]
-        assert id(dp._constraints_list) != id(constraints)
-        assert dp._prepared_for_fitting is False
-
-    def test_add_constraints_raises_invalidconstraintserror(self):
-        """Test that constraints raises an ``InvalidConstraintsError`` when those are not valid."""
-        # Setup
-        constraints = [
-            {'constraint_class': 'Positive', 'constraint_parameters': {'column_name': 'col1'}},
-            {'constraint_class': 'Positiveee', 'constraint_parameters': {'column_name': 'col2'}},
-        ]
-
-        metadata = SingleTableMetadata()
-        metadata.add_column('col1', sdtype='categorical')
-        metadata.add_column('col2', sdtype='categorical')
-        dp = DataProcessor(metadata)
-
-        # Run and Assert
-        error_msg = re.escape(
-            'The provided constraint is invalid:\n'
-            "A Positive constraint is being applied to an invalid column 'col1'. "
-            'This constraint is only defined for numerical columns.\n\n'
-            "Invalid constraint class ('Positiveee')."
-        )
-        with pytest.raises(InvalidConstraintsError, match=error_msg):
-            dp.add_constraints(constraints)
-
-    def test_add_constraints_missing_parameters(self):
-        """Test error raised when required params are missing."""
-        # Setup
-        data = pd.DataFrame({'col': [1, 2, 3]})
-        metadata = SingleTableMetadata()
-        metadata.detect_from_dataframe(data)
-        constraint = {'constraint_class': 'Inequality'}
-        model = BaseSynthesizer(metadata)
-
-        # Run and Assert
-        err_msg = re.escape(
-            "A constraint is missing required parameters {'constraint_parameters'}. "
-            'Please add these parameters to your constraint definition.'
-        )
-        with pytest.raises(SynthesizerInputError, match=err_msg):
-            model.add_constraints([constraint])
-
-    def test_add_constraints_invalid_parameters(self):
-        """Test error raised when invalid params are passed."""
-        # Setup
-        data = pd.DataFrame({'col': [1, 2, 3]})
-        metadata = SingleTableMetadata()
-        metadata.detect_from_dataframe(data)
-        constraint = {
-            'constraint_class': 'Inequality',
-            'constraint_parameters': {'low_column_name': 'col', 'high_column_name': 'col'},
-            'invalid': 42,
-        }
-        model = BaseSynthesizer(metadata)
-
-        # Run and Assert
-        err_msg = re.escape(
-            "Unrecognized constraint parameter {'invalid'}. "
-            'Please remove these parameters from your constraint definition.'
-        )
-        with pytest.raises(SynthesizerInputError, match=err_msg):
-            model.add_constraints([constraint])
-
-    def test_get_constraints(self):
-        """Test that ``get_constraints`` returns a copy of the ``instance._constraints_list``."""
-        # Setup
-        instance = Mock()
-        instance._constraints_list = [
-            {
-                'constraint_class': 'Positive',
-                'constraint_parameters': {'column_name': 'a', 'metadata': SingleTableMetadata()},
-            }
-        ]
-
-        # Run
-        result = DataProcessor.get_constraints(instance)
-
-        # Assert
-        del instance._constraints_list[0]['constraint_parameters']['metadata']
-        assert instance._constraints_list == result
-        assert id(result) != id(instance._constraints_list)
 
     @patch('sdv.data_processing.data_processor.get_subclasses')
     @patch('sdv.data_processing.data_processor.Constraint')

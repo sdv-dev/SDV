@@ -1,5 +1,5 @@
-"""CAG Pattern Exceptions."""
+"""Constraint Exceptions."""
 
 
-class PatternNotMetError(Exception):
-    """Error to raise when a CAG pattern is not met."""
+class ConstraintNotMetError(Exception):
+    """Error to raise when a constraint is not met."""

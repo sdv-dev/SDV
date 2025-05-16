@@ -22,6 +22,7 @@ def test_sample():
     assert len(samples) == 10
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_sample_with_constraints():
     """Test sampling for the ``SingleTablePreset``."""
     # Setup
@@ -45,6 +46,7 @@ def test_sample_with_constraints():
     assert all(samples['a'] < samples['b'])
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_warnings_are_shown():
     """Test all actions with SingleTablePreset gives a FutureWarning"""
     warn_message = (

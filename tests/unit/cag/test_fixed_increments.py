@@ -1,4 +1,4 @@
-"""Unit tests for Fixed Increments CAG pattern."""
+"""Unit tests for Fixed Increments constraint."""
 
 import re
 from unittest.mock import patch
@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from sdv.cag import FixedIncrements
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.metadata import Metadata
 
 
@@ -63,11 +63,11 @@ class TestFixedIncremenets:
         assert instance.table_name == 'table1'
 
     @patch('sdv.cag.fixed_increments._validate_table_and_column_names')
-    def test__validate_pattern_with_metadata(
+    def test__validate_constraint_with_metadata(
         self,
         _validate_table_and_column_names_mock,
     ):
-        """Test validating the pattern with metadata."""
+        """Test validating the constraint with metadata."""
         # Setup
         instance = FixedIncrements(column_name='a', increment_value=5)
         metadata = Metadata.load_from_dict({
@@ -82,12 +82,12 @@ class TestFixedIncremenets:
         })
 
         # Run
-        instance._validate_pattern_with_metadata(metadata)
+        instance._validate_constraint_with_metadata(metadata)
 
         # Assert
         _validate_table_and_column_names_mock.assert_called_once()
 
-    def test__validate_pattern_with_metadata_incorrect_sdtype(self):
+    def test__validate_constraint_with_metadata_incorrect_sdtype(self):
         """Test it when the sdtype is not numerical."""
         # Setup
         instance = FixedIncrements(column_name='a', increment_value=2)
@@ -103,14 +103,14 @@ class TestFixedIncremenets:
         })
         err_msg = re.escape(
             "Column 'a' has an incompatible sdtype ('datetime')."
-            "The column sdtype must be 'numerical'."
+            " The column sdtype must be 'numerical'."
         )
 
         # Run and Assert
-        with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_metadata(metadata)
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
+            instance._validate_constraint_with_metadata(metadata)
 
-    def test__validate_pattern_with_metadata_invalid_column_name(self):
+    def test__validate_constraint_with_metadata_invalid_column_name(self):
         """Test it when the column name is not in metadata."""
         # Setup
         column_name = 'column'
@@ -128,10 +128,10 @@ class TestFixedIncremenets:
         err_msg = re.escape(f"Table 'table' is missing columns '{column_name}")
 
         # Run and Assert
-        with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_metadata(metadata)
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
+            instance._validate_constraint_with_metadata(metadata)
 
-    def test__validate_pattern_with_metadata_no_table_name(self):
+    def test__validate_constraint_with_metadata_no_table_name(self):
         """Test it when table name is undefined and metadata has 2 tables."""
         # Setup
         instance = FixedIncrements(column_name='a', increment_value=2, table_name=None)
@@ -153,8 +153,8 @@ class TestFixedIncremenets:
         err_msg = re.escape('Metadata contains more than 1 table but no ``table_name`` provided.')
 
         # Run and Assert
-        with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_metadata(metadata)
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
+            instance._validate_constraint_with_metadata(metadata)
 
     @pytest.mark.parametrize(
         'values',
@@ -163,7 +163,7 @@ class TestFixedIncremenets:
             [1, 3, 5, 7, 9, 11, 13],
         ],
     )
-    def test__validate_pattern_with_data(self, values):
+    def test__validate_constraint_with_data(self, values):
         """Test it when the data is not divisible by increment value"""
         # Setup
         increment_value = 2
@@ -193,8 +193,8 @@ class TestFixedIncremenets:
         )
 
         # Run and Assert
-        with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_data(data, metadata)
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
+            instance._validate_constraint_with_data(data, metadata)
 
     def test__get_updated_metadata(self):
         """Test the ``_get_updated_metadata`` method."""

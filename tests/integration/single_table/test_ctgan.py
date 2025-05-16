@@ -232,6 +232,7 @@ def test_category_dtype_errors():
         tvae.fit(data)
 
 
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_ctgansynthesizer_with_constraints_generating_categorical_values():
     """Test that ``CTGANSynthesizer`` does not crash when using constraints.
 

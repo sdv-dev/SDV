@@ -1,11 +1,11 @@
-"""Inequality CAG pattern."""
+"""Inequality constraint."""
 
 import numpy as np
 import pandas as pd
 from pandas.api.types import is_object_dtype
 
 from sdv._utils import _convert_to_timedelta, _create_unique_name
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _get_invalid_rows,
     _get_is_valid_dict,
@@ -14,7 +14,7 @@ from sdv.cag._utils import (
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
 )
-from sdv.cag.base import BasePattern
+from sdv.cag.base import BaseConstraint
 from sdv.constraints.utils import (
     cast_to_datetime64,
     compute_nans_column,
@@ -24,8 +24,8 @@ from sdv.constraints.utils import (
 )
 
 
-class Inequality(BasePattern):
-    """Pattern that ensures `high_column_name` is greater than `low_column_name` .
+class Inequality(BaseConstraint):
+    """Constraint that ensures `high_column_name` is greater than `low_column_name` .
 
     The transformation works by creating a column with the difference between the
     `high_column_name` and `low_column_name` columns and storing it in the
@@ -72,8 +72,8 @@ class Inequality(BasePattern):
         self._low_datetime_format = None
         self._high_datetime_format = None
 
-    def _validate_pattern_with_metadata(self, metadata):
-        """Validate the pattern is compatible with the provided metadata.
+    def _validate_constraint_with_metadata(self, metadata):
+        """Validate the constraint is compatible with the provided metadata.
 
         Validates that:
         - If no table_name is provided, the metadata contains a single table
@@ -95,7 +95,7 @@ class Inequality(BasePattern):
         for column in columns:
             col_sdtype = metadata.tables[table_name].columns[column]['sdtype']
             if col_sdtype not in ['numerical', 'datetime']:
-                raise PatternNotMetError(
+                raise ConstraintNotMetError(
                     f"Column '{column}' has an incompatible sdtype '{col_sdtype}'. The column "
                     "sdtype must be either 'numerical' or 'datetime'."
                 )
@@ -103,7 +103,7 @@ class Inequality(BasePattern):
         low_column_sdtype = metadata.tables[table_name].columns[self._low_column_name]['sdtype']
         high_column_sdtype = metadata.tables[table_name].columns[self._high_column_name]['sdtype']
         if low_column_sdtype != high_column_sdtype:
-            raise PatternNotMetError(
+            raise ConstraintNotMetError(
                 f"Columns '{self._low_column_name}' and '{self._high_column_name}' must have the "
                 f"same sdtype. Found '{low_column_sdtype}' and '{high_column_sdtype}'."
             )
@@ -119,8 +119,8 @@ class Inequality(BasePattern):
     def _get_datetime_format(self, metadata, table_name, column_name):
         return metadata.tables[table_name].columns[column_name].get('datetime_format')
 
-    def _validate_pattern_with_data(self, data, metadata):
-        """Validate the data is compatible with the pattern.
+    def _validate_constraint_with_data(self, data, metadata):
+        """Validate the data is compatible with the constraint.
 
         Validate that the inequality requirement is met between the high and low columns.
         """
@@ -146,7 +146,7 @@ class Inequality(BasePattern):
         valid = pd.isna(low) | pd.isna(high) | self._operator(high, low)
         if not valid.all():
             invalid_rows = _get_invalid_rows(valid)
-            raise PatternNotMetError(
+            raise ConstraintNotMetError(
                 f'The inequality requirement is not met for row indices: [{invalid_rows}]'
             )
 
@@ -169,7 +169,7 @@ class Inequality(BasePattern):
         return fillna_low_column, diff_column, nan_diff_column
 
     def _get_updated_metadata(self, metadata):
-        """Get the new output metadata after applying the pattern to the input metadata."""
+        """Get the new output metadata after applying the constraint to the input metadata."""
         table_name = self._get_single_table_name(metadata)
         fillna_low_column, diff_column, nan_diff_column = self._get_diff_and_nan_column_names(
             metadata, self._diff_column_name, table_name
@@ -185,7 +185,7 @@ class Inequality(BasePattern):
         )
 
     def _fit(self, data, metadata):
-        """Fit the pattern.
+        """Fit the constraint.
 
         Args:
             data (dict[str, pd.DataFrame]):

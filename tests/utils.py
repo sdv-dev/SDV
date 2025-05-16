@@ -136,28 +136,28 @@ def catch_sdv_logs(caplog, level, logger):
         logger.removeHandler(caplog.handler)
 
 
-def run_pattern(pattern, data, metadata):
-    """Run a pattern."""
-    pattern.validate(data, metadata)
-    updated_metadata = pattern.get_updated_metadata(metadata)
-    pattern.fit(data, metadata)
-    transformed = pattern.transform(data)
-    reverse_transformed = pattern.reverse_transform(transformed)
+def run_constraint(constraint, data, metadata):
+    """Run a constraint."""
+    constraint.validate(data, metadata)
+    updated_metadata = constraint.get_updated_metadata(metadata)
+    constraint.fit(data, metadata)
+    transformed = constraint.transform(data)
+    reverse_transformed = constraint.reverse_transform(transformed)
 
     return updated_metadata, transformed, reverse_transformed
 
 
-def run_copula(data, metadata, pattern):
+def run_copula(data, metadata, constraint):
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=pattern)
+    synthesizer.add_constraint(constraints=constraint)
     synthesizer.fit(data)
 
     return synthesizer
 
 
-def run_hma(data, metadata, pattern):
+def run_hma(data, metadata, constraint):
     synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_constraint(constraints=[constraint])
     synthesizer.fit(data)
 
     return synthesizer
