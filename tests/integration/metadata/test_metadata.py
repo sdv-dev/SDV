@@ -1203,6 +1203,75 @@ def test_remove_column(metadata_instance):
     assert metadata_instance._multi_table_updated
 
 
+def test_remove_column_column_relationships(metadata_instance):
+    """Test that all column relationships the column is in are removed."""
+    # Run
+    metadata_instance.remove_column('address', 'manufacturers')
+
+    # Assert
+    expected_metadata_dict = {
+        'tables': {
+            'users': {
+                'columns': {
+                    'gender': {'sdtype': 'categorical'},
+                    'age': {'sdtype': 'numerical'},
+                    'name': {'sdtype': 'text'},
+                    'user_id': {'sdtype': 'id'},
+                },
+                'primary_key': 'user_id',
+            },
+            'transactions': {
+                'columns': {
+                    'user_id': {'sdtype': 'id'},
+                    'transaction_id': {'sdtype': 'id'},
+                    'product_id': {'sdtype': 'id'},
+                    'amount': {'sdtype': 'numerical'},
+                },
+                'primary_key': 'transaction_id',
+            },
+            'products': {
+                'columns': {
+                    'product_id': {'sdtype': 'id'},
+                    'cost': {'sdtype': 'numerical'},
+                    'weight': {'sdtype': 'numerical'},
+                    'manufacturer': {'sdtype': 'id'},
+                },
+                'primary_key': 'product_id',
+            },
+            'manufacturers': {
+                'columns': {
+                    'country': {'sdtype': 'categorical'},
+                    'id': {'sdtype': 'id'},
+                },
+                'primary_key': 'id',
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'users',
+                'parent_primary_key': 'user_id',
+                'child_table_name': 'transactions',
+                'child_foreign_key': 'user_id',
+            },
+            {
+                'parent_table_name': 'products',
+                'parent_primary_key': 'product_id',
+                'child_table_name': 'transactions',
+                'child_foreign_key': 'product_id',
+            },
+            {
+                'parent_table_name': 'manufacturers',
+                'parent_primary_key': 'id',
+                'child_table_name': 'products',
+                'child_foreign_key': 'manufacturer',
+            },
+        ],
+        'METADATA_SPEC_VERSION': 'V1',
+    }
+    assert expected_metadata_dict == metadata_instance.to_dict()
+    assert metadata_instance._multi_table_updated
+
+
 @pytest.fixture
 def sequential_metadata():
     metadata_dict = {
