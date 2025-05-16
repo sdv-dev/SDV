@@ -19,7 +19,7 @@ from sdv._utils import (
     generate_synthesizer_id,
 )
 from sdv.cag._errors import ConstraintNotMetError
-from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows
+from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows, _validate_constraints
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
 from sdv.errors import (
     ConstraintsNotMetError,
@@ -194,6 +194,7 @@ class BaseMultiTableSynthesizer:
             constraints (list):
                 A list of CAG constraints to apply to the synthesizer.
         """
+        constraints = _validate_constraints(constraints, self._fitted)
         metadata = self.metadata
         multi_table_constraints = []
         single_table_constraints = []

@@ -965,7 +965,8 @@ class TestBaseSingleTableSynthesizer:
         # Run and Assert
         instance.validate(data)
 
-    def test__validate_cag_single_table(self):
+    @patch('sdv.single_table.base._validate_constraints')
+    def test__validate_cag_single_table(self, mock_validate_constraints):
         """Test the ``_validate_cag`` method"""
         # Setup
         metadata = Metadata()
@@ -979,14 +980,18 @@ class TestBaseSingleTableSynthesizer:
         expected_err_multi_table = re.escape(
             'Pattern `Pattern_Name` is not compatible with the single-table synthesizers.'
         )
+        mock_validate_constraints.side_effect = lambda constraints, _fitted: constraints
 
-        # Run and Assert
-        instance._validate_cag_single_table(constraints=[constraint_1])
+        # Run
+        result = instance._validate_cag_single_table(constraints=[constraint_1])
         with pytest.raises(SynthesizerInputError, match=expected_err_list):
             instance._validate_cag_single_table(constraints='constraint')
 
         with pytest.raises(SynthesizerInputError, match=expected_err_multi_table):
             instance._validate_cag_single_table(constraints=[constraint_1, constraint_2])
+
+        # Assert
+        assert result == [constraint_1]
 
     def test_update_transformers_invalid_keys(self):
         """Test error is raised if passed transformer doesn't match key column.
@@ -2478,6 +2483,7 @@ class TestBaseSingleTableSynthesizer:
         constraint1 = Mock()
         constraint2 = Mock()
         constraint3 = Mock()
+        instance._validate_cag_single_table.side_effect = lambda constraint: constraint
         constraint3.get_updated_metadata.side_effect = [ConstraintNotMetError, None]
         constraint4 = SingleTableProgrammableConstraint()
         mock_harness = Mock()

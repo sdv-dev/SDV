@@ -1,18 +1,22 @@
 """CAG _utils unit tests."""
 
 import re
-from unittest.mock import Mock
+import warnings
+from unittest.mock import Mock, patch
 
 import pytest
 
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _convert_to_snake_case,
+    _filter_old_style_constraints,
     _is_list_of_type,
     _remove_columns_from_metadata,
+    _validate_constraints,
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
 )
+from sdv.cag.base import BaseConstraint
 from sdv.metadata.metadata import Metadata
 
 
@@ -238,3 +242,54 @@ def test__remove_columns_from_metadata_multiple_duplicate_columns():
     assert 'A' in original_metadata.tables['table'].columns
     assert 'A' not in new_metadata.tables['table'].columns
     assert 'B' in new_metadata.tables['table'].columns
+
+
+def test__filter_old_style_constraints():
+    """Test `_filter_old_style_constraints` method"""
+
+    # Setup
+    class DummyConstraint(BaseConstraint):
+        pass
+
+    constraint_1 = DummyConstraint()
+    constraint_2 = DummyConstraint()
+    old_style_constraint = {}
+    expected_warning = re.escape(
+        'The `add_constraints` function no longer supports constraints using the older '
+        'dictionary-style definition. Such constraints will be ignored. Please supply '
+        'objects from `sdv.cag` instead.'
+    )
+
+    # Run
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter('always')
+        result_1 = _filter_old_style_constraints([constraint_1, constraint_2])
+        assert len(record) == 0
+
+    with pytest.warns(DeprecationWarning, match=expected_warning):
+        result_2 = _filter_old_style_constraints([constraint_1, constraint_2, old_style_constraint])
+
+    # Assert
+    assert result_1 == [constraint_1, constraint_2]
+    assert result_2 == result_1
+
+
+@patch('sdv.cag._utils._filter_old_style_constraints')
+def test__validate_constraints(mock_filter_old_style_constraints):
+    """Test `_validate_constraints` method"""
+    # Setup
+    constraint_1 = Mock()
+    constraint_2 = Mock()
+    expected_error = re.escape('Constraints must be a list of sdv.cag objects.')
+    expected_warning = re.escape(
+        "For these constraints to take effect, please refit the synthesizer using 'fit'."
+    )
+
+    # Run and Assert
+    _validate_constraints(constraints=[constraint_1, constraint_2], synthesizer_fitted=False)
+    mock_filter_old_style_constraints.assert_called_once_with([constraint_1, constraint_2])
+    with pytest.raises(ValueError, match=expected_error):
+        _validate_constraints(constraints=constraint_1, synthesizer_fitted=True)
+
+    with pytest.warns(UserWarning, match=expected_warning):
+        _validate_constraints(constraints=[constraint_1], synthesizer_fitted=True)

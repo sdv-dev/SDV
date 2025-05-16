@@ -1587,7 +1587,8 @@ class TestBaseMultiTableSynthesizer:
         assert idx_single_table_2 == 0
 
     @patch('sdv.multi_table.base.ProgrammableConstraintHarness')
-    def test_add_cag(self, mock_programmable_constraint_harness):
+    @patch('sdv.multi_table.base._validate_constraints')
+    def test_add_cag(self, mock_validate_constraints, mock_programmable_constraint_harness):
         """Test adding data constraints to the synthesizer."""
         # Setup
         instance = Mock()
@@ -1610,11 +1611,13 @@ class TestBaseMultiTableSynthesizer:
         single_table_constraint = [constraint4]
         constraints = mutli_table_constraint + single_table_constraint
         instance._detect_single_table_cag = Mock(return_value=3)
+        mock_validate_constraints.return_value = constraints
 
         # Run
         BaseMultiTableSynthesizer.add_cag(instance, constraints)
 
         # Assert
+        mock_validate_constraints.assert_called_once_with(constraints, instance._fitted)
         mock_programmable_constraint_harness.assert_called_once_with(constraint3)
         assert instance._original_metadata == original_metadata
         constraint1.get_updated_metadata.assert_called_once_with(original_metadata)
@@ -1631,7 +1634,8 @@ class TestBaseMultiTableSynthesizer:
         instance._table_synthesizers['table1'].add_cag.assert_called_once_with([constraint4])
         assert instance.constraints == expected_constraints
 
-    def test_updating_constraints_keeps_original_metadata(self):
+    @patch('sdv.multi_table.base._validate_constraints')
+    def test_updating_constraints_keeps_original_metadata(self, mock_validate_constraints):
         """Test adding data constraints to the synthesizer."""
         # Setup
         instance = Mock()
@@ -1644,11 +1648,13 @@ class TestBaseMultiTableSynthesizer:
         constraint2 = Mock()
         instance.constraints = [constraint1]
         instance._detect_single_table_cag = Mock(return_value=None)
+        mock_validate_constraints.return_value = [constraint2]
 
         # Run
         BaseMultiTableSynthesizer.add_cag(instance, [constraint2])
 
         # Assert
+        mock_validate_constraints.assert_called_once_with([constraint2], instance._fitted)
         assert instance._original_metadata == original_metadata
         constraint2.get_updated_metadata.assert_called_once_with(metadata)
         assert instance.metadata == constraint2.get_updated_metadata.return_value

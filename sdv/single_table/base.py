@@ -28,7 +28,7 @@ from sdv._utils import (
     generate_synthesizer_id,
 )
 from sdv.cag._errors import ConstraintNotMetError
-from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows
+from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows, _validate_constraints
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
@@ -752,12 +752,15 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         if not isinstance(constraints, list):
             raise SynthesizerInputError('`constraints` must be a list.')
 
+        constraints = _validate_constraints(constraints, self._fitted)
         for constraint in constraints:
             if constraint._is_single_table is False:
                 raise SynthesizerInputError(
                     f'Pattern `{constraint.__class__.__name__}` is not compatible with the '
                     'single-table synthesizers.'
                 )
+
+        return constraints
 
     def add_cag(self, constraints):
         """Add the list of constraint-augmented generation constraints to the synthesizer.
@@ -766,7 +769,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             constraints (list):
                 A list of CAG constraints to apply to the synthesizer.
         """
-        self._validate_cag_single_table(constraints)
+        constraints = self._validate_cag_single_table(constraints)
         for constraint in constraints:
             if isinstance(constraint, ProgrammableConstraint):
                 constraint = ProgrammableConstraintHarness(constraint)
