@@ -113,6 +113,7 @@ class TestPARSynthesizer:
                 verbose=False,
             )
 
+    @pytest.mark.skip('Old-style constraints are deprecated')
     def test_add_constraints(self):
         """Test that that only simple constraints can be added to PARSynthesizer."""
         # Setup

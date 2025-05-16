@@ -791,21 +791,6 @@ class BaseMultiTableSynthesizer:
             synthesizer = self._table_synthesizers[constraint.pop('table_name')]
             synthesizer._data_processor.add_constraints([constraint])
 
-    def get_constraints(self):
-        """Get constraints of the synthesizer.
-
-        Returns:
-            list:
-                List of dictionaries describing the constraints of the synthesizer.
-        """
-        constraints = []
-        for table_name, synthesizer in self._table_synthesizers.items():
-            for constraint in synthesizer.get_constraints():
-                constraint['table_name'] = table_name
-                constraints.append(constraint)
-
-        return constraints
-
     def load_custom_constraint_classes(self, filepath, class_names):
         """Load a custom constraint class for each table's synthesizer.
 

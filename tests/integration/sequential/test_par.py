@@ -285,7 +285,7 @@ def test_par_missing_sequence_index():
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
 
-
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_constraints_on_par():
     """Test if only simple constraints work on PARSynthesizer."""
     # Setup

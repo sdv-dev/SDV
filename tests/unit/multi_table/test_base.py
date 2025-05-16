@@ -14,7 +14,6 @@ from sdv import version
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
 from sdv.errors import (
-    ConstraintsNotMetError,
     InvalidDataError,
     NotFittedError,
     SamplingError,
@@ -624,37 +623,6 @@ class TestBaseMultiTableSynthesizer:
             "Please use the method 'drop_unknown_references' from sdv.utils to clean the data."
         )
         with pytest.raises(InvalidDataError, match=error_msg):
-            instance.validate(data)
-
-    def test_validate_constraints_not_met(self):
-        """Test that errors are being raised when there are constraints not met."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        data = get_multi_table_data()
-        data['nesreca']['val'] = list(range(4))
-        metadata.add_column('val', 'nesreca', sdtype='numerical')
-        instance = BaseMultiTableSynthesizer(metadata)
-        inequality_constraint = {
-            'constraint_class': 'Inequality',
-            'table_name': 'nesreca',
-            'constraint_parameters': {
-                'low_column_name': 'nesreca_val',
-                'high_column_name': 'val',
-                'strict_boundaries': True,
-            },
-        }
-        instance.add_constraints([inequality_constraint])
-
-        # Run and Assert
-        error_msg = (
-            "\nData is not valid for the 'Inequality' constraint:\n"
-            '   nesreca_val  val\n'
-            '0            0    0\n'
-            '1            1    1\n'
-            '2            2    2\n'
-            '3            3    3'
-        )
-        with pytest.raises(ConstraintsNotMetError, match=error_msg):
             instance.validate(data)
 
     def test_validate_table_synthesizers_errors(self):
@@ -1445,42 +1413,6 @@ class TestBaseMultiTableSynthesizer:
         with pytest.warns(UserWarning, match=warn_msg):
             instance.add_constraints([])
 
-    def test_add_constraints(self):
-        """Test a list of constraints can be added to the synthesizer."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        instance = BaseMultiTableSynthesizer(metadata)
-        metadata.add_column('positive_int', 'nesreca', sdtype='numerical')
-        metadata.add_column('negative_int', 'oseba', sdtype='numerical')
-        positive_constraint = {
-            'constraint_class': 'Positive',
-            'table_name': 'nesreca',
-            'constraint_parameters': {'column_name': 'nesreca_val', 'strict_boundaries': True},
-        }
-        negative_constraint = {
-            'constraint_class': 'Negative',
-            'table_name': 'oseba',
-            'constraint_parameters': {'column_name': 'oseba_val', 'strict_boundaries': False},
-        }
-
-        # Run
-        instance.add_constraints([positive_constraint, negative_constraint])
-
-        # Assert
-        positive_constraint = {
-            'constraint_class': 'Positive',
-            'constraint_parameters': {'column_name': 'nesreca_val', 'strict_boundaries': True},
-        }
-        negative_constraint = {
-            'constraint_class': 'Negative',
-            'constraint_parameters': {'column_name': 'oseba_val', 'strict_boundaries': False},
-        }
-        output_nesreca = instance._table_synthesizers['nesreca'].get_constraints()
-        assert output_nesreca == [positive_constraint]
-
-        output_oseba = instance._table_synthesizers['oseba'].get_constraints()
-        assert output_oseba == [negative_constraint]
-
     def test_add_constraints_unique(self):
         """Test an error is raised when a ``Unique`` constraint is passed."""
         # Setup
@@ -1501,32 +1433,6 @@ class TestBaseMultiTableSynthesizer:
         )
         with pytest.raises(SynthesizerInputError, match=err_msg):
             instance.add_constraints([unique_constraint])
-
-    def test_get_constraints(self):
-        """Test a list of constraints is returned by the method."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        instance = BaseMultiTableSynthesizer(metadata)
-        metadata.add_column('positive_int', 'nesreca', sdtype='numerical')
-        metadata.add_column('negative_int', 'oseba', sdtype='numerical')
-        positive_constraint = {
-            'constraint_class': 'Positive',
-            'table_name': 'nesreca',
-            'constraint_parameters': {'column_name': 'nesreca_val', 'strict_boundaries': True},
-        }
-        negative_constraint = {
-            'constraint_class': 'Negative',
-            'table_name': 'oseba',
-            'constraint_parameters': {'column_name': 'oseba_val', 'strict_boundaries': False},
-        }
-        constraints = [positive_constraint, negative_constraint]
-        instance.add_constraints(constraints)
-
-        # Run
-        output = instance.get_constraints()
-
-        # Assert
-        assert output == constraints
 
     def test_add_constraints_missing_table_name(self):
         """Test error raised when ``table_name`` is missing."""

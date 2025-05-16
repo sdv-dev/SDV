@@ -383,43 +383,6 @@ class BaseSynthesizer:
         """
         self._data_processor.load_custom_constraint_classes(filepath, class_names)
 
-    def add_custom_constraint_class(self, class_object, class_name):
-        """Add a custom constraint class for the synthesizer to use.
-
-        Args:
-            class_object (sdv.constraints.Constraint):
-                A custom constraint class object.
-            class_name (str):
-                The name to assign this custom constraint class. This will be the name to use
-                when writing a constraint dictionary for ``add_constraints``.
-        """
-        self._data_processor.add_custom_constraint_class(class_object, class_name)
-
-    def add_constraints(self, constraints):
-        """Add constraints to the synthesizer.
-
-        Args:
-            constraints (list):
-                List of constraints described as dictionaries in the following format:
-                    * ``constraint_class``: Name of the constraint to apply.
-                    * ``constraint_parameters``: A dictionary with the constraint parameters.
-        """
-        if self._fitted:
-            warnings.warn(
-                "For these constraints to take effect, please refit the synthesizer using 'fit'."
-            )
-
-        self._data_processor.add_constraints(constraints)
-
-    def get_constraints(self):
-        """Get a list of the current constraints that will be used.
-
-        Returns:
-            list:
-                List of dictionaries describing the constraints for this synthesizer.
-        """
-        return self._data_processor.get_constraints()
-
     def _validate_transform_constraints(self, data):
         """Helper method to transform the data for the constraints."""
         return data

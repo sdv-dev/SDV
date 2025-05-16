@@ -298,6 +298,7 @@ class TestHMASynthesizer:
         assert all(sampled['child']['numerical_col_2'] > 1)
         assert not all(sampled['child']['numerical_col'] > 1)
 
+    @pytest.mark.skip('Old-style constraints are deprecated')
     def test_hma_with_inequality_constraint(self):
         """Test that when new columns are created by the constraint this still works."""
         # Setup
@@ -2350,7 +2351,7 @@ def test_small_sample():
     assert synthetic_data['hotels'].columns.tolist() == data['hotels'].columns.tolist()
     assert synthetic_data['guests'].columns.tolist() == data['guests'].columns.tolist()
 
-
+@pytest.mark.skip('Old-style constraints are deprecated')
 def test_hma_synthesizer_with_fixed_combinations():
     """Tests that https://github.com/sdv-dev/SDV/issues/2087 does not occur."""
     # Creating the dataset
