@@ -324,6 +324,33 @@ class Metadata(MultiTableMetadata):
         table_name = self._handle_table_name(table_name)
         super().add_column(table_name, column_name, **kwargs)
 
+    def remove_table(self, table_name):
+        """Remove a table from the metadata.
+
+        This method removes a table from the metadata as well as all relationships that table
+        contains.
+
+        Args:
+            table_name (str):
+                The name of the table to remove.
+        """
+        self._validate_table_exists(table_name)
+
+        # Remove relationships
+        updated_relationships = []
+        for relationship in self.relationships:
+            relationship_tables = (
+                relationship['parent_table_name'],
+                relationship['child_table_name'],
+            )
+            if table_name not in relationship_tables:
+                updated_relationships.append(relationship)
+
+        self.relationships = updated_relationships
+
+        del self.tables[table_name]
+        self._multi_table_updated = True
+
     def add_column_relationship(
         self,
         relationship_type,
@@ -363,6 +390,15 @@ class Metadata(MultiTableMetadata):
         table_name = self._handle_table_name(table_name)
         table_metadata = super().get_table_metadata(table_name)
         return Metadata.load_from_dict(table_metadata.to_dict(), single_table_name=table_name)
+
+    def copy(self):
+        """Return a copy of the metadata.
+
+        Returns:
+            Metadata:
+                Copy of current metadata.
+        """
+        return Metadata.load_from_dict(self.to_dict())
 
     def anonymize(self):
         """Anonymize metadata by obfuscating column names.

@@ -871,6 +871,16 @@ class TestMetadataClass:
         metadata._get_anonymized_dict.assert_called_once()
         mock_load_from_dict.assert_called_once_with({})
 
+    def test_copy(self, metadata_instance):
+        """Test that a copy but different instance is returned."""
+        # Run
+        copied_metadata = metadata_instance.copy()
+
+        # Assert
+        assert metadata_instance != copied_metadata
+        assert isinstance(copied_metadata, Metadata)
+        assert metadata_instance.to_dict() == copied_metadata.to_dict()
+
     @patch('sdv.metadata.multi_table.visualize_graph')
     def test_visualize_with_sequence_key_and_index(self, visualize_graph_mock):
         """Test the ``visualize`` method with sequence key and index"""
@@ -903,3 +913,27 @@ class TestMetadataClass:
             'nasdaq100_2019': expected_label,
         }
         visualize_graph_mock.assert_called_once_with(expected_nodes, [], None)
+
+    def test_remove_table_bad_table_name(self, metadata_instance):
+        """Test an error is raised if the table name does not exist in the metadata."""
+        # Run and Assert
+        expected_message = re.escape("Unknown table name ('fake_table').")
+        with pytest.raises(InvalidMetadataError, match=expected_message):
+            metadata_instance.remove_table('fake_table')
+
+    def test_remove_table_removes_table_and_relationships(self, metadata_instance):
+        """Test that the method removes the table and any relationships it was in."""
+        # Run
+        metadata_instance.remove_table('sessions')
+
+        # Assert
+        assert 'session' not in metadata_instance.tables
+        assert len(metadata_instance.tables) == 3
+        assert metadata_instance.relationships == [
+            {
+                'parent_table_name': 'users',
+                'parent_primary_key': 'id',
+                'child_table_name': 'payments',
+                'child_foreign_key': 'user_id',
+            },
+        ]
