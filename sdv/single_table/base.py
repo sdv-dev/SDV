@@ -30,7 +30,6 @@ from sdv._utils import (
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows, _validate_constraints
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
-from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.numerical_formatter import NumericalFormatter
@@ -218,17 +217,6 @@ class BaseSynthesizer:
         if errors:
             raise InvalidDataError(errors)
 
-    def _validate_constraints(self, data):
-        """Validate that the data satisfies the constraints."""
-        errors = []
-        try:
-            self._data_processor._fit_constraints(data)
-        except AggregateConstraintsError as e:
-            errors.append(e)
-
-        if errors:
-            raise ConstraintsNotMetError(errors)
-
     def _validate(self, data):
         """Validate any rules that only apply to specific synthesizers.
 
@@ -263,7 +251,6 @@ class BaseSynthesizer:
                     * values of a column don't satisfy their sdtype
         """
         self._validate_metadata(data)
-        self._validate_constraints(data)
 
         # Retaining the logic of returning errors and raising them here to maintain consistency
         # with the existing workflow with synthesizers

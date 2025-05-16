@@ -22,7 +22,6 @@ from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows, _validate_constraints
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
 from sdv.errors import (
-    ConstraintsNotMetError,
     InvalidDataError,
     SamplingError,
     SynthesizerInputError,
@@ -414,23 +413,14 @@ class BaseMultiTableSynthesizer:
                 A dictionary of table names to pd.DataFrames.
         """
         errors = []
-        constraints_errors = []
         metadata = self._original_metadata
         metadata.validate_data(data)
         for table_name in data:
             if table_name in self._table_synthesizers:
-                try:
-                    self._table_synthesizers[table_name]._validate_constraints(data[table_name])
-                except ConstraintsNotMetError as error:
-                    constraints_errors.append(error)
-
                 # Validate rules specific to each synthesizer
                 errors += self._table_synthesizers[table_name]._validate(data[table_name])
 
-        if constraints_errors:
-            raise ConstraintsNotMetError(constraints_errors)
-
-        elif errors:
+        if errors:
             raise InvalidDataError(errors)
 
         self._validate_transform_constraints(data, enforce_constraint_fitting=True)
