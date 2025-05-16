@@ -3,7 +3,7 @@ import re
 import numpy as np
 import pandas as pd
 
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.metadata import Metadata
 
 
@@ -23,7 +23,7 @@ def _validate_columns_in_metadata(table_name, columns, metadata):
     if not set(columns).issubset(set(metadata.tables[table_name].columns)):
         missing_columns = set(columns) - set(metadata.tables[table_name].columns)
         missing_columns = "', '".join(sorted(missing_columns))
-        raise PatternNotMetError(f"Table '{table_name}' is missing columns '{missing_columns}'.")
+        raise ConstraintNotMetError(f"Table '{table_name}' is missing columns '{missing_columns}'.")
 
 
 def _validate_table_and_column_names(table_name, columns, metadata):
@@ -45,13 +45,13 @@ def _validate_table_and_column_names(table_name, columns, metadata):
             The Metadata to check.
     """
     if table_name is None and len(metadata.tables) > 1:
-        raise PatternNotMetError(
+        raise ConstraintNotMetError(
             'Metadata contains more than 1 table but no ``table_name`` provided.'
         )
     if table_name is None:
         table_name = metadata._get_single_table_name()
     elif table_name not in metadata.tables:
-        raise PatternNotMetError(f"Table '{table_name}' missing from metadata.")
+        raise ConstraintNotMetError(f"Table '{table_name}' missing from metadata.")
 
     _validate_columns_in_metadata(table_name, columns, metadata)
 

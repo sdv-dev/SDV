@@ -6,7 +6,7 @@ from unittest.mock import Mock
 import pandas as pd
 import pytest
 
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag.programmable_constraint import (
     ProgrammableConstraint,
     ProgrammableConstraintHarness,
@@ -118,7 +118,7 @@ class TestProgrammableConstraintHarness:
             'SingleTableProgrammableConstraint cannot be used with multi-table metadata. '
             'Please use the ProgrammableConstraint base class instead.'
         )
-        with pytest.raises(PatternNotMetError, match=expected_msg):
+        with pytest.raises(ConstraintNotMetError, match=expected_msg):
             instance._validate_constraint_with_metadata(metadata)
 
     def test__validate_constraint_with_data(self):

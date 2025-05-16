@@ -18,7 +18,7 @@ from sdv._utils import (
     check_synthesizer_version,
     generate_synthesizer_id,
 )
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
 from sdv.errors import (
@@ -239,7 +239,7 @@ class BaseMultiTableSynthesizer:
             data (dict[str, pd.DataFrame]): The synthetic data to validate
 
         Raises:
-            PatternNotMetError:
+            ConstraintNotMetError:
                 Raised if synthetic data does not match CAG constraints.
         """
         transformed_data = synthetic_data
@@ -252,7 +252,7 @@ class BaseMultiTableSynthesizer:
                     constraint_name = constraint_name.replace('_', ' ')
                     msg = f"Table '{table_name}': The {constraint_name} requirement is not met "
                     msg += f'for row indices: {invalid_rows_str}.'
-                    raise PatternNotMetError(msg)
+                    raise ConstraintNotMetError(msg)
 
             transformed_data = constraint.transform(data=transformed_data)
 
@@ -260,8 +260,8 @@ class BaseMultiTableSynthesizer:
             synthesizer = self._table_synthesizers[table_name]
             try:
                 synthesizer.validate_cag(table_data)
-            except PatternNotMetError as error:
-                raise PatternNotMetError(f"Table '{table_name}': {error}") from error
+            except ConstraintNotMetError as error:
+                raise ConstraintNotMetError(f"Table '{table_name}': {error}") from error
 
     def get_metadata(self, version='original'):
         """Get the metadata, either original or modified after applying CAG constraints.

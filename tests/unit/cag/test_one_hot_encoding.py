@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from sdv.cag import OneHotEncoding
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.metadata import Metadata
 
 
@@ -81,25 +81,25 @@ class TestOneHotEncoding:
         # Row of all zeros
         data = {'table': pd.DataFrame({'a': [1, 0, 0], 'b': [0, 0, 0], 'c': [0, 0, 1]})}
         err_msg = re.escape('The one hot encoding requirement is not met for row indices: [1]')
-        with pytest.raises(PatternNotMetError, match=err_msg):
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
         # Row with two 1s
         data = {'table': pd.DataFrame({'a': [1, 0, 0], 'b': [0, 1, 1], 'c': [1, 0, 0]})}
         err_msg = re.escape('The one hot encoding requirement is not met for row indices: [0]')
-        with pytest.raises(PatternNotMetError, match=err_msg):
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
         # Invalid number
         data = {'table': pd.DataFrame({'a': [1, 0, 0], 'b': [0, 2, 0], 'c': [0, 0, 1]})}
         err_msg = re.escape('The one hot encoding requirement is not met for row indices: [1]')
-        with pytest.raises(PatternNotMetError, match=err_msg):
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
         # Nans
         data = {'table': pd.DataFrame({'a': [1, 0, 0], 'b': [0, 1, np.nan], 'c': [0, None, 1]})}
         err_msg = re.escape('The one hot encoding requirement is not met for row indices: [1, 2]')
-        with pytest.raises(PatternNotMetError, match=err_msg):
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
         # Valid

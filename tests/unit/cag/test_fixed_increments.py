@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from sdv.cag import FixedIncrements
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.metadata import Metadata
 
 
@@ -107,7 +107,7 @@ class TestFixedIncremenets:
         )
 
         # Run and Assert
-        with pytest.raises(PatternNotMetError, match=err_msg):
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_metadata(metadata)
 
     def test__validate_constraint_with_metadata_invalid_column_name(self):
@@ -128,7 +128,7 @@ class TestFixedIncremenets:
         err_msg = re.escape(f"Table 'table' is missing columns '{column_name}")
 
         # Run and Assert
-        with pytest.raises(PatternNotMetError, match=err_msg):
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_metadata(metadata)
 
     def test__validate_constraint_with_metadata_no_table_name(self):
@@ -153,7 +153,7 @@ class TestFixedIncremenets:
         err_msg = re.escape('Metadata contains more than 1 table but no ``table_name`` provided.')
 
         # Run and Assert
-        with pytest.raises(PatternNotMetError, match=err_msg):
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_metadata(metadata)
 
     @pytest.mark.parametrize(
@@ -193,7 +193,7 @@ class TestFixedIncremenets:
         )
 
         # Run and Assert
-        with pytest.raises(PatternNotMetError, match=err_msg):
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
     def test__get_updated_metadata(self):

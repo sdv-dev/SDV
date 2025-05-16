@@ -6,7 +6,7 @@ import pytest
 from pandas.api.types import is_object_dtype
 
 from sdv.cag import Inequality
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.datasets.demo import download_demo
 from sdv.metadata import Metadata
 from sdv.single_table import GaussianCopulaSynthesizer
@@ -420,7 +420,7 @@ def test_inequality_with_timestamp_and_date_strict_boundaries():
 
     # Run and Assert
     error_msg = 'The inequality requirement is not met for row indices: '
-    with pytest.raises(PatternNotMetError) as error:
+    with pytest.raises(ConstraintNotMetError) as error:
         run_copula(data, metadata, [constraint])
         assert error_msg in error
 
@@ -470,7 +470,7 @@ def test_inequality_constraint_date_less_than_timestamp_strict_boundaries():
 
     # Run and Assert
     error_msg = 'The inequality requirement is not met for row indices: '
-    with pytest.raises(PatternNotMetError) as error:
+    with pytest.raises(ConstraintNotMetError) as error:
         run_copula(data, metadata, [constraint])
         assert error_msg in error
 
@@ -520,7 +520,7 @@ def test_inequality_constraint_timestamp_less_than_date_strict_boundaries():
 
     # Run and Assert
     err_msg = 'The inequality requirement is not met for row indices: '
-    with pytest.raises(PatternNotMetError) as error:
+    with pytest.raises(ConstraintNotMetError) as error:
         run_copula(data, metadata, [constraint])
         assert err_msg in error
 
@@ -863,7 +863,7 @@ def test_validate_cag_raises(data, metadata, constraint):
     msg = re.escape('The inequality requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more')
 
     # Run and Assert
-    with pytest.raises(PatternNotMetError, match=msg):
+    with pytest.raises(ConstraintNotMetError, match=msg):
         synthesizer.validate_cag(synthetic_data=synthetic_data)
 
 
@@ -909,7 +909,7 @@ def test_validate_cag_multi_with_reject_raises(data_reject, metadata_reject, con
     )
 
     # Run and Assert
-    with pytest.raises(PatternNotMetError, match=msg):
+    with pytest.raises(ConstraintNotMetError, match=msg):
         synthesizer.validate_cag(synthetic_data=synthetic_data)
 
 
@@ -930,7 +930,7 @@ def test_validate_cag_multi_raises(data_multi, metadata_multi, constraint_multi)
     )
 
     # Run and Assert
-    with pytest.raises(PatternNotMetError, match=msg):
+    with pytest.raises(ConstraintNotMetError, match=msg):
         synthesizer.validate_cag(synthetic_data=synthetic_data)
 
 
@@ -950,7 +950,7 @@ def test_invalid_data():
 
     # Run and Assert
     synthesizer = run_copula(clean_data, metadata, [constraint])
-    with pytest.raises(PatternNotMetError, match=expected_error_msg):
+    with pytest.raises(ConstraintNotMetError, match=expected_error_msg):
         synthesizer.fit(data_invalid)
 
 

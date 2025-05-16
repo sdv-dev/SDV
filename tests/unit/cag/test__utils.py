@@ -5,7 +5,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _convert_to_snake_case,
     _is_list_of_type,
@@ -36,13 +36,13 @@ def test__validate_table_and_column_names():
 
     # Run and Assert
     _validate_table_and_column_names('parent', columns_correct, metadata)
-    with pytest.raises(PatternNotMetError, match=expected_not_single_table):
+    with pytest.raises(ConstraintNotMetError, match=expected_not_single_table):
         _validate_table_and_column_names(None, columns_correct, metadata)
 
-    with pytest.raises(PatternNotMetError, match=expected_error_wrong_table):
+    with pytest.raises(ConstraintNotMetError, match=expected_error_wrong_table):
         _validate_table_and_column_names('wrong_table', columns_correct, metadata)
 
-    with pytest.raises(PatternNotMetError, match=expected_error_wrong_columns):
+    with pytest.raises(ConstraintNotMetError, match=expected_error_wrong_columns):
         _validate_table_and_column_names('parent', wrong_columns, metadata)
 
 

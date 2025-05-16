@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from sdv.cag import Inequality
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.metadata import Metadata
 
 
@@ -114,7 +114,7 @@ class TestInequality:
             "Column 'high' has an incompatible sdtype 'boolean'. The column "
             "sdtype must be either 'numerical' or 'datetime'."
         )
-        with pytest.raises(PatternNotMetError, match=err_msg):
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_metadata(metadata)
 
     def test__validate_constraint_with_metadata_non_matching_sdtype(self):
@@ -140,7 +140,7 @@ class TestInequality:
         err_msg = re.escape(
             "Columns 'low' and 'high' must have the same sdtype. Found 'numerical' and 'datetime'."
         )
-        with pytest.raises(PatternNotMetError, match=err_msg):
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_metadata(metadata)
 
     def test__validate_constraint_with_data(self):
@@ -165,7 +165,7 @@ class TestInequality:
 
         # Run and Assert
         err_msg = re.escape('The inequality requirement is not met for row indices: [1]')
-        with pytest.raises(PatternNotMetError, match=err_msg):
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
     def test__validate_constraint_with_data_multiple_rows(self):
@@ -197,7 +197,7 @@ class TestInequality:
         err_msg = re.escape(
             'The inequality requirement is not met for row indices: [1, 4, 6, 7, 8, +1 more]'
         )
-        with pytest.raises(PatternNotMetError, match=err_msg):
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
     def test__validate_constraint_with_data_nans(self):
@@ -228,7 +228,7 @@ class TestInequality:
 
         # Run and Assert
         err_msg = re.escape('The inequality requirement is not met for row indices: [2, 5]')
-        with pytest.raises(PatternNotMetError, match=err_msg):
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
     def test__validate_constraint_with_data_strict_boundaries_true(self):
@@ -263,7 +263,7 @@ class TestInequality:
 
         # Run and Assert
         err_msg = re.escape('The inequality requirement is not met for row indices: [2, 3, 5]')
-        with pytest.raises(PatternNotMetError, match=err_msg):
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
     def test__validate_constraint_with_data_datetime(self):
@@ -298,7 +298,7 @@ class TestInequality:
 
         # Run and Assert
         err_msg = re.escape('The inequality requirement is not met for row indices: [1]')
-        with pytest.raises(PatternNotMetError, match=err_msg):
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
     def test__validate_constraint_with_data_datetime_objects(self):
@@ -333,7 +333,7 @@ class TestInequality:
 
         # Run and Assert
         err_msg = re.escape('The inequality requirement is not met for row indices: [1]')
-        with pytest.raises(PatternNotMetError, match=err_msg):
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
     @patch('sdv.cag.inequality.match_datetime_precision')
@@ -398,7 +398,7 @@ class TestInequality:
 
         # Run and Assert
         err_msg = re.escape('The inequality requirement is not met for row indices: [0, 2]')
-        with pytest.raises(PatternNotMetError, match=err_msg):
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
     def test__get_updated_metadata(self):

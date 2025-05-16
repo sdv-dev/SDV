@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from sdv.cag import Range
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.metadata import Metadata
 from tests.utils import run_constraint, run_copula, run_hma
 
@@ -505,7 +505,7 @@ def test_validate_cag_raises(data, metadata, constraint):
     msg = re.escape('The range requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more')
 
     # Run and Assert
-    with pytest.raises(PatternNotMetError, match=msg):
+    with pytest.raises(ConstraintNotMetError, match=msg):
         synthesizer.validate_cag(synthetic_data=synthetic_data)
 
 
@@ -555,5 +555,5 @@ def test_validate_cag_multi_raises(data_multi, metadata_multi, constraint_multi)
     )
 
     # Run and Assert
-    with pytest.raises(PatternNotMetError, match=msg):
+    with pytest.raises(ConstraintNotMetError, match=msg):
         synthesizer.validate_cag(synthetic_data=synthetic_data)

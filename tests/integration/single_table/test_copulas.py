@@ -15,7 +15,7 @@ from rdt.transformers import (
 )
 
 from sdv.cag import Inequality
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
@@ -339,7 +339,7 @@ def test_validate_with_failing_constraint():
     error_msg = re.escape('The inequality requirement is not met for row indices: [0]')
 
     # Run / Assert
-    with pytest.raises(PatternNotMetError, match=error_msg):
+    with pytest.raises(ConstraintNotMetError, match=error_msg):
         gc.validate(real_data)
 
 

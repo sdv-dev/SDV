@@ -5,7 +5,7 @@ import pandas as pd
 from pandas.api.types import is_object_dtype
 
 from sdv._utils import _convert_to_timedelta, _create_unique_name
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _get_invalid_rows,
     _get_is_valid_dict,
@@ -95,7 +95,7 @@ class Inequality(BaseConstraint):
         for column in columns:
             col_sdtype = metadata.tables[table_name].columns[column]['sdtype']
             if col_sdtype not in ['numerical', 'datetime']:
-                raise PatternNotMetError(
+                raise ConstraintNotMetError(
                     f"Column '{column}' has an incompatible sdtype '{col_sdtype}'. The column "
                     "sdtype must be either 'numerical' or 'datetime'."
                 )
@@ -103,7 +103,7 @@ class Inequality(BaseConstraint):
         low_column_sdtype = metadata.tables[table_name].columns[self._low_column_name]['sdtype']
         high_column_sdtype = metadata.tables[table_name].columns[self._high_column_name]['sdtype']
         if low_column_sdtype != high_column_sdtype:
-            raise PatternNotMetError(
+            raise ConstraintNotMetError(
                 f"Columns '{self._low_column_name}' and '{self._high_column_name}' must have the "
                 f"same sdtype. Found '{low_column_sdtype}' and '{high_column_sdtype}'."
             )
@@ -146,7 +146,7 @@ class Inequality(BaseConstraint):
         valid = pd.isna(low) | pd.isna(high) | self._operator(high, low)
         if not valid.all():
             invalid_rows = _get_invalid_rows(valid)
-            raise PatternNotMetError(
+            raise ConstraintNotMetError(
                 f'The inequality requirement is not met for row indices: [{invalid_rows}]'
             )
 

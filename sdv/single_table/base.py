@@ -27,7 +27,7 @@ from sdv._utils import (
     check_synthesizer_version,
     generate_synthesizer_id,
 )
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
 from sdv.constraints.errors import AggregateConstraintsError
@@ -746,7 +746,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 A list of CAG constraints to check.
 
         Raises:
-            PatternNotMetError:
+            ConstraintNotMetError:
                 Raised if the constraint is not compatible with the metadata.
         """
         if not isinstance(constraints, list):
@@ -775,7 +775,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 self.metadata = constraint.get_updated_metadata(self.metadata)
                 self._chained_constraints.append(constraint)
                 self._constraints_fitted = False
-            except PatternNotMetError as e:
+            except ConstraintNotMetError as e:
                 LOGGER.info(
                     'Enforcing constraint %s using reject sampling.', constraint.__class__.__name__
                 )
@@ -783,7 +783,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 try:
                     constraint.get_updated_metadata(self._original_metadata)
                     self._reject_sampling_constraints.append(constraint)
-                except PatternNotMetError:
+                except ConstraintNotMetError:
                     raise e
 
         self._data_processor = DataProcessor(
@@ -811,7 +811,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             synthetic_data (pd.DataFrame): The synthetic data to validate
 
         Raises:
-            PatternNotMetError:
+            ConstraintNotMetError:
                 Raised if synthetic data does not match CAG constraints.
         """
         transformed_data = synthetic_data
@@ -828,7 +828,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     constraint_name = constraint_name.replace('_', ' ')
                     msg = f'The {constraint_name} requirement is not met '
                     msg += f'for row indices: {invalid_rows_str}.'
-                    raise PatternNotMetError(msg)
+                    raise ConstraintNotMetError(msg)
                 elif attribute == '_chained_constraints':
                     transformed_data = constraint.transform(data=transformed_data)
 
@@ -1336,8 +1336,10 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             transformed_condition = self._data_processor.transform(
                 transformed_condition, is_condition=True
             )
-        except PatternNotMetError:
-            raise PatternNotMetError('Provided conditions are not valid for the given constraints.')
+        except ConstraintNotMetError:
+            raise ConstraintNotMetError(
+                'Provided conditions are not valid for the given constraints.'
+            )
         except Exception:
             transformed_condition = self._data_processor.transform(condition_df, is_condition=True)
 

@@ -1,6 +1,6 @@
 """Programmable constraints base classes."""
 
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag.base import BaseConstraint
 
 
@@ -140,7 +140,7 @@ class ProgrammableConstraintHarness(BaseConstraint):
 
     def _validate_constraint_with_metadata(self, metadata):
         if self.programmable_constraint._is_single_table and len(metadata.tables) != 1:
-            raise PatternNotMetError(
+            raise ConstraintNotMetError(
                 'SingleTableProgrammableConstraint cannot be used with multi-table metadata. '
                 'Please use the ProgrammableConstraint base class instead.'
             )

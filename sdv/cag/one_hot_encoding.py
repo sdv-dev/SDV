@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _get_invalid_rows,
     _get_is_valid_dict,
@@ -54,7 +54,7 @@ class OneHotEncoding(BaseConstraint):
                 The metadata to validate against.
 
         Raises:
-            PatternNotMetError:
+            ConstraintNotMetError:
                 If any of the validations fail.
         """
         _validate_table_and_column_names(self.table_name, self._column_names, metadata)
@@ -75,7 +75,7 @@ class OneHotEncoding(BaseConstraint):
         valid = self._get_valid_table_data(data[table_name])
         if not valid.all():
             invalid_rows_str = _get_invalid_rows(valid)
-            raise PatternNotMetError(
+            raise ConstraintNotMetError(
                 f'The one hot encoding requirement is not met for row indices: [{invalid_rows_str}]'
             )
 

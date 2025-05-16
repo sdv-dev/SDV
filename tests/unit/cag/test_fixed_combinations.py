@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from sdv.cag import FixedCombinations
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.metadata import Metadata
 
 
@@ -104,7 +104,7 @@ class TestFixedCombinations:
             "Column 'col2' has an incompatible sdtype ('id'). The column sdtype "
             "must be either 'boolean' or 'categorical'."
         )
-        with pytest.raises(PatternNotMetError, match=expected_msg):
+        with pytest.raises(ConstraintNotMetError, match=expected_msg):
             instance._validate_constraint_with_metadata(metadata)
 
     @patch('sdv.cag.fixed_combinations._validate_table_and_column_names')
@@ -133,7 +133,7 @@ class TestFixedCombinations:
         expected_msg = re.escape(
             "Cannot apply constraint because columns ['col2'] are part of a column relationship."
         )
-        with pytest.raises(PatternNotMetError, match=expected_msg):
+        with pytest.raises(ConstraintNotMetError, match=expected_msg):
             instance._validate_constraint_with_metadata(metadata)
 
     def test__validate_constraint_with_data(self):

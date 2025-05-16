@@ -18,7 +18,7 @@ from rdt.transformers import (
 )
 
 from sdv import version
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag.programmable_constraint import SingleTableProgrammableConstraint
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
@@ -2052,11 +2052,11 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         conditions = pd.DataFrame({'name': ['Johanna'], 'salary': [100.0]})
         instance = Mock()
-        instance._validate_transform_constraints.side_effect = [PatternNotMetError]
+        instance._validate_transform_constraints.side_effect = [ConstraintNotMetError]
 
         # Run and Assert
         error_msg = 'Provided conditions are not valid for the given constraints.'
-        with pytest.raises(PatternNotMetError, match=error_msg):
+        with pytest.raises(ConstraintNotMetError, match=error_msg):
             BaseSingleTableSynthesizer._transform_conditions_chained_constraints(
                 instance,
                 conditions,
@@ -2478,7 +2478,7 @@ class TestBaseSingleTableSynthesizer:
         constraint1 = Mock()
         constraint2 = Mock()
         constraint3 = Mock()
-        constraint3.get_updated_metadata.side_effect = [PatternNotMetError, None]
+        constraint3.get_updated_metadata.side_effect = [ConstraintNotMetError, None]
         constraint4 = SingleTableProgrammableConstraint()
         mock_harness = Mock()
         mock_programmable_constraint_harness.return_value = mock_harness
@@ -2718,7 +2718,7 @@ class TestBaseSingleTableSynthesizer:
         msg = 'The mock requirement is not met for row indices: 0, 1.'
 
         # Run and Assert
-        with pytest.raises(PatternNotMetError, match=msg):
+        with pytest.raises(ConstraintNotMetError, match=msg):
             instance.validate_cag(synthetic_data)
 
     def test__fit_constraint_column_formatters(self):

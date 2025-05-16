@@ -16,7 +16,7 @@ from sdmetrics.reports.multi_table import DiagnosticReport
 
 from sdv import version
 from sdv.cag import Inequality
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
 from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError, VersionError
@@ -2679,7 +2679,7 @@ def test_end_to_end_with_cags():
     synthesizer.fit(data)
     synthetic_data = synthesizer.sample(scale=1.0)
 
-    with pytest.raises(PatternNotMetError, match=expected_error_msg):
+    with pytest.raises(ConstraintNotMetError, match=expected_error_msg):
         synthesizer.fit(invalid_data)
 
     # Assert

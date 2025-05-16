@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 
 from sdv import version
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
 from sdv.errors import (
     ConstraintsNotMetError,
@@ -437,12 +437,12 @@ class TestBaseMultiTableSynthesizer:
         cag_mock_2.transform.return_value = transformed_data
         instance.constraints = [cag_mock_1, cag_mock_2]
         instance._table_synthesizers['table2'].validate_cag = Mock(
-            side_effect=PatternNotMetError('error')
+            side_effect=ConstraintNotMetError('error')
         )
         expected_error_msg = re.escape("Table 'table2': error")
 
         # Run
-        with pytest.raises(PatternNotMetError, match=expected_error_msg):
+        with pytest.raises(ConstraintNotMetError, match=expected_error_msg):
             instance.validate_cag(synthetic_data)
 
         # Assert
@@ -468,7 +468,7 @@ class TestBaseMultiTableSynthesizer:
         msg = f"Table '{table_name}': The mock requirement is not met for row indices: 0."
 
         # Run and Assert
-        with pytest.raises(PatternNotMetError, match=msg):
+        with pytest.raises(ConstraintNotMetError, match=msg):
             instance.validate_cag(synthetic_data)
 
     def test__validate_transform_constraints(self):
