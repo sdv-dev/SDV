@@ -232,7 +232,7 @@ class BaseMultiTableSynthesizer:
 
         return constraints
 
-    def validate_cag(self, synthetic_data):
+    def validate_constraints(self, synthetic_data):
         """Validate synthetic_data against the CAG constraints.
 
         Args:
@@ -259,7 +259,7 @@ class BaseMultiTableSynthesizer:
         for table_name, table_data in transformed_data.items():
             synthesizer = self._table_synthesizers[table_name]
             try:
-                synthesizer.validate_cag(table_data)
+                synthesizer.validate_constraints(table_data)
             except ConstraintNotMetError as error:
                 raise ConstraintNotMetError(f"Table '{table_name}': {error}") from error
 

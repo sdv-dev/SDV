@@ -837,21 +837,21 @@ def test_inequality_with_nan():
     )
 
 
-def test_validate_cag(data, metadata, constraint):
-    """Test validate_cag works with synthetic data generated with Inequality."""
+def test_validate_constraints(data, metadata, constraint):
+    """Test validate_constraints works with synthetic data generated with Inequality."""
     # Setup
     synthesizer = run_copula(data, metadata, [constraint])
     synthetic_data = synthesizer.sample(100)
 
     # Run
-    synthesizer.validate_cag(synthetic_data=synthetic_data)
+    synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
     assert all(synthetic_data['A'] < synthetic_data['B'])
 
 
-def test_validate_cag_raises(data, metadata, constraint):
-    """Test validate_cag raises an error with bad synthetic data with Inequality."""
+def test_validate_constraints_raises(data, metadata, constraint):
+    """Test validate_constraints raises an error with bad synthetic data with Inequality."""
     # Setup
     synthetic_data = pd.DataFrame({
         'A': [10, 20, 30, 10, 20, 10],
@@ -864,37 +864,39 @@ def test_validate_cag_raises(data, metadata, constraint):
 
     # Run and Assert
     with pytest.raises(ConstraintNotMetError, match=msg):
-        synthesizer.validate_cag(synthetic_data=synthetic_data)
+        synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
 
-def test_validate_cag_multi(data_multi, metadata_multi, constraint_multi):
-    """Test validate_cag works with multitable synthetic data generated with Inequality."""
+def test_validate_constraints_multi(data_multi, metadata_multi, constraint_multi):
+    """Test validate_constraints works with multitable synthetic data generated with Inequality."""
     # Setup
     synthesizer = run_hma(data_multi, metadata_multi, [constraint_multi])
     synthetic_data = synthesizer.sample(100)
 
     # Run
-    synthesizer.validate_cag(synthetic_data=synthetic_data)
+    synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
     assert all(synthetic_data['table1']['A'] < synthetic_data['table1']['B'])
 
 
-def test_validate_cag_multi_with_reject(data_reject, metadata_reject, constraints_reject):
-    """Test validate_cag works with reject sampling."""
+def test_validate_constraints_multi_with_reject(data_reject, metadata_reject, constraints_reject):
+    """Test validate_constraints works with reject sampling."""
     # Setup
     synthesizer = run_copula(data_reject, metadata_reject, constraints_reject)
     synthetic_data = synthesizer.sample(100)
 
     # Run
-    synthesizer.validate_cag(synthetic_data=synthetic_data)
+    synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
     assert all(synthetic_data['low'] <= synthetic_data['high'])
 
 
-def test_validate_cag_multi_with_reject_raises(data_reject, metadata_reject, constraints_reject):
-    """Test validate_cag raises an error due reject sampling constraint not matching."""
+def test_validate_constraints_multi_with_reject_raises(
+    data_reject, metadata_reject, constraints_reject
+):
+    """Test validate_constraints raises an error due reject sampling constraint not matching."""
     # Setup
     synthesizer = run_copula(data_reject, metadata_reject, constraints_reject)
 
@@ -910,11 +912,11 @@ def test_validate_cag_multi_with_reject_raises(data_reject, metadata_reject, con
 
     # Run and Assert
     with pytest.raises(ConstraintNotMetError, match=msg):
-        synthesizer.validate_cag(synthetic_data=synthetic_data)
+        synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
 
-def test_validate_cag_multi_raises(data_multi, metadata_multi, constraint_multi):
-    """Test validate_cag raises an error with multitable data."""
+def test_validate_constraints_multi_raises(data_multi, metadata_multi, constraint_multi):
+    """Test validate_constraints raises an error with multitable data."""
     # Setup
     synthetic_data = {
         'table1': pd.DataFrame({
@@ -931,7 +933,7 @@ def test_validate_cag_multi_raises(data_multi, metadata_multi, constraint_multi)
 
     # Run and Assert
     with pytest.raises(ConstraintNotMetError, match=msg):
-        synthesizer.validate_cag(synthetic_data=synthetic_data)
+        synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
 
 def test_invalid_data():

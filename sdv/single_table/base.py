@@ -688,7 +688,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         self._reject_sampling_constraints = []  # constraints used only for reject sampling
         self._constraints_fitted = False
 
-    def _validate_cag_single_table(self, constraints):
+    def _validate_constraints_single_table(self, constraints):
         """Check if the CAG constraints are single table.
 
         Args:
@@ -719,7 +719,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             constraints (list):
                 A list of CAG constraints to apply to the synthesizer.
         """
-        constraints = self._validate_cag_single_table(constraints)
+        constraints = self._validate_constraints_single_table(constraints)
         for constraint in constraints:
             if isinstance(constraint, ProgrammableConstraint):
                 constraint = ProgrammableConstraintHarness(constraint)
@@ -757,7 +757,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return constraints
 
-    def validate_cag(self, synthetic_data):
+    def validate_constraints(self, synthetic_data):
         """Validate synthetic_data against the CAG constraints.
 
         Args:

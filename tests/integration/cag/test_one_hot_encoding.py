@@ -65,7 +65,7 @@ def test_end_to_end(data, metadata):
     synthetic_data = synthesizer.sample(100)
 
     # Run
-    synthesizer.validate_cag(synthetic_data=synthetic_data)
+    synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
     for col in ['a', 'b', 'c']:
@@ -90,7 +90,7 @@ def test_end_to_end_raises(data, metadata):
     msg = re.escape('The one hot encoding requirement is not met for row indices: 1, 2')
     with pytest.raises(ConstraintNotMetError, match=msg):
         synthesizer = run_copula(data, metadata, [OneHotEncoding(column_names=['a', 'b', 'c'])])
-        synthesizer.validate_cag(synthetic_data=invalid_data)
+        synthesizer.validate_constraints(synthetic_data=invalid_data)
 
 
 def test_end_to_end_multi(data_multi, metadata_multi):
@@ -101,7 +101,7 @@ def test_end_to_end_multi(data_multi, metadata_multi):
     synthetic_data = synthesizer.sample(100)
 
     # Run
-    synthesizer.validate_cag(synthetic_data=synthetic_data)
+    synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
     for col in ['a', 'b', 'c']:
@@ -131,4 +131,4 @@ def test_end_to_end_multi_raises(data_multi, metadata_multi):
     msg = "Table 'table1': The one hot encoding requirement is not met for row indices: 1, 2."
     with pytest.raises(ConstraintNotMetError, match=msg):
         synthesizer = run_hma(data_multi, metadata_multi, [constraint])
-        synthesizer.validate_cag(synthetic_data=invalid_data)
+        synthesizer.validate_constraints(synthetic_data=invalid_data)

@@ -411,8 +411,8 @@ class TestBaseMultiTableSynthesizer:
         assert type(result) is Metadata
         assert expected_metadata.to_dict() == result.to_dict()
 
-    def test_validate_cag(self):
-        """Test the ``validate_cag`` method."""
+    def test_validate_constraints(self):
+        """Test the ``validate_constraints`` method."""
         # Setup
         table_name = 'table1'
         synthetic_data = {table_name: Mock()}
@@ -435,25 +435,25 @@ class TestBaseMultiTableSynthesizer:
         cag_mock_2.table_name = table_name
         cag_mock_2.transform.return_value = transformed_data
         instance.constraints = [cag_mock_1, cag_mock_2]
-        instance._table_synthesizers['table2'].validate_cag = Mock(
+        instance._table_synthesizers['table2'].validate_constraints = Mock(
             side_effect=ConstraintNotMetError('error')
         )
         expected_error_msg = re.escape("Table 'table2': error")
 
         # Run
         with pytest.raises(ConstraintNotMetError, match=expected_error_msg):
-            instance.validate_cag(synthetic_data)
+            instance.validate_constraints(synthetic_data)
 
         # Assert
         cag_mock_1.is_valid.assert_called_once_with(data=synthetic_data)
         cag_mock_1.transform.assert_called_once_with(data=synthetic_data)
         cag_mock_2.is_valid.assert_called_once_with(data=transformed_data)
         cag_mock_2.transform.assert_called_once_with(data=transformed_data)
-        instance._table_synthesizers[table_name].validate_cag.assert_called_once_with(
+        instance._table_synthesizers[table_name].validate_constraints.assert_called_once_with(
             transformed_data[table_name]
         )
 
-    def test_validate_cag_raises(self):
+    def test_validate_constraints_raises(self):
         """Test the ``_validate_transform_constraints`` method raises an error."""
         # Setup
         table_name = 'table1'
@@ -468,7 +468,7 @@ class TestBaseMultiTableSynthesizer:
 
         # Run and Assert
         with pytest.raises(ConstraintNotMetError, match=msg):
-            instance.validate_cag(synthetic_data)
+            instance.validate_constraints(synthetic_data)
 
     def test__validate_transform_constraints(self):
         """Test the ``_validate_transform_constraints`` method."""

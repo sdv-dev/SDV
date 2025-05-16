@@ -918,8 +918,8 @@ class TestBaseSingleTableSynthesizer:
         instance.validate(data)
 
     @patch('sdv.single_table.base._validate_constraints')
-    def test__validate_cag_single_table(self, mock_validate_constraints):
-        """Test the ``_validate_cag`` method"""
+    def test__validate_constraints_single_table(self, mock_validate_constraints):
+        """Test the ``_validate_constraints`` method"""
         # Setup
         metadata = Metadata()
         instance = BaseSingleTableSynthesizer(metadata)
@@ -935,12 +935,12 @@ class TestBaseSingleTableSynthesizer:
         mock_validate_constraints.side_effect = lambda constraints, _fitted: constraints
 
         # Run
-        result = instance._validate_cag_single_table(constraints=[constraint_1])
+        result = instance._validate_constraints_single_table(constraints=[constraint_1])
         with pytest.raises(SynthesizerInputError, match=expected_err_list):
-            instance._validate_cag_single_table(constraints='constraint')
+            instance._validate_constraints_single_table(constraints='constraint')
 
         with pytest.raises(SynthesizerInputError, match=expected_err_multi_table):
-            instance._validate_cag_single_table(constraints=[constraint_1, constraint_2])
+            instance._validate_constraints_single_table(constraints=[constraint_1, constraint_2])
 
         # Assert
         assert result == [constraint_1]
@@ -2435,7 +2435,7 @@ class TestBaseSingleTableSynthesizer:
         constraint1 = Mock()
         constraint2 = Mock()
         constraint3 = Mock()
-        instance._validate_cag_single_table.side_effect = lambda constraint: constraint
+        instance._validate_constraints_single_table.side_effect = lambda constraint: constraint
         constraint3.get_updated_metadata.side_effect = [ConstraintNotMetError, None]
         constraint4 = SingleTableProgrammableConstraint()
         mock_harness = Mock()
@@ -2562,8 +2562,8 @@ class TestBaseSingleTableSynthesizer:
                 'fitted_sdv_enterprise_version': '1.2.0',
             }
 
-    def test_validate_cag(self):
-        """Test the ``validate_cag`` method with multiple constraints."""
+    def test_validate_constraints(self):
+        """Test the ``validate_constraints`` method with multiple constraints."""
         # Setup
         synthetic_data = pd.DataFrame()
         transformed_data = pd.DataFrame()
@@ -2575,7 +2575,7 @@ class TestBaseSingleTableSynthesizer:
         instance._chained_constraints = [cag_mock_1, cag_mock_2]
 
         # Run
-        instance.validate_cag(synthetic_data)
+        instance.validate_constraints(synthetic_data)
 
         # Assert
         cag_mock_1.is_valid.assert_called_once_with(data=synthetic_data)
@@ -2583,8 +2583,8 @@ class TestBaseSingleTableSynthesizer:
         cag_mock_2.is_valid.assert_called_once_with(data=transformed_data)
         cag_mock_2.transform.assert_called_once_with(data=transformed_data)
 
-    def test_validate_cag_raises(self):
-        """Test the ``validate_cag`` method raises an error."""
+    def test_validate_constraints_raises(self):
+        """Test the ``validate_constraints`` method raises an error."""
         # Setup
         synthetic_data = pd.DataFrame()
         original_metadata = Metadata()
@@ -2596,7 +2596,7 @@ class TestBaseSingleTableSynthesizer:
 
         # Run and Assert
         with pytest.raises(ConstraintNotMetError, match=msg):
-            instance.validate_cag(synthetic_data)
+            instance.validate_constraints(synthetic_data)
 
     def test__fit_constraint_column_formatters(self):
         """Test the `_fit_constraint_column_formatters` fits formatters for dropped columns."""

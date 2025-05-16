@@ -479,22 +479,22 @@ def test_range_multiple_constraints_different_mid_columns():
     assert all(samples['mid2'] < samples['high2'])
 
 
-def test_validate_cag(data, metadata, constraint):
-    """Test validate_cag works with synthetic data generated with Range."""
+def test_validate_constraints(data, metadata, constraint):
+    """Test validate_constraints works with synthetic data generated with Range."""
     # Setup
     synthesizer = run_copula(data, metadata, [constraint])
     synthetic_data = synthesizer.sample(100)
 
     # Run
-    synthesizer.validate_cag(synthetic_data=synthetic_data)
+    synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
     assert all(synthetic_data['A'] < synthetic_data['B'])
     assert all(synthetic_data['B'] < synthetic_data['C'])
 
 
-def test_validate_cag_raises(data, metadata, constraint):
-    """Test validate_cag raises an error with bad synthetic data with Range."""
+def test_validate_constraints_raises(data, metadata, constraint):
+    """Test validate_constraints raises an error with bad synthetic data with Range."""
     # Setup
     synthetic_data = pd.DataFrame({
         'A': data['B'],
@@ -506,40 +506,40 @@ def test_validate_cag_raises(data, metadata, constraint):
 
     # Run and Assert
     with pytest.raises(ConstraintNotMetError, match=msg):
-        synthesizer.validate_cag(synthetic_data=synthetic_data)
+        synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
 
-def test_validate_cag_multi(data_multi, metadata_multi, constraint_multi):
-    """Test validate_cag with synthetic data generated with Range with multitable numerical data."""
+def test_validate_constraints_multi(data_multi, metadata_multi, constraint_multi):
+    """Test validate_constraints with data generated with Range with multitable numerical data."""
     synthesizer = run_hma(data_multi, metadata_multi, [constraint_multi])
     synthetic_data = synthesizer.sample(100)
 
     # Run
-    synthesizer.validate_cag(synthetic_data=synthetic_data)
+    synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
     assert all(synthetic_data['table1']['A'] < synthetic_data['table1']['B'])
     assert all(synthetic_data['table1']['B'] < synthetic_data['table1']['C'])
 
 
-def test_validate_cag_multi_datetime(
+def test_validate_constraints_multi_datetime(
     data_multi_datetime, metadata_multi_datetime, constraint_multi
 ):
-    """Test validate_cag with synthetic data generated with Range with multitable datetime data."""
+    """Test validate_constraints with data generated with Range with multitable datetime data."""
     # Setup
     synthesizer = run_hma(data_multi_datetime, metadata_multi_datetime, [constraint_multi])
     synthetic_data = synthesizer.sample(100)
 
     # Run
-    synthesizer.validate_cag(synthetic_data=synthetic_data)
+    synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
     assert all(synthetic_data['table1']['A'] < synthetic_data['table1']['B'])
     assert all(synthetic_data['table1']['B'] < synthetic_data['table1']['C'])
 
 
-def test_validate_cag_multi_raises(data_multi, metadata_multi, constraint_multi):
-    """Test validate_cag raises an error with bad multitable synthetic data with Range."""
+def test_validate_constraints_multi_raises(data_multi, metadata_multi, constraint_multi):
+    """Test validate_constraints raises an error with bad multitable synthetic data with Range."""
     # Setup
     synthetic_data = {
         'table1': pd.DataFrame({
@@ -556,4 +556,4 @@ def test_validate_cag_multi_raises(data_multi, metadata_multi, constraint_multi)
 
     # Run and Assert
     with pytest.raises(ConstraintNotMetError, match=msg):
-        synthesizer.validate_cag(synthetic_data=synthetic_data)
+        synthesizer.validate_constraints(synthetic_data=synthetic_data)

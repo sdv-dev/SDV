@@ -393,14 +393,14 @@ def test_fixed_combinations_multiple_constraints_three_constraints_reject_sampli
     assert original_ac_combos == synthetic_ac_combos
 
 
-def test_validate_cag(data, metadata, constraint):
-    """Test validate_cag works with synthetic data generated with FixedCombinations."""
+def test_validate_constraints(data, metadata, constraint):
+    """Test validate_constraints works with synthetic data generated with FixedCombinations."""
     # Setup
     synthesizer = run_copula(data, metadata, [constraint])
     synthetic_data = synthesizer.sample(100)
 
     # Run
-    synthesizer.validate_cag(synthetic_data=synthetic_data)
+    synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
     original_ab_combos = set(zip(data['A'], data['B']))
@@ -408,8 +408,8 @@ def test_validate_cag(data, metadata, constraint):
     assert original_ab_combos == synthetic_ab_combos
 
 
-def test_validate_cag_raises(data, metadata, constraint):
-    """Test validate_cag raises an error with bad synthetic data with FixedCombinations."""
+def test_validate_constraints_raises(data, metadata, constraint):
+    """Test validate_constraints raises an error with bad synthetic data with FixedCombinations."""
     # Setup
     synthetic_data = data.copy()
     synthetic_data['B'] = [11, 21, 31, 11, 21, 11]
@@ -420,17 +420,17 @@ def test_validate_cag_raises(data, metadata, constraint):
 
     # Run and Assert
     with pytest.raises(ConstraintNotMetError, match=msg):
-        synthesizer.validate_cag(synthetic_data=synthetic_data)
+        synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
 
-def test_validate_cag_multi(data_multi, metadata_multi, constraint_multi):
-    """Test validate_cag works with multitable data generated with FixedCombinations."""
+def test_validate_constraints_multi(data_multi, metadata_multi, constraint_multi):
+    """Test validate_constraints works with multitable data generated with FixedCombinations."""
     # Setup
     synthesizer = run_hma(data_multi, metadata_multi, [constraint_multi])
     synthetic_data = synthesizer.sample(100)
 
     # Run
-    synthesizer.validate_cag(synthetic_data=synthetic_data)
+    synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
     original_ab_combos = set(zip(data_multi['table1']['A'], data_multi['table1']['B']))
@@ -438,8 +438,8 @@ def test_validate_cag_multi(data_multi, metadata_multi, constraint_multi):
     assert original_ab_combos == synthetic_ab_combos
 
 
-def test_validate_cag_multi_raises(data_multi, metadata_multi, constraint_multi):
-    """Test validate_cag raises an error with bad multitable data with FixedCombinations."""
+def test_validate_constraints_multi_raises(data_multi, metadata_multi, constraint_multi):
+    """Test validate_constraints raises an error with bad multitable data with FixedCombinations."""
     # Setup
     synthetic_data = {
         'table1': pd.DataFrame({
@@ -456,4 +456,4 @@ def test_validate_cag_multi_raises(data_multi, metadata_multi, constraint_multi)
 
     # Run and Assert
     with pytest.raises(ConstraintNotMetError, match=msg):
-        synthesizer.validate_cag(synthetic_data=synthetic_data)
+        synthesizer.validate_constraints(synthetic_data=synthetic_data)

@@ -149,22 +149,22 @@ def test_fixed_incremements_with_multi_table(data_multi, metadata_multi, constra
         pd.testing.assert_frame_equal(table, reverse_transformed[table_name])
 
 
-def test_validate_cag(data, metadata, constraint):
-    """Test validate_cag works with synthetic data generated with FixedIncrements."""
+def test_validate_constraints(data, metadata, constraint):
+    """Test validate_constraints works with synthetic data generated with FixedIncrements."""
     # Setup
     synthesizer = run_copula(data, metadata, [constraint])
     synthetic_data = synthesizer.sample(100)
 
     # Run
-    synthesizer.validate_cag(synthetic_data=synthetic_data)
+    synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
     assert all(data['A'] % constraint.increment_value == 0)
     assert all(synthetic_data['A'] % constraint.increment_value == 0)
 
 
-def test_validate_cag_raises(data, metadata, constraint):
-    """Test validate_cag raises an error with bad multitable data with FixedIncrements."""
+def test_validate_constraints_raises(data, metadata, constraint):
+    """Test validate_constraints raises an error with bad multitable data with FixedIncrements."""
     # Setup
     synthesizer = run_copula(data, metadata, [constraint])
     synthetic_data = pd.DataFrame({'A': [1, 3, 5, 7, 9, 12]})
@@ -172,25 +172,25 @@ def test_validate_cag_raises(data, metadata, constraint):
 
     # Run and Assert
     with pytest.raises(ConstraintNotMetError, match=msg):
-        synthesizer.validate_cag(synthetic_data=synthetic_data)
+        synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
 
-def test_validate_cag_multi(data_multi, metadata_multi, constraint_multi):
-    """Test validate_cag works with multitable data generated with FixedIncrements."""
+def test_validate_constraints_multi(data_multi, metadata_multi, constraint_multi):
+    """Test validate_constraints works with multitable data generated with FixedIncrements."""
     # Setup
     synthesizer = run_hma(data_multi, metadata_multi, [constraint_multi])
     synthetic_data = synthesizer.sample(100)
 
     # Run
-    synthesizer.validate_cag(synthetic_data=synthetic_data)
+    synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
     assert all(data_multi['table1']['A'] % constraint_multi.increment_value == 0)
     assert all(synthetic_data['table1']['A'] % constraint_multi.increment_value == 0)
 
 
-def test_validate_cag_multi_raises():
-    """Test validate_cag raises an error with bad multitable data with FixedIncrements."""
+def test_validate_constraints_multi_raises():
+    """Test validate_constraints raises an error with bad multitable data with FixedIncrements."""
     # Setup
     data = {
         'table1': pd.DataFrame({'A': [2, 4, 6, 8, 10]}),
@@ -223,7 +223,7 @@ def test_validate_cag_multi_raises():
 
     # Run and Assert
     with pytest.raises(ConstraintNotMetError, match=msg):
-        synthesizer.validate_cag(synthetic_data=synthetic_data)
+        synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
 
 def test_fixedincrements_with_nullable_pandas_dtypes():
