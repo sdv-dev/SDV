@@ -368,8 +368,8 @@ def test_range_pattern_with_multi_table(data_multi, metadata_multi):
         pd.testing.assert_frame_equal(table, reverse_transformed[table_name])
 
 
-def test_range_multiple_patterns():
-    """Test that Range constraint works with multiple patterns."""
+def test_range_multiple_constraints():
+    """Test that Range constraint works with multiple constraints."""
     # Setup
     data = pd.DataFrame({
         'low': [1, 2, 3, 1, 2, 1],
@@ -421,8 +421,8 @@ def test_range_multiple_patterns():
     assert all(samples['mid'] < samples['high2'])
 
 
-def test_range_multiple_patterns_different_mid_columns():
-    """Test that Range constraint works with multiple patterns."""
+def test_range_multiple_constraints_different_mid_columns():
+    """Test that Range constraint works with multiple constraints."""
     # Setup
     data = pd.DataFrame({
         'low': [1, 2, 3, 1, 2, 1],

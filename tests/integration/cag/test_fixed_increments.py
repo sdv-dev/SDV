@@ -243,10 +243,10 @@ def test_fixedincrements_with_nullable_pandas_dtypes():
             'UInt64': {'sdtype': 'numerical', 'computer_representation': 'UInt64'},
         }
     })
-    patterns = [FixedIncrements(column_name=column, increment_value=10) for column in data.columns]
+    constraints = [FixedIncrements(column_name=column, increment_value=10) for column in data.columns]
 
     # Run
-    synthesizer = run_copula(data, metadata, patterns)
+    synthesizer = run_copula(data, metadata, constraints)
     synthetic_data = synthesizer.sample(10)
 
     # Assert

@@ -2663,7 +2663,7 @@ def test_end_to_end_with_cags():
         strict_boundaries=False,
         table_name='guests',
     )
-    synthesizer.add_cag(patterns=[constraint])
+    synthesizer.add_cag(constraints=[constraint])
     data_guests = data['guests']
     clean_data = data_guests[
         ~(data_guests[['amenities_lower', 'amenities_fee']].isna().any(axis=1))

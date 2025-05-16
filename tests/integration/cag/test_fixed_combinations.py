@@ -177,8 +177,8 @@ def test_fixed_null_combinations_with_multi_table(data_multi, metadata_multi, pa
         pd.testing.assert_frame_equal(table, reverse_transformed[table_name])
 
 
-def test_fixed_combinations_multiple_patterns():
-    """Test that FixedCombinations constraint works with multiple patterns."""
+def test_fixed_combinations_multiple_constraints():
+    """Test that FixedCombinations constraint works with multiple constraints."""
     # Setup
     data = pd.DataFrame({
         'A': [1, 2, 3, 1, 2, 1],
@@ -199,7 +199,7 @@ def test_fixed_combinations_multiple_patterns():
 
     # Run
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern1, pattern2])
+    synthesizer.add_cag(constraints=[pattern1, pattern2])
     synthesizer.fit(data)
     samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')
@@ -229,8 +229,8 @@ def test_fixed_combinations_multiple_patterns():
     assert original_cd_combos == synthetic_cd_combos
 
 
-def test_fixed_combinations_multiple_patterns_reject_sampling():
-    """Test that FixedCombinations constraint works with multiple patterns and reject sampling."""
+def test_fixed_combinations_multiple_constraints_reject_sampling():
+    """Test that FixedCombinations constraint works with multiple constraints and reject sampling."""
     # Setup
     data = pd.DataFrame({
         'A': [1, 2, 3, 1, 2, 1],
@@ -249,7 +249,7 @@ def test_fixed_combinations_multiple_patterns_reject_sampling():
 
     # Run
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern1, pattern2])
+    synthesizer.add_cag(constraints=[pattern1, pattern2])
     synthesizer.fit(data)
     samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')
@@ -279,8 +279,8 @@ def test_fixed_combinations_multiple_patterns_reject_sampling():
     assert original_ac_combos == synthetic_ac_combos
 
 
-def test_fixed_combinations_multiple_patterns_three_patterns():
-    """Test that FixedCombinations constraint works with multiple patterns."""
+def test_fixed_combinations_multiple_constraints_three_constraints():
+    """Test that FixedCombinations constraint works with multiple constraints."""
     # Setup
     data = pd.DataFrame({
         'A': [1, 2, 3, 1, 2, 1],
@@ -302,7 +302,7 @@ def test_fixed_combinations_multiple_patterns_three_patterns():
 
     # Run
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern1, pattern2, pattern3])
+    synthesizer.add_cag(constraints=[pattern1, pattern2, pattern3])
     synthesizer.fit(data)
     samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')
@@ -335,8 +335,8 @@ def test_fixed_combinations_multiple_patterns_three_patterns():
     assert original_ac_combos == synthetic_ac_combos
 
 
-def test_fixed_combinations_multiple_patterns_three_patterns_reject_sampling():
-    """Test that FixedCombinations constraint works with multiple patterns.
+def test_fixed_combinations_multiple_constraints_three_constraints_reject_sampling():
+    """Test that FixedCombinations constraint works with multiple constraints.
 
     Test that when the second constraint in the chain fails, the third constraint still works.
     """

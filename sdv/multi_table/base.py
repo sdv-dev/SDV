@@ -121,7 +121,7 @@ class BaseMultiTableSynthesizer:
         self._table_parameters = defaultdict(dict)
         self._original_table_columns = {}
         self._original_metadata = deepcopy(self.metadata)
-        self.patterns = []
+        self.constraints = []
         self._has_seen_single_table_constraint = False
         if synthesizer_kwargs is not None:
             warn_message = (
@@ -163,15 +163,15 @@ class BaseMultiTableSynthesizer:
         self._validate_table_name(table_name)
         self._table_synthesizers[table_name].set_address_columns(column_names, anonymization_level)
 
-    def _detect_single_table_cag(self, patterns):
-        """Filter out single table CAG patterns from the list of patterns.
+    def _detect_single_table_cag(self, constraints):
+        """Filter out single table CAG constraints from the list of constraints.
 
         Args:
-            patterns (list):
-                A list of CAG patterns to filter.
+            constraints (list):
+                A list of CAG constraints to filter.
         """
         idx_single_table_constraint = 0 if self._has_seen_single_table_constraint else None
-        for idx, constraint in enumerate(patterns):
+        for idx, constraint in enumerate(constraints):
             if self._has_seen_single_table_constraint and constraint._is_single_table is False:
                 raise SynthesizerInputError(
                     'Cannot apply multi-table constraint after single-table constraint has '
@@ -187,63 +187,63 @@ class BaseMultiTableSynthesizer:
 
         return idx_single_table_constraint
 
-    def add_cag(self, patterns):
-        """Add the list of constraint-augmented generation patterns to the synthesizer.
+    def add_cag(self, constraints):
+        """Add the list of constraint-augmented generation constraints to the synthesizer.
 
         Args:
-            patterns (list):
-                A list of CAG patterns to apply to the synthesizer.
+            constraints (list):
+                A list of CAG constraints to apply to the synthesizer.
         """
         metadata = self.metadata
-        multi_table_patterns = []
-        single_table_patterns = []
-        idx_single_table_constraint = self._detect_single_table_cag(patterns)
-        for idx, constraint in enumerate(patterns):
+        multi_table_constraints = []
+        single_table_constraints = []
+        idx_single_table_constraint = self._detect_single_table_cag(constraints)
+        for idx, constraint in enumerate(constraints):
             if isinstance(constraint, ProgrammableConstraint):
                 constraint = ProgrammableConstraintHarness(constraint)
 
             if idx_single_table_constraint is not None and idx >= idx_single_table_constraint:
-                single_table_patterns.append(constraint)
+                single_table_constraints.append(constraint)
                 continue
 
-            multi_table_patterns.append(constraint)
+            multi_table_constraints.append(constraint)
             metadata = constraint.get_updated_metadata(metadata)
 
         self.metadata = metadata
-        self.patterns += multi_table_patterns
+        self.constraints += multi_table_constraints
         self._constraints_fitted = False
         self._initialize_models()
-        if single_table_patterns:
-            for constraint in single_table_patterns:
+        if single_table_constraints:
+            for constraint in single_table_constraints:
                 table_name = constraint.table_name
                 self._table_synthesizers[table_name].add_cag([constraint])
 
     def get_cag(self):
         """Get a copy of the list of constraints applied to the synthesizer."""
-        if not hasattr(self, 'patterns'):
+        if not hasattr(self, 'constraints'):
             return []
 
-        patterns = []
-        for constraint in self.patterns:
+        constraints = []
+        for constraint in self.constraints:
             if isinstance(constraint, ProgrammableConstraintHarness):
-                patterns.append(deepcopy(constraint.programmable_constraint))
+                constraints.append(deepcopy(constraint.programmable_constraint))
             else:
-                patterns.append(deepcopy(constraint))
+                constraints.append(deepcopy(constraint))
 
-        return patterns
+        return constraints
 
     def validate_cag(self, synthetic_data):
-        """Validate synthetic_data against the CAG patterns.
+        """Validate synthetic_data against the CAG constraints.
 
         Args:
             data (dict[str, pd.DataFrame]): The synthetic data to validate
 
         Raises:
             PatternNotMetError:
-                Raised if synthetic data does not match CAG patterns.
+                Raised if synthetic data does not match CAG constraints.
         """
         transformed_data = synthetic_data
-        for constraint in self.patterns:
+        for constraint in self.constraints:
             valid_data = constraint.is_valid(data=transformed_data)
             for table_name, valid_table in valid_data.items():
                 if not valid_table.all():
@@ -264,14 +264,14 @@ class BaseMultiTableSynthesizer:
                 raise PatternNotMetError(f"Table '{table_name}': {error}") from error
 
     def get_metadata(self, version='original'):
-        """Get the metadata, either original or modified after applying CAG patterns.
+        """Get the metadata, either original or modified after applying CAG constraints.
 
         Args:
             version (str, optional):
                 The version of metadata to return, must be one of 'original' or 'modified'. If
                 'original', will return the original metadata used to instantiate the
                 synthesizer. If 'modified', will return the modified metadata after applying this
-                synthesizer's CAG patterns. Defaults to 'original'.
+                synthesizer's CAG constraints. Defaults to 'original'.
         """
         if version not in ('original', 'modified'):
             error_msg = f"Unrecognized version '{version}', please use 'original' or 'modified'."
@@ -283,7 +283,7 @@ class BaseMultiTableSynthesizer:
         return Metadata.load_from_dict(self.metadata.to_dict())
 
     def _validate_transform_constraints(self, data, enforce_constraint_fitting=False):
-        """Validate and transform all CAG patterns during preprocessing.
+        """Validate and transform all CAG constraints during preprocessing.
 
         Args:
             data (dict[str, pd.DataFrame]):
@@ -294,13 +294,13 @@ class BaseMultiTableSynthesizer:
                 Defaults to ``False``.
         """
         if self._constraints_fitted and not enforce_constraint_fitting:
-            for constraint in self.patterns:
+            for constraint in self.constraints:
                 data = constraint.transform(data)
 
             return data
 
         metadata = self._original_metadata
-        for constraint in self.patterns:
+        for constraint in self.constraints:
             constraint.fit(data=data, metadata=metadata)
             metadata = constraint.get_updated_metadata(metadata)
             data = constraint.transform(data)
@@ -309,11 +309,11 @@ class BaseMultiTableSynthesizer:
         return data
 
     def _reverse_transform_constraints(self, sampled_data):
-        """Reverse transform CAG patterns after sampling."""
-        if not hasattr(self, 'patterns'):
+        """Reverse transform CAG constraints after sampling."""
+        if not hasattr(self, 'constraints'):
             return sampled_data
 
-        for constraint in reversed(self.patterns):
+        for constraint in reversed(self.constraints):
             sampled_data = constraint.reverse_transform(sampled_data)
 
         from sdv.utils.utils import (

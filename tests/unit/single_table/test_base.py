@@ -809,8 +809,8 @@ class TestBaseSingleTableSynthesizer:
         cag_mock_2.get_updated_metadata = Mock(return_value=metadata_2)
         cag_mock_2.transform = Mock(return_value=data)
         cag_mock_3 = Mock()
-        instance._chained_patterns = [cag_mock_1, cag_mock_2]
-        instance._reject_sampling_patterns = [cag_mock_3]
+        instance._chained_constraints = [cag_mock_1, cag_mock_2]
+        instance._reject_sampling_constraints = [cag_mock_3]
 
         # Run and Assert
         instance._validate_transform_constraints(data)
@@ -970,7 +970,7 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         metadata = Metadata()
         instance = BaseSingleTableSynthesizer(metadata)
-        expected_err_list = re.escape('`patterns` must be a list.')
+        expected_err_list = re.escape('`constraints` must be a list.')
         pattern_1 = Mock()
         pattern_1._is_single_table = True
         pattern_2 = Mock()
@@ -981,12 +981,12 @@ class TestBaseSingleTableSynthesizer:
         )
 
         # Run and Assert
-        instance._validate_cag_single_table(patterns=[pattern_1])
+        instance._validate_cag_single_table(constraints=[pattern_1])
         with pytest.raises(SynthesizerInputError, match=expected_err_list):
-            instance._validate_cag_single_table(patterns='constraint')
+            instance._validate_cag_single_table(constraints='constraint')
 
         with pytest.raises(SynthesizerInputError, match=expected_err_multi_table):
-            instance._validate_cag_single_table(patterns=[pattern_1, pattern_2])
+            instance._validate_cag_single_table(constraints=[pattern_1, pattern_2])
 
     def test_update_transformers_invalid_keys(self):
         """Test error is raised if passed transformer doesn't match key column.
@@ -1232,8 +1232,8 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor.reverse_transform.return_value = data
         instance._data_processor.filter_valid.return_value = data
         instance._data_processor._hyper_transformer._input_columns = []
-        instance._reject_sampling_patterns = []
-        instance._chained_patterns = []
+        instance._reject_sampling_constraints = []
+        instance._chained_constraints = []
         instance._constraint_col_formatters = {}
 
         # Run
@@ -1262,8 +1262,8 @@ class TestBaseSingleTableSynthesizer:
         instance._filter_conditions.return_value = data[data.name == 'John Doe']
         conditions = {'salary': 80.0}
         transformed_conditions = {'salary': 80.0}
-        instance._reject_sampling_patterns = []
-        instance._chained_patterns = []
+        instance._reject_sampling_constraints = []
+        instance._chained_constraints = []
         instance._constraint_col_formatters = {}
 
         # Run
@@ -1296,8 +1296,8 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor._hyper_transformer._input_columns = []
         instance._data_processor.filter_valid = lambda x: x
         instance._data_processor.reverse_transform.return_value = data
-        instance._reject_sampling_patterns = []
-        instance._chained_patterns = []
+        instance._reject_sampling_constraints = []
+        instance._chained_constraints = []
         instance._constraint_col_formatters = {}
 
         # Run
@@ -1325,8 +1325,8 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor.reverse_transform.return_value = data
         instance._data_processor._hyper_transformer._input_columns = []
         instance._filter_conditions.return_value = data[data.name == 'John Doe']
-        instance._reject_sampling_patterns = []
-        instance._chained_patterns = []
+        instance._reject_sampling_constraints = []
+        instance._chained_constraints = []
         conditions = {'salary': 80.0}
         transformed_conditions = {'salary': 80.0}
         instance._sample.side_effect = [NotImplementedError, pd.DataFrame()]
@@ -2067,7 +2067,7 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         conditions = pd.DataFrame({'name': ['Johanna', 'Doe'], 'salary': [100.0, 90.0]})
         instance = Mock()
-        delattr(instance, '_chained_patterns')
+        delattr(instance, '_chained_constraints')
         instance._data_processor.transform.side_effect = [ConstraintsNotMetError]
 
         # Run and Assert
@@ -2472,8 +2472,8 @@ class TestBaseSingleTableSynthesizer:
         """Test adding constraints to the synthesizer."""
         # Setup
         instance = Mock()
-        instance._chained_patterns = []
-        instance._reject_sampling_patterns = []
+        instance._chained_constraints = []
+        instance._reject_sampling_constraints = []
 
         pattern1 = Mock()
         pattern2 = Mock()
@@ -2489,8 +2489,8 @@ class TestBaseSingleTableSynthesizer:
         BaseSingleTableSynthesizer.add_cag(instance, [pattern3, pattern4])
 
         # Assert
-        assert instance._chained_patterns == [pattern1, pattern2, mock_harness]
-        assert instance._reject_sampling_patterns == [pattern3]
+        assert instance._chained_constraints == [pattern1, pattern2, mock_harness]
+        assert instance._reject_sampling_constraints == [pattern3]
         mock_programmable_constraint_harness.assert_called_once_with(pattern4)
         mock_data_processor.assert_has_calls([
             call(
@@ -2686,7 +2686,7 @@ class TestBaseSingleTableSynthesizer:
             }
 
     def test_validate_cag(self):
-        """Test the ``validate_cag`` method with multiple patterns."""
+        """Test the ``validate_cag`` method with multiple constraints."""
         # Setup
         synthetic_data = pd.DataFrame()
         transformed_data = pd.DataFrame()
@@ -2695,7 +2695,7 @@ class TestBaseSingleTableSynthesizer:
         cag_mock_1 = Mock()
         cag_mock_1.transform.return_value = transformed_data
         cag_mock_2 = Mock()
-        instance._chained_patterns = [cag_mock_1, cag_mock_2]
+        instance._chained_constraints = [cag_mock_1, cag_mock_2]
 
         # Run
         instance.validate_cag(synthetic_data)
@@ -2714,7 +2714,7 @@ class TestBaseSingleTableSynthesizer:
         instance = BaseSingleTableSynthesizer(original_metadata)
         cag_mock_1 = Mock()
         cag_mock_1.is_valid.return_value = pd.Series([False, False])
-        instance._chained_patterns = [cag_mock_1]
+        instance._chained_constraints = [cag_mock_1]
         msg = 'The mock requirement is not met for row indices: 0, 1.'
 
         # Run and Assert
