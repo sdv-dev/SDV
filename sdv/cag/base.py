@@ -175,9 +175,15 @@ class BasePattern:
         data = self._convert_data_to_dictionary(data, self.metadata, copy=True)
         reverse_transformed = self._reverse_transform(data)
         for table_name, table in reverse_transformed.items():
-            table = table[self._original_data_columns[table_name]]
+            valid_columns = [
+                column
+                for column in self._original_data_columns[table_name]
+                if column in table.columns
+            ]
+            dtypes = {col: self._dtypes[table_name][col] for col in valid_columns}
+            table = table[valid_columns]
             try:
-                reverse_transformed[table_name] = table.astype(self._dtypes[table_name])
+                reverse_transformed[table_name] = table.astype(dtypes)
             except pd.errors.IntCastingNaNError:
                 # iterate over the columns and cast individually
                 self._table_as_type_by_col(reverse_transformed, table, table_name)
