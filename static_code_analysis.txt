@@ -1,4 +1,4 @@
-Run started:2025-05-01 19:48:28.152773
+Run started:2025-05-16 20:10:22.729092
 
 Test results:
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
@@ -36,10 +36,10 @@ Test results:
    Severity: Medium   Confidence: High
    CWE: CWE-377 (https://cwe.mitre.org/data/definitions/377.html)
    More Info: https://bandit.readthedocs.io/en/1.7.7/blacklists/blacklist_calls.html#b306-mktemp-q
-   Location: ./sdv/logging/utils.py:23:19
-22	    else:
-23	        tmp_path = tempfile.mktemp(dir=store_path, suffix='.yml')
-24	        shutil.copyfile(config_path, tmp_path)
+   Location: ./sdv/logging/utils.py:37:19
+36	    elif os.access(store_path, os.W_OK):
+37	        tmp_path = tempfile.mktemp(dir=store_path, suffix='.yml')
+38	        shutil.copyfile(config_path, tmp_path)
 
 --------------------------------------------------
 >> Issue: [B105:hardcoded_password_string] Possible hardcoded password: 'id'
@@ -77,7 +77,7 @@ Test results:
 --------------------------------------------------
 
 Code scanned:
-	Total lines of code: 13657
+	Total lines of code: 13755
 	Total lines skipped (#nosec): 0
 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
 
