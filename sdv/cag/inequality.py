@@ -14,7 +14,7 @@ from sdv.cag._utils import (
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
 )
-from sdv.cag.base import BasePattern
+from sdv.cag.base import BaseConstraint
 from sdv.constraints.utils import (
     cast_to_datetime64,
     compute_nans_column,
@@ -24,7 +24,7 @@ from sdv.constraints.utils import (
 )
 
 
-class Inequality(BasePattern):
+class Inequality(BaseConstraint):
     """Pattern that ensures `high_column_name` is greater than `low_column_name` .
 
     The transformation works by creating a column with the difference between the

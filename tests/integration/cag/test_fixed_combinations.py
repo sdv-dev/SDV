@@ -10,7 +10,7 @@ from sdv.cag import FixedCombinations
 from sdv.cag._errors import PatternNotMetError
 from sdv.metadata import Metadata
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
-from tests.utils import run_copula, run_hma, run_constraint
+from tests.utils import run_constraint, run_copula, run_hma
 
 
 @pytest.fixture()
@@ -230,7 +230,7 @@ def test_fixed_combinations_multiple_constraints():
 
 
 def test_fixed_combinations_multiple_constraints_reject_sampling():
-    """Test that FixedCombinations constraint works with multiple constraints and reject sampling."""
+    """Test that FixedCombinations works with multiple constraints and reject sampling."""
     # Setup
     data = pd.DataFrame({
         'A': [1, 2, 3, 1, 2, 1],

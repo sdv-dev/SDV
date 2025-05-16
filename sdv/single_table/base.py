@@ -999,7 +999,9 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     raw_sampled = self._sample(num_rows)
             sampled = self._data_processor.reverse_transform(raw_sampled, conditions=conditions)
 
-            if hasattr(self, '_chained_constraints') and hasattr(self, '_reject_sampling_constraints'):
+            if hasattr(self, '_chained_constraints') and hasattr(
+                self, '_reject_sampling_constraints'
+            ):
                 for constraint in reversed(self._chained_constraints):
                     sampled = constraint.reverse_transform(sampled)
                     valid_rows = constraint.is_valid(sampled)

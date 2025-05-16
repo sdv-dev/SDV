@@ -9,7 +9,7 @@ import pytest
 from sdv.cag import FixedIncrements
 from sdv.cag._errors import PatternNotMetError
 from sdv.metadata import Metadata
-from tests.utils import run_copula, run_hma, run_constraint
+from tests.utils import run_constraint, run_copula, run_hma
 
 
 @pytest.fixture()
@@ -243,7 +243,9 @@ def test_fixedincrements_with_nullable_pandas_dtypes():
             'UInt64': {'sdtype': 'numerical', 'computer_representation': 'UInt64'},
         }
     })
-    constraints = [FixedIncrements(column_name=column, increment_value=10) for column in data.columns]
+    constraints = [
+        FixedIncrements(column_name=column, increment_value=10) for column in data.columns
+    ]
 
     # Run
     synthesizer = run_copula(data, metadata, constraints)

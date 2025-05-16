@@ -10,7 +10,7 @@ from sdv.errors import NotFittedError
 LOGGER = logging.getLogger(__name__)
 
 
-class BasePattern:
+class BaseConstraint:
     """Base CAG Pattern Class."""
 
     _is_single_table = True

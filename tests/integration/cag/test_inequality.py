@@ -10,7 +10,7 @@ from sdv.cag._errors import PatternNotMetError
 from sdv.datasets.demo import download_demo
 from sdv.metadata import Metadata
 from sdv.single_table import GaussianCopulaSynthesizer
-from tests.utils import run_copula, run_hma, run_constraint
+from tests.utils import run_constraint, run_copula, run_hma
 
 
 @pytest.fixture()
@@ -776,7 +776,9 @@ def test_inequality_many_constraints():
     metadata = Metadata.load_from_dict({
         'columns': {f'{i}': {'sdtype': 'numerical'} for i in range(10)}
     })
-    constraints = [Inequality(low_column_name=f'{i}', high_column_name=f'{i + 1}') for i in range(9)]
+    constraints = [
+        Inequality(low_column_name=f'{i}', high_column_name=f'{i + 1}') for i in range(9)
+    ]
 
     # Run
     synthesizer = run_copula(data, metadata, constraints)

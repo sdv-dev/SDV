@@ -7,7 +7,7 @@ import pytest
 from sdv.cag import Range
 from sdv.cag._errors import PatternNotMetError
 from sdv.metadata import Metadata
-from tests.utils import run_copula, run_hma, run_constraint
+from tests.utils import run_constraint, run_copula, run_hma
 
 
 @pytest.fixture()
@@ -522,7 +522,9 @@ def test_validate_cag_multi(data_multi, metadata_multi, constraint_multi):
     assert all(synthetic_data['table1']['B'] < synthetic_data['table1']['C'])
 
 
-def test_validate_cag_multi_datetime(data_multi_datetime, metadata_multi_datetime, constraint_multi):
+def test_validate_cag_multi_datetime(
+    data_multi_datetime, metadata_multi_datetime, constraint_multi
+):
     """Test validate_cag with synthetic data generated with Range with multitable datetime data."""
     # Setup
     synthesizer = run_hma(data_multi_datetime, metadata_multi_datetime, [constraint_multi])

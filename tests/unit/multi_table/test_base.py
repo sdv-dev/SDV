@@ -1674,7 +1674,11 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         assert no_constraints == []
         copy_mock.assert_has_calls([call(constraint1), call(constraint2), call(custom_constraint)])
-        assert constraints == [copy_mock.return_value, copy_mock.return_value, copy_mock.return_value]
+        assert constraints == [
+            copy_mock.return_value,
+            copy_mock.return_value,
+            copy_mock.return_value,
+        ]
 
     def test_get_metadata_original(self):
         """Test getting the original metadata from the synthesizer."""
@@ -1825,7 +1829,9 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         constraint2.reverse_transform.assert_called_once_with(data)
-        constraint1.reverse_transform.assert_called_once_with(constraint2.reverse_transform.return_value)
+        constraint1.reverse_transform.assert_called_once_with(
+            constraint2.reverse_transform.return_value
+        )
         drop_unknown_references.assert_called_once_with(
             constraint1.reverse_transform.return_value, instance._original_metadata, verbose=False
         )

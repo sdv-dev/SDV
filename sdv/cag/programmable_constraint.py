@@ -1,7 +1,7 @@
 """Programmable constraints base classes."""
 
 from sdv.cag._errors import PatternNotMetError
-from sdv.cag.base import BasePattern
+from sdv.cag.base import BaseConstraint
 
 
 class ProgrammableConstraint:
@@ -129,7 +129,7 @@ class SingleTableProgrammableConstraint(ProgrammableConstraint):
     _is_single_table = True
 
 
-class ProgrammableConstraintHarness(BasePattern):
+class ProgrammableConstraintHarness(BaseConstraint):
     """Constraint interface class for programmable constraints."""
 
     def __init__(self, programmable_constraint):
