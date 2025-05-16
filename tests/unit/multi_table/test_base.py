@@ -509,11 +509,9 @@ class TestBaseMultiTableSynthesizer:
         instance.validate(data)
 
         # Assert
-        args, kwargs = instance._validate_transform_constraints.call_args
-        for table_name, table_data in data.items():
-            pd.testing.assert_frame_equal(args[0][table_name], table_data)
-
-        assert kwargs['enforce_constraint_fitting'] is True
+        instance._validate_transform_constraints.assert_called_once_with(
+            data, enforce_constraint_fitting=True
+        )
 
     def test_validate_missing_table(self):
         """Test that an error is being raised when there is a missing table in the dictionary."""
@@ -893,6 +891,8 @@ class TestBaseMultiTableSynthesizer:
             'oseba': synth_oseba,
             'upravna_enota': synth_upravna_enota,
         }
+        for table_name, synthesizer in instance._table_synthesizers.items():
+            synthesizer._validate_transform_constraints = Mock(side_effect=lambda data: data)
 
         # Run
         result = instance.preprocess(data)
@@ -911,24 +911,22 @@ class TestBaseMultiTableSynthesizer:
             call('upravna_enota'),
         ]
 
-        # nesreca
-        synth_nesreca.auto_assign_transformers.assert_called_once()
-        args, _ = synth_nesreca.auto_assign_transformers.call_args
-        assert args[0].equals(data['nesreca'])
-
-        args, _ = synth_nesreca._preprocess.call_args
-        assert args[0].equals(data['nesreca'])
+        synth_nesreca.auto_assign_transformers.assert_called_once_with(data['nesreca'])
+        synth_nesreca._preprocess.assert_called_once_with(data['nesreca'])
         synth_nesreca.update_transformers.assert_called_once_with({'a': None, 'b': None})
+        synth_nesreca._validate_transform_constraints.assert_called_once_with(data['nesreca'])
 
-        # oseba
-        args, _ = synth_oseba._preprocess.call_args
-        assert args[0].equals(data['oseba'])
+        synth_oseba._preprocess.assert_called_once_with(data['oseba'])
+        synth_oseba._preprocess.assert_called_once_with(data['oseba'])
         synth_oseba.update_transformers.assert_called_once_with({'a': None, 'b': None})
+        synth_oseba._validate_transform_constraints.assert_called_once_with(data['oseba'])
 
-        # upravna_enota
-        args, _ = synth_upravna_enota._preprocess.call_args
-        assert args[0].equals(data['upravna_enota'])
+        synth_upravna_enota._preprocess.assert_called_once_with(data['upravna_enota'])
+        synth_upravna_enota._preprocess.assert_called_once_with(data['upravna_enota'])
         synth_upravna_enota.update_transformers.assert_called_once_with({'a': None, 'b': None})
+        synth_upravna_enota._validate_transform_constraints.assert_called_once_with(
+            data['upravna_enota']
+        )
 
     def test_preprocess_int_columns(self):
         """Test the preprocess method.
@@ -1222,10 +1220,7 @@ class TestBaseMultiTableSynthesizer:
             BaseMultiTableSynthesizer.fit(instance, data)
 
         # Assert
-        args, _ = instance.preprocess.call_args
-        for table, table_data in data.items():
-            assert args[0][table].equals(table_data)
-
+        instance.preprocess.assert_called_once_with(data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
         instance._check_metadata_updated.assert_called_once()
         assert caplog.messages[0] == str({

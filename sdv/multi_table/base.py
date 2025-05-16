@@ -414,7 +414,6 @@ class BaseMultiTableSynthesizer:
         errors = []
         constraints_errors = []
         metadata = self._original_metadata
-        data = {table: df.copy(deep=True) for table, df in data.items()}
         metadata.validate_data(data)
         for table_name in data:
             if table_name in self._table_synthesizers:
@@ -615,7 +614,6 @@ class BaseMultiTableSynthesizer:
         """
         total_rows = 0
         total_columns = 0
-        data = {table: df.copy(deep=True) for table, df in data.items()}
         for table in data.values():
             total_rows += len(table)
             total_columns += len(table.columns)
