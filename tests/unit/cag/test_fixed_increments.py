@@ -1,4 +1,4 @@
-"""Unit tests for Fixed Increments CAG pattern."""
+"""Unit tests for Fixed Increments constraint."""
 
 import re
 from unittest.mock import patch

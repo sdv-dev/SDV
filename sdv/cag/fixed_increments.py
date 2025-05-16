@@ -1,4 +1,4 @@
-"""FixedIncrements CAG pattern."""
+"""FixedIncrements constraint."""
 
 import pandas as pd
 

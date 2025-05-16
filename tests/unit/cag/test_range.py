@@ -1,4 +1,4 @@
-"""Unit tests for Range CAG pattern."""
+"""Unit tests for Range constraint."""
 
 import operator
 import re

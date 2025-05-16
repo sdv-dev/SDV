@@ -1,4 +1,4 @@
-"""Range CAG pattern."""
+"""Range constraint."""
 
 import operator
 

@@ -1,4 +1,4 @@
-"""One Hot Encoding CAG pattern."""
+"""One Hot Encoding constraint."""
 
 import numpy as np
 

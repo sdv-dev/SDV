@@ -1,4 +1,4 @@
-"""Unit tests for OneHotEncoding CAG pattern."""
+"""Unit tests for OneHotEncoding constraint."""
 
 import re
 from unittest.mock import patch

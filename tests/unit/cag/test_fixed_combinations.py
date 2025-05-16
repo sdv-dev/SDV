@@ -1,4 +1,4 @@
-"""Unit tests for FixedCombinations CAG pattern."""
+"""Unit tests for FixedCombinations constraint."""
 
 import re
 from unittest.mock import call, patch

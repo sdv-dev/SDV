@@ -1,4 +1,4 @@
-"""FixedCombinations CAG pattern."""
+"""FixedCombinations constraint."""
 
 import uuid
 

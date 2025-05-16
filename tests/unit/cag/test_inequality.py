@@ -1,4 +1,4 @@
-"""Unit tests for Inequality CAG pattern."""
+"""Unit tests for Inequality constraint."""
 
 import re
 from datetime import datetime

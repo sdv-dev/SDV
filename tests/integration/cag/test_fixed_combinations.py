@@ -1,4 +1,4 @@
-"""Integration tests for FixedCombinations CAG pattern."""
+"""Integration tests for FixedCombinations constraint."""
 
 import re
 
