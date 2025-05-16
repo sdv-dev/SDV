@@ -106,7 +106,7 @@ class Range(BasePattern):
         self._middle_datetime_format = None
         self._high_datetime_format = None
 
-    def _validate_pattern_with_metadata(self, metadata):
+    def _validate_constraint_with_metadata(self, metadata):
         """Validate the constraint is compatible with the provided metadata.
 
         Validates that:
@@ -163,7 +163,7 @@ class Range(BasePattern):
 
         return low_lt_middle & mid_lt_high & low_lt_high
 
-    def _validate_pattern_with_data(self, data, metadata):
+    def _validate_constraint_with_data(self, data, metadata):
         """Validate the data is compatible with the constraint."""
         table_name = self._get_single_table_name(metadata)
         valid = self._get_valid_table_data(data[table_name])

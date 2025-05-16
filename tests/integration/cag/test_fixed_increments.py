@@ -9,7 +9,7 @@ import pytest
 from sdv.cag import FixedIncrements
 from sdv.cag._errors import PatternNotMetError
 from sdv.metadata import Metadata
-from tests.utils import run_copula, run_hma, run_pattern
+from tests.utils import run_copula, run_hma, run_constraint
 
 
 @pytest.fixture()
@@ -68,7 +68,7 @@ def metadata_multi():
 
 
 @pytest.fixture()
-def pattern_multi():
+def constraint_multi():
     return FixedIncrements(column_name='A', table_name='table1', increment_value=1000)
 
 
@@ -108,7 +108,7 @@ def test_fixed_increments_integers(dtype):
     constraint = FixedIncrements(dtype, increment_value=increment_value)
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(constraint, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -119,11 +119,11 @@ def test_fixed_increments_integers(dtype):
     pd.testing.assert_frame_equal(data, reverse_transformed)
 
 
-def test_fixed_incremements_with_multi_table(data_multi, metadata_multi, pattern_multi):
+def test_fixed_incremements_with_multi_table(data_multi, metadata_multi, constraint_multi):
     """Test that FixedIncrements constraint works with multi-table data."""
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(
-        pattern_multi, data_multi, metadata_multi
+    updated_metadata, transformed, reverse_transformed = run_constraint(
+        constraint_multi, data_multi, metadata_multi
     )
 
     # Assert
@@ -175,18 +175,18 @@ def test_validate_cag_raises(data, metadata, constraint):
         synthesizer.validate_cag(synthetic_data=synthetic_data)
 
 
-def test_validate_cag_multi(data_multi, metadata_multi, pattern_multi):
+def test_validate_cag_multi(data_multi, metadata_multi, constraint_multi):
     """Test validate_cag works with multitable data generated with FixedIncrements."""
     # Setup
-    synthesizer = run_hma(data_multi, metadata_multi, [pattern_multi])
+    synthesizer = run_hma(data_multi, metadata_multi, [constraint_multi])
     synthetic_data = synthesizer.sample(100)
 
     # Run
     synthesizer.validate_cag(synthetic_data=synthetic_data)
 
     # Assert
-    assert all(data_multi['table1']['A'] % pattern_multi.increment_value == 0)
-    assert all(synthetic_data['table1']['A'] % pattern_multi.increment_value == 0)
+    assert all(data_multi['table1']['A'] % constraint_multi.increment_value == 0)
+    assert all(synthetic_data['table1']['A'] % constraint_multi.increment_value == 0)
 
 
 def test_validate_cag_multi_raises():

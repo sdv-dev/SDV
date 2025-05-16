@@ -66,7 +66,7 @@ def programmable_constraint():
             return self.table_name
 
         def validate(self, metadata):
-            FixedCombinations._validate_pattern_with_metadata(self, metadata)
+            FixedCombinations._validate_constraint_with_metadata(self, metadata)
 
         def validate_input_data(self, data):
             return
@@ -104,7 +104,7 @@ def single_table_programmable_constraint():
             return self.table_name
 
         def validate(self, metadata):
-            FixedCombinations._validate_pattern_with_metadata(self, metadata)
+            FixedCombinations._validate_constraint_with_metadata(self, metadata)
 
         def validate_input_data(self, data):
             return

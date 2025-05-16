@@ -10,7 +10,7 @@ from sdv.cag._errors import PatternNotMetError
 from sdv.datasets.demo import download_demo
 from sdv.metadata import Metadata
 from sdv.single_table import GaussianCopulaSynthesizer
-from tests.utils import run_copula, run_hma, run_pattern
+from tests.utils import run_copula, run_hma, run_constraint
 
 
 @pytest.fixture()
@@ -67,7 +67,7 @@ def metadata_multi():
 
 
 @pytest.fixture()
-def pattern_multi():
+def constraint_multi():
     return Inequality(
         low_column_name='A',
         high_column_name='B',
@@ -97,22 +97,22 @@ def metadata_reject():
 
 @pytest.fixture()
 def constraints_reject():
-    # pattern1 drops high column, which pattern2 relies upon
-    pattern1 = Inequality(
+    # constraint1 drops high column, which constraint2 relies upon
+    constraint1 = Inequality(
         low_column_name='low',
         high_column_name='high',
     )
-    pattern2 = Inequality(
+    constraint2 = Inequality(
         low_column_name='low2',
         high_column_name='high',
     )
-    return [pattern1, pattern2]
+    return [constraint1, constraint2]
 
 
-def test_inequality_pattern_integers(data, metadata, constraint):
+def test_inequality_constraint_integers(data, metadata, constraint):
     """Test that Inequality constraint works with integer columns."""
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(constraint, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -143,7 +143,7 @@ def test_all_possible_nans_configurations(constraint, metadata):
     assert (~(pd.isna(synthetic_data['A'])) & ~(pd.isna(synthetic_data['B']))).any()
 
 
-def test_inequality_pattern_with_nans(metadata, constraint):
+def test_inequality_constraint_with_nans(metadata, constraint):
     """Test that Inequality constraint works with NaNs."""
     # Setup
     data = pd.DataFrame({
@@ -152,7 +152,7 @@ def test_inequality_pattern_with_nans(metadata, constraint):
     })
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(constraint, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -172,7 +172,7 @@ def test_inequality_pattern_with_nans(metadata, constraint):
     assert pd.isna(reverse_transformed.iloc[2]['A'])
 
 
-def test_inequality_pattern_datetime(constraint):
+def test_inequality_constraint_datetime(constraint):
     """Test that Inequality constraint works with datetime columns."""
     # Setup
     data = pd.DataFrame({
@@ -201,7 +201,7 @@ def test_inequality_pattern_datetime(constraint):
     })
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(constraint, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -220,7 +220,7 @@ def test_inequality_pattern_datetime(constraint):
         assert (diff.dt.total_seconds() < 1e-6).all()
 
 
-def test_inequality_pattern_datetime_nans(constraint):
+def test_inequality_constraint_datetime_nans(constraint):
     """Test that Inequality constraint works with datetime columns with NaNs."""
     # Setup
     data = pd.DataFrame({
@@ -249,7 +249,7 @@ def test_inequality_pattern_datetime_nans(constraint):
     })
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(constraint, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -271,15 +271,15 @@ def test_inequality_pattern_datetime_nans(constraint):
     assert (diff.dt.total_seconds() < 1e-6).all()
 
 
-def test_inequality_pattern_with_multi_table(data_multi, metadata_multi, pattern_multi):
+def test_inequality_constraint_with_multi_table(data_multi, metadata_multi, constraint_multi):
     """Test that Inequality constraint works with multi-table data."""
     # Setup
     data = data_multi
     metadata = metadata_multi
-    constraint = pattern_multi
+    constraint = constraint_multi
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(constraint, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -425,7 +425,7 @@ def test_inequality_with_timestamp_and_date_strict_boundaries():
         assert error_msg in error
 
 
-def test_inequality_pattern_date_less_than_timestamp_strict_boundaries():
+def test_inequality_constraint_date_less_than_timestamp_strict_boundaries():
     """Test that the inequality constraint fails when date is less than timestamp.
 
     This case evaluates the `Inequality` constraint with
@@ -475,7 +475,7 @@ def test_inequality_pattern_date_less_than_timestamp_strict_boundaries():
         assert error_msg in error
 
 
-def test_inequality_pattern_timestamp_less_than_date_strict_boundaries():
+def test_inequality_constraint_timestamp_less_than_date_strict_boundaries():
     """Test that the inequality constraint fails when timestamp is less than date.
 
     This case evaluates the `Inequality` constraint with
@@ -525,7 +525,7 @@ def test_inequality_pattern_timestamp_less_than_date_strict_boundaries():
         assert err_msg in error
 
 
-def test_inequality_pattern_date_less_than_timestamp_no_strict_boundaries():
+def test_inequality_constraint_date_less_than_timestamp_no_strict_boundaries():
     """Test that the inequality constraint passes when date is less than timestamp.
 
     This case evaluates the `Inequality` constraint with
@@ -586,7 +586,7 @@ def test_inequality_pattern_date_less_than_timestamp_no_strict_boundaries():
     assert invalid_rows.empty
 
 
-def test_inequality_pattern_timestamp_less_than_date_no_strict_boundaries():
+def test_inequality_constraint_timestamp_less_than_date_no_strict_boundaries():
     """Test that the inequality constraint passes when timestamp is less than date.
 
     This case evaluates the `Inequality` constraint with
@@ -660,17 +660,17 @@ def test_inequality_multiple_patterns():
             'high2': {'sdtype': 'numerical'},
         }
     })
-    pattern1 = Inequality(
+    constraint1 = Inequality(
         low_column_name='low',
         high_column_name='high1',
     )
-    pattern2 = Inequality(
+    constraint2 = Inequality(
         low_column_name='low.fillna',
         high_column_name='high2',
     )
 
     # Run
-    synthesizer = run_copula(data, metadata, [pattern1, pattern2])
+    synthesizer = run_copula(data, metadata, [constraint1, constraint2])
     samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
@@ -719,7 +719,7 @@ def test_inequality_multiple_constraints_reject_sampling(
     assert all(samples['low'] <= samples['high'])
 
 
-def test_inequality_multiple_constraints_one_pattern_invalid_column():
+def test_inequality_multiple_constraints_one_constraint_invalid_column():
     """Test that Inequality constraint works with multiple constraints."""
     # Setup
     values = np.random.randint(0, 100, size=1000)
@@ -735,17 +735,17 @@ def test_inequality_multiple_constraints_one_pattern_invalid_column():
             'high': {'sdtype': 'numerical'},
         }
     })
-    pattern1 = Inequality(
+    constraint1 = Inequality(
         low_column_name='low',
         high_column_name='mid',
     )
-    pattern2 = Inequality(
+    constraint2 = Inequality(
         low_column_name='mid',
         high_column_name='high',
     )
 
     # Run
-    synthesizer = run_copula(data, metadata, [pattern1, pattern2])
+    synthesizer = run_copula(data, metadata, [constraint1, constraint2])
     samples = synthesizer.sample(1000000)
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
@@ -865,10 +865,10 @@ def test_validate_cag_raises(data, metadata, constraint):
         synthesizer.validate_cag(synthetic_data=synthetic_data)
 
 
-def test_validate_cag_multi(data_multi, metadata_multi, pattern_multi):
+def test_validate_cag_multi(data_multi, metadata_multi, constraint_multi):
     """Test validate_cag works with multitable synthetic data generated with Inequality."""
     # Setup
-    synthesizer = run_hma(data_multi, metadata_multi, [pattern_multi])
+    synthesizer = run_hma(data_multi, metadata_multi, [constraint_multi])
     synthetic_data = synthesizer.sample(100)
 
     # Run
@@ -911,7 +911,7 @@ def test_validate_cag_multi_with_reject_raises(data_reject, metadata_reject, con
         synthesizer.validate_cag(synthetic_data=synthetic_data)
 
 
-def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
+def test_validate_cag_multi_raises(data_multi, metadata_multi, constraint_multi):
     """Test validate_cag raises an error with multitable data."""
     # Setup
     synthetic_data = {
@@ -921,7 +921,7 @@ def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
         }),
         'table2': pd.DataFrame({'id': range(5)}),
     }
-    synthesizer = run_hma(data_multi, metadata_multi, [pattern_multi])
+    synthesizer = run_hma(data_multi, metadata_multi, [constraint_multi])
     msg = re.escape(
         "Table 'table1': The inequality requirement is not met for "
         'row indices: 0, 1, 2, 3, 4, +1 more'

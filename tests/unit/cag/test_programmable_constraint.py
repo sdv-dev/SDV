@@ -85,8 +85,8 @@ class TestProgrammableConstraintHarness:
         # Assert
         assert instance.programmable_constraint == programmable_constraint
 
-    def test__validate_pattern(self):
-        """Test the ``_validate_pattern`` method."""
+    def test__validate_constraint(self):
+        """Test the ``_validate_constraint`` method."""
         # Setup
         metadata = Metadata().load_from_dict({
             'tables': {'table': {'columns': {'col_A': {'sdtype': 'numerical'}}}}
@@ -96,12 +96,12 @@ class TestProgrammableConstraintHarness:
         instance = ProgrammableConstraintHarness(programmable_constraint)
 
         # Run
-        instance._validate_pattern_with_metadata(metadata)
+        instance._validate_constraint_with_metadata(metadata)
 
         # Assert
         programmable_constraint.validate.assert_called_once_with(metadata)
 
-    def test__validate_pattern_with_metadata_single_table_error(self):
+    def test__validate_constraint_with_metadata_single_table_error(self):
         """Test the method errors if multi-table metadata supplied to single table constraint."""
         # Setup
         metadata = Metadata().load_from_dict({
@@ -119,10 +119,10 @@ class TestProgrammableConstraintHarness:
             'Please use the ProgrammableConstraint base class instead.'
         )
         with pytest.raises(PatternNotMetError, match=expected_msg):
-            instance._validate_pattern_with_metadata(metadata)
+            instance._validate_constraint_with_metadata(metadata)
 
-    def test__validate_pattern_with_data(self):
-        """Test the ``_validate_pattern_with_data`` method."""
+    def test__validate_constraint_with_data(self):
+        """Test the ``_validate_constraint_with_data`` method."""
         # Setup
         metadata = Metadata().load_from_dict({
             'tables': {
@@ -135,12 +135,12 @@ class TestProgrammableConstraintHarness:
         instance = ProgrammableConstraintHarness(programmable_constraint)
 
         # Run
-        instance._validate_pattern_with_data(data, metadata)
+        instance._validate_constraint_with_data(data, metadata)
 
         # Assert
         programmable_constraint.validate_input_data.assert_called_once_with(data)
 
-    def test__validate_pattern_with_data_single_table(self):
+    def test__validate_constraint_with_data_single_table(self):
         """Test the method converts the data dictionary to a single dataframe.."""
         metadata = Metadata().load_from_dict({
             'tables': {
@@ -153,7 +153,7 @@ class TestProgrammableConstraintHarness:
         instance = ProgrammableConstraintHarness(programmable_constraint)
 
         # Run
-        instance._validate_pattern_with_data(data_dict, metadata)
+        instance._validate_constraint_with_data(data_dict, metadata)
 
         # Assert
         programmable_constraint.validate_input_data.assert_called_once_with(data_dict['table'])

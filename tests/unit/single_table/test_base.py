@@ -971,22 +971,22 @@ class TestBaseSingleTableSynthesizer:
         metadata = Metadata()
         instance = BaseSingleTableSynthesizer(metadata)
         expected_err_list = re.escape('`constraints` must be a list.')
-        pattern_1 = Mock()
-        pattern_1._is_single_table = True
-        pattern_2 = Mock()
-        pattern_2.__class__.__name__ = 'Pattern_Name'
-        pattern_2._is_single_table = False
+        constraint_1 = Mock()
+        constraint_1._is_single_table = True
+        constraint_2 = Mock()
+        constraint_2.__class__.__name__ = 'Pattern_Name'
+        constraint_2._is_single_table = False
         expected_err_multi_table = re.escape(
             'Pattern `Pattern_Name` is not compatible with the single-table synthesizers.'
         )
 
         # Run and Assert
-        instance._validate_cag_single_table(constraints=[pattern_1])
+        instance._validate_cag_single_table(constraints=[constraint_1])
         with pytest.raises(SynthesizerInputError, match=expected_err_list):
             instance._validate_cag_single_table(constraints='constraint')
 
         with pytest.raises(SynthesizerInputError, match=expected_err_multi_table):
-            instance._validate_cag_single_table(constraints=[pattern_1, pattern_2])
+            instance._validate_cag_single_table(constraints=[constraint_1, constraint_2])
 
     def test_update_transformers_invalid_keys(self):
         """Test error is raised if passed transformer doesn't match key column.
@@ -2475,26 +2475,26 @@ class TestBaseSingleTableSynthesizer:
         instance._chained_constraints = []
         instance._reject_sampling_constraints = []
 
-        pattern1 = Mock()
-        pattern2 = Mock()
-        pattern3 = Mock()
-        pattern3.get_updated_metadata.side_effect = [PatternNotMetError, None]
-        pattern4 = SingleTableProgrammableConstraint()
+        constraint1 = Mock()
+        constraint2 = Mock()
+        constraint3 = Mock()
+        constraint3.get_updated_metadata.side_effect = [PatternNotMetError, None]
+        constraint4 = SingleTableProgrammableConstraint()
         mock_harness = Mock()
         mock_programmable_constraint_harness.return_value = mock_harness
 
         # Run
-        BaseSingleTableSynthesizer.add_cag(instance, [pattern1, pattern2])
+        BaseSingleTableSynthesizer.add_cag(instance, [constraint1, constraint2])
         instance._fitted = True
-        BaseSingleTableSynthesizer.add_cag(instance, [pattern3, pattern4])
+        BaseSingleTableSynthesizer.add_cag(instance, [constraint3, constraint4])
 
         # Assert
-        assert instance._chained_constraints == [pattern1, pattern2, mock_harness]
-        assert instance._reject_sampling_constraints == [pattern3]
-        mock_programmable_constraint_harness.assert_called_once_with(pattern4)
+        assert instance._chained_constraints == [constraint1, constraint2, mock_harness]
+        assert instance._reject_sampling_constraints == [constraint3]
+        mock_programmable_constraint_harness.assert_called_once_with(constraint4)
         mock_data_processor.assert_has_calls([
             call(
-                metadata=pattern2.get_updated_metadata()._convert_to_single_table.return_value,
+                metadata=constraint2.get_updated_metadata()._convert_to_single_table.return_value,
                 enforce_rounding=instance.enforce_rounding,
                 enforce_min_max_values=instance.enforce_min_max_values,
                 locales=instance.locales,

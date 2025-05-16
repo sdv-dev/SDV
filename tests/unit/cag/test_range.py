@@ -86,7 +86,7 @@ class TestRange:
         assert instance._operator == operator.le
 
     @patch('sdv.cag.range._validate_table_and_column_names')
-    def test__validate_pattern_with_metadata(self, validate_table_and_col_names_mock):
+    def test__validate_constraint_with_metadata(self, validate_table_and_col_names_mock):
         """Test validating the constraint with metadata."""
         # Setup
         instance = Range(
@@ -111,12 +111,12 @@ class TestRange:
         })
 
         # Run
-        instance._validate_pattern_with_metadata(metadata)
+        instance._validate_constraint_with_metadata(metadata)
 
         # Assert
         validate_table_and_col_names_mock.assert_called_once()
 
-    def test__validate_pattern_with_metadata_incorrect_sdtype(self):
+    def test__validate_constraint_with_metadata_incorrect_sdtype(self):
         """Test it when the sdtype is not numerical or datetime."""
         # Setup
         instance = Range(
@@ -146,9 +146,9 @@ class TestRange:
             "sdtype must be either 'numerical' or 'datetime'."
         )
         with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_metadata(metadata)
+            instance._validate_constraint_with_metadata(metadata)
 
-    def test__validate_pattern_with_metadata_non_matching_sdtype(self):
+    def test__validate_constraint_with_metadata_non_matching_sdtype(self):
         """Test it when the sdtypes are not the same."""
         # Setup
         instance = Range(
@@ -178,9 +178,9 @@ class TestRange:
             "Found 'numerical', 'datetime' and 'datetime'."
         )
         with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_metadata(metadata)
+            instance._validate_constraint_with_metadata(metadata)
 
-    def test__validate_pattern_with_data(self):
+    def test__validate_constraint_with_data(self):
         """Test it when the data is not valid."""
         # Setup
         instance = Range(
@@ -209,9 +209,9 @@ class TestRange:
         # Run and Assert
         err_msg = re.escape('The range requirement is not met for row indices: [1]')
         with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_data(data, metadata)
+            instance._validate_constraint_with_data(data, metadata)
 
-    def test__validate_pattern_with_data_multiple_rows(self):
+    def test__validate_constraint_with_data_multiple_rows(self):
         """Test it when the data is not valid for over 5 rows."""
         # Setup
         instance = Range(
@@ -248,9 +248,9 @@ class TestRange:
             'The range requirement is not met for row indices: [1, 4, 6, 7, 8, +1 more]'
         )
         with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_data(data, metadata)
+            instance._validate_constraint_with_data(data, metadata)
 
-    def test__validate_pattern_with_data_nans(self):
+    def test__validate_constraint_with_data_nans(self):
         """Test it when the data is not valid and contains nans."""
         # Setup
         instance = Range(
@@ -285,9 +285,9 @@ class TestRange:
         # Run and Assert
         err_msg = re.escape('The range requirement is not met for row indices: [2, 3, 5]')
         with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_data(data, metadata)
+            instance._validate_constraint_with_data(data, metadata)
 
-    def test__validate_pattern_with_data_strict_boundaries_false(self):
+    def test__validate_constraint_with_data_strict_boundaries_false(self):
         """Test it when the data is not valid and contains nans."""
         # Setup
         instance = Range(
@@ -323,9 +323,9 @@ class TestRange:
         # Run and Assert
         err_msg = re.escape('The range requirement is not met for row indices: [2, 5]')
         with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_data(data, metadata)
+            instance._validate_constraint_with_data(data, metadata)
 
-    def test__validate_pattern_with_data_datetime(self):
+    def test__validate_constraint_with_data_datetime(self):
         """Test it when the data is not valid and contains datetimes."""
         # Setup
         instance = Range(
@@ -361,9 +361,9 @@ class TestRange:
         # Run and Assert
         err_msg = re.escape('The range requirement is not met for row indices: [1]')
         with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_data(data, metadata)
+            instance._validate_constraint_with_data(data, metadata)
 
-    def test__validate_pattern_with_data_datetime_strings(self):
+    def test__validate_constraint_with_data_datetime_strings(self):
         """Test it when the data is not valid and contains datetimes."""
         # Setup
         instance = Range(
@@ -399,9 +399,9 @@ class TestRange:
         # Run and Assert
         err_msg = re.escape('The range requirement is not met for row indices: [1]')
         with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_data(data, metadata)
+            instance._validate_constraint_with_data(data, metadata)
 
-    def test__validate_pattern_with_data_datetime_strings_with_nans(self):
+    def test__validate_constraint_with_data_datetime_strings_with_nans(self):
         """Test it when the data is not valid and contains datetimes."""
         # Setup
         instance = Range(
@@ -437,7 +437,7 @@ class TestRange:
         # Run and Assert
         err_msg = re.escape('The range requirement is not met for row indices: [1]')
         with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_data(data, metadata)
+            instance._validate_constraint_with_data(data, metadata)
 
     def test__get_updated_metadata(self):
         """Test the ``_get_updated_metadata`` method."""

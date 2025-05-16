@@ -53,7 +53,7 @@ class FixedIncrements(BasePattern):
         self.increment_value = increment_value
         self._dtype = None
 
-    def _validate_pattern_with_metadata(self, metadata):
+    def _validate_constraint_with_metadata(self, metadata):
         """Validate the constraint is compatible with the provided Metadata.
 
         Validates that:
@@ -95,7 +95,7 @@ class FixedIncrements(BasePattern):
         is_divisible = data[table_name][column_name] % increment_value == 0
         return isnan | is_divisible
 
-    def _validate_pattern_with_data(self, data, metadata):
+    def _validate_constraint_with_data(self, data, metadata):
         """Validate the data is compatible with the constraint.
 
         Args:

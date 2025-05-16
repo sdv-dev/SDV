@@ -7,7 +7,7 @@ import pytest
 from sdv.cag import Range
 from sdv.cag._errors import PatternNotMetError
 from sdv.metadata import Metadata
-from tests.utils import run_copula, run_hma, run_pattern
+from tests.utils import run_copula, run_hma, run_constraint
 
 
 @pytest.fixture()
@@ -109,7 +109,7 @@ def metadata_multi():
 
 
 @pytest.fixture()
-def pattern_multi():
+def constraint_multi():
     return Range(
         low_column_name='A',
         middle_column_name='B',
@@ -146,10 +146,10 @@ def metadata_multi_datetime():
     })
 
 
-def test_range_pattern_integers(data, metadata, constraint):
+def test_range_constraint_integers(data, metadata, constraint):
     """Test that Range constraint works with integer columns."""
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(constraint, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -165,7 +165,7 @@ def test_range_pattern_integers(data, metadata, constraint):
     pd.testing.assert_frame_equal(data, reverse_transformed)
 
 
-def test_range_pattern_with_nans(metadata, constraint):
+def test_range_constraint_with_nans(metadata, constraint):
     """Test that Range constraint works with NaNs."""
     # Setup
     data = pd.DataFrame({
@@ -175,7 +175,7 @@ def test_range_pattern_with_nans(metadata, constraint):
     })
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(constraint, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -241,14 +241,14 @@ def test_all_possible_nans_configurations(constraint, metadata):
     assert any(~is_nan_low & ~is_nan_middle & ~is_nan_high)
 
 
-def test_range_pattern_datetime(data_datetime, metadata_datetime, constraint):
+def test_range_constraint_datetime(data_datetime, metadata_datetime, constraint):
     """Test that Range constraint works with datetime columns."""
     # Setup
     data = data_datetime
     metadata = metadata_datetime
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(constraint, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -268,7 +268,7 @@ def test_range_pattern_datetime(data_datetime, metadata_datetime, constraint):
         assert (diff.dt.total_seconds() < 1e-6).all()
 
 
-def test_range_pattern_datetime_nans(metadata_datetime, constraint):
+def test_range_constraint_datetime_nans(metadata_datetime, constraint):
     """Test that Range constraint works with datetime columns with NaNs."""
     # Setup
     metadata = metadata_datetime
@@ -300,7 +300,7 @@ def test_range_pattern_datetime_nans(metadata_datetime, constraint):
     })
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(constraint, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -328,7 +328,7 @@ def test_range_pattern_datetime_nans(metadata_datetime, constraint):
     assert (diff.dt.total_seconds() < 1e-6).all()
 
 
-def test_range_pattern_with_multi_table(data_multi, metadata_multi):
+def test_range_constraint_with_multi_table(data_multi, metadata_multi):
     """Test that Range constraint works with multi-table data."""
     # Setup
     constraint = Range(
@@ -339,7 +339,7 @@ def test_range_pattern_with_multi_table(data_multi, metadata_multi):
     )
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(
+    updated_metadata, transformed, reverse_transformed = run_constraint(
         constraint, data_multi, metadata_multi
     )
 
@@ -385,19 +385,19 @@ def test_range_multiple_constraints():
             'high2': {'sdtype': 'numerical'},
         }
     })
-    pattern1 = Range(
+    constraint1 = Range(
         low_column_name='low',
         middle_column_name='mid',
         high_column_name='high1',
     )
-    pattern2 = Range(
+    constraint2 = Range(
         low_column_name='low',
         middle_column_name='mid',
         high_column_name='high2',
     )
 
     # Run
-    synthesizer = run_copula(data, metadata, [pattern1, pattern2])
+    synthesizer = run_copula(data, metadata, [constraint1, constraint2])
     samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
@@ -440,19 +440,19 @@ def test_range_multiple_constraints_different_mid_columns():
             'high2': {'sdtype': 'numerical'},
         }
     })
-    pattern1 = Range(
+    constraint1 = Range(
         low_column_name='low',
         middle_column_name='mid1',
         high_column_name='high1',
     )
-    pattern2 = Range(
+    constraint2 = Range(
         low_column_name='low.fillna',
         middle_column_name='mid2',
         high_column_name='high2',
     )
 
     # Run
-    synthesizer = run_copula(data, metadata, [pattern1, pattern2])
+    synthesizer = run_copula(data, metadata, [constraint1, constraint2])
     samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
@@ -509,9 +509,9 @@ def test_validate_cag_raises(data, metadata, constraint):
         synthesizer.validate_cag(synthetic_data=synthetic_data)
 
 
-def test_validate_cag_multi(data_multi, metadata_multi, pattern_multi):
+def test_validate_cag_multi(data_multi, metadata_multi, constraint_multi):
     """Test validate_cag with synthetic data generated with Range with multitable numerical data."""
-    synthesizer = run_hma(data_multi, metadata_multi, [pattern_multi])
+    synthesizer = run_hma(data_multi, metadata_multi, [constraint_multi])
     synthetic_data = synthesizer.sample(100)
 
     # Run
@@ -522,10 +522,10 @@ def test_validate_cag_multi(data_multi, metadata_multi, pattern_multi):
     assert all(synthetic_data['table1']['B'] < synthetic_data['table1']['C'])
 
 
-def test_validate_cag_multi_datetime(data_multi_datetime, metadata_multi_datetime, pattern_multi):
+def test_validate_cag_multi_datetime(data_multi_datetime, metadata_multi_datetime, constraint_multi):
     """Test validate_cag with synthetic data generated with Range with multitable datetime data."""
     # Setup
-    synthesizer = run_hma(data_multi_datetime, metadata_multi_datetime, [pattern_multi])
+    synthesizer = run_hma(data_multi_datetime, metadata_multi_datetime, [constraint_multi])
     synthetic_data = synthesizer.sample(100)
 
     # Run
@@ -536,7 +536,7 @@ def test_validate_cag_multi_datetime(data_multi_datetime, metadata_multi_datetim
     assert all(synthetic_data['table1']['B'] < synthetic_data['table1']['C'])
 
 
-def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
+def test_validate_cag_multi_raises(data_multi, metadata_multi, constraint_multi):
     """Test validate_cag raises an error with bad multitable synthetic data with Range."""
     # Setup
     synthetic_data = {
@@ -547,7 +547,7 @@ def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
         }),
         'table2': pd.DataFrame({'id': range(5)}),
     }
-    synthesizer = run_hma(data_multi, metadata_multi, [pattern_multi])
+    synthesizer = run_hma(data_multi, metadata_multi, [constraint_multi])
     msg = re.escape(
         "Table 'table1': The range requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more"
     )

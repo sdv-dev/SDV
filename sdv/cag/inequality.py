@@ -72,7 +72,7 @@ class Inequality(BasePattern):
         self._low_datetime_format = None
         self._high_datetime_format = None
 
-    def _validate_pattern_with_metadata(self, metadata):
+    def _validate_constraint_with_metadata(self, metadata):
         """Validate the constraint is compatible with the provided metadata.
 
         Validates that:
@@ -119,7 +119,7 @@ class Inequality(BasePattern):
     def _get_datetime_format(self, metadata, table_name, column_name):
         return metadata.tables[table_name].columns[column_name].get('datetime_format')
 
-    def _validate_pattern_with_data(self, data, metadata):
+    def _validate_constraint_with_data(self, data, metadata):
         """Validate the data is compatible with the constraint.
 
         Validate that the inequality requirement is met between the high and low columns.

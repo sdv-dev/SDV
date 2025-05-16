@@ -248,9 +248,9 @@ class BaseMultiTableSynthesizer:
             for table_name, valid_table in valid_data.items():
                 if not valid_table.all():
                     invalid_rows_str = _get_invalid_rows(valid_table)
-                    pattern_name = _convert_to_snake_case(constraint.__class__.__name__)
-                    pattern_name = pattern_name.replace('_', ' ')
-                    msg = f"Table '{table_name}': The {pattern_name} requirement is not met "
+                    constraint_name = _convert_to_snake_case(constraint.__class__.__name__)
+                    constraint_name = constraint_name.replace('_', ' ')
+                    msg = f"Table '{table_name}': The {constraint_name} requirement is not met "
                     msg += f'for row indices: {invalid_rows_str}.'
                     raise PatternNotMetError(msg)
 

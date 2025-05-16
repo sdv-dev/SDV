@@ -138,7 +138,7 @@ class ProgrammableConstraintHarness(BasePattern):
         self.table_name = None
         self._is_single_table = self.programmable_constraint._is_single_table
 
-    def _validate_pattern_with_metadata(self, metadata):
+    def _validate_constraint_with_metadata(self, metadata):
         if self.programmable_constraint._is_single_table and len(metadata.tables) != 1:
             raise PatternNotMetError(
                 'SingleTableProgrammableConstraint cannot be used with multi-table metadata. '
@@ -147,7 +147,7 @@ class ProgrammableConstraintHarness(BasePattern):
 
         self.programmable_constraint.validate(metadata)
 
-    def _validate_pattern_with_data(self, data, metadata):
+    def _validate_constraint_with_data(self, data, metadata):
         if self._is_single_table:
             data = data[self._get_single_table_name(metadata)]
 
