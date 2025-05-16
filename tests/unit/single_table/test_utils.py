@@ -1,3 +1,4 @@
+import warnings
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -335,6 +336,23 @@ def test_validate_file_path(mock_open):
     assert output_path in result
     assert none_result is None
     mock_open.assert_called_once_with(result, 'w+')
+
+
+@patch('builtins.open', side_effect=PermissionError('No permission'))
+def test_validate_file_path_permission_error(mock_open):
+    """Test validate_file_path emits a warning and returns None on PermissionError."""
+    # Setup
+    output_path = 'sample_output.csv'
+
+    # Run
+    with warnings.catch_warnings(record=True) as warned:
+        warnings.simplefilter('always')
+        result = validate_file_path(output_path)
+
+    # Assert
+    assert result is None
+    assert mock_open.called
+    assert any('Permission denied' in str(warning.message) for warning in warned)
 
 
 def test_warn_missing_numerical_distributions():
