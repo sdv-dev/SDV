@@ -8,6 +8,7 @@ from sdv.cag._utils import (
     _get_is_valid_dict,
     _is_list_of_type,
     _validate_table_and_column_names,
+    _validate_table_name_if_defined,
 )
 from sdv.cag.base import BasePattern
 
@@ -33,8 +34,7 @@ class OneHotEncoding(BasePattern):
         if not _is_list_of_type(column_names):
             raise ValueError('`column_names` must be a list of strings.')
 
-        if table_name and not isinstance(table_name, str):
-            raise ValueError('`table_name` must be a string or None.')
+        _validate_table_name_if_defined(table_name)
 
     def __init__(self, column_names, table_name=None):
         super().__init__()

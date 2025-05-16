@@ -340,7 +340,7 @@ class TestInequality:
     def test__validate_pattern_with_data_datetime_objects_missmatching_formats(
         self, mock_match_datetime_precision
     ):
-        """Test it when the data is not valid with datetimes with missmatching formats."""
+        """Test it when the data is not valid with datetimes with mismatching formats."""
         # Setup
         instance = Inequality(
             low_column_name='low',
@@ -474,7 +474,17 @@ class TestInequality:
 
     @pytest.mark.parametrize(
         'dtype',
-        ['float16', 'float32', 'float64', 'Float64', 'Float32', 'Int64', 'Int32', 'Int16', 'Int8'],
+        [
+            'float16',
+            'float32',
+            'float64',
+            'Float64',
+            'Float32',
+            'Int64',
+            'Int32',
+            'Int16',
+            'Int8',
+        ],
     )
     def test__fit_numerical(self, dtype):
         """Test it for numerical columns."""
@@ -530,6 +540,41 @@ class TestInequality:
         assert instance._is_datetime is True
         assert instance._low_datetime_format == '%Y-%m-%d'
         assert instance._high_datetime_format is None
+
+    def test__fit_datetime_strings(self):
+        """Test it for datetime strings."""
+        # Setup
+        table_data = {
+            'table': pd.DataFrame({
+                'a': ['2020-01-01'],
+                'b': ['2020-01-02'],
+            })
+        }
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'a': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                        'b': {'sdtype': 'datetime'},
+                    },
+                }
+            }
+        })
+        instance = Inequality(
+            low_column_name='a',
+            high_column_name='b',
+            table_name='table',
+        )
+
+        # Run
+        instance._fit(table_data, metadata)
+
+        # Assert
+        assert instance._dtype == np.dtype('O')
+        assert instance._is_datetime is True
+        assert instance._low_datetime_format == '%Y-%m-%d'
+        assert instance._high_datetime_format is None
+        assert instance._diff_column_name == 'a#b'
 
     def test__transform(self):
         """Test it transforms the data correctly."""
@@ -597,7 +642,7 @@ class TestInequality:
         pd.testing.assert_frame_equal(output_without_nans, expected_output_without_nans)
 
     @patch('sdv.cag.inequality._create_unique_name')
-    def test__get_new_column_names(self, mock_create_unique_name):
+    def test__get_diff_and_nan_column_names(self, mock_create_unique_name):
         """Test ``_get_diff_and_nan_column_names`` method."""
         # Setup
         mock_create_unique_name.side_effect = ['a.fillna', 'a#b', 'a#b.nan_component']
@@ -834,6 +879,42 @@ class TestInequality:
         expected_out['b'] = expected_out['b'].astype(np.dtype('O'))
         pd.testing.assert_frame_equal(out, expected_out)
 
+    @pytest.mark.skip(reason='Nans are not being reversed correctly.')
+    def test_reverse_transform_nans(self):
+        """Test it reverses the transformation correctly when the data contains nans."""
+        # Setup
+        transformed = {
+            'table': pd.DataFrame({
+                'a': [1.0, 2.0, 3.0, 2.0],
+                'a#b': [np.log(2)] * 4,
+                'a#b.nan_component': ['b', 'a', 'None', 'a, b'],
+            })
+        }
+        instance = Inequality(
+            low_column_name='a',
+            high_column_name='b',
+            table_name='table',
+        )
+        instance._dtype = np.dtype('float')
+        instance._original_data_columns = {'table': ['a', 'b']}
+        instance._dtypes = {
+            'table': {
+                'a': np.dtype('float'),
+                'b': np.dtype('float'),
+            }
+        }
+
+        # Run
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        out = out['table']
+        expected_out = pd.DataFrame({
+            'a': [1, np.nan, 3, np.nan],
+            'b': [np.nan, 2, 4, np.nan],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
     def test__is_valid(self):
         """Test it checks if the data is valid."""
         # Setup
@@ -926,8 +1007,8 @@ class TestInequality:
         np.testing.assert_array_equal(expected_out, out)
 
     @patch('sdv.cag.inequality.match_datetime_precision')
-    def test_is_valid_datetimes_miss_matching_datetime_formats(self, mock_match_datetime_precision):
-        """Test it validates the data when it contains datetimes with missmatching formats."""
+    def test_is_valid_datetimes_mismatching_datetime_formats(self, mock_match_datetime_precision):
+        """Test it validates the data when it contains datetimes with mismatching formats."""
         # Setup
         table_data = {
             'table': pd.DataFrame({

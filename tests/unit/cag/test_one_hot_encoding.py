@@ -102,6 +102,10 @@ class TestOneHotEncoding:
         with pytest.raises(PatternNotMetError, match=err_msg):
             instance._validate_pattern_with_data(data, metadata)
 
+        # Valid
+        data = {'table': pd.DataFrame({'a': [1, 0, 0], 'b': [0, 1, 0], 'c': [0, 0, 1]})}
+        assert instance._validate_pattern_with_data(data, metadata) is None
+
     def test__fit(self):
         """Test it runs."""
         # Setup

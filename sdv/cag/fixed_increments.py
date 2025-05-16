@@ -75,6 +75,26 @@ class FixedIncrements(BasePattern):
                 "The column sdtype must be 'numerical'."
             )
 
+    def _check_if_divisible(self, data, table_name, column_name, increment_value):
+        """Check if a column is divisible by a given increment value.
+
+        Args:
+            data (dict[pd.DataFrame]):
+                The data.
+
+            table_name (str):
+                Name of the table.
+
+            column_name (str):
+                Name of the table to check divisibility.
+
+            increment_value (int):
+                the number with which divisibility needs to be checked.
+        """
+        isnan = pd.isna(data[table_name][column_name])
+        is_divisible = data[table_name][column_name] % increment_value == 0
+        return isnan | is_divisible
+
     def _validate_pattern_with_data(self, data, metadata):
         """Validate the data is compatible with the pattern.
 
@@ -131,26 +151,6 @@ class FixedIncrements(BasePattern):
         """
         table_name = self._get_single_table_name(metadata)
         self._dtype = data[table_name][self.column_name].dtype
-
-    def _check_if_divisible(self, data, table_name, column_name, increment_value):
-        """Check if a column is divisible by a given increment value.
-
-        Args:
-            data (dict[pd.DataFrame]):
-                The data.
-
-            table_name (str):
-                Name of the table.
-
-            column_name (str):
-                Name of the table to check divisibility.
-
-            increment_value (int):
-                the number with which divisibility needs to be checked.
-        """
-        isnan = pd.isna(data[table_name][column_name])
-        is_divisible = data[table_name][column_name] % increment_value == 0
-        return isnan | is_divisible
 
     def _is_valid(self, data):
         """Determine if the data is evenly divisible by the increment.

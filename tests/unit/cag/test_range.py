@@ -363,6 +363,82 @@ class TestRange:
         with pytest.raises(PatternNotMetError, match=err_msg):
             instance._validate_pattern_with_data(data, metadata)
 
+    def test__validate_pattern_with_data_datetime_strings(self):
+        """Test it when the data is not valid and contains datetimes."""
+        # Setup
+        instance = Range(
+            low_column_name='low',
+            middle_column_name='middle',
+            high_column_name='high',
+            strict_boundaries=True,
+        )
+        data = {
+            'table': pd.DataFrame({
+                'low': ['2020-05-17', '2021-09-01', '2021-09-01'],
+                'middle': ['2020-05-18', '2021-09-01', '2021-09-02'],
+                'high': ['2020-05-19', '2020-09-02', '2022-09-03'],
+                'col': [7, 8, 9],
+            })
+        }
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'low': {'sdtype': 'datetime'},
+                        'middle': {'sdtype': 'datetime'},
+                        'high': {'sdtype': 'datetime'},
+                        'col': {'sdtype': 'id'},
+                    },
+                    'column_relationships': [
+                        {'type': 'relationship', 'column_names': ['low', 'high']}
+                    ],
+                }
+            }
+        })
+
+        # Run and Assert
+        err_msg = re.escape('The range requirement is not met for row indices: [1]')
+        with pytest.raises(PatternNotMetError, match=err_msg):
+            instance._validate_pattern_with_data(data, metadata)
+
+    def test__validate_pattern_with_data_datetime_strings_with_nans(self):
+        """Test it when the data is not valid and contains datetimes."""
+        # Setup
+        instance = Range(
+            low_column_name='low',
+            middle_column_name='middle',
+            high_column_name='high',
+            strict_boundaries=False,
+        )
+        data = {
+            'table': pd.DataFrame({
+                'low': ['2020-05-17', '2021-09-01', np.nan],
+                'middle': ['2020-05-17', '2021-09-01', np.nan],
+                'high': ['2020-05-18', '2020-09-02', '2020-09-02'],
+                'col': [7, 8, 9],
+            })
+        }
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'low': {'sdtype': 'datetime'},
+                        'middle': {'sdtype': 'datetime'},
+                        'high': {'sdtype': 'datetime'},
+                        'col': {'sdtype': 'id'},
+                    },
+                    'column_relationships': [
+                        {'type': 'relationship', 'column_names': ['low', 'high']}
+                    ],
+                }
+            }
+        })
+
+        # Run and Assert
+        err_msg = re.escape('The range requirement is not met for row indices: [1]')
+        with pytest.raises(PatternNotMetError, match=err_msg):
+            instance._validate_pattern_with_data(data, metadata)
+
     def test__get_updated_metadata(self):
         """Test the ``_get_updated_metadata`` method."""
         # Setup
@@ -446,7 +522,9 @@ class TestRange:
         assert instance._low_diff_column_name == 'a#b'
         assert instance._high_diff_column_name == 'b#c'
 
-    @pytest.mark.parametrize('dtype', ['Float64', 'Float32', 'Int64', 'Int32', 'Int16', 'Int8'])
+    @pytest.mark.parametrize(
+        'dtype', ['Float64', 'Float32', 'Int64', 'Int32', 'Int16', 'Int8', 'object']
+    )
     def test__fit_numerical(self, dtype):
         """Test it for numerical columns."""
         # Setup
@@ -522,6 +600,86 @@ class TestRange:
         assert instance._low_datetime_format == '%Y-%m-%d'
         assert instance._middle_datetime_format is None
         assert instance._high_datetime_format is None
+        assert instance._low_diff_column_name == 'a#b'
+        assert instance._high_diff_column_name == 'b#c'
+
+    def test__fit_datetime_strings(self):
+        """Test it for datetime strings."""
+        # Setup
+        table_data = {
+            'table': pd.DataFrame({
+                'a': ['2020-01-01'],
+                'b': ['2020-01-02'],
+                'c': ['2020 01 03'],
+            })
+        }
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'a': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                        'b': {'sdtype': 'datetime'},
+                        'c': {'sdtype': 'datetime', 'datetime_format': '%Y %m %d'},
+                    },
+                }
+            }
+        })
+        instance = Range(
+            low_column_name='a',
+            middle_column_name='b',
+            high_column_name='c',
+            table_name='table',
+        )
+
+        # Run
+        instance._fit(table_data, metadata)
+
+        # Assert
+        assert instance._dtype == np.dtype('O')
+        assert instance._is_datetime is True
+        assert instance._low_datetime_format == '%Y-%m-%d'
+        assert instance._middle_datetime_format is None
+        assert instance._high_datetime_format == '%Y %m %d'
+        assert instance._low_diff_column_name == 'a#b'
+        assert instance._high_diff_column_name == 'b#c'
+
+    def test__fit_datetime_mixed(self):
+        """Test it for datetime with strings and datetimes."""
+        # Setup
+        table_data = {
+            'table': pd.DataFrame({
+                'a': ['2020-01-01'],
+                'b': [datetime(2020, 1, 2)],
+                'c': ['2020 01 03'],
+            })
+        }
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'a': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                        'b': {'sdtype': 'datetime'},
+                        'c': {'sdtype': 'datetime', 'datetime_format': '%Y %m %d'},
+                    },
+                }
+            }
+        })
+        instance = Range(
+            low_column_name='a',
+            middle_column_name='b',
+            high_column_name='c',
+            table_name='table',
+        )
+
+        # Run
+        instance._fit(table_data, metadata)
+
+        # Assert
+        assert instance._dtype == np.dtype('O')
+        assert instance._is_datetime is True
+        assert instance._low_datetime_format == '%Y-%m-%d'
+        assert instance._middle_datetime_format is None
+        assert instance._high_datetime_format == '%Y %m %d'
         assert instance._low_diff_column_name == 'a#b'
         assert instance._high_diff_column_name == 'b#c'
 
@@ -785,6 +943,46 @@ class TestRange:
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
+    @pytest.mark.skip(reason='Nans are not being reversed correctly.')
+    def test_reverse_transform_nans(self):
+        """Test it reverses the transformation correctly when the data contains nans."""
+        # Setup
+        transformed = {
+            'table': pd.DataFrame({
+                'a': [1.0, 2.0, 3.0, 2.0],
+                'a#b': [np.log(2)] * 4,
+                'b#c': [np.log(2)] * 4,
+                'a#b#c.nan_component': ['b, c', 'a', 'None', 'a, b, c'],
+            })
+        }
+        instance = Range(
+            low_column_name='a',
+            middle_column_name='b',
+            high_column_name='c',
+            table_name='table',
+        )
+        instance._dtype = np.dtype('float')
+        instance._original_data_columns = {'table': ['a', 'b', 'c']}
+        instance._dtypes = {
+            'table': {
+                'a': np.dtype('float'),
+                'b': np.dtype('float'),
+                'c': np.dtype('float'),
+            }
+        }
+
+        # Run
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        out = out['table']
+        expected_out = pd.DataFrame({
+            'a': [1, np.nan, 3, np.nan],
+            'b': [np.nan, 2, 4, np.nan],
+            'c': [np.nan, 3, 5, np.nan],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
     def test_reverse_transform_datetime(self):
         """Test it reverses the transformation correctly when the dtype is datetime."""
         # Setup
@@ -950,6 +1148,61 @@ class TestRange:
         instance._low_datetime_format = '%Y-%m-%d'
         instance._is_datetime = True
         instance._dtype = 'O'
+
+        # Run
+        out = instance.is_valid(table_data)
+
+        # Assert
+        out = out['table']
+        expected_out = [True, False, True]
+        np.testing.assert_array_equal(expected_out, out)
+
+    def test_is_valid_datetimes_strings(self):
+        """Test it checks if the data is valid when it contains datetimes."""
+        # Setup
+        table_data = {
+            'table': pd.DataFrame({
+                'a': ['2020-05-17', '2021-09-01', '2021-09-01'],
+                'b': ['2020-05-18', '2020-09-02', '2021-09-02'],
+                'c': ['2020-05-29', '2021-09-03', '2021-09-03'],
+                'col': [7, 8, 9],
+            })
+        }
+        instance = Range(
+            low_column_name='a',
+            middle_column_name='b',
+            high_column_name='c',
+            table_name='table',
+        )
+        instance._fitted = True
+
+        # Run
+        out = instance.is_valid(table_data)
+
+        # Assert
+        out = out['table']
+        expected_out = [True, False, True]
+        np.testing.assert_array_equal(expected_out, out)
+
+    @pytest.mark.skip(reason='Strings with nans not supported.')
+    def test_is_valid_datetimes_strings_with_nans(self):
+        """Test it checks if the data is valid when it contains datetimes."""
+        # Setup
+        table_data = {
+            'table': pd.DataFrame({
+                'a': ['2020-05-17', '2021-09-01', np.nan],
+                'b': ['2020-05-18', '2020-09-02', '2020-09-02'],
+                'c': ['2020-05-29', '2021-09-03', np.nan],
+                'col': [7, 8, 9],
+            })
+        }
+        instance = Range(
+            low_column_name='a',
+            middle_column_name='b',
+            high_column_name='c',
+            table_name='table',
+        )
+        instance._fitted = True
 
         # Run
         out = instance.is_valid(table_data)

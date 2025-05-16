@@ -3,13 +3,12 @@ import re
 import numpy as np
 import pandas as pd
 import pytest
+from pandas.api.types import is_object_dtype
 
 from sdv.cag import Range
 from sdv.cag._errors import PatternNotMetError
 from sdv.metadata import Metadata
-from sdv.multi_table import HMASynthesizer
-from sdv.single_table.copulas import GaussianCopulaSynthesizer
-from tests.utils import run_pattern
+from tests.utils import run_copula, run_hma, run_pattern
 
 
 @pytest.fixture()
@@ -199,6 +198,50 @@ def test_range_pattern_with_nans(metadata, pattern):
     assert 100 < reverse_transformed.iloc[2]['C'] < 300
 
 
+def test_all_possible_nans_configurations(pattern, metadata):
+    """Test it works with all possible NaN configurations."""
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'A': [1, 4, np.nan, 0, 4, np.nan, np.nan, 5, np.nan],
+            'B': [2, 5, 3, np.nan, 5, np.nan, 5, np.nan, np.nan],
+            'C': [3, 7, 8, 4, np.nan, 9, np.nan, np.nan, np.nan],
+        }
+    )
+
+    # Run
+    synthesizer = run_copula(data, metadata, [pattern])
+    synthetic_data = synthesizer.sample(10000)
+
+    # Assert
+    synt_data_not_nan_low_middle = synthetic_data[
+        ~(pd.isna(synthetic_data['A'])) & ~(pd.isna(synthetic_data['B']))
+    ]
+    synt_data_not_nan_middle_high = synthetic_data[
+        ~(pd.isna(synthetic_data['B'])) & ~(pd.isna(synthetic_data['C']))
+    ]
+    synt_data_not_nan_low_high = synthetic_data[
+        ~(pd.isna(synthetic_data['A'])) & ~(pd.isna(synthetic_data['C']))
+    ]
+
+    is_nan_low = pd.isna(synthetic_data['A'])
+    is_nan_middle = pd.isna(synthetic_data['B'])
+    is_nan_high = pd.isna(synthetic_data['C'])
+
+    assert all(synt_data_not_nan_low_middle['A'] <= synt_data_not_nan_low_middle['B'])
+    assert all(synt_data_not_nan_middle_high['B'] <= synt_data_not_nan_middle_high['C'])
+    assert all(synt_data_not_nan_low_high['A'] <= synt_data_not_nan_low_high['C'])
+
+    assert any(is_nan_low & is_nan_middle & is_nan_high)
+    assert any(is_nan_low & is_nan_middle & ~is_nan_high)
+    assert any(is_nan_low & ~is_nan_middle & is_nan_high)
+    assert any(is_nan_low & ~is_nan_middle & ~is_nan_high)
+    assert any(~is_nan_low & is_nan_middle & is_nan_high)
+    assert any(~is_nan_low & is_nan_middle & ~is_nan_high)
+    assert any(~is_nan_low & ~is_nan_middle & is_nan_high)
+    assert any(~is_nan_low & ~is_nan_middle & ~is_nan_high)
+
+
 def test_range_pattern_datetime(data_datetime, metadata_datetime, pattern):
     """Test that Range pattern works with datetime columns."""
     # Setup
@@ -286,14 +329,9 @@ def test_range_pattern_datetime_nans(metadata_datetime, pattern):
     assert (diff.dt.total_seconds() < 1e-6).all()
 
 
-def test_range_pattern_with_multi_table(
-    data_multi,
-    metadata_multi,
-):
+def test_range_pattern_with_multi_table(data_multi, metadata_multi):
     """Test that Range pattern works with multi-table data."""
     # Setup
-    data = data_multi
-    metadata = metadata_multi
     pattern = Range(
         low_column_name='A',
         middle_column_name='B',
@@ -302,7 +340,9 @@ def test_range_pattern_with_multi_table(
     )
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_pattern(
+        pattern, data_multi, metadata_multi
+    )
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -324,8 +364,8 @@ def test_range_pattern_with_multi_table(
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
     assert list(transformed['table1'].columns) == ['A.fillna', 'A#B', 'B#C', 'A#B#C.nan_component']
-    assert set(data.keys()) == set(reverse_transformed.keys())
-    for table_name, table in data.items():
+    assert set(data_multi.keys()) == set(reverse_transformed.keys())
+    for table_name, table in data_multi.items():
         pd.testing.assert_frame_equal(table, reverse_transformed[table_name])
 
 
@@ -358,9 +398,7 @@ def test_range_multiple_patterns():
     )
 
     # Run
-    synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern1, pattern2])
-    synthesizer.fit(data)
+    synthesizer = run_copula(data, metadata, [pattern1, pattern2])
     samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
@@ -415,9 +453,7 @@ def test_range_multiple_patterns_different_mid_columns():
     )
 
     # Run
-    synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern1, pattern2])
-    synthesizer.fit(data)
+    synthesizer = run_copula(data, metadata, [pattern1, pattern2])
     samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
@@ -447,9 +483,7 @@ def test_range_multiple_patterns_different_mid_columns():
 def test_validate_cag(data, metadata, pattern):
     """Test validate_cag works with synthetic data generated with Range."""
     # Setup
-    synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
-    synthesizer.fit(data)
+    synthesizer = run_copula(data, metadata, [pattern])
     synthetic_data = synthesizer.sample(100)
 
     # Run
@@ -468,9 +502,7 @@ def test_validate_cag_raises(data, metadata, pattern):
         'B': data['A'],
         'C': data['C'],
     })
-    synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
-    synthesizer.fit(data)
+    synthesizer = run_copula(data, metadata, [pattern])
     msg = re.escape('The range requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more')
 
     # Run and Assert
@@ -478,18 +510,9 @@ def test_validate_cag_raises(data, metadata, pattern):
         synthesizer.validate_cag(synthetic_data=synthetic_data)
 
 
-def test_validate_cag_multi(
-    data_multi,
-    metadata_multi,
-    pattern_multi,
-):
+def test_validate_cag_multi(data_multi, metadata_multi, pattern_multi):
     """Test validate_cag with synthetic data generated with Range with multitable numerical data."""
-    data = data_multi
-    metadata = metadata_multi
-    pattern = pattern_multi
-    synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
-    synthesizer.fit(data)
+    synthesizer = run_hma(data_multi, metadata_multi, pattern_multi)
     synthetic_data = synthesizer.sample(100)
 
     # Run
@@ -500,19 +523,10 @@ def test_validate_cag_multi(
     assert all(synthetic_data['table1']['B'] < synthetic_data['table1']['C'])
 
 
-def test_validate_cag_multi_datetime(
-    data_multi_datetime,
-    metadata_multi_datetime,
-    pattern_multi,
-):
+def test_validate_cag_multi_datetime(data_multi_datetime, metadata_multi_datetime, pattern_multi):
     """Test validate_cag with synthetic data generated with Range with multitable datetime data."""
     # Setup
-    data = data_multi_datetime
-    metadata = metadata_multi_datetime
-    pattern = pattern_multi
-    synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
-    synthesizer.fit(data)
+    synthesizer = run_hma(data_multi_datetime, metadata_multi_datetime, pattern_multi)
     synthetic_data = synthesizer.sample(100)
 
     # Run
@@ -526,20 +540,15 @@ def test_validate_cag_multi_datetime(
 def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
     """Test validate_cag raises an error with bad multitable synthetic data with Range."""
     # Setup
-    data = data_multi
-    metadata = metadata_multi
-    pattern = pattern_multi
     synthetic_data = {
-        'table1': pd.DataFrame({
-            'A': data['table1']['B'],
-            'B': data['table1']['A'],
-            'C': data['table1']['C'],
-        }),
+        'table1': {
+            'A': data_multi['table1']['B'],
+            'B': data_multi['table1']['A'],
+            'C': data_multi['table1']['C'],
+        },
         'table2': pd.DataFrame({'id': range(5)}),
     }
-    synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
-    synthesizer.fit(data)
+    synthesizer = run_hma(data_multi, metadata_multi, pattern_multi)
     msg = re.escape(
         "Table 'table1': The range requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more"
     )
@@ -547,3 +556,59 @@ def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
     # Run and Assert
     with pytest.raises(PatternNotMetError, match=msg):
         synthesizer.validate_cag(synthetic_data=synthetic_data)
+
+
+@pytest.mark.skip(reason='Issue #2275 needs to be implemented for the Range constraint.')
+def test_range_with_timestamp_and_date():
+    """Test that the range pattern passes for different datetime formats."""
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'SUBMISSION_TIMESTAMP': [
+                '2016-07-10 17:04:00',
+                '2016-07-11 13:23:00',
+                '2016-07-12 08:45:30',
+                '2016-07-11 12:00:00',
+                '2016-07-12 10:30:00',
+            ],
+            'DUE_DATE': ['2016-07-10', '2016-07-11', '2016-07-12', '2016-07-13', '2016-07-14'],
+            'DUE_DATE_2': ['2016-07-11', '2016-07-12', '2016-07-13', '2016-07-14', '2016-07-15'],
+        }
+    )
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'columns': {
+                    'SUBMISSION_TIMESTAMP': {
+                        'sdtype': 'datetime',
+                        'datetime_format': '%Y-%m-%d %H:%M:%S',
+                    },
+                    'DUE_DATE': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                    'DUE_DATE_2': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                }
+            }
+        }
+    })
+    pattern = Range(
+        low_column_name='SUBMISSION_TIMESTAMP',
+        middle_column_name='DUE_DATE',
+        high_column_name='DUE_DATE_2',
+        strict_boundaries=False,
+    )
+
+    # Run
+    synthesizer = run_copula(data, metadata, [pattern])
+    synthetic_data = synthesizer.sample(num_rows=10)
+
+    # Assert
+    assert is_object_dtype(synthetic_data['SUBMISSION_TIMESTAMP'].dtype)
+    synthetic_data['SUBMISSION_TIMESTAMP'] = pd.to_datetime(
+        synthetic_data['SUBMISSION_TIMESTAMP'], format='%Y-%m-%d %H:%M:%S'
+    )
+    assert is_object_dtype(synthetic_data['DUE_DATE'].dtype)
+    synthetic_data['DUE_DATE'] = pd.to_datetime(synthetic_data['DUE_DATE'], format='%Y-%m-%d')
+    invalid_rows = synthetic_data[
+        synthetic_data['SUBMISSION_TIMESTAMP'].dt.date > synthetic_data['DUE_DATE'].dt.date
+    ]
+    assert invalid_rows.empty
