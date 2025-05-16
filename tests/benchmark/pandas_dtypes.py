@@ -24,19 +24,26 @@ PANDAS_DTYPES = {
         'pd.category': pd.Series(['A', 'B', None, 'D'], dtype='category')
     }),
     'pd.datetime64': pd.DataFrame({
-        'pd.datetime64': pd.Series(pd.date_range('2023-01-01', periods=3), dtype='datetime64[ns]')
+        'pd.datetime64': pd.Series(
+            ['2023-01-01', '2023-01-02', '2023-01-03', pd.NaT], dtype='datetime64[ns]'
+        )
     }),
     'pd.timedelta64': pd.DataFrame({
         'pd.timedelta64': pd.Series(
-            [pd.Timedelta(days=1), pd.Timedelta(days=2), pd.Timedelta(days=3)],
+            [pd.Timedelta(days=1), pd.Timedelta(days=2), pd.Timedelta(days=3), pd.NaT],
             dtype='timedelta64[ns]',
         )
     }),
     'pd.Period': pd.DataFrame({
-        'pd.Period': pd.Series(pd.period_range('2023-01', periods=3, freq='M')),
+        'pd.Period': pd.Series([
+            pd.Period('2023-01'),
+            pd.Period('2023-02'),
+            pd.Period('2023-03'),
+            pd.NaT,
+        ]),
     }),
     'pd.Complex': pd.DataFrame({
-        'pd.Complex': pd.Series([1 + 1j, 2 + 2j, 3 + 3j], dtype='complex128'),
+        'pd.Complex': pd.Series([1 + 1j, 2 + 2j, 3 + 3j, None], dtype='complex128'),
     }),
 }
 
@@ -88,10 +95,15 @@ PANDAS_DATETIME_DTYPES = {
     }),
     'pd.datetime64 - datetime': pd.DataFrame({
         'pd.datetime64 - datetime': pd.Series(
-            pd.date_range('2023-01-01', periods=3), dtype='datetime64[ns]'
+            ['2023-01-01', '2023-01-02', '2023-01-03', pd.NaT], dtype='datetime64[ns]'
         )
     }),
     'pd.Period - datetime': pd.DataFrame({
-        'pd.Period - datetime': pd.Series(pd.period_range('2023-01-01', periods=3, freq='D')),
+        'pd.Period - datetime': pd.Series([
+            pd.Period('2023-01'),
+            pd.Period('2023-02'),
+            pd.Period('2023-03'),
+            pd.NaT,
+        ]),
     }),
 }

@@ -928,6 +928,14 @@ class SingleTableMetadata:
         self.sequence_index = column_name
         self._updated = True
 
+    def remove_sequence_index(self):
+        """Remove the sequence index."""
+        if self.sequence_index is None:
+            warnings.warn('No sequence index exists to remove.')
+
+        self.sequence_index = None
+        self._updated = True
+
     def _validate_sequence_index_not_in_sequence_key(self):
         """Check that ``_sequence_index`` and ``_sequence_key`` don't overlap."""
         seq_key = self.sequence_key

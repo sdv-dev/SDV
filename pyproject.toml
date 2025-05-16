@@ -38,7 +38,7 @@ dependencies = [
     'copulas>=0.12.1',
     'ctgan>=0.11.0',
     'deepecho>=0.7.0',
-    'rdt>=1.16.0',
+    'rdt>=1.17.0',
     'sdmetrics>=0.20.1',
     'platformdirs>=4.0',
     'pyyaml>=6.0.1',
@@ -144,7 +144,7 @@ namespaces = false
 version = {attr = 'sdv.__version__'}
 
 [tool.bumpversion]
-current_version = "1.20.1"
+current_version = "1.21.0.dev1"
 parse = '(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(\.(?P<release>[a-z]+)(?P<candidate>\d+))?'
 serialize = [
     '{major}.{minor}.{patch}.{release}{candidate}',
