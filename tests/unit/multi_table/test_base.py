@@ -1568,7 +1568,7 @@ class TestBaseMultiTableSynthesizer:
         assert instance.constraints == [constraint1, constraint2]
 
     @patch('sdv.multi_table.base.deepcopy')
-    def test_get_cag(self, copy_mock):
+    def test_get_constraint(self, copy_mock):
         """Test getting data constraints from the synthesizer."""
         # Setup
         instance = Mock()
@@ -1579,9 +1579,9 @@ class TestBaseMultiTableSynthesizer:
         constraint3 = ProgrammableConstraintHarness(custom_constraint)
 
         # Run
-        no_constraints = BaseMultiTableSynthesizer.get_cag(instance)
+        no_constraints = BaseMultiTableSynthesizer.get_constraint(instance)
         instance.constraints = [constraint1, constraint2, constraint3]
-        constraints = BaseMultiTableSynthesizer.get_cag(instance)
+        constraints = BaseMultiTableSynthesizer.get_constraint(instance)
 
         # Assert
         assert no_constraints == []

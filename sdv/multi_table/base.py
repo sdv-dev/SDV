@@ -219,7 +219,7 @@ class BaseMultiTableSynthesizer:
                 table_name = constraint.table_name
                 self._table_synthesizers[table_name].add_constraint([constraint])
 
-    def get_cag(self):
+    def get_constraint(self):
         """Get a copy of the list of constraints applied to the synthesizer."""
         if not hasattr(self, 'constraints'):
             return []
