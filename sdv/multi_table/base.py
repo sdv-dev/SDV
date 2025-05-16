@@ -122,6 +122,7 @@ class BaseMultiTableSynthesizer:
         self._original_table_columns = {}
         self._original_metadata = deepcopy(self.metadata)
         self.patterns = []
+        self._has_seen_single_table_constraint = False
         if synthesizer_kwargs is not None:
             warn_message = (
                 'The `synthesizer_kwargs` parameter is deprecated as of SDV 1.2.0 and does not '
@@ -162,6 +163,30 @@ class BaseMultiTableSynthesizer:
         self._validate_table_name(table_name)
         self._table_synthesizers[table_name].set_address_columns(column_names, anonymization_level)
 
+    def _detect_single_table_cag(self, patterns):
+        """Filter out single table CAG patterns from the list of patterns.
+
+        Args:
+            patterns (list):
+                A list of CAG patterns to filter.
+        """
+        idx_single_table_constraint = 0 if self._has_seen_single_table_constraint else None
+        for idx, pattern in enumerate(patterns):
+            if self._has_seen_single_table_constraint and pattern._is_single_table is False:
+                raise SynthesizerInputError(
+                    'Cannot apply multi-table constraint after single-table constraint has '
+                    'been applied.'
+                )
+
+            if not pattern._is_single_table:
+                continue
+
+            if not self._has_seen_single_table_constraint:
+                self._has_seen_single_table_constraint = True
+                idx_single_table_constraint = idx
+
+        return idx_single_table_constraint
+
     def add_cag(self, patterns):
         """Add the list of constraint-augmented generation patterns to the synthesizer.
 
@@ -170,18 +195,28 @@ class BaseMultiTableSynthesizer:
                 A list of CAG patterns to apply to the synthesizer.
         """
         metadata = self.metadata
-        added_patterns = []
-        for pattern in patterns:
+        multi_table_patterns = []
+        single_table_patterns = []
+        idx_single_table_constraint = self._detect_single_table_cag(patterns)
+        for idx, pattern in enumerate(patterns):
             if isinstance(pattern, ProgrammableConstraint):
                 pattern = ProgrammableConstraintHarness(pattern)
 
+            if idx_single_table_constraint is not None and idx >= idx_single_table_constraint:
+                single_table_patterns.append(pattern)
+                continue
+
+            multi_table_patterns.append(pattern)
             metadata = pattern.get_updated_metadata(metadata)
-            added_patterns.append(pattern)
 
         self.metadata = metadata
-        self.patterns += added_patterns
+        self.patterns += multi_table_patterns
         self._constraints_fitted = False
         self._initialize_models()
+        if single_table_patterns:
+            for pattern in single_table_patterns:
+                table_name = pattern.table_name
+                self._table_synthesizers[table_name].add_cag([pattern])
 
     def get_cag(self):
         """Get a copy of the list of constraints applied to the synthesizer."""
@@ -208,20 +243,25 @@ class BaseMultiTableSynthesizer:
                 Raised if synthetic data does not match CAG patterns.
         """
         transformed_data = synthetic_data
-        for pattern in self.get_cag():
+        for pattern in self.patterns:
             valid_data = pattern.is_valid(data=transformed_data)
-            table_name = pattern.table_name
-            for table_name, data in valid_data.items():
-                if not valid_data[table_name].all():
-                    invalid_rows_str = _get_invalid_rows(valid_data[table_name])
+            for table_name, valid_table in valid_data.items():
+                if not valid_table.all():
+                    invalid_rows_str = _get_invalid_rows(valid_table)
                     pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
                     pattern_name = pattern_name.replace('_', ' ')
-                    msg = (
-                        f"Table '{table_name}': The {pattern_name} requirement is not "
-                        f'met for row indices: {invalid_rows_str}.'
-                    )
+                    msg = f"Table '{table_name}': The {pattern_name} requirement is not met "
+                    msg += f'for row indices: {invalid_rows_str}.'
                     raise PatternNotMetError(msg)
+
             transformed_data = pattern.transform(data=transformed_data)
+
+        for table_name, table_data in transformed_data.items():
+            synthesizer = self._table_synthesizers[table_name]
+            try:
+                synthesizer.validate_cag(table_data)
+            except PatternNotMetError as error:
+                raise PatternNotMetError(f"Table '{table_name}': {error}") from error
 
     def get_metadata(self, version='original'):
         """Get the metadata, either original or modified after applying CAG patterns.
@@ -493,7 +533,6 @@ class BaseMultiTableSynthesizer:
                 A dictionary with the preprocessed data.
         """
         list_of_changed_tables = self._store_and_convert_original_cols(data)
-
         self.validate(data)
         data = self._validate_transform_constraints(data)
         if self._fitted:
@@ -507,6 +546,7 @@ class BaseMultiTableSynthesizer:
         for table_name, table_data in tqdm(data.items(), **pbar_args):
             synthesizer = self._table_synthesizers[table_name]
             self._assign_table_transformers(synthesizer, table_name, table_data)
+            table_data = synthesizer._validate_transform_constraints(table_data)
             processed_data[table_name] = synthesizer._preprocess(table_data)
 
         for table in list_of_changed_tables:

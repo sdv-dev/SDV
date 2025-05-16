@@ -412,15 +412,21 @@ class TestBaseMultiTableSynthesizer:
         assert type(result) is Metadata
         assert expected_metadata.to_dict() == result.to_dict()
 
-    @patch('sdv.multi_table.base.deepcopy')
-    def test_validate_cag(self, copy_mock):
-        """Test the ``_validate_transform_constraints`` method."""
+    def test_validate_cag(self):
+        """Test the ``validate_cag`` method."""
         # Setup
         table_name = 'table1'
         synthetic_data = {table_name: Mock()}
-        transformed_data = {table_name: Mock()}
+        transformed_data = {
+            table_name: Mock(),
+            'table2': Mock(),
+        }
         original_metadata = Metadata()
         instance = BaseMultiTableSynthesizer(original_metadata)
+        instance._table_synthesizers = {
+            table_name: Mock(),
+            'table2': Mock(),
+        }
         cag_mock_1 = Mock()
         cag_mock_1.table_name = table_name
         cag_mock_1.is_valid.return_value = {table_name: pd.Series([True])}
@@ -428,17 +434,25 @@ class TestBaseMultiTableSynthesizer:
         cag_mock_2 = Mock()
         cag_mock_2.is_valid.return_value = {table_name: pd.Series([True])}
         cag_mock_2.table_name = table_name
+        cag_mock_2.transform.return_value = transformed_data
         instance.patterns = [cag_mock_1, cag_mock_2]
-        copy_mock.side_effect = [cag_mock_1, cag_mock_2]
+        instance._table_synthesizers['table2'].validate_cag = Mock(
+            side_effect=PatternNotMetError('error')
+        )
+        expected_error_msg = re.escape("Table 'table2': error")
 
         # Run
-        instance.validate_cag(synthetic_data)
+        with pytest.raises(PatternNotMetError, match=expected_error_msg):
+            instance.validate_cag(synthetic_data)
 
         # Assert
         cag_mock_1.is_valid.assert_called_once_with(data=synthetic_data)
         cag_mock_1.transform.assert_called_once_with(data=synthetic_data)
         cag_mock_2.is_valid.assert_called_once_with(data=transformed_data)
         cag_mock_2.transform.assert_called_once_with(data=transformed_data)
+        instance._table_synthesizers[table_name].validate_cag.assert_called_once_with(
+            transformed_data[table_name]
+        )
 
     def test_validate_cag_raises(self):
         """Test the ``_validate_transform_constraints`` method raises an error."""
@@ -877,6 +891,8 @@ class TestBaseMultiTableSynthesizer:
             'oseba': synth_oseba,
             'upravna_enota': synth_upravna_enota,
         }
+        for table_name, synthesizer in instance._table_synthesizers.items():
+            synthesizer._validate_transform_constraints = Mock(side_effect=lambda data: data)
 
         # Run
         result = instance.preprocess(data)
@@ -898,14 +914,19 @@ class TestBaseMultiTableSynthesizer:
         synth_nesreca.auto_assign_transformers.assert_called_once_with(data['nesreca'])
         synth_nesreca._preprocess.assert_called_once_with(data['nesreca'])
         synth_nesreca.update_transformers.assert_called_once_with({'a': None, 'b': None})
+        synth_nesreca._validate_transform_constraints.assert_called_once_with(data['nesreca'])
 
         synth_oseba._preprocess.assert_called_once_with(data['oseba'])
         synth_oseba._preprocess.assert_called_once_with(data['oseba'])
         synth_oseba.update_transformers.assert_called_once_with({'a': None, 'b': None})
+        synth_oseba._validate_transform_constraints.assert_called_once_with(data['oseba'])
 
         synth_upravna_enota._preprocess.assert_called_once_with(data['upravna_enota'])
         synth_upravna_enota._preprocess.assert_called_once_with(data['upravna_enota'])
         synth_upravna_enota.update_transformers.assert_called_once_with({'a': None, 'b': None})
+        synth_upravna_enota._validate_transform_constraints.assert_called_once_with(
+            data['upravna_enota']
+        )
 
     def test_preprocess_int_columns(self):
         """Test the preprocess method.
@@ -1013,9 +1034,12 @@ class TestBaseMultiTableSynthesizer:
             'upravna_enota': synth_upravna_enota._preprocess.return_value,
         }
         instance.validate.assert_called_once_with(data)
-        synth_nesreca._preprocess.assert_called_once_with(data['nesreca'])
-        synth_oseba._preprocess.assert_called_once_with(data['oseba'])
-        synth_upravna_enota._preprocess.assert_called_once_with(data['upravna_enota'])
+        args, _ = synth_nesreca._preprocess.call_args
+        assert args[0].equals(data['nesreca'])
+        args, _ = synth_oseba._preprocess.call_args
+        assert args[0].equals(data['oseba'])
+        args, _ = synth_upravna_enota._preprocess.call_args
+        assert args[0].equals(data['upravna_enota'])
         mock_warnings.warn.assert_called_once_with(
             'This model has already been fitted. To use the new preprocessed data, '
             "please refit the model using 'fit' or 'fit_processed_data'."
@@ -1521,6 +1545,47 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(SynthesizerInputError, match=err_msg):
             model.add_constraints([constraint])
 
+    def test__detect_single_table_cag(self):
+        """Test the ``_detect_single_table_cag`` method."""
+        # Setup
+        instance = Mock()
+        instance.metadata = get_multi_table_metadata()
+        instance._has_seen_single_table_constraint = False
+        instance._table_synthesizers = {
+            'table1': Mock(),
+            'table2': Mock(),
+        }
+        pattern1 = Mock()
+        pattern1._is_single_table = False
+        pattern2 = Mock()
+        pattern2._is_single_table = False
+        pattern3 = Mock()
+        pattern3._is_single_table = True
+        pattern4 = Mock()
+        pattern4._is_single_table = True
+        expected_error = re.escape(
+            'Cannot apply multi-table constraint after single-table constraint has been applied.'
+        )
+
+        # Run
+        idx_single_table_1 = BaseMultiTableSynthesizer._detect_single_table_cag(
+            instance, [pattern1, pattern2, pattern3, pattern4]
+        )
+        idx_single_table_2 = BaseMultiTableSynthesizer._detect_single_table_cag(
+            instance, [pattern3, pattern4]
+        )
+        with pytest.raises(SynthesizerInputError, match=expected_error):
+            BaseMultiTableSynthesizer._detect_single_table_cag(instance, [pattern1])
+        instance._has_seen_single_table_constraint = False
+        with pytest.raises(SynthesizerInputError, match=expected_error):
+            BaseMultiTableSynthesizer._detect_single_table_cag(
+                instance, [pattern1, pattern3, pattern2]
+            )
+
+        # Assert
+        assert idx_single_table_1 == 2
+        assert idx_single_table_2 == 0
+
     @patch('sdv.multi_table.base.ProgrammableConstraintHarness')
     def test_add_cag(self, mock_programmable_constraint_harness):
         """Test adding data patterns to the synthesizer."""
@@ -1535,7 +1600,16 @@ class TestBaseMultiTableSynthesizer:
         pattern3 = ProgrammableConstraint()
         mock_harness = Mock()
         mock_programmable_constraint_harness.return_value = mock_harness
-        patterns = [pattern1, pattern2, pattern3]
+        pattern4 = Mock()
+        pattern4.table_name = 'table1'
+        instance._table_synthesizers = {
+            'table1': Mock(),
+        }
+        instance._table_synthesizers['table1'].add_cag = Mock()
+        mutli_table_pattern = [pattern1, pattern2, pattern3]
+        single_table_pattern = [pattern4]
+        patterns = mutli_table_pattern + single_table_pattern
+        instance._detect_single_table_cag = Mock(return_value=3)
 
         # Run
         BaseMultiTableSynthesizer.add_cag(instance, patterns)
@@ -1551,8 +1625,10 @@ class TestBaseMultiTableSynthesizer:
             pattern2.get_updated_metadata.return_value
         )
         assert instance.metadata == mock_harness.get_updated_metadata.return_value
+        instance._detect_single_table_cag.assert_called_once_with(patterns)
         instance._initialize_models.assert_called_once()
         expected_patterns = [pattern1, pattern2, mock_harness]
+        instance._table_synthesizers['table1'].add_cag.assert_called_once_with([pattern4])
         assert instance.patterns == expected_patterns
 
     def test_updating_patterns_keeps_original_metadata(self):
@@ -1567,6 +1643,7 @@ class TestBaseMultiTableSynthesizer:
         pattern1 = Mock()
         pattern2 = Mock()
         instance.patterns = [pattern1]
+        instance._detect_single_table_cag = Mock(return_value=None)
 
         # Run
         BaseMultiTableSynthesizer.add_cag(instance, [pattern2])
