@@ -965,6 +965,29 @@ class TestBaseSingleTableSynthesizer:
         # Run and Assert
         instance.validate(data)
 
+    def test__validate_cag_single_table(self):
+        """Test the ``_validate_cag`` method"""
+        # Setup
+        metadata = Metadata()
+        instance = BaseSingleTableSynthesizer(metadata)
+        expected_err_list = re.escape('`patterns` must be a list.')
+        pattern_1 = Mock()
+        pattern_1._is_single_table = True
+        pattern_2 = Mock()
+        pattern_2.__class__.__name__ = 'Pattern_Name'
+        pattern_2._is_single_table = False
+        expected_err_multi_table = re.escape(
+            'Pattern `Pattern_Name` is not compatible with the single-table synthesizers.'
+        )
+
+        # Run and Assert
+        instance._validate_cag_single_table(patterns=[pattern_1])
+        with pytest.raises(SynthesizerInputError, match=expected_err_list):
+            instance._validate_cag_single_table(patterns='pattern')
+
+        with pytest.raises(SynthesizerInputError, match=expected_err_multi_table):
+            instance._validate_cag_single_table(patterns=[pattern_1, pattern_2])
+
     def test_update_transformers_invalid_keys(self):
         """Test error is raised if passed transformer doesn't match key column.
 
