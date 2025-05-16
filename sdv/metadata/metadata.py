@@ -324,6 +324,16 @@ class Metadata(MultiTableMetadata):
         table_name = self._handle_table_name(table_name)
         super().add_column(table_name, column_name, **kwargs)
 
+    def _remove_matching_relationships(self, element, keys):
+        """Remove relationships where the element matches the keys to check."""
+        updated_relationships = []
+        for relationship in self.relationships:
+            matching_keys = [relationship[key] for key in keys]
+            if element not in matching_keys:
+                updated_relationships.append(relationship)
+
+        self.relationships = updated_relationships
+
     def remove_table(self, table_name):
         """Remove a table from the metadata.
 
@@ -337,18 +347,63 @@ class Metadata(MultiTableMetadata):
         self._validate_table_exists(table_name)
 
         # Remove relationships
-        updated_relationships = []
-        for relationship in self.relationships:
-            relationship_tables = (
-                relationship['parent_table_name'],
-                relationship['child_table_name'],
-            )
-            if table_name not in relationship_tables:
-                updated_relationships.append(relationship)
-
-        self.relationships = updated_relationships
-
+        self._remove_matching_relationships(table_name, ['parent_table_name', 'child_table_name'])
         del self.tables[table_name]
+        self._multi_table_updated = True
+
+    def remove_column(self, column_name, table_name=None):
+        """Remove a column from a table in the metadata.
+
+        This method will remove the column from the metadata, delete any relationships the
+        column is in, delete any column relationships the column is in and remove it from any keys
+        or special columns it is a part of (eg. sequence index).
+
+        Args:
+            column_name (str):
+                The name of the column to remove.
+            table_name (str):
+                The name of the table the column belongs to. Required if there is more than one
+                table.
+        """
+        if table_name:
+            self._validate_table_exists(table_name)
+        else:
+            table_name = self._get_single_table_name()
+
+        if table_name is None:
+            raise ValueError(
+                "'table_name must be provided if there is more than 1 table in the metadata."
+            )
+
+        table_metadata = self.tables[table_name]
+        table_metadata._validate_column_exists(column_name)
+
+        # Remove relationships
+        self._remove_matching_relationships(
+            column_name, ['parent_primary_key', 'child_foreign_key']
+        )
+        updated_column_relationships = []
+        for column_relationship in table_metadata.column_relationships:
+            if column_name not in column_relationship.get('column_names', []):
+                updated_column_relationships.append(column_relationship)
+
+        table_metadata.column_relationships = updated_column_relationships
+
+        # Remove keys and special columns
+        if table_metadata.primary_key == column_name:
+            table_metadata.remove_primary_key()
+
+        if column_name in table_metadata.alternate_keys:
+            table_metadata.alternate_keys.remove(column_name)
+
+        if column_name == table_metadata.sequence_key:
+            table_metadata.set_sequence_key(None)
+
+        if column_name == table_metadata.sequence_index:
+            table_metadata.remove_sequence_index()
+
+        del table_metadata.columns[column_name]
+
         self._multi_table_updated = True
 
     def add_column_relationship(
