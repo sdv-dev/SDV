@@ -377,6 +377,7 @@ class Metadata(MultiTableMetadata):
 
         table_metadata = self.tables[table_name]
         table_metadata._validate_column_exists(column_name)
+
         # Remove relationships
         self._remove_matching_relationships(
             column_name, ['parent_primary_key', 'child_foreign_key']
