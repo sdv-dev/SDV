@@ -963,7 +963,7 @@ def test_auto_assign_transformer():
         high_column_name='checkout_date',
     )
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag([inequality_cag])
+    synthesizer.add_constraint([inequality_cag])
 
     # Run
     synthesizer.auto_assign_transformers(data)
@@ -1000,7 +1000,7 @@ def test_low_column_formatting_maintained():
         high_column_name='room_rate',
     )
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag([inequality_cag])
+    synthesizer.add_constraint([inequality_cag])
 
     # Run
     synthesizer.fit(data)

@@ -199,7 +199,7 @@ def test_fixed_combinations_multiple_constraints():
 
     # Run
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(constraints=[constraint1, constraint2])
+    synthesizer.add_constraint(constraints=[constraint1, constraint2])
     synthesizer.fit(data)
     samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')
@@ -249,7 +249,7 @@ def test_fixed_combinations_multiple_constraints_reject_sampling():
 
     # Run
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(constraints=[constraint1, constraint2])
+    synthesizer.add_constraint(constraints=[constraint1, constraint2])
     synthesizer.fit(data)
     samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')
@@ -302,7 +302,7 @@ def test_fixed_combinations_multiple_constraints_three_constraints():
 
     # Run
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(constraints=[constraint1, constraint2, constraint3])
+    synthesizer.add_constraint(constraints=[constraint1, constraint2, constraint3])
     synthesizer.fit(data)
     samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')

@@ -187,7 +187,7 @@ class BaseMultiTableSynthesizer:
 
         return idx_single_table_constraint
 
-    def add_cag(self, constraints):
+    def add_constraint(self, constraints):
         """Add the list of constraint-augmented generation constraints to the synthesizer.
 
         Args:
@@ -217,7 +217,7 @@ class BaseMultiTableSynthesizer:
         if single_table_constraints:
             for constraint in single_table_constraints:
                 table_name = constraint.table_name
-                self._table_synthesizers[table_name].add_cag([constraint])
+                self._table_synthesizers[table_name].add_constraint([constraint])
 
     def get_cag(self):
         """Get a copy of the list of constraints applied to the synthesizer."""

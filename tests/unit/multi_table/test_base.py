@@ -1494,7 +1494,7 @@ class TestBaseMultiTableSynthesizer:
 
     @patch('sdv.multi_table.base.ProgrammableConstraintHarness')
     @patch('sdv.multi_table.base._validate_constraints')
-    def test_add_cag(self, mock_validate_constraints, mock_programmable_constraint_harness):
+    def test_add_constraint(self, mock_validate_constraints, mock_programmable_constraint_harness):
         """Test adding data constraints to the synthesizer."""
         # Setup
         instance = Mock()
@@ -1512,7 +1512,7 @@ class TestBaseMultiTableSynthesizer:
         instance._table_synthesizers = {
             'table1': Mock(),
         }
-        instance._table_synthesizers['table1'].add_cag = Mock()
+        instance._table_synthesizers['table1'].add_constraint = Mock()
         mutli_table_constraint = [constraint1, constraint2, constraint3]
         single_table_constraint = [constraint4]
         constraints = mutli_table_constraint + single_table_constraint
@@ -1520,7 +1520,7 @@ class TestBaseMultiTableSynthesizer:
         mock_validate_constraints.return_value = constraints
 
         # Run
-        BaseMultiTableSynthesizer.add_cag(instance, constraints)
+        BaseMultiTableSynthesizer.add_constraint(instance, constraints)
 
         # Assert
         mock_validate_constraints.assert_called_once_with(constraints, instance._fitted)
@@ -1537,7 +1537,7 @@ class TestBaseMultiTableSynthesizer:
         instance._detect_single_table_cag.assert_called_once_with(constraints)
         instance._initialize_models.assert_called_once()
         expected_constraints = [constraint1, constraint2, mock_harness]
-        instance._table_synthesizers['table1'].add_cag.assert_called_once_with([constraint4])
+        instance._table_synthesizers['table1'].add_constraint.assert_called_once_with([constraint4])
         assert instance.constraints == expected_constraints
 
     @patch('sdv.multi_table.base._validate_constraints')
@@ -1557,7 +1557,7 @@ class TestBaseMultiTableSynthesizer:
         mock_validate_constraints.return_value = [constraint2]
 
         # Run
-        BaseMultiTableSynthesizer.add_cag(instance, [constraint2])
+        BaseMultiTableSynthesizer.add_constraint(instance, [constraint2])
 
         # Assert
         mock_validate_constraints.assert_called_once_with([constraint2], instance._fitted)

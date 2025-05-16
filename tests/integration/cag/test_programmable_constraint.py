@@ -142,7 +142,7 @@ def test_end_to_end_programmable_constraint(programmable_constraint):
         column_names=['has_rewards', 'room_type'], table_name='guests'
     )
     synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_cag([my_constraint])
+    synthesizer.add_constraint([my_constraint])
 
     # Run
     synthesizer.fit(data)
@@ -165,7 +165,7 @@ def test_end_to_end_single_table_programmable_constraint(single_table_programmab
         column_names=['has_rewards', 'room_type'], table_name='fake_hotel_guests'
     )
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag([my_constraint])
+    synthesizer.add_constraint([my_constraint])
 
     # Run
     synthesizer.fit(data)

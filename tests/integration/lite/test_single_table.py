@@ -21,6 +21,7 @@ def test_sample():
     assert samples['a'].all() in [1, 2, 3, np.nan]
     assert len(samples) == 10
 
+
 @pytest.mark.skip('Old-style constraints are deprecated')
 def test_sample_with_constraints():
     """Test sampling for the ``SingleTablePreset``."""
@@ -43,6 +44,7 @@ def test_sample_with_constraints():
     # Assert
     assert len(samples) == 10
     assert all(samples['a'] < samples['b'])
+
 
 @pytest.mark.skip('Old-style constraints are deprecated')
 def test_warnings_are_shown():
