@@ -125,7 +125,7 @@ class TestBaseConstraint:
         instance = BaseConstraint()
         instance._validate_constraint_with_data = Mock()
         instance._validate_constraint_with_metadata = Mock()
-        expected_msg = re.escape('Pattern must be fit before validating without metadata.')
+        expected_msg = re.escape('Constraint must be fit before validating without metadata.')
         data_mock = Mock()
         metadata_mock = Mock()
 
@@ -300,7 +300,7 @@ class TestBaseConstraint:
         """Test ``transform`` method errors before constraint has been fit."""
         # Setup
         instance = BaseConstraint()
-        expected_msg = re.escape('Pattern must be fit using ``fit`` before transforming.')
+        expected_msg = re.escape('Constraint must be fit using ``fit`` before transforming.')
 
         # Run and Assert
         with pytest.raises(NotFittedError, match=expected_msg):
@@ -410,7 +410,7 @@ class TestBaseConstraint:
         # Setup
         instance = BaseConstraint()
         expected_msg = re.escape(
-            'Pattern must be fit using ``fit`` before determining if data is valid.'
+            'Constraint must be fit using ``fit`` before determining if data is valid.'
         )
 
         # Run and assert

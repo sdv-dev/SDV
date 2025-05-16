@@ -975,10 +975,10 @@ class TestBaseSingleTableSynthesizer:
         constraint_1 = Mock()
         constraint_1._is_single_table = True
         constraint_2 = Mock()
-        constraint_2.__class__.__name__ = 'Pattern_Name'
+        constraint_2.__class__.__name__ = 'Constraint_Name'
         constraint_2._is_single_table = False
         expected_err_multi_table = re.escape(
-            'Pattern `Pattern_Name` is not compatible with the single-table synthesizers.'
+            'Constraint `Constraint_Name` is not compatible with the single-table synthesizers.'
         )
         mock_validate_constraints.side_effect = lambda constraints, _fitted: constraints
 

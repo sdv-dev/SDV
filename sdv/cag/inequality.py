@@ -25,7 +25,7 @@ from sdv.constraints.utils import (
 
 
 class Inequality(BaseConstraint):
-    """Pattern that ensures `high_column_name` is greater than `low_column_name` .
+    """Constraint that ensures `high_column_name` is greater than `low_column_name` .
 
     The transformation works by creating a column with the difference between the
     `high_column_name` and `low_column_name` columns and storing it in the

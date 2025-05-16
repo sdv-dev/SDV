@@ -19,7 +19,7 @@ from sdv.constraints.utils import get_mappable_combination
 
 
 class FixedCombinations(BaseConstraint):
-    """Pattern to ensure that the combinations across multiple columns are fixed.
+    """Constraint to ensure that the combinations across multiple columns are fixed.
 
     One simple example of this constraint can be found in a table that
     contains the columns `country` and `city`, where each country can

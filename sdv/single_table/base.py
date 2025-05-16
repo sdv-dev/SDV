@@ -719,7 +719,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         for constraint in constraints:
             if constraint._is_single_table is False:
                 raise SynthesizerInputError(
-                    f'Pattern `{constraint.__class__.__name__}` is not compatible with the '
+                    f'Constraint `{constraint.__class__.__name__}` is not compatible with the '
                     'single-table synthesizers.'
                 )
 

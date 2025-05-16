@@ -11,7 +11,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class BaseConstraint:
-    """Base CAG Pattern Class."""
+    """Base CAG Constraint Class."""
 
     _is_single_table = True
 
@@ -65,7 +65,7 @@ class BaseConstraint:
         """
         if metadata is None:
             if self.metadata is None:
-                raise NotFittedError('Pattern must be fit before validating without metadata.')
+                raise NotFittedError('Constraint must be fit before validating without metadata.')
 
             metadata = self.metadata
 
@@ -127,7 +127,7 @@ class BaseConstraint:
                 The input data dictionary to be transformed.
         """
         if not self._fitted:
-            raise NotFittedError('Pattern must be fit using ``fit`` before transforming.')
+            raise NotFittedError('Constraint must be fit using ``fit`` before transforming.')
 
         self.validate(data)
         data = self._convert_data_to_dictionary(data, self.metadata, copy=True)
@@ -209,7 +209,7 @@ class BaseConstraint:
         """
         if not self._fitted:
             raise NotFittedError(
-                'Pattern must be fit using ``fit`` before determining if data is valid.'
+                'Constraint must be fit using ``fit`` before determining if data is valid.'
             )
 
         data = self._convert_data_to_dictionary(data, self.metadata)
