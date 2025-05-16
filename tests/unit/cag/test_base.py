@@ -297,7 +297,7 @@ class TestBasePattern:
         pd.testing.assert_frame_equal(transformed, data)
 
     def test_transform_not_fitted(self, data):
-        """Test ``transform`` method errors before pattern has been fit."""
+        """Test ``transform`` method errors before constraint has been fit."""
         # Setup
         instance = BasePattern()
         expected_msg = re.escape('Pattern must be fit using ``fit`` before transforming.')

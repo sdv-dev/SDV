@@ -747,15 +747,15 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         Raises:
             PatternNotMetError:
-                Raised if the pattern is not compatible with the metadata.
+                Raised if the constraint is not compatible with the metadata.
         """
         if not isinstance(patterns, list):
             raise SynthesizerInputError('`patterns` must be a list.')
 
-        for pattern in patterns:
-            if pattern._is_single_table is False:
+        for constraint in patterns:
+            if constraint._is_single_table is False:
                 raise SynthesizerInputError(
-                    f'Pattern `{pattern.__class__.__name__}` is not compatible with the '
+                    f'Pattern `{constraint.__class__.__name__}` is not compatible with the '
                     'single-table synthesizers.'
                 )
 
@@ -767,22 +767,22 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 A list of CAG patterns to apply to the synthesizer.
         """
         self._validate_cag_single_table(patterns)
-        for pattern in patterns:
-            if isinstance(pattern, ProgrammableConstraint):
-                pattern = ProgrammableConstraintHarness(pattern)
+        for constraint in patterns:
+            if isinstance(constraint, ProgrammableConstraint):
+                constraint = ProgrammableConstraintHarness(constraint)
 
             try:
-                self.metadata = pattern.get_updated_metadata(self.metadata)
-                self._chained_patterns.append(pattern)
+                self.metadata = constraint.get_updated_metadata(self.metadata)
+                self._chained_patterns.append(constraint)
                 self._constraints_fitted = False
             except PatternNotMetError as e:
                 LOGGER.info(
-                    'Enforcing pattern %s using reject sampling.', pattern.__class__.__name__
+                    'Enforcing constraint %s using reject sampling.', constraint.__class__.__name__
                 )
 
                 try:
-                    pattern.get_updated_metadata(self._original_metadata)
-                    self._reject_sampling_patterns.append(pattern)
+                    constraint.get_updated_metadata(self._original_metadata)
+                    self._reject_sampling_patterns.append(constraint)
                 except PatternNotMetError:
                     raise e
 
@@ -796,11 +796,11 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
     def get_cag(self):
         """Get a list of constraint-augmented generation patterns applied to the synthesizer."""
         patterns = []
-        for pattern in self._chained_patterns + self._reject_sampling_patterns:
-            if isinstance(pattern, ProgrammableConstraintHarness):
-                patterns.append(deepcopy(pattern.programmable_constraint))
+        for constraint in self._chained_patterns + self._reject_sampling_patterns:
+            if isinstance(constraint, ProgrammableConstraintHarness):
+                patterns.append(deepcopy(constraint.programmable_constraint))
             else:
-                patterns.append(deepcopy(pattern))
+                patterns.append(deepcopy(constraint))
 
         return patterns
 
@@ -816,21 +816,21 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         """
         transformed_data = synthetic_data
         for attribute in ['_reject_sampling_patterns', '_chained_patterns']:
-            for pattern in getattr(self, attribute, []):
+            for constraint in getattr(self, attribute, []):
                 if attribute == '_reject_sampling_patterns':
-                    valid = pattern.is_valid(data=synthetic_data)
+                    valid = constraint.is_valid(data=synthetic_data)
                 else:
-                    valid = pattern.is_valid(data=transformed_data)
+                    valid = constraint.is_valid(data=transformed_data)
 
                 if not valid.all():
                     invalid_rows_str = _get_invalid_rows(valid)
-                    pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
+                    pattern_name = _convert_to_snake_case(constraint.__class__.__name__)
                     pattern_name = pattern_name.replace('_', ' ')
                     msg = f'The {pattern_name} requirement is not met '
                     msg += f'for row indices: {invalid_rows_str}.'
                     raise PatternNotMetError(msg)
                 elif attribute == '_chained_patterns':
-                    transformed_data = pattern.transform(data=transformed_data)
+                    transformed_data = constraint.transform(data=transformed_data)
 
     def _validate_transform_constraints(self, data, enforce_constraint_fitting=False):
         """Validate the data against the constraints and transform it.
@@ -848,21 +848,21 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 Defaults to ``False``.
         """
         if self._constraints_fitted and not enforce_constraint_fitting:
-            for pattern in self._chained_patterns:
-                data = pattern.transform(data)
+            for constraint in self._chained_patterns:
+                data = constraint.transform(data)
 
             return data
 
         metadata = getattr(self, '_original_metadata', self.metadata)
         if hasattr(self, '_reject_sampling_patterns'):
-            for pattern in self._reject_sampling_patterns:
-                pattern.fit(data=data, metadata=self._original_metadata)
+            for constraint in self._reject_sampling_patterns:
+                constraint.fit(data=data, metadata=self._original_metadata)
 
         if hasattr(self, '_chained_patterns'):
-            for pattern in self._chained_patterns:
-                pattern.fit(data=data, metadata=metadata)
-                metadata = pattern.get_updated_metadata(metadata)
-                data = pattern.transform(data)
+            for constraint in self._chained_patterns:
+                constraint.fit(data=data, metadata=metadata)
+                metadata = constraint.get_updated_metadata(metadata)
+                data = constraint.transform(data)
 
         self._constraints_fitted = True
         return data
@@ -1000,13 +1000,13 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             sampled = self._data_processor.reverse_transform(raw_sampled, conditions=conditions)
 
             if hasattr(self, '_chained_patterns') and hasattr(self, '_reject_sampling_patterns'):
-                for pattern in reversed(self._chained_patterns):
-                    sampled = pattern.reverse_transform(sampled)
-                    valid_rows = pattern.is_valid(sampled)
+                for constraint in reversed(self._chained_patterns):
+                    sampled = constraint.reverse_transform(sampled)
+                    valid_rows = constraint.is_valid(sampled)
                     sampled = sampled[valid_rows]
 
-                for pattern in reversed(self._reject_sampling_patterns):
-                    valid_rows = pattern.is_valid(sampled)
+                for constraint in reversed(self._reject_sampling_patterns):
+                    valid_rows = constraint.is_valid(sampled)
                     sampled = sampled[valid_rows]
 
             if getattr(self, '_constraint_col_formatters', False):

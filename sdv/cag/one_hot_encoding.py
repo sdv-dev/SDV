@@ -43,7 +43,7 @@ class OneHotEncoding(BasePattern):
         self.table_name = table_name
 
     def _validate_pattern_with_metadata(self, metadata):
-        """Validate the pattern is compatible with the provided metadata.
+        """Validate the constraint is compatible with the provided metadata.
 
         Validates that:
         - If no table_name is provided the metadata contains a single table
@@ -70,7 +70,7 @@ class OneHotEncoding(BasePattern):
         return sum_one & max_one & min_zero & no_nans
 
     def _validate_pattern_with_data(self, data, metadata):
-        """Validate the data is compatible with the pattern."""
+        """Validate the data is compatible with the constraint."""
         table_name = self._get_single_table_name(metadata)
         valid = self._get_valid_table_data(data[table_name])
         if not valid.all():
@@ -80,7 +80,7 @@ class OneHotEncoding(BasePattern):
             )
 
     def _fit(self, data, metadata):
-        """Fit the pattern.
+        """Fit the constraint.
 
         Args:
             data (dict[str, pd.DataFrame]):

@@ -171,14 +171,14 @@ class BaseMultiTableSynthesizer:
                 A list of CAG patterns to filter.
         """
         idx_single_table_constraint = 0 if self._has_seen_single_table_constraint else None
-        for idx, pattern in enumerate(patterns):
-            if self._has_seen_single_table_constraint and pattern._is_single_table is False:
+        for idx, constraint in enumerate(patterns):
+            if self._has_seen_single_table_constraint and constraint._is_single_table is False:
                 raise SynthesizerInputError(
                     'Cannot apply multi-table constraint after single-table constraint has '
                     'been applied.'
                 )
 
-            if not pattern._is_single_table:
+            if not constraint._is_single_table:
                 continue
 
             if not self._has_seen_single_table_constraint:
@@ -198,25 +198,25 @@ class BaseMultiTableSynthesizer:
         multi_table_patterns = []
         single_table_patterns = []
         idx_single_table_constraint = self._detect_single_table_cag(patterns)
-        for idx, pattern in enumerate(patterns):
-            if isinstance(pattern, ProgrammableConstraint):
-                pattern = ProgrammableConstraintHarness(pattern)
+        for idx, constraint in enumerate(patterns):
+            if isinstance(constraint, ProgrammableConstraint):
+                constraint = ProgrammableConstraintHarness(constraint)
 
             if idx_single_table_constraint is not None and idx >= idx_single_table_constraint:
-                single_table_patterns.append(pattern)
+                single_table_patterns.append(constraint)
                 continue
 
-            multi_table_patterns.append(pattern)
-            metadata = pattern.get_updated_metadata(metadata)
+            multi_table_patterns.append(constraint)
+            metadata = constraint.get_updated_metadata(metadata)
 
         self.metadata = metadata
         self.patterns += multi_table_patterns
         self._constraints_fitted = False
         self._initialize_models()
         if single_table_patterns:
-            for pattern in single_table_patterns:
-                table_name = pattern.table_name
-                self._table_synthesizers[table_name].add_cag([pattern])
+            for constraint in single_table_patterns:
+                table_name = constraint.table_name
+                self._table_synthesizers[table_name].add_cag([constraint])
 
     def get_cag(self):
         """Get a copy of the list of constraints applied to the synthesizer."""
@@ -224,11 +224,11 @@ class BaseMultiTableSynthesizer:
             return []
 
         patterns = []
-        for pattern in self.patterns:
-            if isinstance(pattern, ProgrammableConstraintHarness):
-                patterns.append(deepcopy(pattern.programmable_constraint))
+        for constraint in self.patterns:
+            if isinstance(constraint, ProgrammableConstraintHarness):
+                patterns.append(deepcopy(constraint.programmable_constraint))
             else:
-                patterns.append(deepcopy(pattern))
+                patterns.append(deepcopy(constraint))
 
         return patterns
 
@@ -243,18 +243,18 @@ class BaseMultiTableSynthesizer:
                 Raised if synthetic data does not match CAG patterns.
         """
         transformed_data = synthetic_data
-        for pattern in self.patterns:
-            valid_data = pattern.is_valid(data=transformed_data)
+        for constraint in self.patterns:
+            valid_data = constraint.is_valid(data=transformed_data)
             for table_name, valid_table in valid_data.items():
                 if not valid_table.all():
                     invalid_rows_str = _get_invalid_rows(valid_table)
-                    pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
+                    pattern_name = _convert_to_snake_case(constraint.__class__.__name__)
                     pattern_name = pattern_name.replace('_', ' ')
                     msg = f"Table '{table_name}': The {pattern_name} requirement is not met "
                     msg += f'for row indices: {invalid_rows_str}.'
                     raise PatternNotMetError(msg)
 
-            transformed_data = pattern.transform(data=transformed_data)
+            transformed_data = constraint.transform(data=transformed_data)
 
         for table_name, table_data in transformed_data.items():
             synthesizer = self._table_synthesizers[table_name]
@@ -294,16 +294,16 @@ class BaseMultiTableSynthesizer:
                 Defaults to ``False``.
         """
         if self._constraints_fitted and not enforce_constraint_fitting:
-            for pattern in self.patterns:
-                data = pattern.transform(data)
+            for constraint in self.patterns:
+                data = constraint.transform(data)
 
             return data
 
         metadata = self._original_metadata
-        for pattern in self.patterns:
-            pattern.fit(data=data, metadata=metadata)
-            metadata = pattern.get_updated_metadata(metadata)
-            data = pattern.transform(data)
+        for constraint in self.patterns:
+            constraint.fit(data=data, metadata=metadata)
+            metadata = constraint.get_updated_metadata(metadata)
+            data = constraint.transform(data)
 
         self._constraints_fitted = True
         return data
@@ -313,8 +313,8 @@ class BaseMultiTableSynthesizer:
         if not hasattr(self, 'patterns'):
             return sampled_data
 
-        for pattern in reversed(self.patterns):
-            sampled_data = pattern.reverse_transform(sampled_data)
+        for constraint in reversed(self.patterns):
+            sampled_data = constraint.reverse_transform(sampled_data)
 
         from sdv.utils.utils import (
             drop_unknown_references,  # noqa: F401 Lazy import to fix circular dependency

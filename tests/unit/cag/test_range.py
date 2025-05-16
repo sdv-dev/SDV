@@ -87,7 +87,7 @@ class TestRange:
 
     @patch('sdv.cag.range._validate_table_and_column_names')
     def test__validate_pattern_with_metadata(self, validate_table_and_col_names_mock):
-        """Test validating the pattern with metadata."""
+        """Test validating the constraint with metadata."""
         # Setup
         instance = Range(
             low_column_name='low',

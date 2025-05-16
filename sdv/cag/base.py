@@ -1,4 +1,4 @@
-"""Base CAG constraint pattern."""
+"""Base CAG constraint."""
 
 import logging
 
@@ -54,13 +54,13 @@ class BasePattern:
         raise NotImplementedError()
 
     def validate(self, data=None, metadata=None):
-        """Validate the data/metadata meets the pattern requirements.
+        """Validate the data/metadata meets the constraint requirements.
 
         Args:
             data (dict[str, pd.DataFrame], optional)
                 The data dictionary. If `None`, ``validate`` will skip data validation.
             metadata (sdv.Metadata, optional)
-                The input metadata. If `None`, pattern must have been fitted and ``validate``
+                The input metadata. If `None`, constraint must have been fitted and ``validate``
                 will use the metadata saved during fitting.
         """
         if metadata is None:
@@ -79,11 +79,11 @@ class BasePattern:
         return metadata
 
     def get_updated_metadata(self, metadata):
-        """Get the updated metadata after applying the pattern to the input metadata.
+        """Get the updated metadata after applying the constraint to the input metadata.
 
         Args:
             metadata (sdv.Metadata):
-                The input metadata to apply the pattern to.
+                The input metadata to apply the constraint to.
         """
         self.validate(metadata=metadata)
         return self._get_updated_metadata(metadata)
@@ -92,13 +92,13 @@ class BasePattern:
         raise NotImplementedError
 
     def fit(self, data, metadata):
-        """Fit the pattern with data and metadata.
+        """Fit the constraint with data and metadata.
 
         Args:
             data (dict[pd.DataFrame]):
-                The data dictionary to fit the pattern on.
+                The data dictionary to fit the constraint on.
             metadata (sdv.Metadata):
-                The metadata to fit the pattern on.
+                The metadata to fit the constraint on.
         """
         self._validate_pattern_with_metadata(metadata)
         if isinstance(data, pd.DataFrame):
@@ -205,7 +205,7 @@ class BasePattern:
 
         Returns:
             pd.Series or dict[pd.Series]:
-                Series of boolean values indicating if the row is valid for the pattern or not.
+                Series of boolean values indicating if the row is valid for the constraint or not.
         """
         if not self._fitted:
             raise NotFittedError(

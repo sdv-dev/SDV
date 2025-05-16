@@ -48,7 +48,7 @@ class TestFixedCombinations:
             FixedCombinations(bad_column_names)
 
         short_column_names_msg = re.escape(
-            'FixedCombinations pattern requires at least two columns.'
+            'FixedCombinations constraint requires at least two columns.'
         )
         with pytest.raises(ValueError, match=short_column_names_msg):
             FixedCombinations(short_column_names)
@@ -59,7 +59,7 @@ class TestFixedCombinations:
 
     @patch('sdv.cag.fixed_combinations._validate_table_and_column_names')
     def test__validate_pattern_with_metadata(self, validate_table_and_col_names_mock):
-        """Test validating the pattern with metadata."""
+        """Test validating the constraint with metadata."""
         # Setup
         instance = FixedCombinations(['col1', 'col2'])
         metadata = Metadata.load_from_dict({
@@ -84,7 +84,7 @@ class TestFixedCombinations:
     def test__validate_pattern_with_metadata_bad_col_sdtype(
         self, validate_table_and_col_names_mock
     ):
-        """Test validating the pattern with metadata."""
+        """Test validating the constraint with metadata."""
         # Setup
         instance = FixedCombinations(['col1', 'col2'])
         metadata = Metadata.load_from_dict({
@@ -111,7 +111,7 @@ class TestFixedCombinations:
     def test__validate_pattern_with_metadata_col_relationship(
         self, validate_table_and_col_names_mock
     ):
-        """Test validating the pattern with metadata."""
+        """Test validating the constraint with metadata."""
         # Setup
         instance = FixedCombinations(['col1', 'col2'])
         metadata = Metadata.load_from_dict({
@@ -131,7 +131,7 @@ class TestFixedCombinations:
 
         # Run and assert
         expected_msg = re.escape(
-            "Cannot apply pattern because columns ['col2'] are part of a column relationship."
+            "Cannot apply constraint because columns ['col2'] are part of a column relationship."
         )
         with pytest.raises(PatternNotMetError, match=expected_msg):
             instance._validate_pattern_with_metadata(metadata)

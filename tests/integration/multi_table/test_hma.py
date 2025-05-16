@@ -667,8 +667,8 @@ class TestHMASynthesizer:
         captured = capsys.readouterr()
 
         # Assert
-        for pattern in key_phrases:
-            match = re.search(pattern, captured.out + captured.err)
+        for constraint in key_phrases:
+            match = re.search(constraint, captured.out + captured.err)
             assert match is not None
 
     def test_warning_message_too_many_cols(self, capsys):
@@ -688,8 +688,8 @@ class TestHMASynthesizer:
         captured = capsys.readouterr()
 
         # Assert
-        for pattern in key_phrases:
-            match = re.search(pattern, captured.out + captured.err)
+        for constraint in key_phrases:
+            match = re.search(constraint, captured.out + captured.err)
             assert match is not None
         (_, small_metadata) = download_demo(modality='multi_table', dataset_name='trains_v1')
 
@@ -699,8 +699,8 @@ class TestHMASynthesizer:
         captured = capsys.readouterr()
 
         # Assert that small amount of columns don't trigger the message
-        for pattern in key_phrases:
-            match = re.search(pattern, captured.out + captured.err)
+        for constraint in key_phrases:
+            match = re.search(constraint, captured.out + captured.err)
             assert match is None
 
     def test_hma_three_linear_nodes(self):
@@ -1488,7 +1488,7 @@ class TestHMASynthesizer:
         synthetic_data = synthesizer.sample()
 
         # Assert
-        # Check that IDs match the regex pattern
+        # Check that IDs match the regex constraint
         for table_name, table in synthetic_data.items():
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
@@ -1567,7 +1567,7 @@ class TestHMASynthesizer:
             synthetic_data = synthesizer.sample()
 
         # Assert
-        # Check that IDs match the regex pattern
+        # Check that IDs match the regex constraint
         for table_name, table in synthetic_data.items():
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
@@ -1669,7 +1669,7 @@ class TestHMASynthesizer:
             synthetic_data = synthesizer.sample()
 
         # Assert
-        # Check that IDs match the regex pattern
+        # Check that IDs match the regex constraint
         for table_name, table in synthetic_data.items():
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
@@ -1753,7 +1753,7 @@ class TestHMASynthesizer:
             synthetic_data = synthesizer.sample()
 
         # Assert
-        # Check that IDs match the regex pattern
+        # Check that IDs match the regex constraint
         for table_name, table in synthetic_data.items():
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
@@ -1828,7 +1828,7 @@ class TestHMASynthesizer:
             synthetic_data = synthesizer.sample()
 
         # Assert
-        # Check that IDs match the regex pattern
+        # Check that IDs match the regex constraint
         for table_name, table in synthetic_data.items():
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
@@ -2657,13 +2657,13 @@ def test_end_to_end_with_cags():
         sdtype='numerical',
     )
     synthesizer = HMASynthesizer(metadata)
-    pattern = Inequality(
+    constraint = Inequality(
         low_column_name='amenities_lower',
         high_column_name='amenities_fee',
         strict_boundaries=False,
         table_name='guests',
     )
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_cag(patterns=[constraint])
     data_guests = data['guests']
     clean_data = data_guests[
         ~(data_guests[['amenities_lower', 'amenities_fee']].isna().any(axis=1))

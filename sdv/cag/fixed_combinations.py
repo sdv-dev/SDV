@@ -21,13 +21,13 @@ from sdv.constraints.utils import get_mappable_combination
 class FixedCombinations(BasePattern):
     """Pattern to ensure that the combinations across multiple columns are fixed.
 
-    One simple example of this pattern can be found in a table that
+    One simple example of this constraint can be found in a table that
     contains the columns `country` and `city`, where each country can
     have multiple cities and the same city name can even be found in
     multiple countries, but some combinations of country/city would
     produce invalid results.
 
-    This pattern would ensure that the combinations of country/city
+    This constraint would ensure that the combinations of country/city
     found in the sampled data always stay within the combinations previously
     seen during training.
 
@@ -46,7 +46,7 @@ class FixedCombinations(BasePattern):
             raise ValueError('`column_names` must be a list of strings.')
 
         if len(column_names) < 2:
-            raise ValueError('FixedCombinations pattern requires at least two columns.')
+            raise ValueError('FixedCombinations constraint requires at least two columns.')
 
         _validate_table_name_if_defined(table_name)
 
@@ -56,7 +56,7 @@ class FixedCombinations(BasePattern):
         self._combinations = None
 
     def _validate_pattern_with_metadata(self, metadata):
-        """Validate the pattern is compatible with the provided metadata.
+        """Validate the constraint is compatible with the provided metadata.
 
         Validates that:
         - If `table_name` is None then the metadata contains only a single table
@@ -84,19 +84,19 @@ class FixedCombinations(BasePattern):
             ):
                 bad_columns = "', '".join(list(relationship_columns.intersection(column_set)))
                 raise PatternNotMetError(
-                    f"Cannot apply pattern because columns ['{bad_columns}'] are part of a "
+                    f"Cannot apply constraint because columns ['{bad_columns}'] are part of a "
                     'column relationship.'
                 )
 
     def _validate_pattern_with_data(self, data, metadata):
-        """Validate the data is compatible with the pattern.
+        """Validate the data is compatible with the constraint.
 
         For FixedCombinations, this is a NOP.
         """
         return
 
     def _get_updated_metadata(self, metadata):
-        """Get the new output metadata after applying the pattern to the input metadata."""
+        """Get the new output metadata after applying the constraint to the input metadata."""
         table_name = self._get_single_table_name(metadata)
         combination_column = _create_unique_name(
             self._joint_column, metadata.tables[table_name].columns.keys()
@@ -109,7 +109,7 @@ class FixedCombinations(BasePattern):
         )
 
     def _fit(self, data, metadata):
-        """Fit the pattern."""
+        """Fit the constraint."""
         table_name = self._get_single_table_name(metadata)
         table_data = data[table_name]
         self._joint_column = _create_unique_name(
@@ -183,7 +183,7 @@ class FixedCombinations(BasePattern):
         return data
 
     def _is_valid(self, data):
-        """Determine whether the data matches the pattern."""
+        """Determine whether the data matches the constraint."""
         table_name = self._get_single_table_name(self.metadata)
         is_valid = _get_is_valid_dict(data, table_name)
         merged = data[table_name].merge(

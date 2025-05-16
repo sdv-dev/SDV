@@ -54,7 +54,7 @@ class FixedIncrements(BasePattern):
         self._dtype = None
 
     def _validate_pattern_with_metadata(self, metadata):
-        """Validate the pattern is compatible with the provided Metadata.
+        """Validate the constraint is compatible with the provided Metadata.
 
         Validates that:
             - If no table_name is set, checks that the Metadata only contains a single table
@@ -96,7 +96,7 @@ class FixedIncrements(BasePattern):
         return isnan | is_divisible
 
     def _validate_pattern_with_data(self, data, metadata):
-        """Validate the data is compatible with the pattern.
+        """Validate the data is compatible with the constraint.
 
         Args:
             data (dict[pd.DataFrame]):
@@ -120,14 +120,14 @@ class FixedIncrements(BasePattern):
             )
 
     def _get_updated_metadata(self, metadata):
-        """Get the updated metadata after applying the pattern to the metadata.
+        """Get the updated metadata after applying the constraint to the metadata.
 
         Args:
             metadata (sdv.metadata.Metadata):
-                The input Metadata to apply the pattern to.
+                The input Metadata to apply the constraint to.
 
         Returns:
-            (sdv.metadata.Metadata): The updated Metadata with the pattern applied.
+            (sdv.metadata.Metadata): The updated Metadata with the constraint applied.
         """
         table_name = self._get_single_table_name(metadata)
         increments_column = _create_unique_name(

@@ -27,7 +27,7 @@ def metadata():
 
 
 @pytest.fixture()
-def pattern():
+def constraint():
     return FixedIncrements(column_name='A', increment_value=10)
 
 
@@ -105,10 +105,10 @@ def test_fixed_increments_integers(dtype):
             dtype: {'sdtype': 'numerical', 'computer_representation': dtype},
         }
     })
-    pattern = FixedIncrements(dtype, increment_value=increment_value)
+    constraint = FixedIncrements(dtype, increment_value=increment_value)
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_pattern(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -149,24 +149,24 @@ def test_fixed_incremements_with_multi_table(data_multi, metadata_multi, pattern
         pd.testing.assert_frame_equal(table, reverse_transformed[table_name])
 
 
-def test_validate_cag(data, metadata, pattern):
+def test_validate_cag(data, metadata, constraint):
     """Test validate_cag works with synthetic data generated with FixedIncrements."""
     # Setup
-    synthesizer = run_copula(data, metadata, [pattern])
+    synthesizer = run_copula(data, metadata, [constraint])
     synthetic_data = synthesizer.sample(100)
 
     # Run
     synthesizer.validate_cag(synthetic_data=synthetic_data)
 
     # Assert
-    assert all(data['A'] % pattern.increment_value == 0)
-    assert all(synthetic_data['A'] % pattern.increment_value == 0)
+    assert all(data['A'] % constraint.increment_value == 0)
+    assert all(synthetic_data['A'] % constraint.increment_value == 0)
 
 
-def test_validate_cag_raises(data, metadata, pattern):
+def test_validate_cag_raises(data, metadata, constraint):
     """Test validate_cag raises an error with bad multitable data with FixedIncrements."""
     # Setup
-    synthesizer = run_copula(data, metadata, [pattern])
+    synthesizer = run_copula(data, metadata, [constraint])
     synthetic_data = pd.DataFrame({'A': [1, 3, 5, 7, 9, 12]})
     msg = re.escape('The fixed increments requirement is not met for row indices: 0, 1, 2, 3, 4')
 
@@ -210,8 +210,8 @@ def test_validate_cag_multi_raises():
             },
         }
     })
-    pattern = FixedIncrements(column_name='A', table_name='table1', increment_value=2)
-    synthesizer = run_hma(data, metadata, [pattern])
+    constraint = FixedIncrements(column_name='A', table_name='table1', increment_value=2)
+    synthesizer = run_hma(data, metadata, [constraint])
     synthetic_data = {
         'table1': pd.DataFrame({'A': [1, 3, 5, 7, 9, 12, np.nan]}),
         'table2': pd.DataFrame({'id': range(5)}),

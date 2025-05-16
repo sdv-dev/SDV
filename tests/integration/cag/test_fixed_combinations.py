@@ -32,7 +32,7 @@ def metadata():
 
 
 @pytest.fixture()
-def pattern():
+def constraint():
     return FixedCombinations(['A', 'B'])
 
 
@@ -68,10 +68,10 @@ def pattern_multi():
     return FixedCombinations(['A', 'B'], table_name='table1')
 
 
-def test_fixed_combinations_integers(data, metadata, pattern):
+def test_fixed_combinations_integers(data, metadata, constraint):
     """Test that FixedCombinations constraint works with integer columns."""
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_pattern(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -84,10 +84,10 @@ def test_fixed_combinations_integers(data, metadata, pattern):
     pd.testing.assert_frame_equal(data, reverse_transformed)
 
 
-def test_fixed_combinations_integers_copula(data, metadata, pattern):
+def test_fixed_combinations_integers_copula(data, metadata, constraint):
     """Test that FixedCombinations constraint works with integer columns using Copula."""
     # Run
-    synthesizer = run_copula(data, metadata, [pattern])
+    synthesizer = run_copula(data, metadata, [constraint])
     synthetic_data = synthesizer.sample(1000)
 
     # Assert
@@ -99,7 +99,7 @@ def test_fixed_combinations_integers_copula(data, metadata, pattern):
     )
 
 
-def test_fixed_combinations_with_nans(metadata, pattern):
+def test_fixed_combinations_with_nans(metadata, constraint):
     """Test that FixedCombinations constraint works with NaNs."""
     # Setup
     data = pd.DataFrame({
@@ -108,7 +108,7 @@ def test_fixed_combinations_with_nans(metadata, pattern):
     })
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_pattern(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -121,7 +121,7 @@ def test_fixed_combinations_with_nans(metadata, pattern):
     pd.testing.assert_frame_equal(data, reverse_transformed)
 
 
-def test_fixed_combinations_with_nans_copula(metadata, pattern):
+def test_fixed_combinations_with_nans_copula(metadata, constraint):
     """Test that FixedCombinations constraint works with nans using Copula."""
     # Setup
     data = pd.DataFrame({
@@ -130,7 +130,7 @@ def test_fixed_combinations_with_nans_copula(metadata, pattern):
     })
 
     # Run
-    synthesizer = run_copula(data, metadata, [pattern])
+    synthesizer = run_copula(data, metadata, [constraint])
     synthetic_data = synthesizer.sample(1000)
 
     # Assert
@@ -150,10 +150,10 @@ def test_fixed_null_combinations_with_multi_table(data_multi, metadata_multi, pa
     # Setup
     data = data_multi
     metadata = metadata_multi
-    pattern = pattern_multi
+    constraint = pattern_multi
 
     # Run
-    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
+    updated_metadata, transformed, reverse_transformed = run_pattern(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -178,7 +178,7 @@ def test_fixed_null_combinations_with_multi_table(data_multi, metadata_multi, pa
 
 
 def test_fixed_combinations_multiple_patterns():
-    """Test that FixedCombinations pattern works with multiple patterns."""
+    """Test that FixedCombinations constraint works with multiple patterns."""
     # Setup
     data = pd.DataFrame({
         'A': [1, 2, 3, 1, 2, 1],
@@ -230,7 +230,7 @@ def test_fixed_combinations_multiple_patterns():
 
 
 def test_fixed_combinations_multiple_patterns_reject_sampling():
-    """Test that FixedCombinations pattern works with multiple patterns and reject sampling."""
+    """Test that FixedCombinations constraint works with multiple patterns and reject sampling."""
     # Setup
     data = pd.DataFrame({
         'A': [1, 2, 3, 1, 2, 1],
@@ -280,7 +280,7 @@ def test_fixed_combinations_multiple_patterns_reject_sampling():
 
 
 def test_fixed_combinations_multiple_patterns_three_patterns():
-    """Test that FixedCombinations pattern works with multiple patterns."""
+    """Test that FixedCombinations constraint works with multiple patterns."""
     # Setup
     data = pd.DataFrame({
         'A': [1, 2, 3, 1, 2, 1],
@@ -336,9 +336,9 @@ def test_fixed_combinations_multiple_patterns_three_patterns():
 
 
 def test_fixed_combinations_multiple_patterns_three_patterns_reject_sampling():
-    """Test that FixedCombinations pattern works with multiple patterns.
+    """Test that FixedCombinations constraint works with multiple patterns.
 
-    Test that when the second pattern in the chain fails, the third pattern still works.
+    Test that when the second constraint in the chain fails, the third constraint still works.
     """
     # Setup
     data = pd.DataFrame({
@@ -393,10 +393,10 @@ def test_fixed_combinations_multiple_patterns_three_patterns_reject_sampling():
     assert original_ac_combos == synthetic_ac_combos
 
 
-def test_validate_cag(data, metadata, pattern):
+def test_validate_cag(data, metadata, constraint):
     """Test validate_cag works with synthetic data generated with FixedCombinations."""
     # Setup
-    synthesizer = run_copula(data, metadata, [pattern])
+    synthesizer = run_copula(data, metadata, [constraint])
     synthetic_data = synthesizer.sample(100)
 
     # Run
@@ -408,12 +408,12 @@ def test_validate_cag(data, metadata, pattern):
     assert original_ab_combos == synthetic_ab_combos
 
 
-def test_validate_cag_raises(data, metadata, pattern):
+def test_validate_cag_raises(data, metadata, constraint):
     """Test validate_cag raises an error with bad synthetic data with FixedCombinations."""
     # Setup
     synthetic_data = data.copy()
     synthetic_data['B'] = [11, 21, 31, 11, 21, 11]
-    synthesizer = run_copula(data, metadata, [pattern])
+    synthesizer = run_copula(data, metadata, [constraint])
     msg = re.escape(
         'The fixed combinations requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more'
     )

@@ -522,7 +522,7 @@ def test_overlapping_constraint_logs(caplog, demo_data, demo_metadata):
     synth.fit(demo_data)
 
     # Assert
-    expected_logs = ['Enforcing pattern Inequality using reject sampling.']
+    expected_logs = ['Enforcing constraint Inequality using reject sampling.']
     log_messages = [record[2] for record in caplog.record_tuples]
     for log in expected_logs:
         assert log in log_messages

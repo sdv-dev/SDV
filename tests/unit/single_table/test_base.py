@@ -983,7 +983,7 @@ class TestBaseSingleTableSynthesizer:
         # Run and Assert
         instance._validate_cag_single_table(patterns=[pattern_1])
         with pytest.raises(SynthesizerInputError, match=expected_err_list):
-            instance._validate_cag_single_table(patterns='pattern')
+            instance._validate_cag_single_table(patterns='constraint')
 
         with pytest.raises(SynthesizerInputError, match=expected_err_multi_table):
             instance._validate_cag_single_table(patterns=[pattern_1, pattern_2])
