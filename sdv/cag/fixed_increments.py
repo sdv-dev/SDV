@@ -72,7 +72,7 @@ class FixedIncrements(BaseConstraint):
         if col_sdtype != 'numerical':
             raise ConstraintNotMetError(
                 f"Column '{self.column_name}' has an incompatible sdtype ('{col_sdtype}')."
-                "The column sdtype must be 'numerical'."
+                " The column sdtype must be 'numerical'."
             )
 
     def _check_if_divisible(self, data, table_name, column_name, increment_value):

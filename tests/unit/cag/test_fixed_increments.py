@@ -103,7 +103,7 @@ class TestFixedIncremenets:
         })
         err_msg = re.escape(
             "Column 'a' has an incompatible sdtype ('datetime')."
-            "The column sdtype must be 'numerical'."
+            " The column sdtype must be 'numerical'."
         )
 
         # Run and Assert
