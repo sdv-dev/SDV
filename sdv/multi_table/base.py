@@ -170,8 +170,7 @@ class BaseMultiTableSynthesizer:
             patterns (list):
                 A list of CAG patterns to filter.
         """
-        idx_single_table = None
-        seen_single_table = False
+        idx_single_table_constraint = 0 if self._has_seen_single_table_constraint else None
         for idx, pattern in enumerate(patterns):
             if self._has_seen_single_table_constraint and pattern._is_single_table is False:
                 raise SynthesizerInputError(
@@ -179,12 +178,14 @@ class BaseMultiTableSynthesizer:
                     'been applied.'
                 )
 
-            if pattern._is_single_table and not seen_single_table:
-                self._has_seen_single_table_constraint = True
-                seen_single_table = True
-                idx_single_table = idx
+            if not pattern._is_single_table:
+                continue
 
-        return idx_single_table
+            if not self._has_seen_single_table_constraint:
+                self._has_seen_single_table_constraint = True
+                idx_single_table_constraint = idx
+
+        return idx_single_table_constraint
 
     def add_cag(self, patterns):
         """Add the list of constraint-augmented generation patterns to the synthesizer.
@@ -196,12 +197,12 @@ class BaseMultiTableSynthesizer:
         metadata = self.metadata
         multi_table_patterns = []
         single_table_patterns = []
-        idx_single_table = self._detect_single_table_cag(patterns)
+        idx_single_table_constraint = self._detect_single_table_cag(patterns)
         for idx, pattern in enumerate(patterns):
             if isinstance(pattern, ProgrammableConstraint):
                 pattern = ProgrammableConstraintHarness(pattern)
 
-            if idx_single_table is not None and idx >= idx_single_table:
+            if idx_single_table_constraint is not None and idx >= idx_single_table_constraint:
                 single_table_patterns.append(pattern)
                 continue
 
