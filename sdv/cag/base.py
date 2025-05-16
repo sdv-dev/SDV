@@ -1,4 +1,4 @@
-"""Base CAG constraint."""
+"""Base constraint."""
 
 import logging
 
@@ -11,7 +11,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class BaseConstraint:
-    """Base CAG Constraint Class."""
+    """Base Constraint Class."""
 
     _is_single_table = True
 

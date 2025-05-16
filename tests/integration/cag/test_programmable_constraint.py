@@ -188,7 +188,7 @@ def test_end_to_end_simple_constraint_with_no_fit(programmable_constraint):
     )
 
     # Run
-    synthesizer.add_cag([custom_constraint])
+    synthesizer.add_constraint([custom_constraint])
     synthesizer.fit(data)
     sampled_data = synthesizer.sample(100)
 

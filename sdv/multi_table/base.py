@@ -162,12 +162,12 @@ class BaseMultiTableSynthesizer:
         self._validate_table_name(table_name)
         self._table_synthesizers[table_name].set_address_columns(column_names, anonymization_level)
 
-    def _detect_single_table_cag(self, constraints):
-        """Filter out single table CAG constraints from the list of constraints.
+    def _detect_single_table_constraints(self, constraints):
+        """Filter out single table constraints from the list of constraints.
 
         Args:
             constraints (list):
-                A list of CAG constraints to filter.
+                A list of constraints to filter.
         """
         idx_single_table_constraint = 0 if self._has_seen_single_table_constraint else None
         for idx, constraint in enumerate(constraints):
@@ -191,13 +191,13 @@ class BaseMultiTableSynthesizer:
 
         Args:
             constraints (list):
-                A list of CAG constraints to apply to the synthesizer.
+                A list of constraints to apply to the synthesizer.
         """
         constraints = _validate_constraints(constraints, self._fitted)
         metadata = self.metadata
         multi_table_constraints = []
         single_table_constraints = []
-        idx_single_table_constraint = self._detect_single_table_cag(constraints)
+        idx_single_table_constraint = self._detect_single_table_constraints(constraints)
         for idx, constraint in enumerate(constraints):
             if isinstance(constraint, ProgrammableConstraint):
                 constraint = ProgrammableConstraintHarness(constraint)
@@ -233,14 +233,14 @@ class BaseMultiTableSynthesizer:
         return constraints
 
     def validate_constraints(self, synthetic_data):
-        """Validate synthetic_data against the CAG constraints.
+        """Validate synthetic_data against the constraints.
 
         Args:
             data (dict[str, pd.DataFrame]): The synthetic data to validate
 
         Raises:
             ConstraintNotMetError:
-                Raised if synthetic data does not match CAG constraints.
+                Raised if synthetic data does not match constraints.
         """
         transformed_data = synthetic_data
         for constraint in self.constraints:
@@ -264,14 +264,14 @@ class BaseMultiTableSynthesizer:
                 raise ConstraintNotMetError(f"Table '{table_name}': {error}") from error
 
     def get_metadata(self, version='original'):
-        """Get the metadata, either original or modified after applying CAG constraints.
+        """Get the metadata, either original or modified after applying constraints.
 
         Args:
             version (str, optional):
                 The version of metadata to return, must be one of 'original' or 'modified'. If
                 'original', will return the original metadata used to instantiate the
                 synthesizer. If 'modified', will return the modified metadata after applying this
-                synthesizer's CAG constraints. Defaults to 'original'.
+                synthesizer's constraints. Defaults to 'original'.
         """
         if version not in ('original', 'modified'):
             error_msg = f"Unrecognized version '{version}', please use 'original' or 'modified'."
@@ -283,7 +283,7 @@ class BaseMultiTableSynthesizer:
         return Metadata.load_from_dict(self.metadata.to_dict())
 
     def _validate_transform_constraints(self, data, enforce_constraint_fitting=False):
-        """Validate and transform all CAG constraints during preprocessing.
+        """Validate and transform all constraints during preprocessing.
 
         Args:
             data (dict[str, pd.DataFrame]):
@@ -309,7 +309,7 @@ class BaseMultiTableSynthesizer:
         return data
 
     def _reverse_transform_constraints(self, sampled_data):
-        """Reverse transform CAG constraints after sampling."""
+        """Reverse transform constraints after sampling."""
         if not hasattr(self, 'constraints'):
             return sampled_data
 

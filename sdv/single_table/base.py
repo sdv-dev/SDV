@@ -338,14 +338,14 @@ class BaseSynthesizer:
         return instantiated_parameters
 
     def get_metadata(self, version='original'):
-        """Get the metadata, either original or modified after applying CAG constraints.
+        """Get the metadata, either original or modified after applying constraints.
 
         Args:
             version (str, optional):
                 The version of metadata to return, must be one of 'original' or 'modified'. If
                 'original', will return the original metadata used to instantiate the
                 synthesizer. If 'modified', will return the modified metadata after applying this
-                synthesizer's CAG constraints. Defaults to 'original'.
+                synthesizer's constraints. Defaults to 'original'.
         """
         if version not in ('original', 'modified'):
             raise ValueError(
@@ -689,11 +689,11 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         self._constraints_fitted = False
 
     def _validate_constraints_single_table(self, constraints):
-        """Check if the CAG constraints are single table.
+        """Check if the constraints are single table.
 
         Args:
             constraints (list):
-                A list of CAG constraints to check.
+                A list of constraints to check.
 
         Raises:
             ConstraintNotMetError:
@@ -717,7 +717,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         Args:
             constraints (list):
-                A list of CAG constraints to apply to the synthesizer.
+                A list of constraints to apply to the synthesizer.
         """
         constraints = self._validate_constraints_single_table(constraints)
         for constraint in constraints:
@@ -758,14 +758,14 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         return constraints
 
     def validate_constraints(self, synthetic_data):
-        """Validate synthetic_data against the CAG constraints.
+        """Validate synthetic_data against the constraints.
 
         Args:
             synthetic_data (pd.DataFrame): The synthetic data to validate
 
         Raises:
             ConstraintNotMetError:
-                Raised if synthetic data does not match CAG constraints.
+                Raised if synthetic data does not match constraints.
         """
         transformed_data = synthetic_data
         for attribute in ['_reject_sampling_constraints', '_chained_constraints']:
@@ -826,7 +826,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         This method will validate the data against:
         - The metadata
         - The constraints
-        - The CAG constraints
+        - The constraints
 
         To make it work with the cags we temporarily set the metadata to the original one
         and then restore it.

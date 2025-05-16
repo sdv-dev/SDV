@@ -785,46 +785,54 @@ class TestBaseSingleTableSynthesizer:
         metadata_1 = Metadata()
         metadata_2 = Metadata()
         instance = BaseSingleTableSynthesizer(original_metadata)
-        cag_mock_1 = Mock()
-        cag_mock_1.get_updated_metadata = Mock(return_value=metadata_1)
-        cag_mock_1.transform = Mock(return_value=data)
-        cag_mock_2 = Mock()
-        cag_mock_2.get_updated_metadata = Mock(return_value=metadata_2)
-        cag_mock_2.transform = Mock(return_value=data)
-        cag_mock_3 = Mock()
-        instance._chained_constraints = [cag_mock_1, cag_mock_2]
-        instance._reject_sampling_constraints = [cag_mock_3]
+        constraint_mock_1 = Mock()
+        constraint_mock_1.get_updated_metadata = Mock(return_value=metadata_1)
+        constraint_mock_1.transform = Mock(return_value=data)
+        constraint_mock_2 = Mock()
+        constraint_mock_2.get_updated_metadata = Mock(return_value=metadata_2)
+        constraint_mock_2.transform = Mock(return_value=data)
+        constraint_mock_3 = Mock()
+        instance._chained_constraints = [constraint_mock_1, constraint_mock_2]
+        instance._reject_sampling_constraints = [constraint_mock_3]
 
         # Run and Assert
         instance._validate_transform_constraints(data)
 
-        cag_mock_1.get_updated_metadata.assert_called_once_with(instance._original_metadata)
-        cag_mock_1.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
-        cag_mock_2.fit.assert_called_once_with(data=data, metadata=metadata_1)
-        cag_mock_3.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
+        constraint_mock_1.get_updated_metadata.assert_called_once_with(instance._original_metadata)
+        constraint_mock_1.fit.assert_called_once_with(
+            data=data, metadata=instance._original_metadata
+        )
+        constraint_mock_2.fit.assert_called_once_with(data=data, metadata=metadata_1)
+        constraint_mock_3.fit.assert_called_once_with(
+            data=data, metadata=instance._original_metadata
+        )
         assert instance._constraints_fitted is True
 
         # Reset mock call history
-        cag_mock_1.fit.reset_mock()
-        cag_mock_1.transform.reset_mock()
-        cag_mock_2.fit.reset_mock()
-        cag_mock_2.transform.reset_mock()
-        cag_mock_3.fit.reset_mock()
+        constraint_mock_1.fit.reset_mock()
+        constraint_mock_1.transform.reset_mock()
+        constraint_mock_2.fit.reset_mock()
+        constraint_mock_2.transform.reset_mock()
+        constraint_mock_3.fit.reset_mock()
 
         # Re-run to check it only transforms when constraints are already fitted
         instance._validate_transform_constraints(data)
 
-        cag_mock_1.transform.assert_called_once_with(data)
-        cag_mock_2.transform.assert_called_once_with(data)
-        cag_mock_1.fit.assert_not_called()
-        cag_mock_2.fit.assert_not_called()
+        constraint_mock_1.transform.assert_called_once_with(data)
+        constraint_mock_2.transform.assert_called_once_with(data)
+        constraint_mock_1.fit.assert_not_called()
+        constraint_mock_2.fit.assert_not_called()
 
         # Check the constraints are fitted again with enforce_constraint_fitting=True
         instance._validate_transform_constraints(data, enforce_constraint_fitting=True)
 
-        cag_mock_1.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
-        cag_mock_2.fit.assert_called_once_with(data=data, metadata=metadata_1)
-        cag_mock_3.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
+        constraint_mock_1.fit.assert_called_once_with(
+            data=data, metadata=instance._original_metadata
+        )
+        constraint_mock_2.fit.assert_called_once_with(data=data, metadata=metadata_1)
+        constraint_mock_3.fit.assert_called_once_with(
+            data=data, metadata=instance._original_metadata
+        )
 
     def test_validate(self):
         """Test the appropriate methods are called.
@@ -2569,19 +2577,19 @@ class TestBaseSingleTableSynthesizer:
         transformed_data = pd.DataFrame()
         original_metadata = Metadata()
         instance = BaseSingleTableSynthesizer(original_metadata)
-        cag_mock_1 = Mock()
-        cag_mock_1.transform.return_value = transformed_data
-        cag_mock_2 = Mock()
-        instance._chained_constraints = [cag_mock_1, cag_mock_2]
+        constraint_mock_1 = Mock()
+        constraint_mock_1.transform.return_value = transformed_data
+        constraint_mock_2 = Mock()
+        instance._chained_constraints = [constraint_mock_1, constraint_mock_2]
 
         # Run
         instance.validate_constraints(synthetic_data)
 
         # Assert
-        cag_mock_1.is_valid.assert_called_once_with(data=synthetic_data)
-        cag_mock_1.transform.assert_called_once_with(data=synthetic_data)
-        cag_mock_2.is_valid.assert_called_once_with(data=transformed_data)
-        cag_mock_2.transform.assert_called_once_with(data=transformed_data)
+        constraint_mock_1.is_valid.assert_called_once_with(data=synthetic_data)
+        constraint_mock_1.transform.assert_called_once_with(data=synthetic_data)
+        constraint_mock_2.is_valid.assert_called_once_with(data=transformed_data)
+        constraint_mock_2.transform.assert_called_once_with(data=transformed_data)
 
     def test_validate_constraints_raises(self):
         """Test the ``validate_constraints`` method raises an error."""
@@ -2589,9 +2597,9 @@ class TestBaseSingleTableSynthesizer:
         synthetic_data = pd.DataFrame()
         original_metadata = Metadata()
         instance = BaseSingleTableSynthesizer(original_metadata)
-        cag_mock_1 = Mock()
-        cag_mock_1.is_valid.return_value = pd.Series([False, False])
-        instance._chained_constraints = [cag_mock_1]
+        constraint_mock_1 = Mock()
+        constraint_mock_1.is_valid.return_value = pd.Series([False, False])
+        instance._chained_constraints = [constraint_mock_1]
         msg = 'The mock requirement is not met for row indices: 0, 1.'
 
         # Run and Assert

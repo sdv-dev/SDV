@@ -426,15 +426,15 @@ class TestBaseMultiTableSynthesizer:
             table_name: Mock(),
             'table2': Mock(),
         }
-        cag_mock_1 = Mock()
-        cag_mock_1.table_name = table_name
-        cag_mock_1.is_valid.return_value = {table_name: pd.Series([True])}
-        cag_mock_1.transform.return_value = transformed_data
-        cag_mock_2 = Mock()
-        cag_mock_2.is_valid.return_value = {table_name: pd.Series([True])}
-        cag_mock_2.table_name = table_name
-        cag_mock_2.transform.return_value = transformed_data
-        instance.constraints = [cag_mock_1, cag_mock_2]
+        constraint_mock_1 = Mock()
+        constraint_mock_1.table_name = table_name
+        constraint_mock_1.is_valid.return_value = {table_name: pd.Series([True])}
+        constraint_mock_1.transform.return_value = transformed_data
+        constraint_mock_2 = Mock()
+        constraint_mock_2.is_valid.return_value = {table_name: pd.Series([True])}
+        constraint_mock_2.table_name = table_name
+        constraint_mock_2.transform.return_value = transformed_data
+        instance.constraints = [constraint_mock_1, constraint_mock_2]
         instance._table_synthesizers['table2'].validate_constraints = Mock(
             side_effect=ConstraintNotMetError('error')
         )
@@ -445,10 +445,10 @@ class TestBaseMultiTableSynthesizer:
             instance.validate_constraints(synthetic_data)
 
         # Assert
-        cag_mock_1.is_valid.assert_called_once_with(data=synthetic_data)
-        cag_mock_1.transform.assert_called_once_with(data=synthetic_data)
-        cag_mock_2.is_valid.assert_called_once_with(data=transformed_data)
-        cag_mock_2.transform.assert_called_once_with(data=transformed_data)
+        constraint_mock_1.is_valid.assert_called_once_with(data=synthetic_data)
+        constraint_mock_1.transform.assert_called_once_with(data=synthetic_data)
+        constraint_mock_2.is_valid.assert_called_once_with(data=transformed_data)
+        constraint_mock_2.transform.assert_called_once_with(data=transformed_data)
         instance._table_synthesizers[table_name].validate_constraints.assert_called_once_with(
             transformed_data[table_name]
         )
@@ -460,10 +460,10 @@ class TestBaseMultiTableSynthesizer:
         synthetic_data = {table_name: Mock()}
         original_metadata = Metadata()
         instance = BaseMultiTableSynthesizer(original_metadata)
-        cag_mock_1 = Mock()
-        cag_mock_1.table_name = table_name
-        cag_mock_1.is_valid.return_value = {table_name: pd.Series([False])}
-        instance.constraints = [cag_mock_1]
+        constraint_mock_1 = Mock()
+        constraint_mock_1.table_name = table_name
+        constraint_mock_1.is_valid.return_value = {table_name: pd.Series([False])}
+        instance.constraints = [constraint_mock_1]
         msg = f"Table '{table_name}': The mock requirement is not met for row indices: 0."
 
         # Run and Assert
@@ -478,23 +478,25 @@ class TestBaseMultiTableSynthesizer:
         metadata_1 = Metadata()
         metadata_2 = Metadata()
         instance = BaseMultiTableSynthesizer(original_metadata)
-        cag_mock_1 = Mock()
-        cag_mock_1.get_updated_metadata = Mock(return_value=metadata_1)
-        cag_mock_1.transform = Mock(return_value=data)
-        cag_mock_2 = Mock()
-        cag_mock_2.get_updated_metadata = Mock(return_value=metadata_2)
-        cag_mock_2.transform = Mock(return_value=data)
-        cag_mock_3 = Mock()
-        instance.constraints = [cag_mock_1, cag_mock_2, cag_mock_3]
+        constraint_mock_1 = Mock()
+        constraint_mock_1.get_updated_metadata = Mock(return_value=metadata_1)
+        constraint_mock_1.transform = Mock(return_value=data)
+        constraint_mock_2 = Mock()
+        constraint_mock_2.get_updated_metadata = Mock(return_value=metadata_2)
+        constraint_mock_2.transform = Mock(return_value=data)
+        constraint_mock_3 = Mock()
+        instance.constraints = [constraint_mock_1, constraint_mock_2, constraint_mock_3]
 
         # Run
         instance._validate_transform_constraints(data)
 
         # Assert
-        cag_mock_1.get_updated_metadata.assert_called_once_with(instance._original_metadata)
-        cag_mock_1.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
-        cag_mock_2.fit.assert_called_once_with(data=data, metadata=metadata_1)
-        cag_mock_3.fit.assert_called_once_with(data=data, metadata=metadata_2)
+        constraint_mock_1.get_updated_metadata.assert_called_once_with(instance._original_metadata)
+        constraint_mock_1.fit.assert_called_once_with(
+            data=data, metadata=instance._original_metadata
+        )
+        constraint_mock_2.fit.assert_called_once_with(data=data, metadata=metadata_1)
+        constraint_mock_3.fit.assert_called_once_with(data=data, metadata=metadata_2)
 
     def test_validate(self):
         """Test that no error is being raised when the data is valid."""
@@ -1451,8 +1453,8 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(SynthesizerInputError, match=err_msg):
             model.add_constraints([constraint])
 
-    def test__detect_single_table_cag(self):
-        """Test the ``_detect_single_table_cag`` method."""
+    def test__detect_single_table_constraints(self):
+        """Test the ``_detect_single_table_constraints`` method."""
         # Setup
         instance = Mock()
         instance.metadata = get_multi_table_metadata()
@@ -1474,17 +1476,17 @@ class TestBaseMultiTableSynthesizer:
         )
 
         # Run
-        idx_single_table_1 = BaseMultiTableSynthesizer._detect_single_table_cag(
+        idx_single_table_1 = BaseMultiTableSynthesizer._detect_single_table_constraints(
             instance, [constraint1, constraint2, constraint3, constraint4]
         )
-        idx_single_table_2 = BaseMultiTableSynthesizer._detect_single_table_cag(
+        idx_single_table_2 = BaseMultiTableSynthesizer._detect_single_table_constraints(
             instance, [constraint3, constraint4]
         )
         with pytest.raises(SynthesizerInputError, match=expected_error):
-            BaseMultiTableSynthesizer._detect_single_table_cag(instance, [constraint1])
+            BaseMultiTableSynthesizer._detect_single_table_constraints(instance, [constraint1])
         instance._has_seen_single_table_constraint = False
         with pytest.raises(SynthesizerInputError, match=expected_error):
-            BaseMultiTableSynthesizer._detect_single_table_cag(
+            BaseMultiTableSynthesizer._detect_single_table_constraints(
                 instance, [constraint1, constraint3, constraint2]
             )
 
@@ -1516,7 +1518,7 @@ class TestBaseMultiTableSynthesizer:
         mutli_table_constraint = [constraint1, constraint2, constraint3]
         single_table_constraint = [constraint4]
         constraints = mutli_table_constraint + single_table_constraint
-        instance._detect_single_table_cag = Mock(return_value=3)
+        instance._detect_single_table_constraints = Mock(return_value=3)
         mock_validate_constraints.return_value = constraints
 
         # Run
@@ -1534,7 +1536,7 @@ class TestBaseMultiTableSynthesizer:
             constraint2.get_updated_metadata.return_value
         )
         assert instance.metadata == mock_harness.get_updated_metadata.return_value
-        instance._detect_single_table_cag.assert_called_once_with(constraints)
+        instance._detect_single_table_constraints.assert_called_once_with(constraints)
         instance._initialize_models.assert_called_once()
         expected_constraints = [constraint1, constraint2, mock_harness]
         instance._table_synthesizers['table1'].add_constraint.assert_called_once_with([constraint4])
@@ -1553,7 +1555,7 @@ class TestBaseMultiTableSynthesizer:
         constraint1 = Mock()
         constraint2 = Mock()
         instance.constraints = [constraint1]
-        instance._detect_single_table_cag = Mock(return_value=None)
+        instance._detect_single_table_constraints = Mock(return_value=None)
         mock_validate_constraints.return_value = [constraint2]
 
         # Run

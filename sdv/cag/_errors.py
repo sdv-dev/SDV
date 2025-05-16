@@ -1,4 +1,4 @@
-"""CAG Constraint Exceptions."""
+"""Constraint Exceptions."""
 
 
 class ConstraintNotMetError(Exception):
