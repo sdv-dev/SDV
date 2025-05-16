@@ -1,5 +1,15 @@
 # Release Notes
 
+## v1.21.0 - 2025-05-16
+
+### New Features
+
+* Add an API for copying the Metadata - Issue [#2530](https://github.com/sdv-dev/SDV/issues/2530) by @amontanez24
+* Add an API for removing a table from the Metadata - Issue [#2527](https://github.com/sdv-dev/SDV/issues/2527) by @amontanez24
+* Add an API for removing a column from the Metadata - Issue [#2526](https://github.com/sdv-dev/SDV/issues/2526) by @amontanez24
+* Allow SDV to be used on a readonly filesystem - Issue [#2517](https://github.com/sdv-dev/SDV/issues/2517) by @pvk-developer
+* Allow me to put in additional options when reading multiple CSV files from `CSVHandler` - Issue [#2478](https://github.com/sdv-dev/SDV/issues/2478) by @pvk-developer
+
 ## v1.20.1 - 2025-05-01
 
 ### Bugs Fixed
