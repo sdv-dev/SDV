@@ -530,11 +530,11 @@ def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
     metadata = metadata_multi
     pattern = pattern_multi
     synthetic_data = {
-        'table1': {
+        'table1': pd.DataFrame({
             'A': data['table1']['B'],
             'B': data['table1']['A'],
             'C': data['table1']['C'],
-        },
+        }),
         'table2': pd.DataFrame({'id': range(5)}),
     }
     synthesizer = HMASynthesizer(metadata)

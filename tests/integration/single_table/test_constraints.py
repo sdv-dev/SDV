@@ -11,6 +11,7 @@ from copulas.multivariate.gaussian import GaussianMultivariate
 from sdv.cag import FixedCombinations, Inequality, Range
 from sdv.datasets.demo import download_demo
 from sdv.metadata.metadata import Metadata
+from sdv.multi_table import HMASynthesizer
 from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint, MySingleTableConstraint
@@ -150,18 +151,22 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
 
 def test_custom_constraints_from_object(tmpdir):
     """Ensure the correct loading for a custom constraint class passed as an object."""
-    data = pd.DataFrame({
-        'primary_key': ['user-000', 'user-001', 'user-002'],
-        'pii_col': ['223 Williams Rd', '75 Waltham St', '77 Mass Ave'],
-        'numerical_col': [2, 3, 4],
-        'categorical_col': ['a', 'b', 'a'],
-    })
+    data = {
+        'table': pd.DataFrame({
+            'primary_key': ['user-000', 'user-001', 'user-002'],
+            'pii_col': ['223 Williams Rd', '75 Waltham St', '77 Mass Ave'],
+            'numerical_col': [2, 3, 4],
+            'categorical_col': ['a', 'b', 'a'],
+        }),
+        'table2': pd.DataFrame({
+            'numerical_col2': [22, 33, 44],
+            'categorical_col2': ['aa', 'bb', 'aa'],
+        }),
+    }
 
-    metadata = Metadata.detect_from_dataframes({'table': data})
+    metadata = Metadata.detect_from_dataframes(data)
     metadata.update_column(table_name='table', column_name='pii_col', sdtype='address', pii=True)
-    synthesizer = GaussianCopulaSynthesizer(
-        metadata, enforce_min_max_values=False, enforce_rounding=False
-    )
+    synthesizer = HMASynthesizer(metadata)
     constraint = MyConstraint(column_names=['numerical_col'], table_name='table')
 
     # Run
@@ -169,20 +174,20 @@ def test_custom_constraints_from_object(tmpdir):
     processed_data = synthesizer.preprocess(data)
 
     # Assert Processed Data
-    assert all(processed_data['numerical_col'] == data['numerical_col'] ** 2)
+    assert all(processed_data['table']['numerical_col'] == data['table']['numerical_col'] ** 2)
 
     # Run - Fit the model
     synthesizer.fit_processed_data(processed_data)
 
     # Run - sample
     sampled = synthesizer.sample(10)
-    assert all(sampled['numerical_col'] > 1)
+    assert all(sampled['table']['numerical_col'] > 1)
 
     # Run - Save and Sample
     synthesizer.save(tmpdir / 'test.pkl')
     loaded_instance = synthesizer.load(tmpdir / 'test.pkl')
     loaded_sampled = loaded_instance.sample(10)
-    assert all(loaded_sampled['numerical_col'] > 1)
+    assert all(loaded_sampled['table']['numerical_col'] > 1)
 
 
 def test_single_table_custom_constraints_from_object(tmpdir):
