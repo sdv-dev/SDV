@@ -371,12 +371,16 @@ class Metadata(MultiTableMetadata):
             table_name = self._get_single_table_name()
 
         if table_name is None:
-            raise ValueError("'table_name must be provided if there is more than 1 table in the metadata.")
+            raise ValueError(
+                "'table_name must be provided if there is more than 1 table in the metadata."
+            )
 
         table_metadata = self.tables[table_name]
         table_metadata._validate_column_exists(column_name)
         # Remove relationships
-        self._remove_matching_relationships(column_name, ['parent_primary_key', 'child_foreign_key'])
+        self._remove_matching_relationships(
+            column_name, ['parent_primary_key', 'child_foreign_key']
+        )
         updated_column_relationships = []
         for column_relationship in table_metadata.column_relationships:
             if column_name not in column_relationship.get('column_names', []):
@@ -390,13 +394,13 @@ class Metadata(MultiTableMetadata):
 
         if column_name in table_metadata.alternate_keys:
             table_metadata.alternate_keys.remove(column_name)
-        
+
         if column_name == table_metadata.sequence_key:
             table_metadata.set_sequence_key(None)
-        
+
         if column_name == table_metadata.sequence_index:
-            table_metadata.set_sequence_index(None)
-        
+            table_metadata.remove_sequence_index()
+
         del table_metadata.columns[column_name]
 
         self._multi_table_updated = True

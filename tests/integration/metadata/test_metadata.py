@@ -1073,6 +1073,7 @@ def metadata_instance():
     metadata = Metadata.load_from_dict(metadata_dict)
     return metadata
 
+
 def test_remove_table(metadata_instance):
     """Test that a table and all relationships it has are removed."""
     # Run
@@ -1202,10 +1203,10 @@ def test_remove_column(metadata_instance):
     assert metadata_instance._multi_table_updated
 
 
-    def test_remove_column_column_is_sequence_key():
-        """Test that a column is properly removed if it is a sequence key."""
-        # Setup
-        metadata_dict = {
+@pytest.fixture
+def sequential_metadata():
+    metadata_dict = {
+        'tables': {
             'trades': {
                 'columns': {
                     'ticker': {'sdtype': 'id'},
@@ -1215,6 +1216,98 @@ def test_remove_column(metadata_instance):
                 },
                 'primary_key': 'transaction_id',
                 'sequence_key': 'ticker',
-                'sequence_index': 'time'
+                'sequence_index': 'time',
             },
         }
+    }
+    metadata = Metadata.load_from_dict(metadata_dict)
+    return metadata
+
+
+def test_remove_column_column_is_sequence_key(sequential_metadata):
+    """Test that a column is properly removed if it is a sequence key."""
+    # Run
+    sequential_metadata.remove_column('ticker')
+
+    # Assert
+    expected_metadata_dict = {
+        'tables': {
+            'trades': {
+                'columns': {
+                    'cost': {'sdtype': 'numerical'},
+                    'quantity': {'sdtype': 'numerical'},
+                    'time': {'sdtype': 'datetime'},
+                },
+                'primary_key': 'transaction_id',
+                'sequence_index': 'time',
+            },
+        },
+        'relationships': [],
+        'METADATA_SPEC_VERSION': 'V1',
+    }
+    assert expected_metadata_dict == sequential_metadata.to_dict()
+    assert sequential_metadata._multi_table_updated
+
+
+def test_remove_column_column_is_sequence_index(sequential_metadata):
+    """Test that a column is properly removed if it is a sequence index."""
+    # Run
+    sequential_metadata.remove_column('time')
+
+    # Assert
+    expected_metadata_dict = {
+        'tables': {
+            'trades': {
+                'columns': {
+                    'ticker': {'sdtype': 'id'},
+                    'cost': {'sdtype': 'numerical'},
+                    'quantity': {'sdtype': 'numerical'},
+                },
+                'primary_key': 'transaction_id',
+                'sequence_key': 'ticker',
+            },
+        },
+        'relationships': [],
+        'METADATA_SPEC_VERSION': 'V1',
+    }
+    assert expected_metadata_dict == sequential_metadata.to_dict()
+    assert sequential_metadata._multi_table_updated
+
+
+def test_remove_column_alternate_key():
+    """Test that the column is removed from the alternate keys if it is one."""
+    # Setup
+    metadata_dict = {
+        'tables': {
+            'users': {
+                'columns': {
+                    'email': {'sdtype': 'id'},
+                    'id': {'sdtype': 'id'},
+                    'age': {'sdtype': 'numerical'},
+                },
+                'primary_key': 'id',
+                'alternate_keys': ['email'],
+            },
+        }
+    }
+    metadata = Metadata.load_from_dict(metadata_dict)
+
+    # Run
+    metadata.remove_column('email')
+
+    # Assert
+    expected_metadata_dict = {
+        'tables': {
+            'users': {
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'age': {'sdtype': 'numerical'},
+                },
+                'primary_key': 'id',
+            },
+        },
+        'relationships': [],
+        'METADATA_SPEC_VERSION': 'V1',
+    }
+    assert expected_metadata_dict == metadata.to_dict()
+    assert metadata._multi_table_updated
