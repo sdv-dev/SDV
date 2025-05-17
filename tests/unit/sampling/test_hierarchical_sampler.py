@@ -326,12 +326,17 @@ class TestBaseHierarchicalSampler:
         # Setup
         instance = Mock()
         metadata = Mock()
-        metadata._get_parent_map.return_value = {
-            'sessions': ['users'],
-            'transactions': ['sessions'],
-        }
-        instance.metadata = metadata
 
+        def get_column_names_mock(table_name):
+            mapping = {
+                'users': ['user_id', 'name'],
+                'sessions': ['user_id', 'session_id', 'os', 'country'],
+                'transactions': ['transaction_id', 'session_id'],
+            }
+            return mapping[table_name]
+
+        metadata.get_column_names = Mock(side_effect=get_column_names_mock)
+        instance.metadata = metadata
         sampled_data = {
             'users': pd.DataFrame({
                 'user_id': pd.Series([0, 1, 2], dtype=np.int64),
@@ -398,12 +403,17 @@ class TestBaseHierarchicalSampler:
         # Setup
         instance = Mock()
         metadata = Mock()
-        metadata._get_parent_map.return_value = {
-            'sessions': ['users'],
-            'transactions': ['sessions'],
-        }
-        instance.metadata = metadata
 
+        def get_column_names_mock(table_name):
+            mapping = {
+                'users': ['user_id', 'name'],
+                'sessions': ['user_id', 'session_id', 'os', 'country'],
+                'transactions': ['transaction_id', 'session_id'],
+            }
+            return mapping[table_name]
+
+        metadata.get_column_names = Mock(side_effect=get_column_names_mock)
+        instance.metadata = metadata
         sampled_data = {
             'users': pd.DataFrame({
                 'user_id': pd.Series([0, 1, 2], dtype=np.int64),

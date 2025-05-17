@@ -335,10 +335,16 @@ class TestHMASynthesizer:
         # Setup
         instance = Mock()
         metadata = Mock()
-        metadata._get_parent_map.return_value = {
-            'sessions': ['users'],
-            'transactions': ['sessions'],
-        }
+
+        def get_column_names_mock(table_name):
+            mapping = {
+                'users': ['user_id', 'name'],
+                'sessions': ['user_id', 'session_id', 'os', 'country'],
+                'transactions': ['transaction_id', 'session_id'],
+            }
+            return mapping[table_name]
+
+        metadata.get_column_names = Mock(side_effect=get_column_names_mock)
         instance.metadata = metadata
 
         sampled_data = {

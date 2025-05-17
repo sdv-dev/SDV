@@ -264,7 +264,12 @@ class BaseHierarchicalSampler:
         for table_name, table_rows in sampled_data.items():
             synthesizer = self._table_synthesizers.get(table_name)
             dtypes = synthesizer._data_processor._dtypes
-            for name, dtype in dtypes.items():
+            column_names = self.metadata.get_column_names(table_name)
+            for name in column_names:
+                dtype = dtypes.get(name)
+                if dtype is None:
+                    continue
+
                 try:
                     table_rows[name] = table_rows[name].dropna().astype(dtype)
                 except Exception:
@@ -273,7 +278,7 @@ class BaseHierarchicalSampler:
                     )
                     table_rows[name] = table_rows[name].dropna()
 
-            final_data[table_name] = table_rows[list(dtypes.keys())]
+            final_data[table_name] = table_rows[column_names]
 
         return final_data
 
