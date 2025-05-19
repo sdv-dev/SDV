@@ -147,7 +147,7 @@ def test_end_to_end_programmable_constraint(programmable_constraint):
     # Run
     synthesizer.fit(data)
     sampled_data = synthesizer.sample(scale=1.0)
-    constraints = synthesizer.get_constraint()
+    constraints = synthesizer.get_constraints()
 
     # Assert
     original_combinations = set(zip(data['guests']['has_rewards'], data['guests']['room_type']))
@@ -170,7 +170,7 @@ def test_end_to_end_single_table_programmable_constraint(single_table_programmab
     # Run
     synthesizer.fit(data)
     sampled_data = synthesizer.sample(1000)
-    constraints = synthesizer.get_constraint()
+    constraints = synthesizer.get_constraints()
 
     # Assert
     original_combinations = set(zip(data['has_rewards'], data['room_type']))

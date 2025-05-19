@@ -1567,9 +1567,9 @@ class TestBaseMultiTableSynthesizer:
         constraint3 = ProgrammableConstraintHarness(custom_constraint)
 
         # Run
-        no_constraints = BaseMultiTableSynthesizer.get_constraint(instance)
+        no_constraints = BaseMultiTableSynthesizer.get_constraints(instance)
         instance.constraints = [constraint1, constraint2, constraint3]
-        constraints = BaseMultiTableSynthesizer.get_constraint(instance)
+        constraints = BaseMultiTableSynthesizer.get_constraints(instance)
 
         # Assert
         assert no_constraints == []
