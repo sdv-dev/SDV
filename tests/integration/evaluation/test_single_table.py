@@ -1,10 +1,10 @@
 import pandas as pd
 
 from sdv.datasets.demo import download_demo
-from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, run_diagnostic
+from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, run_diagnostic, plot_learning_curve
 from sdv.metadata.metadata import Metadata
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
-
+from sdv.single_table.ctgan import CTGANSynthesizer
 
 def test_evaluation():
     """Test ``evaluate_quality`` and ``run_diagnostic``."""
@@ -60,7 +60,7 @@ def test_evaluation_metadata():
 def test_column_pair_plot_sample_size_parameter():
     """Test the sample_size parameter for the column pair plot."""
     # Setup
-    real_data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
+    real_data, metadata = download_demo(modality='single_table', dataset_name='expedia_hotel_logs')
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.fit(real_data)
     synthetic_data = synthesizer.sample(len(real_data))
@@ -78,3 +78,13 @@ def test_column_pair_plot_sample_size_parameter():
     assert len(synthetic_data) == 500
     assert len(fig.data[0].x) == 40
     assert len(fig.data[1].x) == 40
+
+def test_plot_learning_curve():
+    """Test the plot_learning_curves function."""
+    # Setup
+    real_data, metadata = download_demo(modality='single_table', dataset_name='asia')
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.fit(real_data)
+
+    learning_curve = plot_learning_curve(real_data, synthesizer, metadata, train_sizes=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+    learning_curve.show()
