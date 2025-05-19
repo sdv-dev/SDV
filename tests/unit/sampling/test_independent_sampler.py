@@ -133,11 +133,16 @@ class TestBaseIndependentSampler:
         # Setup
         instance = Mock()
         metadata = Mock()
-        metadata._get_parent_map.return_value = {
-            'sessions': ['users'],
-            'transactions': ['sessions'],
-            'users': set(),
-        }
+
+        def get_column_names_mock(table_name):
+            mapping = {
+                'users': ['user_id', 'name'],
+                'sessions': ['user_id', 'session_id', 'os', 'country'],
+                'transactions': ['transaction_id', 'session_id'],
+            }
+            return mapping[table_name]
+
+        metadata.get_column_names = Mock(side_effect=get_column_names_mock)
         instance.metadata = metadata
 
         sampled_data = {
@@ -206,13 +211,17 @@ class TestBaseIndependentSampler:
         # Setup
         instance = Mock()
         metadata = Mock()
-        metadata._get_parent_map.return_value = {
-            'sessions': ['users'],
-            'transactions': ['sessions'],
-            'users': set(),
-        }
-        instance.metadata = metadata
 
+        def get_column_names_mock(table_name):
+            mapping = {
+                'users': ['user_id', 'name'],
+                'sessions': ['user_id', 'session_id', 'os', 'country'],
+                'transactions': ['transaction_id', 'session_id'],
+            }
+            return mapping[table_name]
+
+        metadata.get_column_names = Mock(side_effect=get_column_names_mock)
+        instance.metadata = metadata
         sampled_data = {
             'users': pd.DataFrame({
                 'user_id': pd.Series(['a', 'b', 'c'], dtype=object),
@@ -324,6 +333,9 @@ class TestBaseIndependentSampler:
         parent_synthesizer._data_processor._dtypes = {'id': 'int64'}
         instance = Mock()
         instance._table_synthesizers = {'table': parent_synthesizer}
+        metadata = Mock()
+        metadata.get_column_names = Mock(return_value=['id'])
+        instance.metadata = metadata
 
         # Run
         BaseIndependentSampler._finalize(instance, sampled_data)
