@@ -24,11 +24,15 @@ def get_sdv_logger_config():
     except PermissionError:
         # No access to user's data.
         if os.access(config_path, os.W_OK):
-            store_path = config_path
+            store_path = config_path.parent
 
         else:
             # No access to python env
             return logger_conf
+
+    except OSError:
+        # Read only system
+        return logger_conf
 
     if (store_path / 'sdv_logger_config.yml').exists():
         config_path = store_path / 'sdv_logger_config.yml'
