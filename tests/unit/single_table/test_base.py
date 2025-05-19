@@ -2433,7 +2433,7 @@ class TestBaseSingleTableSynthesizer:
 
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.ProgrammableConstraintHarness')
-    def test_add_constraint(self, mock_programmable_constraint_harness, mock_data_processor):
+    def test_add_constraints(self, mock_programmable_constraint_harness, mock_data_processor):
         """Test adding constraints to the synthesizer."""
         # Setup
         instance = Mock()
@@ -2450,9 +2450,9 @@ class TestBaseSingleTableSynthesizer:
         mock_programmable_constraint_harness.return_value = mock_harness
 
         # Run
-        BaseSingleTableSynthesizer.add_constraint(instance, [constraint1, constraint2])
+        BaseSingleTableSynthesizer.add_constraints(instance, [constraint1, constraint2])
         instance._fitted = True
-        BaseSingleTableSynthesizer.add_constraint(instance, [constraint3, constraint4])
+        BaseSingleTableSynthesizer.add_constraints(instance, [constraint3, constraint4])
 
         # Assert
         assert instance._chained_constraints == [constraint1, constraint2, mock_harness]

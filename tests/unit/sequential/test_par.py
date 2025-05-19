@@ -114,7 +114,7 @@ class TestPARSynthesizer:
             )
 
     @pytest.mark.skip('Old-style constraints are deprecated')
-    def test_add_constraints(self):
+    def test_add_constraintss(self):
         """Test that that only simple constraints can be added to PARSynthesizer."""
         # Setup
         metadata = self.get_metadata(add_sequence_key=True)

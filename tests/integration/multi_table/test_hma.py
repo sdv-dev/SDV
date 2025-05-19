@@ -247,7 +247,7 @@ class TestHMASynthesizer:
         constraint = MyConstraint(column_names=['numerical_col'], table_name='parent')
 
         # Run
-        synthesizer.add_constraint([constraint])
+        synthesizer.add_constraints([constraint])
         processed_data = synthesizer.preprocess({'parent': parent_data, 'child': child_data})
 
         # Assert Processed Data
@@ -276,7 +276,7 @@ class TestHMASynthesizer:
         constraint_child = MyConstraint(column_names=['numerical_col_2'], table_name='child')
 
         # Run
-        synthesizer.add_constraint([constraint_parent, constraint_child])
+        synthesizer.add_constraints([constraint_parent, constraint_child])
         processed_data = synthesizer.preprocess({'parent': parent_data, 'child': child_data})
 
         # Assert Processed Data
@@ -2665,7 +2665,7 @@ def test_end_to_end_with_cags():
         strict_boundaries=False,
         table_name='guests',
     )
-    synthesizer.add_constraint(constraints=[constraint])
+    synthesizer.add_constraints(constraints=[constraint])
     data_guests = data['guests']
     clean_data = data_guests[
         ~(data_guests[['amenities_lower', 'amenities_fee']].isna().any(axis=1))

@@ -150,7 +150,7 @@ def run_constraint(constraint, data, metadata):
 def run_copula(data, metadata, constraints=None):
     synthesizer = GaussianCopulaSynthesizer(metadata)
     if constraints:
-        synthesizer.add_constraint(constraints=constraints)
+        synthesizer.add_constraints(constraints=constraints)
     synthesizer.fit(data)
 
     return synthesizer

@@ -712,7 +712,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return constraints
 
-    def add_constraint(self, constraints):
+    def add_constraints(self, constraints):
         """Add the list of constraint-augmented generation constraints to the synthesizer.
 
         Args:

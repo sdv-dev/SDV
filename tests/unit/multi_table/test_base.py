@@ -11,6 +11,7 @@ import pandas as pd
 import pytest
 
 from sdv import version
+from sdv.cag import Inequality
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
 from sdv.errors import (
@@ -1403,7 +1404,7 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(SynthesizerInputError, match=msg):
             instance.get_loss_values('nesreca')
 
-    def test_add_constraint_warning(self):
+    def test_add_constraints_warning(self):
         """Test a warning is raised when the synthesizer had already been fitted."""
         # Setup
         metadata = get_multi_table_metadata()
@@ -1415,40 +1416,22 @@ class TestBaseMultiTableSynthesizer:
         with pytest.warns(UserWarning, match=warn_msg):
             instance.add_constraints([])
 
-    def test_add_constraints_unique(self):
-        """Test an error is raised when a ``Unique`` constraint is passed."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        instance = BaseMultiTableSynthesizer(metadata)
-        unique_constraint = {
-            'constraint_class': 'Unique',
-            'table_name': 'oseba',
-            'constraint_parameters': {
-                'column_name': 'id_nesreca',
-            },
-        }
-
-        # Run and Assert
-        err_msg = re.escape(
-            "The constraint class 'Unique' is not currently supported for multi-table"
-            ' synthesizers. Please remove the constraint for this synthesizer.'
-        )
-        with pytest.raises(SynthesizerInputError, match=err_msg):
-            instance.add_constraints([unique_constraint])
-
-    def test_add_constraints_missing_table_name(self):
+    def test_add_constraintss_missing_table_name(self):
         """Test error raised when ``table_name`` is missing."""
         # Setup
-        data = pd.DataFrame({'col': [1, 2, 3]})
+        data = pd.DataFrame({
+            'col1': [1, 2, 3],
+            'col2': [4, 5, 6],
+        })
         metadata = Metadata()
         metadata.detect_table_from_dataframe('table', data)
-        constraint = {'constraint_class': 'Inequality'}
+        constraint = Inequality(low_column_name='col1', high_column_name='col2')
         model = BaseMultiTableSynthesizer(metadata)
 
         # Run and Assert
         err_msg = re.escape(
-            "A constraint is missing required parameter 'table_name'. "
-            'Please add this parameter to your constraint definition.'
+            "The 'Inequality' is missing the required parameter 'table_name'. Please add"
+            ' this parameter to your constraint definition.'
         )
         with pytest.raises(SynthesizerInputError, match=err_msg):
             model.add_constraints([constraint])
@@ -1496,7 +1479,7 @@ class TestBaseMultiTableSynthesizer:
 
     @patch('sdv.multi_table.base.ProgrammableConstraintHarness')
     @patch('sdv.multi_table.base._validate_constraints')
-    def test_add_constraint(self, mock_validate_constraints, mock_programmable_constraint_harness):
+    def test_add_constraints(self, mock_validate_constraints, mock_programmable_constraint_harness):
         """Test adding data constraints to the synthesizer."""
         # Setup
         instance = Mock()
@@ -1514,7 +1497,7 @@ class TestBaseMultiTableSynthesizer:
         instance._table_synthesizers = {
             'table1': Mock(),
         }
-        instance._table_synthesizers['table1'].add_constraint = Mock()
+        instance._table_synthesizers['table1'].add_constraints = Mock()
         mutli_table_constraint = [constraint1, constraint2, constraint3]
         single_table_constraint = [constraint4]
         constraints = mutli_table_constraint + single_table_constraint
@@ -1522,11 +1505,12 @@ class TestBaseMultiTableSynthesizer:
         mock_validate_constraints.return_value = constraints
 
         # Run
-        BaseMultiTableSynthesizer.add_constraint(instance, constraints)
+        BaseMultiTableSynthesizer.add_constraints(instance, constraints)
 
         # Assert
         mock_validate_constraints.assert_called_once_with(constraints, instance._fitted)
         mock_programmable_constraint_harness.assert_called_once_with(constraint3)
+        instance._validate_single_table_constraints.assert_called_once_with(single_table_constraint)
         assert instance._original_metadata == original_metadata
         constraint1.get_updated_metadata.assert_called_once_with(original_metadata)
         constraint2.get_updated_metadata.assert_called_once_with(
@@ -1539,7 +1523,9 @@ class TestBaseMultiTableSynthesizer:
         instance._detect_single_table_constraints.assert_called_once_with(constraints)
         instance._initialize_models.assert_called_once()
         expected_constraints = [constraint1, constraint2, mock_harness]
-        instance._table_synthesizers['table1'].add_constraint.assert_called_once_with([constraint4])
+        instance._table_synthesizers['table1'].add_constraints.assert_called_once_with([
+            constraint4
+        ])
         assert instance.constraints == expected_constraints
 
     @patch('sdv.multi_table.base._validate_constraints')
@@ -1559,7 +1545,7 @@ class TestBaseMultiTableSynthesizer:
         mock_validate_constraints.return_value = [constraint2]
 
         # Run
-        BaseMultiTableSynthesizer.add_constraint(instance, [constraint2])
+        BaseMultiTableSynthesizer.add_constraints(instance, [constraint2])
 
         # Assert
         mock_validate_constraints.assert_called_once_with([constraint2], instance._fitted)

@@ -186,7 +186,15 @@ class BaseMultiTableSynthesizer:
 
         return idx_single_table_constraint
 
-    def add_constraint(self, constraints):
+    def _validate_single_table_constraints(self, constraints):
+        for constraint in constraints:
+            if getattr(constraint, 'table_name') is None:
+                raise SynthesizerInputError(
+                    f"The '{constraint.__class__.__name__}' is missing the required parameter "
+                    "'table_name'. Please add this parameter to your constraint definition."
+                )
+
+    def add_constraints(self, constraints):
         """Add the list of constraint-augmented generation constraints to the synthesizer.
 
         Args:
@@ -210,13 +218,14 @@ class BaseMultiTableSynthesizer:
             metadata = constraint.get_updated_metadata(metadata)
 
         self.metadata = metadata
+        self._validate_single_table_constraints(single_table_constraints)
         self.constraints += multi_table_constraints
         self._constraints_fitted = False
         self._initialize_models()
         if single_table_constraints:
             for constraint in single_table_constraints:
                 table_name = constraint.table_name
-                self._table_synthesizers[table_name].add_constraint([constraint])
+                self._table_synthesizers[table_name].add_constraints([constraint])
 
     def get_constraint(self):
         """Get a copy of the list of constraints applied to the synthesizer."""
@@ -741,45 +750,6 @@ class BaseMultiTableSynthesizer:
             f"Loss values are not available for table '{table_name}' "
             'because the table does not use a GAN-based model.'
         )
-
-    def _validate_constraints_to_be_added(self, constraints):
-        for constraint_dict in constraints:
-            if 'table_name' not in constraint_dict.keys():
-                raise SynthesizerInputError(
-                    "A constraint is missing required parameter 'table_name'. "
-                    'Please add this parameter to your constraint definition.'
-                )
-
-            if constraint_dict['constraint_class'] == 'Unique':
-                raise SynthesizerInputError(
-                    "The constraint class 'Unique' is not currently supported for multi-table"
-                    ' synthesizers. Please remove the constraint for this synthesizer.'
-                )
-
-        if self._fitted:
-            warnings.warn(
-                "For these constraints to take effect, please refit the synthesizer using 'fit'."
-            )
-
-    def add_constraints(self, constraints):
-        """Add constraints to the synthesizer.
-
-        Args:
-            constraints (list):
-                List of constraints described as dictionaries in the following format:
-                    * ``constraint_class``: Name of the constraint to apply.
-                    * ``table_name``: Name of the table where to apply the constraint.
-                    * ``constraint_parameters``: A dictionary with the constraint parameters.
-
-        Raises:
-            SynthesizerInputError:
-                Raises when the ``Unique`` constraint is passed.
-        """
-        self._validate_constraints_to_be_added(constraints)
-        for constraint in constraints:
-            constraint = deepcopy(constraint)
-            synthesizer = self._table_synthesizers[constraint.pop('table_name')]
-            synthesizer._data_processor.add_constraints([constraint])
 
     def load_custom_constraint_classes(self, filepath, class_names):
         """Load a custom constraint class for each table's synthesizer.
