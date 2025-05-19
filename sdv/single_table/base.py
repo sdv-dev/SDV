@@ -826,7 +826,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         This method will validate the data against:
         - The metadata
         - The constraints
-        - The constraints
 
         To make it work with the cags we temporarily set the metadata to the original one
         and then restore it.
