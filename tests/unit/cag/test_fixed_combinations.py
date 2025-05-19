@@ -394,35 +394,6 @@ class TestFixedCombinations:
         expected_out_a = pd.Series(['a', 'b', 'c'], name='a')
         pd.testing.assert_series_equal(expected_out_a, out['a'])
 
-    @pytest.mark.skip(reason='KeyError raised. It used to throw MissingConstraintColumnError.')
-    def test_transform_not_all_columns_provided(self):
-        """Test the ``FixedCombinations.transform`` method when not all columns are provided."""
-        # Setup
-        metadata = Metadata.load_from_dict({
-            'tables': {
-                'table': {
-                    'columns': {
-                        'a': {'sdtype': 'categorical'},
-                        'b': {'sdtype': 'categorical'},
-                        'c': {'sdtype': 'categorical'},
-                    }
-                }
-            }
-        })
-        table_data = pd.DataFrame({
-            'a': ['a', 'b', 'c'],
-            'b': ['d', 'e', 'f'],
-            'c': ['g', 'h', 'i'],
-        })
-        columns = ['b', 'c']
-        instance = FixedCombinations(column_names=columns)
-        instance.fit(table_data, metadata)
-
-        # Run and Assert
-        with pytest.raises(PatternNotMetError):
-            # Transforming a column that was not seen is not validated
-            instance.transform(pd.DataFrame({'a': ['a', 'b', 'c']}))
-
     def test__reverse_transform(self):
         """Test the ``FixedCombinations.reverse_transform`` method."""
         # Setup

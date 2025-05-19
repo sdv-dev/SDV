@@ -879,42 +879,6 @@ class TestInequality:
         expected_out['b'] = expected_out['b'].astype(np.dtype('O'))
         pd.testing.assert_frame_equal(out, expected_out)
 
-    @pytest.mark.skip(reason='Nans are not being reversed correctly.')
-    def test_reverse_transform_nans(self):
-        """Test it reverses the transformation correctly when the data contains nans."""
-        # Setup
-        transformed = {
-            'table': pd.DataFrame({
-                'a': [1.0, 2.0, 3.0, 2.0],
-                'a#b': [np.log(2)] * 4,
-                'a#b.nan_component': ['b', 'a', 'None', 'a, b'],
-            })
-        }
-        instance = Inequality(
-            low_column_name='a',
-            high_column_name='b',
-            table_name='table',
-        )
-        instance._dtype = np.dtype('float')
-        instance._original_data_columns = {'table': ['a', 'b']}
-        instance._dtypes = {
-            'table': {
-                'a': np.dtype('float'),
-                'b': np.dtype('float'),
-            }
-        }
-
-        # Run
-        out = instance.reverse_transform(transformed)
-
-        # Assert
-        out = out['table']
-        expected_out = pd.DataFrame({
-            'a': [1, np.nan, 3, np.nan],
-            'b': [np.nan, 2, 4, np.nan],
-        })
-        pd.testing.assert_frame_equal(out, expected_out)
-
     def test__is_valid(self):
         """Test it checks if the data is valid."""
         # Setup

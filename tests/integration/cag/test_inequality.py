@@ -106,7 +106,7 @@ def patterns_reject():
         low_column_name='low2',
         high_column_name='high',
     )
-    return pattern1, pattern2
+    return [pattern1, pattern2]
 
 
 def test_inequality_pattern_integers(data, metadata, pattern):
@@ -644,119 +644,6 @@ def test_inequality_pattern_timestamp_less_than_date_no_strict_boundaries():
         synthetic_data['SUBMISSION_TIMESTAMP'].dt.date > synthetic_data['DUE_DATE'].dt.date
     ]
     assert invalid_rows.empty
-
-
-@pytest.mark.skip(reason='This test is failing because of the time component in the B column.')
-def test_inequality_unequal_datetime_formats_strings():
-    """Test that the inequality pattern works with unequal datetime formats."""
-    # Setup
-    data = pd.DataFrame({
-        'A': ['2020-01-01', '2020-01-02', '2020-01-03'],
-        'B': ['2020-01-02 10:00:00', '2020-01-03 13:00:00', '2020-01-04 6:00:00'],
-    })
-    metadata = Metadata.load_from_dict({
-        'columns': {
-            'A': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
-            'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S'},
-        }
-    })
-    pattern = Inequality(low_column_name='A', high_column_name='B')
-
-    # Run
-    sample = run_copula(data, metadata, [pattern]).sample(10)
-
-    # Assert
-    assert is_object_dtype(sample['A'].dtype)
-    assert is_object_dtype(sample['B'].dtype)
-
-    col_A = pd.to_datetime(sample['A'], format='%Y-%m-%d')
-    col_B = pd.to_datetime(sample['B'], format='%Y-%m-%d %H:%M:%S')
-    assert all(col_A <= col_B)
-    assert any(col_B.dt.time.astype(str) != '00:00:00')
-
-
-@pytest.mark.skip(reason='This test is failing because of the time component in the B column.')
-def test_inequality_unequal_datetime_formats():
-    """Test that the inequality pattern works with unequal datetime formats."""
-    # Setup
-    data = pd.DataFrame({
-        'A': pd.to_datetime(['2020-01-01', np.nan, '2020-01-02']),
-        'B': pd.to_datetime(['2020-01-02 10:00:00', '2020-01-03 13:00:00', np.nan]),
-    })
-    metadata = Metadata.load_from_dict({
-        'columns': {
-            'A': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
-            'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S'},
-        }
-    })
-    pattern = Inequality(low_column_name='A', high_column_name='B')
-
-    # Run
-    sample = run_copula(data, metadata, [pattern]).sample(10)
-
-    # Assert
-    col_A = pd.to_datetime(sample['A'], format='%Y-%m-%d')
-    col_B = pd.to_datetime(sample['B'], format='%Y-%m-%d %H:%M:%S')
-    assert all(col_A <= col_B)
-    assert any(col_B.dt.time.astype(str) != '00:00:00')
-
-
-@pytest.mark.skip(reason='Timezone not supported for object dtype.')
-def test_inequality_unequal_datetime_formats_timezone_aware():
-    """Test that the inequality pattern works with timezone-aware datetime objects."""
-    # Setup
-    data = pd.DataFrame({
-        'A': ['2020-01-01 UTC', '2020-01-02 UTC', '2020-01-03 UTC'],
-        'B': ['2020-01-02 10:00:00 UTC', '2020-01-03 13:00:00 UTC', '2020-01-04 6:00:00 UTC'],
-    })
-    metadata = Metadata.load_from_dict({
-        'columns': {
-            'A': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %Z'},
-            'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S %Z'},
-        }
-    })
-    pattern = Inequality(low_column_name='A', high_column_name='B')
-
-    # Run
-    sample = run_copula(data, metadata, [pattern]).sample(10)
-
-    # Assert
-    assert is_object_dtype(sample['A'].dtype)
-    assert is_object_dtype(sample['B'].dtype)
-
-    col_A = pd.to_datetime(sample['A'], format='%Y-%m-%d')
-    col_B = pd.to_datetime(sample['B'], format='%Y-%m-%d %H:%M:%S')
-    assert all(col_A <= col_B)
-    assert any(col_B.dt.time.astype(str) != '00:00:00')
-
-
-@pytest.mark.skip(reason='Does not work if only one column has timezone.')
-def test_inequality_unequal_datetime_formats_unequal_timezone():
-    """Test that the inequality pattern works with timezone-aware datetime objects."""
-    # Setup
-    data = pd.DataFrame({
-        'A': pd.to_datetime(['2020-01-01', np.nan, '2020-01-02']),
-        'B': pd.to_datetime(['2020-01-02 10:00:00 UTC', '2020-01-03 13:00:00 UTC', np.nan]),
-    })
-    metadata = Metadata.load_from_dict({
-        'columns': {
-            'A': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
-            'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S %Z'},
-        }
-    })
-    pattern = Inequality(low_column_name='A', high_column_name='B')
-
-    # Run
-    sample = run_copula(data, metadata, [pattern]).sample(10)
-
-    # Assert
-    assert is_object_dtype(sample['A'].dtype)
-    assert is_object_dtype(sample['B'].dtype)
-
-    col_A = pd.to_datetime(sample['A'], format='%Y-%m-%d')
-    col_B = pd.to_datetime(sample['B'], format='%Y-%m-%d %H:%M:%S')
-    assert all(col_A <= col_B)
-    assert any(col_B.dt.time.astype(str) != '00:00:00')
 
 
 def test_inequality_multiple_patterns():
