@@ -178,7 +178,7 @@ def test_validate_cag_raises(data, metadata, pattern):
 def test_validate_cag_multi(data_multi, metadata_multi, pattern_multi):
     """Test validate_cag works with multitable data generated with FixedIncrements."""
     # Setup
-    synthesizer = run_hma(data_multi, metadata_multi, pattern_multi)
+    synthesizer = run_hma(data_multi, metadata_multi, [pattern_multi])
     synthetic_data = synthesizer.sample(100)
 
     # Run
@@ -211,7 +211,7 @@ def test_validate_cag_multi_raises():
         }
     })
     pattern = FixedIncrements(column_name='A', table_name='table1', increment_value=2)
-    synthesizer = run_hma(data, metadata, pattern)
+    synthesizer = run_hma(data, metadata, [pattern])
     synthetic_data = {
         'table1': pd.DataFrame({'A': [1, 3, 5, 7, 9, 12, np.nan]}),
         'table2': pd.DataFrame({'id': range(5)}),

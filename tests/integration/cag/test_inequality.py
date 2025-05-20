@@ -869,7 +869,7 @@ def test_validate_cag_raises(data, metadata, pattern):
 def test_validate_cag_multi(data_multi, metadata_multi, pattern_multi):
     """Test validate_cag works with multitable synthetic data generated with Inequality."""
     # Setup
-    synthesizer = run_hma(data_multi, metadata_multi, pattern_multi)
+    synthesizer = run_hma(data_multi, metadata_multi, [pattern_multi])
     synthetic_data = synthesizer.sample(100)
 
     # Run
@@ -922,7 +922,7 @@ def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
         }),
         'table2': pd.DataFrame({'id': range(5)}),
     }
-    synthesizer = run_hma(data_multi, metadata_multi, pattern_multi)
+    synthesizer = run_hma(data_multi, metadata_multi, [pattern_multi])
     msg = re.escape(
         "Table 'table1': The inequality requirement is not met for "
         'row indices: 0, 1, 2, 3, 4, +1 more'

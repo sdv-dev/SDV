@@ -511,7 +511,7 @@ def test_validate_cag_raises(data, metadata, pattern):
 
 def test_validate_cag_multi(data_multi, metadata_multi, pattern_multi):
     """Test validate_cag with synthetic data generated with Range with multitable numerical data."""
-    synthesizer = run_hma(data_multi, metadata_multi, pattern_multi)
+    synthesizer = run_hma(data_multi, metadata_multi, [pattern_multi])
     synthetic_data = synthesizer.sample(100)
 
     # Run
@@ -525,7 +525,7 @@ def test_validate_cag_multi(data_multi, metadata_multi, pattern_multi):
 def test_validate_cag_multi_datetime(data_multi_datetime, metadata_multi_datetime, pattern_multi):
     """Test validate_cag with synthetic data generated with Range with multitable datetime data."""
     # Setup
-    synthesizer = run_hma(data_multi_datetime, metadata_multi_datetime, pattern_multi)
+    synthesizer = run_hma(data_multi_datetime, metadata_multi_datetime, [pattern_multi])
     synthetic_data = synthesizer.sample(100)
 
     # Run
@@ -547,7 +547,7 @@ def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
         }),
         'table2': pd.DataFrame({'id': range(5)}),
     }
-    synthesizer = run_hma(data_multi, metadata_multi, pattern_multi)
+    synthesizer = run_hma(data_multi, metadata_multi, [pattern_multi])
     msg = re.escape(
         "Table 'table1': The range requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more"
     )
