@@ -147,17 +147,19 @@ def run_pattern(pattern, data, metadata):
     return updated_metadata, transformed, reverse_transformed
 
 
-def run_copula(data, metadata, patterns):
+def run_copula(data, metadata, constraints=None):
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=patterns)
+    if constraints:
+        synthesizer.add_cag(patterns=constraints)
     synthesizer.fit(data)
 
     return synthesizer
 
 
-def run_hma(data, metadata, patterns):
+def run_hma(data, metadata, constraints=None):
     synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_cag(patterns=patterns)
+    if constraints:
+        synthesizer.add_cag(patterns=constraints)
     synthesizer.fit(data)
 
     return synthesizer
