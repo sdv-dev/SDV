@@ -423,11 +423,16 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             kind = dtype.kind
             if kind in ('i', 'f'):
                 data_type = 'continuous'
-                # Check if metadata overrides this data type
-                if self.metadata.columns.get(field, {}).get('sdtype', None) == 'categorical':
-                    data_type = 'categorical'
+                sdtype = self.metadata.columns.get(field, {}).get('sdtype', None)
+                if sdtype == 'categorical':  # Check if metadata overrides this data type
+                    transformers = self._data_processor._hyper_transformer.field_transformers
+                    transformer = transformers.get(field)
+                    if not transformer or transformer.get_output_sdtypes().get(field) != 'float':
+                        data_type = 'categorical'
+
             elif kind in ('O', 'b'):
                 data_type = 'categorical'
+
             else:
                 raise ValueError(f'Unsupported dtype {dtype}')
 

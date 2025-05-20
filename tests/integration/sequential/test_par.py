@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from deepecho import load_demo
+from rdt.transformers.categorical import UniformEncoder
 
 from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError
@@ -115,7 +116,7 @@ def test_save_and_load(tmp_path):
     """Test that synthesizers can be saved and loaded properly."""
     # Setup
     _, metadata = _get_par_data_and_metadata()
-    instance = PARSynthesizer(metadata)
+    instance = PARSynthesizer(metadata, epochs=1)
     synthesizer_path = tmp_path / 'synthesizer.pkl'
     instance.save(synthesizer_path)
 
@@ -140,9 +141,9 @@ def test_synthesize_sequences(tmp_path):
     # Setup
     real_data, metadata = download_demo(modality='sequential', dataset_name='nasdaq100_2019')
     assert real_data[real_data['Symbol'] == 'AMZN']['Sector'].unique()
-    synthesizer = PARSynthesizer(metadata, epochs=5, context_columns=['Sector', 'Industry'])
+    synthesizer = PARSynthesizer(metadata, epochs=1, context_columns=['Sector', 'Industry'])
     custom_synthesizer = PARSynthesizer(
-        metadata, epochs=5, context_columns=['Sector', 'Industry'], verbose=True
+        metadata, epochs=1, context_columns=['Sector', 'Industry'], verbose=True
     )
     scenario_context = pd.DataFrame(
         data={
@@ -223,7 +224,7 @@ def test_par_subset_of_data():
         )
 
     # now run PAR
-    synthesizer = PARSynthesizer(metadata, epochs=5, verbose=True)
+    synthesizer = PARSynthesizer(metadata, epochs=1, verbose=True)
     synthesizer.fit(data_subset)
     synthetic_data = synthesizer.sample(num_sequences=5)
 
@@ -276,7 +277,7 @@ def test_par_missing_sequence_index():
     data = pd.DataFrame({'value': [10, 20, 30], 'e_id': [1, 2, 3]})
 
     # Run
-    synthesizer = PARSynthesizer(metadata)
+    synthesizer = PARSynthesizer(metadata, epochs=1)
     synthesizer.fit(data)
     sampled = synthesizer.sample(num_sequences=3)
 
@@ -290,7 +291,7 @@ def test_constraints_on_par():
     # Setup
     real_data, metadata = download_demo(modality='sequential', dataset_name='nasdaq100_2019')
 
-    synthesizer = PARSynthesizer(metadata, epochs=5, context_columns=['Sector', 'Industry'])
+    synthesizer = PARSynthesizer(metadata, epochs=1, context_columns=['Sector', 'Industry'])
 
     market_constraint = {
         'constraint_class': 'Positive',
@@ -365,7 +366,7 @@ def test_par_unique_sequence_index_with_enforce_min_max():
     metadata.set_sequence_index('visits', 'table')
 
     synthesizer = PARSynthesizer(
-        metadata, enforce_min_max_values=True, enforce_rounding=False, epochs=100, verbose=True
+        metadata, enforce_min_max_values=True, enforce_rounding=False, epochs=1, verbose=True
     )
 
     # Run
@@ -392,7 +393,7 @@ def test_par_sequence_index_is_numerical():
     metadata = Metadata.load_from_dict(metadata_dict)
     data = pd.DataFrame({'engine_no': [0, 0, 1, 1], 'time_in_cycles': [1, 2, 3, 4]})
 
-    s1 = PARSynthesizer(metadata)
+    s1 = PARSynthesizer(metadata, epochs=1)
     s1.fit(data)
     sample = s1.sample(2, 5)
     assert sample.columns.to_list() == data.columns.to_list()
@@ -414,7 +415,7 @@ def test_init_error_sequence_key_in_context():
     )
     # Run and Assert
     with pytest.raises(SynthesizerInputError, match=sequence_key_context_column_error_msg):
-        PARSynthesizer(metadata, context_columns=['A'])
+        PARSynthesizer(metadata, context_columns=['A'], epochs=1)
 
 
 def test_par_with_datetime_context():
@@ -441,7 +442,7 @@ def test_par_with_datetime_context():
     })
 
     # Run
-    synth = PARSynthesizer(metadata, epochs=50, verbose=True, context_columns=['birthdate'])
+    synth = PARSynthesizer(metadata, epochs=1, verbose=True, context_columns=['birthdate'])
 
     synth.fit(data)
     sample = synth.sample(num_sequences=1)
@@ -452,17 +453,54 @@ def test_par_with_datetime_context():
 
 
 def test_par_categorical_column_represented_by_floats():
-    """Test to see if categorical columns work fine  with float representation."""
+    """Test to see if categorical columns work fine with float representation."""
     # Setup
     data, metadata = download_demo('sequential', 'nasdaq100_2019')
     data['category'] = [100.0 if i % 2 == 0 else 50.0 for i in data.index]
     metadata.add_column('category', 'nasdaq100_2019', sdtype='categorical')
 
     # Run
-    synth = PARSynthesizer(metadata)
+    synth = PARSynthesizer(metadata, epochs=1)
     synth.fit(data)
     sampled = synth.sample(num_sequences=10)
 
     # Assert
     synth.validate(sampled)
     assert sampled['category'].isin(data['category']).all()
+
+
+def test_par_categorical_column_updated_to_float():
+    """Test updating the transformer of a categorical column to float works GH #2482.
+
+    Run on 100k rows. If the model treats the numerical data properly, it takes ~3s.
+    If it treats it as categorical, it runs out of RAM.
+    """
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'sequence_key': ['key-' + str(int(i / 100)) for i in range(100000)],
+            'column': np.random.choice(['value-' + str(i) for i in range(100)], size=100000),
+        }
+    )
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'sequence_key': 'sequence_key',
+                'columns': {
+                    'sequence_key': {'sdtype': 'id'},
+                    'column': {'sdtype': 'categorical'},
+                },
+            }
+        }
+    })
+
+    # Run
+    synthesizer = PARSynthesizer(metadata, epochs=1)
+    synthesizer.auto_assign_transformers(data)
+    synthesizer.update_transformers({'column': UniformEncoder()})
+    synthesizer.fit(data)
+    sampled = synthesizer.sample(num_sequences=10)
+
+    # Assert
+    assert sampled['column'].isin(data['column']).all()
