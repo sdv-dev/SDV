@@ -3,7 +3,7 @@
 import csv
 import logging
 import os
-from functools import lru_cache
+from functools import lru_cache, wraps
 from io import StringIO
 
 from sdv.logging.utils import get_sdv_logger_config
@@ -42,7 +42,42 @@ class CSVFormatter(logging.Formatter):
         return data.strip()
 
 
+def safely_return_logger(func):
+    """Decorator to safely return a logger from a function that may raise a `PermissionError`.
+
+    If the decorated function raises a `PermissionError` (commonly due to file-based
+    logging to an unwritable path), this decorator catches the error and returns a
+    fallback logger configured with a NullHandler instead. This prevents the application
+    from crashing due to logging setup failures.
+
+    The fallback logger is named after the current module (__name__) and will silently
+    discard all logs.
+
+    Args:
+        func (Callable):
+            A function that returns a logger and may raise PermissionError.
+
+    Returns:
+        Callable:
+            A wrapped function that returns either the intended logger or a
+            fallback logger with a NullHandler.
+    """
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except PermissionError:
+            fallback_logger = logging.getLogger(__name__)
+            fallback_logger.addHandler(logging.NullHandler())
+            fallback_logger.warning('Falling back to NullHandler logger due to PermissionError.')
+            return fallback_logger
+
+    return wrapper
+
+
 @lru_cache()
+@safely_return_logger
 def get_sdv_logger(logger_name):
     """Get a logger instance with the specified name and configuration.
 

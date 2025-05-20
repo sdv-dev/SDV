@@ -172,9 +172,16 @@ def validate_file_path(output_file_path):
         # Do not save a file if the user specified not to save a file.
         return None
 
-    # Create the file.
-    with open(output_path, 'w+'):
-        pass
+    try:
+        # Attempt to create the file to verify it's writable
+        with open(output_path, 'w+'):
+            pass
+
+    except PermissionError:
+        warnings.warn(
+            f"Permission denied: cannot write to '{output_path}'. Skipping file creation."
+        )
+        return None
 
     return output_path
 

@@ -42,6 +42,53 @@ def test_get_sdv_logger_config():
     }
 
 
+@patch('sdv.logging.utils.platformdirs.user_data_dir')
+@patch('sdv.logging.utils.Path.mkdir', side_effect=PermissionError)
+@patch('sdv.logging.utils.os.access', return_value=False)
+def test_get_logger_config_no_permissions(mock_os_access, mock_mkdir, mock_data_dir):
+    """Test get_sdv_logger_config when there is no write or read permission.
+
+    Return empty config when both user and default paths are inaccessible.
+    """
+    # Setup
+    mock_data_dir.return_value = '/no_permission/user/config'
+
+    # Run
+    config = get_sdv_logger_config()
+
+    # Assert
+    assert config == {}
+
+
+@patch('sdv.logging.utils.platformdirs.user_data_dir')
+@patch('sdv.logging.utils.Path.mkdir', side_effect=PermissionError)
+@patch('sdv.logging.utils.os.access')
+@patch('sdv.logging.utils.Path.exists', return_value=True)
+@patch('sdv.logging.utils.open', create=True)
+@patch('sdv.logging.utils.yaml.safe_load', return_value={'loggers': {}})
+def test_get_sdv_logger_config_fallback_to_config_path(
+    mock_yaml_load,
+    mock_open,
+    mock_exists,
+    mock_os_access,
+    mock_mkdir,
+    mock_user_data_dir,
+):
+    """Should fall back to config path if store path is not writable but config path is."""
+    # Setup
+    mock_user_data_dir.return_value = '/mock/user/data'
+    mock_os_access.side_effect = [True, True]
+
+    # Run
+    config = get_sdv_logger_config()
+
+    # Assert
+    assert isinstance(config, dict)
+    mock_mkdir.assert_called_once()
+    assert mock_os_access.call_count >= 2
+    mock_yaml_load.assert_called_once()
+
+
 @patch('sdv.logging.utils.logging.getLogger')
 def test_disable_single_table_logger(mock_getlogger):
     # Setup

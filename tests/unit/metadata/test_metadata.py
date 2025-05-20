@@ -871,6 +871,16 @@ class TestMetadataClass:
         metadata._get_anonymized_dict.assert_called_once()
         mock_load_from_dict.assert_called_once_with({})
 
+    def test_copy(self, metadata_instance):
+        """Test that a copy but different instance is returned."""
+        # Run
+        copied_metadata = metadata_instance.copy()
+
+        # Assert
+        assert metadata_instance != copied_metadata
+        assert isinstance(copied_metadata, Metadata)
+        assert metadata_instance.to_dict() == copied_metadata.to_dict()
+
     @patch('sdv.metadata.multi_table.visualize_graph')
     def test_visualize_with_sequence_key_and_index(self, visualize_graph_mock):
         """Test the ``visualize`` method with sequence key and index"""
@@ -903,3 +913,236 @@ class TestMetadataClass:
             'nasdaq100_2019': expected_label,
         }
         visualize_graph_mock.assert_called_once_with(expected_nodes, [], None)
+
+    def test_remove_table_bad_table_name(self, metadata_instance):
+        """Test an error is raised if the table name does not exist in the metadata."""
+        # Run and Assert
+        expected_message = re.escape("Unknown table name ('fake_table').")
+        with pytest.raises(InvalidMetadataError, match=expected_message):
+            metadata_instance.remove_table('fake_table')
+
+    def test_remove_table_removes_table_and_relationships(self, metadata_instance):
+        """Test that the method removes the table and any relationships it was in."""
+        # Run
+        metadata_instance.remove_table('sessions')
+
+        # Assert
+        assert 'session' not in metadata_instance.tables
+        assert len(metadata_instance.tables) == 3
+        assert metadata_instance.relationships == [
+            {
+                'parent_table_name': 'users',
+                'parent_primary_key': 'id',
+                'child_table_name': 'payments',
+                'child_foreign_key': 'user_id',
+            },
+        ]
+
+    def test_remove_column_bad_table_name(self, metadata_instance):
+        """Test an error is raised if the table name does not exist in the metadata."""
+        # Run and Assert
+        expected_message = re.escape("Unknown table name ('fake_table').")
+        with pytest.raises(InvalidMetadataError, match=expected_message):
+            metadata_instance.remove_column('column', 'fake_table')
+
+    def test_remove_column_table_none_more_than_one_table(self, metadata_instance):
+        """Test an error is raised if the table name is not given and there are multiple tables."""
+        # Run and Assert
+        expected_message = (
+            "'table_name must be provided if there is more than 1 table in the metadata."
+        )
+        with pytest.raises(ValueError, match=expected_message):
+            metadata_instance.remove_column('column')
+
+    def test_remove_column_bad_column_name(self, metadata_instance):
+        """Test an error is raised if the table name does not exist in the metadata."""
+        # Run and Assert
+        expected_message = re.escape(
+            "Column name ('column') does not exist in the table. Use 'add_column' to add new "
+            'column.'
+        )
+        with pytest.raises(InvalidMetadataError, match=expected_message):
+            metadata_instance.remove_column('column', 'users')
+
+    def test_remove_column_removes_relationships(self):
+        """Test that the column relaationships and relationships for column are also removed."""
+        # Setup
+        metadata = Metadata()
+        metadata.relationships = [
+            {
+                'parent_table_name': 'users',
+                'parent_primary_key': 'user_id',
+                'child_table_name': 'transactions',
+                'child_foreign_key': 'user_id',
+            },
+            {
+                'parent_table_name': 'products',
+                'parent_primary_key': 'product_id',
+                'child_table_name': 'transactions',
+                'child_foreign_key': 'product_id',
+            },
+            {
+                'parent_table_name': 'manufacturers',
+                'parent_primary_key': 'address',
+                'child_table_name': 'products',
+                'child_foreign_key': 'manufacturer',
+            },
+        ]
+        users_mock = Mock()
+        products_mock = Mock()
+        transactions_mock = Mock()
+        manufacturer_mock = Mock()
+        manufacturer_mock.alternate_keys = []
+        manufacturer_mock.columns = {
+            'country': Mock(),
+            'address': Mock(),
+            'id': Mock(),
+        }
+        manufacturer_mock.column_relationships = [
+            {
+                'type': 'address',
+                'column_names': [
+                    'country',
+                    'address',
+                ],
+            },
+        ]
+        metadata.tables = {
+            'users': users_mock,
+            'products': products_mock,
+            'transactions': transactions_mock,
+            'manufacturers': manufacturer_mock,
+        }
+
+        # Run
+        metadata.remove_column('address', 'manufacturers')
+
+        # Assert
+        assert metadata.relationships == [
+            {
+                'parent_table_name': 'users',
+                'parent_primary_key': 'user_id',
+                'child_table_name': 'transactions',
+                'child_foreign_key': 'user_id',
+            },
+            {
+                'parent_table_name': 'products',
+                'parent_primary_key': 'product_id',
+                'child_table_name': 'transactions',
+                'child_foreign_key': 'product_id',
+            },
+        ]
+        assert manufacturer_mock.column_relationships == []
+        assert list(manufacturer_mock.columns.keys()) == ['country', 'id']
+        assert metadata._multi_table_updated
+
+    def test_remove_column_sequence_key(self):
+        """Test the method also remove the sequence key if the column is one."""
+        # Setup
+        metadata = Metadata()
+        metadata.relationships = []
+        trades_mock = Mock()
+        trades_mock.columns = {
+            'ticker': Mock(),
+            'cost': Mock(),
+            'quantity': Mock(),
+            'time': Mock(),
+        }
+        trades_mock.sequence_key = 'ticker'
+        trades_mock.sequence_index = 'time'
+        trades_mock.column_relationships = []
+        trades_mock.alternate_keys = []
+        metadata.tables = {
+            'trades': trades_mock,
+        }
+
+        # Run
+        metadata.remove_column('ticker')
+
+        # Assert
+        assert list(trades_mock.columns.keys()) == ['cost', 'quantity', 'time']
+        trades_mock.set_sequence_key.assert_called_once_with(None)
+        assert metadata._multi_table_updated
+
+    def test_remove_column_sequence_index(self):
+        """Test the method also remove the sequence index if the column is one."""
+        # Setup
+        metadata = Metadata()
+        metadata.relationships = []
+        trades_mock = Mock()
+        trades_mock.columns = {
+            'ticker': Mock(),
+            'cost': Mock(),
+            'quantity': Mock(),
+            'time': Mock(),
+        }
+        trades_mock.sequence_key = 'ticker'
+        trades_mock.sequence_index = 'time'
+        trades_mock.column_relationships = []
+        trades_mock.alternate_keys = []
+        metadata.tables = {
+            'trades': trades_mock,
+        }
+
+        # Run
+        metadata.remove_column('time')
+
+        # Assert
+        assert list(trades_mock.columns.keys()) == ['ticker', 'cost', 'quantity']
+        trades_mock.remove_sequence_index.assert_called_once()
+        assert metadata._multi_table_updated
+
+    def test_remove_column_primary_key(self):
+        """Test the method also remove the primary key if the column is one."""
+        # Setup
+        metadata = Metadata()
+        metadata.relationships = []
+        trades_mock = Mock()
+        trades_mock.columns = {
+            'ticker': Mock(),
+            'cost': Mock(),
+            'quantity': Mock(),
+            'time': Mock(),
+        }
+        trades_mock.primary_key = 'ticker'
+        trades_mock.column_relationships = []
+        trades_mock.alternate_keys = []
+        metadata.tables = {
+            'trades': trades_mock,
+        }
+
+        # Run
+        metadata.remove_column('ticker')
+
+        # Assert
+        assert list(trades_mock.columns.keys()) == ['cost', 'quantity', 'time']
+        trades_mock.remove_primary_key.assert_called_once()
+        assert metadata._multi_table_updated
+
+    def test_remove_column_alternate_key(self):
+        """Test the method also remove the alternate key if the column is one."""
+        # Setup
+        metadata = Metadata()
+        metadata.relationships = []
+        trades_mock = Mock()
+        trades_mock.columns = {
+            'id': Mock(),
+            'ticker': Mock(),
+            'cost': Mock(),
+            'quantity': Mock(),
+            'time': Mock(),
+        }
+        trades_mock.primary_key = 'id'
+        trades_mock.column_relationships = []
+        trades_mock.alternate_keys = ['ticker']
+        metadata.tables = {
+            'trades': trades_mock,
+        }
+
+        # Run
+        metadata.remove_column('ticker')
+
+        # Assert
+        assert list(trades_mock.columns.keys()) == ['id', 'cost', 'quantity', 'time']
+        assert trades_mock.alternate_keys == []
+        assert metadata._multi_table_updated

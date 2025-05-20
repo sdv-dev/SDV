@@ -11,6 +11,7 @@ from rdt.transformers import (
     IndexGenerator,
     LabelEncoder,
     PseudoAnonymizedFaker,
+    RegexGenerator,
 )
 
 from sdv.cag import Inequality
@@ -291,6 +292,36 @@ def test_update_transformers_with_id_generator():
     assert type(transformers['user_cat']).__name__ == 'UniformEncoder'
     assert len(samples) == sample_num
     assert samples['user_id'].min() == min_value_id
+
+
+@pytest.mark.parametrize(
+    'cardinality_rule, expected_samples',
+    [
+        ('unique', ['AAAAA', 'AAAAB', 'AAAAC']),
+        ('match', ['AAAAA', 'AAAAB', 'AAAAC']),
+        ('scale', ['AAAAA', 'AAAAB', 'AAAAC']),
+        (None, ['AAAAA', 'AAAAB', 'AAAAC']),
+    ],
+)
+def test_regex_transformer_various_cardinality_rules(cardinality_rule, expected_samples):
+    """Test it with various cardinality rules for the regex transformer"""
+    # Setup
+    real_data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
+    metadata.update_column('guest_email', sdtype='id')
+    gc = GaussianCopulaSynthesizer(metadata)
+    gc.auto_assign_transformers(real_data)
+
+    # Run
+    transformer = RegexGenerator(cardinality_rule=cardinality_rule)
+    gc.update_transformers({'guest_email': transformer})
+    gc.fit(real_data)
+    samples = gc.sample(10)
+    transformers = gc.get_transformers()
+
+    # Assert
+    assert transformers['guest_email'] == transformer
+    assert len(samples) == 10
+    assert samples['guest_email'].head(3).tolist() == expected_samples
 
 
 def test_validate_with_failing_constraint():

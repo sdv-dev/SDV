@@ -2,6 +2,7 @@
 
 import contextlib
 import logging
+import os
 import shutil
 import tempfile
 from pathlib import Path
@@ -14,18 +15,32 @@ import yaml
 def get_sdv_logger_config():
     """Return a dictionary with the logging configuration."""
     store_path = Path(platformdirs.user_data_dir('sdv', 'sdv-dev'))
-    store_path.mkdir(parents=True, exist_ok=True)
     config_path = Path(__file__).parent / 'sdv_logger_config.yml'
+    logger_conf = {}
+
+    try:
+        store_path.mkdir(parents=True, exist_ok=True)
+
+    except PermissionError:
+        # No access to user's data.
+        if os.access(config_path, os.W_OK):
+            store_path = config_path
+
+        else:
+            # No access to python env
+            return logger_conf
 
     if (store_path / 'sdv_logger_config.yml').exists():
         config_path = store_path / 'sdv_logger_config.yml'
-    else:
+
+    elif os.access(store_path, os.W_OK):
         tmp_path = tempfile.mktemp(dir=store_path, suffix='.yml')
         shutil.copyfile(config_path, tmp_path)
         shutil.move(tmp_path, store_path / 'sdv_logger_config.yml')
 
-    with open(config_path, 'r') as f:
-        logger_conf = yaml.safe_load(f)
+    if os.access(config_path, os.R_OK):
+        with open(config_path, 'r') as f:
+            logger_conf = yaml.safe_load(f)
 
     for logger in logger_conf.get('loggers', {}).values():
         handler = logger.get('handlers', {})
@@ -46,8 +61,12 @@ def disable_single_table_logger():
     """
     # Logging without ``SingleTableSynthesizer``
     single_table_logger = logging.getLogger('SingleTableSynthesizer')
-    handlers = single_table_logger.handlers
-    single_table_logger.handlers = []
+    if single_table_logger:
+        handlers = single_table_logger.handlers
+        single_table_logger.handlers = []
+    else:
+        handlers = []
+
     try:
         yield
     finally:
