@@ -159,7 +159,7 @@ def run_copula(data, metadata, constraints=None):
 def run_hma(data, metadata, constraints=None):
     synthesizer = HMASynthesizer(metadata)
     if constraints:
-        synthesizer.add_constraint(constraints=constraints)
+        synthesizer.add_constraints(constraints=constraints)
     synthesizer.fit(data)
 
     return synthesizer

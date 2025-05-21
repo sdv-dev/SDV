@@ -645,6 +645,7 @@ def test_inequality_constraint_timestamp_less_than_date_no_strict_boundaries():
     ]
     assert invalid_rows.empty
 
+
 def test_inequality_multiple_patterns():
     """Test that Inequality constraint works with multiple patterns."""
     # Setup
