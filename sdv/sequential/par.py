@@ -426,7 +426,11 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             kind = dtype.kind
             if kind in ('i', 'f'):
                 data_type = 'continuous'
-                sdtype = self.metadata.columns.get(field, {}).get('sdtype', None)
+                sdtype = (
+                    self.metadata.tables[self._table_name]
+                    .columns.get(field, {})
+                    .get('sdtype', None)
+                )
                 if sdtype == 'categorical':  # Check if metadata overrides this data type
                     transformer = self.get_transformers().get(field)
                     if not transformer or transformer.get_output_sdtypes().get(field) != 'float':
