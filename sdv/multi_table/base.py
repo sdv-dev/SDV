@@ -226,6 +226,7 @@ class BaseMultiTableSynthesizer:
             for constraint in single_table_constraints:
                 table_name = constraint.table_name
                 self._table_synthesizers[table_name].add_constraints([constraint])
+                self.metadata = constraint.get_updated_metadata(self.metadata)
 
     def get_constraints(self):
         """Get a copy of the list of constraints applied to the synthesizer."""
