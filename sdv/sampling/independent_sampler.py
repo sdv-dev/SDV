@@ -98,8 +98,12 @@ class BaseIndependentSampler:
         final_data = {}
         for table_name, table_rows in sampled_data.items():
             synthesizer = self._table_synthesizers.get(table_name)
-            dtypes = synthesizer._data_processor._dtypes
             column_names = self.get_metadata().get_column_names(table_name)
+            if not synthesizer._fitted:
+                final_data[table_name] = table_rows[column_names]
+                continue
+
+            dtypes = synthesizer._data_processor._dtypes
             dtypes_to_sdtype = synthesizer._data_processor._DTYPE_TO_SDTYPE
             for name in column_names:
                 dtype = dtypes.get(name)
@@ -109,7 +113,7 @@ class BaseIndependentSampler:
                 try:
                     table_rows[name] = table_rows[name].dropna().astype(dtype)
                 except ValueError as e:
-                    sdtype = self.metadata.columns.get(name).get('sdtype')
+                    sdtype = self.metadata.tables[table_name].columns.get(name).get('sdtype')
                     if sdtype not in dtypes_to_sdtype.values():
                         LOGGER.info(
                             f"The real data in '{table_name}' and column '{name}' was stored as "
