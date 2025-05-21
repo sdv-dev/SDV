@@ -615,6 +615,7 @@ class TestPARSynthesizer:
         metadata = self.get_metadata()
         metadata.update_column('measurement', 'table', sdtype='categorical')
         par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
+        par.auto_assign_transformers(data)
         sequences = [
             {'context': np.array(['M'], dtype=object), 'data': [['2020-01-03'], [65.0]]},
             {'context': np.array(['F'], dtype=object), 'data': [['2020-01-01'], [55.0]]},
