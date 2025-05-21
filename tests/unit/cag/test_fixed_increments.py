@@ -364,6 +364,33 @@ class TestFixedIncremenets:
         expected_out = pd.DataFrame({original_column_name: [10, 100, 1000, 10000, 100000]})
         pd.testing.assert_frame_equal(data[table_name], expected_out)
 
+    def test__reverse_transform_nans(self):
+        """Test it reverses the transformation correctly with nans."""
+        # Setup
+        increment_value = 10
+        table_name = 'table1'
+        original_column_name = 'a'
+        transformed_column_name = f'{original_column_name}#increment'
+        transformed_data = {
+            table_name: pd.DataFrame({
+                transformed_column_name: pd.Series([1, 10, np.nan, 1000, 10000])
+            })
+        }
+        instance = FixedIncrements(
+            column_name=original_column_name, increment_value=increment_value, table_name=table_name
+        )
+        instance._original_data_columns = {table_name: [original_column_name]}
+        instance._dtype = pd.Series([1], dtype='float').dtype
+        instance._fixed_increments_column_name = transformed_column_name
+        instance._dtypes = {table_name: {original_column_name: pd.Series([1], dtype='float').dtype}}
+
+        # Run
+        data = instance.reverse_transform(transformed_data)
+
+        # Assert
+        expected_out = pd.DataFrame({original_column_name: [10, 100, np.nan, 10000, 100000]})
+        pd.testing.assert_frame_equal(data[table_name], expected_out)
+
     @pytest.mark.parametrize(
         'nan',
         [np.nan, pd.NA],

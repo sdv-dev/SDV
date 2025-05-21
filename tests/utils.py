@@ -6,6 +6,8 @@ import pandas as pd
 
 from sdv.logging import get_sdv_logger
 from sdv.metadata.metadata import Metadata
+from sdv.multi_table import HMASynthesizer
+from sdv.single_table import GaussianCopulaSynthesizer
 
 
 class DataFrameMatcher:
@@ -143,3 +145,21 @@ def run_pattern(pattern, data, metadata):
     reverse_transformed = pattern.reverse_transform(transformed)
 
     return updated_metadata, transformed, reverse_transformed
+
+
+def run_copula(data, metadata, constraints=None):
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    if constraints:
+        synthesizer.add_cag(patterns=constraints)
+    synthesizer.fit(data)
+
+    return synthesizer
+
+
+def run_hma(data, metadata, constraints=None):
+    synthesizer = HMASynthesizer(metadata)
+    if constraints:
+        synthesizer.add_cag(patterns=constraints)
+    synthesizer.fit(data)
+
+    return synthesizer
