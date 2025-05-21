@@ -9,9 +9,8 @@ import pytest
 from sdv.cag import FixedCombinations
 from sdv.cag._errors import PatternNotMetError
 from sdv.metadata import Metadata
-from sdv.multi_table import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
-from tests.utils import run_pattern
+from tests.utils import run_copula, run_hma, run_pattern
 
 
 @pytest.fixture()
@@ -85,6 +84,21 @@ def test_fixed_combinations_integers(data, metadata, pattern):
     pd.testing.assert_frame_equal(data, reverse_transformed)
 
 
+def test_fixed_combinations_integers_copula(data, metadata, pattern):
+    """Test that FixedCombinations constraint works with integer columns using Copula."""
+    # Run
+    synthesizer = run_copula(data, metadata, [pattern])
+    synthetic_data = synthesizer.sample(1000)
+
+    # Assert
+    assert len(synthetic_data) == 1000
+    pd.testing.assert_frame_equal(
+        synthetic_data.drop_duplicates(ignore_index=True),
+        data.drop_duplicates(ignore_index=True),
+        check_like=True,
+    )
+
+
 def test_fixed_combinations_with_nans(metadata, pattern):
     """Test that FixedCombinations constraint works with NaNs."""
     # Setup
@@ -105,6 +119,30 @@ def test_fixed_combinations_with_nans(metadata, pattern):
     assert expected_updated_metadata == updated_metadata.to_dict()
     assert list(transformed.columns) == ['A#B']
     pd.testing.assert_frame_equal(data, reverse_transformed)
+
+
+def test_fixed_combinations_with_nans_copula(metadata, pattern):
+    """Test that FixedCombinations constraint works with nans using Copula."""
+    # Setup
+    data = pd.DataFrame({
+        'A': [1, 2, np.nan, 1, 2, 1],
+        'B': [10, 20, 30, 10, 20, 10],
+    })
+
+    # Run
+    synthesizer = run_copula(data, metadata, [pattern])
+    synthetic_data = synthesizer.sample(1000)
+
+    # Assert
+    assert len(synthetic_data) == 1000
+    pd.testing.assert_frame_equal(
+        synthetic_data.drop_duplicates(ignore_index=True),
+        pd.DataFrame({
+            'A': [1, np.nan, 2],
+            'B': [10, 30, 20],
+        }).drop_duplicates(ignore_index=True),
+        check_like=True,
+    )
 
 
 def test_fixed_null_combinations_with_multi_table(data_multi, metadata_multi, pattern_multi):
@@ -322,9 +360,7 @@ def test_fixed_combinations_multiple_patterns_three_patterns_reject_sampling():
     pattern3 = FixedCombinations(['A', 'C'])
 
     # Run
-    synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern1, pattern3, pattern2])
-    synthesizer.fit(data)
+    synthesizer = run_copula(data, metadata, [pattern1, pattern3, pattern2])
     samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
@@ -360,9 +396,7 @@ def test_fixed_combinations_multiple_patterns_three_patterns_reject_sampling():
 def test_validate_cag(data, metadata, pattern):
     """Test validate_cag works with synthetic data generated with FixedCombinations."""
     # Setup
-    synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
-    synthesizer.fit(data)
+    synthesizer = run_copula(data, metadata, [pattern])
     synthetic_data = synthesizer.sample(100)
 
     # Run
@@ -379,9 +413,7 @@ def test_validate_cag_raises(data, metadata, pattern):
     # Setup
     synthetic_data = data.copy()
     synthetic_data['B'] = [11, 21, 31, 11, 21, 11]
-    synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
-    synthesizer.fit(data)
+    synthesizer = run_copula(data, metadata, [pattern])
     msg = re.escape(
         'The fixed combinations requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more'
     )
@@ -394,19 +426,14 @@ def test_validate_cag_raises(data, metadata, pattern):
 def test_validate_cag_multi(data_multi, metadata_multi, pattern_multi):
     """Test validate_cag works with multitable data generated with FixedCombinations."""
     # Setup
-    data = data_multi
-    metadata = metadata_multi
-    pattern = pattern_multi
-    synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
-    synthesizer.fit(data)
+    synthesizer = run_hma(data_multi, metadata_multi, [pattern_multi])
     synthetic_data = synthesizer.sample(100)
 
     # Run
     synthesizer.validate_cag(synthetic_data=synthetic_data)
 
     # Assert
-    original_ab_combos = set(zip(data['table1']['A'], data['table1']['B']))
+    original_ab_combos = set(zip(data_multi['table1']['A'], data_multi['table1']['B']))
     synthetic_ab_combos = set(zip(synthetic_data['table1']['A'], synthetic_data['table1']['B']))
     assert original_ab_combos == synthetic_ab_combos
 
@@ -414,9 +441,6 @@ def test_validate_cag_multi(data_multi, metadata_multi, pattern_multi):
 def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
     """Test validate_cag raises an error with bad multitable data with FixedCombinations."""
     # Setup
-    data = data_multi
-    metadata = metadata_multi
-    pattern = pattern_multi
     synthetic_data = {
         'table1': pd.DataFrame({
             'A': [1, 2, 3, 1, 2, 1],
@@ -424,9 +448,7 @@ def test_validate_cag_multi_raises(data_multi, metadata_multi, pattern_multi):
         }),
         'table2': pd.DataFrame({'id': range(5)}),
     }
-    synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_cag(patterns=[pattern])
-    synthesizer.fit(data)
+    synthesizer = run_hma(data_multi, metadata_multi, [pattern_multi])
     msg = re.escape(
         "Table 'table1': The fixed combinations requirement is "
         'not met for row indices: 0, 1, 2, 3, 4, +1 more'

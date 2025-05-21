@@ -9,9 +9,12 @@ from pandas.api.types import is_object_dtype
 from sdv._utils import _convert_to_timedelta, _create_unique_name
 from sdv.cag._errors import PatternNotMetError
 from sdv.cag._utils import (
+    _get_invalid_rows,
     _get_is_valid_dict,
+    _is_list_of_type,
     _remove_columns_from_metadata,
     _validate_table_and_column_names,
+    _validate_table_name_if_defined,
 )
 from sdv.cag.base import BasePattern
 from sdv.constraints.utils import (
@@ -55,11 +58,7 @@ class Range(BasePattern):
         strict_boundaries,
         table_name,
     ):
-        if not (
-            isinstance(low_column_name, str)
-            and isinstance(middle_column_name, str)
-            and isinstance(high_column_name, str)
-        ):
+        if not _is_list_of_type([low_column_name, middle_column_name, high_column_name], str):
             raise ValueError(
                 '`low_column_name`, `middle_column_name` and `high_column_name` must be strings.'
             )
@@ -67,8 +66,7 @@ class Range(BasePattern):
         if not isinstance(strict_boundaries, bool):
             raise ValueError('`strict_boundaries` must be a boolean.')
 
-        if table_name and not isinstance(table_name, str):
-            raise ValueError('`table_name` must be a string or None.')
+        _validate_table_name_if_defined(table_name)
 
     def __init__(
         self,
@@ -171,14 +169,7 @@ class Range(BasePattern):
         valid = self._get_valid_table_data(data[table_name])
 
         if not valid.all():
-            invalid_rows = np.where(~valid)[0]
-            if len(invalid_rows) <= 5:
-                invalid_rows_str = ', '.join(str(i) for i in invalid_rows)
-            else:
-                first_five = ', '.join(str(i) for i in invalid_rows[:5])
-                remaining = len(invalid_rows) - 5
-                invalid_rows_str = f'{first_five}, +{remaining} more'
-
+            invalid_rows_str = _get_invalid_rows(valid)
             raise PatternNotMetError(
                 f'The range requirement is not met for row indices: [{invalid_rows_str}]'
             )
