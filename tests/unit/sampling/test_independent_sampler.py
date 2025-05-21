@@ -143,7 +143,7 @@ class TestBaseIndependentSampler:
             return mapping[table_name]
 
         metadata.get_column_names = Mock(side_effect=get_column_names_mock)
-        instance.metadata = metadata
+        instance.get_metadata = Mock(return_value=metadata)
 
         sampled_data = {
             'users': pd.DataFrame({
@@ -221,7 +221,7 @@ class TestBaseIndependentSampler:
             return mapping[table_name]
 
         metadata.get_column_names = Mock(side_effect=get_column_names_mock)
-        instance.metadata = metadata
+        instance.get_metadata = Mock(return_value=metadata)
         sampled_data = {
             'users': pd.DataFrame({
                 'user_id': pd.Series(['a', 'b', 'c'], dtype=object),
@@ -335,7 +335,7 @@ class TestBaseIndependentSampler:
         instance._table_synthesizers = {'table': parent_synthesizer}
         metadata = Mock()
         metadata.get_column_names = Mock(return_value=['id'])
-        instance.metadata = metadata
+        instance.get_metadata = Mock(return_value=metadata)
 
         # Run
         BaseIndependentSampler._finalize(instance, sampled_data)
@@ -409,6 +409,7 @@ class TestBaseIndependentSampler:
             'sessions': Mock(),
             'transactions': Mock(),
         }
+        instance._reverse_transform_constraints = Mock(side_effect=lambda x: x)
 
         # Run
         result = BaseIndependentSampler._sample(instance)
@@ -437,15 +438,18 @@ class TestBaseIndependentSampler:
         _connect_tables_mock.assert_called_once_with({
             key: DataFrameMatcher(table) for key, table in expected_sample.items()
         })
-        instance._finalize.assert_called_once_with({
+        expected_result = {
             'users': DataFrameMatcher(expected_sample['users']),
             'sessions': DataFrameMatcher(expected_sample['sessions']),
             'transactions': DataFrameMatcher(connected_transactions),
-        })
+        }
+        instance._reverse_transform_constraints.assert_called_once_with(expected_result)
+        instance._finalize.assert_called_once_with(expected_result)
         assert result == instance._finalize.return_value
 
     def test__sample_too_small(self):
         """Test that the ``_sample`` method works even when sample size is very small."""
+        # Setup
         instance = Mock()
         metadata = Mock()
         metadata.tables = {
@@ -475,5 +479,7 @@ class TestBaseIndependentSampler:
             "The 'scale' parameter is too small. Some tables may have 1 row."
             ' For better quality data, please choose a larger scale.'
         )
+
+        # Run and Assert
         with pytest.warns(Warning, match=warning_msg):
             BaseIndependentSampler._sample(instance, 0.01)

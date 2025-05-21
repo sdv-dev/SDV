@@ -344,6 +344,7 @@ class TestHMASynthesizer:
             }
             return mapping[table_name]
 
+        instance.get_metadata = Mock(return_value=metadata)
         metadata.get_column_names = Mock(side_effect=get_column_names_mock)
         instance.metadata = metadata
 

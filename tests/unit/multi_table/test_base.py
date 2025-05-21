@@ -1316,7 +1316,6 @@ class TestBaseMultiTableSynthesizer:
         instance._original_table_columns = {
             'nesreca': ['upravna_enota', 'id_nesreca', 'nesreca_val'],
         }
-        instance._reverse_transform_constraints = Mock(return_value=data)
 
         synth_id = 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
         instance._synthesizer_id = synth_id
@@ -1327,7 +1326,6 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         instance._sample.assert_called_once_with(scale=1.5)
-        instance._reverse_transform_constraints.assert_called_once_with(data)
         assert caplog.messages[0] == str({
             'EVENT': 'Sample',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',
@@ -1519,7 +1517,7 @@ class TestBaseMultiTableSynthesizer:
         mock_harness.get_updated_metadata.assert_called_once_with(
             constraint2.get_updated_metadata.return_value
         )
-        assert instance.metadata == mock_harness.get_updated_metadata.return_value
+        assert instance.metadata == constraint4.get_updated_metadata.return_value
         instance._detect_single_table_constraints.assert_called_once_with(constraints)
         instance._initialize_models.assert_called_once()
         expected_constraints = [constraint1, constraint2, mock_harness]

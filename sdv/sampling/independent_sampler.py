@@ -99,7 +99,7 @@ class BaseIndependentSampler:
         for table_name, table_rows in sampled_data.items():
             synthesizer = self._table_synthesizers.get(table_name)
             dtypes = synthesizer._data_processor._dtypes
-            column_names = self.metadata.get_column_names(table_name)
+            column_names = self.get_metadata().get_column_names(table_name)
             dtypes_to_sdtype = synthesizer._data_processor._DTYPE_TO_SDTYPE
             for name in column_names:
                 dtype = dtypes.get(name)
@@ -176,4 +176,5 @@ class BaseIndependentSampler:
             warnings.warn(warn_msg)
 
         self._connect_tables(sampled_data)
+        sampled_data = self._reverse_transform_constraints(sampled_data)
         return self._finalize(sampled_data)

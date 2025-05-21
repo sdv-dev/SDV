@@ -670,7 +670,6 @@ class BaseMultiTableSynthesizer:
 
         with self._set_temp_numpy_seed(), disable_single_table_logger():
             sampled_data = self._sample(scale=scale)
-            sampled_data = self._reverse_transform_constraints(sampled_data)
 
         total_rows = 0
         total_columns = 0
