@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sdv.metadata import Metadata
 from sdv.sampling.independent_sampler import BaseIndependentSampler
 from tests.utils import DataFrameMatcher, get_multi_table_metadata
 
@@ -210,17 +211,32 @@ class TestBaseIndependentSampler:
         """Test that finalize function when an id column is string but dtype is int."""
         # Setup
         instance = Mock()
-        metadata = Mock()
-
-        def get_column_names_mock(table_name):
-            mapping = {
-                'users': ['user_id', 'name'],
-                'sessions': ['user_id', 'session_id', 'os', 'country'],
-                'transactions': ['transaction_id', 'session_id'],
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'users': {
+                    'columns': {
+                        'user_id': {'sdtype': 'id'},
+                        'name': {'sdtype': 'categorical'},
+                    },
+                },
+                'sessions': {
+                    'columns': {
+                        'user_id': {'sdtype': 'id'},
+                        'session_id': {'sdtype': 'categorical'},
+                        'os': {'sdtype': 'categorical'},
+                        'country': {'sdtype': 'categorical'},
+                    },
+                },
+                'transactions': {
+                    'primary_key': 'transaction_id',
+                    'columns': {
+                        'transaction_id': {'sdtype': 'numerical'},
+                        'session_id': {'sdtype': 'categorical'},
+                    },
+                },
             }
-            return mapping[table_name]
-
-        metadata.get_column_names = Mock(side_effect=get_column_names_mock)
+        })
+        instance.metadata = metadata
         instance.get_metadata = Mock(return_value=metadata)
         sampled_data = {
             'users': pd.DataFrame({
@@ -275,7 +291,6 @@ class TestBaseIndependentSampler:
             'b': 'boolean',
             'M': 'datetime',
         }
-
         instance._table_synthesizers = {
             'users': users_synth,
             'sessions': sessions_synth,
