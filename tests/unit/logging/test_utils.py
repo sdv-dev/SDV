@@ -42,6 +42,18 @@ def test_get_sdv_logger_config():
     }
 
 
+@patch('sdv.logging.utils.platformdirs.user_data_dir', return_value='/mock/user/data')
+@patch('sdv.logging.utils.Path.mkdir', side_effect=OSError)
+def test_get_logger_config_read_only_system(mock_mkdir, mock_user_data_dir):
+    """Return empty config if the whole system is read‑only."""
+    # Run
+    config = get_sdv_logger_config()
+
+    # Assert
+    assert config == {}
+    mock_mkdir.assert_called_once()
+
+
 @patch('sdv.logging.utils.platformdirs.user_data_dir')
 @patch('sdv.logging.utils.Path.mkdir', side_effect=PermissionError)
 @patch('sdv.logging.utils.os.access', return_value=False)

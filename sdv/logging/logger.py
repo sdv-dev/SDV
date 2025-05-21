@@ -73,6 +73,9 @@ def safely_return_logger(func):
             fallback_logger.warning('Falling back to NullHandler logger due to PermissionError.')
             return fallback_logger
 
+        except Exception:
+            return logging.getLogger(__name__)
+
     return wrapper
 
 
