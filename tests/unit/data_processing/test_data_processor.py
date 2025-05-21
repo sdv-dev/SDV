@@ -2716,3 +2716,54 @@ class TestDataProcessor:
         # Assert
         col2_datetime_formatter.format_data.assert_called_once()
         col3_datetime_formatter.format_data.assert_called_once()
+
+    def test_reverse_transform_conditions(self):
+        """Test the ``reverse_transform`` method with conditions.
+
+        This method should attempt to reverse transform all the columns using the
+        ``HyperTransformer``. Any columns that need to be generated that are also
+        in the conditions dict should use the condition instead.
+        """
+        # Setup
+        dp = DataProcessor(SingleTableMetadata())
+        dp.fitted = True
+        dp.metadata = Mock()
+        dp.metadata.columns = {'a': None, 'b': None, 'c': None, 'key': None, 'd': None}
+        data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [True, True, False],
+            'c': ['d', 'e', 'f'],
+        })
+        dp._keys = ['key']
+        dp._hyper_transformer = Mock()
+        dp._hyper_transformer.create_anonymized_columns.side_effect = [
+            pd.DataFrame({'key': ['sdv_0', 'sdv_1', 'sdv_2']}),
+        ]
+        dp._constraints_to_reverse = []
+        dp._hyper_transformer.reverse_transform_subset.return_value = data.copy()
+        dp._hyper_transformer._output_columns = ['a', 'b', 'c']
+        dp._dtypes = pd.Series(
+            [np.float64, np.bool_, np.object_, np.object_, np.object_],
+            index=['a', 'b', 'c', 'd', 'key'],
+        )
+        conditions = {'d': 'abc@gmail.com'}
+
+        # Run
+        reverse_transformed = dp.reverse_transform(data, conditions=conditions)
+
+        # Assert
+        input_data = pd.DataFrame({'a': [1, 2, 3], 'b': [True, True, False], 'c': ['d', 'e', 'f']})
+        data_from_call = dp._hyper_transformer.reverse_transform_subset.mock_calls[0][1][0]
+        pd.testing.assert_frame_equal(input_data, data_from_call)
+        dp._hyper_transformer.reverse_transform_subset.assert_called_once()
+        dp._hyper_transformer.create_anonymized_columns.assert_has_calls([
+            call(num_rows=3, column_names=['key']),
+        ])
+        expected_output = pd.DataFrame({
+            'a': [1.0, 2.0, 3.0],
+            'b': [True, True, False],
+            'c': ['d', 'e', 'f'],
+            'key': ['sdv_0', 'sdv_1', 'sdv_2'],
+            'd': ['abc@gmail.com', 'abc@gmail.com', 'abc@gmail.com'],
+        })
+        pd.testing.assert_frame_equal(reverse_transformed, expected_output)

@@ -10,6 +10,7 @@ import os
 import uuid
 import warnings
 from collections import defaultdict
+from copy import deepcopy
 
 import cloudpickle
 import copulas
@@ -25,10 +26,14 @@ from sdv._utils import (
     check_sdv_versions_and_warn,
     check_synthesizer_version,
     generate_synthesizer_id,
-    get_possible_chars,
 )
+from sdv.cag._errors import PatternNotMetError
+from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows
+from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
+from sdv.data_processing.datetime_formatter import DatetimeFormatter
+from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.errors import (
     ConstraintsNotMetError,
     InvalidDataError,
@@ -46,11 +51,6 @@ SYNTHESIZER_LOGGER = get_sdv_logger('SingleTableSynthesizer')
 
 COND_IDX = str(uuid.uuid4())
 FIXED_RNG_SEED = 73251
-INT_REGEX_ZERO_ERROR_MESSAGE = (
-    'is stored as an int but the Regex allows it to start with "0". Please remove the Regex '
-    'or update it to correspond to valid ints.'
-)
-
 DEPRECATION_MSG = (
     "The 'SingleTableMetadata' is deprecated. Please use the new 'Metadata' class for synthesizers."
 )
@@ -100,16 +100,20 @@ class BaseSynthesizer:
             for sdtype, transformer in self._model_sdtype_transformers.items():
                 self._data_processor._update_transformers_by_sdtypes(sdtype, transformer)
 
-    def _check_original_metadata_updated(self):
-        if not hasattr(self, '_original_metadata'):
-            unified_metadata = Metadata.load_from_dict(self.metadata.to_dict())
-            setattr(self, '_original_metadata', unified_metadata)
+    def _check_input_metadata_updated(self):
+        if not hasattr(self, '_input_metadata'):
+            if hasattr(self, '_original_metadata'):
+                unified_metadata = Metadata.load_from_dict(self._original_metadata.to_dict())
+            else:
+                unified_metadata = Metadata.load_from_dict(self.metadata.to_dict())
 
-        if isinstance(self._original_metadata, Metadata):
-            metadata = self._original_metadata._convert_to_single_table()
+            setattr(self, '_input_metadata', unified_metadata)
+
+        if isinstance(self._input_metadata, Metadata):
+            metadata = self._input_metadata._convert_to_single_table()
 
         else:
-            metadata = self._original_metadata
+            metadata = self._input_metadata
 
         if metadata._updated:
             warnings.warn(
@@ -118,44 +122,63 @@ class BaseSynthesizer:
             )
 
     def _check_metadata_updated(self):
-        if self.metadata._updated:
-            self.metadata._updated = False
+        if self.metadata._check_updated_flag():
+            self.metadata._reset_updated_flag()
             warnings.warn(
                 "We strongly recommend saving the metadata using 'save_to_json' for replicability"
                 ' in future SDV versions.'
             )
+            if hasattr(self, '_input_metadata'):
+                if hasattr(self._input_metadata, '_reset_updated_flag'):
+                    self._input_metadata._reset_updated_flag()
+                else:
+                    self._input_metadata._updated = False
 
     def _validate_regex_format(self):
-        id_columns = self.metadata.get_column_names(sdtype='id')
-        for column_name in id_columns:
-            regex = self.metadata.columns[column_name].get('regex_format')
-            _check_regex_format(self._table_name, column_name, regex)
+        if self.metadata.tables:
+            id_columns = self.metadata.get_column_names(table_name=self._table_name, sdtype='id')
+            for column_name in id_columns:
+                regex = (
+                    self.metadata.tables[self._table_name].columns[column_name].get('regex_format')
+                )
+                _check_regex_format(self._table_name, column_name, regex)
 
     def __init__(
         self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=['en_US']
     ):
         self._validate_inputs(enforce_min_max_values, enforce_rounding)
-        self._original_metadata = self.metadata = metadata
+
+        # Points to the input metadata object and allows us to check if user has changed it
+        self._input_metadata = metadata
+
+        # Points to a dynamic metadata object that could be modified by constraints
+        self.metadata = metadata
+
         self._table_name = Metadata.DEFAULT_SINGLE_TABLE_NAME
         if isinstance(metadata, Metadata):
             self._table_name = metadata._get_single_table_name()
-            self.metadata = metadata._convert_to_single_table()
-
-        elif isinstance(metadata, SingleTableMetadata):
+        else:
             warnings.warn(DEPRECATION_MSG, FutureWarning)
+            self._table_name = Metadata.DEFAULT_SINGLE_TABLE_NAME
+            self.metadata = Metadata.load_from_dict(metadata.to_dict(), self._table_name)
+            self.metadata.tables[self._table_name]._updated = metadata._updated
 
-        self._validate_inputs(enforce_min_max_values, enforce_rounding)
         self.metadata.validate()
         self._check_metadata_updated()
+
+        # Points to a metadata object that conserves the initialized status of the synthesizer
+        self._original_metadata = deepcopy(self.metadata)
+
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
         self.locales = locales
         self._data_processor = DataProcessor(
-            metadata=self.metadata,
+            metadata=self.metadata._convert_to_single_table(),
             enforce_rounding=self.enforce_rounding,
             enforce_min_max_values=self.enforce_min_max_values,
             locales=self.locales,
         )
+        self._constraint_col_formatters = {}  # Formatters for columns dropped by constraints
         self._validate_regex_format()
         self._original_columns = pd.Index([])
         self._fitted = False
@@ -185,7 +208,10 @@ class BaseSynthesizer:
         """Validate that the data follows the metadata."""
         errors = []
         try:
-            self.metadata.validate_data(data)
+            if isinstance(self.metadata, Metadata):
+                self.metadata.validate_data({self._table_name: data})
+            else:
+                self.metadata.validate_data(data)
         except InvalidDataError as error:
             errors += error.errors
 
@@ -210,16 +236,11 @@ class BaseSynthesizer:
         """
         return []
 
-    def _validate_primary_key(self, data):
-        primary_key = self.metadata.primary_key
-        is_int = primary_key and pd.api.types.is_integer_dtype(data[primary_key])
-        regex = self.metadata.columns.get(primary_key, {}).get('regex_format')
-        if is_int and regex:
-            possible_characters = get_possible_chars(regex, 1)
-            if '0' in possible_characters:
-                raise SynthesizerInputError(
-                    f'Primary key "{primary_key}" {INT_REGEX_ZERO_ERROR_MESSAGE}'
-                )
+    def _get_table_metadata(self):
+        if isinstance(self.metadata, Metadata):
+            return self.metadata.tables.get(self._table_name, SingleTableMetadata())
+
+        return self.metadata
 
     def validate(self, data):
         """Validate data.
@@ -242,7 +263,6 @@ class BaseSynthesizer:
                     * values of a column don't satisfy their sdtype
         """
         self._validate_metadata(data)
-        self._validate_primary_key(data)
         self._validate_constraints(data)
 
         # Retaining the logic of returning errors and raising them here to maintain consistency
@@ -252,8 +272,8 @@ class BaseSynthesizer:
             raise InvalidDataError(synthesizer_errors)
 
     def _validate_transformers(self, column_name_to_transformer):
-        primary_and_alternate_keys = self.metadata._get_primary_and_alternate_keys()
-        sequence_keys = self.metadata._get_set_of_sequence_keys()
+        primary_and_alternate_keys = self._get_table_metadata()._get_primary_and_alternate_keys()
+        sequence_keys = self._get_table_metadata()._get_set_of_sequence_keys()
         keys = primary_and_alternate_keys | sequence_keys
         for column, transformer in column_name_to_transformer.items():
             if transformer is None:
@@ -278,8 +298,9 @@ class BaseSynthesizer:
             column_name_to_transformer (dict):
                 Dict mapping column names to transformers to be used for that column.
         """
+        table_metadata = self._get_table_metadata()
         for column in column_name_to_transformer:
-            sdtype = self.metadata.columns.get(column, {}).get('sdtype')
+            sdtype = table_metadata.columns.get(column, {}).get('sdtype')
             if sdtype in {'categorical', 'boolean'}:
                 warnings.warn(
                     f"Replacing the default transformer for column '{column}' "
@@ -329,9 +350,25 @@ class BaseSynthesizer:
 
         return instantiated_parameters
 
-    def get_metadata(self):
-        """Return the ``Metadata`` for this synthesizer."""
+    def get_metadata(self, version='original'):
+        """Get the metadata, either original or modified after applying CAG patterns.
+
+        Args:
+            version (str, optional):
+                The version of metadata to return, must be one of 'original' or 'modified'. If
+                'original', will return the original metadata used to instantiate the
+                synthesizer. If 'modified', will return the modified metadata after applying this
+                synthesizer's CAG patterns. Defaults to 'original'.
+        """
+        if version not in ('original', 'modified'):
+            raise ValueError(
+                f"Unrecognized version '{version}', please use 'original' or 'modified'."
+            )
+
         table_name = getattr(self, '_table_name', None)
+        if hasattr(self, '_original_metadata') and version == 'original':
+            return Metadata.load_from_dict(self._original_metadata.to_dict(), table_name)
+
         return Metadata.load_from_dict(self.metadata.to_dict(), table_name)
 
     def load_custom_constraint_classes(self, filepath, class_names):
@@ -383,6 +420,10 @@ class BaseSynthesizer:
         """
         return self._data_processor.get_constraints()
 
+    def _validate_transform_constraints(self, data):
+        """Helper method to transform the data for the constraints."""
+        return data
+
     def auto_assign_transformers(self, data):
         """Automatically assign the required transformers for the given data and constraints.
 
@@ -394,6 +435,7 @@ class BaseSynthesizer:
                 The raw data (before any transformations) that will be used to fit the model.
         """
         self.validate(data)
+        data = self._validate_transform_constraints(data)
         self._data_processor.prepare_for_fitting(data)
 
     def get_transformers(self):
@@ -414,9 +456,10 @@ class BaseSynthesizer:
             )
 
         # Order the output to match metadata
+        table_metadata = self._get_table_metadata()
         ordered_field_transformers = {
             column_name: field_transformers.get(column_name)
-            for column_name in self.metadata.columns
+            for column_name in table_metadata.columns
             if column_name in field_transformers
         }
 
@@ -449,8 +492,47 @@ class BaseSynthesizer:
 
         return info
 
+    def _fit_constraint_column_formatters(self, data):
+        """Fit formatters for columns that are dropped by constraints before data processing."""
+        self._constraint_col_formatters = {}
+        primary_key = self.metadata.tables[self._table_name].primary_key
+        input_columns = self._original_metadata.get_column_names()
+        columns_to_format = set(input_columns) - set(self.metadata.get_column_names())
+        for column_name in columns_to_format:
+            column_metadata = self._original_metadata.tables[self._table_name].columns.get(
+                column_name
+            )
+            sdtype = column_metadata.get('sdtype')
+            if sdtype == 'numerical' and column_name != primary_key:
+                representation = column_metadata.get('computer_representation', 'Float')
+                self._constraint_col_formatters[column_name] = NumericalFormatter(
+                    enforce_rounding=self.enforce_rounding,
+                    enforce_min_max_values=self.enforce_min_max_values,
+                    computer_representation=representation,
+                )
+                self._constraint_col_formatters[column_name].learn_format(data[column_name])
+
+            elif sdtype == 'datetime' and column_name != primary_key:
+                datetime_format = column_metadata.get('datetime_format')
+                self._constraint_col_formatters[column_name] = DatetimeFormatter(
+                    datetime_format=datetime_format
+                )
+                self._constraint_col_formatters[column_name].learn_format(data[column_name])
+
+    def _format_constraint_columns(self, data):
+        """Format columns skipped by the data processor due to being dropped by constraints."""
+        column_order = [
+            column for column in self._original_metadata.get_column_names() if column in data
+        ]
+        for column_name, dtype in self._constraint_col_formatters.items():
+            column_data = data[column_name]
+            data[column_name] = self._constraint_col_formatters[column_name].format_data(
+                column_data
+            )
+
+        return data[column_order]
+
     def _preprocess(self, data):
-        self.validate(data)
         self._data_processor.fit(data)
         return self._data_processor.transform(data)
 
@@ -464,6 +546,23 @@ class BaseSynthesizer:
 
         return False
 
+    def _preprocess_helper(self, data):
+        """Preprocess helper method.
+
+        This method:
+        - Validate the data
+        - Warn the user if the model has already been fitted
+        - Store the original columns and convert them to string if needed
+        """
+        self.validate(data)
+        if self._fitted:
+            warnings.warn(
+                'This model has already been fitted. To use the new preprocessed data, '
+                "please refit the model using 'fit' or 'fit_processed_data'."
+            )
+
+        return data
+
     def preprocess(self, data):
         """Transform the raw data to numerical space.
 
@@ -475,16 +574,9 @@ class BaseSynthesizer:
             pandas.DataFrame:
                 The preprocessed data.
         """
-        if self._fitted:
-            warnings.warn(
-                'This model has already been fitted. To use the new preprocessed data, '
-                "please refit the model using 'fit' or 'fit_processed_data'."
-            )
-
         is_converted = self._store_and_convert_original_cols(data)
-
+        data = self._preprocess_helper(data)
         preprocess_data = self._preprocess(data)
-
         if is_converted:
             data.columns = self._original_columns
 
@@ -543,12 +635,16 @@ class BaseSynthesizer:
         })
 
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
-        self._check_original_metadata_updated()
+        self._check_input_metadata_updated()
         self._fitted = False
         self._data_processor.reset_sampling()
         self._random_state_set = False
+        is_converted = self._store_and_convert_original_cols(data)
+        self._fit_constraint_column_formatters(data)
         processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)
+        if is_converted:
+            data.columns = self._original_columns
 
     def _validate_fit_before_save(self):
         """Validate that the synthesizer has been fitted before saving."""
@@ -629,6 +725,175 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
     The ``BaseSingleTableSynthesizer`` class defines the common sampling methods
     for all single-table synthesizers.
     """
+
+    def __init__(
+        self,
+        metadata,
+        enforce_min_max_values=True,
+        enforce_rounding=True,
+        locales=['en_US'],
+    ):
+        super().__init__(metadata, enforce_min_max_values, enforce_rounding, locales)
+        self._chained_patterns = []  # chain of patterns used to preprocess the data
+        self._reject_sampling_patterns = []  # patterns used only for reject sampling
+        self._constraints_fitted = False
+
+    def _validate_cag_single_table(self, patterns):
+        """Check if the CAG patterns are single table.
+
+        Args:
+            patterns (list):
+                A list of CAG patterns to check.
+
+        Raises:
+            PatternNotMetError:
+                Raised if the pattern is not compatible with the metadata.
+        """
+        if not isinstance(patterns, list):
+            raise SynthesizerInputError('`patterns` must be a list.')
+
+        for pattern in patterns:
+            if pattern._is_single_table is False:
+                raise SynthesizerInputError(
+                    f'Pattern `{pattern.__class__.__name__}` is not compatible with the '
+                    'single-table synthesizers.'
+                )
+
+    def add_cag(self, patterns):
+        """Add the list of constraint-augmented generation patterns to the synthesizer.
+
+        Args:
+            patterns (list):
+                A list of CAG patterns to apply to the synthesizer.
+        """
+        self._validate_cag_single_table(patterns)
+        for pattern in patterns:
+            if isinstance(pattern, ProgrammableConstraint):
+                pattern = ProgrammableConstraintHarness(pattern)
+
+            try:
+                self.metadata = pattern.get_updated_metadata(self.metadata)
+                self._chained_patterns.append(pattern)
+                self._constraints_fitted = False
+            except PatternNotMetError as e:
+                LOGGER.info(
+                    'Enforcing pattern %s using reject sampling.', pattern.__class__.__name__
+                )
+
+                try:
+                    pattern.get_updated_metadata(self._original_metadata)
+                    self._reject_sampling_patterns.append(pattern)
+                except PatternNotMetError:
+                    raise e
+
+        self._data_processor = DataProcessor(
+            metadata=self.metadata._convert_to_single_table(),
+            enforce_rounding=self.enforce_rounding,
+            enforce_min_max_values=self.enforce_min_max_values,
+            locales=self.locales,
+        )
+
+    def get_cag(self):
+        """Get a list of constraint-augmented generation patterns applied to the synthesizer."""
+        patterns = []
+        for pattern in self._chained_patterns + self._reject_sampling_patterns:
+            if isinstance(pattern, ProgrammableConstraintHarness):
+                patterns.append(deepcopy(pattern.programmable_constraint))
+            else:
+                patterns.append(deepcopy(pattern))
+
+        return patterns
+
+    def validate_cag(self, synthetic_data):
+        """Validate synthetic_data against the CAG patterns.
+
+        Args:
+            synthetic_data (pd.DataFrame): The synthetic data to validate
+
+        Raises:
+            PatternNotMetError:
+                Raised if synthetic data does not match CAG patterns.
+        """
+        transformed_data = synthetic_data
+        for attribute in ['_reject_sampling_patterns', '_chained_patterns']:
+            for pattern in getattr(self, attribute, []):
+                if attribute == '_reject_sampling_patterns':
+                    valid = pattern.is_valid(data=synthetic_data)
+                else:
+                    valid = pattern.is_valid(data=transformed_data)
+
+                if not valid.all():
+                    invalid_rows_str = _get_invalid_rows(valid)
+                    pattern_name = _convert_to_snake_case(pattern.__class__.__name__)
+                    pattern_name = pattern_name.replace('_', ' ')
+                    msg = f'The {pattern_name} requirement is not met '
+                    msg += f'for row indices: {invalid_rows_str}.'
+                    raise PatternNotMetError(msg)
+                elif attribute == '_chained_patterns':
+                    transformed_data = pattern.transform(data=transformed_data)
+
+    def _validate_transform_constraints(self, data, enforce_constraint_fitting=False):
+        """Validate the data against the constraints and transform it.
+
+        If the constraints are already fitted, it will only transform the data.
+        If not, it will fit the constraints and then transform the data.
+        The constraints validation is done during the fitting process.
+
+        Args:
+            data (pandas.DataFrame):
+                The data to validate.
+            enforce_constraint_fitting (bool):
+                Whether to enforce fitting the constraints again. If set to ``True``, the
+                constraints will be fitted again even if they have already been fitted.
+                Defaults to ``False``.
+        """
+        if self._constraints_fitted and not enforce_constraint_fitting:
+            for pattern in self._chained_patterns:
+                data = pattern.transform(data)
+
+            return data
+
+        metadata = getattr(self, '_original_metadata', self.metadata)
+        if hasattr(self, '_reject_sampling_patterns'):
+            for pattern in self._reject_sampling_patterns:
+                pattern.fit(data=data, metadata=self._original_metadata)
+
+        if hasattr(self, '_chained_patterns'):
+            for pattern in self._chained_patterns:
+                pattern.fit(data=data, metadata=metadata)
+                metadata = pattern.get_updated_metadata(metadata)
+                data = pattern.transform(data)
+
+        self._constraints_fitted = True
+        return data
+
+    def validate(self, data):
+        """Validate data.
+
+        This method will validate the data against:
+        - The metadata
+        - The constraints
+        - The CAG patterns
+
+        To make it work with the cags we temporarily set the metadata to the original one
+        and then restore it.
+
+        Args:
+            data (pandas.DataFrame):
+                The data to validate.
+        """
+        metadata = self.metadata
+        self.metadata = self._original_metadata
+
+        super().validate(data)
+        self._validate_transform_constraints(data, enforce_constraint_fitting=True)
+        self.metadata = metadata
+
+    def _preprocess_helper(self, data):
+        data = super()._preprocess_helper(data)
+        data = self._validate_transform_constraints(data)
+
+        return data
 
     def _set_random_state(self, random_state):
         """Set the random state of the model's random number generator.
@@ -732,7 +997,21 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     raw_sampled = self._sample(num_rows, transformed_conditions)
                 except NotImplementedError:
                     raw_sampled = self._sample(num_rows)
-            sampled = self._data_processor.reverse_transform(raw_sampled)
+            sampled = self._data_processor.reverse_transform(raw_sampled, conditions=conditions)
+
+            if hasattr(self, '_chained_patterns') and hasattr(self, '_reject_sampling_patterns'):
+                for pattern in reversed(self._chained_patterns):
+                    sampled = pattern.reverse_transform(sampled)
+                    valid_rows = pattern.is_valid(sampled)
+                    sampled = sampled[valid_rows]
+
+                for pattern in reversed(self._reject_sampling_patterns):
+                    valid_rows = pattern.is_valid(sampled)
+                    sampled = sampled[valid_rows]
+
+            if getattr(self, '_constraint_col_formatters', False):
+                sampled = self._format_constraint_columns(sampled)
+
             if keep_extra_columns:
                 input_columns = self._data_processor._hyper_transformer._input_columns
                 missing_cols = list(
@@ -1019,7 +1298,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 ' sampling synthetic data.'
             )
 
-        self._check_original_metadata_updated()
+        self._check_input_metadata_updated()
         sample_timestamp = datetime.datetime.now()
         has_constraints = bool(self._data_processor._constraints)
         has_batches = batch_size is not None and batch_size != num_rows
@@ -1048,6 +1327,19 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         })
 
         return sampled_data
+
+    def _transform_conditions_chained_constraints(self, condition_df):
+        try:
+            transformed_condition = self._validate_transform_constraints(condition_df)
+            transformed_condition = self._data_processor.transform(
+                transformed_condition, is_condition=True
+            )
+        except PatternNotMetError:
+            raise PatternNotMetError('Provided conditions are not valid for the given constraints.')
+        except Exception:
+            transformed_condition = self._data_processor.transform(condition_df, is_condition=True)
+
+        return transformed_condition
 
     def _sample_with_conditions(
         self, conditions, max_tries_per_batch, batch_size, progress_bar=None, output_file_path=None
@@ -1092,14 +1384,17 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
             condition = dict(zip(condition_columns, group))
             condition_df = dataframe.iloc[0].to_frame().T
-            try:
-                transformed_condition = self._data_processor.transform(
-                    condition_df, is_condition=True
-                )
-            except ConstraintsNotMetError as error:
-                raise ConstraintsNotMetError(
-                    'Provided conditions are not valid for the given constraints.'
-                ) from error
+            if hasattr(self, '_chained_patterns'):
+                transformed_condition = self._transform_conditions_chained_constraints(condition_df)
+            else:
+                try:
+                    transformed_condition = self._data_processor.transform(
+                        condition_df, is_condition=True
+                    )
+                except ConstraintsNotMetError as error:
+                    raise ConstraintsNotMetError(
+                        'Provided conditions are not valid for the given constraints.'
+                    ) from error
 
             transformed_conditions = pd.concat(
                 [transformed_condition] * len(dataframe), ignore_index=True
@@ -1153,11 +1448,23 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
     def _validate_conditions_unseen_columns(self, conditions):
         """Validate the user-passed conditions."""
         for column in conditions.columns:
-            if column not in self._data_processor.get_sdtypes():
-                raise ValueError(
-                    f"Unexpected column name '{column}'. "
-                    f'Use a column name that was present in the original data.'
-                )
+            if hasattr(self, '_original_metadata'):
+                if column not in self._original_metadata.tables[self._table_name].columns:
+                    raise ValueError(
+                        f"Unexpected column name '{column}'. "
+                        'Use a column name that was present in the original data.'
+                    )
+                if column == self._original_metadata.tables[self._table_name].primary_key:
+                    raise ValueError(
+                        f"Cannot condtionally sample column name '{column}' because it is "
+                        'the primary key.'
+                    )
+            else:
+                if column not in self._data_processor.get_sdtypes():
+                    raise ValueError(
+                        f"Unexpected column name '{column}'. "
+                        f'Use a column name that was present in the original data.'
+                    )
 
     @staticmethod
     def _raise_condition_with_nans():
