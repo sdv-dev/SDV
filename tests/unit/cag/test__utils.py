@@ -2,7 +2,7 @@
 
 import re
 import warnings
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import pytest
 
@@ -13,10 +13,12 @@ from sdv.cag._utils import (
     _is_list_of_type,
     _remove_columns_from_metadata,
     _validate_constraints,
+    _validate_constraints_single_table,
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
 )
 from sdv.cag.base import BaseConstraint
+from sdv.errors import SynthesizerInputError
 from sdv.metadata.metadata import Metadata
 
 
@@ -293,3 +295,32 @@ def test__validate_constraints(mock_filter_old_style_constraints):
 
     with pytest.warns(UserWarning, match=expected_warning):
         _validate_constraints(constraints=[constraint_1], synthesizer_fitted=True)
+
+
+@patch('sdv.cag._utils._validate_constraints')
+def test__validate_constraints_single_table(mock_validate_constraints):
+    """Test the ``_validate_constraints_single_table`` method"""
+    # Setup
+    constraint_1 = Mock()
+    constraint_1._is_single_table = True
+    constraint_2 = Mock()
+    constraint_2.__class__.__name__ = 'Constraint_Name'
+    constraint_2._is_single_table = False
+    expected_err_multi_table = re.escape(
+        'Constraint `Constraint_Name` is not compatible with the single-table synthesizers.'
+    )
+    mock_validate_constraints.side_effect = lambda constraints, _fitted: constraints
+
+    # Run
+    result = _validate_constraints_single_table(constraints=[constraint_1], synthesizer_fitted=True)
+    with pytest.raises(SynthesizerInputError, match=expected_err_multi_table):
+        _validate_constraints_single_table(
+            constraints=[constraint_1, constraint_2], synthesizer_fitted=False
+        )
+
+    # Assert
+    assert result == [constraint_1]
+    mock_validate_constraints.assert_has_calls([
+        call([constraint_1], True),
+        call([constraint_1, constraint_2], False),
+    ])

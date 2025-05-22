@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from sdv.cag._errors import ConstraintNotMetError
+from sdv.errors import SynthesizerInputError
 from sdv.metadata import Metadata
 
 
@@ -188,3 +189,21 @@ def _validate_constraints(constraints, synthesizer_fitted):
         )
 
     return _filter_old_style_constraints(constraints)
+
+
+def _validate_constraints_single_table(constraints, synthesizer_fitted):
+    """Check if the constraints are single table.
+
+    Args:
+        constraints (list):
+            A list of constraints to check.
+    """
+    constraints = _validate_constraints(constraints, synthesizer_fitted)
+    for constraint in constraints:
+        if constraint._is_single_table is False:
+            raise SynthesizerInputError(
+                f'Constraint `{constraint.__class__.__name__}` is not compatible with the '
+                'single-table synthesizers.'
+            )
+
+    return constraints

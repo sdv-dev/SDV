@@ -43,7 +43,7 @@ from sdv.single_table.base import COND_IDX, BaseSingleTableSynthesizer, BaseSynt
 from tests.utils import catch_sdv_logs
 
 
-class TestBaseSingleTableSynthesizer:
+class TestBaseSynthesizer:
     def test__update_default_transformers(self):
         """Test that ``instance._data_processor._update_transformers_by_sdtypes`` is called.
 
@@ -55,7 +55,7 @@ class TestBaseSingleTableSynthesizer:
         instance._model_sdtype_transformers = {'categorical': None, 'numerical': 'FloatTransformer'}
 
         # Run
-        BaseSingleTableSynthesizer._update_default_transformers(instance)
+        BaseSynthesizer._update_default_transformers(instance)
 
         # Assert
         call_list = instance._data_processor._update_transformers_by_sdtypes.call_args_list
@@ -75,7 +75,7 @@ class TestBaseSingleTableSynthesizer:
             ' in future SDV versions.'
         )
         with pytest.warns(UserWarning, match=expected_message):
-            BaseSingleTableSynthesizer._check_metadata_updated(instance)
+            BaseSynthesizer._check_metadata_updated(instance)
 
         # Assert
         instance.metadata._reset_updated_flag.assert_called_once_with()
@@ -96,7 +96,7 @@ class TestBaseSingleTableSynthesizer:
             ' in future SDV versions.'
         )
         with pytest.warns(UserWarning, match=expected_message):
-            BaseSingleTableSynthesizer._check_metadata_updated(instance)
+            BaseSynthesizer._check_metadata_updated(instance)
 
         # Assert
         instance.metadata._reset_updated_flag.assert_called_once_with()
@@ -180,7 +180,7 @@ class TestBaseSingleTableSynthesizer:
         instance._table_name = 'table_1'
 
         # Run
-        BaseSingleTableSynthesizer._validate_regex_format(instance)
+        BaseSynthesizer._validate_regex_format(instance)
 
         # Assert
         mock_check_regex_format.assert_has_calls([
@@ -192,8 +192,8 @@ class TestBaseSingleTableSynthesizer:
     @patch('sdv.single_table.base.datetime')
     @patch('sdv.single_table.base.generate_synthesizer_id')
     @patch('sdv.single_table.base.DataProcessor')
-    @patch('sdv.single_table.base.BaseSingleTableSynthesizer._check_metadata_updated')
-    @patch('sdv.single_table.base.BaseSingleTableSynthesizer._validate_regex_format')
+    @patch('sdv.single_table.base.BaseSynthesizer._check_metadata_updated')
+    @patch('sdv.single_table.base.BaseSynthesizer._validate_regex_format')
     def test___init___l(
         self,
         mock_validate_regex_format,
@@ -206,13 +206,13 @@ class TestBaseSingleTableSynthesizer:
         """Test instantiating with default values."""
         # Setup
         metadata = Metadata()
-        synthesizer_id = 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+        synthesizer_id = 'BaseSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
         mock_generate_synthesizer_id.return_value = synthesizer_id
         mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
 
         # Run
-        with catch_sdv_logs(caplog, logging.INFO, logger='SingleTableSynthesizer'):
-            instance = BaseSingleTableSynthesizer(metadata)
+        with catch_sdv_logs(caplog, logging.INFO, logger='BaseSynthesizer'):
+            instance = BaseSynthesizer(metadata)
 
         # Assert
         assert instance.enforce_min_max_values is True
@@ -238,8 +238,8 @@ class TestBaseSingleTableSynthesizer:
         assert caplog.messages[0] == str({
             'EVENT': 'Instance',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',
-            'SYNTHESIZER CLASS NAME': 'BaseSingleTableSynthesizer',
-            'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            'SYNTHESIZER CLASS NAME': 'BaseSynthesizer',
+            'SYNTHESIZER ID': 'BaseSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         })
 
     def test__init__with_old_metadata_future_warning(self):
@@ -264,7 +264,7 @@ class TestBaseSingleTableSynthesizer:
         )
         # Run
         with pytest.warns(FutureWarning, match=warn_msg):
-            instance = BaseSingleTableSynthesizer(metadata)
+            instance = BaseSynthesizer(metadata)
 
         # Assert
         assert isinstance(instance._input_metadata, SingleTableMetadata)
@@ -304,13 +304,13 @@ class TestBaseSingleTableSynthesizer:
         })
 
         # Run and Assert
-        BaseSingleTableSynthesizer(metadata)
+        BaseSynthesizer(metadata)
         error_msg = re.escape(
             'Metadata contains more than one table, use a MultiTableSynthesizer instead.'
         )
 
         with pytest.raises(InvalidMetadataError, match=error_msg):
-            BaseSingleTableSynthesizer(multi_metadata)
+            BaseSynthesizer(multi_metadata)
 
     @patch('sdv.single_table.base.DataProcessor')
     def test___init__custom(self, mock_data_processor):
@@ -319,7 +319,7 @@ class TestBaseSingleTableSynthesizer:
         metadata = Metadata()
 
         # Run
-        instance = BaseSingleTableSynthesizer(
+        instance = BaseSynthesizer(
             metadata, enforce_min_max_values=False, enforce_rounding=False, locales='en_CA'
         )
 
@@ -343,7 +343,7 @@ class TestBaseSingleTableSynthesizer:
             ' Please provide True or False.'
         )
         with pytest.raises(SynthesizerInputError, match=err_msg):
-            BaseSingleTableSynthesizer(Metadata(), enforce_min_max_values='invalid')
+            BaseSynthesizer(Metadata(), enforce_min_max_values='invalid')
 
     def test___init__invalid_enforce_rounding(self):
         """Test it crashes when ``enforce_rounding`` is not a boolean."""
@@ -353,12 +353,12 @@ class TestBaseSingleTableSynthesizer:
             ' Please provide True or False.'
         )
         with pytest.raises(SynthesizerInputError, match=err_msg):
-            BaseSingleTableSynthesizer(Metadata(), enforce_rounding='invalid')
+            BaseSynthesizer(Metadata(), enforce_rounding='invalid')
 
     def test_set_address_columns_warning(self):
         """Test ``set_address_columns`` method when the synthesizer has been fitted."""
         # Setup
-        synthesizer = BaseSingleTableSynthesizer(Metadata())
+        synthesizer = BaseSynthesizer(Metadata())
 
         # Run and Assert
         expected_message = re.escape(
@@ -374,7 +374,7 @@ class TestBaseSingleTableSynthesizer:
         """Test that it returns every ``init`` parameter without the ``metadata``."""
         # Setup
         metadata = Metadata()
-        instance = BaseSingleTableSynthesizer(
+        instance = BaseSynthesizer(
             metadata, enforce_min_max_values=False, enforce_rounding=False, locales='en_CA'
         )
 
@@ -393,389 +393,13 @@ class TestBaseSingleTableSynthesizer:
         """Test that it returns the ``metadata`` object."""
         # Setup
         metadata = Metadata()
-        instance = BaseSingleTableSynthesizer(
-            metadata, enforce_min_max_values=False, enforce_rounding=False
-        )
+        instance = BaseSynthesizer(metadata, enforce_min_max_values=False, enforce_rounding=False)
 
         # Run
         result = instance.get_metadata()
 
         # Assert
         assert result.to_dict() == metadata.to_dict()
-
-    def test_auto_assign_transformers(self):
-        """Test that the ``DataProcessor.prepare_for_fitting`` is being called."""
-        # Setup
-        instance = Mock()
-        data = pd.DataFrame({'name': ['John', 'Doe', 'Johanna'], 'salary': [80.0, 90.0, 120.0]})
-        instance._validate_transform_constraints = Mock(return_value=data)
-
-        # Run
-        BaseSingleTableSynthesizer.auto_assign_transformers(instance, data)
-
-        # Assert
-        instance.validate.assert_called_once_with(data)
-        instance._validate_transform_constraints.assert_called_once_with(data)
-        instance._data_processor.prepare_for_fitting.assert_called_once_with(data)
-
-    def test_auto_assign_transformers_with_invalid_data(self):
-        """Test that auto_assign_transformer throws useful error about invalid data"""
-        # Setup
-        metadata = Metadata.load_from_dict({
-            'columns': {
-                'a': {'sdtype': 'categorical'},
-            }
-        })
-        synthesizer = GaussianCopulaSynthesizer(metadata)
-        # input data that does not match the metadata
-        data = pd.DataFrame({'b': list(np.random.choice(['M', 'F'], size=10))})
-        error_msg = re.escape(
-            'The provided data does not match the metadata:\n'
-            'Errors in table:\n'
-            "Error: The columns ['b'] are not present in the metadata.\n"
-            "Error: The metadata columns ['a'] are not present in the data."
-        )
-
-        # Run and Assert
-        with pytest.raises(InvalidDataError, match=error_msg):
-            synthesizer.auto_assign_transformers(data)
-
-    def test_get_transformers(self):
-        """Test that this returns the field transformers from the ``HyperTransformer``."""
-        # Setup
-        instance = Mock()
-        instance._data_processor._hyper_transformer.field_transformers = {
-            'name': 'FrequencyEncoder',
-            'salary': 'FloatFormatter',
-            'salary#name': 'LabelEncoder',
-            'address': None,
-        }
-        instance._get_table_metadata.return_value.columns = {
-            'salary': {'sdtype': 'numerical'},
-            'name': {'sdtype': 'categorical'},
-            'address': {'sdtype': 'address'},
-        }
-
-        # Run
-        result = BaseSingleTableSynthesizer.get_transformers(instance)
-
-        # Assert
-        assert result == {
-            'salary': 'FloatFormatter',
-            'name': 'FrequencyEncoder',
-            'address': None,
-            'salary#name': 'LabelEncoder',
-        }
-
-    def test_get_transformers_with_columns_dropped_by_constraint(self):
-        """Test that this returns the transformers that are within the ``field_transformers``."""
-        # Setup
-        instance = Mock()
-        instance._data_processor._hyper_transformer.field_transformers = {
-            'salary#name': 'LabelEncoder',
-            'address': None,
-        }
-        instance._get_table_metadata.return_value.columns = {
-            'salary': {'sdtype': 'numerical'},
-            'name': {'sdtype': 'categorical'},
-            'address': {'sdtype': 'address'},
-        }
-
-        # Run
-        result = BaseSingleTableSynthesizer.get_transformers(instance)
-
-        # Assert
-        assert result == {'address': None, 'salary#name': 'LabelEncoder'}
-
-    def test_get_transformers_raises_an_error(self):
-        """Test that this raises an error when there are no field transformers."""
-        # Setup
-        instance = Mock()
-        instance._data_processor._hyper_transformer.field_transformers = {}
-
-        # Run and Assert
-        error_msg = re.escape(
-            "No transformers were returned in 'get_transformers'. Use "
-            "'auto_assign_transformers' or 'fit' to create them."
-        )
-        with pytest.raises(ValueError, match=error_msg):
-            BaseSingleTableSynthesizer.get_transformers(instance)
-
-    @patch('sdv.single_table.base.warnings')
-    def test__preprocess_helper_basesynthesizer(self, mock_warnings):
-        """Test the ``_preprocess_helper`` method of the ``BaseSynthesizer``."""
-        # Setup
-        instance = Mock()
-        instance._fitted = True
-        data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
-
-        # Run
-        result = BaseSynthesizer._preprocess_helper(instance, data)
-
-        # Assert
-        expected_warning = (
-            'This model has already been fitted. To use the new preprocessed data, please '
-            "refit the model using 'fit' or 'fit_processed_data'."
-        )
-        mock_warnings.warn.assert_called_once_with(expected_warning)
-        instance.validate.assert_called_once_with(data)
-        pd.testing.assert_frame_equal(result, data)
-
-    @patch.object(BaseSynthesizer, '_preprocess_helper')
-    def test__preprocess_helper(self, mock_preprocess_helper):
-        """Test the ``_preprocess_helper`` method."""
-        # Setup
-        metadata = Metadata().load_from_dict({
-            'tables': {
-                'table': {
-                    'columns': {
-                        'name': {'sdtype': 'id'},
-                    },
-                },
-            },
-        })
-        instance = BaseSingleTableSynthesizer(metadata)
-        data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
-        instance._validate_transform_constraints = Mock(return_value=data)
-        mock_preprocess_helper.return_value = data
-
-        # Run
-        result = instance._preprocess_helper(data)
-
-        # Assert
-        pd.testing.assert_frame_equal(result, data)
-        instance._validate_transform_constraints.assert_called_once_with(data)
-
-    def test__preprocess(self):
-        """Test the method preprocesses the data.
-
-        The method calls the ``validate`` function with the data, then fits the
-        ``instance._data_processor`` and returns the output of the transformation.
-        """
-        # Setup
-        instance = Mock()
-        instance._fitted = True
-        data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
-
-        # Run
-        result = BaseSingleTableSynthesizer._preprocess(instance, data)
-
-        # Assert
-        assert result == instance._data_processor.transform.return_value
-        instance._data_processor.fit.assert_called_once()
-        pd.testing.assert_frame_equal(data, instance._data_processor.fit.call_args_list[0][0][0])
-        pd.testing.assert_frame_equal(
-            data, instance._data_processor.transform.call_args_list[0][0][0]
-        )
-
-    def test_preprocess(self):
-        """Test the preprocess method."""
-        # Setup
-        instance = Mock()
-        instance._fitted = True
-        data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
-        instance._preprocess_helper.return_value = data
-        instance._store_and_convert_original_cols = Mock(return_value=False)
-        instance._preprocess.return_value = data
-
-        # Run
-        result = BaseSingleTableSynthesizer.preprocess(instance, data)
-
-        # Assert
-        instance._store_and_convert_original_cols.assert_called_once_with(data)
-        instance._preprocess_helper.assert_called_once_with(data)
-        instance._preprocess.assert_called_once_with(data)
-        pd.testing.assert_frame_equal(result, data)
-
-    def test_preprocess_int_columns(self):
-        """Test the preprocess method.
-
-        Ensure that data with column names as integers are not changed by
-        preprocess.
-        """
-        # Setup
-        metadata = Metadata().load_from_dict({
-            'tables': {
-                'table': {
-                    'columns': {
-                        1: {'sdtype': 'id'},
-                        2: {'sdtype': 'id'},
-                        'str': {'sdtype': 'id'},
-                    },
-                },
-            },
-        })
-        instance = BaseSingleTableSynthesizer(metadata)
-        instance._fitted = False
-        instance._original_columns = pd.Index([1, 2, 'str'])
-        data = pd.DataFrame({
-            1: ['John', 'Doe', 'John Doe'],
-            2: ['John', 'Doe', 'John Doe'],
-            'str': ['John', 'Doe', 'John Doe'],
-        })
-
-        # Run
-        instance.preprocess(data)
-
-        # Assert
-        corrected_frame = pd.DataFrame({
-            1: ['John', 'Doe', 'John Doe'],
-            2: ['John', 'Doe', 'John Doe'],
-            'str': ['John', 'Doe', 'John Doe'],
-        })
-
-        pd.testing.assert_frame_equal(data, corrected_frame)
-
-    @patch('sdv.single_table.base.DataProcessor')
-    def test__fit(self, mock_data_processor):
-        """Test that ``NotImplementedError`` is being raised."""
-        # Setup
-        metadata = Metadata()
-        metadata.add_table('table')
-        metadata.add_column('key', 'table', sdtype='id')
-        data = Mock()
-        instance = BaseSingleTableSynthesizer(metadata)
-
-        # Run and Assert
-        with pytest.raises(NotImplementedError, match=''):
-            instance._fit(data)
-
-    @patch('sdv.single_table.base.datetime')
-    def test_fit_processed_data(self, mock_datetime, caplog):
-        """Test that ``fit_processed_data`` calls the ``_fit``."""
-        # Setup
-        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
-        instance = Mock(
-            _fitted_sdv_version=None,
-            _fitted_sdv_enterprise_version=None,
-            _synthesizer_id='BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
-        )
-        processed_data = pd.DataFrame({'column_a': [1, 2, 3]})
-
-        # Run
-        with catch_sdv_logs(caplog, logging.INFO, 'SingleTableSynthesizer'):
-            BaseSingleTableSynthesizer.fit_processed_data(instance, processed_data)
-
-        # Assert
-        instance._fit.assert_called_once_with(processed_data)
-        assert caplog.messages[0] == str({
-            'EVENT': 'Fit processed data',
-            'TIMESTAMP': '2024-04-19 16:20:10.037183',
-            'SYNTHESIZER CLASS NAME': 'Mock',
-            'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
-            'TOTAL NUMBER OF TABLES': 1,
-            'TOTAL NUMBER OF ROWS': 3,
-            'TOTAL NUMBER OF COLUMNS': 1,
-        })
-
-    def test_fit_processed_data_raises_version_error(self):
-        """Test that ``fit`` raises ``VersionError``
-
-        When attempting to refit a model that was created on a previous version of the software
-        this will raise an error.
-        """
-        # Setup
-        instance = Mock(
-            _fitted_sdv_version='1.0.0',
-            _fitted_sdv_enterprise_version=None,
-        )
-        processed_data = pd.DataFrame({'column_a': [1, 2, 3]})
-        instance._random_state_set = True
-        instance._fitted = True
-
-        # Run and Assert
-        error_msg = (
-            f'You are currently on SDV version {version.public} but this synthesizer was created '
-            'on version 1.0.0. Fitting this synthesizer again is not supported. Please '
-            'create a new synthesizer.'
-        )
-        with pytest.raises(VersionError, match=error_msg):
-            BaseSingleTableSynthesizer.fit_processed_data(instance, processed_data)
-
-    @patch('sdv.single_table.base.datetime')
-    def test_fit(self, mock_datetime, caplog):
-        """Test that ``fit`` calls ``preprocess`` and the ``fit_processed_data``.
-
-        When fitting, the synthsizer has to ``preprocess`` the data and with the output
-        of this method, call the ``fit_processed_data``
-        """
-        # Setup
-        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
-        instance = Mock(
-            _fitted_sdv_version=None,
-            _fitted_sdv_enterprise_version=None,
-            _synthesizer_id='BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
-        )
-        instance._store_and_convert_original_cols.return_value = False
-        data = pd.DataFrame({'column_a': [1, 2, 3], 'name': ['John', 'Doe', 'Johanna']})
-        instance._random_state_set = True
-        instance._fitted = True
-
-        # Run
-        with catch_sdv_logs(caplog, logging.INFO, 'SingleTableSynthesizer'):
-            BaseSingleTableSynthesizer.fit(instance, data)
-
-        # Assert
-        assert instance._random_state_set is False
-        instance._fit_constraint_column_formatters.assert_called_once_with(data)
-        instance._data_processor.reset_sampling.assert_called_once_with()
-        instance.preprocess.assert_called_once_with(data)
-        instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
-        instance._check_input_metadata_updated.assert_called_once()
-        assert caplog.messages[0] == str({
-            'EVENT': 'Fit',
-            'TIMESTAMP': '2024-04-19 16:20:10.037183',
-            'SYNTHESIZER CLASS NAME': 'Mock',
-            'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
-            'TOTAL NUMBER OF TABLES': 1,
-            'TOTAL NUMBER OF ROWS': 3,
-            'TOTAL NUMBER OF COLUMNS': 2,
-        })
-
-    def test_fit_raises_version_error(self):
-        """Test that ``fit`` raises ``VersionError``
-
-        When attempting to refit a model that was created on a previous version of the software
-        this will raise an error.
-        """
-        # Setup
-        instance = Mock(
-            _fitted_sdv_version='1.0.0',
-            _fitted_sdv_enterprise_version=None,
-        )
-        data = pd.DataFrame({'column_a': [1, 2, 3]})
-        instance._random_state_set = True
-        instance._fitted = True
-
-        # Run and Assert
-        error_msg = (
-            f'You are currently on SDV version {version.public} but this synthesizer was created '
-            'on version 1.0.0. Fitting this synthesizer again is not supported. Please '
-            'create a new synthesizer.'
-        )
-        with pytest.raises(VersionError, match=error_msg):
-            BaseSingleTableSynthesizer.fit(instance, data)
-
-    def test_fit_raises_warning_if_metadata_updated(self):
-        """Test that ``fit`` raises a warning if the original metadata was updated."""
-        # Setup
-        metadata = SingleTableMetadata()
-        metadata.add_column('column_a', sdtype='numerical')
-        instance = BaseSingleTableSynthesizer(metadata)
-        instance._fit = Mock()
-
-        data = pd.DataFrame({'column_a': [1, 2, 3]})
-        instance._random_state_set = True
-        instance._fitted = True
-        metadata.update_column('column_a', sdtype='categorical')
-
-        # Run and Assert
-        warn_msg = (
-            'Your metadata has been modified. Metadata modifications cannot be applied to an '
-            'existing synthesizer. Please create a new synthesizer with the modified metadata.'
-        )
-        with pytest.warns(UserWarning, match=warn_msg):
-            instance.fit(data)
 
     def test__validate_transform_constraints(self):
         """Test the ``_validate_transform_constraints`` method."""
@@ -784,7 +408,7 @@ class TestBaseSingleTableSynthesizer:
         original_metadata = Metadata()
         metadata_1 = Metadata()
         metadata_2 = Metadata()
-        instance = BaseSingleTableSynthesizer(original_metadata)
+        instance = BaseSynthesizer(original_metadata)
         constraint_mock_1 = Mock()
         constraint_mock_1.get_updated_metadata = Mock(return_value=metadata_1)
         constraint_mock_1.transform = Mock(return_value=data)
@@ -842,7 +466,7 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         data = pd.DataFrame()
         metadata = Metadata()
-        instance = BaseSingleTableSynthesizer(metadata)
+        instance = BaseSynthesizer(metadata)
         instance._validate_metadata = Mock()
         instance._validate = Mock(return_value=[])
         instance._validate_transform_constraints = Mock()
@@ -866,7 +490,7 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         data = pd.DataFrame()
         metadata = Metadata()
-        instance = BaseSingleTableSynthesizer(metadata)
+        instance = BaseSynthesizer(metadata)
         instance._validate_metadata = Mock(return_value=[])
         instance._validate_metadata.side_effect = InvalidMetadataError(
             '\nThe provided data does not match the metadata.'
@@ -897,7 +521,7 @@ class TestBaseSingleTableSynthesizer:
         metadata.add_column('key', 'table', sdtype='id', regex_format='[0-9]{3,4}')
         metadata.add_column('info', 'table', sdtype='categorical')
         metadata.set_primary_key('key', 'table')
-        instance = BaseSingleTableSynthesizer(metadata)
+        instance = BaseSynthesizer(metadata)
 
         # Run and Assert
         message = (
@@ -920,38 +544,361 @@ class TestBaseSingleTableSynthesizer:
         metadata.add_column('key', 'table', sdtype='id', regex_format='[1-9]{3,4}')
         metadata.add_column('info', 'table', sdtype='categorical')
         metadata.set_primary_key('key', 'table')
-        instance = BaseSingleTableSynthesizer(metadata)
+        instance = BaseSynthesizer(metadata)
 
         # Run and Assert
         instance.validate(data)
 
-    @patch('sdv.single_table.base._validate_constraints')
-    def test__validate_constraints_single_table(self, mock_validate_constraints):
-        """Test the ``_validate_constraints`` method"""
+    def test_auto_assign_transformers(self):
+        """Test that the ``DataProcessor.prepare_for_fitting`` is being called."""
         # Setup
-        metadata = Metadata()
-        instance = BaseSingleTableSynthesizer(metadata)
-        expected_err_list = re.escape('`constraints` must be a list.')
-        constraint_1 = Mock()
-        constraint_1._is_single_table = True
-        constraint_2 = Mock()
-        constraint_2.__class__.__name__ = 'Constraint_Name'
-        constraint_2._is_single_table = False
-        expected_err_multi_table = re.escape(
-            'Constraint `Constraint_Name` is not compatible with the single-table synthesizers.'
-        )
-        mock_validate_constraints.side_effect = lambda constraints, _fitted: constraints
+        instance = Mock()
+        data = pd.DataFrame({'name': ['John', 'Doe', 'Johanna'], 'salary': [80.0, 90.0, 120.0]})
+        instance._validate_transform_constraints = Mock(return_value=data)
 
         # Run
-        result = instance._validate_constraints_single_table(constraints=[constraint_1])
-        with pytest.raises(SynthesizerInputError, match=expected_err_list):
-            instance._validate_constraints_single_table(constraints='constraint')
-
-        with pytest.raises(SynthesizerInputError, match=expected_err_multi_table):
-            instance._validate_constraints_single_table(constraints=[constraint_1, constraint_2])
+        BaseSynthesizer.auto_assign_transformers(instance, data)
 
         # Assert
-        assert result == [constraint_1]
+        instance.validate.assert_called_once_with(data)
+        instance._validate_transform_constraints.assert_called_once_with(data)
+        instance._data_processor.prepare_for_fitting.assert_called_once_with(data)
+
+    def test_auto_assign_transformers_with_invalid_data(self):
+        """Test that auto_assign_transformer throws useful error about invalid data"""
+        # Setup
+        metadata = Metadata.load_from_dict({
+            'columns': {
+                'a': {'sdtype': 'categorical'},
+            }
+        })
+        synthesizer = GaussianCopulaSynthesizer(metadata)
+        # input data that does not match the metadata
+        data = pd.DataFrame({'b': list(np.random.choice(['M', 'F'], size=10))})
+        error_msg = re.escape(
+            'The provided data does not match the metadata:\n'
+            'Errors in table:\n'
+            "Error: The columns ['b'] are not present in the metadata.\n"
+            "Error: The metadata columns ['a'] are not present in the data."
+        )
+
+        # Run and Assert
+        with pytest.raises(InvalidDataError, match=error_msg):
+            synthesizer.auto_assign_transformers(data)
+
+    def test_get_transformers(self):
+        """Test that this returns the field transformers from the ``HyperTransformer``."""
+        # Setup
+        instance = Mock()
+        instance._data_processor._hyper_transformer.field_transformers = {
+            'name': 'FrequencyEncoder',
+            'salary': 'FloatFormatter',
+            'salary#name': 'LabelEncoder',
+            'address': None,
+        }
+        instance._get_table_metadata.return_value.columns = {
+            'salary': {'sdtype': 'numerical'},
+            'name': {'sdtype': 'categorical'},
+            'address': {'sdtype': 'address'},
+        }
+
+        # Run
+        result = BaseSynthesizer.get_transformers(instance)
+
+        # Assert
+        assert result == {
+            'salary': 'FloatFormatter',
+            'name': 'FrequencyEncoder',
+            'address': None,
+            'salary#name': 'LabelEncoder',
+        }
+
+    def test_get_transformers_with_columns_dropped_by_constraint(self):
+        """Test that this returns the transformers that are within the ``field_transformers``."""
+        # Setup
+        instance = Mock()
+        instance._data_processor._hyper_transformer.field_transformers = {
+            'salary#name': 'LabelEncoder',
+            'address': None,
+        }
+        instance._get_table_metadata.return_value.columns = {
+            'salary': {'sdtype': 'numerical'},
+            'name': {'sdtype': 'categorical'},
+            'address': {'sdtype': 'address'},
+        }
+
+        # Run
+        result = BaseSynthesizer.get_transformers(instance)
+
+        # Assert
+        assert result == {'address': None, 'salary#name': 'LabelEncoder'}
+
+    def test_get_transformers_raises_an_error(self):
+        """Test that this raises an error when there are no field transformers."""
+        # Setup
+        instance = Mock()
+        instance._data_processor._hyper_transformer.field_transformers = {}
+
+        # Run and Assert
+        error_msg = re.escape(
+            "No transformers were returned in 'get_transformers'. Use "
+            "'auto_assign_transformers' or 'fit' to create them."
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            BaseSynthesizer.get_transformers(instance)
+
+    @patch('sdv.single_table.base.warnings')
+    def test__preprocess_helper(self, mock_warnings):
+        """Test the ``_preprocess_helper`` method."""
+        # Setup
+        instance = Mock()
+        instance._fitted = True
+        data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
+        instance._validate_transform_constraints.side_effect = lambda x: x
+        expected_warning = (
+            'This model has already been fitted. To use the new preprocessed data, please '
+            "refit the model using 'fit' or 'fit_processed_data'."
+        )
+
+        # Run
+        result = BaseSynthesizer._preprocess_helper(instance, data)
+
+        # Assert
+        mock_warnings.warn.assert_called_once_with(expected_warning)
+        instance.validate.assert_called_once_with(data)
+        instance._validate_transform_constraints.assert_called_once_with(data)
+        pd.testing.assert_frame_equal(result, data)
+
+    def test__preprocess(self):
+        """Test the method preprocesses the data.
+
+        The method calls the ``validate`` function with the data, then fits the
+        ``instance._data_processor`` and returns the output of the transformation.
+        """
+        # Setup
+        instance = Mock()
+        instance._fitted = True
+        data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
+
+        # Run
+        result = BaseSynthesizer._preprocess(instance, data)
+
+        # Assert
+        assert result == instance._data_processor.transform.return_value
+        instance._data_processor.fit.assert_called_once()
+        pd.testing.assert_frame_equal(data, instance._data_processor.fit.call_args_list[0][0][0])
+        pd.testing.assert_frame_equal(
+            data, instance._data_processor.transform.call_args_list[0][0][0]
+        )
+
+    def test_preprocess(self):
+        """Test the preprocess method."""
+        # Setup
+        instance = Mock()
+        instance._fitted = True
+        data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
+        instance._preprocess_helper.return_value = data
+        instance._store_and_convert_original_cols = Mock(return_value=False)
+        instance._preprocess.return_value = data
+
+        # Run
+        result = BaseSynthesizer.preprocess(instance, data)
+
+        # Assert
+        instance._store_and_convert_original_cols.assert_called_once_with(data)
+        instance._preprocess_helper.assert_called_once_with(data)
+        instance._preprocess.assert_called_once_with(data)
+        pd.testing.assert_frame_equal(result, data)
+
+    def test_preprocess_int_columns(self):
+        """Test the preprocess method.
+
+        Ensure that data with column names as integers are not changed by
+        preprocess.
+        """
+        # Setup
+        metadata = Metadata().load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        1: {'sdtype': 'id'},
+                        2: {'sdtype': 'id'},
+                        'str': {'sdtype': 'id'},
+                    },
+                },
+            },
+        })
+        instance = BaseSynthesizer(metadata)
+        instance._fitted = False
+        instance._original_columns = pd.Index([1, 2, 'str'])
+        data = pd.DataFrame({
+            1: ['John', 'Doe', 'John Doe'],
+            2: ['John', 'Doe', 'John Doe'],
+            'str': ['John', 'Doe', 'John Doe'],
+        })
+
+        # Run
+        instance.preprocess(data)
+
+        # Assert
+        corrected_frame = pd.DataFrame({
+            1: ['John', 'Doe', 'John Doe'],
+            2: ['John', 'Doe', 'John Doe'],
+            'str': ['John', 'Doe', 'John Doe'],
+        })
+
+        pd.testing.assert_frame_equal(data, corrected_frame)
+
+    @patch('sdv.single_table.base.DataProcessor')
+    def test__fit(self, mock_data_processor):
+        """Test that ``NotImplementedError`` is being raised."""
+        # Setup
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('key', 'table', sdtype='id')
+        data = Mock()
+        instance = BaseSynthesizer(metadata)
+
+        # Run and Assert
+        with pytest.raises(NotImplementedError, match=''):
+            instance._fit(data)
+
+    @patch('sdv.single_table.base.datetime')
+    def test_fit_processed_data(self, mock_datetime, caplog):
+        """Test that ``fit_processed_data`` calls the ``_fit``."""
+        # Setup
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
+        instance = Mock(
+            _fitted_sdv_version=None,
+            _fitted_sdv_enterprise_version=None,
+            _synthesizer_id='BaseSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+        )
+        processed_data = pd.DataFrame({'column_a': [1, 2, 3]})
+
+        # Run
+        with catch_sdv_logs(caplog, logging.INFO, 'BaseSynthesizer'):
+            BaseSynthesizer.fit_processed_data(instance, processed_data)
+
+        # Assert
+        instance._fit.assert_called_once_with(processed_data)
+        assert caplog.messages[0] == str({
+            'EVENT': 'Fit processed data',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            'TOTAL NUMBER OF TABLES': 1,
+            'TOTAL NUMBER OF ROWS': 3,
+            'TOTAL NUMBER OF COLUMNS': 1,
+        })
+
+    def test_fit_processed_data_raises_version_error(self):
+        """Test that ``fit`` raises ``VersionError``
+
+        When attempting to refit a model that was created on a previous version of the software
+        this will raise an error.
+        """
+        # Setup
+        instance = Mock(
+            _fitted_sdv_version='1.0.0',
+            _fitted_sdv_enterprise_version=None,
+        )
+        processed_data = pd.DataFrame({'column_a': [1, 2, 3]})
+        instance._random_state_set = True
+        instance._fitted = True
+
+        # Run and Assert
+        error_msg = (
+            f'You are currently on SDV version {version.public} but this synthesizer was created '
+            'on version 1.0.0. Fitting this synthesizer again is not supported. Please '
+            'create a new synthesizer.'
+        )
+        with pytest.raises(VersionError, match=error_msg):
+            BaseSynthesizer.fit_processed_data(instance, processed_data)
+
+    @patch('sdv.single_table.base.datetime')
+    def test_fit(self, mock_datetime, caplog):
+        """Test that ``fit`` calls ``preprocess`` and the ``fit_processed_data``.
+
+        When fitting, the synthsizer has to ``preprocess`` the data and with the output
+        of this method, call the ``fit_processed_data``
+        """
+        # Setup
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
+        instance = Mock(
+            _fitted_sdv_version=None,
+            _fitted_sdv_enterprise_version=None,
+            _synthesizer_id='BaseSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+        )
+        instance._store_and_convert_original_cols.return_value = False
+        data = pd.DataFrame({'column_a': [1, 2, 3], 'name': ['John', 'Doe', 'Johanna']})
+        instance._random_state_set = True
+        instance._fitted = True
+
+        # Run
+        with catch_sdv_logs(caplog, logging.INFO, 'BaseSynthesizer'):
+            BaseSynthesizer.fit(instance, data)
+
+        # Assert
+        assert instance._random_state_set is False
+        instance._fit_constraint_column_formatters.assert_called_once_with(data)
+        instance._data_processor.reset_sampling.assert_called_once_with()
+        instance.preprocess.assert_called_once_with(data)
+        instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
+        instance._check_input_metadata_updated.assert_called_once()
+        assert caplog.messages[0] == str({
+            'EVENT': 'Fit',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            'TOTAL NUMBER OF TABLES': 1,
+            'TOTAL NUMBER OF ROWS': 3,
+            'TOTAL NUMBER OF COLUMNS': 2,
+        })
+
+    def test_fit_raises_version_error(self):
+        """Test that ``fit`` raises ``VersionError``
+
+        When attempting to refit a model that was created on a previous version of the software
+        this will raise an error.
+        """
+        # Setup
+        instance = Mock(
+            _fitted_sdv_version='1.0.0',
+            _fitted_sdv_enterprise_version=None,
+        )
+        data = pd.DataFrame({'column_a': [1, 2, 3]})
+        instance._random_state_set = True
+        instance._fitted = True
+
+        # Run and Assert
+        error_msg = (
+            f'You are currently on SDV version {version.public} but this synthesizer was created '
+            'on version 1.0.0. Fitting this synthesizer again is not supported. Please '
+            'create a new synthesizer.'
+        )
+        with pytest.raises(VersionError, match=error_msg):
+            BaseSynthesizer.fit(instance, data)
+
+    def test_fit_raises_warning_if_metadata_updated(self):
+        """Test that ``fit`` raises a warning if the original metadata was updated."""
+        # Setup
+        metadata = SingleTableMetadata()
+        metadata.add_column('column_a', sdtype='numerical')
+        instance = BaseSynthesizer(metadata)
+        instance._fit = Mock()
+
+        data = pd.DataFrame({'column_a': [1, 2, 3]})
+        instance._random_state_set = True
+        instance._fitted = True
+        metadata.update_column('column_a', sdtype='categorical')
+
+        # Run and Assert
+        warn_msg = (
+            'Your metadata has been modified. Metadata modifications cannot be applied to an '
+            'existing synthesizer. Please create a new synthesizer with the modified metadata.'
+        )
+        with pytest.warns(UserWarning, match=warn_msg):
+            instance.fit(data)
 
     def test_update_transformers_invalid_keys(self):
         """Test error is raised if passed transformer doesn't match key column.
@@ -968,7 +915,7 @@ class TestBaseSingleTableSynthesizer:
         metadata.set_sequence_key('col2', 'table')
 
         metadata.add_alternate_keys(['col3'], 'table')
-        instance = BaseSingleTableSynthesizer(metadata)
+        instance = BaseSynthesizer(metadata)
 
         # Run and Assert
         err_msg = re.escape(
@@ -988,7 +935,7 @@ class TestBaseSingleTableSynthesizer:
         metadata.add_table('table')
         metadata.add_column('col1', 'table', sdtype='boolean')
         metadata.add_column('col2', 'table', sdtype='numerical')
-        instance = BaseSingleTableSynthesizer(metadata)
+        instance = BaseSynthesizer(metadata)
 
         # Run and Assert
         err_msg = "Transformer for column 'col2' has already been fit on data."
@@ -1057,7 +1004,7 @@ class TestBaseSingleTableSynthesizer:
         metadata.add_table('table')
         metadata.add_column('col1', 'table', sdtype='numerical')
         metadata.add_column('col2', 'table', sdtype='numerical')
-        instance = BaseSingleTableSynthesizer(metadata)
+        instance = BaseSynthesizer(metadata)
         instance._data_processor.fit(pd.DataFrame({'col1': [1, 2], 'col2': [1, 2]}))
         instance._fitted = True
 
@@ -1076,7 +1023,7 @@ class TestBaseSingleTableSynthesizer:
         metadata.add_table('table')
         metadata.add_column('col1', 'table', sdtype='numerical')
         metadata.add_column('col2', 'table', sdtype='numerical')
-        instance = BaseSingleTableSynthesizer(metadata)
+        instance = BaseSynthesizer(metadata)
         instance._data_processor.fit(pd.DataFrame({'col1': [1, 2], 'col2': [1, 2]}))
 
         # Run
@@ -1097,7 +1044,7 @@ class TestBaseSingleTableSynthesizer:
             'col3': GaussianNormalizer(learn_rounding_scheme=False),
         }
         metadata = Metadata()
-        instance = BaseSingleTableSynthesizer(metadata)
+        instance = BaseSynthesizer(metadata)
         instance._validate_transformers = MagicMock()
         instance._warn_quality_and_performance = MagicMock()
         instance._data_processor = MagicMock()
@@ -1113,6 +1060,422 @@ class TestBaseSingleTableSynthesizer:
         with pytest.warns(UserWarning, match=warn_msg):
             instance.update_transformers(column_name_to_transformer)
 
+    def test_validate_constraints(self):
+        """Test the ``validate_constraints`` method with multiple constraints."""
+        # Setup
+        synthetic_data = pd.DataFrame()
+        transformed_data = pd.DataFrame()
+        original_metadata = Metadata()
+        instance = BaseSynthesizer(original_metadata)
+        constraint_mock_1 = Mock()
+        constraint_mock_1.transform.return_value = transformed_data
+        constraint_mock_2 = Mock()
+        instance._chained_constraints = [constraint_mock_1, constraint_mock_2]
+
+        # Run
+        instance.validate_constraints(synthetic_data)
+
+        # Assert
+        constraint_mock_1.is_valid.assert_called_once_with(data=synthetic_data)
+        constraint_mock_1.transform.assert_called_once_with(data=synthetic_data)
+        constraint_mock_2.is_valid.assert_called_once_with(data=transformed_data)
+        constraint_mock_2.transform.assert_called_once_with(data=transformed_data)
+
+    def test_validate_constraints_raises(self):
+        """Test the ``validate_constraints`` method raises an error."""
+        # Setup
+        synthetic_data = pd.DataFrame()
+        original_metadata = Metadata()
+        instance = BaseSynthesizer(original_metadata)
+        constraint_mock_1 = Mock()
+        constraint_mock_1.is_valid.return_value = pd.Series([False, False])
+        instance._chained_constraints = [constraint_mock_1]
+        msg = 'The mock requirement is not met for row indices: 0, 1.'
+
+        # Run and Assert
+        with pytest.raises(ConstraintNotMetError, match=msg):
+            instance.validate_constraints(synthetic_data)
+
+    def test__fit_constraint_column_formatters(self):
+        """Test the `_fit_constraint_column_formatters` fits formatters for dropped columns."""
+        # Setup
+        instance = Mock()
+        instance.enforce_rounding = False
+        instance.enforce_min_max_values = False
+        instance._table_name = 'table'
+        instance._original_metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'col1': {'sdtype': 'categorical'},
+                        'col2': {'sdtype': 'numerical', 'computer_representation': 'Int8'},
+                        'col3': {'sdtype': 'numerical'},
+                        'date_col1': {'sdtype': 'datetime'},
+                        'date_col2': {'sdtype': 'datetime'},
+                    }
+                }
+            }
+        })
+        instance.metadata = Metadata.load_from_dict({
+            'tables': {'table': {'columns': {'col1#col2': {'sdtype': 'numerical'}}}}
+        })
+        data = pd.DataFrame({
+            'col1': ['abc', 'def'],
+            'col2': [1, 2],
+            'col3': [3, 4],
+            'date_col1': ['16-05-2023', '14-04-2022'],
+            'date_col2': pd.to_datetime(['2021-02-15', '2022-05-16']),
+        })
+
+        # Run
+        BaseSynthesizer._fit_constraint_column_formatters(instance, data)
+
+        # Assert
+        formatters = instance._constraint_col_formatters
+
+        assert set(formatters.keys()) == {'col2', 'col3', 'date_col1', 'date_col2'}
+
+        assert isinstance(formatters['col2'], NumericalFormatter)
+        assert formatters['col2'].enforce_rounding is False
+        assert formatters['col2'].enforce_min_max_values is False
+        assert formatters['col2'].computer_representation == 'Int8'
+
+        assert isinstance(formatters['col3'], NumericalFormatter)
+        assert formatters['col3'].enforce_rounding is False
+        assert formatters['col3'].enforce_min_max_values is False
+        assert formatters['col3'].computer_representation == 'Float'
+
+        assert isinstance(formatters['date_col1'], DatetimeFormatter)
+        assert isinstance(formatters['date_col2'], DatetimeFormatter)
+        assert formatters['date_col1']._dtype == 'O'
+        assert formatters['date_col1'].datetime_format == '%d-%m-%Y'
+        assert formatters['date_col2']._dtype == '<M8[ns]'
+        assert formatters['date_col2'].datetime_format == '%Y-%m-%d'
+
+    @patch('sdv.single_table.base.LOGGER')
+    def test__format_constraint_columns(sel, log_mock):
+        """Test formatting all columns that were dropped by constraints."""
+        # Setup
+        instance = Mock()
+        instance._table_name = 'table'
+        instance._original_metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'datetime_col': {'sdtype': 'datetime'},
+                        'int': {'sdtype': 'numerical'},
+                        'float': {'sdtype': 'numerical'},
+                        'categorical': {'sdtype': 'categorical'},
+                    }
+                }
+            }
+        })
+
+        formatters = {
+            'int': Mock(),
+            'float': Mock(),
+            'datetime_col': Mock(),
+        }
+        formatters['int'].format_data.return_value = [0, 1, 2]
+        formatters['float'].format_data.return_value = [0.1, 1.2, 2.3]
+        formatters['datetime_col'].format_data.return_value = [
+            '2021-02-15',
+            '2022-05-16',
+            '2023-07-18',
+        ]
+        instance._constraint_col_formatters = formatters
+
+        data = pd.DataFrame({
+            'categorical': ['A', 'A', 'C'],
+            'int': [0.0, 1.0, 2.0],
+            'float': [0.11, 1.21, 2.33],
+            'datetime_col': pd.to_datetime(['2021-02-15', '2022-05-16', '2023-07-18']),
+        })
+
+        # Run
+        formatted_data = BaseSynthesizer._format_constraint_columns(instance, data)
+
+        # Assert
+        expected_data = pd.DataFrame({
+            'datetime_col': ['2021-02-15', '2022-05-16', '2023-07-18'],
+            'int': [0, 1, 2],
+            'float': [0.1, 1.2, 2.3],
+            'categorical': ['A', 'A', 'C'],
+        })
+        pd.testing.assert_frame_equal(expected_data, formatted_data)
+
+    @patch('sdv.single_table.base.DataProcessor')
+    @patch('sdv.single_table.base.ProgrammableConstraintHarness')
+    def test_add_constraints(self, mock_programmable_constraint_harness, mock_data_processor):
+        """Test adding constraints to the synthesizer."""
+        # Setup
+        instance = Mock()
+        instance._chained_constraints = []
+        instance._reject_sampling_constraints = []
+
+        constraint1 = Mock()
+        constraint2 = Mock()
+        constraint3 = Mock()
+        instance._validate_constraints_single_table.side_effect = lambda constraint: constraint
+        constraint3.get_updated_metadata.side_effect = [ConstraintNotMetError, None]
+        constraint4 = SingleTableProgrammableConstraint()
+        mock_harness = Mock()
+        mock_programmable_constraint_harness.return_value = mock_harness
+
+        # Run
+        BaseSynthesizer.add_constraints(instance, [constraint1, constraint2])
+        instance._fitted = True
+        BaseSynthesizer.add_constraints(instance, [constraint3, constraint4])
+
+        # Assert
+        assert instance._chained_constraints == [constraint1, constraint2, mock_harness]
+        assert instance._reject_sampling_constraints == [constraint3]
+        mock_programmable_constraint_harness.assert_called_once_with(constraint4)
+        mock_data_processor.assert_has_calls([
+            call(
+                metadata=constraint2.get_updated_metadata()._convert_to_single_table.return_value,
+                enforce_rounding=instance.enforce_rounding,
+                enforce_min_max_values=instance.enforce_min_max_values,
+                locales=instance.locales,
+            ),
+            call(
+                metadata=mock_harness.get_updated_metadata()._convert_to_single_table.return_value,
+                enforce_rounding=instance.enforce_rounding,
+                enforce_min_max_values=instance.enforce_min_max_values,
+                locales=instance.locales,
+            ),
+        ])
+
+    @patch('sdv.single_table.base.datetime')
+    @patch('sdv.single_table.base.cloudpickle')
+    def test_save(self, cloudpickle_mock, mock_datetime, tmp_path, caplog):
+        """Test that the synthesizer is saved correctly."""
+        # Setup
+        synthesizer = Mock(
+            _synthesizer_id='BaseSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+        )
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
+
+        # Run
+        filepath = tmp_path / 'output.pkl'
+        with catch_sdv_logs(caplog, logging.INFO, 'BaseSynthesizer'):
+            BaseSynthesizer.save(synthesizer, filepath)
+
+        # Assert
+        cloudpickle_mock.dump.assert_called_once_with(synthesizer, ANY)
+        assert caplog.messages[0] == str({
+            'EVENT': 'Save',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+        })
+
+    def test_save_warning(self, tmp_path):
+        """Test that the synthesizer produces a warning if saved without fitting."""
+        # Setup
+        synthesizer = BaseSynthesizer(Metadata())
+
+        # Run and Assert
+        warn_msg = re.escape(
+            'You are saving a synthesizer that has not yet been fitted. You will not be able '
+            'to sample synthetic data without fitting. We recommend fitting the synthesizer '
+            'first and then saving.'
+        )
+        with pytest.warns(Warning, match=warn_msg):
+            filepath = os.path.join(tmp_path, 'output.pkl')
+            synthesizer.save(filepath)
+
+    @patch('sdv.single_table.base.datetime')
+    @patch('sdv.single_table.base.generate_synthesizer_id')
+    @patch('sdv.single_table.base.check_synthesizer_version')
+    @patch('sdv.single_table.base.check_sdv_versions_and_warn')
+    @patch('sdv.single_table.base.cloudpickle')
+    @patch('builtins.open', new_callable=mock_open)
+    def test_load(
+        self,
+        mock_file,
+        cloudpickle_mock,
+        mock_check_sdv_versions_and_warn,
+        mock_check_synthesizer_version,
+        mock_generate_synthesizer_id,
+        mock_datetime,
+        caplog,
+    ):
+        """Test that the ``load`` method loads a stored synthesizer."""
+        # Setup
+        synthesizer_mock = Mock(_fitted=False, _synthesizer_id=None)
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
+        synthesizer_id = 'BaseSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+        mock_generate_synthesizer_id.return_value = synthesizer_id
+        cloudpickle_mock.load.return_value = synthesizer_mock
+
+        # Run
+        with catch_sdv_logs(caplog, logging.INFO, 'BaseSynthesizer'):
+            loaded_instance = BaseSynthesizer.load('synth.pkl')
+
+        # Assert
+        mock_file.assert_called_once_with('synth.pkl', 'rb')
+        cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
+        mock_check_sdv_versions_and_warn.assert_called_once_with(loaded_instance)
+        assert loaded_instance == synthesizer_mock
+        assert loaded_instance._synthesizer_id == synthesizer_id
+        mock_check_synthesizer_version.assert_called_once_with(synthesizer_mock)
+        mock_generate_synthesizer_id.assert_called_once_with(synthesizer_mock)
+        assert caplog.messages[0] == str({
+            'EVENT': 'Load',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+        })
+
+    def test_load_custom_constraint_classes(self):
+        """Test that ``load_custom_constraint_classes`` calls the ``DataProcessor``'s method."""
+        # Setup
+        instance = Mock()
+
+        # Run
+        BaseSynthesizer.load_custom_constraint_classes(
+            instance, 'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
+        )
+
+        # Assert
+        instance._data_processor.load_custom_constraint_classes.assert_called_once_with(
+            'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
+        )
+
+    @patch('builtins.open')
+    @patch('sdv.single_table.base.cloudpickle')
+    def test_load_runtime_error(self, cloudpickle_mock, mock_open):
+        """Test that the synthesizer's load method errors with the correct message."""
+        # Setup
+        cloudpickle_mock.load.side_effect = RuntimeError(
+            (
+                'Attempting to deserialize object on a CUDA device but '
+                'torch.cuda.is_available() is False. If you are running on a CPU-only machine,'
+                " please use torch.load with map_location=torch.device('cpu') "
+                'to map your storages to the CPU.'
+            )
+        )
+
+        # Run and Assert
+        err_msg = re.escape(
+            'This synthesizer was created on a machine with GPU but the current machine is'
+            ' CPU-only. This feature is currently unsupported. We recommend sampling on '
+            'the same GPU-enabled machine.'
+        )
+        with pytest.raises(SamplingError, match=err_msg):
+            BaseSynthesizer.load('synth.pkl')
+
+    @patch('builtins.open')
+    @patch('sdv.single_table.base.cloudpickle')
+    def test_load_runtime_error_no_change(self, cloudpickle_mock, mock_open):
+        """Test that the synthesizer's load method errors with the correct message."""
+        # Setup
+        cloudpickle_mock.load.side_effect = RuntimeError('Error')
+
+        # Run and Assert
+        with pytest.raises(RuntimeError, match='Error'):
+            BaseSynthesizer.load('synth.pkl')
+
+    @patch('sdv.single_table.base.version')
+    def test_get_info_no_enterprise(self, mock_sdv_version):
+        """Test the correct dictionary is returned.
+
+        Check the return dictionary is valid both before and after fitting the synthesizer.
+
+        Mocks:
+            * Unfortunately, ``datetime`` can't be mocked directly. This link explains how to
+            do it: https://docs.python.org/3/library/unittest.mock-examples.html#partial-mocking
+        """
+        # Setup
+        data = pd.DataFrame({'col': [1, 2, 3]})
+        mock_sdv_version.public = '1.0.0'
+        mock_sdv_version.enterprise = None
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('col', 'table', sdtype='numerical')
+
+        with patch('sdv.single_table.base.datetime.datetime') as mock_date:
+            mock_date.today.return_value = datetime(2023, 1, 23)
+            mock_date.side_effect = lambda *args, **kw: date(*args, **kw)
+            synthesizer = GaussianCopulaSynthesizer(metadata)
+
+            # Run
+            info = synthesizer.get_info()
+
+            # Assert
+            assert info == {
+                'class_name': 'GaussianCopulaSynthesizer',
+                'creation_date': '2023-01-23',
+                'is_fit': False,
+                'last_fit_date': None,
+                'fitted_sdv_version': None,
+            }
+
+            # Run
+            synthesizer.fit(data)
+            info = synthesizer.get_info()
+
+            # Assert
+            assert info == {
+                'class_name': 'GaussianCopulaSynthesizer',
+                'creation_date': '2023-01-23',
+                'is_fit': True,
+                'last_fit_date': '2023-01-23',
+                'fitted_sdv_version': '1.0.0',
+            }
+
+    @patch('sdv.single_table.base.version')
+    def test_get_info_with_enterprise(self, mock_sdv_version):
+        """Test the correct dictionary is returned with the enterprise version.
+
+        Check the return dictionary is valid both before and after fitting the synthesizer.
+
+        Mocks:
+            * Unfortunately, ``datetime`` can't be mocked directly. This link explains how to
+            do it: https://docs.python.org/3/library/unittest.mock-examples.html#partial-mocking
+        """
+        # Setup
+        data = pd.DataFrame({'col': [1, 2, 3]})
+        mock_sdv_version.public = '1.0.0'
+        mock_sdv_version.enterprise = '1.2.0'
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('col', 'table', sdtype='numerical')
+
+        with patch('sdv.single_table.base.datetime.datetime') as mock_date:
+            mock_date.today.return_value = datetime(2023, 1, 23)
+            mock_date.side_effect = lambda *args, **kw: date(*args, **kw)
+            synthesizer = GaussianCopulaSynthesizer(metadata)
+
+            # Run
+            info = synthesizer.get_info()
+
+            # Assert
+            assert info == {
+                'class_name': 'GaussianCopulaSynthesizer',
+                'creation_date': '2023-01-23',
+                'is_fit': False,
+                'last_fit_date': None,
+                'fitted_sdv_version': None,
+            }
+
+            # Run
+            synthesizer.fit(data)
+            info = synthesizer.get_info()
+
+            # Assert
+            assert info == {
+                'class_name': 'GaussianCopulaSynthesizer',
+                'creation_date': '2023-01-23',
+                'is_fit': True,
+                'last_fit_date': '2023-01-23',
+                'fitted_sdv_version': '1.0.0',
+                'fitted_sdv_enterprise_version': '1.2.0',
+            }
+
+
+class TestBaseSingleTableSynthesizer:
     @patch('sdv.single_table.base.DataProcessor')
     def test__set_random_state(self, mock_data_processor):
         """Test that ``_model.set_random_state`` is being called with the input value.
@@ -1842,7 +2205,7 @@ class TestBaseSingleTableSynthesizer:
         instance._reverse_transform_constraints.return_value = pd.DataFrame({'col': [1, 2, 3]})
 
         # Run
-        with catch_sdv_logs(caplog, logging.INFO, logger='SingleTableSynthesizer'):
+        with catch_sdv_logs(caplog, logging.INFO, logger='BaseSynthesizer'):
             result = BaseSingleTableSynthesizer.sample(
                 instance,
                 num_rows,
@@ -2299,417 +2662,3 @@ class TestBaseSingleTableSynthesizer:
         )
         with pytest.warns(UserWarning, match=warn_msg):
             synthesizer._validate_known_columns(conditions)
-
-    @patch('sdv.single_table.base.datetime')
-    @patch('sdv.single_table.base.cloudpickle')
-    def test_save(self, cloudpickle_mock, mock_datetime, tmp_path, caplog):
-        """Test that the synthesizer is saved correctly."""
-        # Setup
-        synthesizer = Mock(
-            _synthesizer_id='BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
-        )
-        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
-
-        # Run
-        filepath = tmp_path / 'output.pkl'
-        with catch_sdv_logs(caplog, logging.INFO, 'SingleTableSynthesizer'):
-            BaseSingleTableSynthesizer.save(synthesizer, filepath)
-
-        # Assert
-        cloudpickle_mock.dump.assert_called_once_with(synthesizer, ANY)
-        assert caplog.messages[0] == str({
-            'EVENT': 'Save',
-            'TIMESTAMP': '2024-04-19 16:20:10.037183',
-            'SYNTHESIZER CLASS NAME': 'Mock',
-            'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
-        })
-
-    def test_save_warning(self, tmp_path):
-        """Test that the synthesizer produces a warning if saved without fitting."""
-        # Setup
-        synthesizer = BaseSynthesizer(Metadata())
-
-        # Run and Assert
-        warn_msg = re.escape(
-            'You are saving a synthesizer that has not yet been fitted. You will not be able '
-            'to sample synthetic data without fitting. We recommend fitting the synthesizer '
-            'first and then saving.'
-        )
-        with pytest.warns(Warning, match=warn_msg):
-            filepath = os.path.join(tmp_path, 'output.pkl')
-            synthesizer.save(filepath)
-
-    @patch('sdv.single_table.base.datetime')
-    @patch('sdv.single_table.base.generate_synthesizer_id')
-    @patch('sdv.single_table.base.check_synthesizer_version')
-    @patch('sdv.single_table.base.check_sdv_versions_and_warn')
-    @patch('sdv.single_table.base.cloudpickle')
-    @patch('builtins.open', new_callable=mock_open)
-    def test_load(
-        self,
-        mock_file,
-        cloudpickle_mock,
-        mock_check_sdv_versions_and_warn,
-        mock_check_synthesizer_version,
-        mock_generate_synthesizer_id,
-        mock_datetime,
-        caplog,
-    ):
-        """Test that the ``load`` method loads a stored synthesizer."""
-        # Setup
-        synthesizer_mock = Mock(_fitted=False, _synthesizer_id=None)
-        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
-        synthesizer_id = 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
-        mock_generate_synthesizer_id.return_value = synthesizer_id
-        cloudpickle_mock.load.return_value = synthesizer_mock
-
-        # Run
-        with catch_sdv_logs(caplog, logging.INFO, 'SingleTableSynthesizer'):
-            loaded_instance = BaseSingleTableSynthesizer.load('synth.pkl')
-
-        # Assert
-        mock_file.assert_called_once_with('synth.pkl', 'rb')
-        cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
-        mock_check_sdv_versions_and_warn.assert_called_once_with(loaded_instance)
-        assert loaded_instance == synthesizer_mock
-        assert loaded_instance._synthesizer_id == synthesizer_id
-        mock_check_synthesizer_version.assert_called_once_with(synthesizer_mock)
-        mock_generate_synthesizer_id.assert_called_once_with(synthesizer_mock)
-        assert caplog.messages[0] == str({
-            'EVENT': 'Load',
-            'TIMESTAMP': '2024-04-19 16:20:10.037183',
-            'SYNTHESIZER CLASS NAME': 'Mock',
-            'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
-        })
-
-    def test_load_custom_constraint_classes(self):
-        """Test that ``load_custom_constraint_classes`` calls the ``DataProcessor``'s method."""
-        # Setup
-        instance = Mock()
-
-        # Run
-        BaseSingleTableSynthesizer.load_custom_constraint_classes(
-            instance, 'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
-        )
-
-        # Assert
-        instance._data_processor.load_custom_constraint_classes.assert_called_once_with(
-            'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
-        )
-
-    @patch('builtins.open')
-    @patch('sdv.single_table.base.cloudpickle')
-    def test_load_runtime_error(self, cloudpickle_mock, mock_open):
-        """Test that the synthesizer's load method errors with the correct message."""
-        # Setup
-        cloudpickle_mock.load.side_effect = RuntimeError(
-            (
-                'Attempting to deserialize object on a CUDA device but '
-                'torch.cuda.is_available() is False. If you are running on a CPU-only machine,'
-                " please use torch.load with map_location=torch.device('cpu') "
-                'to map your storages to the CPU.'
-            )
-        )
-
-        # Run and Assert
-        err_msg = re.escape(
-            'This synthesizer was created on a machine with GPU but the current machine is'
-            ' CPU-only. This feature is currently unsupported. We recommend sampling on '
-            'the same GPU-enabled machine.'
-        )
-        with pytest.raises(SamplingError, match=err_msg):
-            BaseSingleTableSynthesizer.load('synth.pkl')
-
-    @patch('builtins.open')
-    @patch('sdv.single_table.base.cloudpickle')
-    def test_load_runtime_error_no_change(self, cloudpickle_mock, mock_open):
-        """Test that the synthesizer's load method errors with the correct message."""
-        # Setup
-        cloudpickle_mock.load.side_effect = RuntimeError('Error')
-
-        # Run and Assert
-        with pytest.raises(RuntimeError, match='Error'):
-            BaseSingleTableSynthesizer.load('synth.pkl')
-
-    @patch('sdv.single_table.base.DataProcessor')
-    @patch('sdv.single_table.base.ProgrammableConstraintHarness')
-    def test_add_constraints(self, mock_programmable_constraint_harness, mock_data_processor):
-        """Test adding constraints to the synthesizer."""
-        # Setup
-        instance = Mock()
-        instance._chained_constraints = []
-        instance._reject_sampling_constraints = []
-
-        constraint1 = Mock()
-        constraint2 = Mock()
-        constraint3 = Mock()
-        instance._validate_constraints_single_table.side_effect = lambda constraint: constraint
-        constraint3.get_updated_metadata.side_effect = [ConstraintNotMetError, None]
-        constraint4 = SingleTableProgrammableConstraint()
-        mock_harness = Mock()
-        mock_programmable_constraint_harness.return_value = mock_harness
-
-        # Run
-        BaseSingleTableSynthesizer.add_constraints(instance, [constraint1, constraint2])
-        instance._fitted = True
-        BaseSingleTableSynthesizer.add_constraints(instance, [constraint3, constraint4])
-
-        # Assert
-        assert instance._chained_constraints == [constraint1, constraint2, mock_harness]
-        assert instance._reject_sampling_constraints == [constraint3]
-        mock_programmable_constraint_harness.assert_called_once_with(constraint4)
-        mock_data_processor.assert_has_calls([
-            call(
-                metadata=constraint2.get_updated_metadata()._convert_to_single_table.return_value,
-                enforce_rounding=instance.enforce_rounding,
-                enforce_min_max_values=instance.enforce_min_max_values,
-                locales=instance.locales,
-            ),
-            call(
-                metadata=mock_harness.get_updated_metadata()._convert_to_single_table.return_value,
-                enforce_rounding=instance.enforce_rounding,
-                enforce_min_max_values=instance.enforce_min_max_values,
-                locales=instance.locales,
-            ),
-        ])
-
-    @patch('sdv.single_table.base.version')
-    def test_get_info_no_enterprise(self, mock_sdv_version):
-        """Test the correct dictionary is returned.
-
-        Check the return dictionary is valid both before and after fitting the synthesizer.
-
-        Mocks:
-            * Unfortunately, ``datetime`` can't be mocked directly. This link explains how to
-            do it: https://docs.python.org/3/library/unittest.mock-examples.html#partial-mocking
-        """
-        # Setup
-        data = pd.DataFrame({'col': [1, 2, 3]})
-        mock_sdv_version.public = '1.0.0'
-        mock_sdv_version.enterprise = None
-        metadata = Metadata()
-        metadata.add_table('table')
-        metadata.add_column('col', 'table', sdtype='numerical')
-
-        with patch('sdv.single_table.base.datetime.datetime') as mock_date:
-            mock_date.today.return_value = datetime(2023, 1, 23)
-            mock_date.side_effect = lambda *args, **kw: date(*args, **kw)
-            synthesizer = GaussianCopulaSynthesizer(metadata)
-
-            # Run
-            info = synthesizer.get_info()
-
-            # Assert
-            assert info == {
-                'class_name': 'GaussianCopulaSynthesizer',
-                'creation_date': '2023-01-23',
-                'is_fit': False,
-                'last_fit_date': None,
-                'fitted_sdv_version': None,
-            }
-
-            # Run
-            synthesizer.fit(data)
-            info = synthesizer.get_info()
-
-            # Assert
-            assert info == {
-                'class_name': 'GaussianCopulaSynthesizer',
-                'creation_date': '2023-01-23',
-                'is_fit': True,
-                'last_fit_date': '2023-01-23',
-                'fitted_sdv_version': '1.0.0',
-            }
-
-    @patch('sdv.single_table.base.version')
-    def test_get_info_with_enterprise(self, mock_sdv_version):
-        """Test the correct dictionary is returned with the enterprise version.
-
-        Check the return dictionary is valid both before and after fitting the synthesizer.
-
-        Mocks:
-            * Unfortunately, ``datetime`` can't be mocked directly. This link explains how to
-            do it: https://docs.python.org/3/library/unittest.mock-examples.html#partial-mocking
-        """
-        # Setup
-        data = pd.DataFrame({'col': [1, 2, 3]})
-        mock_sdv_version.public = '1.0.0'
-        mock_sdv_version.enterprise = '1.2.0'
-        metadata = Metadata()
-        metadata.add_table('table')
-        metadata.add_column('col', 'table', sdtype='numerical')
-
-        with patch('sdv.single_table.base.datetime.datetime') as mock_date:
-            mock_date.today.return_value = datetime(2023, 1, 23)
-            mock_date.side_effect = lambda *args, **kw: date(*args, **kw)
-            synthesizer = GaussianCopulaSynthesizer(metadata)
-
-            # Run
-            info = synthesizer.get_info()
-
-            # Assert
-            assert info == {
-                'class_name': 'GaussianCopulaSynthesizer',
-                'creation_date': '2023-01-23',
-                'is_fit': False,
-                'last_fit_date': None,
-                'fitted_sdv_version': None,
-            }
-
-            # Run
-            synthesizer.fit(data)
-            info = synthesizer.get_info()
-
-            # Assert
-            assert info == {
-                'class_name': 'GaussianCopulaSynthesizer',
-                'creation_date': '2023-01-23',
-                'is_fit': True,
-                'last_fit_date': '2023-01-23',
-                'fitted_sdv_version': '1.0.0',
-                'fitted_sdv_enterprise_version': '1.2.0',
-            }
-
-    def test_validate_constraints(self):
-        """Test the ``validate_constraints`` method with multiple constraints."""
-        # Setup
-        synthetic_data = pd.DataFrame()
-        transformed_data = pd.DataFrame()
-        original_metadata = Metadata()
-        instance = BaseSingleTableSynthesizer(original_metadata)
-        constraint_mock_1 = Mock()
-        constraint_mock_1.transform.return_value = transformed_data
-        constraint_mock_2 = Mock()
-        instance._chained_constraints = [constraint_mock_1, constraint_mock_2]
-
-        # Run
-        instance.validate_constraints(synthetic_data)
-
-        # Assert
-        constraint_mock_1.is_valid.assert_called_once_with(data=synthetic_data)
-        constraint_mock_1.transform.assert_called_once_with(data=synthetic_data)
-        constraint_mock_2.is_valid.assert_called_once_with(data=transformed_data)
-        constraint_mock_2.transform.assert_called_once_with(data=transformed_data)
-
-    def test_validate_constraints_raises(self):
-        """Test the ``validate_constraints`` method raises an error."""
-        # Setup
-        synthetic_data = pd.DataFrame()
-        original_metadata = Metadata()
-        instance = BaseSingleTableSynthesizer(original_metadata)
-        constraint_mock_1 = Mock()
-        constraint_mock_1.is_valid.return_value = pd.Series([False, False])
-        instance._chained_constraints = [constraint_mock_1]
-        msg = 'The mock requirement is not met for row indices: 0, 1.'
-
-        # Run and Assert
-        with pytest.raises(ConstraintNotMetError, match=msg):
-            instance.validate_constraints(synthetic_data)
-
-    def test__fit_constraint_column_formatters(self):
-        """Test the `_fit_constraint_column_formatters` fits formatters for dropped columns."""
-        # Setup
-        instance = Mock()
-        instance.enforce_rounding = False
-        instance.enforce_min_max_values = False
-        instance._table_name = 'table'
-        instance._original_metadata = Metadata.load_from_dict({
-            'tables': {
-                'table': {
-                    'columns': {
-                        'col1': {'sdtype': 'categorical'},
-                        'col2': {'sdtype': 'numerical', 'computer_representation': 'Int8'},
-                        'col3': {'sdtype': 'numerical'},
-                        'date_col1': {'sdtype': 'datetime'},
-                        'date_col2': {'sdtype': 'datetime'},
-                    }
-                }
-            }
-        })
-        instance.metadata = Metadata.load_from_dict({
-            'tables': {'table': {'columns': {'col1#col2': {'sdtype': 'numerical'}}}}
-        })
-        data = pd.DataFrame({
-            'col1': ['abc', 'def'],
-            'col2': [1, 2],
-            'col3': [3, 4],
-            'date_col1': ['16-05-2023', '14-04-2022'],
-            'date_col2': pd.to_datetime(['2021-02-15', '2022-05-16']),
-        })
-
-        # Run
-        BaseSingleTableSynthesizer._fit_constraint_column_formatters(instance, data)
-
-        # Assert
-        formatters = instance._constraint_col_formatters
-
-        assert set(formatters.keys()) == {'col2', 'col3', 'date_col1', 'date_col2'}
-
-        assert isinstance(formatters['col2'], NumericalFormatter)
-        assert formatters['col2'].enforce_rounding is False
-        assert formatters['col2'].enforce_min_max_values is False
-        assert formatters['col2'].computer_representation == 'Int8'
-
-        assert isinstance(formatters['col3'], NumericalFormatter)
-        assert formatters['col3'].enforce_rounding is False
-        assert formatters['col3'].enforce_min_max_values is False
-        assert formatters['col3'].computer_representation == 'Float'
-
-        assert isinstance(formatters['date_col1'], DatetimeFormatter)
-        assert isinstance(formatters['date_col2'], DatetimeFormatter)
-        assert formatters['date_col1']._dtype == 'O'
-        assert formatters['date_col1'].datetime_format == '%d-%m-%Y'
-        assert formatters['date_col2']._dtype == '<M8[ns]'
-        assert formatters['date_col2'].datetime_format == '%Y-%m-%d'
-
-    @patch('sdv.single_table.base.LOGGER')
-    def test__format_constraint_columns(sel, log_mock):
-        """Test formatting all columns that were dropped by constraints."""
-        # Setup
-        instance = Mock()
-        instance._table_name = 'table'
-        instance._original_metadata = Metadata.load_from_dict({
-            'tables': {
-                'table': {
-                    'columns': {
-                        'datetime_col': {'sdtype': 'datetime'},
-                        'int': {'sdtype': 'numerical'},
-                        'float': {'sdtype': 'numerical'},
-                        'categorical': {'sdtype': 'categorical'},
-                    }
-                }
-            }
-        })
-
-        formatters = {
-            'int': Mock(),
-            'float': Mock(),
-            'datetime_col': Mock(),
-        }
-        formatters['int'].format_data.return_value = [0, 1, 2]
-        formatters['float'].format_data.return_value = [0.1, 1.2, 2.3]
-        formatters['datetime_col'].format_data.return_value = [
-            '2021-02-15',
-            '2022-05-16',
-            '2023-07-18',
-        ]
-        instance._constraint_col_formatters = formatters
-
-        data = pd.DataFrame({
-            'categorical': ['A', 'A', 'C'],
-            'int': [0.0, 1.0, 2.0],
-            'float': [0.11, 1.21, 2.33],
-            'datetime_col': pd.to_datetime(['2021-02-15', '2022-05-16', '2023-07-18']),
-        })
-
-        # Run
-        formatted_data = BaseSingleTableSynthesizer._format_constraint_columns(instance, data)
-
-        # Assert
-        expected_data = pd.DataFrame({
-            'datetime_col': ['2021-02-15', '2022-05-16', '2023-07-18'],
-            'int': [0, 1, 2],
-            'float': [0.1, 1.2, 2.3],
-            'categorical': ['A', 'A', 'C'],
-        })
-        pd.testing.assert_frame_equal(expected_data, formatted_data)

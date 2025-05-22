@@ -28,7 +28,11 @@ from sdv._utils import (
     generate_synthesizer_id,
 )
 from sdv.cag._errors import ConstraintNotMetError
-from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows, _validate_constraints
+from sdv.cag._utils import (
+    _convert_to_snake_case,
+    _get_invalid_rows,
+    _validate_constraints_single_table,
+)
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
@@ -46,7 +50,7 @@ from sdv.single_table.utils import check_num_rows, handle_sampling_error, valida
 
 LOGGER = logging.getLogger(__name__)
 
-SYNTHESIZER_LOGGER = get_sdv_logger('SingleTableSynthesizer')
+SYNTHESIZER_LOGGER = get_sdv_logger('BaseSynthesizer')
 
 COND_IDX = str(uuid.uuid4())
 FIXED_RNG_SEED = 73251
@@ -187,6 +191,9 @@ class BaseSynthesizer:
         self._fitted_date = None
         self._fitted_sdv_version = None
         self._fitted_sdv_enterprise_version = None
+        self._chained_constraints = []  # chain of constraints used to preprocess the data
+        self._reject_sampling_constraints = []  # constraints used only for reject sampling
+        self._constraints_fitted = False
         self._synthesizer_id = generate_synthesizer_id(self)
         SYNTHESIZER_LOGGER.info({
             'EVENT': 'Instance',
@@ -229,34 +236,6 @@ class BaseSynthesizer:
             return self.metadata.tables.get(self._table_name, SingleTableMetadata())
 
         return self.metadata
-
-    def validate(self, data):
-        """Validate data.
-
-        Args:
-            data (pd.DataFrame):
-                The data to validate.
-
-        Raises:
-            ValueError:
-                Raised when data is not of type pd.DataFrame.
-            ConstraintsNotMetError:
-                If the conditions are not valid for the given constraints.
-            InvalidDataError:
-                Raised if:
-                    * data columns don't match metadata
-                    * keys have missing values
-                    * primary or alternate keys are not unique
-                    * context columns vary for a sequence key
-                    * values of a column don't satisfy their sdtype
-        """
-        self._validate_metadata(data)
-
-        # Retaining the logic of returning errors and raising them here to maintain consistency
-        # with the existing workflow with synthesizers
-        synthesizer_errors = self._validate(data)  # Validate rules specific to each synthesizer
-        if synthesizer_errors:
-            raise InvalidDataError(synthesizer_errors)
 
     def _validate_transformers(self, column_name_to_transformer):
         primary_and_alternate_keys = self._get_table_metadata()._get_primary_and_alternate_keys()
@@ -369,10 +348,6 @@ class BaseSynthesizer:
                 A list of custom constraint classes to be imported.
         """
         self._data_processor.load_custom_constraint_classes(filepath, class_names)
-
-    def _validate_transform_constraints(self, data):
-        """Helper method to transform the data for the constraints."""
-        return data
 
     def auto_assign_transformers(self, data):
         """Automatically assign the required transformers for the given data and constraints.
@@ -496,13 +471,148 @@ class BaseSynthesizer:
 
         return False
 
-    def _preprocess_helper(self, data):
-        """Preprocess helper method.
+    def add_constraints(self, constraints):
+        """Add the list of constraint-augmented generation constraints to the synthesizer.
 
-        This method:
-        - Validate the data
-        - Warn the user if the model has already been fitted
-        - Store the original columns and convert them to string if needed
+        Args:
+            constraints (list):
+                A list of constraints to apply to the synthesizer.
+        """
+        constraints = _validate_constraints_single_table(constraints, self._fitted)
+        for constraint in constraints:
+            if isinstance(constraint, ProgrammableConstraint):
+                constraint = ProgrammableConstraintHarness(constraint)
+
+            try:
+                self.metadata = constraint.get_updated_metadata(self.metadata)
+                self._chained_constraints.append(constraint)
+                self._constraints_fitted = False
+            except ConstraintNotMetError as e:
+                LOGGER.info(
+                    'Enforcing constraint %s using reject sampling.', constraint.__class__.__name__
+                )
+
+                try:
+                    constraint.get_updated_metadata(self._original_metadata)
+                    self._reject_sampling_constraints.append(constraint)
+                except ConstraintNotMetError:
+                    raise e
+
+        self._data_processor = DataProcessor(
+            metadata=self.metadata._convert_to_single_table(),
+            enforce_rounding=self.enforce_rounding,
+            enforce_min_max_values=self.enforce_min_max_values,
+            locales=self.locales,
+        )
+
+    def get_constraints(self):
+        """Get a list of constraint-augmented generation constraints applied to the synthesizer."""
+        constraints = []
+        for constraint in self._chained_constraints + self._reject_sampling_constraints:
+            if isinstance(constraint, ProgrammableConstraintHarness):
+                constraints.append(deepcopy(constraint.programmable_constraint))
+            else:
+                constraints.append(deepcopy(constraint))
+
+        return constraints
+
+    def validate_constraints(self, synthetic_data):
+        """Validate synthetic_data against the constraints.
+
+        Args:
+            synthetic_data (pd.DataFrame): The synthetic data to validate
+
+        Raises:
+            ConstraintNotMetError:
+                Raised if synthetic data does not match constraints.
+        """
+        transformed_data = synthetic_data
+        for attribute in ['_reject_sampling_constraints', '_chained_constraints']:
+            for constraint in getattr(self, attribute, []):
+                if attribute == '_reject_sampling_constraints':
+                    valid = constraint.is_valid(data=synthetic_data)
+                else:
+                    valid = constraint.is_valid(data=transformed_data)
+
+                if not valid.all():
+                    invalid_rows_str = _get_invalid_rows(valid)
+                    constraint_name = _convert_to_snake_case(constraint.__class__.__name__)
+                    constraint_name = constraint_name.replace('_', ' ')
+                    msg = f'The {constraint_name} requirement is not met '
+                    msg += f'for row indices: {invalid_rows_str}.'
+                    raise ConstraintNotMetError(msg)
+                elif attribute == '_chained_constraints':
+                    transformed_data = constraint.transform(data=transformed_data)
+
+    def _validate_transform_constraints(self, data, enforce_constraint_fitting=False):
+        """Validate the data against the constraints and transform it.
+
+        If the constraints are already fitted, it will only transform the data.
+        If not, it will fit the constraints and then transform the data.
+        The constraints validation is done during the fitting process.
+
+        Args:
+            data (pandas.DataFrame):
+                The data to validate.
+            enforce_constraint_fitting (bool):
+                Whether to enforce fitting the constraints again. If set to ``True``, the
+                constraints will be fitted again even if they have already been fitted.
+                Defaults to ``False``.
+        """
+        if self._constraints_fitted and not enforce_constraint_fitting:
+            for constraint in self._chained_constraints:
+                data = constraint.transform(data)
+
+            return data
+
+        metadata = getattr(self, '_original_metadata', self.metadata)
+        if hasattr(self, '_reject_sampling_constraints'):
+            for constraint in self._reject_sampling_constraints:
+                constraint.fit(data=data, metadata=self._original_metadata)
+
+        if hasattr(self, '_chained_constraints'):
+            for constraint in self._chained_constraints:
+                constraint.fit(data=data, metadata=metadata)
+                metadata = constraint.get_updated_metadata(metadata)
+                data = constraint.transform(data)
+
+        self._constraints_fitted = True
+        return data
+
+    def validate(self, data):
+        """Validate data.
+
+        This method will validate the data against:
+        - The metadata
+        - The constraints
+
+        To make it work with the cags we temporarily set the metadata to the original one
+        and then restore it.
+
+        Args:
+            data (pandas.DataFrame):
+                The data to validate.
+        """
+        metadata = self.metadata
+        self.metadata = self._original_metadata
+        self._validate_metadata(data)
+
+        # Retaining the logic of returning errors and raising them here to maintain consistency
+        # with the existing workflow with synthesizers
+        synthesizer_errors = self._validate(data)  # Validate rules specific to each synthesizer
+        if synthesizer_errors:
+            raise InvalidDataError(synthesizer_errors)
+
+        self._validate_transform_constraints(data, enforce_constraint_fitting=True)
+        self.metadata = metadata
+
+    def _preprocess_helper(self, data):
+        """This method is used to preprocess the data.
+
+        It will:
+        - Validate the data.
+        - Warn if the model has already been fitted.
+        - Validate the data against the constraints and transform it.
         """
         self.validate(data)
         if self._fitted:
@@ -510,6 +620,7 @@ class BaseSynthesizer:
                 'This model has already been fitted. To use the new preprocessed data, '
                 "please refit the model using 'fit' or 'fit_processed_data'."
             )
+        data = self._validate_transform_constraints(data)
 
         return data
 
@@ -675,177 +786,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
     The ``BaseSingleTableSynthesizer`` class defines the common sampling methods
     for all single-table synthesizers.
     """
-
-    def __init__(
-        self,
-        metadata,
-        enforce_min_max_values=True,
-        enforce_rounding=True,
-        locales=['en_US'],
-    ):
-        super().__init__(metadata, enforce_min_max_values, enforce_rounding, locales)
-        self._chained_constraints = []  # chain of constraints used to preprocess the data
-        self._reject_sampling_constraints = []  # constraints used only for reject sampling
-        self._constraints_fitted = False
-
-    def _validate_constraints_single_table(self, constraints):
-        """Check if the constraints are single table.
-
-        Args:
-            constraints (list):
-                A list of constraints to check.
-
-        Raises:
-            ConstraintNotMetError:
-                Raised if the constraint is not compatible with the metadata.
-        """
-        if not isinstance(constraints, list):
-            raise SynthesizerInputError('`constraints` must be a list.')
-
-        constraints = _validate_constraints(constraints, self._fitted)
-        for constraint in constraints:
-            if constraint._is_single_table is False:
-                raise SynthesizerInputError(
-                    f'Constraint `{constraint.__class__.__name__}` is not compatible with the '
-                    'single-table synthesizers.'
-                )
-
-        return constraints
-
-    def add_constraints(self, constraints):
-        """Add the list of constraint-augmented generation constraints to the synthesizer.
-
-        Args:
-            constraints (list):
-                A list of constraints to apply to the synthesizer.
-        """
-        constraints = self._validate_constraints_single_table(constraints)
-        for constraint in constraints:
-            if isinstance(constraint, ProgrammableConstraint):
-                constraint = ProgrammableConstraintHarness(constraint)
-
-            try:
-                self.metadata = constraint.get_updated_metadata(self.metadata)
-                self._chained_constraints.append(constraint)
-                self._constraints_fitted = False
-            except ConstraintNotMetError as e:
-                LOGGER.info(
-                    'Enforcing constraint %s using reject sampling.', constraint.__class__.__name__
-                )
-
-                try:
-                    constraint.get_updated_metadata(self._original_metadata)
-                    self._reject_sampling_constraints.append(constraint)
-                except ConstraintNotMetError:
-                    raise e
-
-        self._data_processor = DataProcessor(
-            metadata=self.metadata._convert_to_single_table(),
-            enforce_rounding=self.enforce_rounding,
-            enforce_min_max_values=self.enforce_min_max_values,
-            locales=self.locales,
-        )
-
-    def get_constraints(self):
-        """Get a list of constraint-augmented generation constraints applied to the synthesizer."""
-        constraints = []
-        for constraint in self._chained_constraints + self._reject_sampling_constraints:
-            if isinstance(constraint, ProgrammableConstraintHarness):
-                constraints.append(deepcopy(constraint.programmable_constraint))
-            else:
-                constraints.append(deepcopy(constraint))
-
-        return constraints
-
-    def validate_constraints(self, synthetic_data):
-        """Validate synthetic_data against the constraints.
-
-        Args:
-            synthetic_data (pd.DataFrame): The synthetic data to validate
-
-        Raises:
-            ConstraintNotMetError:
-                Raised if synthetic data does not match constraints.
-        """
-        transformed_data = synthetic_data
-        for attribute in ['_reject_sampling_constraints', '_chained_constraints']:
-            for constraint in getattr(self, attribute, []):
-                if attribute == '_reject_sampling_constraints':
-                    valid = constraint.is_valid(data=synthetic_data)
-                else:
-                    valid = constraint.is_valid(data=transformed_data)
-
-                if not valid.all():
-                    invalid_rows_str = _get_invalid_rows(valid)
-                    constraint_name = _convert_to_snake_case(constraint.__class__.__name__)
-                    constraint_name = constraint_name.replace('_', ' ')
-                    msg = f'The {constraint_name} requirement is not met '
-                    msg += f'for row indices: {invalid_rows_str}.'
-                    raise ConstraintNotMetError(msg)
-                elif attribute == '_chained_constraints':
-                    transformed_data = constraint.transform(data=transformed_data)
-
-    def _validate_transform_constraints(self, data, enforce_constraint_fitting=False):
-        """Validate the data against the constraints and transform it.
-
-        If the constraints are already fitted, it will only transform the data.
-        If not, it will fit the constraints and then transform the data.
-        The constraints validation is done during the fitting process.
-
-        Args:
-            data (pandas.DataFrame):
-                The data to validate.
-            enforce_constraint_fitting (bool):
-                Whether to enforce fitting the constraints again. If set to ``True``, the
-                constraints will be fitted again even if they have already been fitted.
-                Defaults to ``False``.
-        """
-        if self._constraints_fitted and not enforce_constraint_fitting:
-            for constraint in self._chained_constraints:
-                data = constraint.transform(data)
-
-            return data
-
-        metadata = getattr(self, '_original_metadata', self.metadata)
-        if hasattr(self, '_reject_sampling_constraints'):
-            for constraint in self._reject_sampling_constraints:
-                constraint.fit(data=data, metadata=self._original_metadata)
-
-        if hasattr(self, '_chained_constraints'):
-            for constraint in self._chained_constraints:
-                constraint.fit(data=data, metadata=metadata)
-                metadata = constraint.get_updated_metadata(metadata)
-                data = constraint.transform(data)
-
-        self._constraints_fitted = True
-        return data
-
-    def validate(self, data):
-        """Validate data.
-
-        This method will validate the data against:
-        - The metadata
-        - The constraints
-
-        To make it work with the cags we temporarily set the metadata to the original one
-        and then restore it.
-
-        Args:
-            data (pandas.DataFrame):
-                The data to validate.
-        """
-        metadata = self.metadata
-        self.metadata = self._original_metadata
-
-        super().validate(data)
-        self._validate_transform_constraints(data, enforce_constraint_fitting=True)
-        self.metadata = metadata
-
-    def _preprocess_helper(self, data):
-        data = super()._preprocess_helper(data)
-        data = self._validate_transform_constraints(data)
-
-        return data
 
     def _set_random_state(self, random_state):
         """Set the random state of the model's random number generator.
