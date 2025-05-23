@@ -15,7 +15,7 @@ from rdt.transformers import FloatFormatter
 from sdmetrics.reports.multi_table import DiagnosticReport
 
 from sdv import version
-from sdv.cag import Inequality
+from sdv.cag import FixedCombinations, Inequality
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
@@ -298,7 +298,6 @@ class TestHMASynthesizer:
         assert all(sampled['child']['numerical_col_2'] > 1)
         assert not all(sampled['child']['numerical_col'] > 1)
 
-    @pytest.mark.skip('Old-style constraints are deprecated')
     def test_hma_with_inequality_constraint(self):
         """Test that when new columns are created by the constraint this still works."""
         # Setup
@@ -333,16 +332,12 @@ class TestHMASynthesizer:
             parent_primary_key='id',
             child_foreign_key='parent_id',
         )
-
-        constraint = {
-            'constraint_class': 'Inequality',
-            'table_name': 'child_table',
-            'constraint_parameters': {
-                'low_column_name': 'low_column',
-                'high_column_name': 'high_column',
-            },
-        }
-
+        constraint = Inequality(
+            low_column_name='low_column',
+            high_column_name='high_column',
+            table_name='child_table',
+            strict_boundaries=False,
+        )
         synthesizer = HMASynthesizer(metadata)
 
         # Run
@@ -2352,7 +2347,6 @@ def test_small_sample():
     assert synthetic_data['guests'].columns.tolist() == data['guests'].columns.tolist()
 
 
-@pytest.mark.skip('Old-style constraints are deprecated')
 def test_hma_synthesizer_with_fixed_combinations():
     """Tests that https://github.com/sdv-dev/SDV/issues/2087 does not occur."""
     # Creating the dataset
@@ -2388,16 +2382,12 @@ def test_hma_synthesizer_with_fixed_combinations():
     metadata.set_primary_key('location_id', 'locations')
 
     # Adding FixedCombinations to HMASynthesizer
-    synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_constraints(
-        constraints=[
-            {
-                'constraint_class': 'FixedCombinations',
-                'table_name': 'records',
-                'constraint_parameters': {'column_names': ['department', 'office']},
-            }
-        ]
+    constraint = FixedCombinations(
+        table_name='records',
+        column_names=['department', 'office'],
     )
+    synthesizer = HMASynthesizer(metadata)
+    synthesizer.add_constraints(constraints=[constraint])
 
     synthesizer.fit(data)
     sampled = synthesizer.sample(1)

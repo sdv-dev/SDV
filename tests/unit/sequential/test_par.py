@@ -6,14 +6,16 @@ import pandas as pd
 import pytest
 from rdt.transformers import FloatFormatter, UnixTimestampEncoder
 
+from sdv.cag import ProgrammableConstraint
+from sdv.cag.base import BaseConstraint
 from sdv.data_processing.data_processor import DataProcessor
-from sdv.data_processing.errors import InvalidConstraintsError
 from sdv.errors import InvalidDataError, NotFittedError, SamplingError, SynthesizerInputError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling import Condition
 from sdv.sequential.par import PARSynthesizer
+from sdv.single_table.base import BaseSynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 
@@ -113,28 +115,26 @@ class TestPARSynthesizer:
                 verbose=False,
             )
 
-    @pytest.mark.skip('Old-style constraints are deprecated')
-    def test_add_constraintss(self):
+    @patch.object(BaseSynthesizer, 'add_constraints')
+    def test_add_constraints(self, add_constraints_mock):
         """Test that that only simple constraints can be added to PARSynthesizer."""
+
         # Setup
+        class MockConstraint(BaseConstraint):
+            def __init__(self, column_names):
+                super().__init__()
+                self.column_names = column_names
+                self._is_single_table = True
+
         metadata = self.get_metadata(add_sequence_key=True)
         synthesizer = PARSynthesizer(metadata=metadata, context_columns=['gender', 'measurement'])
-        measurement_constraint = {
-            'constraint_class': 'Mock',
-            'constraint_parameters': {'column_name': 'measurement'},
-        }
-        gender_constraint = {
-            'constraint_class': 'Mock',
-            'constraint_parameters': {'column_name': 'gender'},
-        }
-        time_constraint = {
-            'constraint_class': 'Mock',
-            'constraint_parameters': {'column_name': 'time'},
-        }
-        multi_constraint = {
-            'constraint_class': 'Mock',
-            'constraint_parameters': {'column_names': ['gender', 'time']},
-        }
+        programmable_constraint = ProgrammableConstraint()
+        programmable_constraint._is_single_table = True
+        programmable_constraint_error_msg = re.escape(
+            'The PARSynthesizer cannot accommodate with programmable constraints.'
+        )
+        constraint_1 = MockConstraint(column_names=['time'])
+        constraint_2 = MockConstraint(column_names=['time', 'gender'])
         overlapping_error_msg = re.escape(
             'The PARSynthesizer cannot accommodate multiple constraints '
             'that overlap on the same columns.'
@@ -145,27 +145,14 @@ class TestPARSynthesizer:
         )
 
         # Run and Assert
-        with pytest.raises(SynthesizerInputError, match=mixed_constraint_error_msg):
-            synthesizer.add_constraints([time_constraint, gender_constraint])
-
-        with pytest.raises(SynthesizerInputError, match=mixed_constraint_error_msg):
-            synthesizer.add_constraints([time_constraint, measurement_constraint])
-
-        with pytest.raises(SynthesizerInputError, match=mixed_constraint_error_msg):
-            synthesizer.add_constraints([multi_constraint])
+        with pytest.raises(SynthesizerInputError, match=programmable_constraint_error_msg):
+            synthesizer.add_constraints([programmable_constraint])
 
         with pytest.raises(SynthesizerInputError, match=overlapping_error_msg):
-            synthesizer.add_constraints([multi_constraint, gender_constraint])
+            synthesizer.add_constraints([constraint_1, constraint_2])
 
-        with pytest.raises(SynthesizerInputError, match=overlapping_error_msg):
-            synthesizer.add_constraints([gender_constraint, gender_constraint])
-
-        with pytest.raises(SynthesizerInputError, match=overlapping_error_msg):
-            synthesizer.add_constraints([gender_constraint, gender_constraint])
-
-        # Custom constraint will not be found
-        with pytest.raises(InvalidConstraintsError):
-            synthesizer.add_constraints([gender_constraint])
+        with pytest.raises(SynthesizerInputError, match=mixed_constraint_error_msg):
+            synthesizer.add_constraints([constraint_2])
 
     def test_load_custom_constraint_classes(self):
         """Test that if custom constraint is being added, an error is raised."""
