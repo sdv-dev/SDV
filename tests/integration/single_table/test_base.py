@@ -10,6 +10,7 @@ import pytest
 from rdt.transformers import AnonymizedFaker, FloatFormatter, RegexGenerator, UniformEncoder
 
 from sdv import version
+from sdv.cag import FixedCombinations
 from sdv.datasets.demo import download_demo
 from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError, VersionError
 from sdv.metadata import SingleTableMetadata
@@ -237,10 +238,9 @@ def test_multiple_fits():
     metadata.add_column('city', 'table', sdtype='categorical')
     metadata.add_column('state', 'table', sdtype='categorical')
     metadata.add_column('measurement', 'table', sdtype='numerical')
-    constraint = {
-        'constraint_class': 'FixedCombinations',
-        'constraint_parameters': {'column_names': ['city', 'state']},
-    }
+    constraint = FixedCombinations(
+        column_names=['city', 'state'],
+    )
     model = GaussianCopulaSynthesizer(metadata)
     model.add_constraints([constraint])
 
@@ -249,7 +249,7 @@ def test_multiple_fits():
     model.fit(data_2)
 
     # Assert
-    assert ('SF', 'CA') not in model._data_processor._constraints[0]._combinations_to_uuids
+    assert ('SF', 'CA') not in model._chained_constraints[0]._combinations_to_uuids
     assert model._data_processor.formatters['measurement']._rounding_digits == 1
 
 

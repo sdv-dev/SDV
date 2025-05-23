@@ -66,7 +66,7 @@ def programmable_constraint():
             return self.table_name
 
         def validate(self, metadata):
-            FixedCombinations._validate_pattern_with_metadata(self, metadata)
+            FixedCombinations._validate_constraint_with_metadata(self, metadata)
 
         def validate_input_data(self, data):
             return
@@ -104,7 +104,7 @@ def single_table_programmable_constraint():
             return self.table_name
 
         def validate(self, metadata):
-            FixedCombinations._validate_pattern_with_metadata(self, metadata)
+            FixedCombinations._validate_constraint_with_metadata(self, metadata)
 
         def validate_input_data(self, data):
             return
@@ -142,12 +142,12 @@ def test_end_to_end_programmable_constraint(programmable_constraint):
         column_names=['has_rewards', 'room_type'], table_name='guests'
     )
     synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_cag([my_constraint])
+    synthesizer.add_constraints([my_constraint])
 
     # Run
     synthesizer.fit(data)
     sampled_data = synthesizer.sample(scale=1.0)
-    constraints = synthesizer.get_cag()
+    constraints = synthesizer.get_constraints()
 
     # Assert
     original_combinations = set(zip(data['guests']['has_rewards'], data['guests']['room_type']))
@@ -165,12 +165,12 @@ def test_end_to_end_single_table_programmable_constraint(single_table_programmab
         column_names=['has_rewards', 'room_type'], table_name='fake_hotel_guests'
     )
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag([my_constraint])
+    synthesizer.add_constraints([my_constraint])
 
     # Run
     synthesizer.fit(data)
     sampled_data = synthesizer.sample(1000)
-    constraints = synthesizer.get_cag()
+    constraints = synthesizer.get_constraints()
 
     # Assert
     original_combinations = set(zip(data['has_rewards'], data['room_type']))
@@ -188,7 +188,7 @@ def test_end_to_end_simple_constraint_with_no_fit(programmable_constraint):
     )
 
     # Run
-    synthesizer.add_cag([custom_constraint])
+    synthesizer.add_constraints([custom_constraint])
     synthesizer.fit(data)
     sampled_data = synthesizer.sample(100)
 

@@ -98,15 +98,22 @@ class BaseIndependentSampler:
         final_data = {}
         for table_name, table_rows in sampled_data.items():
             synthesizer = self._table_synthesizers.get(table_name)
-            metadata = synthesizer.get_metadata()._convert_to_single_table()
+            column_names = self.get_metadata().get_column_names(table_name)
+            if not synthesizer._fitted:
+                final_data[table_name] = table_rows[column_names]
+                continue
+
             dtypes = synthesizer._data_processor._dtypes
             dtypes_to_sdtype = synthesizer._data_processor._DTYPE_TO_SDTYPE
+            for name in column_names:
+                dtype = dtypes.get(name)
+                if dtype is None:
+                    continue
 
-            for name, dtype in dtypes.items():
                 try:
                     table_rows[name] = table_rows[name].dropna().astype(dtype)
                 except ValueError as e:
-                    sdtype = metadata.columns.get(name).get('sdtype')
+                    sdtype = self.metadata.tables[table_name].columns.get(name).get('sdtype')
                     if sdtype not in dtypes_to_sdtype.values():
                         LOGGER.info(
                             f"The real data in '{table_name}' and column '{name}' was stored as "
@@ -125,7 +132,7 @@ class BaseIndependentSampler:
                         'and metadata settings.'
                     )
 
-            final_data[table_name] = table_rows[list(dtypes.keys())]
+            final_data[table_name] = table_rows[column_names]
 
         return final_data
 
@@ -173,4 +180,5 @@ class BaseIndependentSampler:
             warnings.warn(warn_msg)
 
         self._connect_tables(sampled_data)
+        sampled_data = self._reverse_transform_constraints(sampled_data)
         return self._finalize(sampled_data)

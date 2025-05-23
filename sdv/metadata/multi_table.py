@@ -475,7 +475,7 @@ class MultiTableMetadata:
         table = self.tables.get(table_name)
         table.update_columns_metadata(column_metadata)
 
-    def add_constraint(self, table_name, constraint_name, **kwargs):
+    def add_constraints(self, table_name, constraint_name, **kwargs):
         """Add a constraint to a table in the multi-table metadata.
 
         Args:
@@ -488,7 +488,7 @@ class MultiTableMetadata:
         """
         self._validate_table_exists(table_name)
         table = self.tables.get(table_name)
-        table.add_constraint(constraint_name, **kwargs)
+        table.add_constraints(constraint_name, **kwargs)
 
     def _validate_table_not_detected(self, table_name):
         if table_name in self.tables:

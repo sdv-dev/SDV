@@ -2854,10 +2854,10 @@ class TestMultiTableMetadata:
         metadata._validate_table_exists.assert_called_once_with('table1')
         metadata.tables['table1'].set_sequence_index.assert_called_once_with('col')
 
-    def test_add_constraint(self):
-        """Test the ``add_constraint`` method.
+    def test_add_constraints(self):
+        """Test the ``add_constraints`` method.
 
-        The method should get the appropriate table and call ``add_constraint`` on it.
+        The method should get the appropriate table and call ``add_constraints`` on it.
 
         Setup:
             - Set the ``_tables`` attribute to have a mock for the table name.
@@ -2868,7 +2868,7 @@ class TestMultiTableMetadata:
             - Some key word arguments.
 
         Side effect:
-            - The mock should have the ``add_constraint`` method called with the right attributes.
+            - The mock should have the ``add_constraints`` method called with the right attributes.
         """
         # Setup
         metadata = MultiTableMetadata()
@@ -2876,15 +2876,15 @@ class TestMultiTableMetadata:
         metadata.tables = {'table': table}
 
         # Run
-        metadata.add_constraint('table', 'Inequality', low_column_name='a', high_column_name='b')
+        metadata.add_constraints('table', 'Inequality', low_column_name='a', high_column_name='b')
 
         # Assert
-        table.add_constraint.assert_called_once_with(
+        table.add_constraints.assert_called_once_with(
             'Inequality', low_column_name='a', high_column_name='b'
         )
 
-    def test_add_constraint_table_does_not_exist(self):
-        """Test the ``add_constraint`` method.
+    def test_add_constraints_table_does_not_exist(self):
+        """Test the ``add_constraints`` method.
 
         If the table doesn't exist, an error should be raised.
 
@@ -2902,7 +2902,7 @@ class TestMultiTableMetadata:
         # Run
         error_message = re.escape("Unknown table name ('table')")
         with pytest.raises(InvalidMetadataError, match=error_message):
-            metadata.add_constraint(
+            metadata.add_constraints(
                 'table', 'Inequality', low_column_name='a', high_column_name='b'
             )
 

@@ -336,7 +336,7 @@ class TestBaseHierarchicalSampler:
             return mapping[table_name]
 
         metadata.get_column_names = Mock(side_effect=get_column_names_mock)
-        instance.metadata = metadata
+        instance.get_metadata = Mock(return_value=metadata)
         sampled_data = {
             'users': pd.DataFrame({
                 'user_id': pd.Series([0, 1, 2], dtype=np.int64),
@@ -413,7 +413,7 @@ class TestBaseHierarchicalSampler:
             return mapping[table_name]
 
         metadata.get_column_names = Mock(side_effect=get_column_names_mock)
-        instance.metadata = metadata
+        instance.get_metadata = Mock(return_value=metadata)
         sampled_data = {
             'users': pd.DataFrame({
                 'user_id': pd.Series([0, 1, 2], dtype=np.int64),
@@ -536,6 +536,7 @@ class TestBaseHierarchicalSampler:
         }
         instance._sample_rows.return_value = users
         instance._sample_children.side_effect = _sample_children_dummy
+        instance._reverse_transform_constraints = Mock(side_effect=lambda x: x)
 
         # Run
         result = BaseHierarchicalSampler._sample(instance)
@@ -571,6 +572,7 @@ class TestBaseHierarchicalSampler:
                 expected_sample['transactions'], expected_sample['users'], 'transactions', 'users'
             ),
         ])
+        instance._reverse_transform_constraints.assert_called_once_with(expected_sample)
         instance._finalize.assert_called_once_with(expected_sample)
 
     def test___enforce_table_size_too_many_rows(self):

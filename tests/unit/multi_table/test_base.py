@@ -11,10 +11,10 @@ import pandas as pd
 import pytest
 
 from sdv import version
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag import Inequality
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
 from sdv.errors import (
-    ConstraintsNotMetError,
     InvalidDataError,
     NotFittedError,
     SamplingError,
@@ -412,8 +412,8 @@ class TestBaseMultiTableSynthesizer:
         assert type(result) is Metadata
         assert expected_metadata.to_dict() == result.to_dict()
 
-    def test_validate_cag(self):
-        """Test the ``validate_cag`` method."""
+    def test_validate_constraints(self):
+        """Test the ``validate_constraints`` method."""
         # Setup
         table_name = 'table1'
         synthetic_data = {table_name: Mock()}
@@ -427,49 +427,49 @@ class TestBaseMultiTableSynthesizer:
             table_name: Mock(),
             'table2': Mock(),
         }
-        cag_mock_1 = Mock()
-        cag_mock_1.table_name = table_name
-        cag_mock_1.is_valid.return_value = {table_name: pd.Series([True])}
-        cag_mock_1.transform.return_value = transformed_data
-        cag_mock_2 = Mock()
-        cag_mock_2.is_valid.return_value = {table_name: pd.Series([True])}
-        cag_mock_2.table_name = table_name
-        cag_mock_2.transform.return_value = transformed_data
-        instance.patterns = [cag_mock_1, cag_mock_2]
-        instance._table_synthesizers['table2'].validate_cag = Mock(
-            side_effect=PatternNotMetError('error')
+        constraint_mock_1 = Mock()
+        constraint_mock_1.table_name = table_name
+        constraint_mock_1.is_valid.return_value = {table_name: pd.Series([True])}
+        constraint_mock_1.transform.return_value = transformed_data
+        constraint_mock_2 = Mock()
+        constraint_mock_2.is_valid.return_value = {table_name: pd.Series([True])}
+        constraint_mock_2.table_name = table_name
+        constraint_mock_2.transform.return_value = transformed_data
+        instance.constraints = [constraint_mock_1, constraint_mock_2]
+        instance._table_synthesizers['table2'].validate_constraints = Mock(
+            side_effect=ConstraintNotMetError('error')
         )
         expected_error_msg = re.escape("Table 'table2': error")
 
         # Run
-        with pytest.raises(PatternNotMetError, match=expected_error_msg):
-            instance.validate_cag(synthetic_data)
+        with pytest.raises(ConstraintNotMetError, match=expected_error_msg):
+            instance.validate_constraints(synthetic_data)
 
         # Assert
-        cag_mock_1.is_valid.assert_called_once_with(data=synthetic_data)
-        cag_mock_1.transform.assert_called_once_with(data=synthetic_data)
-        cag_mock_2.is_valid.assert_called_once_with(data=transformed_data)
-        cag_mock_2.transform.assert_called_once_with(data=transformed_data)
-        instance._table_synthesizers[table_name].validate_cag.assert_called_once_with(
+        constraint_mock_1.is_valid.assert_called_once_with(data=synthetic_data)
+        constraint_mock_1.transform.assert_called_once_with(data=synthetic_data)
+        constraint_mock_2.is_valid.assert_called_once_with(data=transformed_data)
+        constraint_mock_2.transform.assert_called_once_with(data=transformed_data)
+        instance._table_synthesizers[table_name].validate_constraints.assert_called_once_with(
             transformed_data[table_name]
         )
 
-    def test_validate_cag_raises(self):
+    def test_validate_constraints_raises(self):
         """Test the ``_validate_transform_constraints`` method raises an error."""
         # Setup
         table_name = 'table1'
         synthetic_data = {table_name: Mock()}
         original_metadata = Metadata()
         instance = BaseMultiTableSynthesizer(original_metadata)
-        cag_mock_1 = Mock()
-        cag_mock_1.table_name = table_name
-        cag_mock_1.is_valid.return_value = {table_name: pd.Series([False])}
-        instance.patterns = [cag_mock_1]
+        constraint_mock_1 = Mock()
+        constraint_mock_1.table_name = table_name
+        constraint_mock_1.is_valid.return_value = {table_name: pd.Series([False])}
+        instance.constraints = [constraint_mock_1]
         msg = f"Table '{table_name}': The mock requirement is not met for row indices: 0."
 
         # Run and Assert
-        with pytest.raises(PatternNotMetError, match=msg):
-            instance.validate_cag(synthetic_data)
+        with pytest.raises(ConstraintNotMetError, match=msg):
+            instance.validate_constraints(synthetic_data)
 
     def test__validate_transform_constraints(self):
         """Test the ``_validate_transform_constraints`` method."""
@@ -479,23 +479,25 @@ class TestBaseMultiTableSynthesizer:
         metadata_1 = Metadata()
         metadata_2 = Metadata()
         instance = BaseMultiTableSynthesizer(original_metadata)
-        cag_mock_1 = Mock()
-        cag_mock_1.get_updated_metadata = Mock(return_value=metadata_1)
-        cag_mock_1.transform = Mock(return_value=data)
-        cag_mock_2 = Mock()
-        cag_mock_2.get_updated_metadata = Mock(return_value=metadata_2)
-        cag_mock_2.transform = Mock(return_value=data)
-        cag_mock_3 = Mock()
-        instance.patterns = [cag_mock_1, cag_mock_2, cag_mock_3]
+        constraint_mock_1 = Mock()
+        constraint_mock_1.get_updated_metadata = Mock(return_value=metadata_1)
+        constraint_mock_1.transform = Mock(return_value=data)
+        constraint_mock_2 = Mock()
+        constraint_mock_2.get_updated_metadata = Mock(return_value=metadata_2)
+        constraint_mock_2.transform = Mock(return_value=data)
+        constraint_mock_3 = Mock()
+        instance.constraints = [constraint_mock_1, constraint_mock_2, constraint_mock_3]
 
         # Run
         instance._validate_transform_constraints(data)
 
         # Assert
-        cag_mock_1.get_updated_metadata.assert_called_once_with(instance._original_metadata)
-        cag_mock_1.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
-        cag_mock_2.fit.assert_called_once_with(data=data, metadata=metadata_1)
-        cag_mock_3.fit.assert_called_once_with(data=data, metadata=metadata_2)
+        constraint_mock_1.get_updated_metadata.assert_called_once_with(instance._original_metadata)
+        constraint_mock_1.fit.assert_called_once_with(
+            data=data, metadata=instance._original_metadata
+        )
+        constraint_mock_2.fit.assert_called_once_with(data=data, metadata=metadata_1)
+        constraint_mock_3.fit.assert_called_once_with(data=data, metadata=metadata_2)
 
     def test_validate(self):
         """Test that no error is being raised when the data is valid."""
@@ -624,37 +626,6 @@ class TestBaseMultiTableSynthesizer:
             "Please use the method 'drop_unknown_references' from sdv.utils to clean the data."
         )
         with pytest.raises(InvalidDataError, match=error_msg):
-            instance.validate(data)
-
-    def test_validate_constraints_not_met(self):
-        """Test that errors are being raised when there are constraints not met."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        data = get_multi_table_data()
-        data['nesreca']['val'] = list(range(4))
-        metadata.add_column('val', 'nesreca', sdtype='numerical')
-        instance = BaseMultiTableSynthesizer(metadata)
-        inequality_constraint = {
-            'constraint_class': 'Inequality',
-            'table_name': 'nesreca',
-            'constraint_parameters': {
-                'low_column_name': 'nesreca_val',
-                'high_column_name': 'val',
-                'strict_boundaries': True,
-            },
-        }
-        instance.add_constraints([inequality_constraint])
-
-        # Run and Assert
-        error_msg = (
-            "\nData is not valid for the 'Inequality' constraint:\n"
-            '   nesreca_val  val\n'
-            '0            0    0\n'
-            '1            1    1\n'
-            '2            2    2\n'
-            '3            3    3'
-        )
-        with pytest.raises(ConstraintsNotMetError, match=error_msg):
             instance.validate(data)
 
     def test_validate_table_synthesizers_errors(self):
@@ -1345,7 +1316,6 @@ class TestBaseMultiTableSynthesizer:
         instance._original_table_columns = {
             'nesreca': ['upravna_enota', 'id_nesreca', 'nesreca_val'],
         }
-        instance._reverse_transform_constraints = Mock(return_value=data)
 
         synth_id = 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
         instance._synthesizer_id = synth_id
@@ -1356,7 +1326,6 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         instance._sample.assert_called_once_with(scale=1.5)
-        instance._reverse_transform_constraints.assert_called_once_with(data)
         assert caplog.messages[0] == str({
             'EVENT': 'Sample',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',
@@ -1433,7 +1402,7 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(SynthesizerInputError, match=msg):
             instance.get_loss_values('nesreca')
 
-    def test_add_constraint_warning(self):
+    def test_add_constraints_warning(self):
         """Test a warning is raised when the synthesizer had already been fitted."""
         # Setup
         metadata = get_multi_table_metadata()
@@ -1445,108 +1414,28 @@ class TestBaseMultiTableSynthesizer:
         with pytest.warns(UserWarning, match=warn_msg):
             instance.add_constraints([])
 
-    def test_add_constraints(self):
-        """Test a list of constraints can be added to the synthesizer."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        instance = BaseMultiTableSynthesizer(metadata)
-        metadata.add_column('positive_int', 'nesreca', sdtype='numerical')
-        metadata.add_column('negative_int', 'oseba', sdtype='numerical')
-        positive_constraint = {
-            'constraint_class': 'Positive',
-            'table_name': 'nesreca',
-            'constraint_parameters': {'column_name': 'nesreca_val', 'strict_boundaries': True},
-        }
-        negative_constraint = {
-            'constraint_class': 'Negative',
-            'table_name': 'oseba',
-            'constraint_parameters': {'column_name': 'oseba_val', 'strict_boundaries': False},
-        }
-
-        # Run
-        instance.add_constraints([positive_constraint, negative_constraint])
-
-        # Assert
-        positive_constraint = {
-            'constraint_class': 'Positive',
-            'constraint_parameters': {'column_name': 'nesreca_val', 'strict_boundaries': True},
-        }
-        negative_constraint = {
-            'constraint_class': 'Negative',
-            'constraint_parameters': {'column_name': 'oseba_val', 'strict_boundaries': False},
-        }
-        output_nesreca = instance._table_synthesizers['nesreca'].get_constraints()
-        assert output_nesreca == [positive_constraint]
-
-        output_oseba = instance._table_synthesizers['oseba'].get_constraints()
-        assert output_oseba == [negative_constraint]
-
-    def test_add_constraints_unique(self):
-        """Test an error is raised when a ``Unique`` constraint is passed."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        instance = BaseMultiTableSynthesizer(metadata)
-        unique_constraint = {
-            'constraint_class': 'Unique',
-            'table_name': 'oseba',
-            'constraint_parameters': {
-                'column_name': 'id_nesreca',
-            },
-        }
-
-        # Run and Assert
-        err_msg = re.escape(
-            "The constraint class 'Unique' is not currently supported for multi-table"
-            ' synthesizers. Please remove the constraint for this synthesizer.'
-        )
-        with pytest.raises(SynthesizerInputError, match=err_msg):
-            instance.add_constraints([unique_constraint])
-
-    def test_get_constraints(self):
-        """Test a list of constraints is returned by the method."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        instance = BaseMultiTableSynthesizer(metadata)
-        metadata.add_column('positive_int', 'nesreca', sdtype='numerical')
-        metadata.add_column('negative_int', 'oseba', sdtype='numerical')
-        positive_constraint = {
-            'constraint_class': 'Positive',
-            'table_name': 'nesreca',
-            'constraint_parameters': {'column_name': 'nesreca_val', 'strict_boundaries': True},
-        }
-        negative_constraint = {
-            'constraint_class': 'Negative',
-            'table_name': 'oseba',
-            'constraint_parameters': {'column_name': 'oseba_val', 'strict_boundaries': False},
-        }
-        constraints = [positive_constraint, negative_constraint]
-        instance.add_constraints(constraints)
-
-        # Run
-        output = instance.get_constraints()
-
-        # Assert
-        assert output == constraints
-
-    def test_add_constraints_missing_table_name(self):
+    def test_add_constraintss_missing_table_name(self):
         """Test error raised when ``table_name`` is missing."""
         # Setup
-        data = pd.DataFrame({'col': [1, 2, 3]})
+        data = pd.DataFrame({
+            'col1': [1, 2, 3],
+            'col2': [4, 5, 6],
+        })
         metadata = Metadata()
         metadata.detect_table_from_dataframe('table', data)
-        constraint = {'constraint_class': 'Inequality'}
+        constraint = Inequality(low_column_name='col1', high_column_name='col2')
         model = BaseMultiTableSynthesizer(metadata)
 
         # Run and Assert
         err_msg = re.escape(
-            "A constraint is missing required parameter 'table_name'. "
-            'Please add this parameter to your constraint definition.'
+            "The 'Inequality' is missing the required parameter 'table_name'. Please add"
+            ' this parameter to your constraint definition.'
         )
         with pytest.raises(SynthesizerInputError, match=err_msg):
             model.add_constraints([constraint])
 
-    def test__detect_single_table_cag(self):
-        """Test the ``_detect_single_table_cag`` method."""
+    def test__detect_single_table_constraints(self):
+        """Test the ``_detect_single_table_constraints`` method."""
         # Setup
         instance = Mock()
         instance.metadata = get_multi_table_metadata()
@@ -1555,31 +1444,31 @@ class TestBaseMultiTableSynthesizer:
             'table1': Mock(),
             'table2': Mock(),
         }
-        pattern1 = Mock()
-        pattern1._is_single_table = False
-        pattern2 = Mock()
-        pattern2._is_single_table = False
-        pattern3 = Mock()
-        pattern3._is_single_table = True
-        pattern4 = Mock()
-        pattern4._is_single_table = True
+        constraint1 = Mock()
+        constraint1._is_single_table = False
+        constraint2 = Mock()
+        constraint2._is_single_table = False
+        constraint3 = Mock()
+        constraint3._is_single_table = True
+        constraint4 = Mock()
+        constraint4._is_single_table = True
         expected_error = re.escape(
             'Cannot apply multi-table constraint after single-table constraint has been applied.'
         )
 
         # Run
-        idx_single_table_1 = BaseMultiTableSynthesizer._detect_single_table_cag(
-            instance, [pattern1, pattern2, pattern3, pattern4]
+        idx_single_table_1 = BaseMultiTableSynthesizer._detect_single_table_constraints(
+            instance, [constraint1, constraint2, constraint3, constraint4]
         )
-        idx_single_table_2 = BaseMultiTableSynthesizer._detect_single_table_cag(
-            instance, [pattern3, pattern4]
+        idx_single_table_2 = BaseMultiTableSynthesizer._detect_single_table_constraints(
+            instance, [constraint3, constraint4]
         )
         with pytest.raises(SynthesizerInputError, match=expected_error):
-            BaseMultiTableSynthesizer._detect_single_table_cag(instance, [pattern1])
+            BaseMultiTableSynthesizer._detect_single_table_constraints(instance, [constraint1])
         instance._has_seen_single_table_constraint = False
         with pytest.raises(SynthesizerInputError, match=expected_error):
-            BaseMultiTableSynthesizer._detect_single_table_cag(
-                instance, [pattern1, pattern3, pattern2]
+            BaseMultiTableSynthesizer._detect_single_table_constraints(
+                instance, [constraint1, constraint3, constraint2]
             )
 
         # Assert
@@ -1587,94 +1476,107 @@ class TestBaseMultiTableSynthesizer:
         assert idx_single_table_2 == 0
 
     @patch('sdv.multi_table.base.ProgrammableConstraintHarness')
-    def test_add_cag(self, mock_programmable_constraint_harness):
-        """Test adding data patterns to the synthesizer."""
+    @patch('sdv.multi_table.base._validate_constraints')
+    def test_add_constraints(self, mock_validate_constraints, mock_programmable_constraint_harness):
+        """Test adding data constraints to the synthesizer."""
         # Setup
         instance = Mock()
         original_metadata = get_multi_table_metadata()
         instance.metadata = original_metadata
         instance._original_metadata = original_metadata
-        instance.patterns = []
-        pattern1 = Mock()
-        pattern2 = Mock()
-        pattern3 = ProgrammableConstraint()
+        instance.constraints = []
+        constraint1 = Mock()
+        constraint2 = Mock()
+        constraint3 = ProgrammableConstraint()
         mock_harness = Mock()
         mock_programmable_constraint_harness.return_value = mock_harness
-        pattern4 = Mock()
-        pattern4.table_name = 'table1'
+        constraint4 = Mock()
+        constraint4.table_name = 'table1'
         instance._table_synthesizers = {
             'table1': Mock(),
         }
-        instance._table_synthesizers['table1'].add_cag = Mock()
-        mutli_table_pattern = [pattern1, pattern2, pattern3]
-        single_table_pattern = [pattern4]
-        patterns = mutli_table_pattern + single_table_pattern
-        instance._detect_single_table_cag = Mock(return_value=3)
+        instance._table_synthesizers['table1'].add_constraints = Mock()
+        mutli_table_constraint = [constraint1, constraint2, constraint3]
+        single_table_constraint = [constraint4]
+        constraints = mutli_table_constraint + single_table_constraint
+        instance._detect_single_table_constraints = Mock(return_value=3)
+        mock_validate_constraints.return_value = constraints
 
         # Run
-        BaseMultiTableSynthesizer.add_cag(instance, patterns)
+        BaseMultiTableSynthesizer.add_constraints(instance, constraints)
 
         # Assert
-        mock_programmable_constraint_harness.assert_called_once_with(pattern3)
+        mock_validate_constraints.assert_called_once_with(constraints, instance._fitted)
+        mock_programmable_constraint_harness.assert_called_once_with(constraint3)
+        instance._validate_single_table_constraints.assert_called_once_with(single_table_constraint)
         assert instance._original_metadata == original_metadata
-        pattern1.get_updated_metadata.assert_called_once_with(original_metadata)
-        pattern2.get_updated_metadata.assert_called_once_with(
-            pattern1.get_updated_metadata.return_value
+        constraint1.get_updated_metadata.assert_called_once_with(original_metadata)
+        constraint2.get_updated_metadata.assert_called_once_with(
+            constraint1.get_updated_metadata.return_value
         )
         mock_harness.get_updated_metadata.assert_called_once_with(
-            pattern2.get_updated_metadata.return_value
+            constraint2.get_updated_metadata.return_value
         )
-        assert instance.metadata == mock_harness.get_updated_metadata.return_value
-        instance._detect_single_table_cag.assert_called_once_with(patterns)
+        assert instance.metadata == constraint4.get_updated_metadata.return_value
+        instance._detect_single_table_constraints.assert_called_once_with(constraints)
         instance._initialize_models.assert_called_once()
-        expected_patterns = [pattern1, pattern2, mock_harness]
-        instance._table_synthesizers['table1'].add_cag.assert_called_once_with([pattern4])
-        assert instance.patterns == expected_patterns
+        expected_constraints = [constraint1, constraint2, mock_harness]
+        instance._table_synthesizers['table1'].add_constraints.assert_called_once_with([
+            constraint4
+        ])
+        assert instance.constraints == expected_constraints
 
-    def test_updating_patterns_keeps_original_metadata(self):
-        """Test adding data patterns to the synthesizer."""
+    @patch('sdv.multi_table.base._validate_constraints')
+    def test_updating_constraints_keeps_original_metadata(self, mock_validate_constraints):
+        """Test adding data constraints to the synthesizer."""
         # Setup
         instance = Mock()
-        delattr(instance, 'patterns')
+        delattr(instance, 'constraints')
         metadata = get_multi_table_metadata()
         original_metadata = Mock()
         instance._original_metadata = original_metadata
         instance.metadata = metadata
-        pattern1 = Mock()
-        pattern2 = Mock()
-        instance.patterns = [pattern1]
-        instance._detect_single_table_cag = Mock(return_value=None)
+        constraint1 = Mock()
+        constraint2 = Mock()
+        instance.constraints = [constraint1]
+        instance._detect_single_table_constraints = Mock(return_value=None)
+        mock_validate_constraints.return_value = [constraint2]
 
         # Run
-        BaseMultiTableSynthesizer.add_cag(instance, [pattern2])
+        BaseMultiTableSynthesizer.add_constraints(instance, [constraint2])
 
         # Assert
+        mock_validate_constraints.assert_called_once_with([constraint2], instance._fitted)
         assert instance._original_metadata == original_metadata
-        pattern2.get_updated_metadata.assert_called_once_with(metadata)
-        assert instance.metadata == pattern2.get_updated_metadata.return_value
+        constraint2.get_updated_metadata.assert_called_once_with(metadata)
+        assert instance.metadata == constraint2.get_updated_metadata.return_value
         instance._initialize_models.assert_called_once()
-        assert instance.patterns == [pattern1, pattern2]
+        assert instance.constraints == [constraint1, constraint2]
 
     @patch('sdv.multi_table.base.deepcopy')
-    def test_get_cag(self, copy_mock):
-        """Test getting data patterns from the synthesizer."""
+    def test_get_constraint(self, copy_mock):
+        """Test getting data constraints from the synthesizer."""
         # Setup
         instance = Mock()
-        delattr(instance, 'patterns')
-        pattern1 = Mock()
-        pattern2 = Mock()
-        custom_pattern = Mock()
-        pattern3 = ProgrammableConstraintHarness(custom_pattern)
+        delattr(instance, 'constraints')
+        constraint1 = Mock()
+        constraint2 = Mock()
+        custom_constraint = Mock()
+        constraint3 = ProgrammableConstraintHarness(custom_constraint)
 
         # Run
-        no_patterns = BaseMultiTableSynthesizer.get_cag(instance)
-        instance.patterns = [pattern1, pattern2, pattern3]
-        patterns = BaseMultiTableSynthesizer.get_cag(instance)
+        no_constraints = BaseMultiTableSynthesizer.get_constraints(instance)
+        instance.constraints = [constraint1, constraint2, constraint3]
+        constraints = BaseMultiTableSynthesizer.get_constraints(instance)
 
         # Assert
-        assert no_patterns == []
-        copy_mock.assert_has_calls([call(pattern1), call(pattern2), call(custom_pattern)])
-        assert patterns == [copy_mock.return_value, copy_mock.return_value, copy_mock.return_value]
+        assert no_constraints == []
+        copy_mock.assert_has_calls([call(constraint1), call(constraint2), call(custom_constraint)])
+        assert constraints == [
+            copy_mock.return_value,
+            copy_mock.return_value,
+            copy_mock.return_value,
+        ]
 
     def test_get_metadata_original(self):
         """Test getting the original metadata from the synthesizer."""
@@ -1685,15 +1587,15 @@ class TestBaseMultiTableSynthesizer:
         delattr(instance, '_original_metadata')
 
         # Run
-        no_patterns_metadata = BaseMultiTableSynthesizer.get_metadata(instance)
+        no_constraints_metadata = BaseMultiTableSynthesizer.get_metadata(instance)
 
         instance._original_metadata = metadata
         instance.metadata = Mock()
-        patterns_metadata = BaseMultiTableSynthesizer.get_metadata(instance)
+        constraints_metadata = BaseMultiTableSynthesizer.get_metadata(instance)
 
         # Assert
-        assert no_patterns_metadata.to_dict() == metadata.to_dict()
-        assert patterns_metadata.to_dict() == metadata.to_dict()
+        assert no_constraints_metadata.to_dict() == metadata.to_dict()
+        assert constraints_metadata.to_dict() == metadata.to_dict()
 
     def test_get_metadata_modified(self):
         """Test getting the modified metadata from the synthesizer."""
@@ -1726,76 +1628,76 @@ class TestBaseMultiTableSynthesizer:
         instance = Mock()
         original_metadata = Mock()
         data = {'table1': Mock(), 'table2': Mock()}
-        pattern1 = Mock()
-        pattern2 = Mock()
+        constraint1 = Mock()
+        constraint2 = Mock()
         instance._constraints_fitted = False
-        instance.patterns = [pattern1, pattern2]
+        instance.constraints = [constraint1, constraint2]
         instance._original_metadata = original_metadata
 
         # Run and Assert
         transformed = BaseMultiTableSynthesizer._validate_transform_constraints(instance, data)
 
-        pattern1.fit.assert_called_once_with(data=data, metadata=original_metadata)
-        pattern1.transform.assert_called_once_with(data)
-        pattern2.fit.assert_called_once_with(
-            data=pattern1.transform.return_value,
-            metadata=pattern1.get_updated_metadata.return_value,
+        constraint1.fit.assert_called_once_with(data=data, metadata=original_metadata)
+        constraint1.transform.assert_called_once_with(data)
+        constraint2.fit.assert_called_once_with(
+            data=constraint1.transform.return_value,
+            metadata=constraint1.get_updated_metadata.return_value,
         )
-        pattern2.transform.assert_called_once_with(pattern1.transform.return_value)
-        assert transformed == pattern2.transform.return_value
+        constraint2.transform.assert_called_once_with(constraint1.transform.return_value)
+        assert transformed == constraint2.transform.return_value
         assert instance._constraints_fitted is True
 
         # Reset mock call history
-        pattern1.fit.reset_mock()
-        pattern1.transform.reset_mock()
-        pattern2.fit.reset_mock()
-        pattern2.transform.reset_mock()
+        constraint1.fit.reset_mock()
+        constraint1.transform.reset_mock()
+        constraint2.fit.reset_mock()
+        constraint2.transform.reset_mock()
 
         # Re-run to check it only transforms when constraints are already fitted
         BaseMultiTableSynthesizer._validate_transform_constraints(instance, data)
 
-        pattern1.transform.assert_called_once_with(data)
-        pattern2.transform.assert_called_once_with(pattern1.transform.return_value)
-        pattern1.fit.assert_not_called()
-        pattern2.fit.assert_not_called()
+        constraint1.transform.assert_called_once_with(data)
+        constraint2.transform.assert_called_once_with(constraint1.transform.return_value)
+        constraint1.fit.assert_not_called()
+        constraint2.fit.assert_not_called()
 
         # Check the constraints are fitted again with enforce_constraint_fitting=True
         BaseMultiTableSynthesizer._validate_transform_constraints(
             instance, data, enforce_constraint_fitting=True
         )
 
-        pattern1.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
-        pattern2.fit.assert_called_once_with(
-            data=pattern1.transform.return_value,
-            metadata=pattern1.get_updated_metadata.return_value,
+        constraint1.fit.assert_called_once_with(data=data, metadata=instance._original_metadata)
+        constraint2.fit.assert_called_once_with(
+            data=constraint1.transform.return_value,
+            metadata=constraint1.get_updated_metadata.return_value,
         )
 
-    def test__validate_transform_constraints_with_patterns(self):
-        """Test validating and transforming the data patterns."""
+    def test__validate_transform_constraints_with_constraints(self):
+        """Test validating and transforming the data constraints."""
         # Setup
         instance = Mock()
         data = {'table1': Mock(), 'table2': Mock()}
-        pattern1 = Mock()
-        pattern2 = Mock()
+        constraint1 = Mock()
+        constraint2 = Mock()
         instance._fitted = True
-        instance.patterns = [pattern1, pattern2]
+        instance.constraints = [constraint1, constraint2]
 
         # Run
         transformed = BaseMultiTableSynthesizer._validate_transform_constraints(instance, data)
 
         # Assert
-        pattern1.fit.assert_not_called()
-        pattern1.transform.assert_called_once_with(data)
-        pattern2.fit.assert_not_called()
-        pattern2.transform.assert_called_once_with(pattern1.transform.return_value)
-        assert transformed == pattern2.transform.return_value
+        constraint1.fit.assert_not_called()
+        constraint1.transform.assert_called_once_with(data)
+        constraint2.fit.assert_not_called()
+        constraint2.transform.assert_called_once_with(constraint1.transform.return_value)
+        assert transformed == constraint2.transform.return_value
 
-    def test__reverse_validate_transform_constraints_no_patterns(self):
-        """Test reverse transforming when no data patterns have been set."""
+    def test__reverse_validate_transform_constraints_no_constraints(self):
+        """Test reverse transforming when no data constraints have been set."""
         # Setup
         instance = Mock()
         data = get_multi_table_data()
-        delattr(instance, 'patterns')
+        delattr(instance, 'constraints')
 
         # Run
         reverse_transformed = BaseMultiTableSynthesizer._reverse_transform_constraints(
@@ -1809,14 +1711,14 @@ class TestBaseMultiTableSynthesizer:
 
     @patch('sdv.utils.utils.drop_unknown_references')
     def test__reverse_validate_transform_constraints(self, drop_unknown_references):
-        """Test reverse transforming the data patterns."""
+        """Test reverse transforming the data constraints."""
         # Setup
         instance = Mock()
         data = {'table1': Mock(), 'table2': Mock()}
-        pattern1 = Mock()
-        pattern2 = Mock()
-        instance.patterns = [pattern1, pattern2]
-        drop_unknown_references.return_value = pattern1.reverse_transform.return_value
+        constraint1 = Mock()
+        constraint2 = Mock()
+        instance.constraints = [constraint1, constraint2]
+        drop_unknown_references.return_value = constraint1.reverse_transform.return_value
 
         # Run
         reverse_transformed = BaseMultiTableSynthesizer._reverse_transform_constraints(
@@ -1824,12 +1726,14 @@ class TestBaseMultiTableSynthesizer:
         )
 
         # Assert
-        pattern2.reverse_transform.assert_called_once_with(data)
-        pattern1.reverse_transform.assert_called_once_with(pattern2.reverse_transform.return_value)
-        drop_unknown_references.assert_called_once_with(
-            pattern1.reverse_transform.return_value, instance._original_metadata, verbose=False
+        constraint2.reverse_transform.assert_called_once_with(data)
+        constraint1.reverse_transform.assert_called_once_with(
+            constraint2.reverse_transform.return_value
         )
-        assert reverse_transformed == pattern1.reverse_transform.return_value
+        drop_unknown_references.assert_called_once_with(
+            constraint1.reverse_transform.return_value, instance._original_metadata, verbose=False
+        )
+        assert reverse_transformed == constraint1.reverse_transform.return_value
 
     def test_load_custom_constraint_classes(self):
         """Test that the method calls the single table synthesizer's version of the method."""
@@ -1867,42 +1771,6 @@ class TestBaseMultiTableSynthesizer:
         )
         table_synth_mock_2.load_custom_constraint_classes.assert_called_once_with(
             'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
-        )
-
-    def test_add_custom_constraint_class(self):
-        """Test that this method calls the single table synthesizer's version of the method."""
-        # Setup
-        instance = Mock()
-        constraint_mock = Mock()
-        table_synth_mock = Mock()
-        instance._table_synthesizers = {'table': table_synth_mock}
-
-        # Run
-        BaseMultiTableSynthesizer.add_custom_constraint_class(instance, constraint_mock, 'custom')
-
-        # Assert
-        table_synth_mock.add_custom_constraint_class.assert_called_once_with(
-            constraint_mock, 'custom'
-        )
-
-    def test_add_custom_constraint_class_multi_tables(self):
-        """Check that ``add_custom_constraint_class`` is called for every tables."""
-        # Setup
-        instance = Mock()
-        constraint_mock = Mock()
-        table_synth_mock = Mock()
-        table_synth_mock_2 = Mock()
-        instance._table_synthesizers = {'table': table_synth_mock, 'table_2': table_synth_mock_2}
-
-        # Run
-        BaseMultiTableSynthesizer.add_custom_constraint_class(instance, constraint_mock, 'custom')
-
-        # Assert
-        table_synth_mock.add_custom_constraint_class.assert_called_once_with(
-            constraint_mock, 'custom'
-        )
-        table_synth_mock_2.add_custom_constraint_class.assert_called_once_with(
-            constraint_mock, 'custom'
         )
 
     @patch('sdv.multi_table.base.version')
