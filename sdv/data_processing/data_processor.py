@@ -16,16 +16,11 @@ from rdt.transformers.pii.anonymization import get_anonymized_transformer
 from sdv._utils import _get_transformer_init_kwargs
 from sdv.constraints import Constraint
 from sdv.constraints.base import get_subclasses
-from sdv.constraints.errors import (
-    AggregateConstraintsError,
-    FunctionError,
-    MissingConstraintColumnError,
-)
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.data_processing.utils import load_module_from_path
-from sdv.errors import SynthesizerInputError, log_exc_stacktrace
+from sdv.errors import SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 
 LOGGER = logging.getLogger(__name__)
@@ -239,60 +234,6 @@ class DataProcessor:
             constraint_class = getattr(module, class_name)
             self._custom_constraint_classes[class_name] = constraint_class
 
-    def _validate_constraint_dict(self, constraint_dict):
-        """Validate a constraint against the single table metadata.
-
-        Args:
-            constraint_dict (dict):
-                A dictionary containing:
-                    * ``constraint_class``: Name of the constraint to apply.
-                    * ``constraint_parameters``: A dictionary with the constraint parameters.
-        """
-        params = {'constraint_class', 'constraint_parameters'}
-        keys = constraint_dict.keys()
-        missing_params = params - keys
-        if missing_params:
-            raise SynthesizerInputError(
-                f'A constraint is missing required parameters {missing_params}. '
-                'Please add these parameters to your constraint definition.'
-            )
-
-        extra_params = keys - params
-        if extra_params:
-            raise SynthesizerInputError(
-                f'Unrecognized constraint parameter {extra_params}. '
-                'Please remove these parameters from your constraint definition.'
-            )
-
-        constraint_class = constraint_dict['constraint_class']
-        constraint_parameters = constraint_dict['constraint_parameters']
-        try:
-            if constraint_class in self._custom_constraint_classes:
-                constraint_class = self._custom_constraint_classes[constraint_class]
-
-            else:
-                constraint_class = Constraint._get_class_from_dict(constraint_class)
-
-        except KeyError:
-            raise InvalidConstraintsError(f"Invalid constraint class ('{constraint_class}').")
-
-        if 'column_name' in constraint_parameters:
-            column_names = [constraint_parameters.get('column_name')]
-        else:
-            column_names = constraint_parameters.get('column_names')
-
-        columns_in_relationship = self._get_grouped_columns()
-        if columns_in_relationship and column_names:
-            relationship_and_constraint = set(column_names) & set(columns_in_relationship)
-            if relationship_and_constraint:
-                to_print = "', '".join(relationship_and_constraint)
-                raise SynthesizerInputError(
-                    f"The '{to_print}' columns are part of a column relationship. You cannot "
-                    'add constraints to columns that are part of a column relationship.'
-                )
-
-        constraint_class._validate_metadata(**constraint_parameters)
-
     def _load_constraints(self):
         loaded_constraints = []
         default_constraints_classes = list(get_subclasses(Constraint))
@@ -307,62 +248,6 @@ class DataProcessor:
                 )
 
         return loaded_constraints
-
-    def _fit_constraints(self, data):
-        self._constraints = self._load_constraints()
-        errors = []
-        for constraint in self._constraints:
-            try:
-                constraint.fit(data)
-            except Exception as e:
-                errors.append(e)
-
-        if errors:
-            raise AggregateConstraintsError(errors)
-
-    def _transform_constraints(self, data, is_condition=False):
-        errors = []
-        if not is_condition:
-            self._constraints_to_reverse = []
-
-        for constraint in self._constraints:
-            try:
-                data = constraint.transform(data)
-                if not is_condition:
-                    self._constraints_to_reverse.append(constraint)
-
-            except (MissingConstraintColumnError, FunctionError) as error:
-                if isinstance(error, MissingConstraintColumnError):
-                    LOGGER.info(
-                        'Unable to transform %s with columns %s because they are not all available'
-                        ' in the data. This happens due to multiple, overlapping constraints.',
-                        constraint.__class__.__name__,
-                        error.missing_columns,
-                    )
-                    log_exc_stacktrace(LOGGER, error)
-                else:
-                    # Error came from custom constraint. We don't want to crash but we do
-                    # want to log it.
-                    LOGGER.info(
-                        'Unable to transform %s with columns %s due to an error in transform: \n'
-                        '%s\nUsing the reject sampling approach instead.',
-                        constraint.__class__.__name__,
-                        constraint.column_names,
-                        str(error),
-                    )
-                    log_exc_stacktrace(LOGGER, error)
-                if is_condition:
-                    indices_to_drop = data.columns.isin(constraint.constraint_columns)
-                    columns_to_drop = data.columns.where(indices_to_drop).dropna()
-                    data = data.drop(columns_to_drop, axis=1)
-
-            except Exception as error:
-                errors.append(error)
-
-        if errors:
-            raise AggregateConstraintsError(errors)
-
-        return data
 
     def _update_transformers_by_sdtypes(self, sdtype, transformer):
         self._transformers_by_sdtype[sdtype] = transformer
@@ -464,40 +349,12 @@ class DataProcessor:
 
         return deepcopy(transformer)
 
-    def _update_constraint_transformers(self, data, columns_created_by_constraints, config):
-        missing_columns = set(columns_created_by_constraints) - config['transformers'].keys()
-        for column in missing_columns:
-            dtype_kind = data[column].dtype.kind
-            if dtype_kind in ('i', 'f'):
-                config['sdtypes'][column] = 'numerical'
-                config['transformers'][column] = rdt.transformers.FloatFormatter(
-                    missing_value_replacement='mean',
-                    missing_value_generation='random',
-                    enforce_min_max_values=self._enforce_min_max_values,
-                )
-            else:
-                sdtype = self._DTYPE_TO_SDTYPE.get(dtype_kind, 'categorical')
-                config['sdtypes'][column] = sdtype
-                config['transformers'][column] = self._get_transformer_instance(sdtype, {})
-
-        # Remove columns that have been dropped by the constraint
-        for column in list(config['sdtypes'].keys()):
-            if column not in data:
-                LOGGER.info(
-                    f"A constraint has dropped the column '{column}', removing the transformer "
-                    "from the 'HyperTransformer'."
-                )
-                config['sdtypes'].pop(column)
-                config['transformers'].pop(column)
-
-        return config
-
-    def _create_config(self, data, columns_created_by_constraints):
+    def _create_config(self, data):
         sdtypes = {}
         transformers = {}
 
         columns_in_multi_col_transformer = self._get_grouped_columns()
-        for column in set(data.columns) - columns_created_by_constraints:
+        for column in set(data.columns):
             column_metadata = self.metadata.columns.get(column)
             sdtype = column_metadata.get('sdtype')
 
@@ -600,8 +457,6 @@ class DataProcessor:
             transformers[columns] = transformer
 
         config = {'transformers': transformers, 'sdtypes': sdtypes}
-        config = self._update_constraint_transformers(data, columns_created_by_constraints, config)
-
         return config
 
     def update_transformers(self, column_name_to_transformer):
@@ -672,7 +527,7 @@ class DataProcessor:
         """Prepare the ``DataProcessor`` for fitting.
 
         This method will learn the ``dtypes`` of the data, fit the numerical formatters,
-        fit the constraints and create the configuration for the ``rdt.HyperTransformer``.
+        fit and create the configuration for the ``rdt.HyperTransformer``.
         If the ``rdt.HyperTransformer`` has already been updated, this will not perform the
         actions again.
 
@@ -688,15 +543,7 @@ class DataProcessor:
             LOGGER.info(f'Fitting formatters for table {self.table_name}')
             self._fit_formatters(data)
 
-            LOGGER.info(f'Fitting constraints for table {self.table_name}')
-            if len(self._constraints_list) != len(self._constraints):
-                self._fit_constraints(data)
-
-            constrained = self._transform_constraints(data)
-            columns_created_by_constraints = set(constrained.columns) - set(data.columns)
-
             config = self._hyper_transformer.get_config()
-            missing_columns = columns_created_by_constraints - config.get('sdtypes').keys()
             if not config.get('sdtypes'):
                 LOGGER.info(
                     (
@@ -704,12 +551,7 @@ class DataProcessor:
                         f'for table {self.table_name}'
                     )
                 )
-                config = self._create_config(constrained, columns_created_by_constraints)
-                self._hyper_transformer.set_config(config)
-
-            elif missing_columns:
-                config = self._update_constraint_transformers(constrained, missing_columns, config)
-                self._hyper_transformer = rdt.HyperTransformer()
+                config = self._create_config(data)
                 self._hyper_transformer.set_config(config)
 
             self._prepared_for_fitting = True
@@ -725,13 +567,8 @@ class DataProcessor:
             raise ValueError('The fit dataframe is empty, synthesizer will not be fitted.')
         self._prepared_for_fitting = False
         self.prepare_for_fitting(data)
-        constrained = self._transform_constraints(data)
-        if constrained.empty:
-            raise ValueError(
-                'The constrained fit dataframe is empty, synthesizer will not be fitted.'
-            )
         LOGGER.info(f'Fitting HyperTransformer for table {self.table_name}')
-        self._fit_hyper_transformer(constrained)
+        self._fit_hyper_transformer(data)
         self.fitted = True
 
     def reset_sampling(self):
@@ -772,15 +609,12 @@ class DataProcessor:
         if not self.fitted:
             raise NotFittedError()
 
-        # Filter columns that can be transformed
         columns = [
             column
             for column in self.get_sdtypes(primary_keys=not is_condition)
             if column in data.columns
         ]
-        LOGGER.debug(f'Transforming constraints for table {self.table_name}')
-        data = self._transform_constraints(data[columns], is_condition)
-
+        data = data[columns]
         LOGGER.debug(f'Transforming table {self.table_name}')
         if self._keys and not is_condition:
             data = data.set_index(self._primary_key, drop=False)

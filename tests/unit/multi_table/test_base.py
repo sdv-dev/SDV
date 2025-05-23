@@ -1773,42 +1773,6 @@ class TestBaseMultiTableSynthesizer:
             'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
         )
 
-    def test_add_custom_constraint_class(self):
-        """Test that this method calls the single table synthesizer's version of the method."""
-        # Setup
-        instance = Mock()
-        constraint_mock = Mock()
-        table_synth_mock = Mock()
-        instance._table_synthesizers = {'table': table_synth_mock}
-
-        # Run
-        BaseMultiTableSynthesizer.add_custom_constraint_class(instance, constraint_mock, 'custom')
-
-        # Assert
-        table_synth_mock.add_custom_constraint_class.assert_called_once_with(
-            constraint_mock, 'custom'
-        )
-
-    def test_add_custom_constraint_class_multi_tables(self):
-        """Check that ``add_custom_constraint_class`` is called for every tables."""
-        # Setup
-        instance = Mock()
-        constraint_mock = Mock()
-        table_synth_mock = Mock()
-        table_synth_mock_2 = Mock()
-        instance._table_synthesizers = {'table': table_synth_mock, 'table_2': table_synth_mock_2}
-
-        # Run
-        BaseMultiTableSynthesizer.add_custom_constraint_class(instance, constraint_mock, 'custom')
-
-        # Assert
-        table_synth_mock.add_custom_constraint_class.assert_called_once_with(
-            constraint_mock, 'custom'
-        )
-        table_synth_mock_2.add_custom_constraint_class.assert_called_once_with(
-            constraint_mock, 'custom'
-        )
-
     @patch('sdv.multi_table.base.version')
     def test_get_info(self, mock_version):
         """Test the correct dictionary is returned.
