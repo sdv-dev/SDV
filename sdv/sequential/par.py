@@ -14,6 +14,7 @@ from deepecho.sequences import assemble_sequences
 from rdt.transformers import FloatFormatter
 
 from sdv._utils import _cast_to_iterable, _groupby_list
+from sdv.cag._utils import _validate_constraints_single_table
 from sdv.errors import SamplingError, SynthesizerInputError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
@@ -80,7 +81,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         for column, column_metadata in self._extra_context_columns.items():
             context_columns_dict[column] = column_metadata
 
-        table_metadata = self._get_table_metadata()
+        table_metadata = self.metadata.tables[self._table_name]
         for column in context_columns:
             context_columns_dict[column] = table_metadata.columns[column]
 
@@ -99,7 +100,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
                 Updated context column metadata.
         """
         default_transformers_by_sdtype = deepcopy(self._data_processor._transformers_by_sdtype)
-        table_metadata = self._get_table_metadata()
+        table_metadata = self.metadata.tables[self._table_name]
         for column in self.context_columns:
             column_metadata = table_metadata.columns[column]
             if default_transformers_by_sdtype.get(column_metadata['sdtype']):
@@ -200,18 +201,27 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
                     * ``constraint_class``: Name of the constraint to apply.
                     * ``constraint_parameters``: A dictionary with the constraint parameters.
         """
+        _validate_constraints_single_table(constraints, self._fitted)
+        metadata_columns = self.get_metadata('modified').get_column_names()
+        transformer_by_sdtype = self._data_processor._transformers_by_sdtype
         context_set = set(self.context_columns)
         constraint_cols = []
         for constraint in constraints:
-            constraint_parameters = constraint['constraint_parameters']
             columns = []
-            for param in constraint_parameters:
-                if 'column_name' in param:
-                    col_names = constraint_parameters[param]
-                    if isinstance(col_names, list):
-                        columns.extend(col_names)
-                    else:
-                        columns.append(col_names)
+            init_signature = inspect.signature(constraint.__class__.__init__)
+            init_param_names = [p for p in init_signature.parameters if p != 'self']
+            for param in init_param_names:
+                value = getattr(constraint, param, None)
+                if value is None:
+                    value = getattr(constraint, f'_{param}', None)
+
+                if isinstance(value, str) and value in metadata_columns:
+                    columns.append(value)
+                elif isinstance(value, (list, tuple)):
+                    for item in value:
+                        if isinstance(item, str) and item in metadata_columns:
+                            columns.append(item)
+
             for col in columns:
                 if col in constraint_cols:
                     raise SynthesizerInputError(
@@ -222,9 +232,17 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
 
         all_context = all(col in context_set for col in constraint_cols)
         no_context = all(col not in context_set for col in constraint_cols)
-
         if all_context or no_context:
             super().add_constraints(constraints)
+            self._data_processor._transformers_by_sdtype = transformer_by_sdtype
+            if all_context:
+                new_columns = self.metadata.get_column_names()
+                extra_columns = set(new_columns).difference(set(metadata_columns))
+                self.context_columns = list(
+                    extra_columns.union(context_set.intersection(set(new_columns)))
+                )
+                context_metadata = self._get_context_metadata()
+                self._context_synthesizer.metadata = context_metadata
         else:
             raise SynthesizerInputError(
                 'The PARSynthesizer cannot accommodate constraints '
@@ -232,10 +250,6 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             )
 
     def load_custom_constraint_classes(self, filepath, class_names):
-        """Error that tells the user custom constraints can't be used in the ``PARSynthesizer``."""
-        raise SynthesizerInputError('The PARSynthesizer cannot accommodate custom constraints.')
-
-    def add_custom_constraint_class(self, class_object, class_name):
         """Error that tells the user custom constraints can't be used in the ``PARSynthesizer``."""
         raise SynthesizerInputError('The PARSynthesizer cannot accommodate custom constraints.')
 
@@ -270,6 +284,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         return errors
 
     def _validate(self, data):
+        data = self._validate_transform_constraints(data)
         return self._validate_context_columns(data)
 
     def _transform_sequence_index(self, data):
@@ -319,8 +334,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             InvalidDataError:
                 If a table of the data is not present in the metadata.
         """
-        super().auto_assign_transformers(data)
-
+        self._data_processor.prepare_for_fitting(data)
         # Ensure that sequence index does not get auto assigned with enforce_min_max_values
         if self._sequence_index:
             sequence_index_transformer = self.get_transformers()[self._sequence_index]
@@ -523,7 +537,8 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
 
     def _sample(self, context_columns, sequence_length=None):
         sampled = self._sample_from_par(context_columns, sequence_length)
-        return self._data_processor.reverse_transform(sampled)
+        sampled = self._data_processor.reverse_transform(sampled)
+        return self.reverse_transform_constraints(sampled)
 
     def sample(self, num_sequences, sequence_length=None):
         """Sample new sequences.

@@ -7,6 +7,7 @@ import pytest
 from deepecho import load_demo
 from rdt.transformers.categorical import UniformEncoder
 
+from sdv.cag import FixedCombinations
 from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError
 from sdv.metadata.metadata import Metadata
@@ -286,43 +287,56 @@ def test_par_missing_sequence_index():
     assert (sampled.dtypes == data.dtypes).all()
 
 
-@pytest.mark.skip('Old-style constraints are deprecated')
-def test_constraints_on_par():
-    """Test if only simple constraints work on PARSynthesizer."""
+def test_with_constraints():
+    """Test constraint works on PARSynthesizer."""
     # Setup
     real_data, metadata = download_demo(modality='sequential', dataset_name='nasdaq100_2019')
-
-    synthesizer = PARSynthesizer(metadata, epochs=1, context_columns=['Sector', 'Industry'])
-
-    market_constraint = {
-        'constraint_class': 'Positive',
-        'constraint_parameters': {'column_name': 'MarketCap', 'strict_boundaries': True},
-    }
-    volume_constraint = {
-        'constraint_class': 'Positive',
-        'constraint_parameters': {'column_name': 'Volume', 'strict_boundaries': True},
-    }
-
-    context_constraint = {
-        'constraint_class': 'Mock',
-        'constraint_parameters': {'column_name': 'Sector', 'strict_boundaries': True},
-    }
+    synthesizer = PARSynthesizer(metadata, epochs=1)
+    constraint = FixedCombinations(column_names=['Sector', 'Industry'])
 
     # Run
-    synthesizer.add_constraints([volume_constraint, market_constraint])
+    synthesizer.add_constraints([constraint])
     synthesizer.fit(real_data)
     samples = synthesizer.sample(50, 10)
 
     # Assert
-    assert not (samples['MarketCap'] < 0).any().any()
-    assert not (samples['Volume'] < 0).any().any()
-    mixed_constraint_error_msg = re.escape(
-        'The PARSynthesizer cannot accommodate constraints '
-        'with a mix of context and non-context columns.'
+    real_data_pairs = zip(
+        real_data['Sector'].apply(lambda x: None if pd.isna(x) else x),
+        real_data['Industry'].apply(lambda x: None if pd.isna(x) else x),
     )
+    sample_pairs = zip(
+        samples['Sector'].apply(lambda x: None if pd.isna(x) else x),
+        samples['Industry'].apply(lambda x: None if pd.isna(x) else x),
+    )
+    original_combos = set(real_data_pairs)
+    synthetic_combos = set(sample_pairs)
+    assert synthetic_combos.issubset(original_combos)
 
-    with pytest.raises(SynthesizerInputError, match=mixed_constraint_error_msg):
-        synthesizer.add_constraints([volume_constraint, context_constraint])
+
+def test_constraints_and_context_column():
+    """Test constraint works with context columns."""
+    # Setup
+    real_data, metadata = download_demo(modality='sequential', dataset_name='nasdaq100_2019')
+    synthesizer = PARSynthesizer(metadata, epochs=1, context_columns=['Sector', 'Industry'])
+    constraint = FixedCombinations(column_names=['Sector', 'Industry'])
+
+    # Run
+    synthesizer.add_constraints([constraint])
+    synthesizer.fit(real_data)
+    samples = synthesizer.sample(50, 10)
+
+    # Assert
+    real_data_pairs = zip(
+        real_data['Sector'].apply(lambda x: None if pd.isna(x) else x),
+        real_data['Industry'].apply(lambda x: None if pd.isna(x) else x),
+    )
+    sample_pairs = zip(
+        samples['Sector'].apply(lambda x: None if pd.isna(x) else x),
+        samples['Industry'].apply(lambda x: None if pd.isna(x) else x),
+    )
+    original_combos = set(real_data_pairs)
+    synthetic_combos = set(sample_pairs)
+    assert synthetic_combos.issubset(original_combos)
 
 
 def test_par_unique_sequence_index_with_enforce_min_max():
@@ -365,7 +379,6 @@ def test_par_unique_sequence_index_with_enforce_min_max():
     metadata.set_sequence_key('s_key', 'table')
 
     metadata.set_sequence_index('visits', 'table')
-
     synthesizer = PARSynthesizer(
         metadata, enforce_min_max_values=True, enforce_rounding=False, epochs=1, verbose=True
     )

@@ -596,15 +596,14 @@ class BaseSynthesizer:
         metadata = self.metadata
         self.metadata = self._original_metadata
         self._validate_metadata(data)
+        self._validate_transform_constraints(data, enforce_constraint_fitting=True)
+        self.metadata = metadata
 
         # Retaining the logic of returning errors and raising them here to maintain consistency
         # with the existing workflow with synthesizers
         synthesizer_errors = self._validate(data)  # Validate rules specific to each synthesizer
         if synthesizer_errors:
             raise InvalidDataError(synthesizer_errors)
-
-        self._validate_transform_constraints(data, enforce_constraint_fitting=True)
-        self.metadata = metadata
 
     def _preprocess_helper(self, data):
         """This method is used to preprocess the data.
@@ -779,6 +778,23 @@ class BaseSynthesizer:
 
         return synthesizer
 
+    def reverse_transform_constraints(self, sampled):
+        """Reverse transform the constraints."""
+        if hasattr(self, '_chained_constraints') and hasattr(self, '_reject_sampling_constraints'):
+            for constraint in reversed(self._chained_constraints):
+                sampled = constraint.reverse_transform(sampled)
+                valid_rows = constraint.is_valid(sampled)
+                sampled = sampled[valid_rows]
+
+            for constraint in reversed(self._reject_sampling_constraints):
+                valid_rows = constraint.is_valid(sampled)
+                sampled = sampled[valid_rows]
+
+        if getattr(self, '_constraint_col_formatters', False):
+            sampled = self._format_constraint_columns(sampled)
+
+        return sampled
+
 
 class BaseSingleTableSynthesizer(BaseSynthesizer):
     """Base class for all single-table ``Synthesizers``.
@@ -890,22 +906,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 except NotImplementedError:
                     raw_sampled = self._sample(num_rows)
             sampled = self._data_processor.reverse_transform(raw_sampled, conditions=conditions)
-
-            if hasattr(self, '_chained_constraints') and hasattr(
-                self, '_reject_sampling_constraints'
-            ):
-                for constraint in reversed(self._chained_constraints):
-                    sampled = constraint.reverse_transform(sampled)
-                    valid_rows = constraint.is_valid(sampled)
-                    sampled = sampled[valid_rows]
-
-                for constraint in reversed(self._reject_sampling_constraints):
-                    valid_rows = constraint.is_valid(sampled)
-                    sampled = sampled[valid_rows]
-
-            if getattr(self, '_constraint_col_formatters', False):
-                sampled = self._format_constraint_columns(sampled)
-
+            sampled = self.reverse_transform_constraints(sampled)
             if keep_extra_columns:
                 input_columns = self._data_processor._hyper_transformer._input_columns
                 missing_cols = list(

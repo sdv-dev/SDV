@@ -178,17 +178,6 @@ class TestPARSynthesizer:
         with pytest.raises(SynthesizerInputError, match=error_message):
             synthesizer.load_custom_constraint_classes(filepath='test', class_names=[])
 
-    def test_add_custom_constraint_class(self):
-        """Test that if custom constraint is being added, an error is raised."""
-        # Setup
-        metadata = self.get_metadata()
-        synthesizer = PARSynthesizer(metadata=metadata)
-
-        # Run and Assert
-        error_message = re.escape('The PARSynthesizer cannot accommodate custom constraints.')
-        with pytest.raises(SynthesizerInputError, match=error_message):
-            synthesizer.add_custom_constraint_class(Mock(), class_name='Mock')
-
     def test_get_parameters(self):
         """Test that it returns every ``init`` parameter without the ``metadata``."""
         # Setup

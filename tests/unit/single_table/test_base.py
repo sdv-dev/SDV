@@ -1563,6 +1563,7 @@ class TestBaseSingleTableSynthesizer:
         instance._reject_sampling_constraints = []
         instance._chained_constraints = []
         instance._constraint_col_formatters = {}
+        instance.reverse_transform_constraints = Mock(side_effect=lambda x: x)
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(instance, 3)
@@ -1573,6 +1574,9 @@ class TestBaseSingleTableSynthesizer:
         instance._sample.assert_called_once_with(3)
         instance._data_processor.reverse_transform.assert_called_once_with(
             instance._sample.return_value, conditions=None
+        )
+        instance.reverse_transform_constraints.assert_called_once_with(
+            instance._data_processor.reverse_transform.return_value
         )
         instance._data_processor.filter_valid.assert_called_once_with(
             instance._data_processor.reverse_transform.return_value
@@ -1593,6 +1597,7 @@ class TestBaseSingleTableSynthesizer:
         instance._reject_sampling_constraints = []
         instance._chained_constraints = []
         instance._constraint_col_formatters = {}
+        instance.reverse_transform_constraints = Mock(side_effect=lambda x: x)
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(
@@ -1627,6 +1632,7 @@ class TestBaseSingleTableSynthesizer:
         instance._reject_sampling_constraints = []
         instance._chained_constraints = []
         instance._constraint_col_formatters = {}
+        instance.reverse_transform_constraints = Mock(side_effect=lambda x: x)
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(
