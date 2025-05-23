@@ -26,7 +26,7 @@ def test_backward_compatibility_old_style_constraints(tmpdir):
             'strict_boundaries': False,
         },
     }
-    synthesizer._data_processor._constraints = [constraint]
+    synthesizer._data_processor._constraints_list.extend(constraint)
 
     # Run
     synthesizer.fit(data)

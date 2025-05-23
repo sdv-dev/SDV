@@ -764,19 +764,6 @@ class BaseMultiTableSynthesizer:
         for synthesizer in self._table_synthesizers.values():
             synthesizer.load_custom_constraint_classes(filepath, class_names)
 
-    def add_custom_constraint_class(self, class_object, class_name):
-        """Add a custom constraint class for the synthesizer to use.
-
-        Args:
-            class_object (sdv.constraints.Constraint):
-                A custom constraint class object.
-            class_name (str):
-                The name to assign this custom constraint class. This will be the name to use
-                when writing a constraint dictionary for ``add_constraints``.
-        """
-        for synthesizer in self._table_synthesizers.values():
-            synthesizer.add_custom_constraint_class(class_object, class_name)
-
     def get_info(self):
         """Get dictionary with information regarding the synthesizer.
 
