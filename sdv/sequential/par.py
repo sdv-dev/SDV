@@ -14,6 +14,7 @@ from deepecho.sequences import assemble_sequences
 from rdt.transformers import FloatFormatter
 
 from sdv._utils import _cast_to_iterable, _groupby_list
+from sdv.cag import ProgrammableConstraint
 from sdv.cag._utils import _validate_constraints_single_table
 from sdv.errors import SamplingError, SynthesizerInputError
 from sdv.metadata.errors import InvalidMetadataError
@@ -207,6 +208,11 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         context_set = set(self.context_columns)
         constraint_cols = []
         for constraint in constraints:
+            if isinstance(constraint, ProgrammableConstraint):
+                raise SynthesizerInputError(
+                    'The PARSynthesizer cannot accommodate with programmable constraints.'
+                )
+
             columns = []
             init_signature = inspect.signature(constraint.__class__.__init__)
             init_param_names = [p for p in init_signature.parameters if p != 'self']

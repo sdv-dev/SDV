@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 from rdt.transformers import FloatFormatter, LabelEncoder
 
+from sdv.cag import FixedCombinations
 from sdv.datasets.demo import download_demo
 from sdv.errors import InvalidDataTypeError
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
@@ -232,7 +233,6 @@ def test_category_dtype_errors():
         tvae.fit(data)
 
 
-@pytest.mark.skip('Old-style constraints are deprecated')
 def test_ctgansynthesizer_with_constraints_generating_categorical_values():
     """Test that ``CTGANSynthesizer`` does not crash when using constraints.
 
@@ -243,11 +243,10 @@ def test_ctgansynthesizer_with_constraints_generating_categorical_values():
     # Setup
     data, metadata = download_demo('single_table', 'student_placements')
     my_synthesizer = CTGANSynthesizer(metadata)
-    my_constraint = {
-        'constraint_class': 'FixedCombinations',
-        'constraint_parameters': {'column_names': ['high_spec', 'degree_type']},
-    }
-    my_synthesizer.add_constraints(constraints=[my_constraint])
+    constraint = FixedCombinations(
+        column_names=['high_spec', 'degree_type'],
+    )
+    my_synthesizer.add_constraints(constraints=[constraint])
 
     # Run
     my_synthesizer.fit(data)
