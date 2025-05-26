@@ -206,12 +206,12 @@ class TestBaseSynthesizer:
         """Test instantiating with default values."""
         # Setup
         metadata = Metadata()
-        synthesizer_id = 'BaseSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+        synthesizer_id = 'SingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
         mock_generate_synthesizer_id.return_value = synthesizer_id
         mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
 
         # Run
-        with catch_sdv_logs(caplog, logging.INFO, logger='BaseSynthesizer'):
+        with catch_sdv_logs(caplog, logging.INFO, logger='SingleTableSynthesizer'):
             instance = BaseSynthesizer(metadata)
 
         # Assert
@@ -239,7 +239,7 @@ class TestBaseSynthesizer:
             'EVENT': 'Instance',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',
             'SYNTHESIZER CLASS NAME': 'BaseSynthesizer',
-            'SYNTHESIZER ID': 'BaseSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            'SYNTHESIZER ID': 'SingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         })
 
     def test__init__with_old_metadata_future_warning(self):
@@ -467,15 +467,17 @@ class TestBaseSynthesizer:
         data = pd.DataFrame()
         metadata = Metadata()
         instance = BaseSynthesizer(metadata)
-        instance._validate_metadata = Mock()
         instance._validate = Mock(return_value=[])
         instance._validate_transform_constraints = Mock()
+        instance._original_metadata.validate_data = Mock()
 
         # Run
         instance.validate(data)
 
         # Assert
-        instance._validate_metadata.assert_called_once_with(data)
+        instance._original_metadata.validate_data.assert_called_once_with({
+            instance._table_name: data
+        })
         instance._validate.assert_called_once_with(data)
         instance._validate_transform_constraints.assert_called_once_with(
             data, enforce_constraint_fitting=True
@@ -491,9 +493,8 @@ class TestBaseSynthesizer:
         data = pd.DataFrame()
         metadata = Metadata()
         instance = BaseSynthesizer(metadata)
-        instance._validate_metadata = Mock(return_value=[])
-        instance._validate_metadata.side_effect = InvalidMetadataError(
-            '\nThe provided data does not match the metadata.'
+        instance._original_metadata.validate_data = Mock(
+            side_effect=InvalidMetadataError('\nThe provided data does not match the metadata.')
         )
         instance._validate = Mock(return_value=[])
 
@@ -503,7 +504,9 @@ class TestBaseSynthesizer:
             instance.validate(data)
 
         # Assert auxiliary methods are called
-        instance._validate_metadata.assert_called_once_with(data)
+        instance._original_metadata.validate_data.assert_called_once_with({
+            instance._table_name: data
+        })
         instance._validate.assert_not_called()
 
     def test_validate_int_primary_key_regex_starts_with_zero(self):
@@ -771,12 +774,12 @@ class TestBaseSynthesizer:
         instance = Mock(
             _fitted_sdv_version=None,
             _fitted_sdv_enterprise_version=None,
-            _synthesizer_id='BaseSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            _synthesizer_id='SingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         )
         processed_data = pd.DataFrame({'column_a': [1, 2, 3]})
 
         # Run
-        with catch_sdv_logs(caplog, logging.INFO, 'BaseSynthesizer'):
+        with catch_sdv_logs(caplog, logging.INFO, 'SingleTableSynthesizer'):
             BaseSynthesizer.fit_processed_data(instance, processed_data)
 
         # Assert
@@ -785,7 +788,7 @@ class TestBaseSynthesizer:
             'EVENT': 'Fit processed data',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',
             'SYNTHESIZER CLASS NAME': 'Mock',
-            'SYNTHESIZER ID': 'BaseSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            'SYNTHESIZER ID': 'SingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
             'TOTAL NUMBER OF TABLES': 1,
             'TOTAL NUMBER OF ROWS': 3,
             'TOTAL NUMBER OF COLUMNS': 1,
@@ -827,7 +830,7 @@ class TestBaseSynthesizer:
         instance = Mock(
             _fitted_sdv_version=None,
             _fitted_sdv_enterprise_version=None,
-            _synthesizer_id='BaseSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            _synthesizer_id='SingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         )
         instance._store_and_convert_original_cols.return_value = False
         data = pd.DataFrame({'column_a': [1, 2, 3], 'name': ['John', 'Doe', 'Johanna']})
@@ -835,7 +838,7 @@ class TestBaseSynthesizer:
         instance._fitted = True
 
         # Run
-        with catch_sdv_logs(caplog, logging.INFO, 'BaseSynthesizer'):
+        with catch_sdv_logs(caplog, logging.INFO, 'SingleTableSynthesizer'):
             BaseSynthesizer.fit(instance, data)
 
         # Assert
@@ -849,7 +852,7 @@ class TestBaseSynthesizer:
             'EVENT': 'Fit',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',
             'SYNTHESIZER CLASS NAME': 'Mock',
-            'SYNTHESIZER ID': 'BaseSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            'SYNTHESIZER ID': 'SingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
             'TOTAL NUMBER OF TABLES': 1,
             'TOTAL NUMBER OF ROWS': 3,
             'TOTAL NUMBER OF COLUMNS': 2,
@@ -1252,13 +1255,13 @@ class TestBaseSynthesizer:
         """Test that the synthesizer is saved correctly."""
         # Setup
         synthesizer = Mock(
-            _synthesizer_id='BaseSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            _synthesizer_id='SingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         )
         mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
 
         # Run
         filepath = tmp_path / 'output.pkl'
-        with catch_sdv_logs(caplog, logging.INFO, 'BaseSynthesizer'):
+        with catch_sdv_logs(caplog, logging.INFO, 'SingleTableSynthesizer'):
             BaseSynthesizer.save(synthesizer, filepath)
 
         # Assert
@@ -1267,7 +1270,7 @@ class TestBaseSynthesizer:
             'EVENT': 'Save',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',
             'SYNTHESIZER CLASS NAME': 'Mock',
-            'SYNTHESIZER ID': 'BaseSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            'SYNTHESIZER ID': 'SingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         })
 
     def test_save_warning(self, tmp_path):
@@ -1305,12 +1308,12 @@ class TestBaseSynthesizer:
         # Setup
         synthesizer_mock = Mock(_fitted=False, _synthesizer_id=None)
         mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
-        synthesizer_id = 'BaseSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+        synthesizer_id = 'SingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
         mock_generate_synthesizer_id.return_value = synthesizer_id
         cloudpickle_mock.load.return_value = synthesizer_mock
 
         # Run
-        with catch_sdv_logs(caplog, logging.INFO, 'BaseSynthesizer'):
+        with catch_sdv_logs(caplog, logging.INFO, 'SingleTableSynthesizer'):
             loaded_instance = BaseSynthesizer.load('synth.pkl')
 
         # Assert
@@ -1325,7 +1328,7 @@ class TestBaseSynthesizer:
             'EVENT': 'Load',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',
             'SYNTHESIZER CLASS NAME': 'Mock',
-            'SYNTHESIZER ID': 'BaseSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            'SYNTHESIZER ID': 'SingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         })
 
     def test_load_custom_constraint_classes(self):
@@ -2211,7 +2214,7 @@ class TestBaseSingleTableSynthesizer:
         instance._reverse_transform_constraints.return_value = pd.DataFrame({'col': [1, 2, 3]})
 
         # Run
-        with catch_sdv_logs(caplog, logging.INFO, logger='BaseSynthesizer'):
+        with catch_sdv_logs(caplog, logging.INFO, logger='SingleTableSynthesizer'):
             result = BaseSingleTableSynthesizer.sample(
                 instance,
                 num_rows,

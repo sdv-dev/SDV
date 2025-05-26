@@ -50,7 +50,7 @@ from sdv.single_table.utils import check_num_rows, handle_sampling_error, valida
 
 LOGGER = logging.getLogger(__name__)
 
-SYNTHESIZER_LOGGER = get_sdv_logger('BaseSynthesizer')
+SYNTHESIZER_LOGGER = get_sdv_logger('SingleTableSynthesizer')
 
 COND_IDX = str(uuid.uuid4())
 FIXED_RNG_SEED = 73251
@@ -593,11 +593,8 @@ class BaseSynthesizer:
             data (pandas.DataFrame):
                 The data to validate.
         """
-        metadata = self.metadata
-        self.metadata = self._original_metadata
-        self._validate_metadata(data)
+        self._original_metadata.validate_data({self._table_name: data})
         self._validate_transform_constraints(data, enforce_constraint_fitting=True)
-        self.metadata = metadata
 
         # Retaining the logic of returning errors and raising them here to maintain consistency
         # with the existing workflow with synthesizers
@@ -612,6 +609,14 @@ class BaseSynthesizer:
         - Validate the data.
         - Warn if the model has already been fitted.
         - Validate the data against the constraints and transform it.
+
+        Args:
+            data (pandas.DataFrame):
+                The data to preprocess.
+
+        Returns:
+            pandas.DataFrame:
+                The data after constraint transformation.
         """
         self.validate(data)
         if self._fitted:
