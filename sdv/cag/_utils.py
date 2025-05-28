@@ -203,7 +203,7 @@ def _validate_constraints_single_table(constraints, synthesizer_fitted):
         if constraint._is_single_table is False:
             raise SynthesizerInputError(
                 f'Constraint `{constraint.__class__.__name__}` is not compatible with the '
-                'single-table synthesizers.'
+                'single table synthesizers.'
             )
 
     return constraints

@@ -307,7 +307,7 @@ def test__validate_constraints_single_table(mock_validate_constraints):
     constraint_2.__class__.__name__ = 'Constraint_Name'
     constraint_2._is_single_table = False
     expected_err_multi_table = re.escape(
-        'Constraint `Constraint_Name` is not compatible with the single-table synthesizers.'
+        'Constraint `Constraint_Name` is not compatible with the single table synthesizers.'
     )
     mock_validate_constraints.side_effect = lambda constraints, _fitted: constraints
 
