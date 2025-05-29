@@ -871,7 +871,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 missing_cols = list(
                     set(raw_sampled.columns) - set(input_columns) - set(sampled.columns)
                 )
-                sampled = pd.concat([sampled, raw_sampled[missing_cols]], axis=1)
+                sampled = pd.concat([sampled, raw_sampled.loc[sampled.index, missing_cols]], axis=1)
 
             if previous_rows is not None:
                 sampled = pd.concat([previous_rows, sampled], ignore_index=True)
