@@ -38,7 +38,7 @@ class TestBaseConstraint:
         # Assert
         assert instance._fitted is False
         assert instance.metadata is None
-        assert instance._constraint_col_formatters == {}
+        assert instance._formatters == {}
 
     def test__convert_data_to_dictionary(self):
         """Test the ``_convert_data_to_dictionary`` method."""
@@ -196,7 +196,7 @@ class TestBaseConstraint:
         """Test the `_fit_constraint_column_formatters` fits formatters for dropped columns."""
         # Setup
         instance = Mock()
-        instance._constraint_col_formatters = {}
+        instance._formatters = {}
         instance.metadata = Metadata.load_from_dict({
             'tables': {
                 'table': {
@@ -244,7 +244,7 @@ class TestBaseConstraint:
 
         # Assert
         instance._get_updated_metadata.assert_called_once_with(instance.metadata)
-        formatters = instance._constraint_col_formatters
+        formatters = instance._formatters
         assert set(formatters.keys()) == {'table', 'table2'}
         assert set(formatters['table'].keys()) == {'col2', 'col3', 'date_col1', 'date_col2'}
         assert set(formatters['table2'].keys()) == {'col4', 'col5'}
@@ -295,7 +295,7 @@ class TestBaseConstraint:
             '2022-05-16',
             '2023-07-18',
         ]
-        instance._constraint_col_formatters = formatters
+        instance._formatters = formatters
         data = {
             'table': pd.DataFrame({
                 'categorical': ['A', 'A', 'C'],
@@ -318,10 +318,10 @@ class TestBaseConstraint:
         pd.testing.assert_frame_equal(expected_data, formatted_data['table'])
 
     def test__format_constraint_columns_backwards_compatibility(self):
-        """Test the BaseConstraint without the `_constraint_col_formatters` attribute."""
+        """Test the BaseConstraint without the `_formatters` attribute."""
         # Setup
         instance = BaseConstraint()
-        del instance._constraint_col_formatters
+        del instance._formatters
         data = {
             'table': pd.DataFrame({
                 'categorical': ['A', 'A', 'C'],

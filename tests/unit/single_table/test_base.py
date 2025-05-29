@@ -1454,7 +1454,6 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor._hyper_transformer._input_columns = []
         instance._reject_sampling_constraints = []
         instance._chained_constraints = []
-        instance._constraint_col_formatters = {}
         instance.reverse_transform_constraints = Mock(side_effect=lambda x: x)
 
         # Run
@@ -1488,7 +1487,7 @@ class TestBaseSingleTableSynthesizer:
         transformed_conditions = {'salary': 80.0}
         instance._reject_sampling_constraints = []
         instance._chained_constraints = []
-        instance._constraint_col_formatters = {}
+        instance._formatters = {}
         instance.reverse_transform_constraints = Mock(side_effect=lambda x: x)
 
         # Run
@@ -1523,7 +1522,7 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor.reverse_transform.return_value = data
         instance._reject_sampling_constraints = []
         instance._chained_constraints = []
-        instance._constraint_col_formatters = {}
+        instance._formatters = {}
         instance.reverse_transform_constraints = Mock(side_effect=lambda x: x)
 
         # Run

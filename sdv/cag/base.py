@@ -22,7 +22,7 @@ class BaseConstraint:
         self._fitted = False
         self._single_table = False
         self._dtypes = None
-        self._constraint_col_formatters = {}
+        self._formatters = {}
 
     def _convert_data_to_dictionary(self, data, metadata, copy=False):
         """Helper to handle converting single dataframes into dictionaries.
@@ -99,7 +99,7 @@ class BaseConstraint:
         """Fit formatters for columns that are dropped by constraints before data processing."""
         updated_metadata = self._get_updated_metadata(self.metadata)
         for table_name in self.metadata.tables:
-            self._constraint_col_formatters[table_name] = {}
+            self._formatters[table_name] = {}
             primary_key = self.metadata.tables[table_name].primary_key
             input_columns = self._original_data_columns[table_name]
             table_metdadata = updated_metadata.tables.get(table_name)
@@ -113,27 +113,27 @@ class BaseConstraint:
                 sdtype = column_metadata.get('sdtype')
                 if sdtype == 'numerical' and column_name != primary_key:
                     representation = column_metadata.get('computer_representation', 'Float')
-                    self._constraint_col_formatters[table_name][column_name] = NumericalFormatter(
+                    self._formatters[table_name][column_name] = NumericalFormatter(
                         computer_representation=representation,
                         enforce_rounding=True,
                         enforce_min_max_values=True,
                     )
-                    self._constraint_col_formatters[table_name][column_name].learn_format(
+                    self._formatters[table_name][column_name].learn_format(
                         data[table_name][column_name]
                     )
 
                 elif sdtype == 'datetime' and column_name != primary_key:
                     datetime_format = column_metadata.get('datetime_format')
-                    self._constraint_col_formatters[table_name][column_name] = DatetimeFormatter(
+                    self._formatters[table_name][column_name] = DatetimeFormatter(
                         datetime_format=datetime_format
                     )
-                    self._constraint_col_formatters[table_name][column_name].learn_format(
+                    self._formatters[table_name][column_name].learn_format(
                         data[table_name][column_name]
                     )
 
     def _format_constraint_columns(self, data):
         """Format columns skipped by the data processor due to being dropped by constraints."""
-        if not hasattr(self, '_constraint_col_formatters'):
+        if not hasattr(self, '_formatters'):
             # Backwards compatibility for constraints saved without formatters.
             return data
 
@@ -141,7 +141,7 @@ class BaseConstraint:
             column_order = [
                 column for column in self._original_data_columns[table_name] if column in table_data
             ]
-            table_formatters = self._constraint_col_formatters.get(table_name, {})
+            table_formatters = self._formatters.get(table_name, {})
             for column_name, formatter in table_formatters.items():
                 column_data = table_data[column_name]
                 table_data[column_name] = formatter.format_data(column_data)

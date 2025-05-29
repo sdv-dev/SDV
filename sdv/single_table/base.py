@@ -179,7 +179,6 @@ class BaseSynthesizer:
             enforce_min_max_values=self.enforce_min_max_values,
             locales=self.locales,
         )
-        self._constraint_col_formatters = {}  # Formatters for columns dropped by constraints
         self._validate_regex_format()
         self._original_columns = pd.Index([])
         self._fitted = False
