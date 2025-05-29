@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 
 from sdv.datasets.demo import download_demo
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, run_diagnostic
@@ -72,6 +73,31 @@ def test_column_pair_plot_sample_size_parameter():
         column_names=['room_rate', 'amenities_fee'],
         metadata=metadata,
         sample_size=40,
+    )
+
+    # Assert
+    assert len(synthetic_data) == 500
+    assert len(fig.data[0].x) == 40
+    assert len(fig.data[1].x) == 40
+
+
+@pytest.mark.parametrize('plot_type', ['box', 'heatmap', 'scatter', 'violin'])
+def test_column_pair_plot_different_plot_types(plot_type):
+    """Test the method with all supported plot types."""
+    # Setup
+    real_data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.fit(real_data)
+    synthetic_data = synthesizer.sample(len(real_data))
+
+    # Run
+    fig = get_column_pair_plot(
+        real_data=real_data,
+        synthetic_data=synthetic_data,
+        column_names=['room_rate', 'amenities_fee'],
+        metadata=metadata,
+        sample_size=40,
+        plot_type=plot_type,
     )
 
     # Assert

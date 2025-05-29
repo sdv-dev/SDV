@@ -126,10 +126,11 @@ def get_column_pair_plot(
         column_names (list[string]):
             The names of the two columns to plot.
         plot_type (str or None):
-            The plot to be used. Can choose between ``box``, ``heatmap``, ``scatter`` or ``None``.
-            If ``None` select between ``box``, ``heatmap`` or ``scatter`` depending on the data
-            that the column contains, ``scatter`` used for datetime and numerical values,
-            ``heatmap`` for categorical and ``box`` for a mix of both. Defaults to ``None``.
+            The plot to be used. Can choose between ``box``, ``heatmap``, ``scatter``, ``violin``
+            or ``None``. If ``None` select between ``box``, ``heatmap`` or ``scatter`` depending
+            on the data that the column contains, ``scatter`` used for datetime and numerical
+            values, ``heatmap`` for categorical and ``box`` for a mix of both. Defaults to
+            ``None``.
         sample_size (int or None):
             The number of samples to use for the plot. If ``None`` use the whole dataset.
             Defaults to ``None``.
