@@ -15,7 +15,7 @@ from rdt.transformers import (
 )
 
 from sdv.cag import Inequality
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
@@ -149,7 +149,7 @@ def test_adding_constraints(tmp_path):
     synthesizer = GaussianCopulaSynthesizer(metadata)
 
     # Run
-    synthesizer.add_cag([checkin_lessthan_checkout])
+    synthesizer.add_constraints([checkin_lessthan_checkout])
     synthesizer.fit(real_data)
     synthetic_data_constrained = synthesizer.sample(500)
 
@@ -162,7 +162,7 @@ def test_adding_constraints(tmp_path):
 
     # Load custom constraint class
     rewards_member_no_fee = SingleTableIfTrueThenZero(column_names=['has_rewards', 'amenities_fee'])
-    synthesizer.add_cag([rewards_member_no_fee])
+    synthesizer.add_constraints([rewards_member_no_fee])
 
     # Re-Fit the model
     synthesizer.preprocess(real_data)
@@ -334,12 +334,12 @@ def test_validate_with_failing_constraint():
     checkin_lessthan_checkout = Inequality(
         low_column_name='checkin_date', high_column_name='checkout_date'
     )
-    gc.add_cag([checkin_lessthan_checkout])
+    gc.add_constraints([checkin_lessthan_checkout])
 
     error_msg = re.escape('The inequality requirement is not met for row indices: [0]')
 
     # Run / Assert
-    with pytest.raises(PatternNotMetError, match=error_msg):
+    with pytest.raises(ConstraintNotMetError, match=error_msg):
         gc.validate(real_data)
 
 

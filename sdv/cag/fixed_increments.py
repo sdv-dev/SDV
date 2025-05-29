@@ -1,9 +1,9 @@
-"""FixedIncrements CAG pattern."""
+"""FixedIncrements constraint."""
 
 import pandas as pd
 
 from sdv._utils import _create_unique_name
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _get_invalid_rows,
     _get_is_valid_dict,
@@ -11,10 +11,10 @@ from sdv.cag._utils import (
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
 )
-from sdv.cag.base import BasePattern
+from sdv.cag.base import BaseConstraint
 
 
-class FixedIncrements(BasePattern):
+class FixedIncrements(BaseConstraint):
     """Ensure every value in a column is a multiple of the specified increment.
 
     Args:
@@ -53,8 +53,8 @@ class FixedIncrements(BasePattern):
         self.increment_value = increment_value
         self._dtype = None
 
-    def _validate_pattern_with_metadata(self, metadata):
-        """Validate the pattern is compatible with the provided Metadata.
+    def _validate_constraint_with_metadata(self, metadata):
+        """Validate the constraint is compatible with the provided Metadata.
 
         Validates that:
             - If no table_name is set, checks that the Metadata only contains a single table
@@ -70,9 +70,9 @@ class FixedIncrements(BasePattern):
         table_name = self._get_single_table_name(metadata)
         col_sdtype = metadata.tables[table_name].columns[self.column_name]['sdtype']
         if col_sdtype != 'numerical':
-            raise PatternNotMetError(
+            raise ConstraintNotMetError(
                 f"Column '{self.column_name}' has an incompatible sdtype ('{col_sdtype}')."
-                "The column sdtype must be 'numerical'."
+                " The column sdtype must be 'numerical'."
             )
 
     def _check_if_divisible(self, data, table_name, column_name, increment_value):
@@ -95,8 +95,8 @@ class FixedIncrements(BasePattern):
         is_divisible = data[table_name][column_name] % increment_value == 0
         return isnan | is_divisible
 
-    def _validate_pattern_with_data(self, data, metadata):
-        """Validate the data is compatible with the pattern.
+    def _validate_constraint_with_data(self, data, metadata):
+        """Validate the data is compatible with the constraint.
 
         Args:
             data (dict[pd.DataFrame]):
@@ -113,21 +113,21 @@ class FixedIncrements(BasePattern):
         )
         if not valid.all():
             invalid_rows_str = _get_invalid_rows(valid)
-            raise PatternNotMetError(
+            raise ConstraintNotMetError(
                 'The fixed increments requirement has not been met because the data is not '
                 f"evenly divisible by '{self.increment_value}' for row indices: "
                 f'[{invalid_rows_str}]'
             )
 
     def _get_updated_metadata(self, metadata):
-        """Get the updated metadata after applying the pattern to the metadata.
+        """Get the updated metadata after applying the constraint to the metadata.
 
         Args:
             metadata (sdv.metadata.Metadata):
-                The input Metadata to apply the pattern to.
+                The input Metadata to apply the constraint to.
 
         Returns:
-            (sdv.metadata.Metadata): The updated Metadata with the pattern applied.
+            (sdv.metadata.Metadata): The updated Metadata with the constraint applied.
         """
         table_name = self._get_single_table_name(metadata)
         increments_column = _create_unique_name(

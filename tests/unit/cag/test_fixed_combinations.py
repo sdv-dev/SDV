@@ -1,4 +1,4 @@
-"""Unit tests for FixedCombinations CAG pattern."""
+"""Unit tests for FixedCombinations constraint."""
 
 import re
 from unittest.mock import call, patch
@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from sdv.cag import FixedCombinations
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.metadata import Metadata
 
 
@@ -48,7 +48,7 @@ class TestFixedCombinations:
             FixedCombinations(bad_column_names)
 
         short_column_names_msg = re.escape(
-            'FixedCombinations pattern requires at least two columns.'
+            'FixedCombinations constraint requires at least two columns.'
         )
         with pytest.raises(ValueError, match=short_column_names_msg):
             FixedCombinations(short_column_names)
@@ -58,8 +58,8 @@ class TestFixedCombinations:
             FixedCombinations(column_names=['col1', 'col2'], table_name=bad_table_name)
 
     @patch('sdv.cag.fixed_combinations._validate_table_and_column_names')
-    def test__validate_pattern_with_metadata(self, validate_table_and_col_names_mock):
-        """Test validating the pattern with metadata."""
+    def test__validate_constraint_with_metadata(self, validate_table_and_col_names_mock):
+        """Test validating the constraint with metadata."""
         # Setup
         instance = FixedCombinations(['col1', 'col2'])
         metadata = Metadata.load_from_dict({
@@ -78,13 +78,13 @@ class TestFixedCombinations:
         })
 
         # Run
-        instance._validate_pattern_with_metadata(metadata)
+        instance._validate_constraint_with_metadata(metadata)
 
     @patch('sdv.cag.fixed_combinations._validate_table_and_column_names')
-    def test__validate_pattern_with_metadata_bad_col_sdtype(
+    def test__validate_constraint_with_metadata_bad_col_sdtype(
         self, validate_table_and_col_names_mock
     ):
-        """Test validating the pattern with metadata."""
+        """Test validating the constraint with metadata."""
         # Setup
         instance = FixedCombinations(['col1', 'col2'])
         metadata = Metadata.load_from_dict({
@@ -104,14 +104,14 @@ class TestFixedCombinations:
             "Column 'col2' has an incompatible sdtype ('id'). The column sdtype "
             "must be either 'boolean' or 'categorical'."
         )
-        with pytest.raises(PatternNotMetError, match=expected_msg):
-            instance._validate_pattern_with_metadata(metadata)
+        with pytest.raises(ConstraintNotMetError, match=expected_msg):
+            instance._validate_constraint_with_metadata(metadata)
 
     @patch('sdv.cag.fixed_combinations._validate_table_and_column_names')
-    def test__validate_pattern_with_metadata_col_relationship(
+    def test__validate_constraint_with_metadata_col_relationship(
         self, validate_table_and_col_names_mock
     ):
-        """Test validating the pattern with metadata."""
+        """Test validating the constraint with metadata."""
         # Setup
         instance = FixedCombinations(['col1', 'col2'])
         metadata = Metadata.load_from_dict({
@@ -131,13 +131,13 @@ class TestFixedCombinations:
 
         # Run and assert
         expected_msg = re.escape(
-            "Cannot apply pattern because columns ['col2'] are part of a column relationship."
+            "Cannot apply constraint because columns ['col2'] are part of a column relationship."
         )
-        with pytest.raises(PatternNotMetError, match=expected_msg):
-            instance._validate_pattern_with_metadata(metadata)
+        with pytest.raises(ConstraintNotMetError, match=expected_msg):
+            instance._validate_constraint_with_metadata(metadata)
 
-    def test__validate_pattern_with_data(self):
-        """Test the ``_validate_pattern_with_data`` method."""
+    def test__validate_constraint_with_data(self):
+        """Test the ``_validate_constraint_with_data`` method."""
         # Setup
         instance = FixedCombinations(['col1', 'col2'])
         data = pd.DataFrame({'col1': ['A', 'B'], 'col2': ['a', 'b']})
@@ -153,7 +153,7 @@ class TestFixedCombinations:
         })
 
         # Run
-        assert instance._validate_pattern_with_data(data, metadata) is None
+        assert instance._validate_constraint_with_data(data, metadata) is None
 
     def test__get_updated_metadata(self):
         """Test the ``_get_updated_metadata`` method."""
