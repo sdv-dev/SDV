@@ -15,8 +15,8 @@ from rdt.transformers import FloatFormatter
 from sdmetrics.reports.multi_table import DiagnosticReport
 
 from sdv import version
-from sdv.cag import Inequality
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag import FixedCombinations, Inequality
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
 from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError, VersionError
@@ -247,7 +247,7 @@ class TestHMASynthesizer:
         constraint = MyConstraint(column_names=['numerical_col'], table_name='parent')
 
         # Run
-        synthesizer.add_cag([constraint])
+        synthesizer.add_constraints([constraint])
         processed_data = synthesizer.preprocess({'parent': parent_data, 'child': child_data})
 
         # Assert Processed Data
@@ -276,7 +276,7 @@ class TestHMASynthesizer:
         constraint_child = MyConstraint(column_names=['numerical_col_2'], table_name='child')
 
         # Run
-        synthesizer.add_cag([constraint_parent, constraint_child])
+        synthesizer.add_constraints([constraint_parent, constraint_child])
         processed_data = synthesizer.preprocess({'parent': parent_data, 'child': child_data})
 
         # Assert Processed Data
@@ -332,16 +332,12 @@ class TestHMASynthesizer:
             parent_primary_key='id',
             child_foreign_key='parent_id',
         )
-
-        constraint = {
-            'constraint_class': 'Inequality',
-            'table_name': 'child_table',
-            'constraint_parameters': {
-                'low_column_name': 'low_column',
-                'high_column_name': 'high_column',
-            },
-        }
-
+        constraint = Inequality(
+            low_column_name='low_column',
+            high_column_name='high_column',
+            table_name='child_table',
+            strict_boundaries=False,
+        )
         synthesizer = HMASynthesizer(metadata)
 
         # Run
@@ -667,8 +663,8 @@ class TestHMASynthesizer:
         captured = capsys.readouterr()
 
         # Assert
-        for pattern in key_phrases:
-            match = re.search(pattern, captured.out + captured.err)
+        for constraint in key_phrases:
+            match = re.search(constraint, captured.out + captured.err)
             assert match is not None
 
     def test_warning_message_too_many_cols(self, capsys):
@@ -688,8 +684,8 @@ class TestHMASynthesizer:
         captured = capsys.readouterr()
 
         # Assert
-        for pattern in key_phrases:
-            match = re.search(pattern, captured.out + captured.err)
+        for constraint in key_phrases:
+            match = re.search(constraint, captured.out + captured.err)
             assert match is not None
         (_, small_metadata) = download_demo(modality='multi_table', dataset_name='trains_v1')
 
@@ -699,8 +695,8 @@ class TestHMASynthesizer:
         captured = capsys.readouterr()
 
         # Assert that small amount of columns don't trigger the message
-        for pattern in key_phrases:
-            match = re.search(pattern, captured.out + captured.err)
+        for constraint in key_phrases:
+            match = re.search(constraint, captured.out + captured.err)
             assert match is None
 
     def test_hma_three_linear_nodes(self):
@@ -1488,7 +1484,7 @@ class TestHMASynthesizer:
         synthetic_data = synthesizer.sample()
 
         # Assert
-        # Check that IDs match the regex pattern
+        # Check that IDs match the regex constraint
         for table_name, table in synthetic_data.items():
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
@@ -1567,7 +1563,7 @@ class TestHMASynthesizer:
             synthetic_data = synthesizer.sample()
 
         # Assert
-        # Check that IDs match the regex pattern
+        # Check that IDs match the regex constraint
         for table_name, table in synthetic_data.items():
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
@@ -1669,7 +1665,7 @@ class TestHMASynthesizer:
             synthetic_data = synthesizer.sample()
 
         # Assert
-        # Check that IDs match the regex pattern
+        # Check that IDs match the regex constraint
         for table_name, table in synthetic_data.items():
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
@@ -1753,7 +1749,7 @@ class TestHMASynthesizer:
             synthetic_data = synthesizer.sample()
 
         # Assert
-        # Check that IDs match the regex pattern
+        # Check that IDs match the regex constraint
         for table_name, table in synthetic_data.items():
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
@@ -1828,7 +1824,7 @@ class TestHMASynthesizer:
             synthetic_data = synthesizer.sample()
 
         # Assert
-        # Check that IDs match the regex pattern
+        # Check that IDs match the regex constraint
         for table_name, table in synthetic_data.items():
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
@@ -2386,16 +2382,12 @@ def test_hma_synthesizer_with_fixed_combinations():
     metadata.set_primary_key('location_id', 'locations')
 
     # Adding FixedCombinations to HMASynthesizer
-    synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_constraints(
-        constraints=[
-            {
-                'constraint_class': 'FixedCombinations',
-                'table_name': 'records',
-                'constraint_parameters': {'column_names': ['department', 'office']},
-            }
-        ]
+    constraint = FixedCombinations(
+        table_name='records',
+        column_names=['department', 'office'],
     )
+    synthesizer = HMASynthesizer(metadata)
+    synthesizer.add_constraints(constraints=[constraint])
 
     synthesizer.fit(data)
     sampled = synthesizer.sample(1)
@@ -2657,13 +2649,13 @@ def test_end_to_end_with_cags():
         sdtype='numerical',
     )
     synthesizer = HMASynthesizer(metadata)
-    pattern = Inequality(
+    constraint = Inequality(
         low_column_name='amenities_lower',
         high_column_name='amenities_fee',
         strict_boundaries=False,
         table_name='guests',
     )
-    synthesizer.add_cag(patterns=[pattern])
+    synthesizer.add_constraints(constraints=[constraint])
     data_guests = data['guests']
     clean_data = data_guests[
         ~(data_guests[['amenities_lower', 'amenities_fee']].isna().any(axis=1))
@@ -2679,7 +2671,7 @@ def test_end_to_end_with_cags():
     synthesizer.fit(data)
     synthetic_data = synthesizer.sample(scale=1.0)
 
-    with pytest.raises(PatternNotMetError, match=expected_error_msg):
+    with pytest.raises(ConstraintNotMetError, match=expected_error_msg):
         synthesizer.fit(invalid_data)
 
     # Assert

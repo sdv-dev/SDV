@@ -1,8 +1,8 @@
-"""One Hot Encoding CAG pattern."""
+"""One Hot Encoding constraint."""
 
 import numpy as np
 
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _get_invalid_rows,
     _get_is_valid_dict,
@@ -10,10 +10,10 @@ from sdv.cag._utils import (
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
 )
-from sdv.cag.base import BasePattern
+from sdv.cag.base import BaseConstraint
 
 
-class OneHotEncoding(BasePattern):
+class OneHotEncoding(BaseConstraint):
     """Ensure the appropriate columns are one hot encoded.
 
     This constraint allows the user to specify a list of columns where each row
@@ -42,8 +42,8 @@ class OneHotEncoding(BasePattern):
         self._column_names = column_names
         self.table_name = table_name
 
-    def _validate_pattern_with_metadata(self, metadata):
-        """Validate the pattern is compatible with the provided metadata.
+    def _validate_constraint_with_metadata(self, metadata):
+        """Validate the constraint is compatible with the provided metadata.
 
         Validates that:
         - If no table_name is provided the metadata contains a single table
@@ -54,7 +54,7 @@ class OneHotEncoding(BasePattern):
                 The metadata to validate against.
 
         Raises:
-            PatternNotMetError:
+            ConstraintNotMetError:
                 If any of the validations fail.
         """
         _validate_table_and_column_names(self.table_name, self._column_names, metadata)
@@ -69,18 +69,18 @@ class OneHotEncoding(BasePattern):
 
         return sum_one & max_one & min_zero & no_nans
 
-    def _validate_pattern_with_data(self, data, metadata):
-        """Validate the data is compatible with the pattern."""
+    def _validate_constraint_with_data(self, data, metadata):
+        """Validate the data is compatible with the constraint."""
         table_name = self._get_single_table_name(metadata)
         valid = self._get_valid_table_data(data[table_name])
         if not valid.all():
             invalid_rows_str = _get_invalid_rows(valid)
-            raise PatternNotMetError(
+            raise ConstraintNotMetError(
                 f'The one hot encoding requirement is not met for row indices: [{invalid_rows_str}]'
             )
 
     def _fit(self, data, metadata):
-        """Fit the pattern.
+        """Fit the constraint.
 
         Args:
             data (dict[str, pd.DataFrame]):

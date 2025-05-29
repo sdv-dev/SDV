@@ -1,4 +1,4 @@
-"""Unit tests for Inequality CAG pattern."""
+"""Unit tests for Inequality constraint."""
 
 import re
 from datetime import datetime
@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from sdv.cag import Inequality
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.metadata import Metadata
 
 
@@ -65,8 +65,8 @@ class TestInequality:
         assert instance._operator == np.greater
 
     @patch('sdv.cag.inequality._validate_table_and_column_names')
-    def test__validate_pattern_with_metadata(self, validate_table_and_col_names_mock):
-        """Test validating the pattern with metadata."""
+    def test__validate_constraint_with_metadata(self, validate_table_and_col_names_mock):
+        """Test validating the constraint with metadata."""
         # Setup
         instance = Inequality(low_column_name='low', high_column_name='high')
         metadata = Metadata.load_from_dict({
@@ -85,12 +85,12 @@ class TestInequality:
         })
 
         # Run
-        instance._validate_pattern_with_metadata(metadata)
+        instance._validate_constraint_with_metadata(metadata)
 
         # Assert
         validate_table_and_col_names_mock.assert_called_once()
 
-    def test__validate_pattern_with_metadata_incorrect_sdtype(self):
+    def test__validate_constraint_with_metadata_incorrect_sdtype(self):
         """Test it when the sdtype is not numerical or datetime."""
         # Setup
         instance = Inequality(low_column_name='low', high_column_name='high')
@@ -114,10 +114,10 @@ class TestInequality:
             "Column 'high' has an incompatible sdtype 'boolean'. The column "
             "sdtype must be either 'numerical' or 'datetime'."
         )
-        with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_metadata(metadata)
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
+            instance._validate_constraint_with_metadata(metadata)
 
-    def test__validate_pattern_with_metadata_non_matching_sdtype(self):
+    def test__validate_constraint_with_metadata_non_matching_sdtype(self):
         """Test it when the sdtypes are not the same."""
         # Setup
         instance = Inequality(low_column_name='low', high_column_name='high')
@@ -140,10 +140,10 @@ class TestInequality:
         err_msg = re.escape(
             "Columns 'low' and 'high' must have the same sdtype. Found 'numerical' and 'datetime'."
         )
-        with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_metadata(metadata)
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
+            instance._validate_constraint_with_metadata(metadata)
 
-    def test__validate_pattern_with_data(self):
+    def test__validate_constraint_with_data(self):
         """Test it when the data is not valid."""
         # Setup
         instance = Inequality(low_column_name='low', high_column_name='high', table_name='table')
@@ -165,10 +165,10 @@ class TestInequality:
 
         # Run and Assert
         err_msg = re.escape('The inequality requirement is not met for row indices: [1]')
-        with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_data(data, metadata)
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
+            instance._validate_constraint_with_data(data, metadata)
 
-    def test__validate_pattern_with_data_multiple_rows(self):
+    def test__validate_constraint_with_data_multiple_rows(self):
         """Test it when the data is not valid for over 5 rows."""
         # Setup
         instance = Inequality(low_column_name='low', high_column_name='high', table_name='table')
@@ -197,10 +197,10 @@ class TestInequality:
         err_msg = re.escape(
             'The inequality requirement is not met for row indices: [1, 4, 6, 7, 8, +1 more]'
         )
-        with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_data(data, metadata)
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
+            instance._validate_constraint_with_data(data, metadata)
 
-    def test__validate_pattern_with_data_nans(self):
+    def test__validate_constraint_with_data_nans(self):
         """Test it when the data is not valid and contains nans."""
         # Setup
         instance = Inequality(low_column_name='low', high_column_name='high')
@@ -228,10 +228,10 @@ class TestInequality:
 
         # Run and Assert
         err_msg = re.escape('The inequality requirement is not met for row indices: [2, 5]')
-        with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_data(data, metadata)
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
+            instance._validate_constraint_with_data(data, metadata)
 
-    def test__validate_pattern_with_data_strict_boundaries_true(self):
+    def test__validate_constraint_with_data_strict_boundaries_true(self):
         """Test it when the data is not valid and contains nans."""
         # Setup
         instance = Inequality(
@@ -263,10 +263,10 @@ class TestInequality:
 
         # Run and Assert
         err_msg = re.escape('The inequality requirement is not met for row indices: [2, 3, 5]')
-        with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_data(data, metadata)
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
+            instance._validate_constraint_with_data(data, metadata)
 
-    def test__validate_pattern_with_data_datetime(self):
+    def test__validate_constraint_with_data_datetime(self):
         """Test it when the data is not valid and contains datetimes."""
         # Setup
         instance = Inequality(
@@ -298,10 +298,10 @@ class TestInequality:
 
         # Run and Assert
         err_msg = re.escape('The inequality requirement is not met for row indices: [1]')
-        with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_data(data, metadata)
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
+            instance._validate_constraint_with_data(data, metadata)
 
-    def test__validate_pattern_with_data_datetime_objects(self):
+    def test__validate_constraint_with_data_datetime_objects(self):
         """Test it when the data is not valid and contains datetimes as objects."""
         # Setup
         instance = Inequality(
@@ -333,11 +333,11 @@ class TestInequality:
 
         # Run and Assert
         err_msg = re.escape('The inequality requirement is not met for row indices: [1]')
-        with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_data(data, metadata)
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
+            instance._validate_constraint_with_data(data, metadata)
 
     @patch('sdv.cag.inequality.match_datetime_precision')
-    def test__validate_pattern_with_data_datetime_objects_missmatching_formats(
+    def test__validate_constraint_with_data_datetime_objects_missmatching_formats(
         self, mock_match_datetime_precision
     ):
         """Test it when the data is not valid with datetimes with mismatching formats."""
@@ -398,8 +398,8 @@ class TestInequality:
 
         # Run and Assert
         err_msg = re.escape('The inequality requirement is not met for row indices: [0, 2]')
-        with pytest.raises(PatternNotMetError, match=err_msg):
-            instance._validate_pattern_with_data(data, metadata)
+        with pytest.raises(ConstraintNotMetError, match=err_msg):
+            instance._validate_constraint_with_data(data, metadata)
 
     def test__get_updated_metadata(self):
         """Test the ``_get_updated_metadata`` method."""

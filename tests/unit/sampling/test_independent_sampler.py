@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sdv.metadata import Metadata
 from sdv.sampling.independent_sampler import BaseIndependentSampler
 from tests.utils import DataFrameMatcher, get_multi_table_metadata
 
@@ -133,12 +134,17 @@ class TestBaseIndependentSampler:
         # Setup
         instance = Mock()
         metadata = Mock()
-        metadata._get_parent_map.return_value = {
-            'sessions': ['users'],
-            'transactions': ['sessions'],
-            'users': set(),
-        }
-        instance.metadata = metadata
+
+        def get_column_names_mock(table_name):
+            mapping = {
+                'users': ['user_id', 'name'],
+                'sessions': ['user_id', 'session_id', 'os', 'country'],
+                'transactions': ['transaction_id', 'session_id'],
+            }
+            return mapping[table_name]
+
+        metadata.get_column_names = Mock(side_effect=get_column_names_mock)
+        instance.get_metadata = Mock(return_value=metadata)
 
         sampled_data = {
             'users': pd.DataFrame({
@@ -205,14 +211,33 @@ class TestBaseIndependentSampler:
         """Test that finalize function when an id column is string but dtype is int."""
         # Setup
         instance = Mock()
-        metadata = Mock()
-        metadata._get_parent_map.return_value = {
-            'sessions': ['users'],
-            'transactions': ['sessions'],
-            'users': set(),
-        }
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'users': {
+                    'columns': {
+                        'user_id': {'sdtype': 'id'},
+                        'name': {'sdtype': 'categorical'},
+                    },
+                },
+                'sessions': {
+                    'columns': {
+                        'user_id': {'sdtype': 'id'},
+                        'session_id': {'sdtype': 'categorical'},
+                        'os': {'sdtype': 'categorical'},
+                        'country': {'sdtype': 'categorical'},
+                    },
+                },
+                'transactions': {
+                    'primary_key': 'transaction_id',
+                    'columns': {
+                        'transaction_id': {'sdtype': 'numerical'},
+                        'session_id': {'sdtype': 'categorical'},
+                    },
+                },
+            }
+        })
         instance.metadata = metadata
-
+        instance.get_metadata = Mock(return_value=metadata)
         sampled_data = {
             'users': pd.DataFrame({
                 'user_id': pd.Series(['a', 'b', 'c'], dtype=object),
@@ -266,7 +291,6 @@ class TestBaseIndependentSampler:
             'b': 'boolean',
             'M': 'datetime',
         }
-
         instance._table_synthesizers = {
             'users': users_synth,
             'sessions': sessions_synth,
@@ -324,6 +348,9 @@ class TestBaseIndependentSampler:
         parent_synthesizer._data_processor._dtypes = {'id': 'int64'}
         instance = Mock()
         instance._table_synthesizers = {'table': parent_synthesizer}
+        metadata = Mock()
+        metadata.get_column_names = Mock(return_value=['id'])
+        instance.get_metadata = Mock(return_value=metadata)
 
         # Run
         BaseIndependentSampler._finalize(instance, sampled_data)
@@ -397,6 +424,7 @@ class TestBaseIndependentSampler:
             'sessions': Mock(),
             'transactions': Mock(),
         }
+        instance._reverse_transform_constraints = Mock(side_effect=lambda x: x)
 
         # Run
         result = BaseIndependentSampler._sample(instance)
@@ -425,15 +453,18 @@ class TestBaseIndependentSampler:
         _connect_tables_mock.assert_called_once_with({
             key: DataFrameMatcher(table) for key, table in expected_sample.items()
         })
-        instance._finalize.assert_called_once_with({
+        expected_result = {
             'users': DataFrameMatcher(expected_sample['users']),
             'sessions': DataFrameMatcher(expected_sample['sessions']),
             'transactions': DataFrameMatcher(connected_transactions),
-        })
+        }
+        instance._reverse_transform_constraints.assert_called_once_with(expected_result)
+        instance._finalize.assert_called_once_with(expected_result)
         assert result == instance._finalize.return_value
 
     def test__sample_too_small(self):
         """Test that the ``_sample`` method works even when sample size is very small."""
+        # Setup
         instance = Mock()
         metadata = Mock()
         metadata.tables = {
@@ -463,5 +494,7 @@ class TestBaseIndependentSampler:
             "The 'scale' parameter is too small. Some tables may have 1 row."
             ' For better quality data, please choose a larger scale.'
         )
+
+        # Run and Assert
         with pytest.warns(Warning, match=warning_msg):
             BaseIndependentSampler._sample(instance, 0.01)

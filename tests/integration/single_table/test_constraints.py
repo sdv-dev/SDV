@@ -50,7 +50,7 @@ def test_conditional_sampling_with_constraints(demo_data, demo_metadata):
     my_condition = Condition(num_rows=250, column_values={'checkin_date': '04 Feb 2020'})
 
     # Run
-    synth.add_cag([constraint])
+    synth.add_constraints([constraint])
     synth.fit(demo_data)
     samples = synth.sample_from_conditions([my_condition])
 
@@ -76,7 +76,7 @@ def test_conditional_sampling_with_constraints_transforms_if_possible(demo_data,
     )
 
     # Run
-    synth.add_cag([constraint])
+    synth.add_constraints([constraint])
     synth.fit(demo_data)
     samples = synth.sample_from_conditions([my_condition])
 
@@ -124,7 +124,7 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
     model = GaussianCopulaSynthesizer(metadata)
 
     constraint = FixedCombinations(column_names=['city', 'state'])
-    model.add_cag([constraint])
+    model.add_constraints([constraint])
     sampled_numeric_data = [
         pd.DataFrame({'city#state': [0.1, 1, 0.75, 0.25, 0.25], 'age': [30, 30, 30, 30, 30]}),
         pd.DataFrame({'city#state': [0.75], 'age': [30]}),
@@ -170,7 +170,7 @@ def test_custom_constraints_from_object(tmpdir):
     constraint = MyConstraint(column_names=['numerical_col'], table_name='table')
 
     # Run
-    synthesizer.add_cag([constraint])
+    synthesizer.add_constraints([constraint])
     processed_data = synthesizer.preprocess(data)
 
     # Assert Processed Data
@@ -207,7 +207,7 @@ def test_single_table_custom_constraints_from_object(tmpdir):
     constraint = MySingleTableConstraint(column_names=['numerical_col'])
 
     # Run
-    synthesizer.add_cag([constraint])
+    synthesizer.add_constraints([constraint])
     processed_data = synthesizer.preprocess(data)
 
     # Assert Processed Data
@@ -236,7 +236,7 @@ def test_synthesizer_with_inequality_constraint(demo_data, demo_metadata):
     checkin_lessthan_checkout = Inequality(
         low_column_name='checkin_date', high_column_name='checkout_date'
     )
-    synthesizer.add_cag([checkin_lessthan_checkout])
+    synthesizer.add_constraints([checkin_lessthan_checkout])
     synthesizer.fit(demo_data)
 
     # Run and Assert
@@ -267,7 +267,7 @@ def test_inequality_constraint_with_datetimes_and_nones():
 
     metadata.validate()
     synth = GaussianCopulaSynthesizer(metadata)
-    synth.add_cag([Inequality(low_column_name='A', high_column_name='B')])
+    synth.add_constraints([Inequality(low_column_name='A', high_column_name='B')])
     synth.validate(data)
 
     # Run
@@ -326,7 +326,7 @@ def test_range_constraint_with_datetimes_and_nones():
 
     metadata.validate()
     synth = GaussianCopulaSynthesizer(metadata)
-    synth.add_cag([
+    synth.add_constraints([
         Range(
             low_column_name='A',
             middle_column_name='B',
@@ -396,7 +396,7 @@ def test_inequality_constraint_all_possible_nans_configurations():
     })
 
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_cag([Inequality(low_column_name='A', high_column_name='B')])
+    synthesizer.add_constraints([Inequality(low_column_name='A', high_column_name='B')])
 
     # Run
     synthesizer.fit(data)
@@ -436,7 +436,7 @@ def test_range_constraint_all_possible_nans_configurations():
     )
 
     # Run
-    synthesizer.add_cag([my_constraint])
+    synthesizer.add_constraints([my_constraint])
     synthesizer.fit(data)
 
     s_data = synthesizer.sample(2000)
@@ -484,7 +484,7 @@ def test_timezone_aware_constraints():
 
     # Run
     synth = GaussianCopulaSynthesizer(metadata)
-    synth.add_cag([my_constraint])
+    synth.add_constraints([my_constraint])
     synth.fit(data)
     samples = synth.sample(100)
 
@@ -517,12 +517,12 @@ def test_overlapping_constraint_logs(caplog, demo_data, demo_metadata):
 
     # Run
     with caplog.at_level(logging.INFO, logger='sdv.single_table.base'):
-        synth.add_cag([checkin_checkout_constraint, overlapped_constraint])
+        synth.add_constraints([checkin_checkout_constraint, overlapped_constraint])
 
     synth.fit(demo_data)
 
     # Assert
-    expected_logs = ['Enforcing pattern Inequality using reject sampling.']
+    expected_logs = ['Enforcing constraint Inequality using reject sampling.']
     log_messages = [record[2] for record in caplog.record_tuples]
     for log in expected_logs:
         assert log in log_messages
@@ -559,7 +559,7 @@ def test_constraint_datetime_check():
     metadata.validate_data(data)
 
     synth = GaussianCopulaSynthesizer(metadata)
-    synth.add_cag([my_constraint])
+    synth.add_constraints([my_constraint])
     synth.fit(data['table'])
     samples = synth.sample(3)
 
