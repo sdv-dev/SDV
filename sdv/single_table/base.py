@@ -35,8 +35,6 @@ from sdv.cag._utils import (
 )
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
 from sdv.data_processing.data_processor import DataProcessor
-from sdv.data_processing.datetime_formatter import DatetimeFormatter
-from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.errors import (
     ConstraintsNotMetError,
     InvalidDataError,
@@ -417,46 +415,6 @@ class BaseSynthesizer:
 
         return info
 
-    def _fit_constraint_column_formatters(self, data):
-        """Fit formatters for columns that are dropped by constraints before data processing."""
-        self._constraint_col_formatters = {}
-        primary_key = self.metadata.tables[self._table_name].primary_key
-        input_columns = self._original_metadata.get_column_names()
-        columns_to_format = set(input_columns) - set(self.metadata.get_column_names())
-        for column_name in columns_to_format:
-            column_metadata = self._original_metadata.tables[self._table_name].columns.get(
-                column_name
-            )
-            sdtype = column_metadata.get('sdtype')
-            if sdtype == 'numerical' and column_name != primary_key:
-                representation = column_metadata.get('computer_representation', 'Float')
-                self._constraint_col_formatters[column_name] = NumericalFormatter(
-                    enforce_rounding=self.enforce_rounding,
-                    enforce_min_max_values=self.enforce_min_max_values,
-                    computer_representation=representation,
-                )
-                self._constraint_col_formatters[column_name].learn_format(data[column_name])
-
-            elif sdtype == 'datetime' and column_name != primary_key:
-                datetime_format = column_metadata.get('datetime_format')
-                self._constraint_col_formatters[column_name] = DatetimeFormatter(
-                    datetime_format=datetime_format
-                )
-                self._constraint_col_formatters[column_name].learn_format(data[column_name])
-
-    def _format_constraint_columns(self, data):
-        """Format columns skipped by the data processor due to being dropped by constraints."""
-        column_order = [
-            column for column in self._original_metadata.get_column_names() if column in data
-        ]
-        for column_name, dtype in self._constraint_col_formatters.items():
-            column_data = data[column_name]
-            data[column_name] = self._constraint_col_formatters[column_name].format_data(
-                column_data
-            )
-
-        return data[column_order]
-
     def _preprocess(self, data):
         self._data_processor.fit(data)
         return self._data_processor.transform(data)
@@ -705,7 +663,6 @@ class BaseSynthesizer:
         self._data_processor.reset_sampling()
         self._random_state_set = False
         is_converted = self._store_and_convert_original_cols(data)
-        self._fit_constraint_column_formatters(data)
         processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)
         if is_converted:
@@ -794,9 +751,6 @@ class BaseSynthesizer:
             for constraint in reversed(self._reject_sampling_constraints):
                 valid_rows = constraint.is_valid(sampled)
                 sampled = sampled[valid_rows]
-
-        if getattr(self, '_constraint_col_formatters', False):
-            sampled = self._format_constraint_columns(sampled)
 
         return sampled
 

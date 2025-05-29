@@ -20,8 +20,6 @@ from rdt.transformers import (
 from sdv import version
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag.programmable_constraint import SingleTableProgrammableConstraint
-from sdv.data_processing.datetime_formatter import DatetimeFormatter
-from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.errors import (
     ConstraintsNotMetError,
     InvalidDataError,
@@ -843,7 +841,6 @@ class TestBaseSynthesizer:
 
         # Assert
         assert instance._random_state_set is False
-        instance._fit_constraint_column_formatters.assert_called_once_with(data)
         instance._data_processor.reset_sampling.assert_called_once_with()
         instance.preprocess.assert_called_once_with(data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
@@ -1098,114 +1095,6 @@ class TestBaseSynthesizer:
         # Run and Assert
         with pytest.raises(ConstraintNotMetError, match=msg):
             instance.validate_constraints(synthetic_data)
-
-    def test__fit_constraint_column_formatters(self):
-        """Test the `_fit_constraint_column_formatters` fits formatters for dropped columns."""
-        # Setup
-        instance = Mock()
-        instance.enforce_rounding = False
-        instance.enforce_min_max_values = False
-        instance._table_name = 'table'
-        instance._original_metadata = Metadata.load_from_dict({
-            'tables': {
-                'table': {
-                    'columns': {
-                        'col1': {'sdtype': 'categorical'},
-                        'col2': {'sdtype': 'numerical', 'computer_representation': 'Int8'},
-                        'col3': {'sdtype': 'numerical'},
-                        'date_col1': {'sdtype': 'datetime'},
-                        'date_col2': {'sdtype': 'datetime'},
-                    }
-                }
-            }
-        })
-        instance.metadata = Metadata.load_from_dict({
-            'tables': {'table': {'columns': {'col1#col2': {'sdtype': 'numerical'}}}}
-        })
-        data = pd.DataFrame({
-            'col1': ['abc', 'def'],
-            'col2': [1, 2],
-            'col3': [3, 4],
-            'date_col1': ['16-05-2023', '14-04-2022'],
-            'date_col2': pd.to_datetime(['2021-02-15', '2022-05-16']),
-        })
-
-        # Run
-        BaseSynthesizer._fit_constraint_column_formatters(instance, data)
-
-        # Assert
-        formatters = instance._constraint_col_formatters
-
-        assert set(formatters.keys()) == {'col2', 'col3', 'date_col1', 'date_col2'}
-
-        assert isinstance(formatters['col2'], NumericalFormatter)
-        assert formatters['col2'].enforce_rounding is False
-        assert formatters['col2'].enforce_min_max_values is False
-        assert formatters['col2'].computer_representation == 'Int8'
-
-        assert isinstance(formatters['col3'], NumericalFormatter)
-        assert formatters['col3'].enforce_rounding is False
-        assert formatters['col3'].enforce_min_max_values is False
-        assert formatters['col3'].computer_representation == 'Float'
-
-        assert isinstance(formatters['date_col1'], DatetimeFormatter)
-        assert isinstance(formatters['date_col2'], DatetimeFormatter)
-        assert formatters['date_col1']._dtype == 'O'
-        assert formatters['date_col1'].datetime_format == '%d-%m-%Y'
-        assert formatters['date_col2']._dtype == '<M8[ns]'
-        assert formatters['date_col2'].datetime_format == '%Y-%m-%d'
-
-    @patch('sdv.single_table.base.LOGGER')
-    def test__format_constraint_columns(sel, log_mock):
-        """Test formatting all columns that were dropped by constraints."""
-        # Setup
-        instance = Mock()
-        instance._table_name = 'table'
-        instance._original_metadata = Metadata.load_from_dict({
-            'tables': {
-                'table': {
-                    'columns': {
-                        'datetime_col': {'sdtype': 'datetime'},
-                        'int': {'sdtype': 'numerical'},
-                        'float': {'sdtype': 'numerical'},
-                        'categorical': {'sdtype': 'categorical'},
-                    }
-                }
-            }
-        })
-
-        formatters = {
-            'int': Mock(),
-            'float': Mock(),
-            'datetime_col': Mock(),
-        }
-        formatters['int'].format_data.return_value = [0, 1, 2]
-        formatters['float'].format_data.return_value = [0.1, 1.2, 2.3]
-        formatters['datetime_col'].format_data.return_value = [
-            '2021-02-15',
-            '2022-05-16',
-            '2023-07-18',
-        ]
-        instance._constraint_col_formatters = formatters
-
-        data = pd.DataFrame({
-            'categorical': ['A', 'A', 'C'],
-            'int': [0.0, 1.0, 2.0],
-            'float': [0.11, 1.21, 2.33],
-            'datetime_col': pd.to_datetime(['2021-02-15', '2022-05-16', '2023-07-18']),
-        })
-
-        # Run
-        formatted_data = BaseSynthesizer._format_constraint_columns(instance, data)
-
-        # Assert
-        expected_data = pd.DataFrame({
-            'datetime_col': ['2021-02-15', '2022-05-16', '2023-07-18'],
-            'int': [0, 1, 2],
-            'float': [0.1, 1.2, 2.3],
-            'categorical': ['A', 'A', 'C'],
-        })
-        pd.testing.assert_frame_equal(expected_data, formatted_data)
 
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.ProgrammableConstraintHarness')
