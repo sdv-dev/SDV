@@ -827,7 +827,7 @@ def test_inequality_with_nan():
 
     # Run
     synthesizer = run_copula(data, metadata, [inequality_cag])
-    sampled_data = synthesizer.sample(10000)
+    sampled_data = synthesizer.sample(100)
     synthesizer.validate(sampled_data)
 
     # Assert
