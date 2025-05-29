@@ -10,6 +10,8 @@ import pandas as pd
 import pytest
 
 from sdv.cag.base import BaseConstraint
+from sdv.data_processing.datetime_formatter import DatetimeFormatter
+from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.errors import NotFittedError
 from sdv.metadata import Metadata
 from tests.utils import DataFrameDictMatcher
@@ -189,6 +191,131 @@ class TestBaseConstraint:
         instance.validate.assert_called_once_with(metadata=metadata)
         instance._get_updated_metadata.assert_called_once()
 
+    def test__fit_constraint_column_formatters(self):
+        """Test the `_fit_constraint_column_formatters` fits formatters for dropped columns."""
+        # Setup
+        instance = Mock()
+        instance._constraint_col_formatters = {}
+        instance.metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'col1': {'sdtype': 'categorical'},
+                        'col2': {'sdtype': 'numerical', 'computer_representation': 'Int8'},
+                        'col3': {'sdtype': 'numerical'},
+                        'date_col1': {'sdtype': 'datetime'},
+                        'date_col2': {'sdtype': 'datetime'},
+                    },
+                },
+                'table2': {
+                    'columns': {
+                        'col4': {'sdtype': 'datetime'},
+                        'col5': {'sdtype': 'numerical'},
+                    }
+                },
+            }
+        })
+        instance._original_data_columns = {
+            'table': ['col1', 'col2', 'col3', 'date_col1', 'date_col2'],
+            'table2': ['col4', 'col5'],
+        }
+        instance._get_updated_metadata = Mock(
+            return_value=Metadata.load_from_dict({
+                'tables': {'table': {'columns': {'col1#col2': {'sdtype': 'numerical'}}}}
+            })
+        )
+        data = {
+            'table': pd.DataFrame({
+                'col1': ['abc', 'def'],
+                'col2': [1, 2],
+                'col3': [3, 4],
+                'date_col1': ['16-05-2023', '14-04-2022'],
+                'date_col2': pd.to_datetime(['2021-02-15', '2022-05-16']),
+            }),
+            'table2': pd.DataFrame({
+                'col4': ['2023-01-01', '2023-02-01'],
+                'col5': [5.0, 6.0],
+            }),
+        }
+
+        # Run
+        BaseConstraint._fit_constraint_column_formatters(instance, data)
+
+        # Assert
+        instance._get_updated_metadata.assert_called_once_with(instance.metadata)
+        formatters = instance._constraint_col_formatters
+        assert set(formatters.keys()) == {'table', 'table2'}
+        assert set(formatters['table'].keys()) == {'col2', 'col3', 'date_col1', 'date_col2'}
+        assert set(formatters['table2'].keys()) == {'col4', 'col5'}
+
+        assert isinstance(formatters['table']['col2'], NumericalFormatter)
+        assert formatters['table']['col2'].enforce_rounding is True
+        assert formatters['table']['col2'].enforce_min_max_values is True
+        assert formatters['table']['col2'].computer_representation == 'Int8'
+
+        assert isinstance(formatters['table']['col3'], NumericalFormatter)
+        assert formatters['table']['col3'].enforce_rounding is True
+        assert formatters['table']['col3'].enforce_min_max_values is True
+        assert formatters['table']['col3'].computer_representation == 'Float'
+
+        assert isinstance(formatters['table']['date_col1'], DatetimeFormatter)
+        assert isinstance(formatters['table']['date_col2'], DatetimeFormatter)
+        assert formatters['table']['date_col1']._dtype == 'O'
+        assert formatters['table']['date_col1'].datetime_format == '%d-%m-%Y'
+        assert formatters['table']['date_col2']._dtype == '<M8[ns]'
+        assert formatters['table']['date_col2'].datetime_format == '%Y-%m-%d'
+
+        assert isinstance(formatters['table2']['col4'], DatetimeFormatter)
+        assert formatters['table2']['col4']._dtype == 'O'
+        assert formatters['table2']['col4'].datetime_format == '%Y-%m-%d'
+        assert isinstance(formatters['table2']['col5'], NumericalFormatter)
+        assert formatters['table2']['col5'].enforce_rounding is True
+        assert formatters['table2']['col5'].enforce_min_max_values is True
+
+    def test__format_constraint_columns(self):
+        """Test formatting all columns that were dropped by constraints."""
+        # Setup
+        instance = Mock()
+        instance._original_data_columns = {
+            'table': ['categorical', 'int', 'float', 'datetime_col'],
+        }
+
+        formatters = {
+            'table': {
+                'int': Mock(),
+                'float': Mock(),
+                'datetime_col': Mock(),
+            }
+        }
+        formatters['table']['int'].format_data.return_value = [0, 1, 2]
+        formatters['table']['float'].format_data.return_value = [0.1, 1.2, 2.3]
+        formatters['table']['datetime_col'].format_data.return_value = [
+            '2021-02-15',
+            '2022-05-16',
+            '2023-07-18',
+        ]
+        instance._constraint_col_formatters = formatters
+        data = {
+            'table': pd.DataFrame({
+                'categorical': ['A', 'A', 'C'],
+                'int': [0.0, 1.0, 2.0],
+                'float': [0.11, 1.21, 2.33],
+                'datetime_col': pd.to_datetime(['2021-02-15', '2022-05-16', '2023-07-18']),
+            })
+        }
+
+        # Run
+        formatted_data = BaseConstraint._format_constraint_columns(instance, data)
+
+        # Assert
+        expected_data = pd.DataFrame({
+            'categorical': ['A', 'A', 'C'],
+            'int': [0, 1, 2],
+            'float': [0.1, 1.2, 2.3],
+            'datetime_col': ['2021-02-15', '2022-05-16', '2023-07-18'],
+        })
+        pd.testing.assert_frame_equal(expected_data, formatted_data['table'])
+
     def test_fit(self, data):
         """Test ``fit`` method."""
         # Setup
@@ -196,6 +323,7 @@ class TestBaseConstraint:
         instance._validate_constraint_with_metadata = Mock()
         instance._validate_constraint_with_data = Mock()
         instance._fit = Mock()
+        instance._fit_constraint_column_formatters = Mock()
         metadata = Metadata.load_from_dict({
             'tables': {
                 'table1': {
@@ -213,6 +341,7 @@ class TestBaseConstraint:
         instance._validate_constraint_with_metadata.assert_called_once_with(metadata)
         instance._validate_constraint_with_data.assert_called_once_with(data, metadata)
         instance._fit.assert_called_once_with(data, metadata)
+        instance._fit_constraint_column_formatters.assert_called_once_with(data)
         assert instance._dtypes == {
             'table1': {'col1': 'int64', 'col2': 'object', 'col3': 'float64'},
             'table2': {'col4': 'int64', 'col5': 'object'},
