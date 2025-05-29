@@ -142,9 +142,9 @@ class BaseConstraint:
                 column for column in self._original_data_columns[table_name] if column in table_data
             ]
             table_formatters = self._constraint_col_formatters.get(table_name, {})
-            for column_name, dtype in table_formatters.items():
+            for column_name, formatter in table_formatters.items():
                 column_data = table_data[column_name]
-                table_data[column_name] = table_formatters[column_name].format_data(column_data)
+                table_data[column_name] = formatter.format_data(column_data)
 
             data[table_name] = table_data[column_order]
 

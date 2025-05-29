@@ -38,6 +38,7 @@ class TestBaseConstraint:
         # Assert
         assert instance._fitted is False
         assert instance.metadata is None
+        assert instance._constraint_col_formatters == {}
 
     def test__convert_data_to_dictionary(self):
         """Test the ``_convert_data_to_dictionary`` method."""
