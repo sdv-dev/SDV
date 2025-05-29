@@ -317,6 +317,26 @@ class TestBaseConstraint:
         })
         pd.testing.assert_frame_equal(expected_data, formatted_data['table'])
 
+    def test__format_constraint_columns_backwards_compatibility(self):
+        """Test the BaseConstraint without the `_constraint_col_formatters` attribute."""
+        # Setup
+        instance = BaseConstraint()
+        del instance._constraint_col_formatters
+        data = {
+            'table': pd.DataFrame({
+                'categorical': ['A', 'A', 'C'],
+                'int': [0.0, 1.0, 2.0],
+                'float': [0.11, 1.21, 2.33],
+                'datetime_col': pd.to_datetime(['2021-02-15', '2022-05-16', '2023-07-18']),
+            })
+        }
+
+        # Run
+        formatted_data = BaseConstraint._format_constraint_columns(instance, data)
+
+        # Assert
+        pd.testing.assert_frame_equal(formatted_data['table'], data['table'])
+
     def test_fit(self, data):
         """Test ``fit`` method."""
         # Setup
