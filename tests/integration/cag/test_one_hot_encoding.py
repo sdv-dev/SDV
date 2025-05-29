@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from sdv.cag import OneHotEncoding
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.metadata import Metadata
 from tests.utils import run_copula, run_hma
 
@@ -65,7 +65,7 @@ def test_end_to_end(data, metadata):
     synthetic_data = synthesizer.sample(100)
 
     # Run
-    synthesizer.validate_cag(synthetic_data=synthetic_data)
+    synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
     for col in ['a', 'b', 'c']:
@@ -84,24 +84,24 @@ def test_end_to_end_raises(data, metadata):
 
     # Run and Assert
     msg = re.escape('The one hot encoding requirement is not met for row indices: [1, 2]')
-    with pytest.raises(PatternNotMetError, match=msg):
+    with pytest.raises(ConstraintNotMetError, match=msg):
         run_copula(invalid_data, metadata, [OneHotEncoding(column_names=['a', 'b', 'c'])])
 
     msg = re.escape('The one hot encoding requirement is not met for row indices: 1, 2')
-    with pytest.raises(PatternNotMetError, match=msg):
+    with pytest.raises(ConstraintNotMetError, match=msg):
         synthesizer = run_copula(data, metadata, [OneHotEncoding(column_names=['a', 'b', 'c'])])
-        synthesizer.validate_cag(synthetic_data=invalid_data)
+        synthesizer.validate_constraints(synthetic_data=invalid_data)
 
 
 def test_end_to_end_multi(data_multi, metadata_multi):
     """Test end to end with OneHotEncoding with multitable data."""
     # Setup
-    pattern = OneHotEncoding(column_names=['a', 'b', 'c'], table_name='table1')
-    synthesizer = run_hma(data_multi, metadata_multi, [pattern])
+    constraint = OneHotEncoding(column_names=['a', 'b', 'c'], table_name='table1')
+    synthesizer = run_hma(data_multi, metadata_multi, [constraint])
     synthetic_data = synthesizer.sample(100)
 
     # Run
-    synthesizer.validate_cag(synthetic_data=synthetic_data)
+    synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
     for col in ['a', 'b', 'c']:
@@ -112,8 +112,8 @@ def test_end_to_end_multi(data_multi, metadata_multi):
 def test_end_to_end_multi_raises(data_multi, metadata_multi):
     """Test end to end raises an error with bad multitable synthetic data with OneHotEncoding."""
     # Setup
-    pattern = OneHotEncoding(column_names=['a', 'b', 'c'], table_name='table1')
-    synthesizer = run_hma(data_multi, metadata_multi, [pattern])
+    constraint = OneHotEncoding(column_names=['a', 'b', 'c'], table_name='table1')
+    synthesizer = run_hma(data_multi, metadata_multi, [constraint])
     invalid_data = {
         'table1': pd.DataFrame({
             'a': [1, 2, 0],
@@ -125,10 +125,10 @@ def test_end_to_end_multi_raises(data_multi, metadata_multi):
 
     # Run and Assert
     msg = re.escape('The one hot encoding requirement is not met for row indices: [1, 2]')
-    with pytest.raises(PatternNotMetError, match=msg):
-        run_hma(invalid_data, metadata_multi, [pattern])
+    with pytest.raises(ConstraintNotMetError, match=msg):
+        run_hma(invalid_data, metadata_multi, [constraint])
 
     msg = "Table 'table1': The one hot encoding requirement is not met for row indices: 1, 2."
-    with pytest.raises(PatternNotMetError, match=msg):
-        synthesizer = run_hma(data_multi, metadata_multi, [pattern])
-        synthesizer.validate_cag(synthetic_data=invalid_data)
+    with pytest.raises(ConstraintNotMetError, match=msg):
+        synthesizer = run_hma(data_multi, metadata_multi, [constraint])
+        synthesizer.validate_constraints(synthetic_data=invalid_data)

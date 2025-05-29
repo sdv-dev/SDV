@@ -1,4 +1,4 @@
-"""Range CAG pattern."""
+"""Range constraint."""
 
 import operator
 
@@ -7,7 +7,7 @@ import pandas as pd
 from pandas.api.types import is_object_dtype
 
 from sdv._utils import _convert_to_timedelta, _create_unique_name
-from sdv.cag._errors import PatternNotMetError
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _get_invalid_rows,
     _get_is_valid_dict,
@@ -16,7 +16,7 @@ from sdv.cag._utils import (
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
 )
-from sdv.cag.base import BasePattern
+from sdv.cag.base import BaseConstraint
 from sdv.constraints.utils import (
     cast_to_datetime64,
     compute_nans_column,
@@ -25,10 +25,10 @@ from sdv.constraints.utils import (
 )
 
 
-class Range(BasePattern):
+class Range(BaseConstraint):
     """Ensure that the `middle_column_name` is between `low_column_name` and `high_column_name`.
 
-    The transformation strategy works the same as the Inequality pattern but with two
+    The transformation strategy works the same as the Inequality constraint but with two
     columns instead of one. We compute the difference between the `middle_column_name`
     and the `low_column_name` column and then apply a logarithm to the difference + 1 to ensure
     that the value stays positive when reverted afterwards using an exponential.
@@ -106,8 +106,8 @@ class Range(BasePattern):
         self._middle_datetime_format = None
         self._high_datetime_format = None
 
-    def _validate_pattern_with_metadata(self, metadata):
-        """Validate the pattern is compatible with the provided metadata.
+    def _validate_constraint_with_metadata(self, metadata):
+        """Validate the constraint is compatible with the provided metadata.
 
         Validates that:
         - If no table_name is provided the metadata contains a single table
@@ -119,7 +119,7 @@ class Range(BasePattern):
                 The metadata to validate against.
 
         Raises:
-            PatternNotMetError:
+            ConstraintNotMetError:
                 If any of the validations fail.
         """
         columns = [self._low_column_name, self._middle_column_name, self._high_column_name]
@@ -128,7 +128,7 @@ class Range(BasePattern):
         for column in columns:
             col_sdtype = metadata.tables[table_name].columns[column]['sdtype']
             if col_sdtype not in ['numerical', 'datetime']:
-                raise PatternNotMetError(
+                raise ConstraintNotMetError(
                     f"Column '{column}' has an incompatible sdtype '{col_sdtype}'. The column "
                     "sdtype must be either 'numerical' or 'datetime'."
                 )
@@ -137,7 +137,7 @@ class Range(BasePattern):
         mid_column_sdtype = metadata.tables[table_name].columns[self._middle_column_name]['sdtype']
         high_column_sdtype = metadata.tables[table_name].columns[self._high_column_name]['sdtype']
         if low_column_sdtype != mid_column_sdtype or mid_column_sdtype != high_column_sdtype:
-            raise PatternNotMetError(
+            raise ConstraintNotMetError(
                 f"Columns '{self._low_column_name}', '{self._middle_column_name}' and "
                 f"'{self._high_column_name}' must have the same sdtype. Found '{low_column_sdtype}'"
                 f", '{mid_column_sdtype}' and '{high_column_sdtype}'."
@@ -163,14 +163,14 @@ class Range(BasePattern):
 
         return low_lt_middle & mid_lt_high & low_lt_high
 
-    def _validate_pattern_with_data(self, data, metadata):
-        """Validate the data is compatible with the pattern."""
+    def _validate_constraint_with_data(self, data, metadata):
+        """Validate the data is compatible with the constraint."""
         table_name = self._get_single_table_name(metadata)
         valid = self._get_valid_table_data(data[table_name])
 
         if not valid.all():
             invalid_rows_str = _get_invalid_rows(valid)
-            raise PatternNotMetError(
+            raise ConstraintNotMetError(
                 f'The range requirement is not met for row indices: [{invalid_rows_str}]'
             )
 
@@ -185,7 +185,7 @@ class Range(BasePattern):
         return fillna_low_column, low_diff_column, high_diff_column, nan_component_column
 
     def _get_updated_metadata(self, metadata):
-        """Get the new output metadata after applying the pattern to the input metadata."""
+        """Get the new output metadata after applying the constraint to the input metadata."""
         table_name = self._get_single_table_name(metadata)
         fillna_low_column, low_diff_column, high_diff_column, nan_component_column = (
             self._get_diff_and_nan_column_names(metadata, table_name)
@@ -214,7 +214,7 @@ class Range(BasePattern):
         return metadata.tables[table_name].columns[column_name].get('datetime_format')
 
     def _fit(self, data, metadata):
-        """Fit the pattern.
+        """Fit the constraint.
 
         Args:
             data (dict[str, pd.DataFrame]):
