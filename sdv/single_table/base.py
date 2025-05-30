@@ -204,7 +204,7 @@ class BaseSynthesizer:
         warnings.warn(
             '`set_address_columns` is deprecated. Please add these columns directly to your'
             ' metadata using `add_column_relationship`.',
-            DeprecationWarning,
+            FutureWarning,
         )
 
     def _validate_metadata(self, data):

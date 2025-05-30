@@ -162,7 +162,7 @@ def _filter_old_style_constraints(constraints):
             'The `add_constraints` function no longer supports constraints using the older '
             'dictionary-style definition. Such constraints will be ignored. Please supply '
             'objects from `sdv.cag` instead.',
-            DeprecationWarning,
+            FutureWarning,
         )
 
     return result

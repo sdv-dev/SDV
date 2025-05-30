@@ -268,7 +268,7 @@ def test__filter_old_style_constraints():
         result_1 = _filter_old_style_constraints([constraint_1, constraint_2])
         assert len(record) == 0
 
-    with pytest.warns(DeprecationWarning, match=expected_warning):
+    with pytest.warns(FutureWarning, match=expected_warning):
         result_2 = _filter_old_style_constraints([constraint_1, constraint_2, old_style_constraint])
 
     # Assert
