@@ -240,6 +240,9 @@ class BaseMultiTableSynthesizer:
             else:
                 constraints.append(deepcopy(constraint))
 
+        for table_name, synthesizer in self._table_synthesizers.items():
+            constraints += synthesizer.get_constraints()
+
         return constraints
 
     def validate_constraints(self, synthetic_data):

@@ -1563,6 +1563,14 @@ class TestBaseMultiTableSynthesizer:
         constraint2 = Mock()
         custom_constraint = Mock()
         constraint3 = ProgrammableConstraintHarness(custom_constraint)
+        constraint4 = Mock()
+        constraint5 = Mock()
+        instance._table_synthesizers = {
+            'table1': Mock(),
+            'table2': Mock(),
+        }
+        instance._table_synthesizers['table1'].get_constraints = Mock(return_value=[constraint4])
+        instance._table_synthesizers['table2'].get_constraints = Mock(return_value=[constraint5])
 
         # Run
         no_constraints = BaseMultiTableSynthesizer.get_constraints(instance)
@@ -1576,6 +1584,8 @@ class TestBaseMultiTableSynthesizer:
             copy_mock.return_value,
             copy_mock.return_value,
             copy_mock.return_value,
+            constraint4,
+            constraint5,
         ]
 
     def test_get_metadata_original(self):
