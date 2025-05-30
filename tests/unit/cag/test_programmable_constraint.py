@@ -183,13 +183,16 @@ class TestProgrammableConstraintHarness:
         data = {'table': pd.DataFrame({'col_A': range(5)})}
         programmable_constraint = ProgrammableConstraint()
         programmable_constraint.fit = Mock()
+        programmable_constraint.get_updated_metadata = Mock(return_value=metadata)
         instance = ProgrammableConstraintHarness(programmable_constraint)
+        instance._fit_constraint_column_formatters = Mock()
 
         # Run
         instance.fit(data, metadata)
 
         # Assert
         programmable_constraint.fit.assert_called_once_with(data, metadata)
+        instance._fit_constraint_column_formatters.assert_called_once_with(data)
 
     def test__fit_single_table(self):
         """Test the method handles converting the data dictionary to a single dataframe."""
@@ -200,13 +203,16 @@ class TestProgrammableConstraintHarness:
         data = pd.DataFrame({'col_A': range(5)})
         programmable_constraint = SingleTableProgrammableConstraint()
         programmable_constraint.fit = Mock()
+        programmable_constraint.get_updated_metadata = Mock(return_value=metadata)
         instance = ProgrammableConstraintHarness(programmable_constraint)
+        instance._fit_constraint_column_formatters = Mock()
 
         # Run
         instance.fit(data, metadata)
 
         # Assert
         programmable_constraint.fit.assert_called_once_with(data, metadata)
+        instance._fit_constraint_column_formatters.assert_called_once_with({'table': data})
 
     def test__transform(self):
         """Test the ``_transform`` method."""

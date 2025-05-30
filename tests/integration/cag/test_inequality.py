@@ -822,6 +822,7 @@ def test_inequality_with_nan():
     inequality_cag = Inequality(
         low_column_name='checkin_date',
         high_column_name='checkout_date',
+        strict_boundaries=True,
     )
 
     # Run
