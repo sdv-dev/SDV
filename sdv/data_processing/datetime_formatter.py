@@ -1,6 +1,7 @@
 """Formatter for datetime data."""
 
 import pandas as pd
+from pandas.api.types import is_datetime64_any_dtype
 
 from sdv._utils import _get_datetime_format
 
@@ -40,6 +41,9 @@ class DatetimeFormatter:
             numpy.ndarray:
                 containing the formatted data.
         """
+        if self._dtype == column.dtype and is_datetime64_any_dtype(column):
+            return column
+
         if self.datetime_format:
             try:
                 datetime_column = pd.to_datetime(column, format=self.datetime_format)

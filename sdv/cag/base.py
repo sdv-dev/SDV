@@ -5,6 +5,8 @@ import logging
 import numpy as np
 import pandas as pd
 
+from sdv.data_processing.datetime_formatter import DatetimeFormatter
+from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.errors import NotFittedError
 
 LOGGER = logging.getLogger(__name__)
@@ -19,6 +21,8 @@ class BaseConstraint:
         self.metadata = None
         self._fitted = False
         self._single_table = False
+        self._dtypes = None
+        self._formatters = {}
 
     def _convert_data_to_dictionary(self, data, metadata, copy=False):
         """Helper to handle converting single dataframes into dictionaries.
@@ -91,6 +95,61 @@ class BaseConstraint:
     def _fit(self, data, metadata):
         raise NotImplementedError
 
+    def _fit_constraint_column_formatters(self, data):
+        """Fit formatters for columns that are dropped by constraints before data processing."""
+        updated_metadata = self._get_updated_metadata(self.metadata)
+        for table_name in self.metadata.tables:
+            self._formatters[table_name] = {}
+            primary_key = self.metadata.tables[table_name].primary_key
+            input_columns = self._original_data_columns[table_name]
+            table_metdadata = updated_metadata.tables.get(table_name)
+            if table_metdadata:
+                columns_to_format = set(input_columns) - set(table_metdadata.get_column_names())
+            else:
+                columns_to_format = set(input_columns)
+
+            for column_name in columns_to_format:
+                column_metadata = self.metadata.tables[table_name].columns.get(column_name)
+                sdtype = column_metadata.get('sdtype')
+                if sdtype == 'numerical' and column_name != primary_key:
+                    representation = column_metadata.get('computer_representation', 'Float')
+                    self._formatters[table_name][column_name] = NumericalFormatter(
+                        computer_representation=representation,
+                        enforce_rounding=True,
+                        enforce_min_max_values=True,
+                    )
+                    self._formatters[table_name][column_name].learn_format(
+                        data[table_name][column_name]
+                    )
+
+                elif sdtype == 'datetime' and column_name != primary_key:
+                    datetime_format = column_metadata.get('datetime_format')
+                    self._formatters[table_name][column_name] = DatetimeFormatter(
+                        datetime_format=datetime_format
+                    )
+                    self._formatters[table_name][column_name].learn_format(
+                        data[table_name][column_name]
+                    )
+
+    def _format_constraint_columns(self, data):
+        """Format columns skipped by the data processor due to being dropped by constraints."""
+        if not hasattr(self, '_formatters'):
+            # Backwards compatibility for constraints saved without formatters.
+            return data
+
+        for table_name, table_data in data.items():
+            column_order = [
+                column for column in self._original_data_columns[table_name] if column in table_data
+            ]
+            table_formatters = self._formatters.get(table_name, {})
+            for column_name, formatter in table_formatters.items():
+                column_data = table_data[column_name]
+                table_data[column_name] = formatter.format_data(column_data)
+
+            data[table_name] = table_data[column_order]
+
+        return data
+
     def fit(self, data, metadata):
         """Fit the constraint with data and metadata.
 
@@ -109,11 +168,11 @@ class BaseConstraint:
         self._validate_constraint_with_data(data, metadata)
         self._fit(data, metadata)
         self.metadata = metadata
-
         self._dtypes = {table: data[table].dtypes.to_dict() for table in metadata.tables}
         self._original_data_columns = {
             table: metadata.tables[table].get_column_names() for table in metadata.tables
         }
+        self._fit_constraint_column_formatters(data)
         self._fitted = True
 
     def _transform(self, data):
@@ -174,6 +233,7 @@ class BaseConstraint:
         """
         data = self._convert_data_to_dictionary(data, self.metadata, copy=True)
         reverse_transformed = self._reverse_transform(data)
+        reverse_transformed = self._format_constraint_columns(reverse_transformed)
         for table_name, table in reverse_transformed.items():
             valid_columns = [
                 column
