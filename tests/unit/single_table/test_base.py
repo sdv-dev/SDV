@@ -363,7 +363,7 @@ class TestBaseSynthesizer:
             '`set_address_columns` is deprecated. Please add these columns directly to your'
             ' metadata using `add_column_relationship`.'
         )
-        with pytest.warns(DeprecationWarning, match=expected_message):
+        with pytest.warns(FutureWarning, match=expected_message):
             synthesizer.set_address_columns(
                 ['country_column', 'city_column'], anonymization_level='full'
             )
