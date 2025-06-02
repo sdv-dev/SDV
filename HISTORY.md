@@ -1,5 +1,42 @@
 # Release Notes
 
+## v1.22.0 - 2025-06-02
+
+### New Features
+
+* Add violin option to get_column_plot function docstrings - Issue [#2554](https://github.com/sdv-dev/SDV/issues/2554) by @amontanez24
+* Allow `fit` to be an optional method for `ProgrammableConstraint` and `SingleTableProgrammableConstraint` - Issue [#2525](https://github.com/sdv-dev/SDV/issues/2525) by @pvk-developer
+* Add `ProgrammableConstraint` and `ProgrammableSingleTableConstraint` - Issue [#2513](https://github.com/sdv-dev/SDV/issues/2513) by @frances-h
+* Enable single-table constraint reject sampling with multi-table synthesizers - Issue [#2512](https://github.com/sdv-dev/SDV/issues/2512) by @R-Palazzo
+* Consolidate names of CAG/data patterns to `constraints` - Issue [#2492](https://github.com/sdv-dev/SDV/issues/2492) by @R-Palazzo
+* Add 'version' parameter to SingleTableSynthesizer.get_metadata - Issue [#2484](https://github.com/sdv-dev/SDV/issues/2484) by @pvk-developer
+* Add synthesizer.validate_cag method - Issue [#2471](https://github.com/sdv-dev/SDV/issues/2471) by @gsheni
+* Add CAG validation to synthesizer.validate - Issue [#2470](https://github.com/sdv-dev/SDV/issues/2470) by @R-Palazzo
+* Deprecate `ScalarInequality` and `ScalarRange` constraints - Issue [#2433](https://github.com/sdv-dev/SDV/issues/2433)
+* Add CAG support to single table synthesizers - Issue [#2389](https://github.com/sdv-dev/SDV/issues/2389) by @fealho
+* Add `OneHotEncoding` CAG pattern - Issue [#2387](https://github.com/sdv-dev/SDV/issues/2387) by @fealho
+* Add the `FixedIncrements` CAG pattern - Issue [#2386](https://github.com/sdv-dev/SDV/issues/2386) by @gsheni
+* Add `Range` CAG pattern - Issue [#2385](https://github.com/sdv-dev/SDV/issues/2385) by @fealho
+* Add `Inequality` CAG pattern - Issue [#2384](https://github.com/sdv-dev/SDV/issues/2384) by @fealho
+* Add `FixedCombinations` CAG pattern + add CAG base class to public - Issue [#2383](https://github.com/sdv-dev/SDV/issues/2383) by @frances-h
+
+### Bugs Fixed
+
+* Using old style constraints should raise a `FutureWarning` - Issue [#2561](https://github.com/sdv-dev/SDV/issues/2561) by @frances-h
+* `get_constraints` for multi-table does not return single-table constraints - Issue [#2559](https://github.com/sdv-dev/SDV/issues/2559) by @R-Palazzo
+* Formatted columns dropped by CAG constraints may invalidate constraint - Issue [#2550](https://github.com/sdv-dev/SDV/issues/2550) by @R-Palazzo
+* SDV cannot be used on a readonly filesystem - Issue [#2543](https://github.com/sdv-dev/SDV/issues/2543) by @pvk-developer
+* Incorrect formatting when applying `Inequality` constraint - Issue [#2524](https://github.com/sdv-dev/SDV/issues/2524)
+* `ValueError` if conditionally sampling on a column dropped by constraints - Issue [#2519](https://github.com/sdv-dev/SDV/issues/2519) by @frances-h
+* Constraint hits IntCastingNanError when reverse transforming int column with nan values - Issue [#2514](https://github.com/sdv-dev/SDV/issues/2514) by @frances-h
+* Inequality CAG does not respect datetime format - Issue [#2495](https://github.com/sdv-dev/SDV/issues/2495)
+* `auto_assign_transformers` errors after adding CAG pattern - Issue [#2490](https://github.com/sdv-dev/SDV/issues/2490) by @R-Palazzo
+* Evaluate and improve CAG pattern testing coverage - Issue [#2489](https://github.com/sdv-dev/SDV/issues/2489) by @fealho
+* Inequality CAG errors out if data contains NaN values - Issue [#2488](https://github.com/sdv-dev/SDV/issues/2488) by @R-Palazzo
+* Add multi-table CAG support - Issue [#2487](https://github.com/sdv-dev/SDV/issues/2487) by @frances-h
+* PARSynthesizer is not aware of the sdtypes produced after pre-processing - Issue [#2482](https://github.com/sdv-dev/SDV/issues/2482) by @fealho
+* Make single table CAGs backwards compatible - Issue [#2446](https://github.com/sdv-dev/SDV/issues/2446) by @fealho
+
 ## v1.21.0 - 2025-05-16
 
 ### New Features
