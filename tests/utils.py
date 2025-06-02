@@ -6,6 +6,8 @@ import pandas as pd
 
 from sdv.logging import get_sdv_logger
 from sdv.metadata.metadata import Metadata
+from sdv.multi_table import HMASynthesizer
+from sdv.single_table import GaussianCopulaSynthesizer
 
 
 class DataFrameMatcher:
@@ -16,6 +18,21 @@ class DataFrameMatcher:
 
     def __eq__(self, other):
         pd.testing.assert_frame_equal(self.df, other)
+        return True
+
+
+class DataFrameDictMatcher:
+    """Match a given dictionary of pandas DataFrames in a mock function call."""
+
+    def __init__(self, data):
+        self.data = data
+
+    def __eq__(self, other):
+        """Assert the data keys match, then use pandas to assert the values are equal."""
+        assert self.data.keys() == other.keys()
+        for key in self.data:
+            pd.testing.assert_frame_equal(self.data[key], other[key])
+
         return True
 
 
@@ -117,3 +134,32 @@ def catch_sdv_logs(caplog, level, logger):
     finally:
         logger.setLevel(orig_level)
         logger.removeHandler(caplog.handler)
+
+
+def run_constraint(constraint, data, metadata):
+    """Run a constraint."""
+    constraint.validate(data, metadata)
+    updated_metadata = constraint.get_updated_metadata(metadata)
+    constraint.fit(data, metadata)
+    transformed = constraint.transform(data)
+    reverse_transformed = constraint.reverse_transform(transformed)
+
+    return updated_metadata, transformed, reverse_transformed
+
+
+def run_copula(data, metadata, constraints=None):
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    if constraints:
+        synthesizer.add_constraints(constraints=constraints)
+    synthesizer.fit(data)
+
+    return synthesizer
+
+
+def run_hma(data, metadata, constraints=None):
+    synthesizer = HMASynthesizer(metadata)
+    if constraints:
+        synthesizer.add_constraints(constraints=constraints)
+    synthesizer.fit(data)
+
+    return synthesizer

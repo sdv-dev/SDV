@@ -118,8 +118,8 @@ class TestHMASynthesizer:
 
         # Assert
         get_distributions_mock.assert_called_once()
-        for pattern in key_phrases:
-            match = re.search(pattern, captured.out + captured.err)
+        for constraint in key_phrases:
+            match = re.search(constraint, captured.out + captured.err)
             assert match is not None
 
         # Run
@@ -127,8 +127,8 @@ class TestHMASynthesizer:
         captured = capsys.readouterr()
 
         # Assert that small amount of columns don't trigger the message
-        for pattern in key_phrases:
-            match = re.search(pattern, captured.out + captured.err)
+        for constraint in key_phrases:
+            match = re.search(constraint, captured.out + captured.err)
             assert match is None
 
     def test__get_extension_foreign_key_only(self):
@@ -335,10 +335,17 @@ class TestHMASynthesizer:
         # Setup
         instance = Mock()
         metadata = Mock()
-        metadata._get_parent_map.return_value = {
-            'sessions': ['users'],
-            'transactions': ['sessions'],
-        }
+
+        def get_column_names_mock(table_name):
+            mapping = {
+                'users': ['user_id', 'name'],
+                'sessions': ['user_id', 'session_id', 'os', 'country'],
+                'transactions': ['transaction_id', 'session_id'],
+            }
+            return mapping[table_name]
+
+        instance.get_metadata = Mock(return_value=metadata)
+        metadata.get_column_names = Mock(side_effect=get_column_names_mock)
         instance.metadata = metadata
 
         sampled_data = {

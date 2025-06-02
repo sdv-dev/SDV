@@ -15,9 +15,11 @@ from rdt.transformers import FloatFormatter
 from sdmetrics.reports.multi_table import DiagnosticReport
 
 from sdv import version
+from sdv.cag import FixedCombinations, Inequality
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
-from sdv.errors import SamplingError, SynthesizerInputError, VersionError
+from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError, VersionError
 from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata import MultiTableMetadata
 from sdv.metadata.metadata import Metadata
@@ -242,15 +244,10 @@ class TestHMASynthesizer:
         # Setup
         parent_data, child_data, metadata = self.get_custom_constraint_data_and_metadata()
         synthesizer = HMASynthesizer(metadata)
-        constraint = {
-            'table_name': 'parent',
-            'constraint_class': 'MyConstraint',
-            'constraint_parameters': {'column_names': ['numerical_col']},
-        }
-        synthesizer.add_custom_constraint_class(MyConstraint, 'MyConstraint')
+        constraint = MyConstraint(column_names=['numerical_col'], table_name='parent')
 
         # Run
-        synthesizer.add_constraints(constraints=[constraint])
+        synthesizer.add_constraints([constraint])
         processed_data = synthesizer.preprocess({'parent': parent_data, 'child': child_data})
 
         # Assert Processed Data
@@ -275,21 +272,11 @@ class TestHMASynthesizer:
         parent_data, child_data, metadata = self.get_custom_constraint_data_and_metadata()
         synthesizer = HMASynthesizer(metadata)
 
-        constraint_parent = {
-            'table_name': 'parent',
-            'constraint_class': 'MyConstraint',
-            'constraint_parameters': {'column_names': ['numerical_col']},
-        }
-
-        constraint_child = {
-            'table_name': 'child',
-            'constraint_class': 'MyConstraint',
-            'constraint_parameters': {'column_names': ['numerical_col_2']},
-        }
-        synthesizer.add_custom_constraint_class(MyConstraint, 'MyConstraint')
+        constraint_parent = MyConstraint(column_names=['numerical_col'], table_name='parent')
+        constraint_child = MyConstraint(column_names=['numerical_col_2'], table_name='child')
 
         # Run
-        synthesizer.add_constraints(constraints=[constraint_parent, constraint_child])
+        synthesizer.add_constraints([constraint_parent, constraint_child])
         processed_data = synthesizer.preprocess({'parent': parent_data, 'child': child_data})
 
         # Assert Processed Data
@@ -310,37 +297,6 @@ class TestHMASynthesizer:
         assert all(sampled['parent']['numerical_col'] > 1)
         assert all(sampled['child']['numerical_col_2'] > 1)
         assert not all(sampled['child']['numerical_col'] > 1)
-
-    def test_hma_custom_constraint_loaded_from_file(self):
-        """Test an example of using a custom constraint loaded from a file."""
-        # Setup
-        parent_data, child_data, metadata = self.get_custom_constraint_data_and_metadata()
-        synthesizer = HMASynthesizer(metadata)
-        constraint = {
-            'table_name': 'parent',
-            'constraint_class': 'MyConstraint',
-            'constraint_parameters': {'column_names': ['numerical_col']},
-        }
-        synthesizer.load_custom_constraint_classes(
-            'tests/integration/single_table/custom_constraints.py', ['MyConstraint']
-        )
-
-        # Run
-        synthesizer.add_constraints(constraints=[constraint])
-        processed_data = synthesizer.preprocess({'parent': parent_data, 'child': child_data})
-
-        # Assert Processed Data
-        np.testing.assert_equal(
-            processed_data['parent']['numerical_col'].array,
-            (parent_data['numerical_col'] ** 2.0).array,
-        )
-
-        # Run - Fit the model
-        synthesizer.fit_processed_data(processed_data)
-
-        # Run - sample
-        sampled = synthesizer.sample(10)
-        assert all(sampled['parent']['numerical_col'] > 1)
 
     def test_hma_with_inequality_constraint(self):
         """Test that when new columns are created by the constraint this still works."""
@@ -376,16 +332,12 @@ class TestHMASynthesizer:
             parent_primary_key='id',
             child_foreign_key='parent_id',
         )
-
-        constraint = {
-            'constraint_class': 'Inequality',
-            'table_name': 'child_table',
-            'constraint_parameters': {
-                'low_column_name': 'low_column',
-                'high_column_name': 'high_column',
-            },
-        }
-
+        constraint = Inequality(
+            low_column_name='low_column',
+            high_column_name='high_column',
+            table_name='child_table',
+            strict_boundaries=False,
+        )
         synthesizer = HMASynthesizer(metadata)
 
         # Run
@@ -711,8 +663,8 @@ class TestHMASynthesizer:
         captured = capsys.readouterr()
 
         # Assert
-        for pattern in key_phrases:
-            match = re.search(pattern, captured.out + captured.err)
+        for constraint in key_phrases:
+            match = re.search(constraint, captured.out + captured.err)
             assert match is not None
 
     def test_warning_message_too_many_cols(self, capsys):
@@ -732,8 +684,8 @@ class TestHMASynthesizer:
         captured = capsys.readouterr()
 
         # Assert
-        for pattern in key_phrases:
-            match = re.search(pattern, captured.out + captured.err)
+        for constraint in key_phrases:
+            match = re.search(constraint, captured.out + captured.err)
             assert match is not None
         (_, small_metadata) = download_demo(modality='multi_table', dataset_name='trains_v1')
 
@@ -743,8 +695,8 @@ class TestHMASynthesizer:
         captured = capsys.readouterr()
 
         # Assert that small amount of columns don't trigger the message
-        for pattern in key_phrases:
-            match = re.search(pattern, captured.out + captured.err)
+        for constraint in key_phrases:
+            match = re.search(constraint, captured.out + captured.err)
             assert match is None
 
     def test_hma_three_linear_nodes(self):
@@ -1532,7 +1484,7 @@ class TestHMASynthesizer:
         synthetic_data = synthesizer.sample()
 
         # Assert
-        # Check that IDs match the regex pattern
+        # Check that IDs match the regex constraint
         for table_name, table in synthetic_data.items():
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
@@ -1611,7 +1563,7 @@ class TestHMASynthesizer:
             synthetic_data = synthesizer.sample()
 
         # Assert
-        # Check that IDs match the regex pattern
+        # Check that IDs match the regex constraint
         for table_name, table in synthetic_data.items():
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
@@ -1713,7 +1665,7 @@ class TestHMASynthesizer:
             synthetic_data = synthesizer.sample()
 
         # Assert
-        # Check that IDs match the regex pattern
+        # Check that IDs match the regex constraint
         for table_name, table in synthetic_data.items():
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
@@ -1797,7 +1749,7 @@ class TestHMASynthesizer:
             synthetic_data = synthesizer.sample()
 
         # Assert
-        # Check that IDs match the regex pattern
+        # Check that IDs match the regex constraint
         for table_name, table in synthetic_data.items():
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
@@ -1872,7 +1824,7 @@ class TestHMASynthesizer:
             synthetic_data = synthesizer.sample()
 
         # Assert
-        # Check that IDs match the regex pattern
+        # Check that IDs match the regex constraint
         for table_name, table in synthetic_data.items():
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
@@ -2430,16 +2382,12 @@ def test_hma_synthesizer_with_fixed_combinations():
     metadata.set_primary_key('location_id', 'locations')
 
     # Adding FixedCombinations to HMASynthesizer
-    synthesizer = HMASynthesizer(metadata)
-    synthesizer.add_constraints(
-        constraints=[
-            {
-                'constraint_class': 'FixedCombinations',
-                'table_name': 'records',
-                'constraint_parameters': {'column_names': ['department', 'office']},
-            }
-        ]
+    constraint = FixedCombinations(
+        table_name='records',
+        column_names=['department', 'office'],
     )
+    synthesizer = HMASynthesizer(metadata)
+    synthesizer.add_constraints(constraints=[constraint])
 
     synthesizer.fit(data)
     sampled = synthesizer.sample(1)
@@ -2476,7 +2424,7 @@ def test_fit_int_primary_key_regex_includes_zero(regex):
         'Primary key for table "parent_data" is stored as an int but the Regex allows it to start '
         'with "0". Please remove the Regex or update it to correspond to valid ints.'
     )
-    with pytest.raises(SynthesizerInputError, match=message):
+    with pytest.raises(InvalidDataError, match=message):
         instance.fit(data)
 
 
@@ -2686,3 +2634,45 @@ def test__unsupported_regex_format():
     # Run and Assert
     with pytest.raises(SynthesizerInputError, match=expected_error):
         HMASynthesizer(metadata)
+
+
+def test_end_to_end_with_cags():
+    """Test HMA with a single-table cag."""
+    # Setup
+    data, metadata = download_demo('multi_table', 'fake_hotels')
+    data['guests']['amenities_lower'] = data['guests']['amenities_fee'] - np.random.rand(
+        len(data['guests'])
+    )
+    metadata.add_column(
+        table_name='guests',
+        column_name='amenities_lower',
+        sdtype='numerical',
+    )
+    synthesizer = HMASynthesizer(metadata)
+    constraint = Inequality(
+        low_column_name='amenities_lower',
+        high_column_name='amenities_fee',
+        strict_boundaries=False,
+        table_name='guests',
+    )
+    synthesizer.add_constraints(constraints=[constraint])
+    data_guests = data['guests']
+    clean_data = data_guests[
+        ~(data_guests[['amenities_lower', 'amenities_fee']].isna().any(axis=1))
+    ]
+    data_invalid = clean_data.copy()
+    data_invalid.loc[0, 'amenities_lower'] = data_invalid.loc[0, 'amenities_fee'] + 1
+    data['guests'] = clean_data
+    invalid_data = data.copy()
+    invalid_data['guests'] = data_invalid
+    expected_error_msg = re.escape('The inequality requirement is not met for row indices: [0]')
+
+    # Run
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(scale=1.0)
+
+    with pytest.raises(ConstraintNotMetError, match=expected_error_msg):
+        synthesizer.fit(invalid_data)
+
+    # Assert
+    synthesizer.validate(synthetic_data)

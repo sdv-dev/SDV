@@ -10,8 +10,9 @@ import pytest
 from rdt.transformers import AnonymizedFaker, FloatFormatter, RegexGenerator, UniformEncoder
 
 from sdv import version
+from sdv.cag import FixedCombinations
 from sdv.datasets.demo import download_demo
-from sdv.errors import SamplingError, SynthesizerInputError, VersionError
+from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError, VersionError
 from sdv.metadata import SingleTableMetadata
 from sdv.metadata.metadata import Metadata
 from sdv.sampling import Condition
@@ -237,10 +238,9 @@ def test_multiple_fits():
     metadata.add_column('city', 'table', sdtype='categorical')
     metadata.add_column('state', 'table', sdtype='categorical')
     metadata.add_column('measurement', 'table', sdtype='numerical')
-    constraint = {
-        'constraint_class': 'FixedCombinations',
-        'constraint_parameters': {'column_names': ['city', 'state']},
-    }
+    constraint = FixedCombinations(
+        column_names=['city', 'state'],
+    )
     model = GaussianCopulaSynthesizer(metadata)
     model.add_constraints([constraint])
 
@@ -249,7 +249,7 @@ def test_multiple_fits():
     model.fit(data_2)
 
     # Assert
-    assert ('SF', 'CA') not in model._data_processor._constraints[0]._combinations_to_uuids
+    assert ('SF', 'CA') not in model._chained_constraints[0]._combinations_to_uuids
     assert model._data_processor.formatters['measurement']._rounding_digits == 1
 
 
@@ -526,12 +526,7 @@ def test_save_and_load(tmp_path):
 
     # Assert
     assert isinstance(loaded_instance, BaseSingleTableSynthesizer)
-    assert loaded_instance.metadata.columns == {}
-    assert loaded_instance.metadata.primary_key is None
-    assert loaded_instance.metadata.alternate_keys == []
-    assert loaded_instance.metadata.sequence_key is None
-    assert loaded_instance.metadata.sequence_index is None
-    assert loaded_instance.metadata._version == 'SINGLE_TABLE_V1'
+    assert loaded_instance.metadata.tables == {}
     assert instance._synthesizer_id == loaded_instance._synthesizer_id
 
 
@@ -550,12 +545,8 @@ def test_save_and_load_no_id(tmp_path):
 
     # Assert
     assert isinstance(loaded_instance, BaseSingleTableSynthesizer)
-    assert loaded_instance.metadata.columns == {}
-    assert loaded_instance.metadata.primary_key is None
-    assert loaded_instance.metadata.alternate_keys == []
-    assert loaded_instance.metadata.sequence_key is None
-    assert loaded_instance.metadata.sequence_index is None
-    assert loaded_instance.metadata._version == 'SINGLE_TABLE_V1'
+
+    assert loaded_instance.metadata.tables == {}
     assert hasattr(instance, '_synthesizer_id') is False
     assert hasattr(loaded_instance, '_synthesizer_id') is True
     assert isinstance(loaded_instance._synthesizer_id, str) is True
@@ -718,10 +709,10 @@ def test_metadata_updated_warning(method, kwargs):
     single_metadata = metadata._convert_to_single_table()
     single_metadata.__getattribute__(method)(**kwargs)
     with pytest.warns(UserWarning, match=expected_message):
-        BaseSingleTableSynthesizer(single_metadata)
+        instance = BaseSingleTableSynthesizer(single_metadata)
 
     # Assert
-    assert single_metadata._updated is False
+    assert instance.metadata.tables['table']._updated is False
 
 
 def test_fit_raises_version_error():
@@ -842,7 +833,7 @@ def test_fit_int_primary_key_regex_includes_zero(synthesizer_class, regex):
         'Primary key "a" is stored as an int but the Regex allows it to start with "0". Please '
         'remove the Regex or update it to correspond to valid ints.'
     )
-    with pytest.raises(SynthesizerInputError, match=message):
+    with pytest.raises(InvalidDataError, match=message):
         instance.fit(data)
 
 

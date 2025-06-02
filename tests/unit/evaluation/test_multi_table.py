@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import pandas as pd
 
@@ -108,11 +108,18 @@ def test_get_column_pair_plot(mock_plot):
     mock_plot.return_value = 'plot'
 
     # Run
-    plot = get_column_pair_plot(data1, data2, metadata, 'table', ['col1', 'col2'], 2)
+    plot = get_column_pair_plot(data1, data2, metadata, 'table', ['col1', 'col2'], sample_size=2)
 
     # Assert
     call_metadata = metadata.tables['table']
-    mock_plot.assert_called_once_with(table1, table2, call_metadata, ['col1', 'col2'], None, 2)
+    mock_plot.assert_called_once_with(
+        real_data=table1,
+        synthetic_data=table2,
+        metadata=call_metadata,
+        column_names=['col1', 'col2'],
+        plot_type=None,
+        sample_size=2,
+    )
     assert plot == 'plot'
 
 
@@ -127,15 +134,28 @@ def test_get_column_pair_plot_only_real_or_synthetic(mock_plot):
     mock_plot.return_value = 'plot'
 
     # Run
-    get_column_pair_plot(data1, None, metadata, 'table', ['col1', 'col2'], 2)
-    get_column_pair_plot(None, data1, metadata, 'table', ['col1', 'col2'], 2)
+    get_column_pair_plot(data1, None, metadata, 'table', ['col1', 'col2'], sample_size=2)
+    get_column_pair_plot(None, data1, metadata, 'table', ['col1', 'col2'], sample_size=2)
 
     # Assert
     call_metadata = metadata.tables['table']
-    mock_plot.assert_has_calls([
-        ((table1, None, call_metadata, ['col1', 'col2'], None, 2), {}),
-        ((None, table1, call_metadata, ['col1', 'col2'], None, 2), {}),
-    ])
+    call1 = call(
+        real_data=table1,
+        synthetic_data=None,
+        metadata=call_metadata,
+        column_names=['col1', 'col2'],
+        plot_type=None,
+        sample_size=2,
+    )
+    call2 = call(
+        real_data=None,
+        synthetic_data=table1,
+        metadata=call_metadata,
+        column_names=['col1', 'col2'],
+        plot_type=None,
+        sample_size=2,
+    )
+    mock_plot.assert_has_calls([call1, call2])
 
 
 @patch('sdmetrics.visualization.get_cardinality_plot')

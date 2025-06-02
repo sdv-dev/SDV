@@ -263,8 +263,17 @@ class BaseHierarchicalSampler:
         final_data = {}
         for table_name, table_rows in sampled_data.items():
             synthesizer = self._table_synthesizers.get(table_name)
+            column_names = self.get_metadata().get_column_names(table_name)
+            if not synthesizer._fitted:
+                final_data[table_name] = table_rows[column_names]
+                continue
+
             dtypes = synthesizer._data_processor._dtypes
-            for name, dtype in dtypes.items():
+            for name in column_names:
+                dtype = dtypes.get(name)
+                if dtype is None:
+                    continue
+
                 try:
                     table_rows[name] = table_rows[name].dropna().astype(dtype)
                 except Exception:
@@ -273,7 +282,7 @@ class BaseHierarchicalSampler:
                     )
                     table_rows[name] = table_rows[name].dropna()
 
-            final_data[table_name] = table_rows[list(dtypes.keys())]
+            final_data[table_name] = table_rows[column_names]
 
         return final_data
 
@@ -332,4 +341,6 @@ class BaseHierarchicalSampler:
                     sampled_data[child_name], sampled_data[parent_name], child_name, parent_name
                 )
                 added_relationships.add((parent_name, child_name))
+
+        sampled_data = self._reverse_transform_constraints(sampled_data)
         return self._finalize(sampled_data)

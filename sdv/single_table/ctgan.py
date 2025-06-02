@@ -270,7 +270,6 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
             )
 
     def _preprocess(self, data):
-        self.validate(data)
         self._data_processor.fit(data)
         self._print_warning(data)
 

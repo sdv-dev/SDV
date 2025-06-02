@@ -3,6 +3,8 @@
 import logging
 from unittest.mock import Mock, patch
 
+import pytest
+
 from sdv.logging.logger import CSVFormatter, get_sdv_logger
 
 
@@ -118,3 +120,28 @@ def test_get_sdv_logger_permission_error(mock_get_sdv_logger_config):
 
     # Assert
     assert isinstance(logger.handlers[0], logging.NullHandler)
+
+
+@pytest.mark.parametrize(
+    'side_effect',
+    [
+        NotADirectoryError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+        AttributeError,
+        PermissionError,
+    ],
+)
+def test_get_sdv_logger_with_exceptions(side_effect):
+    """Test fallback to a logger when logger config raises different exceptions."""
+    # Setup
+    get_sdv_logger.cache_clear()
+
+    with patch('sdv.logging.logger.get_sdv_logger_config', side_effect=side_effect):
+        # Run
+        logger = get_sdv_logger('test_logger_csv')
+
+        # Assert
+        assert isinstance(logger.handlers[0], logging.NullHandler)

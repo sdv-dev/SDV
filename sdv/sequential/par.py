@@ -14,6 +14,8 @@ from deepecho.sequences import assemble_sequences
 from rdt.transformers import FloatFormatter
 
 from sdv._utils import _cast_to_iterable, _groupby_list
+from sdv.cag import ProgrammableConstraint
+from sdv.cag._utils import _validate_constraints_single_table
 from sdv.errors import SamplingError, SynthesizerInputError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
@@ -34,8 +36,8 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
     to be passed into PAR.
 
     Args:
-        metadata (sdv.metadata.SingleTableMetadata):
-            Single table metadata representing the data that this synthesizer will be used for.
+        metadata (sdv.metadata.Metadata):
+            Metadata representing the data that this synthesizer will be used for.
         enforce_min_max_values (bool):
             Specify whether or not to clip the data returned by ``reverse_transform`` of
             the numerical transformer, ``FloatFormatter``, to the min and max values seen
@@ -80,8 +82,9 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         for column, column_metadata in self._extra_context_columns.items():
             context_columns_dict[column] = column_metadata
 
+        table_metadata = self.metadata.tables[self._table_name]
         for column in context_columns:
-            context_columns_dict[column] = self.metadata.columns[column]
+            context_columns_dict[column] = table_metadata.columns[column]
 
         context_metadata_dict['columns'] = self._update_context_column_dict(context_columns_dict)
         return SingleTableMetadata.load_from_dict(context_metadata_dict)
@@ -98,8 +101,9 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
                 Updated context column metadata.
         """
         default_transformers_by_sdtype = deepcopy(self._data_processor._transformers_by_sdtype)
+        table_metadata = self.metadata.tables[self._table_name]
         for column in self.context_columns:
-            column_metadata = self.metadata.columns[column]
+            column_metadata = table_metadata.columns[column]
             if default_transformers_by_sdtype.get(column_metadata['sdtype']):
                 context_columns_dict[column] = {'sdtype': 'numerical'}
 
@@ -108,8 +112,9 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
     def _get_context_columns_for_processing(self):
         columns_to_be_processed = []
         default_transformers_by_sdtype = deepcopy(self._data_processor._transformers_by_sdtype)
+        table_metadata = self._get_table_metadata()
         for column in self.context_columns:
-            if default_transformers_by_sdtype.get(self.metadata.columns[column]['sdtype']):
+            if default_transformers_by_sdtype.get(table_metadata.columns[column]['sdtype']):
                 columns_to_be_processed.append(column)
 
         return columns_to_be_processed
@@ -139,7 +144,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
 
         # Cast the sequence key to an iterable. While the metadata only supports a single sequence
         # key, but PAR is set up to handle composite sequence keys
-        sequence_key = self.metadata.sequence_key
+        sequence_key = self._get_table_metadata().sequence_key
         self._sequence_key = list(_cast_to_iterable(sequence_key)) if sequence_key else None
         if not self._sequence_key:
             raise SynthesizerInputError(
@@ -147,7 +152,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
                 'sequence key. Your metadata does not include a sequence key.'
             )
 
-        self._sequence_index = self.metadata.sequence_index
+        self._sequence_index = self._get_table_metadata().sequence_index
         self.context_columns = context_columns or []
         self._validate_sequence_key_and_context_columns()
         self._extra_context_columns = {}
@@ -197,18 +202,32 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
                     * ``constraint_class``: Name of the constraint to apply.
                     * ``constraint_parameters``: A dictionary with the constraint parameters.
         """
+        _validate_constraints_single_table(constraints, self._fitted)
+        metadata_columns = self.get_metadata('modified').get_column_names()
+        transformer_by_sdtype = self._data_processor._transformers_by_sdtype
         context_set = set(self.context_columns)
         constraint_cols = []
         for constraint in constraints:
-            constraint_parameters = constraint['constraint_parameters']
+            if isinstance(constraint, ProgrammableConstraint):
+                raise SynthesizerInputError(
+                    'The PARSynthesizer cannot accommodate with programmable constraints.'
+                )
+
             columns = []
-            for param in constraint_parameters:
-                if 'column_name' in param:
-                    col_names = constraint_parameters[param]
-                    if isinstance(col_names, list):
-                        columns.extend(col_names)
-                    else:
-                        columns.append(col_names)
+            init_signature = inspect.signature(constraint.__class__.__init__)
+            init_param_names = [p for p in init_signature.parameters if p != 'self']
+            for param in init_param_names:
+                value = getattr(constraint, param, None)
+                if value is None:
+                    value = getattr(constraint, f'_{param}', None)
+
+                if isinstance(value, str) and value in metadata_columns:
+                    columns.append(value)
+                elif isinstance(value, (list, tuple)):
+                    for item in value:
+                        if isinstance(item, str) and item in metadata_columns:
+                            columns.append(item)
+
             for col in columns:
                 if col in constraint_cols:
                     raise SynthesizerInputError(
@@ -219,9 +238,17 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
 
         all_context = all(col in context_set for col in constraint_cols)
         no_context = all(col not in context_set for col in constraint_cols)
-
         if all_context or no_context:
             super().add_constraints(constraints)
+            self._data_processor._transformers_by_sdtype = transformer_by_sdtype
+            if all_context:
+                new_columns = self.metadata.get_column_names()
+                extra_columns = set(new_columns).difference(set(metadata_columns))
+                self.context_columns = list(
+                    extra_columns.union(context_set.intersection(set(new_columns)))
+                )
+                context_metadata = self._get_context_metadata()
+                self._context_synthesizer.metadata = context_metadata
         else:
             raise SynthesizerInputError(
                 'The PARSynthesizer cannot accommodate constraints '
@@ -229,10 +256,6 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             )
 
     def load_custom_constraint_classes(self, filepath, class_names):
-        """Error that tells the user custom constraints can't be used in the ``PARSynthesizer``."""
-        raise SynthesizerInputError('The PARSynthesizer cannot accommodate custom constraints.')
-
-    def add_custom_constraint_class(self, class_object, class_name):
         """Error that tells the user custom constraints can't be used in the ``PARSynthesizer``."""
         raise SynthesizerInputError('The PARSynthesizer cannot accommodate custom constraints.')
 
@@ -267,6 +290,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         return errors
 
     def _validate(self, data):
+        data = self._validate_transform_constraints(data)
         return self._validate_context_columns(data)
 
     def _transform_sequence_index(self, data):
@@ -316,8 +340,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             InvalidDataError:
                 If a table of the data is not present in the metadata.
         """
-        super().auto_assign_transformers(data)
-
+        self._data_processor.prepare_for_fitting(data)
         # Ensure that sequence index does not get auto assigned with enforce_min_max_values
         if self._sequence_index:
             sequence_index_transformer = self.get_transformers()[self._sequence_index]
@@ -423,11 +446,19 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             kind = dtype.kind
             if kind in ('i', 'f'):
                 data_type = 'continuous'
-                # Check if metadata overrides this data type
-                if self.metadata.columns.get(field, {}).get('sdtype', None) == 'categorical':
-                    data_type = 'categorical'
+                sdtype = (
+                    self.metadata.tables[self._table_name]
+                    .columns.get(field, {})
+                    .get('sdtype', None)
+                )
+                if sdtype == 'categorical':  # Check if metadata overrides this data type
+                    transformer = self.get_transformers().get(field)
+                    if not transformer or transformer.get_output_sdtypes().get(field) != 'float':
+                        data_type = 'categorical'
+
             elif kind in ('O', 'b'):
                 data_type = 'categorical'
+
             else:
                 raise ValueError(f'Unsupported dtype {dtype}')
 
@@ -512,7 +543,8 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
 
     def _sample(self, context_columns, sequence_length=None):
         sampled = self._sample_from_par(context_columns, sequence_length)
-        return self._data_processor.reverse_transform(sampled)
+        sampled = self._data_processor.reverse_transform(sampled)
+        return self.reverse_transform_constraints(sampled)
 
     def sample(self, num_sequences, sequence_length=None):
         """Sample new sequences.

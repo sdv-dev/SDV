@@ -14,12 +14,15 @@ from rdt.transformers import (
     RegexGenerator,
 )
 
+from sdv.cag import Inequality
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.datasets.demo import download_demo
-from sdv.errors import ConstraintsNotMetError, SynthesizerInputError
+from sdv.errors import SynthesizerInputError
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata.metadata import Metadata
 from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
+from tests.integration.single_table.custom_constraints import SingleTableIfTrueThenZero
 
 
 def test_synthesize_table_gaussian_copula(tmp_path):
@@ -108,7 +111,7 @@ def test_synthesize_table_gaussian_copula(tmp_path):
     loaded_synthesizer = GaussianCopulaSynthesizer.load(model_path)
     assert isinstance(synthesizer, GaussianCopulaSynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
-    assert loaded_synthesizer.metadata.to_dict() == metadata._convert_to_single_table().to_dict()
+    assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
     loaded_synthesizer.sample(20)
 
     # Assert - custom synthesizer
@@ -139,13 +142,10 @@ def test_adding_constraints(tmp_path):
     # Setup
     real_data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
 
-    checkin_lessthan_checkout = {
-        'constraint_class': 'Inequality',
-        'constraint_parameters': {
-            'low_column_name': 'checkin_date',
-            'high_column_name': 'checkout_date',
-        },
-    }
+    checkin_lessthan_checkout = Inequality(
+        low_column_name='checkin_date',
+        high_column_name='checkout_date',
+    )
     synthesizer = GaussianCopulaSynthesizer(metadata)
 
     # Run
@@ -161,13 +161,7 @@ def test_adding_constraints(tmp_path):
     assert all(~violations)
 
     # Load custom constraint class
-    synthesizer.load_custom_constraint_classes(
-        'tests/integration/single_table/custom_constraints.py', ['IfTrueThenZero']
-    )
-    rewards_member_no_fee = {
-        'constraint_class': 'IfTrueThenZero',
-        'constraint_parameters': {'column_names': ['has_rewards', 'amenities_fee']},
-    }
+    rewards_member_no_fee = SingleTableIfTrueThenZero(column_names=['has_rewards', 'amenities_fee'])
     synthesizer.add_constraints([rewards_member_no_fee])
 
     # Re-Fit the model
@@ -194,7 +188,7 @@ def test_adding_constraints(tmp_path):
 
     assert isinstance(loaded_synthesizer, GaussianCopulaSynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
-    assert loaded_synthesizer.metadata.to_dict() == metadata._convert_to_single_table().to_dict()
+    assert loaded_synthesizer._original_metadata.to_dict() == metadata.to_dict()
     sampled_data = loaded_synthesizer.sample(100)
     validation = sampled_data[sampled_data['has_rewards']]
     assert validation['amenities_fee'].sum() == 0.0
@@ -337,23 +331,15 @@ def test_validate_with_failing_constraint():
     real_data['checkin_date'][0] = real_data['checkout_date'][1]
     gc = GaussianCopulaSynthesizer(metadata)
 
-    checkin_lessthan_checkout = {
-        'constraint_class': 'Inequality',
-        'constraint_parameters': {
-            'low_column_name': 'checkin_date',
-            'high_column_name': 'checkout_date',
-        },
-    }
+    checkin_lessthan_checkout = Inequality(
+        low_column_name='checkin_date', high_column_name='checkout_date'
+    )
     gc.add_constraints([checkin_lessthan_checkout])
 
-    error_msg = (
-        "Data is not valid for the 'Inequality' constraint:"
-        '\n  checkin_date checkout_date'
-        '\n0  02 Jan 2021   29 Dec 2020'
-    )
+    error_msg = re.escape('The inequality requirement is not met for row indices: [0]')
 
     # Run / Assert
-    with pytest.raises(ConstraintsNotMetError, match=error_msg):
+    with pytest.raises(ConstraintNotMetError, match=error_msg):
         gc.validate(real_data)
 
 

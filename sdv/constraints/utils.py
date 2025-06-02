@@ -159,8 +159,8 @@ def get_nan_component_value(row):
 
     if columns_with_nans:
         return ', '.join(columns_with_nans)
-    else:
-        return 'None'
+
+    return 'None'
 
 
 def compute_nans_column(table_data, list_column_names):
@@ -195,7 +195,7 @@ def revert_nans_columns(table_data, nan_column_name):
     """
     combinations = table_data[nan_column_name].unique()
     for combination in combinations:
-        if combination != 'None':
+        if not pd.isna(combination) and combination != 'None':
             column_names = [column_name.strip() for column_name in combination.split(',')]
             table_data.loc[table_data[nan_column_name] == combination, column_names] = np.nan
 
