@@ -1,5 +1,11 @@
 # Release Notes
 
+## v1.22.1 - 2025-06-03
+
+### Bugs Fixed
+
+* Original metadata object passed to ProgrammableConstraint - Issue [#2565](https://github.com/sdv-dev/SDV/issues/2565) by @frances-h
+
 ## v1.22.0 - 2025-06-02
 
 ### New Features
