@@ -1,7 +1,7 @@
 """Test ProgrammableConstraint and ProgrammableConstraintHarness."""
 
 import re
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
@@ -158,12 +158,17 @@ class TestProgrammableConstraintHarness:
         # Assert
         programmable_constraint.validate_input_data.assert_called_once_with(data_dict['table'])
 
-    def test__get_updated_metadata(self):
+    @patch('sdv.cag.programmable_constraint.deepcopy')
+    def test__get_updated_metadata(self, mock_deepcopy):
         """Test the ``_get_updated_metadata`` method."""
         # Setup
         metadata = Metadata().load_from_dict({
             'tables': {'table': {'columns': {'col_A': {'sdtype': 'numerical'}}}}
         })
+        copied_metadata = Metadata().load_from_dict({
+            'tables': {'table': {'columns': {'col_A': {'sdtype': 'numerical'}}}}
+        })
+        mock_deepcopy.return_value = copied_metadata
         programmable_constraint = ProgrammableConstraint()
         programmable_constraint.get_updated_metadata = Mock()
         instance = ProgrammableConstraintHarness(programmable_constraint)
@@ -172,7 +177,7 @@ class TestProgrammableConstraintHarness:
         instance._get_updated_metadata(metadata)
 
         # Assert
-        programmable_constraint.get_updated_metadata.assert_called_once_with(metadata)
+        programmable_constraint.get_updated_metadata.assert_called_once_with(copied_metadata)
 
     def test__fit(self):
         """Test the ``_fit`` method."""

@@ -1,5 +1,7 @@
 """Programmable constraints base classes."""
 
+from copy import deepcopy
+
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag.base import BaseConstraint
 
@@ -154,6 +156,7 @@ class ProgrammableConstraintHarness(BaseConstraint):
         self.programmable_constraint.validate_input_data(data)
 
     def _get_updated_metadata(self, metadata):
+        metadata = deepcopy(metadata)
         return self.programmable_constraint.get_updated_metadata(metadata)
 
     def _fit(self, data, metadata):
