@@ -230,10 +230,11 @@ def test_get_updated_metadata_is_passed_metadata_copy(single_table_programmable_
         'tables': {
             'fake_hotel_guests': {
                 'columns': {
-                    col: col_meta
-                    for col, col_meta in original_metadata.tables['fake_hotel_guests'].columns
+                    col: meta
+                    for col, meta in original_metadata.tables['fake_hotel_guests'].columns.items()
                     if col not in ['has_rewards', 'room_type']
-                }
+                },
+                'primary_key': 'guest_email',
             }
         }
     })
