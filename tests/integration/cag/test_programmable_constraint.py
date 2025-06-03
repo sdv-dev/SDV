@@ -4,6 +4,7 @@ import pytest
 
 from sdv.cag import FixedCombinations, ProgrammableConstraint, SingleTableProgrammableConstraint
 from sdv.datasets.demo import download_demo
+from sdv.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
 from sdv.single_table import GaussianCopulaSynthesizer
 
@@ -196,3 +197,46 @@ def test_end_to_end_simple_constraint_with_no_fit(programmable_constraint):
     true_values = (sampled_data['has_rewards']) & (sampled_data['amenities_fee'] == 0.0)
     false_values = ~sampled_data['has_rewards']
     assert all((true_values) | (false_values))
+
+
+def test_get_updated_metadata_is_passed_metadata_copy(single_table_programmable_constraint):
+    """Test that the ``get_updated_metadata`` is not given the original metadata."""
+    # Setup
+    data, metadata = download_demo('single_table', 'fake_hotel_guests')
+    original_metadata = Metadata.load_from_dict(metadata.to_dict())
+
+    def get_updated_metadata(self, metadata):
+        for column in self.column_names:
+            metadata.remove_column(column)
+
+        metadata.add_column(self._joint_column, sdtype='categorical')
+        return metadata
+
+    single_table_programmable_constraint.get_updated_metadata = get_updated_metadata
+    my_constraint = single_table_programmable_constraint(
+        column_names=['has_rewards', 'room_type'], table_name='fake_hotel_guests'
+    )
+
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+
+    # Run
+    synthesizer.add_constraints([my_constraint])
+    synthesizer.fit(data)
+    updated_metadata = synthesizer.get_metadata('modified')
+
+    # Assert
+    assert metadata.to_dict() == original_metadata.to_dict()
+    expected_modified_metadata = Metadata.load_from_dict({
+        'tables': {
+            'fake_hotel_guests': {
+                'columns': {
+                    col: meta
+                    for col, meta in original_metadata.tables['fake_hotel_guests'].columns.items()
+                    if col not in ['has_rewards', 'room_type']
+                },
+                'primary_key': 'guest_email',
+            }
+        }
+    })
+    expected_modified_metadata.add_column('has_rewards#room_type', sdtype='categorical')
+    assert updated_metadata.to_dict() == expected_modified_metadata.to_dict()
