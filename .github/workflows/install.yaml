@@ -33,7 +33,7 @@ jobs:
       - name: Test by importing packages
         run: |
           python -c "import sdv"
-          python -c "import sdv;print(sdv.version.public)"
+          python -c "import sdv;print(sdv.version.community)"
       - name: Check package conflicts
         run: |
           python -m pip check

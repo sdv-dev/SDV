@@ -252,32 +252,32 @@ def check_sdv_versions_and_warn(synthesizer):
             If the current SDV or SDV Enterprise version does not match the version used to fit
             the synthesizer.
     """
-    current_public_version = getattr(version, 'public', None)
+    current_community_version = getattr(version, 'community', None)
     current_enterprise_version = getattr(version, 'enterprise', None)
     if synthesizer._fitted:
-        fitted_public_version = getattr(synthesizer, '_fitted_sdv_version', None)
+        fitted_community_version = getattr(synthesizer, '_fitted_sdv_version', None)
         fitted_enterprise_version = getattr(synthesizer, '_fitted_sdv_enterprise_version', None)
-        public_missmatch = current_public_version != fitted_public_version
+        community_missmatch = current_community_version != fitted_community_version
         enterprise_missmatch = current_enterprise_version != fitted_enterprise_version
 
-        if public_missmatch or enterprise_missmatch:
+        if community_missmatch or enterprise_missmatch:
             static_message = (
                 'The latest bug fixes and features may not be available for this synthesizer. '
                 'To see these enhancements, create and train a new synthesizer on this version.'
             )
-            if public_missmatch and enterprise_missmatch:
+            if community_missmatch and enterprise_missmatch:
                 message = (
                     'You are currently on SDV version '
-                    f'{current_public_version} and SDV Enterprise version '
+                    f'{current_community_version} and SDV Enterprise version '
                     f'{current_enterprise_version} but this synthesizer was created on '
                     f'SDV version {synthesizer._fitted_sdv_version} and SDV Enterprise version '
                     f'{synthesizer._fitted_sdv_enterprise_version}.'
                 )
 
-            elif public_missmatch:
+            elif community_missmatch:
                 message = (
                     'You are currently on SDV version '
-                    f'{current_public_version} but this synthesizer was created on '
+                    f'{current_community_version} but this synthesizer was created on '
                     f'version {synthesizer._fitted_sdv_version}.'
                 )
             elif enterprise_missmatch:
@@ -348,7 +348,7 @@ def check_synthesizer_version(synthesizer, is_fit_method=False, compare_operator
         VersionError:
             If the current version of the software is lower than the synthesizer's version.
     """
-    current_public_version = getattr(version, 'public', None)
+    current_community_version = getattr(version, 'community', None)
     current_enterprise_version = getattr(version, 'enterprise', None)
     static_message = 'Downgrading your SDV version is not supported.'
     if is_fit_method:
@@ -356,29 +356,29 @@ def check_synthesizer_version(synthesizer, is_fit_method=False, compare_operator
             'Fitting this synthesizer again is not supported. Please create a new synthesizer.'
         )
 
-    fit_public_version = getattr(synthesizer, '_fitted_sdv_version', None)
+    fit_community_version = getattr(synthesizer, '_fitted_sdv_version', None)
     fit_enterprise_version = getattr(synthesizer, '_fitted_sdv_enterprise_version', None)
 
-    is_public_lower = _compare_versions(
-        current_public_version, fit_public_version, compare_operator
+    is_community_lower = _compare_versions(
+        current_community_version, fit_community_version, compare_operator
     )
 
     is_enterprise_lower = _compare_versions(
         current_enterprise_version, fit_enterprise_version, compare_operator
     )
 
-    if is_public_lower and is_enterprise_lower:
+    if is_community_lower and is_enterprise_lower:
         raise VersionError(
-            f'You are currently on SDV version {current_public_version} and SDV Enterprise '
+            f'You are currently on SDV version {current_community_version} and SDV Enterprise '
             f'version {current_enterprise_version} but this '
-            f'synthesizer was created on SDV version {fit_public_version} and SDV '
+            f'synthesizer was created on SDV version {fit_community_version} and SDV '
             f'Enterprise version {fit_enterprise_version}. {static_message}'
         )
 
-    if is_public_lower:
+    if is_community_lower:
         raise VersionError(
-            f'You are currently on SDV version {current_public_version} but this '
-            f'synthesizer was created on version {fit_public_version}. {static_message}'
+            f'You are currently on SDV version {current_community_version} but this '
+            f'synthesizer was created on version {fit_community_version}. {static_message}'
         )
 
     if is_enterprise_lower:
@@ -398,7 +398,7 @@ def _get_root_tables(relationships):
 def generate_synthesizer_id(synthesizer):
     """Generate a unique identifier for the synthesizer instance.
 
-    This method creates a unique identifier by combining the class name, the public SDV version
+    This method creates a unique identifier by combining the class name, the community SDV version
     and the last part of a UUID4 composed by 36 random characters.
 
     Args:
@@ -410,7 +410,7 @@ def generate_synthesizer_id(synthesizer):
             A unique identifier for this synthesizer.
     """
     class_name = synthesizer.__class__.__name__
-    synth_version = version.public
+    synth_version = version.community
     unique_id = ''.join(str(uuid.uuid4()).split('-'))
     return f'{class_name}_{synth_version}_{unique_id}'
 

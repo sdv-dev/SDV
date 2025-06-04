@@ -1158,7 +1158,7 @@ class TestBaseMultiTableSynthesizer:
 
         # Run and Assert
         error_msg = (
-            f'You are currently on SDV version {version.public} but this synthesizer '
+            f'You are currently on SDV version {version.community} but this synthesizer '
             'was created on version 1.0.0. Fitting this synthesizer again is not supported. '
             'Please create a new synthesizer.'
         )
@@ -1216,7 +1216,7 @@ class TestBaseMultiTableSynthesizer:
 
         # Run and Assert
         error_msg = (
-            f'You are currently on SDV version {version.public} but this synthesizer '
+            f'You are currently on SDV version {version.community} but this synthesizer '
             'was created on version 1.0.0. Fitting this synthesizer again is not supported. '
             'Please create a new synthesizer.'
         )
@@ -1798,7 +1798,7 @@ class TestBaseMultiTableSynthesizer:
         metadata = Metadata()
         metadata.add_table('tab')
         metadata.add_column('col', 'tab', sdtype='numerical')
-        mock_version.public = '1.0.0'
+        mock_version.community = '1.0.0'
         mock_version.enterprise = None
 
         with patch('sdv.multi_table.base.datetime.datetime') as mock_date:
@@ -1846,7 +1846,7 @@ class TestBaseMultiTableSynthesizer:
         metadata = Metadata()
         metadata.add_table('tab')
         metadata.add_column('col', 'tab', sdtype='numerical')
-        mock_version.public = '1.0.0'
+        mock_version.community = '1.0.0'
         mock_version.enterprise = '1.1.0'
 
         with patch('sdv.multi_table.base.datetime.datetime') as mock_date:

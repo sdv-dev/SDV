@@ -2,7 +2,7 @@
 
 from importlib.metadata import version
 
-public = version('sdv')
+community = version('sdv')
 enterprise = None
 
-__all__ = ('public', 'enterprise')
+__all__ = ('community', 'enterprise')
