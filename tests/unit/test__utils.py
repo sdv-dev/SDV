@@ -386,8 +386,8 @@ def test__validate_foreign_keys_not_null_no_nulls():
 
 
 @patch('sdv._utils.warnings')
-def test_check_sdv_versions_and_warn_no_missmatch(mock_warnings):
-    """Test that no warnings is raised when no missmatch is produced."""
+def test_check_sdv_versions_and_warn_no_mismatch(mock_warnings):
+    """Test that no warnings is raised when no mismatch is produced."""
     # Setup
     synthesizer = Mock()
     synthesizer._fitted_sdv_version = version.community
@@ -400,8 +400,8 @@ def test_check_sdv_versions_and_warn_no_missmatch(mock_warnings):
     mock_warnings.warn.assert_not_called()
 
 
-def test_check_sdv_versions_and_warn_community_missmatch():
-    """Test that warnings is raised when community version is missmatched."""
+def test_check_sdv_versions_and_warn_community_mismatch():
+    """Test that warnings is raised when community version is mismatched."""
     # Setup
     synthesizer = Mock()
     synthesizer._fitted_sdv_version = '1.0.0'
@@ -419,8 +419,8 @@ def test_check_sdv_versions_and_warn_community_missmatch():
 
 
 @patch('sdv._utils.version')
-def test_check_sdv_versions_and_warn_enterprise_missmatch(mock_version):
-    """Test that warnings is raised when enterprise version is missmatched."""
+def test_check_sdv_versions_and_warn_enterprise_mismatch(mock_version):
+    """Test that warnings is raised when enterprise version is mismatched."""
     # Setup
     synthesizer = Mock()
     synthesizer._fitted_sdv_version = version.community
@@ -441,8 +441,8 @@ def test_check_sdv_versions_and_warn_enterprise_missmatch(mock_version):
 
 
 @patch('sdv._utils.version')
-def test_check_sdv_versions_and_warn_community_and_enterprise_missmatch(mock_version):
-    """Test that warnings is raised when both community and enterprise version missmatch."""
+def test_check_sdv_versions_and_warn_community_and_enterprise_mismatch(mock_version):
+    """Test that warnings is raised when both community and enterprise version mismatch."""
     # Setup
     synthesizer = Mock()
     synthesizer._fitted_sdv_version = '1.0.0'
@@ -622,7 +622,7 @@ def test_check_synthesizer_version_check_synthesizer_is_greater_equal(mock_versi
 
 
 @patch('sdv._utils.version')
-def test_check_synthesizer_version_check_synthesizer_is_greater_community_missmatch(mock_version):
+def test_check_synthesizer_version_check_synthesizer_is_greater_community_mismatch(mock_version):
     """Test that ``VersionError`` is raised when checking if synthesizer is greater.
 
     Ensure that this test will raise a ``VersionError`` when the synthesizer version is lower
@@ -645,7 +645,7 @@ def test_check_synthesizer_version_check_synthesizer_is_greater_community_missma
 
 
 @patch('sdv._utils.version')
-def test_check_synthesizer_version_check_synthesizer_is_greater_both_missmatch(mock_version):
+def test_check_synthesizer_version_check_synthesizer_is_greater_both_mismatch(mock_version):
     """Test that ``VersionError`` is raised when community and enterprise are greater.
 
     Ensure that this test will raise a ``VersionError`` when the synthesizer version is lower

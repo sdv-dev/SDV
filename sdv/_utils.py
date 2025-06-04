@@ -257,15 +257,15 @@ def check_sdv_versions_and_warn(synthesizer):
     if synthesizer._fitted:
         fitted_community_version = getattr(synthesizer, '_fitted_sdv_version', None)
         fitted_enterprise_version = getattr(synthesizer, '_fitted_sdv_enterprise_version', None)
-        community_missmatch = current_community_version != fitted_community_version
-        enterprise_missmatch = current_enterprise_version != fitted_enterprise_version
+        community_mismatch = current_community_version != fitted_community_version
+        enterprise_mismatch = current_enterprise_version != fitted_enterprise_version
 
-        if community_missmatch or enterprise_missmatch:
+        if community_mismatch or enterprise_mismatch:
             static_message = (
                 'The latest bug fixes and features may not be available for this synthesizer. '
                 'To see these enhancements, create and train a new synthesizer on this version.'
             )
-            if community_missmatch and enterprise_missmatch:
+            if community_mismatch and enterprise_mismatch:
                 message = (
                     'You are currently on SDV version '
                     f'{current_community_version} and SDV Enterprise version '
@@ -274,13 +274,13 @@ def check_sdv_versions_and_warn(synthesizer):
                     f'{synthesizer._fitted_sdv_enterprise_version}.'
                 )
 
-            elif community_missmatch:
+            elif community_mismatch:
                 message = (
                     'You are currently on SDV version '
                     f'{current_community_version} but this synthesizer was created on '
                     f'version {synthesizer._fitted_sdv_version}.'
                 )
-            elif enterprise_missmatch:
+            elif enterprise_mismatch:
                 message = (
                     'You are currently on SDV Enterprise version '
                     f'{current_enterprise_version} but this synthesizer was created on '
