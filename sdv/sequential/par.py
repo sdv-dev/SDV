@@ -21,7 +21,8 @@ from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
 from sdv.single_table.base import BaseSynthesizer
-from sdv.single_table.ctgan import LossValuesMixin, MissingModuleMixin
+from sdv.single_table.ctgan import LossValuesMixin
+from sdv.utils.mixins import MissingModuleMixin
 
 try:
     from deepecho import PARModel

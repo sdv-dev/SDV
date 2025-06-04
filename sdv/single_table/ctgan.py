@@ -10,6 +10,7 @@ from sdmetrics import visualization
 from sdv.errors import InvalidDataTypeError, NotFittedError
 from sdv.single_table.base import BaseSingleTableSynthesizer
 from sdv.single_table.utils import detect_discrete_columns
+from sdv.utils.mixins import MissingModuleMixin
 
 try:
     from ctgan import CTGAN, TVAE
@@ -102,17 +103,6 @@ class LossValuesMixin:
         )
         fig.update_layout(title=title, xaxis_title='Epoch', yaxis_title='Loss')
         return fig
-
-
-class MissingModuleMixin:
-    """Mixin for raising a custom error message when a module is not found."""
-
-    @classmethod
-    def raise_module_not_found_error(cls, error):
-        """Takes in an existing ModuleNotFoundError and raises a new one with custom text."""
-        raise ModuleNotFoundError(
-            f"{error.msg}. Please install {error.name} in order to use the '{cls.__name__}'."
-        )
 
 
 class CTGANSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynthesizer):
