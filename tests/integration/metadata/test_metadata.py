@@ -1386,7 +1386,6 @@ def test_loading_invalid_single_table_metadata():
     """Test loading invalid single table metadata dict."""
     # Setup
     _, metadata = download_demo(modality='multi_table', dataset_name='fake_hotels')
-    # add an extra, invalid key to the guests table's metadata
     metadata_dict = metadata.to_dict()
     metadata_dict['tables']['guests']['invalid_key'] = {'value1': True, 'value2': False}
     expected_error = re.escape(

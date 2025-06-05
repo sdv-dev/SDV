@@ -1188,15 +1188,7 @@ class MultiTableMetadata:
             self.relationships.append(type_safe_relationships)
 
     def _valdiate_no_extra_keys_metadata_dict(self, metadata_dict):
-        """Validate that the metadata dictionary does not contain extra keys.
-
-        Args:
-            metadata_dict (dict):
-                Python dictionary representing a ``MultiTableMetadata`` object.
-
-        Raises:
-            InvalidMetadataError: If the metadata_dict contains unexpected keys.
-        """
+        """Validate that the metadata dictionary does not contain extra keys."""
         expected_keys = {'tables', 'relationships', 'METADATA_SPEC_VERSION'}
         extra_keys = set(metadata_dict.keys()) - expected_keys
         if extra_keys:
