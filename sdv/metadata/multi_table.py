@@ -1173,7 +1173,12 @@ class MultiTableMetadata:
                 Python dictionary representing a ``MultiTableMetadata`` object.
         """
         for table_name, table_dict in metadata.get('tables', {}).items():
-            self.tables[table_name] = SingleTableMetadata.load_from_dict(table_dict)
+            try:
+                self.tables[table_name] = SingleTableMetadata.load_from_dict(table_dict)
+            except ValueError as error:
+                raise ValueError(
+                    f"Invalid metadata dict for table '{table_name}':\n {str(error)}"
+                ) from error
 
         for relationship in metadata.get('relationships', []):
             type_safe_relationships = {
@@ -1181,6 +1186,26 @@ class MultiTableMetadata:
                 for key, value in relationship.items()
             }
             self.relationships.append(type_safe_relationships)
+
+    def _valdiate_no_extra_keys_metadata_dict(self, metadata_dict):
+        """Validate that the metadata dictionary does not contain extra keys.
+
+        Args:
+            metadata_dict (dict):
+                Python dictionary representing a ``MultiTableMetadata`` object.
+
+        Raises:
+            InvalidMetadataError: If the metadata_dict contains unexpected keys.
+        """
+        expected_keys = {'tables', 'relationships', 'METADATA_SPEC_VERSION'}
+        extra_keys = set(metadata_dict.keys()) - expected_keys
+        if extra_keys:
+            extra_keys = "', '".join(sorted(extra_keys))
+            valid_keys = "', '".join(sorted(expected_keys))
+            raise ValueError(
+                f"The metadata dictionary contains extra keys: '{extra_keys}'. "
+                f"Valid keys are: '{valid_keys}'."
+            )
 
     @classmethod
     def load_from_dict(cls, metadata_dict):
@@ -1194,6 +1219,7 @@ class MultiTableMetadata:
             Instance of ``MultiTableMetadata``.
         """
         instance = cls()
+        instance._valdiate_no_extra_keys_metadata_dict(metadata_dict)
         instance._set_metadata_dict(metadata_dict)
         return instance
 
