@@ -138,7 +138,6 @@ class TestDataProcessor:
             ('country_column', 'city_column'): randomlocationgenerator,
         }
 
-    @patch('sdv.data_processing.data_processor.rdt.transformers.RegexGenerator')
     @patch('sdv.data_processing.data_processor.get_default_transformers')
     @patch('sdv.data_processing.data_processor.rdt')
     @patch('sdv.data_processing.data_processor.DataProcessor._update_numerical_transformer')
@@ -149,7 +148,6 @@ class TestDataProcessor:
         update_transformer_mock,
         mock_rdt,
         mock_default_transformers,
-        mock_regex_generator,
     ):
         """Test the ``__init__`` method.
 
@@ -176,12 +174,9 @@ class TestDataProcessor:
             'categorical': 'UniformEncoder()',
             'boolean': 'UniformEncoder()',
             'datetime': 'UnixTimestampEncoder()',
-            'text': 'RegexGenerator()',
+            'id': 'RegexGenerator()',
             'pii': 'AnonymizedFaker()',
         }
-
-        mock_regex_generator.return_value = 'RegexGenerator()'
-
         detect_multi_column_transformers_mock.return_value = {}
 
         # Run
@@ -209,8 +204,6 @@ class TestDataProcessor:
         update_transformer_mock.assert_called_with(True, False)
 
         mock_default_transformers.assert_called_once()
-        mock_regex_generator.assert_called_once()
-
         expected_default_transformers = {
             'numerical': 'FloatFormatter()',
             'categorical': 'UniformEncoder()',
@@ -872,12 +865,12 @@ class TestDataProcessor:
             'categorical': 'categorical',
             'email': 'pii',
             'first_name': 'pii',
-            'id_regex_key': 'text',
-            'id_regex': 'text',
-            'id_no_regex': 'text',
-            'id_numeric_int8': 'text',
-            'id_numeric_int16': 'text',
-            'id_numeric_int32': 'text',
+            'id_regex_key': 'id',
+            'id_regex': 'id',
+            'id_no_regex': 'id',
+            'id_numeric_int8': 'id',
+            'id_numeric_int16': 'id',
+            'id_numeric_int32': 'id',
             'id_column': 'id',
             'date': 'datetime',
             'unknown': 'pii',
