@@ -1380,3 +1380,23 @@ def test_remove_column_alternate_key():
     }
     assert expected_metadata_dict == metadata.to_dict()
     assert metadata._multi_table_updated
+
+
+def test_loading_invalid_single_table_metadata():
+    """Test loading invalid single table metadata dict."""
+    # Setup
+    _, metadata = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    # add an extra, invalid key to the guests table's metadata
+    metadata_dict = metadata.to_dict()
+    metadata_dict['tables']['guests']['invalid_key'] = {'value1': True, 'value2': False}
+    expected_error = re.escape(
+        "Invalid metadata dict for table 'guests':\n "
+        "The metadata dictionary contains extra keys: 'invalid_key'. "
+        "Valid keys are: 'METADATA_SPEC_VERSION', 'alternate_keys', "
+        "'column_relationships', 'columns', 'primary_key', 'sequence_index',"
+        " 'sequence_key'."
+    )
+
+    # Run and Assert
+    with pytest.raises(ValueError, match=expected_error):
+        Metadata.load_from_dict(metadata_dict)
