@@ -115,6 +115,20 @@ class TestPARSynthesizer:
                 verbose=False,
             )
 
+    @patch('sdv.sequential.par.PARModel', None)
+    @patch('sdv.sequential.par.import_error')
+    @patch('sdv.sequential.par.PARSynthesizer.raise_module_not_found_error')
+    def test___init___no_torch(self, mock_raise_error, mock_import_error):
+        """Test PAR raises a custom error when initialized with torch not installed."""
+        # Setup
+        metadata = self.get_metadata()
+
+        # Run
+        PARSynthesizer(metadata)
+
+        # Assert
+        mock_raise_error.assert_called_once_with(mock_import_error)
+
     @patch.object(BaseSynthesizer, 'add_constraints')
     def test_add_constraints(self, add_constraints_mock):
         """Test that that only simple constraints can be added to PARSynthesizer."""

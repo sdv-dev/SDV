@@ -154,6 +154,20 @@ class TestCTGANSynthesizer:
         assert instance.pac == pac
         assert instance.cuda is False
 
+    @patch('sdv.single_table.ctgan.CTGAN', None)
+    @patch('sdv.single_table.ctgan.import_error')
+    @patch('sdv.single_table.ctgan.CTGANSynthesizer.raise_module_not_found_error')
+    def test___init___no_torch(self, mock_raise_error, mock_import_error):
+        """Test CTGAN raises a custom error when initialized with torch not installed."""
+        # Setup
+        metadata = Metadata()
+
+        # Run
+        CTGANSynthesizer(metadata)
+
+        # Assert
+        mock_raise_error.assert_called_once_with(mock_import_error)
+
     def test_get_parameters(self):
         """Test that inherited method ``get_parameters`` returns the specific init parameters."""
         # Setup
@@ -440,6 +454,20 @@ class TestTVAESynthesizer:
         assert instance.epochs == 150
         assert instance.loss_factor == 4
         assert instance.cuda is False
+
+    @patch('sdv.single_table.ctgan.TVAE', None)
+    @patch('sdv.single_table.ctgan.import_error')
+    @patch('sdv.single_table.ctgan.TVAESynthesizer.raise_module_not_found_error')
+    def test___init___no_torch(self, mock_raise_error, mock_import_error):
+        """Test TVAE raises a custom error when initialized with torch not installed."""
+        # Setup
+        metadata = Metadata()
+
+        # Run
+        TVAESynthesizer(metadata)
+
+        # Assert
+        mock_raise_error.assert_called_once_with(mock_import_error)
 
     def test_get_parameters(self):
         """Test that inherited method ``get_parameters`` returns the specific init parameters."""

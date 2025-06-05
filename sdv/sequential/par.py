@@ -9,8 +9,6 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 import tqdm
-from deepecho import PARModel
-from deepecho.sequences import assemble_sequences
 from rdt.transformers import FloatFormatter
 
 from sdv._utils import _cast_to_iterable, _groupby_list
@@ -24,11 +22,22 @@ from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
 from sdv.single_table.base import BaseSynthesizer
 from sdv.single_table.ctgan import LossValuesMixin
+from sdv.utils.mixins import MissingModuleMixin
+
+try:
+    from deepecho import PARModel
+    from deepecho.sequences import assemble_sequences
+
+    import_error = None
+except ModuleNotFoundError as e:
+    PARModel = None
+    assemble_sequences = None
+    import_error = e
 
 LOGGER = logging.getLogger(__name__)
 
 
-class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
+class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
     """Synthesizer for sequential data.
 
     This synthesizer uses the ``deepecho.models.par.PARModel`` class as the core model.
@@ -132,6 +141,8 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         cuda=True,
         verbose=False,
     ):
+        if PARModel is None:
+            self.raise_module_not_found_error(import_error)
         if type(metadata) is Metadata and len(metadata.tables) > 1:
             raise InvalidMetadataError('PARSynthesizer can only be used with a single table.')
 
