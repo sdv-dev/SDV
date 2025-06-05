@@ -636,7 +636,7 @@ class BaseSynthesizer:
 
         self._fitted = True
         self._fitted_date = datetime.datetime.today().strftime('%Y-%m-%d')
-        self._fitted_sdv_version = getattr(version, 'public', None)
+        self._fitted_sdv_version = getattr(version, 'community', None)
         self._fitted_sdv_enterprise_version = getattr(version, 'enterprise', None)
 
     def fit(self, data):

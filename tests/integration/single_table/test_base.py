@@ -564,7 +564,7 @@ def test_save_and_load_with_downgraded_version(tmp_path):
 
     # Run and Assert
     error_msg = (
-        f'You are currently on SDV version {version.public} but this '
+        f'You are currently on SDV version {version.community} but this '
         'synthesizer was created on version 10.0.0. '
         'Downgrading your SDV version is not supported.'
     )
@@ -729,7 +729,7 @@ def test_fit_raises_version_error():
 
     # Run and Assert
     expected_message = (
-        f'You are currently on SDV version {version.public} but this synthesizer was created on '
+        f'You are currently on SDV version {version.community} but this synthesizer was created on '
         'version 1.0.0. Fitting this synthesizer again is not supported. Please create a new '
         'synthesizer.'
     )

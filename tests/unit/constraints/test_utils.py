@@ -311,7 +311,7 @@ def test_get_datetime_diff():
     assert np.array_equal(expected, diff, equal_nan=True)
 
 
-def test_get_datetime_diff_with_format_precision_missmatch():
+def test_get_datetime_diff_with_format_precision_mismatch():
     """Test `get_datetime_diff` with miss matching datetime formats."""
     # Setup
     high = np.array(['2024-11-13 12:00:00.123', '2024-11-13 13:00:00.456'], dtype='O')
