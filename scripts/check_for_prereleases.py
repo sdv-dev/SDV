@@ -11,7 +11,7 @@ def get_dev_dependencies(dependency_list):
     prereleases = []
     for dependency in dependency_list:
         requirement = Requirement(dependency)
-        if requirement.specifier.prereleases:
+        if requirement.specifier.prereleases or requirement.url:
             prereleases.append(dependency)
 
     return prereleases
