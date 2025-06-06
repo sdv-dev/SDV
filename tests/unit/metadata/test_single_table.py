@@ -2901,7 +2901,34 @@ class TestSingleTableMetadata:
             'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
         }
 
-    def test_load_from_dict(self):
+    def test__valdiate_no_extra_keys_metadata_dict(self):
+        """Test that ``_valdiate_no_extra_keys_metadata_dict`` raises an error if extra keys are
+        present in the metadata dict."""
+        # Setup
+        metadata = {
+            'columns': {'my_column': 'value'},
+            'primary_key': 'pk',
+            'alternate_keys': [],
+            'sequence_key': None,
+            'sequence_index': None,
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        }
+        instance = SingleTableMetadata()
+        expected_error = re.escape(
+            "The metadata dictionary contains extra keys: 'invalid_key'. "
+            "Valid keys are: 'METADATA_SPEC_VERSION', 'alternate_keys', "
+            "'column_relationships', 'columns', 'primary_key', 'sequence_index',"
+            " 'sequence_key'."
+        )
+
+        # Run and Assert
+        instance._valdiate_no_extra_keys_metadata_dict(metadata)
+        metadata['invalid_key'] = 'extra_value'
+        with pytest.raises(ValueError, match=expected_error):
+            instance._valdiate_no_extra_keys_metadata_dict(metadata)
+
+    @patch('sdv.metadata.single_table.SingleTableMetadata._valdiate_no_extra_keys_metadata_dict')
+    def test_load_from_dict(self, mock_validate):
         """Test that ``load_from_dict`` returns a instance with the ``dict`` updated objects."""
         # Setup
         my_metadata = {
@@ -2917,6 +2944,7 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata.load_from_dict(my_metadata)
 
         # Assert
+        mock_validate.assert_called_once_with(my_metadata)
         assert instance.columns == {'my_column': 'value'}
         assert instance.primary_key == 'pk'
         assert instance.sequence_key is None

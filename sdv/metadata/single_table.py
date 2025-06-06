@@ -1443,6 +1443,17 @@ class SingleTableMetadata:
 
         self._updated = False
 
+    def _valdiate_no_extra_keys_metadata_dict(self, metadata_dict):
+        """Validate that the metadata dictionary does not contain extra keys."""
+        extra_keys = set(metadata_dict.keys()).difference(self._KEYS)
+        if extra_keys:
+            extra_keys = "', '".join(sorted(extra_keys))
+            valid_keys = "', '".join(sorted(self._KEYS))
+            raise ValueError(
+                f"The metadata dictionary contains extra keys: '{extra_keys}'. "
+                f"Valid keys are: '{valid_keys}'."
+            )
+
     @classmethod
     def load_from_dict(cls, metadata_dict):
         """Create a ``SingleTableMetadata`` instance from a python ``dict``.
@@ -1456,6 +1467,7 @@ class SingleTableMetadata:
             string type.
         """
         instance = cls()
+        instance._valdiate_no_extra_keys_metadata_dict(metadata_dict)
         for key in instance._KEYS:
             value = deepcopy(metadata_dict.get(key))
             if value:

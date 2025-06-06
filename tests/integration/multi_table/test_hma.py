@@ -2012,7 +2012,6 @@ def test_metadata_updated_warning(method, kwargs):
                 },
             },
             'arrival': {
-                'foreign_key': 'id',
                 'columns': {
                     'id': {'sdtype': 'id'},
                     'date': {'sdtype': 'datetime'},
@@ -2062,7 +2061,6 @@ def test_save_and_load_with_downgraded_version(tmp_path):
                 },
             },
             'arrival': {
-                'foreign_key': 'id',
                 'columns': {
                     'id': {'sdtype': 'id'},
                     'date': {'sdtype': 'datetime'},
@@ -2113,7 +2111,6 @@ def test_fit_raises_version_error():
                 },
             },
             'arrival': {
-                'foreign_key': 'id',
                 'columns': {
                     'id': {'sdtype': 'id'},
                     'date': {'sdtype': 'datetime'},
