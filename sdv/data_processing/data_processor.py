@@ -123,10 +123,7 @@ class DataProcessor:
         }
 
         self._transformers_by_sdtype = deepcopy(get_default_transformers())
-        self._transformers_by_sdtype['id'] = rdt.transformers.RegexGenerator()
-        del self._transformers_by_sdtype['text']
         self.grouped_columns_to_transformers = self._detect_multi_column_transformers()
-
         self._update_numerical_transformer(enforce_rounding, enforce_min_max_values)
         self._hyper_transformer = rdt.HyperTransformer()
         self.table_name = table_name or ''
@@ -376,7 +373,7 @@ class DataProcessor:
                     transformers[column] = self.create_regex_generator(
                         column, sdtype, column_metadata, is_numeric
                     )
-                    sdtypes[column] = 'text'
+                    sdtypes[column] = 'id'
                 elif column in self._keys:
                     if is_numeric:
                         function_name = 'random_int'
@@ -401,7 +398,7 @@ class DataProcessor:
                         cardinality_rule=cardinality_rule,
                     )
 
-                    sdtypes[column] = 'pii' if column_metadata.get('pii') else 'text'
+                    sdtypes[column] = 'pii' if column_metadata.get('pii') else 'id'
                 else:
                     transformers[column] = self._get_transformer_instance(
                         'categorical', column_metadata
