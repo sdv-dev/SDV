@@ -24,7 +24,11 @@ if __name__ == '__main__':
     with open(toml_path, 'rb') as f:
         pyproject = tomllib.load(f)
 
-    dev_deps = get_dev_dependencies(pyproject['project']['dependencies'])
+    dependencies = pyproject['project']['dependencies']
+    optional_dependencies = pyproject['project'].get('optional-dependencies', {})
+    for dependency_list in optional_dependencies.values():
+        dependencies.extend(dependency_list)
+    dev_deps = get_dev_dependencies(dependencies)
 
     if dev_deps:
         raise RuntimeError(f'Found dev dependencies: {", ".join(dev_deps)}')
