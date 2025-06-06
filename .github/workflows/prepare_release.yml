@@ -29,7 +29,11 @@ jobs:
             python -m pip install --upgrade pip
             python -m pip install requests==2.31.0
             python -m pip install bandit==1.7.7
+            python -m pip install packaging
             python -m pip install .[test]
+
+      - name: Check for prerelase dependencies
+        run: python scripts/check_for_prereleases.py
 
       - name: Generate release notes
         env:
