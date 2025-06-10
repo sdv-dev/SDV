@@ -32,7 +32,7 @@ jobs:
             python -m pip install packaging
             python -m pip install .[test]
 
-      - name: Check for prerelase dependencies
+      - name: Check for prerelease dependencies
         run: python scripts/check_for_prereleases.py
 
       - name: Generate release notes
