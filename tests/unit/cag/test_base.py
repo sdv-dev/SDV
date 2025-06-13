@@ -560,7 +560,8 @@ class TestBaseConstraint:
         # Setup
         instance = BaseConstraint()
         expected_msg = re.escape(
-            'Constraint must be fit using ``fit`` before determining if data is valid.'
+            'Constraint must be fit using ``fit`` before determining '
+            'if data is valid without providing metadata.'
         )
 
         # Run and assert
@@ -573,12 +574,13 @@ class TestBaseConstraint:
         instance = BaseConstraint()
         instance._is_valid = Mock()
         instance._fitted = True
+        instance.metadata = Mock()
 
         # Run
         is_valid_result = instance.is_valid(data)
 
         # Assert
-        instance._is_valid.assert_called_once_with(data)
+        instance._is_valid.assert_called_once_with(data, instance.metadata)
         assert is_valid_result == instance._is_valid.return_value
 
     def test_is_valid_single_table(self, data):
@@ -591,10 +593,13 @@ class TestBaseConstraint:
         instance._is_valid = Mock()
         instance._is_valid.return_value = {'table1': data.copy()}
         instance._fitted = True
+        instance.metadata = Mock()
 
         # Run
         is_valid_result = instance.is_valid(data)
 
         # Assert
-        instance._is_valid.assert_called_once_with(DataFrameDictMatcher({'table1': data}))
+        instance._is_valid.assert_called_once_with(
+            DataFrameDictMatcher({'table1': data}), instance.metadata
+        )
         pd.testing.assert_frame_equal(is_valid_result, data)

@@ -99,6 +99,7 @@ def single_table_programmable_constraint():
             self.table_name = table_name
             self._joint_column = '#'.join(self.column_names)
             self._combinations = None
+            self._fitted = False
 
         def _get_single_table_name(self, metadata):
             # Have to define this so that we can re-use existing methods on the constraint
@@ -114,6 +115,7 @@ def single_table_programmable_constraint():
             self.metadata = metadata
             data = {self.table_name: data}
             FixedCombinations._fit(self, data, metadata)
+            self._fitted = True
 
         def transform(self, data):
             data = {self.table_name: data}
@@ -130,7 +132,7 @@ def single_table_programmable_constraint():
 
         def is_valid(self, synthetic_data):
             synthetic_data = {self.table_name: synthetic_data}
-            is_valid = FixedCombinations._is_valid(self, synthetic_data)
+            is_valid = FixedCombinations._is_valid(self, synthetic_data, self.metadata)
             return is_valid[self.table_name]
 
     return MyConstraint

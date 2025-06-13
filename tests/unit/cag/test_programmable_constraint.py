@@ -294,9 +294,10 @@ class TestProgrammableConstraintHarness:
         programmable_constraint = ProgrammableConstraint()
         programmable_constraint.is_valid = Mock()
         instance = ProgrammableConstraintHarness(programmable_constraint)
+        metadata = Mock()
 
         # Run
-        instance._is_valid(data)
+        instance._is_valid(data, metadata)
 
         # Assert
         programmable_constraint.is_valid.assert_called_once_with(data)
@@ -310,9 +311,10 @@ class TestProgrammableConstraintHarness:
         programmable_constraint.is_valid.return_value = pd.Series([True] * 5)
         instance = ProgrammableConstraintHarness(programmable_constraint)
         instance._table_name = 'table'
+        metadata = Mock()
 
         # Run
-        is_valid = instance._is_valid(data)
+        is_valid = instance._is_valid(data, metadata)
 
         # Assert
         programmable_constraint.is_valid.assert_called_once_with(DataFrameMatcher(data['table']))
