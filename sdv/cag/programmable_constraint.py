@@ -187,7 +187,7 @@ class ProgrammableConstraintHarness(BaseConstraint):
 
         return reverse_transformed
 
-    def _is_valid(self, data):
+    def _is_valid(self, data, metadata):
         if self._is_single_table:
             data = data[self._table_name]
 

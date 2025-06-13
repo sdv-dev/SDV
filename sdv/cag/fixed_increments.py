@@ -152,7 +152,7 @@ class FixedIncrements(BaseConstraint):
         table_name = self._get_single_table_name(metadata)
         self._dtype = data[table_name][self.column_name].dtype
 
-    def _is_valid(self, data):
+    def _is_valid(self, data, metadata):
         """Determine if the data is evenly divisible by the increment.
 
         Args:
@@ -169,7 +169,7 @@ class FixedIncrements(BaseConstraint):
                 number of tables in the data and contain the same
                 table names.
         """
-        table_name = self._get_single_table_name(self.metadata)
+        table_name = self._get_single_table_name(metadata)
         is_valid = _get_is_valid_dict(data, table_name)
         valid = self._check_if_divisible(data, table_name, self.column_name, self.increment_value)
         is_valid[table_name] = valid

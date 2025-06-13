@@ -182,8 +182,11 @@ class FixedCombinations(BaseConstraint):
 
         return data
 
-    def _is_valid(self, data):
+    def _is_valid(self, data, metadata):
         """Determine whether the data matches the constraint."""
+        if not self._fitted:
+            return _get_is_valid_dict(data, table_name=None)
+
         table_name = self._get_single_table_name(self.metadata)
         is_valid = _get_is_valid_dict(data, table_name)
         merged = data[table_name].merge(
