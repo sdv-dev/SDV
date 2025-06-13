@@ -119,16 +119,10 @@ class Inequality(BaseConstraint):
     def _get_datetime_format(self, metadata, table_name, column_name):
         return metadata.tables[table_name].columns[column_name].get('datetime_format')
 
-    def _validate_constraint_with_data(self, data, metadata):
-        """Validate the data is compatible with the constraint.
-
-        Validate that the inequality requirement is met between the high and low columns.
-        """
-        table_name = self._get_single_table_name(metadata)
-        data = data[table_name]
-        low, high = self._get_data(data)
+    def _get_valid_table_data(self, table_data, metadata, table_name):
+        low, high = self._get_data(table_data)
         is_datetime = self._get_is_datetime(metadata, table_name)
-        if is_datetime and is_object_dtype(data[self._low_column_name]):
+        if is_datetime and is_object_dtype(table_data[self._low_column_name]):
             low_format = self._get_datetime_format(metadata, table_name, self._low_column_name)
             high_format = self._get_datetime_format(metadata, table_name, self._high_column_name)
             low = cast_to_datetime64(low, low_format)
@@ -143,7 +137,15 @@ class Inequality(BaseConstraint):
                     high_datetime_format=high_format,
                 )
 
-        valid = pd.isna(low) | pd.isna(high) | self._operator(high, low)
+        return pd.isna(low) | pd.isna(high) | self._operator(high, low)
+
+    def _validate_constraint_with_data(self, data, metadata):
+        """Validate the data is compatible with the constraint.
+
+        Validate that the inequality requirement is met between the high and low columns.
+        """
+        table_name = self._get_single_table_name(metadata)
+        valid = self._get_valid_table_data(data[table_name], metadata, table_name)
         if not valid.all():
             invalid_rows = _get_invalid_rows(valid)
             raise ConstraintNotMetError(
@@ -293,7 +295,7 @@ class Inequality(BaseConstraint):
 
         return data
 
-    def _is_valid(self, data):
+    def _is_valid(self, data, metadata):
         """Check whether `high` is greater than `low` in each row.
 
         Args:
@@ -306,22 +308,7 @@ class Inequality(BaseConstraint):
         """
         table_name = self._get_single_table_name(self.metadata)
         is_valid = _get_is_valid_dict(data, table_name)
-        table_data = data[table_name]
-        low, high = self._get_data(table_data)
-        if self._is_datetime and is_object_dtype(self._dtype):
-            low = cast_to_datetime64(low, self._low_datetime_format)
-            high = cast_to_datetime64(high, self._high_datetime_format)
-
-            format_matches = bool(self._low_datetime_format == self._high_datetime_format)
-            if not format_matches:
-                low, high = match_datetime_precision(
-                    low=low,
-                    high=high,
-                    low_datetime_format=self._low_datetime_format,
-                    high_datetime_format=self._high_datetime_format,
-                )
-
-        valid = pd.isna(low) | pd.isna(high) | self._operator(high, low)
-        is_valid[table_name] = valid
+        valid_table_rows = self._get_valid_table_data(data[table_name], metadata, table_name)
+        is_valid[table_name] = valid_table_rows
 
         return is_valid

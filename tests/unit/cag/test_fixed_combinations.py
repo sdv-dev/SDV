@@ -581,3 +581,34 @@ class TestFixedCombinations:
 
         expected_invalid_out = pd.Series([False] * 3, name='b#c')
         pd.testing.assert_series_equal(expected_invalid_out, invalid_out)
+
+    def test__is_valid_unfit(self):
+        """Test the ``_is_valid`` method when the constraint has not been fit."""
+        # Setup
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'a': {'sdtype': 'categorical'},
+                        'b': {'sdtype': 'categorical'},
+                        'c': {'sdtype': 'categorical'},
+                        'd': {'sdtype': 'categorical'},
+                    }
+                }
+            }
+        })
+        data = pd.DataFrame({
+            'a': ['a', 'b', 'c'],
+            'b': ['d', 'e', 'f'],
+            'c': ['g', 'h', 'i'],
+        })
+
+        columns = ['b', 'c']
+        instance = FixedCombinations(column_names=columns)
+
+        # Run
+        valid_out = instance.is_valid(data, metadata)
+
+        # Assert
+        expected_valid_out = pd.Series([True, True, True])
+        pd.testing.assert_series_equal(expected_valid_out, valid_out)

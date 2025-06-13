@@ -889,16 +889,35 @@ class TestInequality:
                 'c': [7, 8, 9, 10, 11, 12, 13, 14],
             })
         }
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'a': {'sdtype': 'numerical'},
+                        'b': {'sdtype': 'numerical'},
+                        'c': {'sdtype': 'numerical'},
+                    }
+                }
+            }
+        })
         instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
         instance._fitted = True
+        instance.metadata = metadata
+
+        unfit_instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
 
         # Run
-        out = instance.is_valid(table_data)
+        out_fit = instance.is_valid(table_data)
+        out_unfit = unfit_instance.is_valid(table_data, metadata)
 
         # Assert
-        out = out['table']
+        out_fit = out_fit['table']
         expected_out = [True, True, False, True, True, False, True, True]
-        np.testing.assert_array_equal(expected_out, out)
+        np.testing.assert_array_equal(expected_out, out_fit)
+
+        out_unfit = out_unfit['table']
+        expected_out = [True, True, False, True, True, False, True, True]
+        np.testing.assert_array_equal(expected_out, out_unfit)
 
     def test_is_valid_strict_boundaries_true(self):
         """Test it checks if the data is valid when strict boundaries are True."""
@@ -910,6 +929,17 @@ class TestInequality:
                 'c': [7, 8, 9, 10, 11, 12, 13, 14],
             })
         }
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'a': {'sdtype': 'numerical'},
+                        'b': {'sdtype': 'numerical'},
+                        'c': {'sdtype': 'numerical'},
+                    }
+                }
+            }
+        })
         instance = Inequality(
             low_column_name='a',
             high_column_name='b',
@@ -917,6 +947,7 @@ class TestInequality:
             table_name='table',
         )
         instance._fitted = True
+        instance.metadata = metadata
 
         # Run
         out = instance.is_valid(table_data)
@@ -936,8 +967,20 @@ class TestInequality:
                 'c': [7, 8, 9],
             })
         }
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'a': {'sdtype': 'datetime'},
+                        'b': {'sdtype': 'datetime'},
+                        'c': {'sdtype': 'numerical'},
+                    }
+                }
+            }
+        })
         instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
         instance._fitted = True
+        instance.metadata = metadata
 
         # Run
         out = instance.is_valid(table_data)
@@ -957,9 +1000,20 @@ class TestInequality:
                 'c': [7, 8, 9],
             })
         }
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'a': {'sdtype': 'datetime'},
+                        'b': {'sdtype': 'datetime'},
+                        'c': {'sdtype': 'numerical'},
+                    }
+                }
+            }
+        })
         instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
+        instance.metadata = metadata
         instance._is_datetime = True
-        instance._dtype = 'O'
         instance._fitted = True
 
         # Run
@@ -987,11 +1041,26 @@ class TestInequality:
                 'RANDOM_VALUE': [7, 8, 9, 10, 11],
             })
         }
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'SUBMISSION_TIMESTAMP': {
+                            'sdtype': 'datetime',
+                            'datetime_format': '%Y-%m-%d %H:%M:%S',
+                        },
+                        'DUE_DATE': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                        'RANDOM_VALUE': {'sdtype': 'numerical'},
+                    }
+                }
+            }
+        })
         instance = Inequality(
             low_column_name='SUBMISSION_TIMESTAMP',
             high_column_name='DUE_DATE',
             table_name='table',
         )
+        instance.metadata = metadata
         low_return = np.array([
             datetime(2020, 5, 18),
             datetime(2020, 9, 2),
@@ -1008,8 +1077,6 @@ class TestInequality:
         ])
         instance._dtype = 'O'
         instance._is_datetime = True
-        instance._low_datetime_format = '%Y-%m-%d %H:%M:%S'
-        instance._high_datetime_format = '%Y-%m-%d'
         mock_match_datetime_precision.return_value = (low_return, high_return)
         instance._fitted = True
 

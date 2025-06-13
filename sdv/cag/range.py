@@ -354,7 +354,7 @@ class Range(BaseConstraint):
 
         return data
 
-    def _is_valid(self, data):
+    def _is_valid(self, data, metadata):
         """Check whether the `middle` column is between the `low` and `high` columns.
 
         Args:
@@ -365,7 +365,7 @@ class Range(BaseConstraint):
             dict[str, pd.Series]:
                 Whether each row is valid.
         """
-        table_name = self._get_single_table_name(self.metadata)
+        table_name = self._get_single_table_name(metadata)
         is_valid = _get_is_valid_dict(data, table_name)
         is_valid[table_name] = self._get_valid_table_data(data[table_name])
 
