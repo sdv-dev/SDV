@@ -1,5 +1,25 @@
 # Release Notes
 
+## v1.23.0 - 2025-06-16
+
+### New Features
+
+* Update the wording used to get the version of SDV Community - Issue [#2568](https://github.com/sdv-dev/SDV/issues/2568) by @rwedge
+* If I don't have `torch` installed, I should still be able to use SDV features that don't require torch - Issue [#2551](https://github.com/sdv-dev/SDV/issues/2551) by @rwedge
+
+### Bugs Fixed
+
+* I should not be able to load Metadata if it contains unrecognized keys - Issue [#2548](https://github.com/sdv-dev/SDV/issues/2548) by @R-Palazzo
+
+### Internal
+
+* Check pyproject for pre-release dependencies - Issue [#2564](https://github.com/sdv-dev/SDV/issues/2564) by @rwedge
+* `DataProcessor` should assign `'id'` sdtype to ID columns instead of `'text'` - Issue [#2424](https://github.com/sdv-dev/SDV/issues/2424) by @R-Palazzo
+
+### Maintenance
+
+* Update python set up step in workflows to use latest python version - Issue [#2281](https://github.com/sdv-dev/SDV/issues/2281) by @frances-h
+
 ## v1.22.1 - 2025-06-03
 
 ### Bugs Fixed
