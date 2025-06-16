@@ -1,5 +1,6 @@
 import datetime
 import re
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -518,3 +519,18 @@ def test_par_categorical_column_updated_to_float():
 
     # Assert
     assert sampled['column'].isin(data['column']).all()
+
+
+@patch('sdv.sequential.par.PARModel', None)
+@patch('sdv.sequential.par.import_error')
+def test___init___without_torch(mock_import_error):
+    """Test PAR raises a custom error when initialized with torch not installed."""
+    # Setup
+    _, metadata = _get_par_data_and_metadata()
+    mock_import_error.name = 'torch'
+    mock_import_error.msg = "No module named 'torch'"
+    msg = "No module named 'torch'. Please install torch in order to use the 'PARSynthesizer'."
+
+    # Run and Assert
+    with pytest.raises(ModuleNotFoundError, match=msg):
+        PARSynthesizer(metadata)

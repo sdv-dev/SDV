@@ -5,12 +5,21 @@ import warnings
 import numpy as np
 import pandas as pd
 import plotly.express as px
-from ctgan import CTGAN, TVAE
 from sdmetrics import visualization
 
 from sdv.errors import InvalidDataTypeError, NotFittedError
 from sdv.single_table.base import BaseSingleTableSynthesizer
 from sdv.single_table.utils import detect_discrete_columns
+from sdv.utils.mixins import MissingModuleMixin
+
+try:
+    from ctgan import CTGAN, TVAE
+
+    import_error = None
+except ModuleNotFoundError as e:
+    CTGAN = None
+    TVAE = None
+    import_error = e
 
 
 def _validate_no_category_dtype(data):
@@ -96,7 +105,7 @@ class LossValuesMixin:
         return fig
 
 
-class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
+class CTGANSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynthesizer):
     """Model wrapping ``CTGAN`` model.
 
     Args:
@@ -173,6 +182,8 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
         pac=10,
         cuda=True,
     ):
+        if CTGAN is None:
+            self.raise_module_not_found_error(import_error)
         super().__init__(
             metadata=metadata,
             enforce_min_max_values=enforce_min_max_values,
@@ -312,7 +323,7 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
         raise NotImplementedError("CTGANSynthesizer doesn't support conditional sampling.")
 
 
-class TVAESynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
+class TVAESynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynthesizer):
     """Model wrapping ``TVAE`` model.
 
     Args:
@@ -364,6 +375,8 @@ class TVAESynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
         loss_factor=2,
         cuda=True,
     ):
+        if TVAE is None:
+            self.raise_module_not_found_error(import_error)
         super().__init__(
             metadata=metadata,
             enforce_min_max_values=enforce_min_max_values,

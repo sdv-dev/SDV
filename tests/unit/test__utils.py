@@ -386,11 +386,11 @@ def test__validate_foreign_keys_not_null_no_nulls():
 
 
 @patch('sdv._utils.warnings')
-def test_check_sdv_versions_and_warn_no_missmatch(mock_warnings):
-    """Test that no warnings is raised when no missmatch is produced."""
+def test_check_sdv_versions_and_warn_no_mismatch(mock_warnings):
+    """Test that no warnings is raised when no mismatch is produced."""
     # Setup
     synthesizer = Mock()
-    synthesizer._fitted_sdv_version = version.public
+    synthesizer._fitted_sdv_version = version.community
     synthesizer._fitted_sdv_enterprise_version = version.enterprise
 
     # Run
@@ -400,8 +400,8 @@ def test_check_sdv_versions_and_warn_no_missmatch(mock_warnings):
     mock_warnings.warn.assert_not_called()
 
 
-def test_check_sdv_versions_and_warn_public_missmatch():
-    """Test that warnings is raised when public version is missmatched."""
+def test_check_sdv_versions_and_warn_community_mismatch():
+    """Test that warnings is raised when community version is mismatched."""
     # Setup
     synthesizer = Mock()
     synthesizer._fitted_sdv_version = '1.0.0'
@@ -409,7 +409,7 @@ def test_check_sdv_versions_and_warn_public_missmatch():
 
     # Run and Assert
     message = (
-        f'You are currently on SDV version {version.public} but this synthesizer was created on '
+        f'You are currently on SDV version {version.community} but this synthesizer was created on '
         'version 1.0.0. The latest bug fixes and features may not be available for this '
         'synthesizer. To see these enhancements, create and train a new synthesizer on this '
         'version.'
@@ -419,15 +419,15 @@ def test_check_sdv_versions_and_warn_public_missmatch():
 
 
 @patch('sdv._utils.version')
-def test_check_sdv_versions_and_warn_enterprise_missmatch(mock_version):
-    """Test that warnings is raised when enterprise version is missmatched."""
+def test_check_sdv_versions_and_warn_enterprise_mismatch(mock_version):
+    """Test that warnings is raised when enterprise version is mismatched."""
     # Setup
     synthesizer = Mock()
-    synthesizer._fitted_sdv_version = version.public
+    synthesizer._fitted_sdv_version = version.community
     synthesizer._fitted_sdv_enterprise_version = '1.2.0'
 
     mock_version.enterprise = '1.3.0'
-    mock_version.public = version.public
+    mock_version.community = version.community
 
     # Run and Assert
     message = (
@@ -441,14 +441,14 @@ def test_check_sdv_versions_and_warn_enterprise_missmatch(mock_version):
 
 
 @patch('sdv._utils.version')
-def test_check_sdv_versions_and_warn_public_and_enterprise_missmatch(mock_version):
-    """Test that warnings is raised when both public and enterprise version missmatch."""
+def test_check_sdv_versions_and_warn_community_and_enterprise_mismatch(mock_version):
+    """Test that warnings is raised when both community and enterprise version mismatch."""
     # Setup
     synthesizer = Mock()
     synthesizer._fitted_sdv_version = '1.0.0'
     synthesizer._fitted_sdv_enterprise_version = '1.2.0'
 
-    mock_version.public = '1.3.0'
+    mock_version.community = '1.3.0'
     mock_version.enterprise = '1.3.3'
 
     # Run and Assert
@@ -502,12 +502,12 @@ def test__compare_versions_lower():
 
 
 @patch('sdv._utils.version')
-def test_check_synthesizer_version_public_and_enterprise_are_lower(mock_version):
-    """Test that VersionError is raised when both public and enterprise version are higher."""
+def test_check_synthesizer_version_community_and_enterprise_are_lower(mock_version):
+    """Test that VersionError is raised when both community and enterprise version are higher."""
     # Setup
     synthesizer = Mock(_fitted_sdv_version='2.0.0', _fitted_sdv_enterprise_version='2.1.0')
 
-    mock_version.public = '1.3.0'
+    mock_version.community = '1.3.0'
     mock_version.enterprise = '1.3.3'
 
     # Run and Assert
@@ -521,12 +521,12 @@ def test_check_synthesizer_version_public_and_enterprise_are_lower(mock_version)
 
 
 @patch('sdv._utils.version')
-def test_check_synthesizer_version_public_is_lower(mock_version):
-    """Test that VersionError is raised when only public version is lower."""
+def test_check_synthesizer_version_community_is_lower(mock_version):
+    """Test that VersionError is raised when only community version is lower."""
     # Setup
     synthesizer = Mock(_fitted_sdv_version='1.4.0', _fitted_sdv_enterprise_version='1.2.0')
 
-    mock_version.public = '1.3.0'
+    mock_version.community = '1.3.0'
     mock_version.enterprise = '1.2.0'
 
     # Run and Assert
@@ -544,7 +544,7 @@ def test_check_synthesizer_version_enterprise_is_lower(mock_version):
     # Setup
     synthesizer = Mock(_fitted_sdv_version='1.3.0', _fitted_sdv_enterprise_version='1.3.0')
 
-    mock_version.public = '1.3.0'
+    mock_version.community = '1.3.0'
     mock_version.enterprise = '1.2.0'
 
     # Run and Assert
@@ -562,7 +562,7 @@ def test_check_synthesizer_version_enterprise_is_none(mock_version):
     # Setup
     synthesizer = Mock(_fitted_sdv_version='1.3.0', _fitted_sdv_enterprise_version=None)
 
-    mock_version.public = '1.3.0'
+    mock_version.community = '1.3.0'
     mock_version.enterprise = '1.2.0'
 
     # Run and Assert
@@ -595,7 +595,7 @@ def test_check_synthesizer_version_check_synthesizer_is_greater(mock_version):
     # Setup
     synthesizer = Mock(_fitted_sdv_version='1.3.0', _fitted_sdv_enterprise_version='1.3.0')
 
-    mock_version.public = '1.3.0'
+    mock_version.community = '1.3.0'
     mock_version.enterprise = '1.4.0'
 
     # Run and Assert
@@ -614,7 +614,7 @@ def test_check_synthesizer_version_check_synthesizer_is_greater_equal(mock_versi
     # Setup
     synthesizer = Mock(_fitted_sdv_version='1.3.0', _fitted_sdv_enterprise_version='1.3.0')
 
-    mock_version.public = '1.3.0'
+    mock_version.community = '1.3.0'
     mock_version.enterprise = '1.3.0'
 
     # Run and Assert
@@ -622,7 +622,7 @@ def test_check_synthesizer_version_check_synthesizer_is_greater_equal(mock_versi
 
 
 @patch('sdv._utils.version')
-def test_check_synthesizer_version_check_synthesizer_is_greater_public_missmatch(mock_version):
+def test_check_synthesizer_version_check_synthesizer_is_greater_community_mismatch(mock_version):
     """Test that ``VersionError`` is raised when checking if synthesizer is greater.
 
     Ensure that this test will raise a ``VersionError`` when the synthesizer version is lower
@@ -631,7 +631,7 @@ def test_check_synthesizer_version_check_synthesizer_is_greater_public_missmatch
     # Setup
     synthesizer = Mock(_fitted_sdv_version='1.3.0', _fitted_sdv_enterprise_version='1.4.0')
 
-    mock_version.public = '1.5.0'
+    mock_version.community = '1.5.0'
     mock_version.enterprise = '1.4.0'
 
     # Run and Assert
@@ -645,8 +645,8 @@ def test_check_synthesizer_version_check_synthesizer_is_greater_public_missmatch
 
 
 @patch('sdv._utils.version')
-def test_check_synthesizer_version_check_synthesizer_is_greater_both_missmatch(mock_version):
-    """Test that ``VersionError`` is raised when public and enterprise are greater.
+def test_check_synthesizer_version_check_synthesizer_is_greater_both_mismatch(mock_version):
+    """Test that ``VersionError`` is raised when community and enterprise are greater.
 
     Ensure that this test will raise a ``VersionError`` when the synthesizer version is lower
     than the current package version.
@@ -654,7 +654,7 @@ def test_check_synthesizer_version_check_synthesizer_is_greater_both_missmatch(m
     # Setup
     synthesizer = Mock(_fitted_sdv_version='1.3.0', _fitted_sdv_enterprise_version='1.3.2')
 
-    mock_version.public = '1.5.0'
+    mock_version.community = '1.5.0'
     mock_version.enterprise = '1.4.0'
 
     # Run and Assert
@@ -672,7 +672,7 @@ def test_check_synthesizer_version_check_synthesizer_is_greater_both_missmatch(m
 def test_generate_synthesizer_id(mock_version, mock_uuid):
     """Test that ``generate_synthesizer_id`` returns the expected id."""
     # Setup
-    mock_version.public = '1.0.0'
+    mock_version.community = '1.0.0'
     mock_uuid.uuid4.return_value = '92aff11e-9a56-49d1-a280-990d1231a5f5'
     metadata = SingleTableMetadata()
     metadata.add_column('key', sdtype='id')

@@ -337,7 +337,7 @@ class TestInequality:
             instance._validate_constraint_with_data(data, metadata)
 
     @patch('sdv.cag.inequality.match_datetime_precision')
-    def test__validate_constraint_with_data_datetime_objects_missmatching_formats(
+    def test__validate_constraint_with_data_datetime_objects_mismatching_formats(
         self, mock_match_datetime_precision
     ):
         """Test it when the data is not valid with datetimes with mismatching formats."""

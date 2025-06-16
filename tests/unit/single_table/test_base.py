@@ -809,8 +809,8 @@ class TestBaseSynthesizer:
 
         # Run and Assert
         error_msg = (
-            f'You are currently on SDV version {version.public} but this synthesizer was created '
-            'on version 1.0.0. Fitting this synthesizer again is not supported. Please '
+            f'You are currently on SDV version {version.community} but this synthesizer was '
+            'created on version 1.0.0. Fitting this synthesizer again is not supported. Please '
             'create a new synthesizer.'
         )
         with pytest.raises(VersionError, match=error_msg):
@@ -872,8 +872,8 @@ class TestBaseSynthesizer:
 
         # Run and Assert
         error_msg = (
-            f'You are currently on SDV version {version.public} but this synthesizer was created '
-            'on version 1.0.0. Fitting this synthesizer again is not supported. Please '
+            f'You are currently on SDV version {version.community} but this synthesizer was '
+            'created on version 1.0.0. Fitting this synthesizer again is not supported. Please '
             'create a new synthesizer.'
         )
         with pytest.raises(VersionError, match=error_msg):
@@ -1281,7 +1281,7 @@ class TestBaseSynthesizer:
         """
         # Setup
         data = pd.DataFrame({'col': [1, 2, 3]})
-        mock_sdv_version.public = '1.0.0'
+        mock_sdv_version.community = '1.0.0'
         mock_sdv_version.enterprise = None
         metadata = Metadata()
         metadata.add_table('table')
@@ -1329,7 +1329,7 @@ class TestBaseSynthesizer:
         """
         # Setup
         data = pd.DataFrame({'col': [1, 2, 3]})
-        mock_sdv_version.public = '1.0.0'
+        mock_sdv_version.community = '1.0.0'
         mock_sdv_version.enterprise = '1.2.0'
         metadata = Metadata()
         metadata.add_table('table')

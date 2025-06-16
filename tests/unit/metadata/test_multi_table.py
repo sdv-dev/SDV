@@ -1839,7 +1839,73 @@ class TestMultiTableMetadata:
         ]
 
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
-    def test_load_from_dict(self, mock_singletablemetadata):
+    def test__set_metadata_invalid_keys_single_table(self, mock_singletablemetadata):
+        """Test ``_set_metadata`` with invalid keys in single table metadata."""
+        # Setup
+        multitable_metadata = {
+            'tables': {
+                'accounts': {
+                    'id': {'sdtype': 'numerical'},
+                    'branch_id': {'sdtype': 'numerical'},
+                    'amount': {'sdtype': 'numerical'},
+                    'start_date': {'sdtype': 'datetime'},
+                    'owner': {'sdtype': 'id'},
+                }
+            },
+        }
+        mock_singletablemetadata.load_from_dict.side_effect = [
+            ValueError('Invalid key in single table metadata'),
+        ]
+        expected_error_msg = re.escape(
+            "Invalid metadata dict for table 'accounts':\n Invalid key in single table metadata"
+        )
+        instance = MultiTableMetadata()
+
+        # Run and Assert
+        with pytest.raises(ValueError, match=expected_error_msg):
+            instance._set_metadata_dict(multitable_metadata)
+
+    def test__valdiate_no_extra_keys_metadata_dict(self):
+        """Test the method ``_valdiate_no_extra_keys_metadata_dict``."""
+        # Setup
+        instance = MultiTableMetadata()
+        multitable_metadata = {
+            'tables': {
+                'accounts': {
+                    'id': {'sdtype': 'numerical'},
+                    'branch_id': {'sdtype': 'numerical'},
+                    'amount': {'sdtype': 'numerical'},
+                    'start_date': {'sdtype': 'datetime'},
+                    'owner': {'sdtype': 'id'},
+                },
+                'branches': {
+                    'id': {'sdtype': 'numerical'},
+                    'name': {'sdtype': 'id'},
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'accounts',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'branches',
+                    'child_foreign_key': 'branch_id',
+                }
+            ],
+        }
+        expected_error_msg = re.escape(
+            "The metadata dictionary contains extra keys: 'invalid_key'. "
+            "Valid keys are: 'METADATA_SPEC_VERSION', 'relationships', 'tables'."
+        )
+
+        # Run and Assert
+        instance._valdiate_no_extra_keys_metadata_dict(multitable_metadata)
+        multitable_metadata['invalid_key'] = 'invalid_value'
+        with pytest.raises(ValueError, match=expected_error_msg):
+            instance._valdiate_no_extra_keys_metadata_dict(multitable_metadata)
+
+    @patch('sdv.metadata.multi_table.SingleTableMetadata')
+    @patch('sdv.metadata.multi_table.MultiTableMetadata._valdiate_no_extra_keys_metadata_dict')
+    def test_load_from_dict(self, mock_validate, mock_singletablemetadata):
         """Test that ``load_from_dict`` returns a instance of ``MultiTableMetadata``.
 
         Test that when calling the ``load_from_dict`` method a new instance with the passed
@@ -1893,6 +1959,7 @@ class TestMultiTableMetadata:
         instance = MultiTableMetadata.load_from_dict(multitable_metadata)
 
         # Assert
+        mock_validate.assert_called_once_with(multitable_metadata)
         assert instance.tables == {
             'accounts': single_table_accounts,
             'branches': single_table_branches,

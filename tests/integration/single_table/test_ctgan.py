@@ -1,4 +1,5 @@
 import re
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -48,6 +49,21 @@ def test__estimate_num_columns():
         'categorical3': 1,
         'boolean': 2,
     }
+
+
+@patch('sdv.single_table.ctgan.CTGAN', None)
+@patch('sdv.single_table.ctgan.import_error')
+def test_ctgan___init___without_torch(mock_import_error):
+    """Test CTGAN raises a custom error when initialized with torch not installed."""
+    # Setup
+    metadata = Metadata()
+    mock_import_error.name = 'torch'
+    mock_import_error.msg = "No module named 'torch'"
+    msg = "No module named 'torch'. Please install torch in order to use the 'CTGANSynthesizer'."
+
+    # Run and Assert
+    with pytest.raises(ModuleNotFoundError, match=msg):
+        CTGANSynthesizer(metadata)
 
 
 def test_synthesize_table_ctgan(tmp_path):
@@ -300,3 +316,18 @@ def test_ctgan_with_dropped_columns():
             name='user_id',
         ),
     )
+
+
+@patch('sdv.single_table.ctgan.TVAE', None)
+@patch('sdv.single_table.ctgan.import_error')
+def test_tvae___init___without_torch(mock_import_error):
+    """Test TVAE raises a custom error when initialized with torch not installed."""
+    # Setup
+    metadata = Metadata()
+    mock_import_error.name = 'torch'
+    mock_import_error.msg = "No module named 'torch'"
+    msg = "No module named 'torch'. Please install torch in order to use the 'TVAESynthesizer'."
+
+    # Run and Assert
+    with pytest.raises(ModuleNotFoundError, match=msg):
+        TVAESynthesizer(metadata)
