@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 import tqdm
 from copulas.multivariate import GaussianMultivariate
+from pandas.api.types import is_float_dtype
 
 from sdv import version
 from sdv._utils import (
@@ -799,7 +800,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             column_values = sampled[column]
             if pd.isna(value):
                 sampled = sampled[column_values.isna()]
-            elif column_values.dtype.kind == 'f':
+            elif is_float_dtype(column_values.dtype):
                 distance = abs(value) * float_rtol
                 sampled = sampled[np.abs(column_values - value) <= distance]
                 sampled.loc[:, column] = value

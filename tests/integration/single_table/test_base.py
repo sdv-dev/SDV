@@ -12,7 +12,7 @@ from rdt.transformers import AnonymizedFaker, FloatFormatter, RegexGenerator, Un
 from sdv import version
 from sdv.cag import FixedCombinations
 from sdv.datasets.demo import download_demo
-from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError, VersionError
+from sdv.errors import InvalidDataError, SamplingError, VersionError
 from sdv.metadata import SingleTableMetadata
 from sdv.metadata.metadata import Metadata
 from sdv.sampling import Condition
