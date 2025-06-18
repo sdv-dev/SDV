@@ -2128,6 +2128,6 @@ class TestDataProcessor:
             'c': ['d', 'e', 'f'],
             'key': ['sdv_0', 'sdv_1', 'sdv_2'],
             'd': ['abc@gmail.com', 'abc@gmail.com', 'abc@gmail.com'],
-            'e': [None, None, None]
+            'e': [None, None, None],
         })
         pd.testing.assert_frame_equal(reverse_transformed, expected_output)
