@@ -797,7 +797,9 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         """
         for column, value in conditions.items():
             column_values = sampled[column]
-            if column_values.dtype.kind == 'f':
+            if pd.isna(value):
+                sampled = sampled[column_values.isna()]
+            elif column_values.dtype.kind == 'f':
                 distance = abs(value) * float_rtol
                 sampled = sampled[np.abs(column_values - value) <= distance]
                 sampled.loc[:, column] = value
@@ -1228,7 +1230,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         condition_columns = list(conditions.columns)
         conditions.index.name = COND_IDX
         conditions = conditions.reset_index()
-        grouped_conditions = conditions.groupby(_groupby_list(condition_columns))
+        grouped_conditions = conditions.groupby(_groupby_list(condition_columns), dropna=False)
 
         # sample
         all_sampled_rows = []
@@ -1332,8 +1334,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         """Validate the user-passed conditions."""
         for condition_dataframe in conditions:
             self._validate_conditions_unseen_columns(condition_dataframe)
-            if condition_dataframe.isna().any().any():
-                self._raise_condition_with_nans()
 
     def sample_from_conditions(
         self, conditions, max_tries_per_batch=100, batch_size=None, output_file_path=None
@@ -1405,13 +1405,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
     def _validate_known_columns(self, conditions):
         """Validate the user-passed conditions."""
         self._validate_conditions_unseen_columns(conditions)
-        if conditions.dropna().empty:
-            self._raise_condition_with_nans()
-        elif conditions.isna().any().any():
-            warnings.warn(
-                'Missing values are not yet supported. '
-                'Rows with any missing values will not be created.'
-            )
 
     def sample_remaining_columns(
         self, known_columns, max_tries_per_batch=100, batch_size=None, output_file_path=None

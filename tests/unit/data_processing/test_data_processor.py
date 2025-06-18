@@ -2090,11 +2090,12 @@ class TestDataProcessor:
         dp = DataProcessor(SingleTableMetadata())
         dp.fitted = True
         dp.metadata = Mock()
-        dp.metadata.columns = {'a': None, 'b': None, 'c': None, 'key': None, 'd': None}
+        dp.metadata.columns = {'a': None, 'b': None, 'c': None, 'key': None, 'd': None, 'e': None}
         data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [True, True, False],
             'c': ['d', 'e', 'f'],
+            'e': [1, 2, 3],
         })
         dp._keys = ['key']
         dp._hyper_transformer = Mock()
@@ -2105,10 +2106,10 @@ class TestDataProcessor:
         dp._hyper_transformer.reverse_transform_subset.return_value = data.copy()
         dp._hyper_transformer._output_columns = ['a', 'b', 'c']
         dp._dtypes = pd.Series(
-            [np.float64, np.bool_, np.object_, np.object_, np.object_],
-            index=['a', 'b', 'c', 'd', 'key'],
+            [np.float64, np.bool_, np.object_, np.object_, np.object_, np.object_],
+            index=['a', 'b', 'c', 'd', 'key', 'e'],
         )
-        conditions = {'d': 'abc@gmail.com'}
+        conditions = {'d': 'abc@gmail.com', 'e': None}
 
         # Run
         reverse_transformed = dp.reverse_transform(data, conditions=conditions)
@@ -2127,5 +2128,6 @@ class TestDataProcessor:
             'c': ['d', 'e', 'f'],
             'key': ['sdv_0', 'sdv_1', 'sdv_2'],
             'd': ['abc@gmail.com', 'abc@gmail.com', 'abc@gmail.com'],
+            'e': [None, None, None]
         })
         pd.testing.assert_frame_equal(reverse_transformed, expected_output)
