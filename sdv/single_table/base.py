@@ -1324,13 +1324,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                         f'Use a column name that was present in the original data.'
                     )
 
-    @staticmethod
-    def _raise_condition_with_nans():
-        raise SynthesizerInputError(
-            'Missing values are not yet supported for conditional sampling. '
-            'Please include only non-null values in your Condition objects.'
-        )
-
     def _validate_conditions(self, conditions):
         """Validate the user-passed conditions."""
         for condition_dataframe in conditions:
