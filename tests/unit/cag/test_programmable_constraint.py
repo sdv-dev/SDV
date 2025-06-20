@@ -311,7 +311,9 @@ class TestProgrammableConstraintHarness:
         programmable_constraint.is_valid.return_value = pd.Series([True] * 5)
         instance = ProgrammableConstraintHarness(programmable_constraint)
         instance._table_name = 'table'
-        metadata = Mock()
+        metadata = Metadata.load_from_dict({
+            'tables': {'table': {'columns': {'col_A': {'sdtype': 'numerical'}}}}
+        })
 
         # Run
         is_valid = instance._is_valid(data, metadata)
