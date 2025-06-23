@@ -9,7 +9,7 @@ from pandas.api.types import is_object_dtype
 from sdv._utils import _convert_to_timedelta, _create_unique_name
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
-    _format_error_message_inequality_constraints,
+    _format_error_message_constraint,
     _get_is_valid_dict,
     _is_list_of_type,
     _remove_columns_from_metadata,
@@ -172,7 +172,7 @@ class Range(BaseConstraint):
             invalid_rows = data[table_name].loc[
                 ~valid, [self._low_column_name, self._middle_column_name, self._high_column_name]
             ]
-            _format_error_message_inequality_constraints(invalid_rows, self, table_name)
+            _format_error_message_constraint(invalid_rows, self, table_name)
 
     def _get_diff_and_nan_column_names(self, metadata, table_name):
         """Create unique names for the low, high, and nan component columns."""

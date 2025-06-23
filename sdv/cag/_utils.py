@@ -210,7 +210,7 @@ def _validate_constraints_single_table(constraints, synthesizer_fitted):
     return constraints
 
 
-def _format_error_message_inequality_constraints(invalid_data, constraint, table_name):
+def _format_error_message_constraint(invalid_data, constraint, table_name):
     """Format the error message for inequality constraints."""
     invalid_rows_str = _format_invalid_values_string(invalid_data, 5)
     raise ConstraintNotMetError(
