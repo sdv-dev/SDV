@@ -7,7 +7,7 @@ from pandas.api.types import is_object_dtype
 from sdv._utils import _convert_to_timedelta, _create_unique_name
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
-    _get_invalid_rows,
+    _format_error_message_inequality_constraints,
     _get_is_valid_dict,
     _is_list_of_type,
     _remove_columns_from_metadata,
@@ -147,10 +147,8 @@ class Inequality(BaseConstraint):
         table_name = self._get_single_table_name(metadata)
         valid = self._get_valid_table_data(data[table_name], metadata, table_name)
         if not valid.all():
-            invalid_rows = _get_invalid_rows(valid)
-            raise ConstraintNotMetError(
-                f'The inequality requirement is not met for row indices: [{invalid_rows}]'
-            )
+            invalid_rows = data.loc[~valid, [self._low_column_name, self._high_column_name]]
+            _format_error_message_inequality_constraints(invalid_rows, self, table_name)
 
     def _get_diff_and_nan_column_names(self, metadata, column_name, table_name):
         """Get the column names for the difference and NaN columns.
