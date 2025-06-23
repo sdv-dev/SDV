@@ -657,6 +657,11 @@ class DataProcessor:
             if not transformer.output_columns:
                 reversed_data = transformer.reverse_transform(reversed_data)
 
+        if conditions:
+            for column, condition in conditions.items():
+                if pd.isna(condition):
+                    reversed_data[column] = condition
+
         num_rows = len(reversed_data)
         sampled_columns = list(reversed_data.columns)
         missing_columns = [
