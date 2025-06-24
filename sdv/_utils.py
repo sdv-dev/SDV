@@ -23,6 +23,9 @@ except ImportError:
     import sre_parse
 
 
+MODELABLE_SDTYPES = ['categorical', 'numerical', 'datetime', 'boolean']
+
+
 def _cast_to_iterable(value):
     """Return a ``list`` if the input object is not a ``list`` or ``tuple``."""
     if isinstance(value, (list, tuple)):
