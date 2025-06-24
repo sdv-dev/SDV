@@ -10,7 +10,6 @@ from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _convert_to_snake_case,
     _filter_old_style_constraints,
-    _format_error_message_constraint,
     _is_list_of_type,
     _remove_columns_from_metadata,
     _validate_constraints,
@@ -325,27 +324,3 @@ def test__validate_constraints_single_table(mock_validate_constraints):
         call([constraint_1], True),
         call([constraint_1, constraint_2], False),
     ])
-
-
-@patch('sdv.cag._utils._format_invalid_values_string')
-def test__format_error_message_constraint(mock_format_invalid_values_string):
-    """Test `_format_error_message_constraint` method."""
-    # Setup
-    invalid_data = {'row_1': 'value_1', 'row_2': 'value_2'}
-    constraint = Mock()
-    constraint.__class__.__name__ = 'InequalityConstraint'
-    table_name = 'test_table'
-    mock_format_invalid_values_string.return_value = re.escape(
-        'checkin_date checkout_date\n0  31 Dec 2020   29 Dec 2020'
-    )
-    expected_error_message = re.escape(
-        "Data is not valid for the 'InequalityConstraint' constraint in table "
-        "'test_table':\ncheckin_date\\ checkout_date\\\n0\\ \\ 31\\ Dec\\ 2020\\"
-        ' \\ \\ 29\\ Dec\\ 2020'
-    )
-
-    # Run and Assert
-    with pytest.raises(ConstraintNotMetError, match=expected_error_message):
-        _format_error_message_constraint(invalid_data, constraint, table_name)
-
-    mock_format_invalid_values_string.assert_called_once_with(invalid_data, 5)

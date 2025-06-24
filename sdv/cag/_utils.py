@@ -4,7 +4,6 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from sdv._utils import _format_invalid_values_string
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.errors import SynthesizerInputError
 from sdv.metadata import Metadata
@@ -208,12 +207,3 @@ def _validate_constraints_single_table(constraints, synthesizer_fitted):
             )
 
     return constraints
-
-
-def _format_error_message_constraint(invalid_data, constraint, table_name):
-    """Format the error message for inequality constraints."""
-    invalid_rows_str = _format_invalid_values_string(invalid_data, 5)
-    raise ConstraintNotMetError(
-        f"Data is not valid for the '{constraint.__class__.__name__}' constraint in "
-        f"table '{table_name}':\n{invalid_rows_str}"
-    )

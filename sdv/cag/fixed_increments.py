@@ -5,7 +5,6 @@ import pandas as pd
 from sdv._utils import _create_unique_name
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
-    _format_error_message_constraint,
     _get_is_valid_dict,
     _remove_columns_from_metadata,
     _validate_table_and_column_names,
@@ -114,7 +113,7 @@ class FixedIncrements(BaseConstraint):
         if not valid.all():
             table_name = self._get_single_table_name(metadata)
             invalid_rows = data[table_name].loc[~valid, [self.column_name]]
-            _format_error_message_constraint(invalid_rows, self, table_name)
+            self._format_error_message_constraint(invalid_rows, table_name)
 
     def _get_updated_metadata(self, metadata):
         """Get the updated metadata after applying the constraint to the metadata.
