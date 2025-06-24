@@ -54,7 +54,7 @@ class BaseConstraint:
         return metadata._get_single_table_name() if self.table_name is None else self.table_name
 
     def _format_error_message_constraint(self, invalid_data, table_name):
-        """Format the error message for inequality constraints."""
+        """Format the error message for the constraints."""
         invalid_rows_str = _format_invalid_values_string(invalid_data, 5)
         raise ConstraintNotMetError(
             f"Data is not valid for the '{self.__class__.__name__}' constraint in "
