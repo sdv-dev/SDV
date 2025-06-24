@@ -106,15 +106,10 @@ def _get_is_valid_dict(data, table_name):
         dict:
             Dictionary of table names to boolean Series of True values.
     """
-    if table_name is None:
-        return {
-            table: pd.Series(True, index=table_data.index) for table, table_data in data.items()
-        }
-
     return {
         table: pd.Series(True, index=table_data.index)
         for table, table_data in data.items()
-        if table != table_name
+        if table != table_name or table_name is None
     }
 
 
