@@ -2090,12 +2090,21 @@ class TestDataProcessor:
         dp = DataProcessor(SingleTableMetadata())
         dp.fitted = True
         dp.metadata = Mock()
-        dp.metadata.columns = {'a': None, 'b': None, 'c': None, 'key': None, 'd': None, 'e': None}
+        dp.metadata.columns = {
+            'a': {'sdtype': 'numerical'},
+            'b': {'sdtype': 'boolean'},
+            'c': {'sdtype': 'categorical'},
+            'key': {'sdtype': 'id'},
+            'd': {'sdtype': 'email'},
+            'e': {'sdtype': 'numerical'},
+            'f': {'sdtype': 'email'},
+        }
         data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [True, True, False],
             'c': ['d', 'e', 'f'],
             'e': [1, 2, 3],
+            'f': ['email1@gmail.com', 'email2@gmail.com', 'email3@gmail.com'],
         })
         dp._keys = ['key']
         dp._hyper_transformer = Mock()
@@ -2106,10 +2115,15 @@ class TestDataProcessor:
         dp._hyper_transformer.reverse_transform_subset.return_value = data.copy()
         dp._hyper_transformer._output_columns = ['a', 'b', 'c']
         dp._dtypes = pd.Series(
-            [np.float64, np.bool_, np.object_, np.object_, np.object_, np.object_],
-            index=['a', 'b', 'c', 'd', 'key', 'e'],
+            [np.float64, np.bool_, np.object_, np.object_, np.object_, np.object_, np.object_],
+            index=['a', 'b', 'c', 'd', 'key', 'e', 'f'],
         )
-        conditions = {'d': 'abc@gmail.com', 'e': None}
+        conditions = {
+            'c': 'e',  # Test that a modelable column is not forced to the condition
+            'd': 'abc@gmail.com',  # Test a generated column
+            'e': None,  # Test a null value
+            'f': 'test@gmail.com',  # Test a PII column with contextual anonyimization
+        }
 
         # Run
         reverse_transformed = dp.reverse_transform(data, conditions=conditions)
@@ -2129,5 +2143,6 @@ class TestDataProcessor:
             'key': ['sdv_0', 'sdv_1', 'sdv_2'],
             'd': ['abc@gmail.com', 'abc@gmail.com', 'abc@gmail.com'],
             'e': [None, None, None],
+            'f': ['test@gmail.com'] * 3,
         })
         pd.testing.assert_frame_equal(reverse_transformed, expected_output)

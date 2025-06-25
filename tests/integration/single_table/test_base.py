@@ -141,7 +141,7 @@ def test_sample_from_conditions_negative_float():
 
 
 def test_sample_from_conditions_with_nans():
-    """Test it crashes when condition has nans (GH#1758)."""
+    """Test it correctly samples null values."""
     # Setup
     data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
     synthesizer = GaussianCopulaSynthesizer(metadata)
@@ -157,7 +157,7 @@ def test_sample_from_conditions_with_nans():
 
 
 def test_sample_remaining_columns_with_nans():
-    """Test it crashes when every condition row has a nan (GH#1758)."""
+    """Test ``sample_remaining_columns`` with entirely null row."""
     # Setup
     data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
     synthesizer = GaussianCopulaSynthesizer(metadata)
