@@ -33,13 +33,13 @@ jobs:
             python -m pip install .[test]
 
       - name: Check for prerelease dependencies
-        run: python scripts/check_for_prereleases.py
+        run: python -m scripts.check_for_prereleases
 
       - name: Generate release notes
         env:
             GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
         run: >
-            python scripts/release_notes_generator.py
+            python -m scripts.release_notes_generator
             -v ${{ inputs.version }}
             -d ${{ inputs.date }}
 
