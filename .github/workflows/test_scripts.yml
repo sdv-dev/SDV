@@ -1,0 +1,24 @@
+name: Test scripts
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up latest Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: 'pyproject.toml'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install invoke .[dev]
+    - name: Run script tests
+      run: pytest tests/scripts
