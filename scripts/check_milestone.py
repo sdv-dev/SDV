@@ -2,7 +2,7 @@
 
 import argparse
 
-from github_client import GithubClient, GithubGraphQLClient
+from scripts.github_client import GithubClient, GithubGraphQLClient
 
 
 def _get_linked_issues(
@@ -34,25 +34,38 @@ def _get_linked_issues(
     return linked_issues
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--pr-number', type=str, help='The number of the pull request')
-    args = parser.parse_args()
+def _post_comment(github_client: GithubClient, pr_number: str):
+    comment = (
+        'This Pull Request is not linked to an issue. To ensure our community is able to '
+        'accurately track resolved issues, please link any that will be closed by this PR!'
+    )
+    github_client.post(
+        github_org='sdv-dev',
+        repo='sdv',
+        endpoint=f'issues/{pr_number}/comments',
+        payload={'body': comment},
+    )
+
+
+def check_for_milestone(pr_number: str):
+    """Check that the pull request is linked to an issue and that the issue has a milestone.
+
+    Args:
+        pr_number (str): The string representation of the Pull Request number.
+    """
     github_client = GithubClient()
     graphql_client = GithubGraphQLClient()
-    linked_issues = _get_linked_issues(github_client, graphql_client, args.pr_number)
+    linked_issues = _get_linked_issues(github_client, graphql_client, pr_number)
     if not linked_issues:
-        comment = (
-            'This Pull Request is not linked to an issue. To ensure our community is able to '
-            'accurately track resolved issues, please link any that will be closed by this PR!'
-        )
-        github_client.post(
-            github_org='sdv-dev',
-            repo='sdv',
-            endpoint=f'issues/{args.pr_number}/comments',
-            payload={'body': comment},
-        )
+        _post_comment(github_client, pr_number)
 
     for issue in linked_issues:
         if not issue.get('milestone'):
             raise Exception(f'No milestone attached to issue number {issue.get("number")}')
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-p', '--pr-number', type=str, help='The number of the pull request')
+    args = parser.parse_args()
+    check_for_milestone(args.pr_number)

@@ -51,35 +51,6 @@ class GithubClient(BaseClient):
             url += f'/{id}'
         return url
 
-    def list(
-        self,
-        github_org: str,
-        repo: str,
-        resource: str,
-        query_params: dict | None = None,
-        timeout: int | None = None,
-    ):
-        """Get all values for a resource from a GitHub repository.
-
-        Args:
-            github_org (str):
-                The name of the GitHub organization to search.
-            repo (str):
-                The name of the repository to search.
-            resource (str):
-                The name of the resource we are getting. For example, issues. This means we'd be
-                making a request to https://api.github.com/repos/{github_org}/{repo}/{resource}.
-            query_params (dict):
-                A dictionary mapping any query parameters to the desired value. Defaults to None.
-            timeout (int):
-                How long to wait before the request times out. Defaults to None.
-
-        Returns:
-            requests.models.Response
-        """
-        url = self._construct_url(github_org, repo, resource)
-        return requests.get(url, headers=self.headers, params=query_params, timeout=timeout)
-
     def get(
         self,
         github_org: str,
@@ -96,8 +67,8 @@ class GithubClient(BaseClient):
             repo (str):
                 The name of the repository to search.
             endpoint (str):
-                The endpoint for the resource. For example, issues. This means we'd be
-                making a request to https://api.github.com/repos/{github_org}/{repo}/issues.
+                The endpoint for the resource. For example, issues/{issue_number}. This means we'd
+                be making a request to https://api.github.com/repos/{github_org}/{repo}/issues/{issue_number}.
             query_params (dict):
                 A dictionary mapping any query parameters to the desired value. Defaults to None.
             timeout (int):

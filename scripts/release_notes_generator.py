@@ -1,10 +1,9 @@
 """Script to generate release notes."""
 
 import argparse
-import os
 from collections import defaultdict
 
-import requests
+from scripts.github_client import GithubClient
 
 LABEL_TO_HEADER = {
     'feature request': 'New Features',
@@ -32,15 +31,13 @@ ISSUE_LABELS_ORDERED_BY_IMPORTANCE = [
     'maintenance',
 ]
 NEW_LINE = '\n'
-GITHUB_URL = 'https://api.github.com/repos/sdv-dev/sdv'
-GITHUB_TOKEN = os.getenv('GH_ACCESS_TOKEN')
 
 
-def _get_milestone_number(milestone_title):
-    url = f'{GITHUB_URL}/milestones'
-    headers = {'Authorization': f'Bearer {GITHUB_TOKEN}'}
+def _get_milestone_number(client, milestone_title):
     query_params = {'milestone': milestone_title, 'state': 'all', 'per_page': 100}
-    response = requests.get(url, headers=headers, params=query_params, timeout=10)
+    response = client.get(
+        github_org='sdv-dev', repo='sdv', endpoint='milestones', query_params=query_params
+    )
     body = response.json()
     if response.status_code != 200:
         raise Exception(str(body))
@@ -54,16 +51,21 @@ def _get_milestone_number(milestone_title):
 
 
 def _get_issues_by_milestone(milestone):
-    headers = {'Authorization': f'Bearer {GITHUB_TOKEN}'}
     # get milestone number
-    milestone_number = _get_milestone_number(milestone)
-    url = f'{GITHUB_URL}/issues'
+    client = GithubClient()
+    milestone_number = _get_milestone_number(client, milestone)
     page = 1
     query_params = {'milestone': milestone_number, 'state': 'all'}
     issues = []
     while True:
         query_params['page'] = page
-        response = requests.get(url, headers=headers, params=query_params, timeout=10)
+        response = client.get(
+            github_org='sdv-dev',
+            repo='sdv',
+            endpoint='issues',
+            query_params=query_params,
+            timeout=10,
+        )
         body = response.json()
         if response.status_code != 200:
             raise Exception(str(body))
