@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-import tomllib
+import tomli
 from packaging.requirements import Requirement
 
 
@@ -22,7 +22,7 @@ if __name__ == '__main__':
     toml_path = folder.joinpath('..', 'pyproject.toml')
 
     with open(toml_path, 'rb') as f:
-        pyproject = tomllib.load(f)
+        pyproject = tomli.load(f)
 
     dependencies = pyproject['project']['dependencies']
     optional_dependencies = pyproject['project'].get('optional-dependencies', {})

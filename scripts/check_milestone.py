@@ -4,25 +4,28 @@ import argparse
 
 from scripts.github_client import GithubClient, GithubGraphQLClient
 
-
-def _get_linked_issues(
-    github_client: GithubClient, graph_client: GithubGraphQLClient, pr_number: int
-):
-    query = """
-        query($owner: String!, $repo: String!, $prNumber: Int!) {
-            repository(owner: $owner, name: $repo) {
-                pullRequest(number: $prNumber) {
-                    closingIssuesReferences(first: 10) {
-                        nodes {
-                            number
-                        }
+CLOSING_ISSUES_QUERY = """
+    query($owner: String!, $repo: String!, $prNumber: Int!) {
+        repository(owner: $owner, name: $repo) {
+            pullRequest(number: $prNumber) {
+                closingIssuesReferences(first: 10) {
+                    nodes {
+                        number
                     }
                 }
             }
         }
-    """
-    pr_number = int(pr_number)
-    results = graph_client.query(query=query, owner='sdv-dev', repo='sdv', prNumber=pr_number)
+    }
+"""
+
+
+def _get_linked_issues(
+    github_client: GithubClient, graph_client: GithubGraphQLClient, pr_number: int
+):
+    pr_number = pr_number
+    results = graph_client.query(
+        query=CLOSING_ISSUES_QUERY, owner='sdv-dev', repo='sdv', prNumber=pr_number
+    )
     pr = results.json().get('data', {}).get('repository', {}).get('pullRequest', {})
     issues = pr.get('closingIssuesReferences', {}).get('nodes', [])
     issue_numbers = [issue['number'] for issue in issues]
@@ -34,7 +37,7 @@ def _get_linked_issues(
     return linked_issues
 
 
-def _post_comment(github_client: GithubClient, pr_number: str):
+def _post_comment(github_client: GithubClient, pr_number: int):
     comment = (
         'This Pull Request is not linked to an issue. To ensure our community is able to '
         'accurately track resolved issues, please link any that will be closed by this PR!'
@@ -47,11 +50,11 @@ def _post_comment(github_client: GithubClient, pr_number: str):
     )
 
 
-def check_for_milestone(pr_number: str):
+def check_for_milestone(pr_number: int):
     """Check that the pull request is linked to an issue and that the issue has a milestone.
 
     Args:
-        pr_number (str): The string representation of the Pull Request number.
+        pr_number (int): The string representation of the Pull Request number.
     """
     github_client = GithubClient()
     graphql_client = GithubGraphQLClient()
@@ -66,6 +69,6 @@ def check_for_milestone(pr_number: str):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--pr-number', type=str, help='The number of the pull request')
+    parser.add_argument('-p', '--pr-number', type=int, help='The number of the pull request')
     args = parser.parse_args()
     check_for_milestone(args.pr_number)
