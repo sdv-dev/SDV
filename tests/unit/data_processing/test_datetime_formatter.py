@@ -86,3 +86,43 @@ class TestDatetimeFormatter:
             '20220929111311000000',
         ])
         pd.testing.assert_series_equal(result, expected)
+
+    def test_format_data_datetime_dtype_returns_early(self):
+        """Test that if dtype is datetime64 and matches column, it returns early."""
+        # Setup
+        formatter = DatetimeFormatter('%Y-%m-%d')
+        column = pd.Series(pd.to_datetime(['2021-01-01', '2022-01-01']))
+        formatter._dtype = column.dtype
+
+        # Run
+        result = formatter.format_data(column)
+
+        # Assert
+        pd.testing.assert_series_equal(result, column)
+
+    def test_format_data_values_match_format_and_dtype(self):
+        """Test that if all values match the format and dtype matches, returns original."""
+        # Setup
+        column = pd.Series(['2023-01-01', '2023-01-02'])
+        formatter = DatetimeFormatter('%Y-%m-%d')
+        formatter._dtype = column.dtype  # Object
+
+        # Run
+        result = formatter.format_data(column)
+
+        # Assert
+        pd.testing.assert_series_equal(result, column)
+
+    def test_format_data_parsing_fallback_on_value_error(self):
+        """Test fallback formatting when parsing with format raises ValueError."""
+        # Setup
+        formatter = DatetimeFormatter('%Y/%m/%d')
+        formatter._dtype = 'O'
+        column = pd.Series(['2024-06-01', '2025-06-01'])  # does not match %Y/%m/%d
+
+        # Run
+        result = formatter.format_data(column)
+
+        # Assert
+        expected = pd.Series(['2024/06/01', '2025/06/01'])
+        pd.testing.assert_series_equal(result, expected)

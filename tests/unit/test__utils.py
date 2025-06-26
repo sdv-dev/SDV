@@ -15,6 +15,7 @@ from sdv._utils import (
     _compare_versions,
     _convert_to_timedelta,
     _create_unique_name,
+    _datetime_string_matches_format,
     _get_chars_for_option,
     _get_datetime_format,
     _get_root_tables,
@@ -832,3 +833,27 @@ def test__check_regex_format(mock_strings_from_regex):
 
     # Assert
     mock_strings_from_regex.assert_called_once_with(regex)
+
+
+@pytest.mark.parametrize(
+    'value, datetime_format, expected',
+    [
+        ('2023-06-01', '%Y-%m-%d', True),
+        ('2023-6-1', '%Y-%m-%d', False),
+        ('06/01/2023', '%Y-%m-%d', False),
+        (pd.NA, '%Y-%m-%d', True),
+        (None, '%Y-%m-%d', True),
+        (datetime(2023, 6, 1), '%Y-%m-%d', False),
+        (20230601, '%Y-%m-%d', False),
+        ('2023-06', '%Y-%m-%d', False),
+    ],
+)
+def test__datetime_string_matches_format(value, datetime_format, expected):
+    """Test `_datetime_string_matches_format` with various input types and formats."""
+    # Setup done by parametrize
+
+    # Run
+    result = _datetime_string_matches_format(value, datetime_format)
+
+    # Assert
+    assert result is expected
