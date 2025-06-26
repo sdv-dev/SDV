@@ -1,6 +1,12 @@
 name: Check Milestone
 
 on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: The PR number
+        required: true
+
   pull_request:
     types:
       - opened
@@ -23,11 +29,12 @@ jobs:
             python -m pip install requests==2.31.0
             python -m pip install .[dev]
 
-      - name: Check for prerelease dependencies
-        run: python scripts/check_for_prereleases.py
+      - name: Get PR number
+        run: |
+            echo "PR_NUMBER=${{ inputs.pr_number ||  github.event.number }}" >> $GITHUB_ENV
 
       - name: Check milestone
         env:
             GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
         run: >
-            python -m scripts.check_milestone -p ${{ github.event.number }}
+            python -m scripts.check_milestone -p ${{ env.PR_NUMBER }}
