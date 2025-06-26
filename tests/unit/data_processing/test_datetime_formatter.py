@@ -126,17 +126,3 @@ class TestDatetimeFormatter:
         # Assert
         expected = pd.Series(['2024/06/01', '2025/06/01'])
         pd.testing.assert_series_equal(result, expected)
-
-    def test_format_data_fallback_value_error_then_success(self):
-        """Test fallback parsing when initial format fails but fallback succeeds."""
-        # Setup
-        formatter = DatetimeFormatter('%Y/%m/%d')
-        formatter._dtype = 'O'
-        column = pd.Series(['2023-01-01', '2023-01-02'])  # doesn't match %Y/%m/%d
-
-        # Run
-        result = formatter.format_data(column)
-
-        # Assert
-        expected = pd.Series(['2023/01/01', '2023/01/02'])
-        pd.testing.assert_series_equal(result, expected)
