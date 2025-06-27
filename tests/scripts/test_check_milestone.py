@@ -20,8 +20,8 @@ def test_check_for_milestone(mock_github_client, mock_github_graph_ql_client):
     }
     mock_get_result = Mock()
     mock_get_result.json.side_effect = [
-        {'number': 1234, 'milestone': '1.1.1'},
-        {'number': 1235, 'milestone': '1.1.1'},
+        {'number': 1234, 'milestone': {'title': '1.1.1'}},
+        {'number': 1235, 'milestone': {'title': '1.1.1'}},
     ]
     mock_github_graph_ql_client.return_value.query.return_value = mock_query_result
     mock_github_client.return_value.get.return_value = mock_get_result
@@ -82,8 +82,8 @@ def test_check_for_milestone_different_milestones(mock_github_client, mock_githu
     }
     mock_get_result = Mock()
     mock_get_result.json.side_effect = [
-        {'number': 1234, 'milestone': '1.1.1'},
-        {'number': 1235, 'milestone': '1.1.2'},
+        {'number': 1234, 'milestone': {'title': '1.1.1'}},
+        {'number': 1235, 'milestone': {'title': '1.1.2'}},
     ]
     mock_github_graph_ql_client.return_value.query.return_value = mock_query_result
     mock_github_client.return_value.get.return_value = mock_get_result
