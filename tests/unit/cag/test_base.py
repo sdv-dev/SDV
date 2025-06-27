@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag.base import BaseConstraint
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.numerical_formatter import NumericalFormatter
@@ -203,17 +202,18 @@ class TestBaseConstraint:
         mock_format_invalid_values_string.return_value = re.escape(
             'checkin_date checkout_date\n0  31 Dec 2020   29 Dec 2020'
         )
-        expected_error_message = re.escape(
+        expected_error_message = (
             "Data is not valid for the 'BaseConstraint' constraint in table "
             "'test_table':\ncheckin_date\\ checkout_date\\\n0\\ \\ 31\\ Dec\\ 2020\\"
             ' \\ \\ 29\\ Dec\\ 2020'
         )
 
-        # Run and Assert
-        with pytest.raises(ConstraintNotMetError, match=expected_error_message):
-            constraint._format_error_message_constraint(invalid_data, table_name)
+        # Run
+        message = constraint._format_error_message_constraint(invalid_data, table_name)
 
+        # Assert
         mock_format_invalid_values_string.assert_called_once_with(invalid_data, 5)
+        assert message == expected_error_message
 
     def test__fit_constraint_column_formatters(self):
         """Test the `_fit_constraint_column_formatters` fits formatters for dropped columns."""

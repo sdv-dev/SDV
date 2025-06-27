@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 
 from sdv._utils import _format_invalid_values_string
-from sdv.cag._errors import ConstraintNotMetError
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.errors import NotFittedError
@@ -56,7 +55,7 @@ class BaseConstraint:
     def _format_error_message_constraint(self, invalid_data, table_name):
         """Format the error message for the constraints."""
         invalid_rows_str = _format_invalid_values_string(invalid_data, 5)
-        raise ConstraintNotMetError(
+        return (
             f"Data is not valid for the '{self.__class__.__name__}' constraint in "
             f"table '{table_name}':\n{invalid_rows_str}"
         )

@@ -147,7 +147,8 @@ class Inequality(BaseConstraint):
         valid = self._get_valid_table_data(data[table_name], metadata, table_name)
         if not valid.all():
             invalid_rows = data.loc[~valid, [self._low_column_name, self._high_column_name]]
-            self._format_error_message_constraint(invalid_rows, table_name)
+            error_message = self._format_error_message_constraint(invalid_rows, table_name)
+            raise ConstraintNotMetError(error_message)
 
     def _get_diff_and_nan_column_names(self, metadata, column_name, table_name):
         """Get the column names for the difference and NaN columns.

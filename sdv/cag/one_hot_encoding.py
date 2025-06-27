@@ -2,6 +2,7 @@
 
 import numpy as np
 
+from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _get_is_valid_dict,
     _is_list_of_type,
@@ -73,7 +74,8 @@ class OneHotEncoding(BaseConstraint):
         valid = self._get_valid_table_data(data[table_name])
         if not valid.all():
             invalid_rows = data[table_name].loc[~valid, self._column_names]
-            self._format_error_message_constraint(invalid_rows, table_name)
+            error_message = self._format_error_message_constraint(invalid_rows, table_name)
+            raise ConstraintNotMetError(error_message)
 
     def _fit(self, data, metadata):
         """Fit the constraint.

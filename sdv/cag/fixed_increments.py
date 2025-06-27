@@ -113,7 +113,8 @@ class FixedIncrements(BaseConstraint):
         if not valid.all():
             table_name = self._get_single_table_name(metadata)
             invalid_rows = data[table_name].loc[~valid, [self.column_name]]
-            self._format_error_message_constraint(invalid_rows, table_name)
+            error_message = self._format_error_message_constraint(invalid_rows, table_name)
+            raise ConstraintNotMetError(error_message)
 
     def _get_updated_metadata(self, metadata):
         """Get the updated metadata after applying the constraint to the metadata.
