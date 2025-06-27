@@ -40,7 +40,7 @@ def _get_linked_issues(
 def _post_comment(github_client: GithubClient, pr_number: int):
     comment = (
         'This Pull Request is not linked to an issue. To ensure our community is able to '
-        'accurately track resolved issues, please link any that will be closed by this PR!'
+        'accurately track resolved issues, please link any issue that will be closed by this PR!'
     )
     github_client.post(
         github_org='sdv-dev',
