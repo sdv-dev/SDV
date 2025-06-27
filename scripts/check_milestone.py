@@ -62,9 +62,16 @@ def check_for_milestone(pr_number: int):
     if not linked_issues:
         _post_comment(github_client, pr_number)
 
+    milestones = set()
     for issue in linked_issues:
-        if not issue.get('milestone'):
+        milestone = issue.get('milestone')
+        if not milestone:
             raise Exception(f'No milestone attached to issue number {issue.get("number")}')
+
+        milestones.add(milestone)
+
+    if len(milestones) > 1:
+        raise Exception('This PR resolves issues with multiple different milestones.')
 
 
 if __name__ == '__main__':
