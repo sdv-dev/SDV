@@ -2662,7 +2662,10 @@ def test_end_to_end_with_cags():
     data['guests'] = clean_data
     invalid_data = data.copy()
     invalid_data['guests'] = data_invalid
-    expected_error_msg = re.escape('The inequality requirement is not met for row indices: [0]')
+    expected_error_msg = re.escape(
+        "Data is not valid for the 'Inequality' constraint in table 'guests':\n   amenities_lower"
+        '  amenities_fee\n0            38.89          37.89'
+    )
 
     # Run
     synthesizer.fit(data)

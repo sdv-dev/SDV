@@ -164,7 +164,10 @@ class TestInequality:
         })
 
         # Run and Assert
-        err_msg = re.escape('The inequality requirement is not met for row indices: [1]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Inequality' constraint in table 'table':\n   low  "
+            'high\n1    2     0'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -195,7 +198,8 @@ class TestInequality:
 
         # Run and Assert
         err_msg = re.escape(
-            'The inequality requirement is not met for row indices: [1, 4, 6, 7, 8, +1 more]'
+            "Data is not valid for the 'Inequality' constraint in table 'table':\n   low  "
+            'high\n1    2     0\n4    5     0\n6    7     4\n7    8     0\n8    9     6\n+1 more'
         )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
@@ -227,7 +231,10 @@ class TestInequality:
         })
 
         # Run and Assert
-        err_msg = re.escape('The inequality requirement is not met for row indices: [2, 5]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Inequality' constraint in table 'table':\n"
+            '   low  high\n2  3.0   2.0\n5  6.0  -6.0'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -262,7 +269,10 @@ class TestInequality:
         })
 
         # Run and Assert
-        err_msg = re.escape('The inequality requirement is not met for row indices: [2, 3, 5]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Inequality' constraint in table 'table':\n   low"
+            '  high\n2  3.0   2.0\n3  4.0   4.0\n5  6.0  -6.0'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -297,7 +307,10 @@ class TestInequality:
         })
 
         # Run and Assert
-        err_msg = re.escape('The inequality requirement is not met for row indices: [1]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Inequality' constraint in table 'table':\n "
+            '        low       high\n1 2021-09-01 2020-09-02'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -332,7 +345,10 @@ class TestInequality:
         })
 
         # Run and Assert
-        err_msg = re.escape('The inequality requirement is not met for row indices: [1]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Inequality' constraint in table 'table':\n"
+            '        low      high\n1  2021-9-1  2020-9-2'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -397,7 +413,11 @@ class TestInequality:
         })
 
         # Run and Assert
-        err_msg = re.escape('The inequality requirement is not met for row indices: [0, 2]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Inequality' constraint in table 'table':\n   "
+            '                low        high\n0  2016-07-10 17:04:00  2016-07-10\n2  '
+            '2016-07-12 08:45:30  2016-07-12'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 

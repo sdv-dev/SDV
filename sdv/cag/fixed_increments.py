@@ -5,7 +5,6 @@ import pandas as pd
 from sdv._utils import _create_unique_name
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
-    _get_invalid_rows,
     _get_is_valid_dict,
     _remove_columns_from_metadata,
     _validate_table_and_column_names,
@@ -112,12 +111,10 @@ class FixedIncrements(BaseConstraint):
             data, self._get_single_table_name(metadata), self.column_name, self.increment_value
         )
         if not valid.all():
-            invalid_rows_str = _get_invalid_rows(valid)
-            raise ConstraintNotMetError(
-                'The fixed increments requirement has not been met because the data is not '
-                f"evenly divisible by '{self.increment_value}' for row indices: "
-                f'[{invalid_rows_str}]'
-            )
+            table_name = self._get_single_table_name(metadata)
+            invalid_rows = data[table_name].loc[~valid, [self.column_name]]
+            error_message = self._format_error_message_constraint(invalid_rows, table_name)
+            raise ConstraintNotMetError(error_message)
 
     def _get_updated_metadata(self, metadata):
         """Get the updated metadata after applying the constraint to the metadata.

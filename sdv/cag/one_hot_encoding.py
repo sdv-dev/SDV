@@ -4,7 +4,6 @@ import numpy as np
 
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
-    _get_invalid_rows,
     _get_is_valid_dict,
     _is_list_of_type,
     _validate_table_and_column_names,
@@ -74,10 +73,9 @@ class OneHotEncoding(BaseConstraint):
         table_name = self._get_single_table_name(metadata)
         valid = self._get_valid_table_data(data[table_name])
         if not valid.all():
-            invalid_rows_str = _get_invalid_rows(valid)
-            raise ConstraintNotMetError(
-                f'The one hot encoding requirement is not met for row indices: [{invalid_rows_str}]'
-            )
+            invalid_rows = data[table_name].loc[~valid, self._column_names]
+            error_message = self._format_error_message_constraint(invalid_rows, table_name)
+            raise ConstraintNotMetError(error_message)
 
     def _fit(self, data, metadata):
         """Fit the constraint.

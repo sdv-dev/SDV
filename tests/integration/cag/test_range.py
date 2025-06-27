@@ -509,6 +509,25 @@ def test_validate_constraints_raises(data, metadata, constraint):
         synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
 
+def test_invalid_data(data, metadata, constraint):
+    """Test validate_constraints raises an error with bad synthetic data with Range."""
+    # Setup
+    invalid_data = pd.DataFrame({
+        'A': data['B'],
+        'B': data['A'],
+        'C': data['C'],
+    })
+    msg = re.escape(
+        "Data is not valid for the 'Range' constraint in table 'table':\n"
+        '    A  B    C\n0  10  1  100\n1  20  2  200\n2  30  3  300\n3  10'
+        '  1  100\n4  20  2  200\n+1 more'
+    )
+
+    # Run and Assert
+    with pytest.raises(ConstraintNotMetError, match=msg):
+        run_copula(invalid_data, metadata, [constraint])
+
+
 def test_validate_constraints_multi(data_multi, metadata_multi, constraint_multi):
     """Test validate_constraints with data generated with Range with multitable numerical data."""
     synthesizer = run_hma(data_multi, metadata_multi, [constraint_multi])
