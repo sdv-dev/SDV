@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
             python -m pip install --upgrade pip
-            python -m pip install requests==2.31.0
+            python -m pip install requests
             python -m pip install .[dev]
 
       - name: Check milestone
