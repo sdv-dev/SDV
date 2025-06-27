@@ -46,6 +46,7 @@ from sdv.constraints.errors import (
     InvalidFunctionError,
 )
 from sdv.constraints.utils import (
+    _warn_if_timezone_aware_formats,
     cast_to_datetime64,
     compute_nans_column,
     get_datetime_diff,
@@ -469,6 +470,8 @@ class Inequality(Constraint):
             self._high_datetime_format = self.metadata.columns[self._high_column_name].get(
                 'datetime_format'
             )
+            formats = [self._low_datetime_format, self._high_datetime_format]
+            _warn_if_timezone_aware_formats(formats)
 
     def is_valid(self, table_data):
         """Check whether ``high`` is greater than ``low`` in each row.
@@ -698,6 +701,7 @@ class ScalarInequality(Constraint):
         self._is_datetime = self._get_is_datetime()
         if self._is_datetime:
             self._datetime_format = self.metadata.columns[self._column_name].get('datetime_format')
+            _warn_if_timezone_aware_formats([self._datetime_format])
 
     def is_valid(self, table_data):
         """Say whether ``high`` is greater than ``low`` in each row.
@@ -931,6 +935,8 @@ class Range(Constraint):
             self._high_datetime_format = self.metadata.columns[self.high_column_name].get(
                 'datetime_format'
             )
+            formats = [self._low_datetime_format, self._high_datetime_format]
+            _warn_if_timezone_aware_formats(formats)
 
         self.low_diff_column_name = f'{self.low_column_name}#{self.middle_column_name}'
         self.high_diff_column_name = f'{self.middle_column_name}#{self.high_column_name}'
@@ -1188,6 +1194,7 @@ class ScalarRange(Constraint):
             self._high_value = cast_to_datetime64(
                 self._high_value, datetime_format=self._datetime_format
             )
+            _warn_if_timezone_aware_formats([self._datetime_format])
 
     def is_valid(self, table_data):
         """Say whether the ``column_name`` is between the ``low`` and ``high`` values.

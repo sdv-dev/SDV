@@ -1,6 +1,7 @@
 """Constraint utility functions."""
 
 import re
+import warnings
 from datetime import datetime
 from decimal import Decimal
 
@@ -35,34 +36,45 @@ PRECISION_LEVELS = {
 }
 
 
-def cast_to_datetime64(value, datetime_format=None):
+def cast_to_datetime64(value, datetime_format=None, ignore_timezone=True):
     """Cast a given value to a ``numpy.datetime64`` format.
 
     Args:
         value (pandas.Series, np.ndarray, list, or str):
-            Input data to convert to ``numpy.datetime64``.
-        datetime_format (str):
+            Input data to convert.
+        datetime_format (str, optional):
             Datetime format of the `value`.
+        ignore_timezone (bool):
+            If True, strips `%z` or `%Z` from the format and removes tzinfo.
 
-    Return:
-        ``numpy.datetime64`` value or values.
+    Returns:
+        numpy.datetime64, pandas.Series, or numpy.ndarray of datetime64
     """
     if datetime_format:
         datetime_format = datetime_format.replace('%-', '%')
 
-    if isinstance(value, str):
-        value = pd.to_datetime(value, format=datetime_format).to_datetime64()
-    elif isinstance(value, pd.Series):
-        value = value.astype('datetime64[ns]')
-    elif isinstance(value, (np.ndarray, list)):
-        value = np.array([
-            pd.to_datetime(item, format=datetime_format).to_datetime64()
-            if not pd.isna(item)
-            else pd.NaT.to_datetime64()
-            for item in value
-        ])
+    def _parse(value):
+        if pd.isna(value):
+            return pd.NaT.to_datetime64()
 
-    return value
+        dt = pd.to_datetime(value, format=datetime_format, errors='coerce')
+        if ignore_timezone and hasattr(dt, 'tz_localize'):
+            dt = dt.tz_localize(None)
+
+        return dt.to_datetime64()
+
+    if isinstance(value, str):
+        return _parse(value)
+
+    elif isinstance(value, pd.Series):
+        dt_series = pd.to_datetime(value, format=datetime_format, errors='coerce')
+        if ignore_timezone and hasattr(dt_series.dt, 'tz_localize'):
+            dt_series = dt_series.dt.tz_localize(None)
+
+        return dt_series.astype('datetime64[ns]')
+
+    elif isinstance(value, (np.ndarray, list)):
+        return np.array([_parse(val) for val in value])
 
 
 def matches_datetime_format(value, datetime_format):
@@ -352,3 +364,13 @@ def format_datetime_array(datetime_array, target_format):
         pd.to_datetime(date).strftime(target_format) if not pd.isna(date) else pd.NaT
         for date in datetime_array
     ])
+
+
+def _warn_if_timezone_aware_formats(formats):
+    if any(dt_format and ('%z' in dt_format or '%Z' in dt_format) for dt_format in formats):
+        warnings.warn(
+            'Timezone information in datetime formats will be ignored when evaluating '
+            'constraints. All datetime values will be treated as naive (timezone-unaware). '
+            'Support for timezone-aware constraints will be added in a future release.',
+            UserWarning,
+        )

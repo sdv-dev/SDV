@@ -8,6 +8,7 @@ import pandas as pd
 
 from sdv.constraints.utils import (
     _cast_to_type,
+    _warn_if_timezone_aware_formats,
     cast_to_datetime64,
     compute_nans_column,
     downcast_datetime_to_lower_precision,
@@ -169,6 +170,37 @@ def test_cast_to_datetime64_datetime_format():
     expected_list_output = np.array(
         [np.datetime64('NaT'), np.datetime64('NaT'), '2021-02-02'], dtype='datetime64[ns]'
     )
+    np.testing.assert_array_equal(expected_list_output, list_out)
+    pd.testing.assert_series_equal(expected_series_output, series_out)
+    assert expected_string_output == string_out
+
+
+def test_cast_to_datetime64_ignore_timezone():
+    """Test `cast_to_datetime64` with timezone-aware inputs and ignore_timezone=True."""
+    # Setup
+    string_value = '2021-02-02 10:00:00 -0500'
+    list_value = [None, np.nan, '2021-02-02 10:00:00 -0500']
+    series_value = pd.Series(['2021-02-02 10:00:00 -0500', None, pd.NaT])
+
+    datetime_format = '%Y-%m-%d %H:%M:%S %z'
+
+    # Run
+    string_out = cast_to_datetime64(string_value, datetime_format=datetime_format)
+    list_out = cast_to_datetime64(list_value, datetime_format=datetime_format)
+    series_out = cast_to_datetime64(series_value, datetime_format=datetime_format)
+
+    # Assert
+    expected_string_output = np.datetime64('2021-02-02T10:00:00')
+    expected_series_output = pd.Series([
+        np.datetime64('2021-02-02T10:00:00'),
+        np.datetime64('NaT'),
+        np.datetime64('NaT'),
+    ])
+    expected_list_output = np.array(
+        [np.datetime64('NaT'), np.datetime64('NaT'), np.datetime64('2021-02-02T10:00:00')],
+        dtype='datetime64[ns]',
+    )
+
     np.testing.assert_array_equal(expected_list_output, list_out)
     pd.testing.assert_series_equal(expected_series_output, series_out)
     assert expected_string_output == string_out
@@ -573,3 +605,34 @@ def test_match_datetime_precision_high_has_higher_precision(mock_downcast):
     mock_downcast.assert_called_once_with(high, low_format)
     np.testing.assert_array_equal(result_low, low)
     np.testing.assert_array_equal(result_high, expected_high)
+
+
+@patch('sdv.constraints.utils.warnings.warn')
+def test_warn_if_timezone_aware_formats_warns(mock_warn):
+    """Test it calls warnings.warn if timezone-aware format is detected."""
+    # Setup
+    formats_with_timezone = ['%Y-%m-%d %H:%M:%S%z', None, '%Y %m %d %Z']
+
+    # Run
+    _warn_if_timezone_aware_formats(formats_with_timezone)
+
+    # Assert
+    expected_message = (
+        'Timezone information in datetime formats will be ignored when evaluating '
+        'constraints. All datetime values will be treated as naive (timezone-unaware). '
+        'Support for timezone-aware constraints will be added in a future release.'
+    )
+    mock_warn.assert_called_once_with(expected_message, UserWarning)
+
+
+@patch('sdv.constraints.utils.warnings.warn')
+def test_warn_if_timezone_aware_formats_no_warning(mock_warn):
+    """Test it does not call warnings.warn if all formats are timezone-naive."""
+    # Setup
+    formats_without_timezone = ['%Y-%m-%d', '%d %b %Y', None]
+
+    # Run
+    _warn_if_timezone_aware_formats(formats_without_timezone)
+
+    # Assert
+    mock_warn.assert_not_called()

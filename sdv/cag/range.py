@@ -18,6 +18,7 @@ from sdv.cag._utils import (
 )
 from sdv.cag.base import BaseConstraint
 from sdv.constraints.utils import (
+    _warn_if_timezone_aware_formats,
     cast_to_datetime64,
     compute_nans_column,
     get_datetime_diff,
@@ -236,6 +237,8 @@ class Range(BaseConstraint):
             self._high_datetime_format = self._get_datetime_format(
                 metadata, table_name, self._high_column_name
             )
+            formats = [self._low_datetime_format, self._high_datetime_format]
+            _warn_if_timezone_aware_formats(formats)
 
         (
             self._fillna_low_column_name,
@@ -339,12 +342,20 @@ class Range(BaseConstraint):
         low = table_data[self._low_column_name].to_numpy()
         if self._is_datetime and is_object_dtype(self._dtype):
             low = cast_to_datetime64(low, self._low_datetime_format)
+            middle = pd.Series(low_diff_column + low).astype(self._dtype)
+            high = pd.Series(high_diff_column + middle.to_numpy()).astype(self._dtype)
+            table_data[self._middle_column_name] = cast_to_datetime64(
+                middle, self._middle_datetime_format
+            )
+            table_data[self._high_column_name] = cast_to_datetime64(
+                high, self._high_datetime_format
+            )
 
-        middle = pd.Series(low_diff_column + low).astype(self._dtype)
-        table_data[self._middle_column_name] = middle
-        table_data[self._high_column_name] = pd.Series(high_diff_column + middle.to_numpy()).astype(
-            self._dtype
-        )
+        else:
+            middle = pd.Series(low_diff_column + low).astype(self._dtype)
+            high = pd.Series(high_diff_column + middle.to_numpy()).astype(self._dtype)
+            table_data[self._middle_column_name] = middle
+            table_data[self._high_column_name] = high
 
         table_data = revert_nans_columns(table_data, self._nan_column_name)
 

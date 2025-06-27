@@ -576,6 +576,52 @@ class TestInequality:
         assert instance._high_datetime_format is None
         assert instance._diff_column_name == 'a#b'
 
+    @patch('sdv.cag.inequality._warn_if_timezone_aware_formats')
+    def test__fit_warns_if_datetime(self, mock__warn_if_timezone):
+        """Test _fit learns the correct attributes and warns if datetime with timezone."""
+        # Setup
+        data = {
+            'table': pd.DataFrame({
+                'a': [1, 2, 4],
+                'b': [4, 5, 6],
+            })
+        }
+
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'a': {'sdtype': 'datetime', 'datetime_format': '%y %m, %d %z'},
+                        'b': {'sdtype': 'datetime', 'datetime_format': '%y %m %d'},
+                    },
+                }
+            }
+        })
+
+        instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
+        instance._get_diff_and_nan_column_names = Mock(
+            return_value=('a.fillna', 'a#b', 'a#b.nan_component')
+        )
+        instance._get_is_datetime = Mock(return_value=True)
+        instance._get_datetime_format = Mock(side_effect=['%y %m, %d %z', '%y %m %d'])
+
+        # Run
+        instance._fit(data, metadata)
+
+        # Assert internal state
+        assert instance._is_datetime is True
+        assert instance._dtype == data['table']['b'].dtype
+        assert instance._low_datetime_format == '%y %m, %d %z'
+        assert instance._high_datetime_format == '%y %m %d'
+        assert instance._diff_column_name == 'a#b'
+        assert instance._nan_column_name == 'a#b.nan_component'
+        instance._get_diff_and_nan_column_names.assert_called_once_with(metadata, 'a#b', 'table')
+        instance._get_datetime_format.assert_any_call(metadata, 'table', 'a')
+        instance._get_datetime_format.assert_any_call(metadata, 'table', 'b')
+
+        # Assert
+        mock__warn_if_timezone.assert_called_once_with(['%y %m, %d %z', '%y %m %d'])
+
     def test__transform(self):
         """Test it transforms the data correctly."""
         # Setup
@@ -872,11 +918,12 @@ class TestInequality:
         # Assert
         out = out['table']
         expected_out = pd.DataFrame({
-            'a': ['2020-01-01T00:00:00', '2020-01-02T00:00:00'],
+            'a': [pd.Timestamp('2020-01-01 00:00:00'), pd.Timestamp('2020-01-02 00:00:00')],
             'b': [pd.Timestamp('2020-01-01 00:00:01'), pd.Timestamp('2020-01-02 00:00:01')],
             'c': [1, 2],
         })
         expected_out['b'] = expected_out['b'].astype(np.dtype('O'))
+        expected_out['a'] = expected_out['a'].astype(np.dtype('O'))
         pd.testing.assert_frame_equal(out, expected_out)
 
     def test__is_valid(self):
