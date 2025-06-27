@@ -68,7 +68,7 @@ def check_for_milestone(pr_number: int):
         if not milestone:
             raise Exception(f'No milestone attached to issue number {issue.get("number")}')
 
-        milestones.add(milestone)
+        milestones.add(milestone.get('title'))
 
     if len(milestones) > 1:
         raise Exception('This PR resolves issues with multiple different milestones.')
