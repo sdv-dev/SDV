@@ -683,6 +683,51 @@ class TestRange:
         assert instance._low_diff_column_name == 'a#b'
         assert instance._high_diff_column_name == 'b#c'
 
+    @patch('sdv.cag.range._warn_if_timezone_aware_formats')
+    def test__fit_datetime_mixed_warns_if_timezone(self, mock_warn):
+        """Test _fit for datetime columns and assert timezone warning is triggered."""
+        # Setup
+        table_data = {
+            'table': pd.DataFrame({
+                'a': ['2020-01-01'],
+                'b': [datetime(2020, 1, 2)],
+                'c': ['2020 01 03'],
+            })
+        }
+
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'a': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                        'b': {'sdtype': 'datetime'},  # no format
+                        'c': {'sdtype': 'datetime', 'datetime_format': '%Y %m %d %z'},
+                    },
+                }
+            }
+        })
+
+        instance = Range(
+            low_column_name='a',
+            middle_column_name='b',
+            high_column_name='c',
+            table_name='table',
+        )
+
+        # Run
+        instance._fit(table_data, metadata)
+
+        # Assert
+        assert instance._dtype == np.dtype('O')
+        assert instance._is_datetime is True
+        assert instance._low_datetime_format == '%Y-%m-%d'
+        assert instance._middle_datetime_format is None
+        assert instance._high_datetime_format == '%Y %m %d %z'
+        assert instance._low_diff_column_name == 'a#b'
+        assert instance._high_diff_column_name == 'b#c'
+        assert instance._nan_column_name == 'a#b#c.nan_component'
+        mock_warn.assert_called_once_with(['%Y-%m-%d', '%Y %m %d %z'])
+
     def test__transform(self):
         """Test it transforms the data correctly."""
         # Setup
