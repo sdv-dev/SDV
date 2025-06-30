@@ -17,21 +17,22 @@ CLOSING_ISSUES_QUERY = """
         }
     }
 """
-
+OWNER = 'sdv-dev'
+REPO = 'sdv'
 
 def _get_linked_issues(
     github_client: GithubClient, graph_client: GithubGraphQLClient, pr_number: int
 ):
     pr_number = pr_number
     results = graph_client.query(
-        query=CLOSING_ISSUES_QUERY, owner='sdv-dev', repo='sdv', prNumber=pr_number
+        query=CLOSING_ISSUES_QUERY, owner=OWNER, repo=REPO, prNumber=pr_number
     )
     pr = results.json().get('data', {}).get('repository', {}).get('pullRequest', {})
     issues = pr.get('closingIssuesReferences', {}).get('nodes', [])
     issue_numbers = [issue['number'] for issue in issues]
     linked_issues = []
     for number in issue_numbers:
-        issue = github_client.get(github_org='sdv-dev', repo='sdv', endpoint=f'issues/{number}')
+        issue = github_client.get(github_org=OWNER, repo=REPO, endpoint=f'issues/{number}')
         linked_issues.append(issue.json())
 
     return linked_issues
@@ -43,8 +44,8 @@ def _post_comment(github_client: GithubClient, pr_number: int):
         'accurately track resolved issues, please link any issue that will be closed by this PR!'
     )
     github_client.post(
-        github_org='sdv-dev',
-        repo='sdv',
+        github_org=OWNER,
+        repo=REPO,
         endpoint=f'issues/{pr_number}/comments',
         payload={'body': comment},
     )

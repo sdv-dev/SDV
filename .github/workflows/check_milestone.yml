@@ -8,8 +8,9 @@ on:
       - reopened
 
 jobs:
-  preparerelease:
+  checkmilestone:
     runs-on: ubuntu-latest
+    if: ${{ !startsWith(github.head_ref, 'latest-dependency-update-') }}
     steps:
       - uses: actions/checkout@v4
       - name: Set up latest Python
