@@ -207,7 +207,10 @@ class TestRange:
         })
 
         # Run and Assert
-        err_msg = re.escape('The range requirement is not met for row indices: [1]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Range' constraint in table 'table':\n"
+            '   low  middle  high\n1    2      -1     8'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -245,7 +248,9 @@ class TestRange:
 
         # Run and Assert
         err_msg = re.escape(
-            'The range requirement is not met for row indices: [1, 4, 6, 7, 8, +1 more]'
+            "Data is not valid for the 'Range' constraint in table 'table':\n   low"
+            '  middle  high\n1    2       0     0\n4    5       8    -1\n6   10'
+            '      10    13\n7   12      11    14\n8    9       9     9\n+1 more'
         )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
@@ -283,7 +288,10 @@ class TestRange:
         })
 
         # Run and Assert
-        err_msg = re.escape('The range requirement is not met for row indices: [2, 3, 5]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Range' constraint in table 'table':\n   low"
+            '  middle  high\n2  3.0     2.0   9.0\n3  4.0     4.0  10.0\n5  6.0    -6.0  12.0'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -321,7 +329,10 @@ class TestRange:
         })
 
         # Run and Assert
-        err_msg = re.escape('The range requirement is not met for row indices: [2, 5]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Range' constraint in table 'table':\n   low"
+            '  middle  high\n2  3.0     2.0   2.0\n5  6.0    -6.0  -6.0'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -359,7 +370,10 @@ class TestRange:
         })
 
         # Run and Assert
-        err_msg = re.escape('The range requirement is not met for row indices: [1]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Range' constraint in table 'table':\n    "
+            '     low     middle       high\n1 2021-09-01 2021-09-01 2020-09-02'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -397,7 +411,10 @@ class TestRange:
         })
 
         # Run and Assert
-        err_msg = re.escape('The range requirement is not met for row indices: [1]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Range' constraint in table 'table':\n  "
+            '        low      middle        high\n1  2021-09-01  2021-09-01  2020-09-02'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -435,7 +452,10 @@ class TestRange:
         })
 
         # Run and Assert
-        err_msg = re.escape('The range requirement is not met for row indices: [1]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Range' constraint in table 'table':\n  "
+            '        low      middle        high\n1  2021-09-01  2021-09-01  2020-09-02'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 

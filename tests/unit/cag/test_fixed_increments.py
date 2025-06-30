@@ -183,14 +183,16 @@ class TestFixedIncremenets:
         instance = FixedIncrements(
             column_name=column_name, increment_value=increment_value, table_name=table_name
         )
-        indices = data[table_name].index.tolist()
-        if len(indices) > 5:
-            indices = '[0, 1, 2, 3, 4, +2 more]'
-        err_msg = re.escape(
-            'The fixed increments requirement has not been met because the data is not '
-            f"evenly divisible by '{increment_value}' "
-            f'for row indices: {indices}'
-        )
+        if len(data[table_name]) > 5:
+            err_msg = re.escape(
+                "Data is not valid for the 'FixedIncrements' constraint in table 'table1':\n   "
+                'odd\n0    1\n1    3\n2    5\n3    7\n4    9\n+2 more'
+            )
+        else:
+            err_msg = re.escape(
+                "Data is not valid for the 'FixedIncrements' constraint in table 'table1':\n   "
+                'odd\n0    1\n1    3\n2    5\n3    7'
+            )
 
         # Run and Assert
         with pytest.raises(ConstraintNotMetError, match=err_msg):
