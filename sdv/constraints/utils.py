@@ -84,7 +84,12 @@ def _parse_datetime(value, datetime_format, ignore_timezone):
 
     elif ignore_timezone and hasattr(parsed_value, 'tz_localize'):
         if isinstance(parsed_value, (list, tuple, pd.Series, np.ndarray)):
-            parsed_value = [new_value.tz_localize(None) for new_value in parsed_value]
+            parsed_value = [
+                new_value.replace(tzinfo=None) if isinstance(new_value, datetime)
+                else new_value.tz_localize(None)
+                for new_value in parsed_value
+            ]
+
         else:
             parsed_value = parsed_value.tz_localize(None)
 
