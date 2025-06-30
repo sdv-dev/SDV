@@ -20,6 +20,7 @@ CLOSING_ISSUES_QUERY = """
 OWNER = 'sdv-dev'
 REPO = 'sdv'
 
+
 def _get_linked_issues(
     github_client: GithubClient, graph_client: GithubGraphQLClient, pr_number: int
 ):
