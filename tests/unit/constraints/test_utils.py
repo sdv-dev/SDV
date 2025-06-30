@@ -8,6 +8,8 @@ import pandas as pd
 
 from sdv.constraints.utils import (
     _cast_to_type,
+    _parse_datetime,
+    _parse_datetime64_value,
     _warn_if_timezone_aware_formats,
     cast_to_datetime64,
     compute_nans_column,
@@ -636,3 +638,69 @@ def test_warn_if_timezone_aware_formats_no_warning(mock_warn):
 
     # Assert
     mock_warn.assert_not_called()
+
+
+def test__parse_datetime64_value():
+    """Test `_parse_datetime64_value` with valid date string and format."""
+    # Setup
+    value = '2021-02-02'
+    expected = np.datetime64('2021-02-02')
+
+    # Run
+    result = _parse_datetime64_value(value, datetime_format='%Y-%m-%d')
+
+    # Assert
+    assert result == expected
+
+
+def test__parse_datetime64_value_with_nat():
+    """Test `_parse_datetime64_value` with NaN input returns NaT."""
+    # Run
+    result_none = _parse_datetime64_value(None)
+    result_nan = _parse_datetime64_value(np.nan)
+
+    # Assert
+    assert np.isnat(result_none)
+    assert np.isnat(result_nan)
+
+
+def test__parse_datetime64_value_ignores_timezone():
+    """Test `_parse_datetime64_value` strips timezone info when ignore_timezone=True."""
+    # Setup
+    value = '2021-02-02 15:00:00+0200'
+    dt_format = '%Y-%m-%d %H:%M:%S%z'
+
+    # Run
+    result = _parse_datetime64_value(value, datetime_format=dt_format, ignore_timezone=True)
+
+    # Assert
+    assert isinstance(result, np.datetime64)
+    assert str(result) == '2021-02-02T15:00:00.000000000'
+
+
+def test__parse_datetime_with_series_and_timezone_and_ignore_tz():
+    """Test `_parse_datetime` on a Series with timezone info."""
+    # Setup
+    series = pd.Series(['2020-01-01 10:00:00+0000', '2021-01-01 12:00:00+0200'])
+    dt_format = '%Y-%m-%d %H:%M:%S%z'
+
+    # Run
+    result = _parse_datetime(series, datetime_format=dt_format, ignore_timezone=True)
+
+    # Assert
+    assert isinstance(result, pd.Series)
+    assert result.dt.tz is None
+
+
+def test__parse_datetime_without_ignoring_timezone():
+    """Test `_parse_datetime` keeps tz-aware timestamps when ignore_timezone=False."""
+    # Setup
+    value = '2021-02-02 12:00:00+0200'
+    dt_format = '%Y-%m-%d %H:%M:%S%z'
+
+    # Run
+    result = _parse_datetime(value, datetime_format=dt_format, ignore_timezone=False)
+
+    # Assert
+    assert result.tzinfo is not None
+    assert str(result).endswith('+02:00')
