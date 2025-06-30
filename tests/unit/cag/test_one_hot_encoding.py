@@ -80,25 +80,37 @@ class TestOneHotEncoding:
 
         # Row of all zeros
         data = {'table': pd.DataFrame({'a': [1, 0, 0], 'b': [0, 0, 0], 'c': [0, 0, 1]})}
-        err_msg = re.escape('The one hot encoding requirement is not met for row indices: [1]')
+        err_msg = re.escape(
+            "Data is not valid for the 'OneHotEncoding' constraint in table 'table':\n  "
+            ' a  b  c\n1  0  0  0'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
         # Row with two 1s
         data = {'table': pd.DataFrame({'a': [1, 0, 0], 'b': [0, 1, 1], 'c': [1, 0, 0]})}
-        err_msg = re.escape('The one hot encoding requirement is not met for row indices: [0]')
+        err_msg = re.escape(
+            "Data is not valid for the 'OneHotEncoding' constraint in table 'table':\n"
+            '   a  b  c\n0  1  0  1'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
         # Invalid number
         data = {'table': pd.DataFrame({'a': [1, 0, 0], 'b': [0, 2, 0], 'c': [0, 0, 1]})}
-        err_msg = re.escape('The one hot encoding requirement is not met for row indices: [1]')
+        err_msg = re.escape(
+            "Data is not valid for the 'OneHotEncoding' constraint in table 'table':\n"
+            '   a  b  c\n1  0  2  0'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
         # Nans
         data = {'table': pd.DataFrame({'a': [1, 0, 0], 'b': [0, 1, np.nan], 'c': [0, None, 1]})}
-        err_msg = re.escape('The one hot encoding requirement is not met for row indices: [1, 2]')
+        err_msg = re.escape(
+            "Data is not valid for the 'OneHotEncoding' constraint in table 'table':\n"
+            '   a    b    c\n1  0  1.0  NaN\n2  0  NaN  1.0'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 

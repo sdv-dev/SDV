@@ -335,8 +335,10 @@ def test_validate_with_failing_constraint():
         low_column_name='checkin_date', high_column_name='checkout_date'
     )
     gc.add_constraints([checkin_lessthan_checkout])
-
-    error_msg = re.escape('The inequality requirement is not met for row indices: [0]')
+    error_msg = re.escape(
+        "Data is not valid for the 'Inequality' constraint in table 'fake_hotel_guests':\n"
+        '  checkin_date checkout_date\n0  02 Jan 2021   29 Dec 2020'
+    )
 
     # Run / Assert
     with pytest.raises(ConstraintNotMetError, match=error_msg):
