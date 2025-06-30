@@ -1,5 +1,21 @@
 # Release Notes
 
+## v1.24.0 - 2025-06-30
+
+### New Features
+
+* Add support for condtionally sampling column relationships and contextually anonymized columns - Issue [#2582](https://github.com/sdv-dev/SDV/issues/2582) by @frances-h
+* Add support for conditional sampling null values - Issue [#2581](https://github.com/sdv-dev/SDV/issues/2581) by @frances-h
+
+### Bugs Fixed
+
+* Unable to sample synthetic data when using timezone extraction - Issue [#2589](https://github.com/sdv-dev/SDV/issues/2589) by @pvk-developer
+
+### Internal
+
+* Ignore Timezone Information in Datetime Constraints (Short-Term Fix) - Issue [#2595](https://github.com/sdv-dev/SDV/issues/2595) by @pvk-developer
+* Add workflow to check that issues tied to PRs have a milestone - Issue [#2585](https://github.com/sdv-dev/SDV/issues/2585) by @amontanez24
+
 ## v1.23.0 - 2025-06-16
 
 ### New Features
