@@ -31,12 +31,14 @@ ISSUE_LABELS_ORDERED_BY_IMPORTANCE = [
     'maintenance',
 ]
 NEW_LINE = '\n'
+GITHUB_ORG = 'sdv-dev'
+REPO = 'sdv'
 
 
 def _get_milestone_number(client, milestone_title):
     query_params = {'milestone': milestone_title, 'state': 'all', 'per_page': 100}
     response = client.get(
-        github_org='sdv-dev', repo='sdv', endpoint='milestones', query_params=query_params
+        github_org=GITHUB_ORG, repo=REPO, endpoint='milestones', query_params=query_params
     )
     body = response.json()
     if response.status_code != 200:
@@ -60,8 +62,8 @@ def _get_issues_by_milestone(milestone):
     while True:
         query_params['page'] = page
         response = client.get(
-            github_org='sdv-dev',
-            repo='sdv',
+            github_org=GITHUB_ORG,
+            repo=REPO,
             endpoint='issues',
             query_params=query_params,
             timeout=10,
