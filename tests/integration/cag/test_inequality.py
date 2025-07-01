@@ -950,7 +950,10 @@ def test_invalid_data():
     clean_data = data[~(data[['checkin_date', 'checkout_date']].isna().any(axis=1))]
     data_invalid = clean_data.copy()
     data_invalid.loc[0, 'checkin_date'] = '31 Dec 2020'
-    expected_error_msg = re.escape('The inequality requirement is not met for row indices: [0]')
+    expected_error_msg = re.escape(
+        "Data is not valid for the 'Inequality' constraint in table 'fake_hotel_guests':\n"
+        '  checkin_date checkout_date\n0  31 Dec 2020   29 Dec 2020'
+    )
 
     # Run and Assert
     synthesizer = run_copula(clean_data, metadata, [constraint])

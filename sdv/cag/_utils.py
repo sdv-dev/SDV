@@ -109,7 +109,7 @@ def _get_is_valid_dict(data, table_name):
     return {
         table: pd.Series(True, index=table_data.index)
         for table, table_data in data.items()
-        if table != table_name
+        if table != table_name or table_name is None
     }
 
 

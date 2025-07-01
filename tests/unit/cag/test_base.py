@@ -3,7 +3,7 @@
 import logging
 import re
 from copy import deepcopy
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -191,6 +191,29 @@ class TestBaseConstraint:
         # Assert
         instance.validate.assert_called_once_with(metadata=metadata)
         instance._get_updated_metadata.assert_called_once()
+
+    @patch('sdv.cag.base._format_invalid_values_string')
+    def test__format_error_message_constraint(self, mock_format_invalid_values_string):
+        """Test `_format_error_message_constraint` method."""
+        # Setup
+        invalid_data = {'row_1': 'value_1', 'row_2': 'value_2'}
+        constraint = BaseConstraint()
+        table_name = 'test_table'
+        mock_format_invalid_values_string.return_value = re.escape(
+            'checkin_date checkout_date\n0  31 Dec 2020   29 Dec 2020'
+        )
+        expected_error_message = (
+            "Data is not valid for the 'BaseConstraint' constraint in table "
+            "'test_table':\ncheckin_date\\ checkout_date\\\n0\\ \\ 31\\ Dec\\ 2020\\"
+            ' \\ \\ 29\\ Dec\\ 2020'
+        )
+
+        # Run
+        message = constraint._format_error_message_constraint(invalid_data, table_name)
+
+        # Assert
+        mock_format_invalid_values_string.assert_called_once_with(invalid_data, 5)
+        assert message == expected_error_message
 
     def test__fit_constraint_column_formatters(self):
         """Test the `_fit_constraint_column_formatters` fits formatters for dropped columns."""
@@ -560,7 +583,8 @@ class TestBaseConstraint:
         # Setup
         instance = BaseConstraint()
         expected_msg = re.escape(
-            'Constraint must be fit using ``fit`` before determining if data is valid.'
+            'Constraint must be fit using ``fit`` before determining '
+            'if data is valid without providing metadata.'
         )
 
         # Run and assert
@@ -573,12 +597,13 @@ class TestBaseConstraint:
         instance = BaseConstraint()
         instance._is_valid = Mock()
         instance._fitted = True
+        instance.metadata = Mock()
 
         # Run
         is_valid_result = instance.is_valid(data)
 
         # Assert
-        instance._is_valid.assert_called_once_with(data)
+        instance._is_valid.assert_called_once_with(data, instance.metadata)
         assert is_valid_result == instance._is_valid.return_value
 
     def test_is_valid_single_table(self, data):
@@ -591,10 +616,13 @@ class TestBaseConstraint:
         instance._is_valid = Mock()
         instance._is_valid.return_value = {'table1': data.copy()}
         instance._fitted = True
+        instance.metadata = Mock()
 
         # Run
         is_valid_result = instance.is_valid(data)
 
         # Assert
-        instance._is_valid.assert_called_once_with(DataFrameDictMatcher({'table1': data}))
+        instance._is_valid.assert_called_once_with(
+            DataFrameDictMatcher({'table1': data}), instance.metadata
+        )
         pd.testing.assert_frame_equal(is_valid_result, data)

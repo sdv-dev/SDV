@@ -7,7 +7,6 @@ from pandas.api.types import is_object_dtype
 from sdv._utils import _convert_to_timedelta, _create_unique_name
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
-    _get_invalid_rows,
     _get_is_valid_dict,
     _is_list_of_type,
     _remove_columns_from_metadata,
@@ -16,6 +15,7 @@ from sdv.cag._utils import (
 )
 from sdv.cag.base import BaseConstraint
 from sdv.constraints.utils import (
+    _warn_if_timezone_aware_formats,
     cast_to_datetime64,
     compute_nans_column,
     get_datetime_diff,
@@ -117,18 +117,13 @@ class Inequality(BaseConstraint):
         return metadata.tables[table_name].columns[self._low_column_name]['sdtype'] == 'datetime'
 
     def _get_datetime_format(self, metadata, table_name, column_name):
-        return metadata.tables[table_name].columns[column_name].get('datetime_format')
+        datetime_format = metadata.tables[table_name].columns[column_name].get('datetime_format')
+        return datetime_format
 
-    def _validate_constraint_with_data(self, data, metadata):
-        """Validate the data is compatible with the constraint.
-
-        Validate that the inequality requirement is met between the high and low columns.
-        """
-        table_name = self._get_single_table_name(metadata)
-        data = data[table_name]
-        low, high = self._get_data(data)
+    def _get_valid_table_data(self, table_data, metadata, table_name):
+        low, high = self._get_data(table_data)
         is_datetime = self._get_is_datetime(metadata, table_name)
-        if is_datetime and is_object_dtype(data[self._low_column_name]):
+        if is_datetime and is_object_dtype(table_data[self._low_column_name]):
             low_format = self._get_datetime_format(metadata, table_name, self._low_column_name)
             high_format = self._get_datetime_format(metadata, table_name, self._high_column_name)
             low = cast_to_datetime64(low, low_format)
@@ -143,12 +138,21 @@ class Inequality(BaseConstraint):
                     high_datetime_format=high_format,
                 )
 
-        valid = pd.isna(low) | pd.isna(high) | self._operator(high, low)
+        return pd.isna(low) | pd.isna(high) | self._operator(high, low)
+
+    def _validate_constraint_with_data(self, data, metadata):
+        """Validate the data is compatible with the constraint.
+
+        Validate that the inequality requirement is met between the high and low columns.
+        """
+        table_name = self._get_single_table_name(metadata)
+        valid = self._get_valid_table_data(data[table_name], metadata, table_name)
         if not valid.all():
-            invalid_rows = _get_invalid_rows(valid)
-            raise ConstraintNotMetError(
-                f'The inequality requirement is not met for row indices: [{invalid_rows}]'
-            )
+            invalid_rows = data[table_name].loc[
+                ~valid, [self._low_column_name, self._high_column_name]
+            ]
+            error_message = self._format_error_message_constraint(invalid_rows, table_name)
+            raise ConstraintNotMetError(error_message)
 
     def _get_diff_and_nan_column_names(self, metadata, column_name, table_name):
         """Get the column names for the difference and NaN columns.
@@ -207,6 +211,8 @@ class Inequality(BaseConstraint):
             self._high_datetime_format = self._get_datetime_format(
                 metadata, table_name, self._high_column_name
             )
+            formats = [self._low_datetime_format, self._high_datetime_format]
+            _warn_if_timezone_aware_formats(formats)
 
     def _transform(self, data):
         """Transform the data.
@@ -284,7 +290,7 @@ class Inequality(BaseConstraint):
 
         low = table_data[self._low_column_name].to_numpy()
         if self._is_datetime and is_object_dtype(self._dtype):
-            low = cast_to_datetime64(low)
+            table_data[self._low_column_name] = low = cast_to_datetime64(low)
 
         table_data[self._high_column_name] = pd.Series(diff_column + low).astype(self._dtype)
         table_data = revert_nans_columns(table_data, self._nan_column_name)
@@ -293,7 +299,7 @@ class Inequality(BaseConstraint):
 
         return data
 
-    def _is_valid(self, data):
+    def _is_valid(self, data, metadata):
         """Check whether `high` is greater than `low` in each row.
 
         Args:
@@ -304,24 +310,9 @@ class Inequality(BaseConstraint):
             dict[str, pd.Series]:
                 Whether each row is valid.
         """
-        table_name = self._get_single_table_name(self.metadata)
+        table_name = self._get_single_table_name(metadata)
         is_valid = _get_is_valid_dict(data, table_name)
-        table_data = data[table_name]
-        low, high = self._get_data(table_data)
-        if self._is_datetime and is_object_dtype(self._dtype):
-            low = cast_to_datetime64(low, self._low_datetime_format)
-            high = cast_to_datetime64(high, self._high_datetime_format)
-
-            format_matches = bool(self._low_datetime_format == self._high_datetime_format)
-            if not format_matches:
-                low, high = match_datetime_precision(
-                    low=low,
-                    high=high,
-                    low_datetime_format=self._low_datetime_format,
-                    high_datetime_format=self._high_datetime_format,
-                )
-
-        valid = pd.isna(low) | pd.isna(high) | self._operator(high, low)
-        is_valid[table_name] = valid
+        valid_table_rows = self._get_valid_table_data(data[table_name], metadata, table_name)
+        is_valid[table_name] = valid_table_rows
 
         return is_valid

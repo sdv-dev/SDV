@@ -164,7 +164,10 @@ class TestInequality:
         })
 
         # Run and Assert
-        err_msg = re.escape('The inequality requirement is not met for row indices: [1]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Inequality' constraint in table 'table':\n   low  "
+            'high\n1    2     0'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -195,7 +198,8 @@ class TestInequality:
 
         # Run and Assert
         err_msg = re.escape(
-            'The inequality requirement is not met for row indices: [1, 4, 6, 7, 8, +1 more]'
+            "Data is not valid for the 'Inequality' constraint in table 'table':\n   low  "
+            'high\n1    2     0\n4    5     0\n6    7     4\n7    8     0\n8    9     6\n+1 more'
         )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
@@ -227,7 +231,10 @@ class TestInequality:
         })
 
         # Run and Assert
-        err_msg = re.escape('The inequality requirement is not met for row indices: [2, 5]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Inequality' constraint in table 'table':\n"
+            '   low  high\n2  3.0   2.0\n5  6.0  -6.0'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -262,7 +269,10 @@ class TestInequality:
         })
 
         # Run and Assert
-        err_msg = re.escape('The inequality requirement is not met for row indices: [2, 3, 5]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Inequality' constraint in table 'table':\n   low"
+            '  high\n2  3.0   2.0\n3  4.0   4.0\n5  6.0  -6.0'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -297,7 +307,10 @@ class TestInequality:
         })
 
         # Run and Assert
-        err_msg = re.escape('The inequality requirement is not met for row indices: [1]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Inequality' constraint in table 'table':\n "
+            '        low       high\n1 2021-09-01 2020-09-02'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -332,7 +345,10 @@ class TestInequality:
         })
 
         # Run and Assert
-        err_msg = re.escape('The inequality requirement is not met for row indices: [1]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Inequality' constraint in table 'table':\n"
+            '        low      high\n1  2021-9-1  2020-9-2'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -397,7 +413,11 @@ class TestInequality:
         })
 
         # Run and Assert
-        err_msg = re.escape('The inequality requirement is not met for row indices: [0, 2]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Inequality' constraint in table 'table':\n   "
+            '                low        high\n0  2016-07-10 17:04:00  2016-07-10\n2  '
+            '2016-07-12 08:45:30  2016-07-12'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -575,6 +595,52 @@ class TestInequality:
         assert instance._low_datetime_format == '%Y-%m-%d'
         assert instance._high_datetime_format is None
         assert instance._diff_column_name == 'a#b'
+
+    @patch('sdv.cag.inequality._warn_if_timezone_aware_formats')
+    def test__fit_warns_if_datetime(self, mock__warn_if_timezone):
+        """Test _fit learns the correct attributes and warns if datetime with timezone."""
+        # Setup
+        data = {
+            'table': pd.DataFrame({
+                'a': [1, 2, 4],
+                'b': [4, 5, 6],
+            })
+        }
+
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'a': {'sdtype': 'datetime', 'datetime_format': '%y %m, %d %z'},
+                        'b': {'sdtype': 'datetime', 'datetime_format': '%y %m %d'},
+                    },
+                }
+            }
+        })
+
+        instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
+        instance._get_diff_and_nan_column_names = Mock(
+            return_value=('a.fillna', 'a#b', 'a#b.nan_component')
+        )
+        instance._get_is_datetime = Mock(return_value=True)
+        instance._get_datetime_format = Mock(side_effect=['%y %m, %d %z', '%y %m %d'])
+
+        # Run
+        instance._fit(data, metadata)
+
+        # Assert internal state
+        assert instance._is_datetime is True
+        assert instance._dtype == data['table']['b'].dtype
+        assert instance._low_datetime_format == '%y %m, %d %z'
+        assert instance._high_datetime_format == '%y %m %d'
+        assert instance._diff_column_name == 'a#b'
+        assert instance._nan_column_name == 'a#b.nan_component'
+        instance._get_diff_and_nan_column_names.assert_called_once_with(metadata, 'a#b', 'table')
+        instance._get_datetime_format.assert_any_call(metadata, 'table', 'a')
+        instance._get_datetime_format.assert_any_call(metadata, 'table', 'b')
+
+        # Assert
+        mock__warn_if_timezone.assert_called_once_with(['%y %m, %d %z', '%y %m %d'])
 
     def test__transform(self):
         """Test it transforms the data correctly."""
@@ -872,11 +938,12 @@ class TestInequality:
         # Assert
         out = out['table']
         expected_out = pd.DataFrame({
-            'a': ['2020-01-01T00:00:00', '2020-01-02T00:00:00'],
+            'a': [pd.Timestamp('2020-01-01 00:00:00'), pd.Timestamp('2020-01-02 00:00:00')],
             'b': [pd.Timestamp('2020-01-01 00:00:01'), pd.Timestamp('2020-01-02 00:00:01')],
             'c': [1, 2],
         })
         expected_out['b'] = expected_out['b'].astype(np.dtype('O'))
+        expected_out['a'] = expected_out['a'].astype(np.dtype('O'))
         pd.testing.assert_frame_equal(out, expected_out)
 
     def test__is_valid(self):
@@ -889,16 +956,35 @@ class TestInequality:
                 'c': [7, 8, 9, 10, 11, 12, 13, 14],
             })
         }
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'a': {'sdtype': 'numerical'},
+                        'b': {'sdtype': 'numerical'},
+                        'c': {'sdtype': 'numerical'},
+                    }
+                }
+            }
+        })
         instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
         instance._fitted = True
+        instance.metadata = metadata
+
+        unfit_instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
 
         # Run
-        out = instance.is_valid(table_data)
+        out_fit = instance.is_valid(table_data)
+        out_unfit = unfit_instance.is_valid(table_data, metadata)
 
         # Assert
-        out = out['table']
+        out_fit = out_fit['table']
         expected_out = [True, True, False, True, True, False, True, True]
-        np.testing.assert_array_equal(expected_out, out)
+        np.testing.assert_array_equal(expected_out, out_fit)
+
+        out_unfit = out_unfit['table']
+        expected_out = [True, True, False, True, True, False, True, True]
+        np.testing.assert_array_equal(expected_out, out_unfit)
 
     def test_is_valid_strict_boundaries_true(self):
         """Test it checks if the data is valid when strict boundaries are True."""
@@ -910,6 +996,17 @@ class TestInequality:
                 'c': [7, 8, 9, 10, 11, 12, 13, 14],
             })
         }
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'a': {'sdtype': 'numerical'},
+                        'b': {'sdtype': 'numerical'},
+                        'c': {'sdtype': 'numerical'},
+                    }
+                }
+            }
+        })
         instance = Inequality(
             low_column_name='a',
             high_column_name='b',
@@ -917,6 +1014,7 @@ class TestInequality:
             table_name='table',
         )
         instance._fitted = True
+        instance.metadata = metadata
 
         # Run
         out = instance.is_valid(table_data)
@@ -936,8 +1034,20 @@ class TestInequality:
                 'c': [7, 8, 9],
             })
         }
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'a': {'sdtype': 'datetime'},
+                        'b': {'sdtype': 'datetime'},
+                        'c': {'sdtype': 'numerical'},
+                    }
+                }
+            }
+        })
         instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
         instance._fitted = True
+        instance.metadata = metadata
 
         # Run
         out = instance.is_valid(table_data)
@@ -957,9 +1067,20 @@ class TestInequality:
                 'c': [7, 8, 9],
             })
         }
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'a': {'sdtype': 'datetime'},
+                        'b': {'sdtype': 'datetime'},
+                        'c': {'sdtype': 'numerical'},
+                    }
+                }
+            }
+        })
         instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
+        instance.metadata = metadata
         instance._is_datetime = True
-        instance._dtype = 'O'
         instance._fitted = True
 
         # Run
@@ -987,11 +1108,26 @@ class TestInequality:
                 'RANDOM_VALUE': [7, 8, 9, 10, 11],
             })
         }
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'SUBMISSION_TIMESTAMP': {
+                            'sdtype': 'datetime',
+                            'datetime_format': '%Y-%m-%d %H:%M:%S',
+                        },
+                        'DUE_DATE': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                        'RANDOM_VALUE': {'sdtype': 'numerical'},
+                    }
+                }
+            }
+        })
         instance = Inequality(
             low_column_name='SUBMISSION_TIMESTAMP',
             high_column_name='DUE_DATE',
             table_name='table',
         )
+        instance.metadata = metadata
         low_return = np.array([
             datetime(2020, 5, 18),
             datetime(2020, 9, 2),
@@ -1008,8 +1144,6 @@ class TestInequality:
         ])
         instance._dtype = 'O'
         instance._is_datetime = True
-        instance._low_datetime_format = '%Y-%m-%d %H:%M:%S'
-        instance._high_datetime_format = '%Y-%m-%d'
         mock_match_datetime_precision.return_value = (low_return, high_return)
         instance._fitted = True
 

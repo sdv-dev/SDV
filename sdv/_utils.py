@@ -23,6 +23,9 @@ except ImportError:
     import sre_parse
 
 
+MODELABLE_SDTYPES = ['categorical', 'numerical', 'datetime', 'boolean']
+
+
 def _cast_to_iterable(value):
     """Return a ``list`` if the input object is not a ``list`` or ``tuple``."""
     if isinstance(value, (list, tuple)):
@@ -120,7 +123,7 @@ def _is_boolean_type(value):
 
 
 def _validate_datetime_format(column, datetime_format):
-    """Determine the values of the column that match the datetime format.
+    """Return values from the column that do not match the specified datetime format.
 
     Args:
         column (pd.Series):
@@ -129,14 +132,24 @@ def _validate_datetime_format(column, datetime_format):
             The datetime format.
 
     Returns:
-        pd.Series:
-            Series of booleans, with True if the value matches the format, False if not.
+        set:
+            A set of values from the column that do not match the datetime format.
     """
     pandas_datetime_format = datetime_format.replace('%-', '%')
     datetime_column = pd.to_datetime(column, errors='coerce', format=pandas_datetime_format)
     valid = pd.isna(column) | ~pd.isna(datetime_column)
 
     return set(column[~valid])
+
+
+def _datetime_string_matches_format(value, datetime_format):
+    if pd.isna(value):
+        return True
+    try:
+        parsed = datetime.strptime(str(value), datetime_format)
+        return value == parsed.strftime(datetime_format)
+    except ValueError:
+        return False
 
 
 def _convert_to_timedelta(column):

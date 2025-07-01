@@ -7,12 +7,10 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 
-from sdv._utils import _get_root_tables
+from sdv._utils import MODELABLE_SDTYPES, _get_root_tables
 from sdv.errors import InvalidDataError, SamplingError
 from sdv.multi_table import HMASynthesizer
 from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS
-
-MODELABLE_SDTYPE = ['categorical', 'numerical', 'datetime', 'boolean']
 
 
 def _get_child_tables(relationships):
@@ -159,7 +157,7 @@ def _simplify_grandchildren(metadata, grandchildren):
         columns_to_drop = [
             col_name
             for col_name in columns
-            if columns[col_name]['sdtype'] in MODELABLE_SDTYPE
+            if columns[col_name]['sdtype'] in MODELABLE_SDTYPES
             or (columns[col_name]['sdtype'] == 'id' and col_name not in key_columns)
         ]
         for column in columns_to_drop:
@@ -196,7 +194,7 @@ def _get_num_column_to_drop(metadata, child_table, max_col_per_relationships):
     columns = metadata.tables[child_table].columns
     modelable_columns = defaultdict(list)
     for column, column_metadata in columns.items():
-        if column_metadata['sdtype'] in MODELABLE_SDTYPE:
+        if column_metadata['sdtype'] in MODELABLE_SDTYPES:
             modelable_columns[column_metadata['sdtype']].append(column)
 
     num_modelable_column = sum([len(value) for value in modelable_columns.values()])

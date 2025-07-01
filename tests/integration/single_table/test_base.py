@@ -12,7 +12,7 @@ from rdt.transformers import AnonymizedFaker, FloatFormatter, RegexGenerator, Un
 from sdv import version
 from sdv.cag import FixedCombinations
 from sdv.datasets.demo import download_demo
-from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError, VersionError
+from sdv.errors import InvalidDataError, SamplingError, VersionError
 from sdv.metadata import SingleTableMetadata
 from sdv.metadata.metadata import Metadata
 from sdv.sampling import Condition
@@ -141,7 +141,7 @@ def test_sample_from_conditions_negative_float():
 
 
 def test_sample_from_conditions_with_nans():
-    """Test it crashes when condition has nans (GH#1758)."""
+    """Test it correctly samples null values."""
     # Setup
     data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
     synthesizer = GaussianCopulaSynthesizer(metadata)
@@ -149,55 +149,32 @@ def test_sample_from_conditions_with_nans():
 
     # Run
     synthesizer.fit(data)
+    sample = synthesizer.sample_from_conditions(conditions=[my_condition])
 
     # Assert
-    error_msg = (
-        'Missing values are not yet supported for conditional sampling. '
-        'Please include only non-null values in your Condition objects.'
-    )
-    with pytest.raises(SynthesizerInputError, match=error_msg):
-        synthesizer.sample_from_conditions(conditions=[my_condition])
+    assert all(sample['room_type'].isna())
+    assert all(~sample['has_rewards'])
 
 
-def test_sample_remaining_columns_with_all_nans():
-    """Test it crashes when every condition row has a nan (GH#1758)."""
+def test_sample_remaining_columns_with_nans():
+    """Test ``sample_remaining_columns`` with entirely null row."""
     # Setup
     data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
     synthesizer = GaussianCopulaSynthesizer(metadata)
     known_columns = pd.DataFrame(
-        data={'has_rewards': [np.nan, False, True], 'amenities_fee': [5.00, np.nan, None]}
+        data={'checkout_date': [None, '29 Dec 2020', None], 'amenities_fee': [5.00, np.nan, None]}
     )
 
     # Run
     synthesizer.fit(data)
+    sample = synthesizer.sample_remaining_columns(known_columns=known_columns)
 
     # Assert
-    error_msg = (
-        'Missing values are not yet supported for conditional sampling. '
-        'Please include only non-null values in your Condition objects.'
-    )
-    with pytest.raises(SynthesizerInputError, match=error_msg):
-        synthesizer.sample_remaining_columns(known_columns=known_columns)
-
-
-def test_sample_remaining_columns_with_some_nans():
-    """Test it warns when some of the condition rows contain nans (GH#1758)."""
-    # Setup
-    data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
-    synthesizer = GaussianCopulaSynthesizer(metadata)
-    known_columns = pd.DataFrame(
-        data={'has_rewards': [True, False, np.nan], 'amenities_fee': [5.00, np.nan, None]}
-    )
-
-    # Run
-    synthesizer.fit(data)
-
-    # Assert
-    warn_msg = (
-        'Missing values are not yet supported. Rows with any missing values will not be created.'
-    )
-    with pytest.warns(UserWarning, match=warn_msg):
-        synthesizer.sample_remaining_columns(known_columns=known_columns)
+    expected_columns = pd.DataFrame({
+        'checkout_date': [None, '29 Dec 2020', None],
+        'amenities_fee': [5.00, np.nan, None],
+    })
+    pd.testing.assert_frame_equal(sample[['checkout_date', 'amenities_fee']], expected_columns)
 
 
 def test_sample_keys_are_scrambled():

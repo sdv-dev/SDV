@@ -13,7 +13,7 @@ from pandas.errors import IntCastingNaNError
 from rdt.transformers import AnonymizedFaker, get_default_transformers
 from rdt.transformers.pii.anonymization import get_anonymized_transformer
 
-from sdv._utils import _get_transformer_init_kwargs
+from sdv._utils import MODELABLE_SDTYPES, _get_transformer_init_kwargs
 from sdv.constraints import Constraint
 from sdv.constraints.base import get_subclasses
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
@@ -656,6 +656,14 @@ class DataProcessor:
         for transformer in self.grouped_columns_to_transformers.values():
             if not transformer.output_columns:
                 reversed_data = transformer.reverse_transform(reversed_data)
+
+        if conditions:
+            for column, condition in conditions.items():
+                column_sdtype = self.metadata.columns.get(column, {}).get('sdtype')
+                if pd.isna(condition):
+                    reversed_data[column] = condition
+                elif column_sdtype not in MODELABLE_SDTYPES:
+                    reversed_data[column] = condition
 
         num_rows = len(reversed_data)
         sampled_columns = list(reversed_data.columns)

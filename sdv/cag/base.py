@@ -5,6 +5,7 @@ import logging
 import numpy as np
 import pandas as pd
 
+from sdv._utils import _format_invalid_values_string
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.errors import NotFittedError
@@ -50,6 +51,14 @@ class BaseConstraint:
             raise ValueError('No ``table_name`` attribute has been set.')
 
         return metadata._get_single_table_name() if self.table_name is None else self.table_name
+
+    def _format_error_message_constraint(self, invalid_data, table_name):
+        """Format the error message for the constraints."""
+        invalid_rows_str = _format_invalid_values_string(invalid_data, 5)
+        return (
+            f"Data is not valid for the '{self.__class__.__name__}' constraint in "
+            f"table '{table_name}':\n{invalid_rows_str}"
+        )
 
     def _validate_constraint_with_metadata(self, metadata):
         raise NotImplementedError()
@@ -253,10 +262,10 @@ class BaseConstraint:
 
         return reverse_transformed
 
-    def _is_valid(self, data):
+    def _is_valid(self, data, metadata):
         raise NotImplementedError
 
-    def is_valid(self, data):
+    def is_valid(self, data, metadata=None):
         """Say whether the given table rows are valid.
 
         Args:
@@ -267,14 +276,21 @@ class BaseConstraint:
             pd.Series or dict[pd.Series]:
                 Series of boolean values indicating if the row is valid for the constraint or not.
         """
-        if not self._fitted:
+        if not self._fitted and metadata is None:
             raise NotFittedError(
-                'Constraint must be fit using ``fit`` before determining if data is valid.'
+                'Constraint must be fit using ``fit`` before determining if data is valid '
+                'without providing metadata.'
             )
 
-        data = self._convert_data_to_dictionary(data, self.metadata)
-        is_valid_data = self._is_valid(data)
-        if self._single_table:
-            return is_valid_data[self._table_name]
+        metadata = self.metadata if metadata is None else metadata
+        data_dict = self._convert_data_to_dictionary(data, metadata)
+        is_valid_data = self._is_valid(data_dict, metadata)
+        if isinstance(data, pd.DataFrame) or self._single_table:
+            table_name = (
+                self._get_single_table_name(metadata)
+                if getattr(self, '_table_name', None) is None
+                else self._table_name
+            )
+            return is_valid_data[table_name]
 
         return is_valid_data

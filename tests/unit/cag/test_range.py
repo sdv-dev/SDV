@@ -207,7 +207,10 @@ class TestRange:
         })
 
         # Run and Assert
-        err_msg = re.escape('The range requirement is not met for row indices: [1]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Range' constraint in table 'table':\n"
+            '   low  middle  high\n1    2      -1     8'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -245,7 +248,9 @@ class TestRange:
 
         # Run and Assert
         err_msg = re.escape(
-            'The range requirement is not met for row indices: [1, 4, 6, 7, 8, +1 more]'
+            "Data is not valid for the 'Range' constraint in table 'table':\n   low"
+            '  middle  high\n1    2       0     0\n4    5       8    -1\n6   10'
+            '      10    13\n7   12      11    14\n8    9       9     9\n+1 more'
         )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
@@ -283,7 +288,10 @@ class TestRange:
         })
 
         # Run and Assert
-        err_msg = re.escape('The range requirement is not met for row indices: [2, 3, 5]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Range' constraint in table 'table':\n   low"
+            '  middle  high\n2  3.0     2.0   9.0\n3  4.0     4.0  10.0\n5  6.0    -6.0  12.0'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -321,7 +329,10 @@ class TestRange:
         })
 
         # Run and Assert
-        err_msg = re.escape('The range requirement is not met for row indices: [2, 5]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Range' constraint in table 'table':\n   low"
+            '  middle  high\n2  3.0     2.0   2.0\n5  6.0    -6.0  -6.0'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -359,7 +370,10 @@ class TestRange:
         })
 
         # Run and Assert
-        err_msg = re.escape('The range requirement is not met for row indices: [1]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Range' constraint in table 'table':\n    "
+            '     low     middle       high\n1 2021-09-01 2021-09-01 2020-09-02'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -397,7 +411,10 @@ class TestRange:
         })
 
         # Run and Assert
-        err_msg = re.escape('The range requirement is not met for row indices: [1]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Range' constraint in table 'table':\n  "
+            '        low      middle        high\n1  2021-09-01  2021-09-01  2020-09-02'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -435,7 +452,10 @@ class TestRange:
         })
 
         # Run and Assert
-        err_msg = re.escape('The range requirement is not met for row indices: [1]')
+        err_msg = re.escape(
+            "Data is not valid for the 'Range' constraint in table 'table':\n  "
+            '        low      middle        high\n1  2021-09-01  2021-09-01  2020-09-02'
+        )
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
@@ -682,6 +702,51 @@ class TestRange:
         assert instance._high_datetime_format == '%Y %m %d'
         assert instance._low_diff_column_name == 'a#b'
         assert instance._high_diff_column_name == 'b#c'
+
+    @patch('sdv.cag.range._warn_if_timezone_aware_formats')
+    def test__fit_datetime_mixed_warns_if_timezone(self, mock_warn):
+        """Test _fit for datetime columns and assert timezone warning is triggered."""
+        # Setup
+        table_data = {
+            'table': pd.DataFrame({
+                'a': ['2020-01-01'],
+                'b': [datetime(2020, 1, 2)],
+                'c': ['2020 01 03'],
+            })
+        }
+
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'a': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                        'b': {'sdtype': 'datetime'},  # no format
+                        'c': {'sdtype': 'datetime', 'datetime_format': '%Y %m %d %z'},
+                    },
+                }
+            }
+        })
+
+        instance = Range(
+            low_column_name='a',
+            middle_column_name='b',
+            high_column_name='c',
+            table_name='table',
+        )
+
+        # Run
+        instance._fit(table_data, metadata)
+
+        # Assert
+        assert instance._dtype == np.dtype('O')
+        assert instance._is_datetime is True
+        assert instance._low_datetime_format == '%Y-%m-%d'
+        assert instance._middle_datetime_format is None
+        assert instance._high_datetime_format == '%Y %m %d %z'
+        assert instance._low_diff_column_name == 'a#b'
+        assert instance._high_diff_column_name == 'b#c'
+        assert instance._nan_column_name == 'a#b#c.nan_component'
+        mock_warn.assert_called_once_with(['%Y-%m-%d', '%Y %m %d %z'])
 
     def test__transform(self):
         """Test it transforms the data correctly."""
