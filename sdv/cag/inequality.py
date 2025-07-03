@@ -7,7 +7,6 @@ from pandas.api.types import is_object_dtype
 from sdv._utils import _convert_to_timedelta, _create_unique_name
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
-    _get_invalid_rows,
     _get_is_valid_dict,
     _is_list_of_type,
     _remove_columns_from_metadata,
@@ -16,6 +15,7 @@ from sdv.cag._utils import (
 )
 from sdv.cag.base import BaseConstraint
 from sdv.constraints.utils import (
+    _warn_if_timezone_aware_formats,
     cast_to_datetime64,
     compute_nans_column,
     get_datetime_diff,
@@ -117,7 +117,8 @@ class Inequality(BaseConstraint):
         return metadata.tables[table_name].columns[self._low_column_name]['sdtype'] == 'datetime'
 
     def _get_datetime_format(self, metadata, table_name, column_name):
-        return metadata.tables[table_name].columns[column_name].get('datetime_format')
+        datetime_format = metadata.tables[table_name].columns[column_name].get('datetime_format')
+        return datetime_format
 
     def _get_valid_table_data(self, table_data, metadata, table_name):
         low, high = self._get_data(table_data)
@@ -147,10 +148,11 @@ class Inequality(BaseConstraint):
         table_name = self._get_single_table_name(metadata)
         valid = self._get_valid_table_data(data[table_name], metadata, table_name)
         if not valid.all():
-            invalid_rows = _get_invalid_rows(valid)
-            raise ConstraintNotMetError(
-                f'The inequality requirement is not met for row indices: [{invalid_rows}]'
-            )
+            invalid_rows = data[table_name].loc[
+                ~valid, [self._low_column_name, self._high_column_name]
+            ]
+            error_message = self._format_error_message_constraint(invalid_rows, table_name)
+            raise ConstraintNotMetError(error_message)
 
     def _get_diff_and_nan_column_names(self, metadata, column_name, table_name):
         """Get the column names for the difference and NaN columns.
@@ -209,6 +211,8 @@ class Inequality(BaseConstraint):
             self._high_datetime_format = self._get_datetime_format(
                 metadata, table_name, self._high_column_name
             )
+            formats = [self._low_datetime_format, self._high_datetime_format]
+            _warn_if_timezone_aware_formats(formats)
 
     def _transform(self, data):
         """Transform the data.
@@ -286,7 +290,7 @@ class Inequality(BaseConstraint):
 
         low = table_data[self._low_column_name].to_numpy()
         if self._is_datetime and is_object_dtype(self._dtype):
-            low = cast_to_datetime64(low)
+            table_data[self._low_column_name] = low = cast_to_datetime64(low)
 
         table_data[self._high_column_name] = pd.Series(diff_column + low).astype(self._dtype)
         table_data = revert_nans_columns(table_data, self._nan_column_name)

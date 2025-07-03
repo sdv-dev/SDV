@@ -83,7 +83,10 @@ def test_end_to_end_raises(data, metadata):
     })
 
     # Run and Assert
-    msg = re.escape('The one hot encoding requirement is not met for row indices: [1, 2]')
+    msg = re.escape(
+        "Data is not valid for the 'OneHotEncoding' constraint in table 'table':\n"
+        '   a    b  c\n1  2  1.0  0\n2  0  NaN  3'
+    )
     with pytest.raises(ConstraintNotMetError, match=msg):
         run_copula(invalid_data, metadata, [OneHotEncoding(column_names=['a', 'b', 'c'])])
 
@@ -124,7 +127,10 @@ def test_end_to_end_multi_raises(data_multi, metadata_multi):
     }
 
     # Run and Assert
-    msg = re.escape('The one hot encoding requirement is not met for row indices: [1, 2]')
+    msg = re.escape(
+        "Data is not valid for the 'OneHotEncoding' constraint in table 'table1':\n   "
+        'a    b  c\n1  2  1.0  0\n2  0  NaN  3'
+    )
     with pytest.raises(ConstraintNotMetError, match=msg):
         run_hma(invalid_data, metadata_multi, [constraint])
 

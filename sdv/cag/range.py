@@ -9,7 +9,6 @@ from pandas.api.types import is_object_dtype
 from sdv._utils import _convert_to_timedelta, _create_unique_name
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
-    _get_invalid_rows,
     _get_is_valid_dict,
     _is_list_of_type,
     _remove_columns_from_metadata,
@@ -18,6 +17,7 @@ from sdv.cag._utils import (
 )
 from sdv.cag.base import BaseConstraint
 from sdv.constraints.utils import (
+    _warn_if_timezone_aware_formats,
     cast_to_datetime64,
     compute_nans_column,
     get_datetime_diff,
@@ -169,10 +169,11 @@ class Range(BaseConstraint):
         valid = self._get_valid_table_data(data[table_name])
 
         if not valid.all():
-            invalid_rows_str = _get_invalid_rows(valid)
-            raise ConstraintNotMetError(
-                f'The range requirement is not met for row indices: [{invalid_rows_str}]'
-            )
+            invalid_rows = data[table_name].loc[
+                ~valid, [self._low_column_name, self._middle_column_name, self._high_column_name]
+            ]
+            error_message = self._format_error_message_constraint(invalid_rows, table_name)
+            raise ConstraintNotMetError(error_message)
 
     def _get_diff_and_nan_column_names(self, metadata, table_name):
         """Create unique names for the low, high, and nan component columns."""
@@ -236,6 +237,8 @@ class Range(BaseConstraint):
             self._high_datetime_format = self._get_datetime_format(
                 metadata, table_name, self._high_column_name
             )
+            formats = [self._low_datetime_format, self._high_datetime_format]
+            _warn_if_timezone_aware_formats(formats)
 
         (
             self._fillna_low_column_name,
@@ -339,12 +342,20 @@ class Range(BaseConstraint):
         low = table_data[self._low_column_name].to_numpy()
         if self._is_datetime and is_object_dtype(self._dtype):
             low = cast_to_datetime64(low, self._low_datetime_format)
+            middle = pd.Series(low_diff_column + low).astype(self._dtype)
+            high = pd.Series(high_diff_column + middle.to_numpy()).astype(self._dtype)
+            table_data[self._middle_column_name] = cast_to_datetime64(
+                middle, self._middle_datetime_format
+            )
+            table_data[self._high_column_name] = cast_to_datetime64(
+                high, self._high_datetime_format
+            )
 
-        middle = pd.Series(low_diff_column + low).astype(self._dtype)
-        table_data[self._middle_column_name] = middle
-        table_data[self._high_column_name] = pd.Series(high_diff_column + middle.to_numpy()).astype(
-            self._dtype
-        )
+        else:
+            middle = pd.Series(low_diff_column + low).astype(self._dtype)
+            high = pd.Series(high_diff_column + middle.to_numpy()).astype(self._dtype)
+            table_data[self._middle_column_name] = middle
+            table_data[self._high_column_name] = high
 
         table_data = revert_nans_columns(table_data, self._nan_column_name)
 
