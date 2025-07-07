@@ -732,11 +732,8 @@ class TestDataProcessor:
         from the dictionary ``self._transformers_by_sdtype``.
         """
         # Setup
-        dp = Mock()
-        dp._transformers_by_sdtype = {
-            'numerical': 'FloatFormatter',
-            'categorical': 'UniformEncoder',
-        }
+        dp = DataProcessor(SingleTableMetadata())
+        dp._get_other_transformer = Mock(return_value='FloatFormatter')
 
         # Run
         result = DataProcessor._get_transformer_instance(dp, 'numerical', {})
