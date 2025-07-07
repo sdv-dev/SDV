@@ -323,33 +323,12 @@ class DataProcessor:
 
         return transformer
 
-    def _get_datetime_transformer(self, kwargs, transformer):
-        """Get a datetime transformer.
-
-        Args:
-            sdtype (str):
-                Semantic data type of the column.
-            column_metadata (dict):
-                A dictionary representing the metadata for the column.
-            transformer (rdt.transformers.DatetimeFormatter):
-                A datetime transformer.
-
-        Returns:
-            rdt.transformers.DatetimeFormatter:
-                A datetime transformer.
-        """
-        kwargs['enforce_min_max_values'] = self._enforce_min_max_values
-        transformer_class = transformer.__class__
-        default_transformer_kwargs = _get_transformer_init_kwargs(transformer)
-
-        return transformer_class(**{**default_transformer_kwargs, **kwargs})
-
     def _get_other_transformer(self, kwargs, transformer):
         """Get a transformer.
 
         Args:
             kwargs (dict):
-                A dictionary representing the metadata for the column.
+                The keyword arguments for the transformer.
             transformer (rdt.transformers.Transformer):
                 A transformer.
 
@@ -363,6 +342,81 @@ class DataProcessor:
             return transformer_class(**{**default_transformer_kwargs, **kwargs})
 
         return deepcopy(transformer)
+
+    def _get_datetime_transformer(self, kwargs, transformer):
+        """Get a datetime transformer.
+
+        Args:
+            kwargs (dict):
+                The keyword arguments for the transformer.
+            transformer (rdt.transformers.DatetimeFormatter):
+                A datetime transformer.
+
+        Returns:
+            rdt.transformers.DatetimeFormatter:
+                A datetime transformer.
+        """
+        kwargs['enforce_min_max_values'] = self._enforce_min_max_values
+
+        return self._get_other_transformer(kwargs, transformer)
+
+    def _get_categorical_transformer(self, kwargs, transformer):
+        """Get a categorical transformer.
+
+        Args:
+            kwargs (dict):
+                The keyword arguments for the transformer.
+            transformer:
+                A categorical transformer.
+
+        Returns:
+            transformer:
+                A categorical transformer.
+        """
+        return self._get_other_transformer(kwargs, transformer)
+
+    def _get_numerical_transformer(self, kwargs, transformer):
+        """Get a numerical transformer.
+
+        Args:
+            kwargs (dict):
+                The keyword arguments for the transformer.
+            transformer:
+                A numerical transformer.
+
+        Returns:
+            transformer:
+                A numerical transformer.
+        """
+        return self._get_other_transformer(kwargs, transformer)
+
+    def _get_boolean_transformer(self, kwargs, transformer):
+        """Get a boolean transformer.
+
+        Args:
+            kwargs (dict):
+                The keyword arguments for the transformer.
+            transformer:
+                A boolean transformer.
+
+        Returns:
+            transformer:
+                A boolean transformer.
+        """
+        return self._get_other_transformer(kwargs, transformer)
+
+    def _get_sdtype_transformer(self, sdtype, kwargs, transformer):
+        transformer_map = {
+            'datetime': self._get_datetime_transformer,
+            'numerical': self._get_numerical_transformer,
+            'categorical': self._get_categorical_transformer,
+            'boolean': self._get_boolean_transformer,
+        }
+        transformer_fn = transformer_map.get(sdtype)
+        if transformer_fn:
+            return transformer_fn(kwargs, transformer)
+
+        return self._get_other_transformer(kwargs, transformer)
 
     def _get_transformer_instance(self, sdtype, column_metadata):
         transformer = self._transformers_by_sdtype[sdtype]
@@ -379,10 +433,7 @@ class DataProcessor:
         kwargs = {
             key: value for key, value in column_metadata.items() if key not in ['pii', 'sdtype']
         }
-        if sdtype == 'datetime':
-            return self._get_datetime_transformer(kwargs, transformer)
-
-        return self._get_other_transformer(kwargs, transformer)
+        return self._get_sdtype_transformer(sdtype, kwargs, transformer)
 
     def _get_multi_column_config(self, column, sdtype, data):
         """Get the configuration (sdtype and transformer) for a multi-column.
