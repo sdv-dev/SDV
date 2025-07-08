@@ -323,17 +323,17 @@ class DataProcessor:
 
         return transformer
 
-    def _get_other_transformer(self, kwargs, transformer):
-        """Get a transformer.
+    def _get_transformer_with_kwargs(self, kwargs, transformer):
+        """Get a transformer with kwargs.
 
         Args:
             kwargs (dict):
                 The keyword arguments for the transformer.
-            transformer (rdt.transformers.Transformer):
+            transformer (rdt.transformers.BaseTransformer):
                 A transformer.
 
         Returns:
-            rdt.transformers.Transformer:
+            rdt.transformers.BaseTransformer:
                 A transformer.
         """
         if kwargs:
@@ -349,16 +349,16 @@ class DataProcessor:
         Args:
             kwargs (dict):
                 The keyword arguments for the transformer.
-            transformer (rdt.transformers.DatetimeFormatter):
+            transformer (rdt.transformers.BaseTransformer):
                 A datetime transformer.
 
         Returns:
-            rdt.transformers.DatetimeFormatter:
+            rdt.transformers.BaseTransformer:
                 A datetime transformer.
         """
         kwargs['enforce_min_max_values'] = self._enforce_min_max_values
 
-        return self._get_other_transformer(kwargs, transformer)
+        return self._get_transformer_with_kwargs(kwargs, transformer)
 
     def _get_categorical_transformer(self, kwargs, transformer):
         """Get a categorical transformer.
@@ -366,14 +366,14 @@ class DataProcessor:
         Args:
             kwargs (dict):
                 The keyword arguments for the transformer.
-            transformer:
+            transformer (rdt.transformers.BaseTransformer):
                 A categorical transformer.
 
         Returns:
-            transformer:
+            rdt.transformers.BaseTransformer:
                 A categorical transformer.
         """
-        return self._get_other_transformer(kwargs, transformer)
+        return self._get_transformer_with_kwargs(kwargs, transformer)
 
     def _get_numerical_transformer(self, kwargs, transformer):
         """Get a numerical transformer.
@@ -381,14 +381,14 @@ class DataProcessor:
         Args:
             kwargs (dict):
                 The keyword arguments for the transformer.
-            transformer:
+            transformer (rdt.transformers.BaseTransformer):
                 A numerical transformer.
 
         Returns:
-            transformer:
+            rdt.transformers.BaseTransformer:
                 A numerical transformer.
         """
-        return self._get_other_transformer(kwargs, transformer)
+        return self._get_transformer_with_kwargs(kwargs, transformer)
 
     def _get_boolean_transformer(self, kwargs, transformer):
         """Get a boolean transformer.
@@ -396,14 +396,14 @@ class DataProcessor:
         Args:
             kwargs (dict):
                 The keyword arguments for the transformer.
-            transformer:
+            transformer (rdt.transformers.BaseTransformer):
                 A boolean transformer.
 
         Returns:
-            transformer:
+            rdt.transformers.BaseTransformer:
                 A boolean transformer.
         """
-        return self._get_other_transformer(kwargs, transformer)
+        return self._get_transformer_with_kwargs(kwargs, transformer)
 
     def _get_sdtype_transformer(self, sdtype, kwargs, transformer):
         transformer_map = {
@@ -416,7 +416,7 @@ class DataProcessor:
         if transformer_fn:
             return transformer_fn(kwargs, transformer)
 
-        return self._get_other_transformer(kwargs, transformer)
+        return self._get_transformer_with_kwargs(kwargs, transformer)
 
     def _get_transformer_instance(self, sdtype, column_metadata):
         transformer = self._transformers_by_sdtype[sdtype]
@@ -528,6 +528,10 @@ class DataProcessor:
                 The data type of the column.
             data (pandas.DataFrame):
                 The input data.
+
+        Returns:
+            tuple:
+                (sdtype, transformer)
         """
         if is_numeric:
             function_name, function_kwargs = self._get_anonymized_faker_params_numeric_data(
@@ -559,6 +563,10 @@ class DataProcessor:
                 A dictionary representing the metadata for the column.
             data (pandas.DataFrame):
                 The input data.
+
+        Returns:
+            tuple:
+                (sdtype, transformer)
         """
         return 'id', self._get_transformer_instance('categorical', column_metadata)
 
@@ -638,7 +646,8 @@ class DataProcessor:
                 The input data.
 
         Returns:
-            tuple: (sdtype, transformer)
+            tuple:
+                (sdtype, transformer)
         """
         column_metadata = self.metadata.columns.get(column)
         cardinality_rule = 'unique' if bool(column in self._keys) else None

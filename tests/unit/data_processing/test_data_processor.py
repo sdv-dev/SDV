@@ -733,7 +733,7 @@ class TestDataProcessor:
         """
         # Setup
         dp = DataProcessor(SingleTableMetadata())
-        dp._get_other_transformer = Mock(return_value='FloatFormatter')
+        dp._get_transformer_with_kwargs = Mock(return_value='FloatFormatter')
 
         # Run
         result = DataProcessor._get_transformer_instance(dp, 'numerical', {})
