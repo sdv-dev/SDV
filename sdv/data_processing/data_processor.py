@@ -323,12 +323,12 @@ class DataProcessor:
 
         return transformer
 
-    def _get_transformer_with_kwargs(self, kwargs, transformer):
-        """Get a transformer with kwargs.
+    def _get_transformer_with_parameters(self, parameters, transformer):
+        """Get a transformer with parameters .
 
         Args:
-            kwargs (dict):
-                The keyword arguments for the transformer.
+            parameters (dict):
+                The parameters for the transformer.
             transformer (rdt.transformers.BaseTransformer):
                 A transformer.
 
@@ -336,19 +336,19 @@ class DataProcessor:
             rdt.transformers.BaseTransformer:
                 A transformer.
         """
-        if kwargs:
+        if parameters:
             transformer_class = transformer.__class__
             default_transformer_kwargs = _get_transformer_init_kwargs(transformer)
-            return transformer_class(**{**default_transformer_kwargs, **kwargs})
+            return transformer_class(**{**default_transformer_kwargs, **parameters})
 
         return deepcopy(transformer)
 
-    def _get_datetime_transformer(self, kwargs, transformer):
+    def _get_datetime_transformer(self, parameters, transformer):
         """Get a datetime transformer.
 
         Args:
-            kwargs (dict):
-                The keyword arguments for the transformer.
+            parameters (dict):
+                The parameters for the transformer.
             transformer (rdt.transformers.BaseTransformer):
                 A datetime transformer.
 
@@ -356,16 +356,16 @@ class DataProcessor:
             rdt.transformers.BaseTransformer:
                 A datetime transformer.
         """
-        kwargs['enforce_min_max_values'] = self._enforce_min_max_values
+        parameters['enforce_min_max_values'] = self._enforce_min_max_values
 
-        return self._get_transformer_with_kwargs(kwargs, transformer)
+        return self._get_transformer_with_parameters(parameters, transformer)
 
-    def _get_categorical_transformer(self, kwargs, transformer):
+    def _get_categorical_transformer(self, parameters, transformer):
         """Get a categorical transformer.
 
         Args:
-            kwargs (dict):
-                The keyword arguments for the transformer.
+            parameters (dict):
+                The parameters for the transformer.
             transformer (rdt.transformers.BaseTransformer):
                 A categorical transformer.
 
@@ -373,14 +373,14 @@ class DataProcessor:
             rdt.transformers.BaseTransformer:
                 A categorical transformer.
         """
-        return self._get_transformer_with_kwargs(kwargs, transformer)
+        return self._get_transformer_with_parameters(parameters, transformer)
 
-    def _get_numerical_transformer(self, kwargs, transformer):
+    def _get_numerical_transformer(self, parameters, transformer):
         """Get a numerical transformer.
 
         Args:
-            kwargs (dict):
-                The keyword arguments for the transformer.
+            parameters (dict):
+                The parameters for the transformer.
             transformer (rdt.transformers.BaseTransformer):
                 A numerical transformer.
 
@@ -388,14 +388,14 @@ class DataProcessor:
             rdt.transformers.BaseTransformer:
                 A numerical transformer.
         """
-        return self._get_transformer_with_kwargs(kwargs, transformer)
+        return self._get_transformer_with_parameters(parameters, transformer)
 
-    def _get_boolean_transformer(self, kwargs, transformer):
+    def _get_boolean_transformer(self, parameters, transformer):
         """Get a boolean transformer.
 
         Args:
-            kwargs (dict):
-                The keyword arguments for the transformer.
+            parameters (dict):
+                The parameters for the transformer.
             transformer (rdt.transformers.BaseTransformer):
                 A boolean transformer.
 
@@ -403,9 +403,9 @@ class DataProcessor:
             rdt.transformers.BaseTransformer:
                 A boolean transformer.
         """
-        return self._get_transformer_with_kwargs(kwargs, transformer)
+        return self._get_transformer_with_parameters(parameters, transformer)
 
-    def _get_sdtype_transformer(self, sdtype, kwargs, transformer):
+    def _get_sdtype_transformer(self, sdtype, parameters, transformer):
         transformer_map = {
             'datetime': self._get_datetime_transformer,
             'numerical': self._get_numerical_transformer,
@@ -414,9 +414,9 @@ class DataProcessor:
         }
         transformer_fn = transformer_map.get(sdtype)
         if transformer_fn:
-            return transformer_fn(kwargs, transformer)
+            return transformer_fn(parameters, transformer)
 
-        return self._get_transformer_with_kwargs(kwargs, transformer)
+        return self._get_transformer_with_parameters(parameters, transformer)
 
     def _get_transformer_instance(self, sdtype, column_metadata):
         transformer = self._transformers_by_sdtype[sdtype]
@@ -430,10 +430,10 @@ class DataProcessor:
         ):
             return self.create_anonymized_transformer(sdtype, column_metadata, None, self._locales)
 
-        kwargs = {
+        parameters = {
             key: value for key, value in column_metadata.items() if key not in ['pii', 'sdtype']
         }
-        return self._get_sdtype_transformer(sdtype, kwargs, transformer)
+        return self._get_sdtype_transformer(sdtype, parameters, transformer)
 
     def _get_multi_column_config(self, column, sdtype, data):
         """Get the configuration (sdtype and transformer) for a multi-column.
