@@ -231,10 +231,7 @@ class BaseMultiTableSynthesizer:
                 try:
                     self.metadata = constraint.get_updated_metadata(self.metadata)
                 except ConstraintNotMetError:
-                    try:
-                        constraint.get_updated_metadata(self._modified_multi_table_metdata)
-                    except ConstraintNotMetError as e:
-                        raise e
+                    constraint.get_updated_metadata(self._modified_multi_table_metdata)
 
     def get_constraints(self):
         """Get a copy of the list of constraints applied to the synthesizer."""
