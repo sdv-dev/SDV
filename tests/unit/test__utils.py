@@ -22,6 +22,7 @@ from sdv._utils import (
     _get_transformer_init_kwargs,
     _is_datetime_type,
     _is_numerical,
+    _validate_datetime_format,
     _validate_foreign_keys_not_null,
     check_sdv_versions_and_warn,
     check_synthesizer_version,
@@ -857,3 +858,14 @@ def test__datetime_string_matches_format(value, datetime_format, expected):
 
     # Assert
     assert result is expected
+
+
+def test__validate_datetime_format_mixed_timezones():
+    # Setup
+    base_datetime = '2025-07-10 12:00:00'
+    timezones = ['+03:00', '-03:00', '+08:00', '+05:00', '-05:00']
+    column = pd.Series([base_datetime + tz for tz in timezones], dtype='object')
+    datetime_format = '%Y-%m-%d %H:%M:%S%z'
+
+    # Run
+    _validate_datetime_format(column, datetime_format)
