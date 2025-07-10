@@ -725,18 +725,15 @@ class TestDataProcessor:
         }
         mock_get_anonymized_transformer.assert_called_once_with('email', expected_kwargs)
 
-    def test__get_transformer_instance_no_kwargs(self):
-        """Test the ``_get_transformer_instance`` without keyword args.
+    def test__get_transformer_instance_no_parameters(self):
+        """Test the ``_get_transformer_instance`` without parameters.
 
-        When there are no keyword args this will return a copy of a predefined transformer
+        When there are no parameters this will return a copy of a predefined transformer
         from the dictionary ``self._transformers_by_sdtype``.
         """
         # Setup
-        dp = Mock()
-        dp._transformers_by_sdtype = {
-            'numerical': 'FloatFormatter',
-            'categorical': 'UniformEncoder',
-        }
+        dp = DataProcessor(SingleTableMetadata())
+        dp._get_transformer_with_parameters = Mock(return_value='FloatFormatter')
 
         # Run
         result = DataProcessor._get_transformer_instance(dp, 'numerical', {})
