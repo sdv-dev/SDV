@@ -44,12 +44,12 @@ And you will see something like this:
 
 ```
 Coverage XML written to file ./integration_cov.xml
-====================== 81 passed, 7820 warnings in 23.54s ======================
+================ 425 passed, 568 warnings in 381.21s (0:06:21) =================
 ...
 invoke lint
 No broken requirements found.
 All checks passed!
-86 files already formatted
+198 files already formatted
 ```
 
 The execution has finished with no errors, 0 test skipped and 7820 warnings.
