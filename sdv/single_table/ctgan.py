@@ -33,7 +33,7 @@ def _validate_no_category_dtype(data):
         - ``InvalidDataTypeError`` if any columns in the data have 'category' dtype.
     """
     category_cols = [
-        col for col, dtype in data.dtypes.items() if pd.api.types.is_categorical_dtype(dtype)
+        col for col, dtype in data.dtypes.items() if isinstance(dtype, pd.CategoricalDtype)
     ]
     if category_cols:
         categoricals = "', '".join(category_cols)
