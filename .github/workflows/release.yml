@@ -1,0 +1,81 @@
+name: Release
+on:
+  release:
+    types: [published]
+    branches:
+      - main
+      - stable
+
+  workflow_dispatch:
+    inputs:
+      candidate:
+        description: 'Release candidate.'
+        required: true
+        type: boolean
+        default: true
+      test_pypi:
+        description: 'Test PyPI.'
+        type: boolean
+        default: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.candidate && 'main' || 'stable' }}
+
+      - name: Set up latest Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: 'pyproject.toml'
+
+      - name: Install dependencies
+        run: |
+            python -m pip install --upgrade pip
+            python -m pip install .[dev]
+
+      - name: Create wheel
+        run: |
+          make dist
+
+      - name: Publish a Python distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: ${{ inputs.test_pypi && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
+
+      - name: Bump version to next candidate
+        if: ${{ inputs.candidate && !inputs.test_pypi }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          bump-my-version bump candidate --no-tag --no-commit
+
+      - name: Create pull request
+        if: ${{ inputs.candidate && !inputs.test_pypi }}
+        id: cpr
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          commit-message: bumpversion-candidate
+          committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+          author: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>
+          signoff: false
+          delete-branch: true
+          title: Automated Bump Version Candidate
+          body: "This is an auto-generated PR that bumps the version to the next candidate."
+          branch: bumpversion-candidate-update
+          branch-suffix: short-commit-hash
+          add-paths: |
+            sdv/__init__.py
+            pyproject.toml
+          draft: false
+          base: main
+
+      - name: Enable Pull Request Automerge
+        if: ${{ steps.cpr.outputs.pull-request-operation == 'created' }}
+        run: gh pr merge "${{ steps.cpr.outputs.pull-request-number }}" --squash --admin
+        env:
+          GH_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
