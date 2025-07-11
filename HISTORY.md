@@ -1,5 +1,20 @@
 # Release Notes
 
+## v1.24.1 - 2025-07-14
+
+### Bugs Fixed
+
+* Unable to add overlapping single-table constraints to a multi-table schema - Issue [#2601](https://github.com/sdv-dev/SDV/issues/2601) by @frances-h
+* Resolve DeprecationWarning (pd.api.types.is_categorical_dtype is deprecated) - Issue [#2505](https://github.com/sdv-dev/SDV/issues/2505) by @gsheni
+
+### Internal
+
+* Refactor _create_config method - Issue [#2593](https://github.com/sdv-dev/SDV/issues/2593) by @fealho
+
+### Maintenance
+
+* Add workflow to release SDV on PyPI - Issue [#2603](https://github.com/sdv-dev/SDV/issues/2603) by @gsheni
+
 ## v1.24.0 - 2025-06-30
 
 ### New Features
