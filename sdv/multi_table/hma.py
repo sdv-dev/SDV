@@ -565,6 +565,9 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 )
                 synthesizer = self._synthesizer(table_meta, **self._table_parameters[child_name])
 
+            self._set_extended_columns_distributions(
+                synthesizer, child_name, self._parent_extended_columns[child_name]
+            )
             synthesizer._set_parameters(parameters, default_parameters)
         else:
             synthesizer = self._null_child_synthesizers[f'__{child_name}__{foreign_key}']
