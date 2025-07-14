@@ -1,6 +1,4 @@
-import random
 import re
-from datetime import timedelta, timezone
 from uuid import UUID
 
 import numpy as np
@@ -607,39 +605,33 @@ def test_unsupported_regex():
 
 
 def test_datetime_column_multiple_timezones():
-    real_data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
-    timezones = ['+03:00', '-03:00', '+08:00', '+05:00', '-05:00']
-    random_timezones = np.random.choice(timezones, size=len(real_data))
+    """Test auto_assign_transformers does not crash if column with timestamps, several timezones."""
+    # Setup
+    datetime_format = '%Y-%m-%d %H:%M:%S%z'
+    data = pd.DataFrame({
+        'id': list(range(5)),
+        'A': [
+            pd.Timestamp('2025-01-01 00:00:00-0100', tz='UTC-01:00'),
+            pd.Timestamp('2025-01-01 00:00:00+0200', tz='UTC+02:00'),
+            pd.Timestamp('2025-01-01 00:00:00-0300', tz='UTC-03:00'),
+            pd.Timestamp('2025-01-01 00:00:00-1200', tz='UTC-12:00'),
+            pd.Timestamp('2025-01-01 00:00:00+1400', tz='UTC+14:00'),
+        ],
+    })
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'A': {'sdtype': 'datetime', 'datetime_format': datetime_format},
+                },
+            },
+        },
+    })
+    synth = GaussianCopulaSynthesizer(metadata)
 
-    def parse_offset(offset_str):
-        # Remove colon for easier parsing (e.g. +0300)
-        offset_str_clean = offset_str.replace(':', '')
+    # Run
+    synth.auto_assign_transformers(data)
 
-        sign = 1 if offset_str_clean.startswith('+') else -1
-        hours = int(offset_str_clean[1:3])
-        minutes = int(offset_str_clean[3:5])
-
-        delta = timedelta(hours=hours, minutes=minutes)
-        return timezone(sign * delta)
-
-    # Apply timezone conversion row by row
-    real_data['checkin_date'] = real_data.apply(
-        lambda row: pd.to_datetime(row['checkin_date']).replace(
-            tzinfo=parse_offset(random.choice(timezones))
-        ),
-        axis=1,
-    )
-    real_data['checkout_date'] = real_data.apply(
-        lambda row: pd.to_datetime(row['checkout_date']).replace(
-            tzinfo=parse_offset(random.choice(timezones))
-        ),
-        axis=1,
-    )
-    new_metadata = Metadata.detect_from_dataframe(real_data)
-    date_constraint = Inequality(low_column_name='checkin_date', high_column_name='checkout_date')
-    new_metadata.update_columns(
-        ['checkin_date', 'checkout_date'], sdtype='datetime', datetime_format='%Y-%m-%d %H:%M:%S%z'
-    )
-    synth = GaussianCopulaSynthesizer(new_metadata)
-    synth.auto_assign_transformers(real_data)
-    synth.add_constraints([date_constraint])
+    # Assert
+    assert synth.validate(data) is None
