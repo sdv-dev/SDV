@@ -2633,8 +2633,8 @@ def test__unsupported_regex_format():
         HMASynthesizer(metadata)
 
 
-def test_end_to_end_with_cags():
-    """Test HMA with a single-table cag."""
+def test_end_to_end_with_constraints():
+    """Test HMA with a single-table constraints."""
     # Setup
     data, metadata = download_demo('multi_table', 'fake_hotels')
     data['guests']['amenities_lower'] = data['guests']['amenities_fee'] - np.random.rand(

@@ -323,138 +323,442 @@ class DataProcessor:
 
         return transformer
 
-    def _get_transformer_instance(self, sdtype, column_metadata):
-        transformer = self._transformers_by_sdtype[sdtype]
-        if isinstance(transformer, AnonymizedFaker):
-            is_lexify = transformer.function_name == 'lexify'
-            is_baseprovider = transformer.provider_name == 'BaseProvider'
-            if is_lexify and is_baseprovider:  # Default settings
-                return self.create_anonymized_transformer(
-                    sdtype, column_metadata, None, self._locales
-                )
+    def _get_transformer_with_parameters(self, parameters, transformer):
+        """Get a transformer with parameters .
 
-        kwargs = {
-            key: value for key, value in column_metadata.items() if key not in ['pii', 'sdtype']
-        }
-        if sdtype == 'datetime':
-            kwargs['enforce_min_max_values'] = self._enforce_min_max_values
+        Args:
+            parameters (dict):
+                The parameters for the transformer.
+            transformer (rdt.transformers.BaseTransformer):
+                A transformer.
 
-        if kwargs and transformer is not None:
+        Returns:
+            rdt.transformers.BaseTransformer:
+                A transformer.
+        """
+        if parameters:
             transformer_class = transformer.__class__
             default_transformer_kwargs = _get_transformer_init_kwargs(transformer)
-            return transformer_class(**{**default_transformer_kwargs, **kwargs})
+            return transformer_class(**{**default_transformer_kwargs, **parameters})
 
         return deepcopy(transformer)
 
-    def _create_config(self, data):
-        sdtypes = {}
-        transformers = {}
+    def _get_datetime_transformer(self, parameters, transformer):
+        """Get a datetime transformer.
 
-        columns_in_multi_col_transformer = self._get_grouped_columns()
-        for column in set(data.columns):
-            column_metadata = self.metadata.columns.get(column)
-            sdtype = column_metadata.get('sdtype')
+        Args:
+            parameters (dict):
+                The parameters for the transformer.
+            transformer (rdt.transformers.BaseTransformer):
+                A datetime transformer.
 
-            if column in columns_in_multi_col_transformer:
-                sdtypes[column] = sdtype
-                continue
+        Returns:
+            rdt.transformers.BaseTransformer:
+                A datetime transformer.
+        """
+        parameters['enforce_min_max_values'] = self._enforce_min_max_values
 
-            pii = (
-                sdtype not in self._transformers_by_sdtype
-                and sdtype not in {'unknown', 'id'}
-                and (column_metadata.get('pii', True))
+        return self._get_transformer_with_parameters(parameters, transformer)
+
+    def _get_categorical_transformer(self, parameters, transformer):
+        """Get a categorical transformer.
+
+        Args:
+            parameters (dict):
+                The parameters for the transformer.
+            transformer (rdt.transformers.BaseTransformer):
+                A categorical transformer.
+
+        Returns:
+            rdt.transformers.BaseTransformer:
+                A categorical transformer.
+        """
+        return self._get_transformer_with_parameters(parameters, transformer)
+
+    def _get_numerical_transformer(self, parameters, transformer):
+        """Get a numerical transformer.
+
+        Args:
+            parameters (dict):
+                The parameters for the transformer.
+            transformer (rdt.transformers.BaseTransformer):
+                A numerical transformer.
+
+        Returns:
+            rdt.transformers.BaseTransformer:
+                A numerical transformer.
+        """
+        return self._get_transformer_with_parameters(parameters, transformer)
+
+    def _get_boolean_transformer(self, parameters, transformer):
+        """Get a boolean transformer.
+
+        Args:
+            parameters (dict):
+                The parameters for the transformer.
+            transformer (rdt.transformers.BaseTransformer):
+                A boolean transformer.
+
+        Returns:
+            rdt.transformers.BaseTransformer:
+                A boolean transformer.
+        """
+        return self._get_transformer_with_parameters(parameters, transformer)
+
+    def _get_sdtype_transformer(self, sdtype, parameters, transformer):
+        transformer_map = {
+            'datetime': self._get_datetime_transformer,
+            'numerical': self._get_numerical_transformer,
+            'categorical': self._get_categorical_transformer,
+            'boolean': self._get_boolean_transformer,
+        }
+        transformer_fn = transformer_map.get(sdtype)
+        if transformer_fn:
+            return transformer_fn(parameters, transformer)
+
+        return self._get_transformer_with_parameters(parameters, transformer)
+
+    def _get_transformer_instance(self, sdtype, column_metadata):
+        transformer = self._transformers_by_sdtype[sdtype]
+        if transformer is None:
+            return None
+
+        if (
+            isinstance(transformer, AnonymizedFaker)
+            and transformer.function_name == 'lexify'
+            and transformer.provider_name == 'BaseProvider'  # Default settings
+        ):
+            return self.create_anonymized_transformer(sdtype, column_metadata, None, self._locales)
+
+        parameters = {
+            key: value for key, value in column_metadata.items() if key not in ['pii', 'sdtype']
+        }
+        return self._get_sdtype_transformer(sdtype, parameters, transformer)
+
+    def _get_multi_column_config(self, column, sdtype, data):
+        """Get the configuration (sdtype and transformer) for a multi-column.
+
+        Args:
+            column (str):
+                Column name.
+            sdtype (str):
+                Semantic data type of the column.
+            data (pandas.DataFrame):
+                The input data.
+
+        Returns:
+            tuple:
+                (sdtype, transformer) where transformer is None for multi-column cases.
+        """
+        return sdtype, None
+
+    def _get_id_column_no_regex_format_config(
+        self, column, sdtype, column_metadata, is_numeric, data
+    ):
+        """Get config (sdtype and transformer) for a column with 'id' sdtype and no regex format.
+
+        Args:
+            column (str):
+                Column name.
+            sdtype (str):
+                Semantic data type of the column.
+            column_metadata (dict):
+                A dictionary representing the metadata for the column.
+            is_numeric (boolean):
+                A boolean representing whether or not data type is numeric or not.
+            data (pandas.DataFrame):
+                The input data.
+
+        Returns:
+            tuple:
+                (sdtype, transformer)
+        """
+        return 'id', self.create_regex_generator(column, sdtype, column_metadata, is_numeric)
+
+    def _get_anonymized_faker_params_numeric_data(self, column_dtype, data):
+        """Get the function name and kwargs for the anonymized faker transformer for numeric data.
+
+        Args:
+            column_dtype (str):
+                The data type of the column.
+            data (pandas.DataFrame):
+                The input data.
+
+        Returns:
+            tuple:
+                (function_name, function_kwargs)
+        """
+        column_dtype = str(column_dtype).lower()
+        function_kwargs = {'min': 0, 'max': 16777216}
+        if 'int8' in column_dtype:
+            function_kwargs['max'] = 127
+        elif 'int16' in column_dtype:
+            function_kwargs['max'] = 32767
+
+        return 'random_int', function_kwargs
+
+    def _get_anonymized_faker_params_non_numeric_data(self, column_dtype, data):
+        """Get function name and kwargs for the anonymized faker transformer for non-numeric data.
+
+        Args:
+            column_dtype (str):
+                The data type of the column.
+            data (pandas.DataFrame):
+                The input data.
+
+        Returns:
+            tuple:
+                (function_name, function_kwargs)
+        """
+        return 'bothify', {'text': 'sdv-id-??????'}
+
+    def _get_id_column_key_column_config(
+        self, column, column_metadata, is_numeric, column_dtype, data
+    ):
+        """Get config (sdtype and transformer) for a key column.
+
+        Args:
+            column (str):
+                Column name.
+            column_metadata (dict):
+                A dictionary representing the metadata for the column.
+            is_numeric (boolean):
+                A boolean representing whether or not data type is numeric or not.
+            column_dtype (str):
+                The data type of the column.
+            data (pandas.DataFrame):
+                The input data.
+
+        Returns:
+            tuple:
+                (sdtype, transformer)
+        """
+        if is_numeric:
+            function_name, function_kwargs = self._get_anonymized_faker_params_numeric_data(
+                column_dtype, data
+            )
+        else:
+            function_name, function_kwargs = self._get_anonymized_faker_params_non_numeric_data(
+                column_dtype, data
             )
 
-            if sdtype == 'id':
-                function_name = 'bothify'
-                column_dtype = data[column].dtype
-                is_numeric = pd.api.types.is_numeric_dtype(column_dtype)
-                if column_metadata.get('regex_format', False):
-                    transformers[column] = self.create_regex_generator(
-                        column, sdtype, column_metadata, is_numeric
-                    )
-                    sdtypes[column] = 'id'
-                elif column in self._keys:
-                    if is_numeric:
-                        function_name = 'random_int'
-                        column_dtype = str(column_dtype).lower()
-                        function_kwargs = {'min': 0, 'max': 16777216}
-                        if 'int8' in column_dtype:
-                            function_kwargs['max'] = 127
-                        elif 'int16' in column_dtype:
-                            function_kwargs['max'] = 32767
+        cardinality_rule = None
+        if column in self._keys:
+            cardinality_rule = 'unique'
 
-                    else:
-                        function_kwargs = {'text': 'sdv-id-??????'}
+        transformer = AnonymizedFaker(
+            provider_name=None,
+            function_name=function_name,
+            function_kwargs=function_kwargs,
+            cardinality_rule=cardinality_rule,
+        )
 
-                    cardinality_rule = None
-                    if column in self._keys:
-                        cardinality_rule = 'unique'
+        return 'pii' if column_metadata.get('pii') else 'id', transformer
 
-                    transformers[column] = AnonymizedFaker(
-                        provider_name=None,
-                        function_name=function_name,
-                        function_kwargs=function_kwargs,
-                        cardinality_rule=cardinality_rule,
-                    )
+    def _get_id_column_no_regex_format_no_key_config(self, column_metadata, data):
+        """Get config (sdtype and transformer) for non-key 'id' column with no regex format.
 
-                    sdtypes[column] = 'pii' if column_metadata.get('pii') else 'id'
-                else:
-                    transformers[column] = self._get_transformer_instance(
-                        'categorical', column_metadata
-                    )
-                    sdtypes[column] = 'id'
+        Args:
+            column_metadata (dict):
+                A dictionary representing the metadata for the column.
+            data (pandas.DataFrame):
+                The input data.
 
-            elif sdtype == 'unknown':
-                sdtypes[column] = 'pii'
-                function_name = 'bothify'
-                function_kwargs = {
-                    'text': 'sdv-pii-?????',
-                    'letters': '0123456789abcdefghijklmnopqrstuvwxyz',
-                }
-                if pd.api.types.is_numeric_dtype(data[column]):
-                    max_digits = len(str(abs(max(data[column]))))
-                    min_digits = len(str(abs(min(data[column]))))
-                    text = ('!' * (max_digits - min_digits)) + '%' + ('#' * (min_digits - 1))
-                    function_name = 'numerify'
-                    function_kwargs = {
-                        'text': text,
-                    }
-                transformers[column] = AnonymizedFaker(
-                    function_name=function_name,
-                )
-                transformers[column].function_kwargs = function_kwargs
+        Returns:
+            tuple:
+                (sdtype, transformer)
+        """
+        return 'id', self._get_transformer_instance('categorical', column_metadata)
 
-            elif pii:
-                sdtypes[column] = 'pii'
-                cardinality_rule = 'unique' if bool(column in self._keys) else None
-                transformers[column] = self.create_anonymized_transformer(
-                    sdtype, column_metadata, cardinality_rule, self._locales
-                )
+    def _get_id_column_config(self, column, sdtype, data):
+        """Get config (sdtype and transformer) for a column with 'id' sdtype.
 
-            elif sdtype in self._transformers_by_sdtype:
-                sdtypes[column] = sdtype
-                if column != self._primary_key:
-                    transformers[column] = self._get_transformer_instance(sdtype, column_metadata)
-                else:
-                    transformers[column] = self.create_anonymized_transformer(
-                        sdtype=sdtype,
-                        column_metadata=column_metadata,
-                        cardinality_rule='unique',
-                        locales=self._locales,
-                    )
+        Args:
+            column (str):
+                Column name.
+            sdtype (str):
+                Semantic data type of the column.
+            data (pandas.DataFrame):
+                The input data.
 
-            else:
-                sdtypes[column] = 'categorical'
-                transformers[column] = self._get_transformer_instance(
-                    'categorical', column_metadata
-                )
+        Returns:
+            tuple:
+                (sdtype, transformer)
+        """
+        column_metadata = self.metadata.columns.get(column)
+        column_dtype = data[column].dtype
+        is_numeric = pd.api.types.is_numeric_dtype(column_dtype)
+
+        if column_metadata.get('regex_format', False):
+            return self._get_id_column_no_regex_format_config(
+                column, sdtype, column_metadata, is_numeric, data
+            )
+
+        if column in self._keys:
+            return self._get_id_column_key_column_config(
+                column, column_metadata, is_numeric, column_dtype, data
+            )
+
+        return self._get_id_column_no_regex_format_no_key_config(column_metadata, data)
+
+    def _get_unknown_column_config(self, column, data):
+        """Get config (sdtype and transformer) for a column with 'unknown' sdtype.
+
+        Args:
+            column (str):
+                Column name.
+            data (pandas.DataFrame):
+                The input data.
+
+        Returns:
+            tuple:
+                (sdtype, transformer)
+        """
+        function_name = 'bothify'
+        function_kwargs = {
+            'text': 'sdv-pii-?????',
+            'letters': '0123456789abcdefghijklmnopqrstuvwxyz',
+        }
+        if pd.api.types.is_numeric_dtype(data[column]):
+            max_digits = len(str(abs(max(data[column]))))
+            min_digits = len(str(abs(min(data[column]))))
+            text = ('!' * (max_digits - min_digits)) + '%' + ('#' * (min_digits - 1))
+            function_name = 'numerify'
+            function_kwargs = {
+                'text': text,
+            }
+        transformer = AnonymizedFaker(
+            function_name=function_name,
+        )
+        transformer.function_kwargs = function_kwargs
+
+        return 'pii', transformer
+
+    def _get_pii_column_config(self, column, sdtype, data):
+        """Get config (sdtype and transformer) for a column that is PII.
+
+        Args:
+            column (str):
+                Column name.
+            sdtype (str):
+                Semantic data type of the column.
+            data (pandas.DataFrame):
+                The input data.
+
+        Returns:
+            tuple:
+                (sdtype, transformer)
+        """
+        column_metadata = self.metadata.columns.get(column)
+        cardinality_rule = 'unique' if bool(column in self._keys) else None
+        transformer = self.create_anonymized_transformer(
+            sdtype, column_metadata, cardinality_rule, self._locales
+        )
+
+        return 'pii', transformer
+
+    def _get_standard_sdtype_column_config(self, column, sdtype, data):
+        """Get config (sdtype and transformer) for a column with standard sdtype.
+
+        Args:
+            column (str):
+                Column name.
+            sdtype (str):
+                Semantic data type of the column.
+            data (pandas.DataFrame):
+                The input data.
+
+        Returns:
+            tuple:
+                (sdtype, transformer)
+        """
+        column_metadata = self.metadata.columns.get(column)
+        if column != self._primary_key:
+            transformer = self._get_transformer_instance(sdtype, column_metadata)
+        else:
+            transformer = self.create_anonymized_transformer(
+                sdtype=sdtype,
+                column_metadata=column_metadata,
+                cardinality_rule='unique',
+                locales=self._locales,
+            )
+
+        return sdtype, transformer
+
+    def _get_fallback_column_config(self, column, data):
+        """Get config (sdtype and transformer) for a column that doesn't match other categories.
+
+        Args:
+            column (str):
+                Column name.
+            data (pandas.DataFrame):
+                The input data.
+
+        Returns:
+            tuple:
+                (sdtype, transformer)
+        """
+        column_metadata = self.metadata.columns.get(column)
+
+        return 'categorical', self._get_transformer_instance('categorical', column_metadata)
+
+    def _get_column_config(self, column, data):
+        """Get the configuration (sdtype and transformer) for a single column.
+
+        Args:
+            column (str):
+                Column name.
+            data (pandas.DataFrame):
+                The input data.
+
+        Returns:
+            tuple:
+                (sdtype, transformer)
+        """
+        column_metadata = self.metadata.columns.get(column)
+        sdtype = self.metadata.columns.get(column).get('sdtype')
+
+        if column in self._get_grouped_columns():
+            return self._get_multi_column_config(column, sdtype, data)
+        if sdtype == 'id':
+            return self._get_id_column_config(column, sdtype, data)
+        if sdtype == 'unknown':
+            return self._get_unknown_column_config(column, data)
+
+        pii = (
+            sdtype not in self._transformers_by_sdtype
+            and sdtype not in {'unknown', 'id'}
+            and (column_metadata.get('pii', True))
+        )
+        if pii:
+            return self._get_pii_column_config(column, sdtype, data)
+        if sdtype in self._transformers_by_sdtype:
+            return self._get_standard_sdtype_column_config(column, sdtype, data)
+
+        return self._get_fallback_column_config(column, data)
+
+    def _create_config(self, data):
+        """Create a configuration for the HyperTransformer.
+
+        Args:
+            data (pandas.DataFrame):
+                The input data.
+
+        Returns:
+            dict:
+                Configuration for the HyperTransformer.
+        """
+        sdtypes = {}
+        transformers = {}
+        for column in set(data.columns):
+            sdtypes[column], transformer = self._get_column_config(column, data)
+            if column not in self._get_grouped_columns():
+                transformers[column] = transformer
 
         for columns, transformer in self.grouped_columns_to_transformers.items():
             transformers[columns] = transformer
 
-        config = {'transformers': transformers, 'sdtypes': sdtypes}
-        return config
+        return {'transformers': transformers, 'sdtypes': sdtypes}
 
     def update_transformers(self, column_name_to_transformer):
         """Update any of the transformers assigned to each of the column names.

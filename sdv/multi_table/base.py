@@ -120,6 +120,7 @@ class BaseMultiTableSynthesizer:
         self._table_parameters = defaultdict(dict)
         self._original_table_columns = {}
         self._original_metadata = deepcopy(self.metadata)
+        self._modified_multi_table_metadata = deepcopy(self.metadata)
         self.constraints = []
         self._has_seen_single_table_constraint = False
         if synthesizer_kwargs is not None:
@@ -216,6 +217,7 @@ class BaseMultiTableSynthesizer:
 
             multi_table_constraints.append(constraint)
             metadata = constraint.get_updated_metadata(metadata)
+            self._modified_multi_table_metadata = metadata
 
         self.metadata = metadata
         self._validate_single_table_constraints(single_table_constraints)
@@ -226,7 +228,10 @@ class BaseMultiTableSynthesizer:
             for constraint in single_table_constraints:
                 table_name = constraint.table_name
                 self._table_synthesizers[table_name].add_constraints([constraint])
-                self.metadata = constraint.get_updated_metadata(self.metadata)
+                try:
+                    self.metadata = constraint.get_updated_metadata(self.metadata)
+                except ConstraintNotMetError:
+                    constraint.get_updated_metadata(self._modified_multi_table_metadata)
 
     def get_constraints(self):
         """Get a copy of the list of constraints applied to the synthesizer."""
