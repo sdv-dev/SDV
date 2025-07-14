@@ -604,8 +604,8 @@ def test_unsupported_regex():
         GaussianCopulaSynthesizer(metadata)
 
 
-def test_datetime_column_multiple_timezones():
-    """Test auto_assign_transformers does not crash if column with timestamps, several timezones."""
+def test_datetime_column_mixed_timezones():
+    """Test auto_assign_transformers does not crash if column with timestamps, mixed timezones."""
     # Setup
     datetime_format = '%Y-%m-%d %H:%M:%S%z'
     data = pd.DataFrame({
