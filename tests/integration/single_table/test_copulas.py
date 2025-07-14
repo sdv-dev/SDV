@@ -609,13 +609,15 @@ def test_datetime_column_mixed_timezones():
     # Setup
     datetime_format = '%Y-%m-%d %H:%M:%S%z'
     data = pd.DataFrame({
-        'id': list(range(5)),
+        'id': list(range(7)),
         'A': [
             pd.Timestamp('2025-01-01 00:00:00-0100', tz='UTC-01:00'),
             pd.Timestamp('2025-01-01 00:00:00+0200', tz='UTC+02:00'),
             pd.Timestamp('2025-01-01 00:00:00-0300', tz='UTC-03:00'),
             pd.Timestamp('2025-01-01 00:00:00-1200', tz='UTC-12:00'),
             pd.Timestamp('2025-01-01 00:00:00+1400', tz='UTC+14:00'),
+            np.nan,
+            None,
         ],
     })
     metadata = Metadata.load_from_dict({
