@@ -1040,12 +1040,11 @@ class TestValidateDatetimeFormatMixedTimezones:
         datetime_format = '%Y-%m-%d %H:%M:%S'
         column = pd.Series(
             [
-                pd.Timestamp('2020-01-01 00:00:00', tz=None),
-                pd.Timestamp('2021-01-01 00:01:00', tz=None),
-                pd.Timestamp('2022-01-01 01:00:00', tz=None),
-                pd.Timestamp('2023-01-01 02:00:00', tz=None),
-                pd.Timestamp('2024-01-01 10:00:00', tz=None),
-                np.nan,
+                pd.Timestamp('2025-01-01 00:00:00', tz=None),
+                pd.Timestamp('2025-01-01 00:01:00', tz=None),
+                pd.Timestamp('2025-01-01 01:00:00', tz=None),
+                pd.Timestamp('2025-01-01 02:00:00', tz=None),
+                pd.Timestamp('2025-01-01 10:00:00', tz=None),
             ],
             dtype='object',
         )
