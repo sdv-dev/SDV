@@ -1,7 +1,7 @@
 import operator
 import re
 import string
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -862,8 +862,8 @@ def test__datetime_string_matches_format(value, datetime_format, expected):
 def date_column():
     return pd.Series(
         [
-            '2023-06-01',
-            '2023-01-01',
+            '2025-06-01',
+            '2025-01-01',
             '2025-12-31',
             np.nan,
             None,
@@ -876,9 +876,37 @@ def date_column():
 def datetime_column():
     return pd.Series(
         [
-            '2023-06-01 00:00:00',
-            '2023-01-01 23:59:59',
+            '2025-06-01 00:00:00',
+            '2025-01-01 23:59:59',
             '2025-12-31 01:01:01',
+            np.nan,
+            None,
+        ],
+        dtype='object',
+    )
+
+
+@pytest.fixture()
+def datetime_col_as_dts():
+    return pd.Series(
+        [
+            datetime(2025, 1, 1),
+            datetime(2025, 12, 31),
+            datetime(2025, 1, 1),
+            np.nan,
+            None,
+        ],
+        dtype='object',
+    )
+
+
+@pytest.fixture()
+def datetime_col_as_timestamps():
+    return pd.Series(
+        [
+            pd.Timestamp(2025, 1, 1),
+            pd.Timestamp(2025, 12, 31),
+            pd.Timestamp(2025, 1, 1),
             np.nan,
             None,
         ],
@@ -929,42 +957,22 @@ class TestValidateDatetimeFormat:
         assert len(invalid_values) == 3
         assert sorted(invalid_values) == sorted(datetime_column.tolist()[:3])
 
-    def test__validate_datetime_format_valid_datetimes(self):
+    def test__validate_datetime_format_valid_datetimes(self, datetime_col_as_dts):
         # Setup
         datetime_format = '%Y-%m-%d'
-        column = pd.Series(
-            [
-                datetime(2023, 1, 1),
-                datetime(2023, 12, 31),
-                datetime(2023, 1, 1),
-                np.nan,
-                None,
-            ],
-            dtype='object',
-        )
 
         # Run
-        invalid_values = _validate_datetime_format(column, datetime_format)
+        invalid_values = _validate_datetime_format(datetime_col_as_dts, datetime_format)
 
         # Assert
         assert len(invalid_values) == 0
 
-    def test__validate_datetime_format_valid_pd_timestamps(self):
+    def test__validate_datetime_format_valid_pd_timestamps(self, datetime_col_as_timestamps):
         # Setup
         datetime_format = '%Y/%m/%d'
-        column = pd.Series(
-            [
-                pd.Timestamp(2023, 1, 1),
-                pd.Timestamp(2023, 12, 31),
-                pd.Timestamp(2023, 1, 1),
-                np.nan,
-                None,
-            ],
-            dtype='object',
-        )
 
         # Run
-        invalid_values = _validate_datetime_format(column, datetime_format)
+        invalid_values = _validate_datetime_format(datetime_col_as_timestamps, datetime_format)
 
         # Assert
         assert len(invalid_values) == 0
@@ -975,49 +983,48 @@ class TestValidateDatetimeFormat:
     [(False, None), (True, np.nan), (True, None), (True, pd.NA), (True, pd.NaT)],
 )
 class TestValidateDatetimeFormatMixedTimezones:
+    def _add_nan_if_needed(self, column, add_nan_representation, nan_value):
+        if add_nan_representation:
+            column.loc[column.index.max() + 1] = nan_value
+        return column
+
+    def _run_test_and_assert(self, column, datetime_format, add_nan_representation, nan_value):
+        column = self._add_nan_if_needed(column, add_nan_representation, nan_value)
+        invalid_values = _validate_datetime_format(column, datetime_format)
+        assert len(invalid_values) == 0
+
     def test__validate_datetime_format_mixed_timezones(self, add_nan_representation, nan_value):
         # Setup
         datetime_format = '%Y-%m-%d %H:%M:%S%z'
         column = pd.Series(
             [
-                pd.Timestamp('2020-01-01 00:00:00-0100', tz='UTC-01:00'),
-                pd.Timestamp('2020-01-01 00:00:00+0200', tz='UTC+02:00'),
-                pd.Timestamp('2020-01-01 00:00:00-0300', tz='UTC-03:00'),
-                pd.Timestamp('2020-01-01 00:00:00+0400', tz='UTC+04:00'),
-                pd.Timestamp('2020-01-01 00:00:00+0500', tz='UTC+05:00'),
+                pd.Timestamp('2025-01-01 00:00:00-0100', tz='UTC-01:00'),
+                pd.Timestamp('2025-01-01 00:00:00+0200', tz='UTC+02:00'),
+                pd.Timestamp('2025-01-01 00:00:00-0300', tz='UTC-03:00'),
+                pd.Timestamp('2025-01-01 00:00:00-1200', tz='UTC-12:00'),
+                pd.Timestamp('2025-01-01 00:00:00+1400', tz='UTC+14:00'),
             ],
             dtype='object',
         )
-        if add_nan_representation:
-            column.loc[column.index.max() + 1] = nan_value
-
-        # Run
-        invalid_values = _validate_datetime_format(column, datetime_format)
-
-        # Assert
-        assert len(invalid_values) == 0
+        # Run and Assert
+        self._run_test_and_assert(column, datetime_format, add_nan_representation, nan_value)
 
     def test__validate_datetime_format_same_timezone(self, add_nan_representation, nan_value):
         # Setup
+        datetime_format = '%Y-%m-%d %H:%M:%S%z'
         column = pd.Series(
             [
-                pd.Timestamp('2020-01-01 00:00:00-0100', tz='UTC-01:00'),
-                pd.Timestamp('2021-01-01 00:01:00-0100', tz='UTC-01:00'),
-                pd.Timestamp('2022-01-01 01:00:00-0100', tz='UTC-01:00'),
-                pd.Timestamp('2023-01-01 02:00:00-0100', tz='UTC-01:00'),
-                pd.Timestamp('2024-01-01 10:00:00-0100', tz='UTC-01:00'),
+                pd.Timestamp('2025-01-01 00:00:00-0100', tz='UTC-01:00'),
+                pd.Timestamp('2025-01-01 00:01:00-0100', tz='UTC-01:00'),
+                pd.Timestamp('2025-01-01 01:00:00-0100', tz='UTC-01:00'),
+                pd.Timestamp('2025-01-01 02:00:00-1200', tz='UTC-12:00'),
+                pd.Timestamp('2025-01-01 10:00:00+1400', tz='UTC+14:00'),
             ],
             dtype='object',
         )
-        datetime_format = '%Y-%m-%d %H:%M:%S%z'
-        if add_nan_representation:
-            column.loc[column.index.max() + 1] = nan_value
 
-        # Run
-        invalid_values = _validate_datetime_format(column, datetime_format)
-
-        # Assert
-        assert len(invalid_values) == 0
+        # Run and Assert
+        self._run_test_and_assert(column, datetime_format, add_nan_representation, nan_value)
 
     def test__validate_datetime_format_no_timezone(self, add_nan_representation, nan_value):
         # Setup
@@ -1033,14 +1040,9 @@ class TestValidateDatetimeFormatMixedTimezones:
             ],
             dtype='object',
         )
-        if add_nan_representation:
-            column.loc[column.index.max() + 1] = nan_value
 
-        # Run
-        invalid_values = _validate_datetime_format(column, datetime_format)
-
-        # Assert
-        assert len(invalid_values) == 0
+        # Run and Assert
+        self._run_test_and_assert(column, datetime_format, add_nan_representation, nan_value)
 
     def test__validate_datetime_format_no_timezone_dts(self, add_nan_representation, nan_value):
         # Setup
@@ -1054,11 +1056,31 @@ class TestValidateDatetimeFormatMixedTimezones:
             dtype='object',
         )
 
-        if add_nan_representation:
-            column.loc[column.index.max() + 1] = nan_value
+        # Run and Assert
+        self._run_test_and_assert(column, datetime_format, add_nan_representation, nan_value)
 
-        # Run
-        invalid_values = _validate_datetime_format(column, datetime_format)
+    def test__validate_datetime_format_timezone_dts(self, add_nan_representation, nan_value):
+        # Setup
+        datetime_format = '%Y-%m-%d'
+        column = pd.Series(
+            [
+                datetime(2025, 1, 1, tzinfo=timezone.utc),
+                datetime(2025, 12, 31, tzinfo=timezone(timedelta(seconds=hours_to_seconds(1)))),
+                datetime(2025, 12, 31, tzinfo=timezone(timedelta(seconds=hours_to_seconds(-2)))),
+                datetime(2025, 12, 31, tzinfo=timezone(timedelta(seconds=hours_to_seconds(14)))),
+                datetime(
+                    2025,
+                    1,
+                    1,
+                    tzinfo=timezone(timedelta(seconds=hours_to_seconds(-12))),
+                ),
+            ],
+            dtype='object',
+        )
 
-        # Assert
-        assert len(invalid_values) == 0
+        # Run and Assert
+        self._run_test_and_assert(column, datetime_format, add_nan_representation, nan_value)
+
+
+def hours_to_seconds(hours):
+    return hours * 60 * 60
