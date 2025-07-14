@@ -127,7 +127,8 @@ def _validate_datetime_format(column, datetime_format):
 
     Args:
         column (pd.Series):
-            Column to evaluate.
+            Column to evaluate. It must contain pd.Timestamp/string/datetime values.
+            The column must be of object dtype.
         datetime_format (str):
             The datetime format.
 
@@ -136,7 +137,9 @@ def _validate_datetime_format(column, datetime_format):
             A set of values from the column that do not match the datetime format.
     """
     pandas_datetime_format = datetime_format.replace('%-', '%')
-    datetime_column = pd.to_datetime(column, errors='coerce', format=pandas_datetime_format)
+    datetime_column = pd.to_datetime(
+        column, errors='coerce', format=pandas_datetime_format, utc=True
+    )
     valid = pd.isna(column) | ~pd.isna(datetime_column)
 
     return set(column[~valid])
