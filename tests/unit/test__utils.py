@@ -916,6 +916,7 @@ def datetime_col_as_timestamps():
 
 class TestValidateDatetimeFormat:
     def test__validate_datetime_format_valid_with_dates(self, date_column):
+        """Test _validate_datetime_format with dates (as strings and valid format."""
         # Setup
         datetime_format = '%Y-%m-%d'
 
@@ -926,6 +927,7 @@ class TestValidateDatetimeFormat:
         assert len(invalid_values) == 0
 
     def test__validate_datetime_format_valid_with_datetimes(self, datetime_column):
+        """Test _validate_datetime_format with datetimes (as strings) and valid format."""
         # Setup
         datetime_format = '%Y-%m-%d %H:%M:%S'
 
@@ -936,6 +938,7 @@ class TestValidateDatetimeFormat:
         assert len(invalid_values) == 0
 
     def test__validate_datetime_format_invalid_dates(self, date_column):
+        """Test _validate_datetime_format with dates (as strings) and invalid format."""
         # Setup
         bad_format = '%Y/%m/%d'
 
@@ -947,6 +950,7 @@ class TestValidateDatetimeFormat:
         assert sorted(invalid_values) == sorted(date_column.tolist()[:3])
 
     def test__validate_datetime_format_invalid_datetimes(self, datetime_column):
+        """Test _validate_datetime_format with datetimes (as strings) and invalid format."""
         # Setup
         bad_format = '%Y-%m-%d %H-%M'
 
@@ -958,6 +962,7 @@ class TestValidateDatetimeFormat:
         assert sorted(invalid_values) == sorted(datetime_column.tolist()[:3])
 
     def test__validate_datetime_format_valid_datetimes(self, datetime_col_as_dts):
+        """Test _validate_datetime_format with datetimes (as datetimes) and valid format."""
         # Setup
         datetime_format = '%Y-%m-%d'
 
@@ -968,6 +973,7 @@ class TestValidateDatetimeFormat:
         assert len(invalid_values) == 0
 
     def test__validate_datetime_format_valid_pd_timestamps(self, datetime_col_as_timestamps):
+        """Test _validate_datetime_format with datetimes (as timestamps) and valid format."""
         # Setup
         datetime_format = '%Y/%m/%d'
 
@@ -994,6 +1000,7 @@ class TestValidateDatetimeFormatMixedTimezones:
         assert len(invalid_values) == 0
 
     def test__validate_datetime_format_mixed_timezones(self, add_nan_representation, nan_value):
+        """Test _validate_datetime_format with datetimes (as timestamps) and mixed timezones."""
         # Setup
         datetime_format = '%Y-%m-%d %H:%M:%S%z'
         column = pd.Series(
@@ -1010,6 +1017,7 @@ class TestValidateDatetimeFormatMixedTimezones:
         self._run_test_and_assert(column, datetime_format, add_nan_representation, nan_value)
 
     def test__validate_datetime_format_same_timezone(self, add_nan_representation, nan_value):
+        """Test _validate_datetime_format with datetimes (as timestamps) and same timezones."""
         # Setup
         datetime_format = '%Y-%m-%d %H:%M:%S%z'
         column = pd.Series(
@@ -1027,6 +1035,7 @@ class TestValidateDatetimeFormatMixedTimezones:
         self._run_test_and_assert(column, datetime_format, add_nan_representation, nan_value)
 
     def test__validate_datetime_format_no_timezone(self, add_nan_representation, nan_value):
+        """Test _validate_datetime_format with datetimes (as timestamps) and no timezones."""
         # Setup
         datetime_format = '%Y-%m-%d %H:%M:%S'
         column = pd.Series(
@@ -1045,6 +1054,7 @@ class TestValidateDatetimeFormatMixedTimezones:
         self._run_test_and_assert(column, datetime_format, add_nan_representation, nan_value)
 
     def test__validate_datetime_format_no_timezone_dts(self, add_nan_representation, nan_value):
+        """Test _validate_datetime_format with datetimes (as datetimes) and no timezones."""
         # Setup
         datetime_format = '%Y-%m-%d'
         column = pd.Series(
@@ -1060,19 +1070,20 @@ class TestValidateDatetimeFormatMixedTimezones:
         self._run_test_and_assert(column, datetime_format, add_nan_representation, nan_value)
 
     def test__validate_datetime_format_timezone_dts(self, add_nan_representation, nan_value):
+        """Test _validate_datetime_format with datetimes (as datetimes) and mixed timezones."""
         # Setup
         datetime_format = '%Y-%m-%d'
         column = pd.Series(
             [
                 datetime(2025, 1, 1, tzinfo=timezone.utc),
-                datetime(2025, 12, 31, tzinfo=timezone(timedelta(seconds=hours_to_seconds(1)))),
-                datetime(2025, 12, 31, tzinfo=timezone(timedelta(seconds=hours_to_seconds(-2)))),
-                datetime(2025, 12, 31, tzinfo=timezone(timedelta(seconds=hours_to_seconds(14)))),
+                datetime(2025, 12, 31, tzinfo=timezone(timedelta(seconds=1 * 60 * 60))),
+                datetime(2025, 12, 31, tzinfo=timezone(timedelta(seconds=-1 * 60 * 60))),
+                datetime(2025, 12, 31, tzinfo=timezone(timedelta(seconds=14 * 60 * 60))),
                 datetime(
                     2025,
                     1,
                     1,
-                    tzinfo=timezone(timedelta(seconds=hours_to_seconds(-12))),
+                    tzinfo=timezone(timedelta(seconds=-12 * 60 * 60)),
                 ),
             ],
             dtype='object',
@@ -1080,7 +1091,3 @@ class TestValidateDatetimeFormatMixedTimezones:
 
         # Run and Assert
         self._run_test_and_assert(column, datetime_format, add_nan_representation, nan_value)
-
-
-def hours_to_seconds(hours):
-    return hours * 60 * 60
