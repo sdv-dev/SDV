@@ -990,11 +990,13 @@ class TestValidateDatetimeFormat:
 )
 class TestValidateDatetimeFormatMixedTimezones:
     def _add_nan_if_needed(self, column, add_nan_representation, nan_value):
+        """Helper method to add NaN represetnation if needed to Series."""
         if add_nan_representation:
             column.loc[column.index.max() + 1] = nan_value
         return column
 
     def _run_test_and_assert(self, column, datetime_format, add_nan_representation, nan_value):
+        """Helper method to add NaN, run function, and assert no invalid values."""
         column = self._add_nan_if_needed(column, add_nan_representation, nan_value)
         invalid_values = _validate_datetime_format(column, datetime_format)
         assert len(invalid_values) == 0
