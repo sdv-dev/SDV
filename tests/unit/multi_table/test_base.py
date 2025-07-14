@@ -1527,6 +1527,52 @@ class TestBaseMultiTableSynthesizer:
         assert instance.constraints == expected_constraints
 
     @patch('sdv.multi_table.base._validate_constraints')
+    def test_add_constraints_single_table_overlap(self, mock_validate_constraints):
+        """Test adding overlapping single-table constraints to the synthesizer."""
+        # Setup
+        instance = Mock()
+        original_metadata = get_multi_table_metadata()
+        instance.metadata = original_metadata
+        instance._original_metadata = original_metadata
+        instance.constraints = []
+        constraint1 = Mock()
+        constraint1.table_name = 'table1'
+        constraint2 = Mock()
+        constraint2.table_name = 'table1'
+        constraint2.get_updated_metadata.side_effect = [ConstraintNotMetError, Mock()]
+        multi_table_constraint = Mock()
+        instance._table_synthesizers = {
+            'table1': Mock(),
+        }
+        instance._table_synthesizers['table1'].add_constraints = Mock()
+        single_table_constraints = [constraint1, constraint2]
+        constraints = [multi_table_constraint, constraint1, constraint2]
+        instance._detect_single_table_constraints = Mock(return_value=1)
+        mock_validate_constraints.return_value = constraints
+
+        # Run
+        BaseMultiTableSynthesizer.add_constraints(instance, constraints)
+
+        # Assert
+        mock_validate_constraints.assert_called_once_with(constraints, instance._fitted)
+        instance._validate_single_table_constraints.assert_called_once_with(
+            single_table_constraints
+        )
+        assert instance._original_metadata == original_metadata
+        multi_table_constraint.get_updated_metadata.assert_called_once_with(original_metadata)
+        constraint1.get_updated_metadata.assert_called_once_with(
+            multi_table_constraint.get_updated_metadata.return_value
+        )
+        constraint2.get_updated_metadata.assert_has_calls([
+            call(constraint1.get_updated_metadata.return_value),
+            call(multi_table_constraint.get_updated_metadata.return_value),
+        ])
+        instance._detect_single_table_constraints.assert_called_once_with(constraints)
+        instance._initialize_models.assert_called_once()
+        expected_multi_table_constraints = [multi_table_constraint]
+        assert instance.constraints == expected_multi_table_constraints
+
+    @patch('sdv.multi_table.base._validate_constraints')
     def test_updating_constraints_keeps_original_metadata(self, mock_validate_constraints):
         """Test adding data constraints to the synthesizer."""
         # Setup

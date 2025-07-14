@@ -342,7 +342,7 @@ class FixedCombinations(Constraint):
         table_data[self._columns] = table_data[self._columns].astype({
             col: object
             for col in self._columns
-            if pd.api.types.is_categorical_dtype(table_data[col])
+            if isinstance(table_data[col].dtype, pd.CategoricalDtype)
         })
 
         table_data[self._columns] = table_data[self._columns].replace({np.nan: None})
