@@ -858,103 +858,76 @@ def test__datetime_string_matches_format(value, datetime_format, expected):
     assert result is expected
 
 
-# @pytest.mark.parametrize(
-#     'value, datetime_format, expected',
-#     [
-#         ('2023-06-01', '%Y-%m-%d', True),
-#         ('06/01/2023', '%Y-%m-%d', False),
-#         (np.nan, '%Y-%m-%d', True),
-#         (pd.NaT, '%Y-%m-%d', True),
-#         (pd.NA, '%Y-%m-%d', True),
-#         (None, '%Y-%m-%d', True),
-#         (20230601, '%Y-%m-%d', False),
-#         ('2023-06', '%Y-%m-%d', False),
-#     ],
-# )
+@pytest.fixture()
+def date_column():
+    return pd.Series(
+        [
+            '2023-06-01',
+            '2023-01-01',
+            '2025-12-31',
+            np.nan,
+            None,
+        ],
+        dtype='object',
+    )
+
+
+@pytest.fixture()
+def datetime_column():
+    return pd.Series(
+        [
+            '2023-06-01 00:00:00',
+            '2023-01-01 23:59:59',
+            '2025-12-31 01:01:01',
+            np.nan,
+            None,
+        ],
+        dtype='object',
+    )
 
 
 class TestValidateDatetimeFormat:
-    def test__validate_datetime_format_valid_with_dates(self):
+    def test__validate_datetime_format_valid_with_dates(self, date_column):
         # Setup
         datetime_format = '%Y-%m-%d'
-        column = pd.Series(
-            [
-                '2023-06-01',
-                '2023-01-01',
-                '2025-12-31',
-                np.nan,
-                None,
-            ],
-            dtype='object',
-        )
 
         # Run
-        invalid_values = _validate_datetime_format(column, datetime_format)
+        invalid_values = _validate_datetime_format(date_column, datetime_format)
 
         # Assert
         assert len(invalid_values) == 0
 
-    def test__validate_datetime_format_valid_with_datetimes(self):
+    def test__validate_datetime_format_valid_with_datetimes(self, datetime_column):
         # Setup
         datetime_format = '%Y-%m-%d %H:%M:%S'
-        column = pd.Series(
-            [
-                '2023-06-01 00:00:00',
-                '2023-01-01 23:59:59',
-                '2025-12-31 01:01:01',
-                np.nan,
-                None,
-            ],
-            dtype='object',
-        )
 
         # Run
-        invalid_values = _validate_datetime_format(column, datetime_format)
+        invalid_values = _validate_datetime_format(datetime_column, datetime_format)
 
         # Assert
         assert len(invalid_values) == 0
 
-    def test__validate_datetime_format_invalid_dates(self):
+    def test__validate_datetime_format_invalid_dates(self, date_column):
         # Setup
-        datetime_format = '%Y-%m-%d'
-        column = pd.Series(
-            [
-                '06/01/2023',
-                '12/31/2023',
-                '01/01/2023',
-                np.nan,
-                None,
-            ],
-            dtype='object',
-        )
+        bad_format = '%Y/%m/%d'
 
         # Run
-        invalid_values = _validate_datetime_format(column, datetime_format)
+        invalid_values = _validate_datetime_format(date_column, bad_format)
 
         # Assert
         assert len(invalid_values) == 3
-        assert sorted(invalid_values) == sorted(column.tolist()[:3])
+        assert sorted(invalid_values) == sorted(date_column.tolist()[:3])
 
-    def test__validate_datetime_format_invalid_datetimes(self):
+    def test__validate_datetime_format_invalid_datetimes(self, datetime_column):
         # Setup
-        datetime_format = '%Y-%m-%d %H-%M'
-        column = pd.Series(
-            [
-                '2023-06-01 00:00:00',
-                '2023-01-01 23:59:59',
-                '2025-12-31 01:01:01',
-                np.nan,
-                None,
-            ],
-            dtype='object',
-        )
+        bad_format = '%Y-%m-%d %H-%M'
 
         # Run
-        invalid_values = _validate_datetime_format(column, datetime_format)
+        invalid_values = _validate_datetime_format(datetime_column, bad_format)
 
         # Assert
         assert len(invalid_values) == 3
-        assert sorted(invalid_values) == sorted(column.tolist()[:3])
+        assert sorted(invalid_values) == sorted(datetime_column.tolist()[:3])
 
     def test__validate_datetime_format_valid_datetimes(self):
         # Setup
@@ -964,6 +937,28 @@ class TestValidateDatetimeFormat:
                 datetime(2023, 1, 1),
                 datetime(2023, 12, 31),
                 datetime(2023, 1, 1),
+                np.nan,
+                None,
+            ],
+            dtype='object',
+        )
+
+        # Run
+        invalid_values = _validate_datetime_format(column, datetime_format)
+
+        # Assert
+        assert len(invalid_values) == 0
+
+    def test__validate_datetime_format_valid_pd_timestamps(self):
+        # Setup
+        datetime_format = '%Y/%m/%d'
+        column = pd.Series(
+            [
+                pd.Timestamp(2023, 1, 1),
+                pd.Timestamp(2023, 12, 31),
+                pd.Timestamp(2023, 1, 1),
+                np.nan,
+                None,
             ],
             dtype='object',
         )
