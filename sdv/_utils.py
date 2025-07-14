@@ -128,7 +128,6 @@ def _validate_datetime_format(column, datetime_format):
     Args:
         column (pd.Series):
             Column to evaluate. It must contain pd.Timestamp/string/datetime values.
-            The column must be of object dtype.
         datetime_format (str):
             The datetime format.
 
