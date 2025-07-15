@@ -919,8 +919,6 @@ class TestValidateDatetimeFormat:
     def test__validate_datetime_format_invalid_dates(self, dates, dtype):
         """Test _validate_datetime_format with dates (as str), invalid format."""
         # Setup
-        if not is_pandas_two_installed:
-            pytest.skip('Datetimes are parsed with a consistent format with pandas >= 2.0.0')
         bad_format = '%Y/%m/%d'
         column = pd.Series(dates, dtype=dtype)
         column = add_nan(column)
@@ -929,8 +927,11 @@ class TestValidateDatetimeFormat:
         invalid_values = _validate_datetime_format(column, bad_format)
 
         # Assert
-        assert len(invalid_values) == 3
-        assert sorted(invalid_values) == sorted(column.tolist()[:3])
+        if not is_pandas_two_installed:
+            pytest.skip('Datetimes are only parsed with a consistent format with pandas >= 2.0.0')
+        else:
+            assert len(invalid_values) == 3
+            assert sorted(invalid_values) == sorted(column.tolist()[:3])
 
     def test__validate_datetime_format_valid_datetimes(self, datetimes, dtype):
         """Test _validate_datetime_format with datetimes (as str), valid format."""
