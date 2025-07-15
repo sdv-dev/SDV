@@ -7,6 +7,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 import pytest
+from packaging.version import Version
 from pandas.api.types import is_datetime64_any_dtype, is_object_dtype, is_string_dtype
 from rdt.transformers.numerical import FloatFormatter
 
@@ -39,6 +40,8 @@ try:
     from re import _parser as sre_parse
 except ImportError:
     import sre_parse
+
+is_pandas_two_installed = Version(pd.__version__) >= Version('2.0.0')
 
 
 @patch('sdv._utils.pd.to_timedelta')
@@ -916,6 +919,8 @@ class TestValidateDatetimeFormat:
     def test__validate_datetime_format_invalid_dates(self, dates, dtype):
         """Test _validate_datetime_format with dates (as str), invalid format."""
         # Setup
+        if not is_pandas_two_installed:
+            pytest.skip('Datetimes are parsed with a consistent format with pandas >= 2.0.0')
         bad_format = '%Y/%m/%d'
         column = pd.Series(dates, dtype=dtype)
         column = add_nan(column)
@@ -1004,9 +1009,9 @@ def datetimes_as_dts_with_tz():
 @pytest.fixture()
 def datetimes_as_ts_with_tz():
     return [
-        pd.Timestamp(2025, 1, 1, tz='UTC-01:00'),
-        pd.Timestamp(2025, 12, 31, tz='UTC-12:00'),
-        pd.Timestamp(2025, 1, 1, tz='UTC+12:00'),
+        pd.Timestamp(1513393355, tz='US/Pacific'),
+        pd.Timestamp(1513393234, tz='US/Eastern'),
+        pd.Timestamp(1513399934, tz='US/Mountain'),
     ]
 
 
