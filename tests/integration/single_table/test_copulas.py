@@ -328,7 +328,7 @@ def test_validate_with_failing_constraint():
     """Validate that the ``constraint`` are raising errors if there is an error during validate."""
     # Setup
     real_data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
-    real_data['checkin_date'][0] = real_data['checkout_date'][1]
+    real_data.loc[0, 'checkin_date'] = real_data['checkout_date'][1]
     gc = GaussianCopulaSynthesizer(metadata)
 
     checkin_lessthan_checkout = Inequality(
