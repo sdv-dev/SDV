@@ -1155,6 +1155,7 @@ class TestValidateDatetimeFormatSameTimezone:
 
 
 def test__validate_datetime_format_same_timezone():
+    """Test _validate_datetime_format with datetimes (as datetimes) and same timezones."""
     # Setup
     datetime_format = '%Y-%m-%d %H:%M:%S%z'
     column = pd.Series(
