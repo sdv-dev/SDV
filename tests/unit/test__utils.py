@@ -41,8 +41,6 @@ try:
 except ImportError:
     import sre_parse
 
-is_pandas_two_installed = Version(pd.__version__) >= Version('2.0.0')
-
 
 @patch('sdv._utils.pd.to_timedelta')
 def test__convert_to_timedelta(to_timedelta_mock):
@@ -927,11 +925,11 @@ class TestValidateDatetimeFormat:
         invalid_values = _validate_datetime_format(column, bad_format)
 
         # Assert
-        if not is_pandas_two_installed:
-            pytest.skip('Datetimes are only parsed with a consistent format with pandas >= 2.0.0')
-        else:
+        if Version(pd.__version__) >= Version('2.0.0'):
             assert len(invalid_values) == 3
             assert sorted(invalid_values) == sorted(column.tolist()[:3])
+        else:
+            pytest.skip('Datetimes are only parsed with a consistent format with pandas >= 2.0.0')
 
     def test__validate_datetime_format_valid_datetimes(self, datetimes, dtype):
         """Test _validate_datetime_format with datetimes (as str), valid format."""
