@@ -914,10 +914,13 @@ class TestValidateDatetimeFormat:
         # Assert
         assert len(invalid_values) == 0
 
-    def test__validate_datetime_format_invalid_dates(self, dates, dtype):
+    @pytest.mark.parametrize(
+        'bad_format',
+        [('%Y/%m/%d'), ('%%m-%d-%Y'), ('%Y-%m-%d %H-%M-%S')],
+    )
+    def test__validate_datetime_format_invalid_dates(self, dates, dtype, bad_format):
         """Test _validate_datetime_format with dates (as str), invalid format, no tz."""
         # Setup
-        bad_format = '%Y/%m/%d'
         column = pd.Series(dates, dtype=dtype)
         column = add_nan(column)
 
