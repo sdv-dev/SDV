@@ -129,7 +129,7 @@ def _validate_datetime_format(column, datetime_format):
         column (pd.Series):
             Column to evaluate. It must contain pd.Timestamp/string/datetime values.
             A column can multiple timezones, a single timezone, or no timezone.
-            The column can be object or datetime64[ns] dtype.
+            The column can be object, string or datetime64[ns] dtype.
         datetime_format (str):
             The datetime format.
 
