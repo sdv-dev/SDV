@@ -860,7 +860,7 @@ def test__datetime_string_matches_format(value, datetime_format, expected):
     assert result is expected
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture()
 def dates():
     return [
         '2025-06-01',
@@ -883,7 +883,7 @@ def add_nan(column):
     max_index = column.index.max() + 1
     if is_datetime64_any_dtype(column.dtype):
         column.loc[max_index] = pd.NaT
-    if is_object_dtype(column.dtype):
+    elif is_object_dtype(column.dtype):
         column.loc[max_index] = np.nan
     elif is_string_dtype(column.dtype):
         column.loc[max_index] = pd.NA
@@ -902,7 +902,7 @@ def add_timezone(column):
 )
 class TestValidateDatetimeFormat:
     def test__validate_datetime_format_valid_dates(self, dates, dtype):
-        """Test _validate_datetime_format with dates (as str), valid format."""
+        """Test _validate_datetime_format with dates (as str), valid format, no tz."""
         # Setup
         datetime_format = '%Y-%m-%d'
         column = pd.Series(dates, dtype=dtype)
@@ -915,7 +915,7 @@ class TestValidateDatetimeFormat:
         assert len(invalid_values) == 0
 
     def test__validate_datetime_format_invalid_dates(self, dates, dtype):
-        """Test _validate_datetime_format with dates (as str), invalid format."""
+        """Test _validate_datetime_format with dates (as str), invalid format, no tz."""
         # Setup
         bad_format = '%Y/%m/%d'
         column = pd.Series(dates, dtype=dtype)
@@ -932,7 +932,7 @@ class TestValidateDatetimeFormat:
             pytest.skip('Datetimes are only parsed with a consistent format with pandas >= 2.0.0')
 
     def test__validate_datetime_format_valid_datetimes(self, datetimes, dtype):
-        """Test _validate_datetime_format with datetimes (as str), valid format."""
+        """Test _validate_datetime_format with datetimes (as str), valid format, no tz."""
         # Setup
         datetime_format = '%Y-%m-%d %H:%M:%S'
         column = pd.Series(datetimes, dtype=dtype)
@@ -944,8 +944,12 @@ class TestValidateDatetimeFormat:
         # Assert
         assert len(invalid_values) == 0
 
-    def test__validate_datetime_format_invalid_with_datetimes(self, datetimes, dtype):
-        """Test _validate_datetime_format with datetimes (as str) and invalid format."""
+    @pytest.mark.parametrize(
+        'bad_format',
+        [('%m-%d %H:%M:%S'), ('%Y-%m-%d %H:%M:%S'), ('%Y-%m-%d %H-%M-%S')],
+    )
+    def test__validate_datetime_format_invalid_with_datetimes(self, datetimes, dtype, bad_format):
+        """Test _validate_datetime_format with datetimes (as str), invalid format, no tz."""
         # Setup
         bad_format = '%Y-%m-%d %H-%M'
         column = pd.Series(datetimes, dtype=dtype)
@@ -971,6 +975,27 @@ class TestValidateDatetimeFormat:
 
         # Assert
         assert len(invalid_values) == 0
+
+    @pytest.mark.parametrize(
+        'bad_format',
+        [('%m-%d %H:%M:%S'), ('%Y-%m-%d %H:%M:%S'), ('%Y-%m-%d %H-%M-%S')],
+    )
+    def test__validate_datetime_format_invalid_datetimes_tz(self, datetimes, dtype, bad_format):
+        """Test _validate_datetime_format with datetimes (as str), invalid format, tz."""
+        # Setup
+        column = pd.Series(datetimes, dtype=dtype)
+        column = add_nan(column)
+        column = add_timezone(column)
+
+        # Run
+        invalid_values = _validate_datetime_format(column, bad_format)
+
+        # Assert
+        if Version(pd.__version__) >= Version('2.0.0'):
+            assert len(invalid_values) == 3
+            assert sorted(invalid_values) == sorted(column.tolist()[:3])
+        else:
+            pytest.skip('Datetimes are only parsed with a consistent format with pandas >= 2.0.0')
 
 
 @pytest.fixture()
