@@ -1810,7 +1810,7 @@ class TestBaseSingleTableSynthesizer:
         """Test _make_condition_dfs raises an error with invalid condition"""
 
         # Setup
-        msg = '`conditions` must be of type Condition or DataFrameCondition'
+        msg = '`conditions` must be list of Condition or DataFrameCondition'
 
         class CustomCondition:
             pass
