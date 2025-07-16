@@ -34,11 +34,15 @@ class Condition:
 class DataFrameCondition:
     """DataFrameCondition class.
 
+        This class represents a condition that is used for sampling.
+
     Attributes:
         dataframe (pd.DataFrame):
+            A pandas DataFrame representing the desired conditions.
+            A copy of the DataFrame is saved on this condition.
 
         table_name (str):
-
+            The name of the table. Optional, defaults to None.
     """
 
     def __init__(self, dataframe, table_name=None):
