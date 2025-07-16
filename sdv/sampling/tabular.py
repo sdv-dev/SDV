@@ -2,6 +2,8 @@
 
 import pandas as pd
 
+from sdv.errors import TableNameError
+
 
 class Condition:
     """Condition class.
@@ -52,7 +54,7 @@ class DataFrameCondition:
             raise ValueError('`dataframe` must be a pandas DataFrame object.')
 
         if table_name and not isinstance(table_name, str):
-            raise ValueError('`table_name` must be a string or None.')
+            raise TableNameError
 
         self.dataframe = dataframe.copy()
         self.table_name = table_name
