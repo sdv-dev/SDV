@@ -328,7 +328,7 @@ def test_validate_with_failing_constraint():
     """Validate that the ``constraint`` are raising errors if there is an error during validate."""
     # Setup
     real_data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
-    real_data['checkin_date'][0] = real_data['checkout_date'][1]
+    real_data.loc[0, 'checkin_date'] = real_data['checkout_date'][1]
     gc = GaussianCopulaSynthesizer(metadata)
 
     checkin_lessthan_checkout = Inequality(
@@ -602,3 +602,40 @@ def test_unsupported_regex():
     )
     with pytest.raises(SynthesizerInputError, match=expected_error):
         GaussianCopulaSynthesizer(metadata)
+
+
+def test_datetime_column_mixed_timezones():
+    """Test auto_assign_transformers does not crash if column has pd.Timestamps, mixed timezones."""
+    # Setup
+    datetime_format = '%Y-%m-%d %H:%M:%S%z'
+    data = pd.DataFrame({
+        'id': list(range(6)),
+        'A': pd.Series(
+            [
+                pd.Timestamp('2025-01-01 00:00:00-0100', tz='UTC-01:00'),
+                pd.Timestamp('2025-01-01 00:00:00+0200', tz='UTC+02:00'),
+                pd.Timestamp('2025-01-01 00:00:00-0300', tz='UTC-03:00'),
+                pd.Timestamp('2025-01-01 00:00:00-1200', tz='UTC-12:00'),
+                pd.Timestamp('2025-01-01 00:00:00+1400', tz='UTC+14:00'),
+                np.nan,
+            ],
+            dtype='object',
+        ),
+    })
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'A': {'sdtype': 'datetime', 'datetime_format': datetime_format},
+                },
+            },
+        },
+    })
+    synth = GaussianCopulaSynthesizer(metadata)
+
+    # Run
+    synth.auto_assign_transformers(data)
+
+    # Assert
+    assert synth.validate(data) is None
