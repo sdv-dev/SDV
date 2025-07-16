@@ -1320,7 +1320,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     )
                 if column == self._original_metadata.tables[self._table_name].primary_key:
                     raise ValueError(
-                        f"Cannot condtionally sample column name '{column}' because it is "
+                        f"Cannot conditionally sample column name '{column}' because it is "
                         'the primary key.'
                     )
             else:

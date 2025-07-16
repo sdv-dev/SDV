@@ -30,7 +30,7 @@ from sdv.errors import (
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
 from sdv.metadata.single_table import SingleTableMetadata
-from sdv.sampling.tabular import Condition
+from sdv.sampling.tabular import Condition, DataFrameCondition
 from sdv.single_table import (
     CopulaGANSynthesizer,
     CTGANSynthesizer,
@@ -1755,7 +1755,7 @@ class TestBaseSingleTableSynthesizer:
         mock_progress_bar.update.call_count == 3
 
     def test__make_condition_dfs(self):
-        """Test that the condition dfs are being created as expected."""
+        """Test _make_condition_dfs works with Condition conditions."""
         # Setup
         condition_a = Condition({'name': 'John Doe'})
         condition_b = Condition({'salary': 80.0})
@@ -1768,7 +1768,41 @@ class TestBaseSingleTableSynthesizer:
             pd.DataFrame({'name': ['John Doe']}),
             pd.DataFrame({'salary': [80.0]}),
         ]
+        for res, exp in zip(result, expected_result):
+            pd.testing.assert_frame_equal(res, exp)
 
+    def test__make_condition_dfs_dataframe_condition(self):
+        """Test _make_condition_dfs works with DataFrameCondition conditions."""
+        # Setup
+        dataframe = pd.DataFrame({
+            'name': ['John Doe'],
+            'salary': [80.0],
+        })
+        users_condition = DataFrameCondition(table_name='table', dataframe=dataframe)
+
+        # Run
+        result = BaseSingleTableSynthesizer._make_condition_dfs([users_condition])
+
+        # Assert
+        expected_result = [dataframe]
+        for res, exp in zip(result, expected_result):
+            pd.testing.assert_frame_equal(res, exp)
+
+    def test__make_condition_dfs_condition_and_dataframe_conditions(self):
+        """Test _make_condition_dfs works with Condition and DataFrameCondition conditions."""
+        # Setup
+        condition_ = Condition({'name': 'John Doe'})
+        dataframe = pd.DataFrame({'salary': [80.0]})
+        dataframe_condition = DataFrameCondition(table_name=None, dataframe=dataframe)
+
+        # Run
+        result = BaseSingleTableSynthesizer._make_condition_dfs([condition_, dataframe_condition])
+
+        # Assert
+        expected_result = [
+            pd.DataFrame({'name': ['John Doe']}),
+            pd.DataFrame({'salary': [80.0]}),
+        ]
         for res, exp in zip(result, expected_result):
             pd.testing.assert_frame_equal(res, exp)
 
@@ -2248,7 +2282,7 @@ class TestBaseSingleTableSynthesizer:
 
         # Run and Assert
         error_msg = re.escape(
-            "Cannot condtionally sample column name 'name' because it is the primary key."
+            "Cannot conditionally sample column name 'name' because it is the primary key."
         )
         with pytest.raises(ValueError, match=error_msg):
             BaseSingleTableSynthesizer._validate_conditions_unseen_columns(instance, conditions)
