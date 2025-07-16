@@ -29,3 +29,26 @@ class Condition:
     def get_num_rows(self):
         """Get the desired number of rows for this condition."""
         return self.num_rows
+
+
+class DataFrameCondition:
+    """DataFrameCondition class.
+
+    Attributes:
+        dataframe (pd.DataFrame):
+
+        table_name (str):
+
+    """
+
+    def __init__(self, dataframe, table_name=None):
+        self.dataframe = dataframe.copy()
+        self.table_name = table_name
+
+    def get_table_name(self):
+        """Get the table name for this condition."""
+        return self.table_name
+
+    def get_dataframe(self):
+        """Get the dataframe for this condition."""
+        return self.dataframe
