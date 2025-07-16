@@ -1023,7 +1023,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 columns = dataframe.columns.tolist()
                 condition_dataframes[tuple(columns)].append(dataframe)
             else:
-                raise ValueError('invalid condition type')
+                raise ValueError('`conditions` must be of type Condition or DataFrameCondition')
         return [
             pd.concat(condition_list, ignore_index=True)
             for condition_list in condition_dataframes.values()

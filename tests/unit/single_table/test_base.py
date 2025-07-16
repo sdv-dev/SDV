@@ -1806,6 +1806,21 @@ class TestBaseSingleTableSynthesizer:
         for res, exp in zip(result, expected_result):
             pd.testing.assert_frame_equal(res, exp)
 
+    def test__make_condition_dfs_raises(self):
+        """Test _make_condition_dfs raises an error with invalid condition"""
+
+        # Setup
+        msg = '`conditions` must be of type Condition or DataFrameCondition'
+
+        class CustomCondition:
+            pass
+
+        condition = CustomCondition()
+
+        # Run
+        with pytest.raises(ValueError, match=msg):
+            BaseSingleTableSynthesizer._make_condition_dfs([condition])
+
     def test__sample_in_batches(self):
         """Test that this method calls and concatenates the output of ``_sample_batch``."""
         # Setup
