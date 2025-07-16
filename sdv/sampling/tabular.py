@@ -1,5 +1,7 @@
 """SDV Condition class for sampling."""
 
+import pandas as pd
+
 
 class Condition:
     """Condition class.
@@ -46,6 +48,12 @@ class DataFrameCondition:
     """
 
     def __init__(self, dataframe, table_name=None):
+        if not isinstance(dataframe, pd.DataFrame):
+            raise ValueError('`dataframe` must be a pandas DataFrame object.')
+
+        if table_name and not isinstance(table_name, str):
+            raise ValueError('`table_name` must be a string or None.')
+
         self.dataframe = dataframe.copy()
         self.table_name = table_name
 

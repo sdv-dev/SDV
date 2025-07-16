@@ -1022,6 +1022,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 dataframe = condition.get_dataframe()
                 columns = dataframe.columns.tolist()
                 condition_dataframes[tuple(columns)].append(dataframe)
+            else:
+                raise ValueError('invalid condition type')
         return [
             pd.concat(condition_list, ignore_index=True)
             for condition_list in condition_dataframes.values()
