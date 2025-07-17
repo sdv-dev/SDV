@@ -548,6 +548,12 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             output.append(sequence_df)
 
         output = pd.concat([df.dropna(axis=1, how='all') for df in output])
+
+        # Handle all-null columns that might have been dropped
+        missing_columns = set(self._output_columns) - set(output.columns)
+        for col in missing_columns:
+            output[col] = np.nan
+
         output = output[self._output_columns].reset_index(drop=True)
 
         return output
