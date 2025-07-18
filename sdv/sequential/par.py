@@ -113,7 +113,9 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         table_metadata = self.metadata.tables[self._table_name]
         for column in self.context_columns:
             column_metadata = table_metadata.columns[column]
-            if default_transformers_by_sdtype.get(column_metadata['sdtype']):
+            sdtype = column_metadata['sdtype']
+            # Only convert to numerical if the column has a transformer (excluding id columns)
+            if sdtype != 'id' and default_transformers_by_sdtype.get(sdtype):
                 context_columns_dict[column] = {'sdtype': 'numerical'}
 
         return context_columns_dict
@@ -123,7 +125,9 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         default_transformers_by_sdtype = deepcopy(self._data_processor._transformers_by_sdtype)
         table_metadata = self._get_table_metadata()
         for column in self.context_columns:
-            if default_transformers_by_sdtype.get(table_metadata.columns[column]['sdtype']):
+            sdtype = table_metadata.columns[column]['sdtype']
+            # Don't process id columns as they are set to None transformers in _preprocess
+            if sdtype != 'id' and default_transformers_by_sdtype.get(sdtype):
                 columns_to_be_processed.append(column)
 
         return columns_to_be_processed
@@ -375,10 +379,19 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         """
         self._extra_context_columns = {}
         sequence_key_transformers = {sequence_key: None for sequence_key in self._sequence_key}
+        # Also set context columns with 'id' sdtype to None transformers to preserve original values
+        context_id_transformers = {}
+        table_metadata = self.metadata.tables[self._table_name]
+        for column in self.context_columns:
+            if table_metadata.columns[column]['sdtype'] == 'id':
+                context_id_transformers[column] = None
+
         if not self._data_processor._prepared_for_fitting:
             self.auto_assign_transformers(data)
 
-        self.update_transformers(sequence_key_transformers)
+        # Update transformers for both sequence keys and id context columns
+        all_transformers = {**sequence_key_transformers, **context_id_transformers}
+        self.update_transformers(all_transformers)
         preprocessed = super()._preprocess(data)
 
         if self._sequence_index:
@@ -395,12 +408,18 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
 
         Raises:
             ValueError:
-                Raise when the transformer of a context column is passed.
+                Raise when the transformer of a context column is passed (except for None).
         """
-        if set(column_name_to_transformer).intersection(set(self.context_columns)):
-            raise SynthesizerInputError(
-                'Transformers for context columns are not allowed to be updated.'
-            )
+        context_columns_being_updated = set(column_name_to_transformer).intersection(
+            set(self.context_columns)
+        )
+        if context_columns_being_updated:
+            # Allow setting context column transformers to None
+            for column in context_columns_being_updated:
+                if column_name_to_transformer[column] is not None:
+                    raise SynthesizerInputError(
+                        'Transformers for context columns are not allowed to be updated.'
+                    )
 
         super().update_transformers(column_name_to_transformer)
 
