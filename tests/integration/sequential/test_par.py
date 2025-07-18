@@ -534,3 +534,41 @@ def test___init___without_torch(mock_import_error):
     # Run and Assert
     with pytest.raises(ModuleNotFoundError, match=msg):
         PARSynthesizer(metadata)
+
+
+def test_par_with_all_null_column():
+    """Test that the method handles all-null columns correctly."""
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'sequence_key': ['sequence-' + str(int(i / 5)) for i in range(100)],
+            'numerical_col': np.random.randint(low=0, high=100, size=100),
+            'categorical_col': np.random.choice(['A', 'B', 'C'], size=100),
+            'all_null_col': [np.nan] * 100,
+        }
+    )
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'columns': {
+                    'sequence_key': {'sdtype': 'id'},
+                    'numerical_col': {'sdtype': 'numerical'},
+                    'categorical_col': {'sdtype': 'categorical'},
+                    'all_null_col': {'sdtype': 'numerical'},
+                },
+                'sequence_key': 'sequence_key',
+            }
+        }
+    })
+
+    synthesizer = PARSynthesizer(metadata, epochs=1)
+
+    # Run
+    synthesizer.fit(data)
+    result = synthesizer.sample(num_sequences=2)
+
+    # Assert
+    assert 'all_null_col' in result.columns
+    assert result['all_null_col'].isna().all()
+    assert len(result) > 0
