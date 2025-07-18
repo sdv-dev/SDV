@@ -1,5 +1,9 @@
 """SDV Condition class for sampling."""
 
+import pandas as pd
+
+from sdv.errors import TableNameError
+
 
 class Condition:
     """Condition class.
@@ -29,3 +33,36 @@ class Condition:
     def get_num_rows(self):
         """Get the desired number of rows for this condition."""
         return self.num_rows
+
+
+class DataFrameCondition:
+    """DataFrameCondition class.
+
+        This class represents a condition that is used for sampling.
+
+    Attributes:
+        dataframe (pd.DataFrame):
+            A pandas DataFrame representing the desired conditions.
+            A copy of the DataFrame is saved on this condition.
+
+        table_name (str):
+            The name of the table. Optional, defaults to None.
+    """
+
+    def __init__(self, dataframe, table_name=None):
+        if not isinstance(dataframe, pd.DataFrame):
+            raise ValueError('`dataframe` must be a pandas DataFrame object.')
+
+        if table_name and not isinstance(table_name, str):
+            raise TableNameError
+
+        self.dataframe = dataframe.copy()
+        self.table_name = table_name
+
+    def get_table_name(self):
+        """Get the table name for this condition."""
+        return self.table_name
+
+    def get_dataframe(self):
+        """Get the dataframe for this condition."""
+        return self.dataframe

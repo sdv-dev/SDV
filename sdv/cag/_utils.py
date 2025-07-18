@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from sdv.cag._errors import ConstraintNotMetError
-from sdv.errors import SynthesizerInputError
+from sdv.errors import SynthesizerInputError, TableNameError
 from sdv.metadata import Metadata
 
 
@@ -61,7 +61,7 @@ def _validate_table_and_column_names(table_name, columns, metadata):
 def _validate_table_name_if_defined(table_name):
     """Validate if the table name is defined, it is a string."""
     if table_name and not isinstance(table_name, str):
-        raise ValueError('`table_name` must be a string or None.')
+        raise TableNameError
 
 
 def _is_list_of_type(values, type_to_check=str):
