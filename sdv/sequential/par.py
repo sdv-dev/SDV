@@ -126,7 +126,9 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         default_transformers_by_sdtype = deepcopy(self._data_processor._transformers_by_sdtype)
         table_metadata = self._get_table_metadata()
         for column in self.context_columns:
-            if default_transformers_by_sdtype.get(table_metadata.columns[column]['sdtype']):
+            sdtype = table_metadata.columns[column]['sdtype']
+            # Don't process id columns as they are set to None transformers in _preprocess
+            if sdtype != 'id' and default_transformers_by_sdtype.get(sdtype):
                 columns_to_be_processed.append(column)
 
         return columns_to_be_processed
@@ -392,7 +394,9 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         if not self._data_processor._prepared_for_fitting:
             self.auto_assign_transformers(data)
 
-        self.update_transformers(sequence_key_transformers)
+        # Update transformers for both sequence keys and id context columns
+        all_transformers = {**sequence_key_transformers, **context_id_transformers}
+        self.update_transformers(all_transformers)
         preprocessed = super()._preprocess(data)
 
         if self._sequence_index:
@@ -409,7 +413,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
 
         Raises:
             ValueError:
-                Raise when the transformer of a context column is passed.
+                Raise when the transformer of a context column is passed (except for None).
         """
         forbidden_updates = []
         for column in set(column_name_to_transformer).intersection(set(self.context_columns)):
