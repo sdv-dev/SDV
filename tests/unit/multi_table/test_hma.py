@@ -472,6 +472,7 @@ class TestHMASynthesizer:
         instance._table_parameters = {'users': {'a': 1}}
         instance._table_synthesizers = {'users': table_synthesizer}
         instance._default_parameters = {'users': {'colA': 'default_param', 'colB': 'default_param'}}
+        instance._parent_extended_columns = {'users': []}
 
         # Run
         synthesizer = HMASynthesizer._recreate_child_synthesizer(
@@ -493,6 +494,9 @@ class TestHMASynthesizer:
             {'colA': 'default_param', 'colB': 'default_param'},
         )
         instance._extract_parameters.assert_called_once_with(parent_row, table_name, 'session_id')
+        instance._set_extended_columns_distributions.assert_called_once_with(
+            synthesizer, table_name, []
+        )
 
     def test__get_likelihoods(self):
         """Test that ``_get_likelihoods`` computes the likelihoods.
