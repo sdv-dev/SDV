@@ -30,6 +30,20 @@ class TestCondition:
         assert condition.column_values == column_values
         assert condition.num_rows == num_rows
 
+    def test___init___invalid_inputs(self):
+        """Test ```Condition.__init__`` method with invalid arguments."""
+        # Setup
+        column_values = {'a': 1, 'b': 2}
+
+        # Run and Assert
+        expected_msg = re.escape('Table name must be set for `num_rows` to be `None`.')
+        with pytest.raises(ValueError, match=expected_msg):
+            Condition(column_values, num_rows=None, table_name=None)
+
+        expected_msg = re.escape('`num_rows` must be an integer greater than zero.')
+        with pytest.raises(ValueError, match=expected_msg):
+            Condition(column_values, num_rows='0', table_name=None)
+
     def test_get_column_values(self):
         """Test ```Condition.get_column_values`` method.
 

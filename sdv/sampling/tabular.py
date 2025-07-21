@@ -25,6 +25,14 @@ class Condition:
     num_rows = 1
 
     def __init__(self, column_values, num_rows=1, table_name=None):
+        if num_rows is None and table_name is None:
+            raise ValueError('Table name must be set for `num_rows` to be `None`.')
+        elif num_rows is not None and (not isinstance(num_rows, int) or num_rows < 1):
+            raise ValueError('`num_rows` must be an integer greater than zero.')
+
+        if table_name and not isinstance(table_name, str):
+            raise TableNameError
+
         self.column_values = column_values
         self.num_rows = num_rows
         self.table_name = table_name
