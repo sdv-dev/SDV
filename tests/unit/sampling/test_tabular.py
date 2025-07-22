@@ -246,7 +246,7 @@ class TestInterTableCondition:
         assert instance.table_conditions == instance._validate_conditions.return_value
 
     def test_get_conditions(self):
-        """Test the ``get_table_conditions`` returns the conditions for each table."""
+        """Test the ``get_conditions`` returns all the conditions."""
         instance = Mock()
         condition_1 = Condition({'a': 0}, num_rows=5, table_name='table')
         condition_2 = Condition({'b': 1}, num_rows=3, table_name='parent')

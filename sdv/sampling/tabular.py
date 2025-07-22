@@ -136,8 +136,8 @@ class InterTableCondition:
 
     def get_conditions(self):
         """Return the list of all conditions for this condition."""
-        return self.conditions
+        return self.conditions.copy()
 
     def get_table_conditions(self):
         """Get a dict of the list of conditions for each table."""
-        return self.table_conditions
+        return self.table_conditions.copy()
