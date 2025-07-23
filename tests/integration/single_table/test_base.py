@@ -831,3 +831,30 @@ def test_update_transformers(warning_mock):
         "synthesizer is enforcing rounding. We recommend setting the synthesizer's "
         "'enforce_rounding' parameter to False."
     )
+
+
+def test_sample_not_fitted_raises_error():
+    """Test that ``sample`` raises SamplingError when synthesizer is not fitted."""
+    # Setup
+    expected_message = re.escape(
+        'This synthesizer has not been fitted. Please fit your synthesizer first before'
+        ' sampling synthetic data.'
+    )
+
+    # Run and Assert
+    with pytest.raises(SamplingError, match=expected_message):
+        GaussianCopulaSynthesizer(METADATA).sample(num_rows=10)
+
+
+def test_sample_from_conditions_not_fitted_raises_error():
+    """Test that ``sample_from_conditions`` raises SamplingError when synthesizer is not fitted."""
+    # Setup
+    conditions = [Condition({'column1': 1, 'column2': 2})]
+    expected_message = re.escape(
+        'This synthesizer has not been fitted. Please fit your synthesizer first before'
+        ' sampling synthetic data.'
+    )
+
+    # Run and Assert
+    with pytest.raises(SamplingError, match=expected_message):
+        GaussianCopulaSynthesizer(METADATA).sample_from_conditions(conditions=conditions)
