@@ -1,6 +1,7 @@
+import logging
 import re
 from collections import defaultdict
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, mock_open, patch
 
 import numpy as np
 import pandas as pd
@@ -8,7 +9,9 @@ import pytest
 
 from sdv.errors import InvalidDataError
 from sdv.metadata import SingleTableMetadata
-from sdv.utils.utils import drop_unknown_references, get_random_sequence_subset
+from sdv.multi_table.base import BaseMultiTableSynthesizer
+from sdv.utils.utils import drop_unknown_references, get_random_sequence_subset, load_synthesizer
+from tests.utils import catch_sdv_logs
 
 
 @patch('sdv.utils.utils._drop_rows')
@@ -507,3 +510,46 @@ def test_get_random_sequence_subset_use_random_rows(mock_np):
         'value': [0, 2, 4, 5, 7, 9, 10, 11, 12, 14, 15, 16, 26, 27, 28, 29],
     })
     pd.testing.assert_frame_equal(expected, subset)
+
+
+@patch('sdv.utils.utils.datetime')
+@patch('sdv.utils.utils.generate_synthesizer_id')
+@patch('sdv.utils.utils.check_synthesizer_version')
+@patch('sdv.utils.utils.check_sdv_versions_and_warn')
+@patch('sdv.utils.utils.cloudpickle')
+@patch('builtins.open', new_callable=mock_open)
+def test_load_synthesizer(
+    mock_file,
+    cloudpickle_mock,
+    mock_check_sdv_versions_and_warn,
+    mock_check_synthesizer_version,
+    mock_generate_synthesizer_id,
+    mock_datetime,
+    caplog,
+):
+    """Test `load_synthesizer` method."""
+    # Setup
+    synthesizer_id = 'HMASynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+    mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
+    mock_generate_synthesizer_id.return_value = synthesizer_id
+    synthesizer_mock = Mock(spec=BaseMultiTableSynthesizer, _fitted=False, _synthesizer_id=None)
+    cloudpickle_mock.load.return_value = synthesizer_mock
+
+    # Run
+    with catch_sdv_logs(caplog, logging.INFO, 'MultiTableSynthesizer'):
+        loaded_instance = load_synthesizer('synth.pkl')
+
+    # Assert
+    mock_file.assert_called_once_with('synth.pkl', 'rb')
+    mock_check_sdv_versions_and_warn.assert_called_once_with(loaded_instance)
+    cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
+    assert loaded_instance == synthesizer_mock
+    mock_check_synthesizer_version.assert_called_once_with(synthesizer_mock)
+    assert loaded_instance._synthesizer_id == synthesizer_id
+    mock_generate_synthesizer_id.assert_called_once_with(synthesizer_mock)
+    assert caplog.messages[0] == str({
+        'EVENT': 'Load',
+        'TIMESTAMP': '2024-04-19 16:20:10.037183',
+        'SYNTHESIZER CLASS NAME': 'BaseMultiTableSynthesizer',
+        'SYNTHESIZER ID': 'HMASynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+    })
