@@ -83,8 +83,8 @@ class DataFrameCondition:
         return len(self.dataframe)
 
 
-class InterTableCondition:
-    """InterTableCondition class.
+class MultiTableCondition:
+    """MultiTableCondition class.
 
         This class represents a group of conditions that should be used for sampling
         a multi-table dataset.
