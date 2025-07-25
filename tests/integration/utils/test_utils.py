@@ -8,7 +8,8 @@ import pytest
 from sdv.datasets.demo import download_demo
 from sdv.errors import InvalidDataError
 from sdv.metadata.metadata import Metadata
-from sdv.utils import drop_unknown_references, get_random_sequence_subset
+from sdv.single_table import GaussianCopulaSynthesizer
+from sdv.utils import drop_unknown_references, get_random_sequence_subset, load_synthesizer
 
 
 @pytest.fixture
@@ -194,3 +195,20 @@ def test_get_random_sequence_subset_random_clipping():
         pd.testing.assert_frame_equal(
             subset_data.reset_index(drop=True), selected_sequence.reset_index(drop=True)
         )
+
+
+def test_load_synthesizer(tmp_path):
+    """Test the `load_synthesizer` method."""
+    # Setup
+    data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
+    synthesizer = GaussianCopulaSynthesizer(metadata=metadata)
+    synthesizer.fit(data)
+    synthesizer.save(tmp_path / 'GCSynthesizer.pkl')
+
+    # Run
+    loaded_synthesizer = load_synthesizer(tmp_path / 'GCSynthesizer.pkl')
+    synthetic_data = loaded_synthesizer.sample(num_rows=10)
+
+    # Assert
+    assert isinstance(loaded_synthesizer, GaussianCopulaSynthesizer)
+    assert set(synthetic_data.columns) == set(data.columns)
