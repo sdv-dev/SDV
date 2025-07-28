@@ -1138,6 +1138,13 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return sampled
 
+    def _validate_fit_before_sample(self):
+        if not self._fitted:
+            raise SamplingError(
+                'This synthesizer has not been fitted. Please fit your synthesizer first before'
+                ' sampling synthetic data.'
+            )
+
     def sample(self, num_rows, max_tries_per_batch=100, batch_size=None, output_file_path=None):
         """Sample rows from this table.
 
@@ -1156,12 +1163,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             pandas.DataFrame:
                 Sampled data.
         """
-        if not self._fitted:
-            raise SamplingError(
-                'This synthesizer has not been fitted. Please fit your synthesizer first before'
-                ' sampling synthetic data.'
-            )
-
+        self._validate_fit_before_sample()
         self._check_input_metadata_updated()
         sample_timestamp = datetime.datetime.now()
         has_constraints = bool(self._data_processor._constraints)
@@ -1366,6 +1368,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     * any of the conditions' columns are not valid.
                     * no rows could be generated.
         """
+        self._validate_fit_before_sample()
         output_file_path = validate_file_path(output_file_path)
 
         num_rows = functools.reduce(
