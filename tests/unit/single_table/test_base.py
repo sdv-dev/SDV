@@ -2104,6 +2104,14 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         instance = Mock()
         instance._fitted = False
+
+        def raise_sampling_error():
+            raise SamplingError(
+                'This synthesizer has not been fitted. Please fit your synthesizer first before'
+                ' sampling synthetic data.'
+            )
+
+        instance._validate_fit_before_sample = Mock(side_effect=raise_sampling_error)
         expected_message = re.escape(
             'This synthesizer has not been fitted. Please fit your synthesizer first before'
             ' sampling synthetic data.'
@@ -2439,7 +2447,7 @@ class TestBaseSingleTableSynthesizer:
         instance._sample_with_conditions = Mock()
         instance._model = GaussianMultivariate()
         instance._sample_with_conditions.return_value = pd.DataFrame({'name': ['John Doe']})
-
+        instance._validate_fit_before_sample = Mock()
         progress_bar = MagicMock()
         mock_tqdm.tqdm.return_value = progress_bar
 
@@ -2498,6 +2506,7 @@ class TestBaseSingleTableSynthesizer:
 
         instance._validate_known_columns = Mock()
         instance._sample_with_conditions = Mock()
+        instance._validate_fit_before_sample = Mock()
         instance._model = GaussianMultivariate()
         instance._sample_with_conditions.return_value = pd.DataFrame({'name': ['John Doe']})
         mock_validate_file_path.return_value = '.sample.csv.temp'
@@ -2551,3 +2560,42 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame())
         mock_handle_sampling_error.assert_called_once_with('temp_file', keyboard_error)
+
+    def test__validate_fit_before_sample_fitted(self):
+        """Test that ``_validate_fit_before_sample`` does nothing when synthesizer is fitted."""
+        # Setup
+        instance = Mock()
+        instance._fitted = True
+
+        # Run
+        BaseSingleTableSynthesizer._validate_fit_before_sample(instance)
+
+    def test__validate_fit_before_sample_not_fitted(self):
+        """Test that ``_validate_fit_before_sample`` raises SamplingError when not fitted."""
+        # Setup
+        instance = Mock()
+        instance._fitted = False
+        expected_message = re.escape(
+            'This synthesizer has not been fitted. Please fit your synthesizer first before'
+            ' sampling synthetic data.'
+        )
+
+        # Run and Assert
+        with pytest.raises(SamplingError, match=expected_message):
+            BaseSingleTableSynthesizer._validate_fit_before_sample(instance)
+
+    def test_sample_calls_validate_fit_before_sample(self):
+        """Test that ``sample`` calls ``_validate_fit_before_sample``."""
+        # Setup
+        instance = Mock()
+        instance._fitted = True
+        instance._check_input_metadata_updated = Mock()
+        instance._sample_with_progress_bar = Mock(return_value=pd.DataFrame())
+        instance._original_columns = pd.Index([])
+        instance._validate_fit_before_sample = Mock()
+
+        # Run
+        BaseSingleTableSynthesizer.sample(instance, 10)
+
+        # Assert
+        instance._validate_fit_before_sample.assert_called_once_with()
