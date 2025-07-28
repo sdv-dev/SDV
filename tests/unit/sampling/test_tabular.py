@@ -6,7 +6,7 @@ from unittest.mock import Mock
 import pandas as pd
 import pytest
 
-from sdv.sampling.tabular import Condition, DataFrameCondition, InterTableCondition
+from sdv.sampling.tabular import Condition, DataFrameCondition, MultiTableCondition
 
 
 class TestCondition:
@@ -167,7 +167,7 @@ class TestDataFrameCondition:
         assert num_rows == 2
 
 
-class TestInterTableCondition:
+class TestMultiTableCondition:
     def test__validate_conditions_invalid_conditions(self):
         """Test the ``_validate_conditions`` method errors with invalid conditions."""
         # Setup
@@ -178,14 +178,14 @@ class TestInterTableCondition:
         # Run and Assert
         expected_msg = re.escape('Invalid Condition. Condition does not have a table name set.')
         with pytest.raises(ValueError, match=expected_msg):
-            InterTableCondition._validate_conditions(instance, [condition_no_table])
+            MultiTableCondition._validate_conditions(instance, [condition_no_table])
 
         expected_msg = re.escape(
             "Invalid condition ({'a': 0}). Conditions must be a `Condition`"
             'or `DataFrameCondition` object.'
         )
         with pytest.raises(ValueError, match=expected_msg):
-            InterTableCondition._validate_conditions(instance, [bad_condition])
+            MultiTableCondition._validate_conditions(instance, [bad_condition])
 
     def test__validate_conditions_num_rows_not_set(self):
         """Test the ``_validate_condtions`` errors if num_rows not set."""
@@ -198,14 +198,14 @@ class TestInterTableCondition:
         # Run and Assert
         expected_msg = re.escape('At least one condition must have `num_rows` set.')
         with pytest.raises(ValueError, match=expected_msg):
-            InterTableCondition._validate_conditions(instance, [condition_1, condition_2])
+            MultiTableCondition._validate_conditions(instance, [condition_1, condition_2])
 
         expected_msg = re.escape(
             "Multiple conditions found for table 'table'. If multiple conditions "
             'are supplied for a table, all conditions for that table must have `num_rows` set.'
         )
         with pytest.raises(ValueError, match=expected_msg):
-            InterTableCondition._validate_conditions(instance, [condition_1, condition_3])
+            MultiTableCondition._validate_conditions(instance, [condition_1, condition_3])
 
     def test__validate_conditions(self):
         """Test ``_validate_conditions`` returns a map of conditions to table names."""
@@ -218,7 +218,7 @@ class TestInterTableCondition:
         conditions = [condition_1, condition_2, condition_3, condition_4]
 
         # Run
-        condition_map = InterTableCondition._validate_conditions(instance, conditions)
+        condition_map = MultiTableCondition._validate_conditions(instance, conditions)
 
         # Assert
         expected_condition_map = {
@@ -238,7 +238,7 @@ class TestInterTableCondition:
         conditions = [condition_1, condition_2, condition_3, condition_4]
 
         # Run
-        InterTableCondition.__init__(instance, conditions)
+        MultiTableCondition.__init__(instance, conditions)
 
         # Assert
         instance._validate_conditions.assert_called_once_with(conditions)
@@ -255,7 +255,7 @@ class TestInterTableCondition:
         instance.conditions = [condition_1, condition_2, condition_3, condition_4]
 
         # Run
-        conditions = InterTableCondition.get_conditions(instance)
+        conditions = MultiTableCondition.get_conditions(instance)
 
         # Assert
         assert conditions == [condition_1, condition_2, condition_3, condition_4]
@@ -274,7 +274,7 @@ class TestInterTableCondition:
         }
 
         # Run
-        table_conditions = InterTableCondition.get_table_conditions(instance)
+        table_conditions = MultiTableCondition.get_table_conditions(instance)
 
         # Assert
         assert table_conditions == {
