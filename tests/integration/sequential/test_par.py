@@ -572,3 +572,38 @@ def test_par_with_all_null_column():
     assert 'all_null_col' in result.columns
     assert result['all_null_col'].isna().all()
     assert len(result) > 0
+
+
+def test_par_unique_sequence_key_with_regex():
+    """Test that the method handles unique sequence key with regex correctly."""
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'sequence_key': ['seq-0'] * 5 + ['seq-1'] * 2 + ['seq-2'] * 3,
+            'column_A': np.random.randint(low=0, high=10, size=10),
+            'column_B': np.random.choice(['Yes', 'No', 'Maybe'], size=10),
+        }
+    )
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'sequence_key': 'sequence_key',
+                'columns': {
+                    'sequence_key': {'sdtype': 'id', 'regex_format': 'seq-[0-9]'},
+                    'column_A': {'sdtype': 'numerical'},
+                    'column_B': {'sdtype': 'categorical'},
+                },
+            }
+        }
+    })
+
+    # Run
+    synthesizer = PARSynthesizer(metadata, epochs=1)
+    synthesizer.fit(data)
+    sample = synthesizer.sample(num_sequences=20)
+
+    # Assert
+    assert sample['sequence_key'].nunique() == 20
+    transformer = synthesizer._context_synthesizer.get_transformers()['sequence_key']
+    transformer.cardinality_rule == 'unique'
