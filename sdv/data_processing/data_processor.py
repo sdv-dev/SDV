@@ -57,7 +57,7 @@ class DataProcessor:
             Default locales to use for AnonymizedFaker transformers. Defaults to ['en_US'].
         id_columns_use_old_behavior (list):
             List of ID column names that should use the old behavior instead of automatically
-            getting assigned UniformEncoder. Defaults to empty list.
+            getting assigned UniformEncoder. Defaults to None.
     """
 
     _DTYPE_TO_SDTYPE = {
@@ -110,7 +110,7 @@ class DataProcessor:
         model_kwargs=None,
         table_name=None,
         locales=['en_US'],
-        id_columns_use_old_behavior=[],
+        id_columns_use_old_behavior=None,
     ):
         self.metadata = metadata
         self._enforce_rounding = enforce_rounding
@@ -141,7 +141,7 @@ class DataProcessor:
         if self._primary_key:
             self._keys.append(self._primary_key)
 
-        self._id_columns_use_old_behavior = id_columns_use_old_behavior
+        self._id_columns_use_old_behavior = id_columns_use_old_behavior or []
 
     def _get_grouped_columns(self):
         """Get the columns that are part of a multi column transformer.
