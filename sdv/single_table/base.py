@@ -43,6 +43,7 @@ from sdv.errors import (
     SynthesizerInputError,
 )
 from sdv.logging import get_sdv_logger
+from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling import Condition, DataFrameCondition
@@ -417,6 +418,11 @@ class BaseSynthesizer:
         return info
 
     def _preprocess(self, data):
+        if not self.metadata.tables:
+            raise InvalidMetadataError(
+                'The metadata is empty. Please add at least one table to the metadata.'
+            )
+
         self._data_processor.fit(data)
         return self._data_processor.transform(data)
 
