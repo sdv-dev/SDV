@@ -1863,6 +1863,7 @@ class TestBaseSingleTableSynthesizer:
             float_rtol=0.02,
             progress_bar='progress_bar',
             output_file_path='output_file_path',
+            keep_extra_columns=False,
         )
         assert expected_call == instance._sample_batch.call_args_list[0]
         assert expected_call == instance._sample_batch.call_args_list[1]
@@ -1904,6 +1905,7 @@ class TestBaseSingleTableSynthesizer:
             float_rtol=0.01,
             progress_bar=None,
             output_file_path=None,
+            keep_extra_columns=False,
         )
 
     def test__conditionally_sample_rows_no_rows_sampled_error(self):
@@ -2385,6 +2387,7 @@ class TestBaseSingleTableSynthesizer:
             'batch_size': 10,
             'progress_bar': None,
             'output_file_path': None,
+            'keep_extra_columns': False,
         }
         assert second_call_kwargs == {
             'condition': {'name': 'Johanna'},
@@ -2393,6 +2396,7 @@ class TestBaseSingleTableSynthesizer:
             'batch_size': 10,
             'progress_bar': None,
             'output_file_path': None,
+            'keep_extra_columns': False,
         }
 
     def test__transform_conditions_chained_constraints_no_transformed_conditions(self):
