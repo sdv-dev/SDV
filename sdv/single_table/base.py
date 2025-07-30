@@ -24,9 +24,11 @@ from sdv import version
 from sdv._utils import (
     _check_regex_format,
     _groupby_list,
+    _validate_correct_synthesizer_loading,
     check_sdv_versions_and_warn,
     check_synthesizer_version,
     generate_synthesizer_id,
+    warn_load_deprecated,
 )
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
@@ -43,6 +45,7 @@ from sdv.errors import (
     SynthesizerInputError,
 )
 from sdv.logging import get_sdv_logger
+from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling import Condition, DataFrameCondition
@@ -417,6 +420,11 @@ class BaseSynthesizer:
         return info
 
     def _preprocess(self, data):
+        if not self.metadata.tables:
+            raise InvalidMetadataError(
+                'The metadata is empty. Please add at least one table to the metadata.'
+            )
+
         self._data_processor.fit(data)
         return self._data_processor.transform(data)
 
@@ -709,6 +717,7 @@ class BaseSynthesizer:
             SingleTableSynthesizer:
                 The loaded synthesizer.
         """
+        warn_load_deprecated()
         with open(filepath, 'rb') as f:
             try:
                 synthesizer = cloudpickle.load(f)
@@ -727,6 +736,7 @@ class BaseSynthesizer:
                     )
                 raise e
 
+        _validate_correct_synthesizer_loading(synthesizer, cls)
         check_synthesizer_version(synthesizer)
         check_sdv_versions_and_warn(synthesizer)
         if getattr(synthesizer, '_synthesizer_id', None) is None:
@@ -1039,6 +1049,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         float_rtol=0.01,
         progress_bar=None,
         output_file_path=None,
+        keep_extra_columns=False,
     ):
         sampled = []
         batch_size = batch_size if num_rows > batch_size else num_rows
@@ -1051,6 +1062,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 float_rtol=float_rtol,
                 progress_bar=progress_bar,
                 output_file_path=output_file_path,
+                keep_extra_columns=keep_extra_columns,
             )
             sampled.append(sampled_rows)
 
@@ -1068,6 +1080,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         graceful_reject_sampling=True,
         progress_bar=None,
         output_file_path=None,
+        keep_extra_columns=False,
     ):
         batch_size = batch_size or len(dataframe)
         sampled_rows = self._sample_in_batches(
@@ -1079,6 +1092,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             float_rtol=float_rtol,
             progress_bar=progress_bar,
             output_file_path=output_file_path,
+            keep_extra_columns=keep_extra_columns,
         )
 
         if len(sampled_rows) > 0:
@@ -1210,7 +1224,13 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         return transformed_condition
 
     def _sample_with_conditions(
-        self, conditions, max_tries_per_batch, batch_size, progress_bar=None, output_file_path=None
+        self,
+        conditions,
+        max_tries_per_batch,
+        batch_size,
+        progress_bar=None,
+        output_file_path=None,
+        keep_extra_columns=False,
     ):
         """Sample rows with conditions.
 
@@ -1225,6 +1245,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 The progress bar to update.
             output_file_path (str or None):
                 The file to periodically write sampled rows to. Defaults to None.
+            keep_extra_columns (bool):
+                Whether to keep extra columns from the sampled data. Defaults to False.
 
         Returns:
             pandas.DataFrame:
@@ -1281,6 +1303,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     batch_size=batch_size,
                     progress_bar=progress_bar,
                     output_file_path=output_file_path,
+                    keep_extra_columns=keep_extra_columns,
                 )
                 all_sampled_rows.append(sampled_rows)
             else:
@@ -1300,6 +1323,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                         batch_size=batch_size,
                         progress_bar=progress_bar,
                         output_file_path=output_file_path,
+                        keep_extra_columns=keep_extra_columns,
                     )
                     all_sampled_rows.append(sampled_rows)
 

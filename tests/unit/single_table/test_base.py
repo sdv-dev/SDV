@@ -1183,8 +1183,12 @@ class TestBaseSynthesizer:
     @patch('sdv.single_table.base.check_sdv_versions_and_warn')
     @patch('sdv.single_table.base.cloudpickle')
     @patch('builtins.open', new_callable=mock_open)
+    @patch('sdv.single_table.base.warn_load_deprecated')
+    @patch('sdv.single_table.base._validate_correct_synthesizer_loading')
     def test_load(
         self,
+        mock_validate_correct_synthesizer_loading,
+        mock_warn_load_deprecated,
         mock_file,
         cloudpickle_mock,
         mock_check_sdv_versions_and_warn,
@@ -1206,6 +1210,10 @@ class TestBaseSynthesizer:
             loaded_instance = BaseSynthesizer.load('synth.pkl')
 
         # Assert
+        mock_validate_correct_synthesizer_loading.assert_called_once_with(
+            synthesizer_mock, BaseSynthesizer
+        )
+        mock_warn_load_deprecated.assert_called_once()
         mock_file.assert_called_once_with('synth.pkl', 'rb')
         cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
         mock_check_sdv_versions_and_warn.assert_called_once_with(loaded_instance)
@@ -1863,6 +1871,7 @@ class TestBaseSingleTableSynthesizer:
             float_rtol=0.02,
             progress_bar='progress_bar',
             output_file_path='output_file_path',
+            keep_extra_columns=False,
         )
         assert expected_call == instance._sample_batch.call_args_list[0]
         assert expected_call == instance._sample_batch.call_args_list[1]
@@ -1904,6 +1913,7 @@ class TestBaseSingleTableSynthesizer:
             float_rtol=0.01,
             progress_bar=None,
             output_file_path=None,
+            keep_extra_columns=False,
         )
 
     def test__conditionally_sample_rows_no_rows_sampled_error(self):
@@ -2385,6 +2395,7 @@ class TestBaseSingleTableSynthesizer:
             'batch_size': 10,
             'progress_bar': None,
             'output_file_path': None,
+            'keep_extra_columns': False,
         }
         assert second_call_kwargs == {
             'condition': {'name': 'Johanna'},
@@ -2393,6 +2404,7 @@ class TestBaseSingleTableSynthesizer:
             'batch_size': 10,
             'progress_bar': None,
             'output_file_path': None,
+            'keep_extra_columns': False,
         }
 
     def test__transform_conditions_chained_constraints_no_transformed_conditions(self):
