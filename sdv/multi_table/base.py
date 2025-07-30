@@ -628,6 +628,13 @@ class BaseMultiTableSynthesizer:
                 Dictionary mapping each table name to a ``pandas.DataFrame`` in the raw format
                 (before any transformations).
         """
+        empty_tables = [table_name for table_name, table_data in data.items() if table_data.empty]
+        if empty_tables:
+            raise ValueError(
+                f'The fit dataframe for table(s) {empty_tables} is empty, '
+                'synthesizer will not be fitted.'
+            )
+
         total_rows = 0
         total_columns = 0
         for table in data.values():

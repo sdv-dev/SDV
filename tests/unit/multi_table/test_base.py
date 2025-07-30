@@ -1228,6 +1228,53 @@ class TestBaseMultiTableSynthesizer:
         instance.fit_processed_data.assert_not_called()
         instance._check_metadata_updated.assert_not_called()
 
+    def test_fit_raises_error_empty_dataframe(self):
+        """Test that fit raises a ValueError when a table contains an empty dataframe."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        data = {
+            'nesreca': pd.DataFrame({
+                'id_nesreca': [1, 2, 3],
+                'upravna_enota': [1, 2, 3],
+                'nesreca_val': [10, 20, 30],
+            }),
+            'oseba': pd.DataFrame(),  # Empty dataframe
+            'upravna_enota': pd.DataFrame({
+                'id_upravna_enota': [1, 2, 3],
+                'upravna_val': [100, 200, 300],
+            }),
+        }
+
+        # Run and Assert
+        expected_error = re.escape(
+            "The fit dataframe for table(s) ['oseba'] is empty, synthesizer will not be fitted."
+        )
+        with pytest.raises(ValueError, match=expected_error):
+            instance.fit(data)
+
+    def test_fit_raises_error_empty_dataframe_multiple_tables(self):
+        """Test that fit raises a ValueError for the first empty table found."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        data = {
+            'nesreca': pd.DataFrame(),
+            'oseba': pd.DataFrame(),
+            'upravna_enota': pd.DataFrame({
+                'id_upravna_enota': [1, 2, 3],
+                'upravna_val': [100, 200, 300],
+            }),
+        }
+
+        # Run and Assert
+        expected_error = re.escape(
+            "The fit dataframe for table(s) ['nesreca', 'oseba'] is empty, "
+            'synthesizer will not be fitted.'
+        )
+        with pytest.raises(ValueError, match=expected_error):
+            instance.fit(data)
+
     def test_reset_sampling(self):
         """Test that ``reset_sampling`` resets the numpy seed and the synthesizers."""
         # Setup
