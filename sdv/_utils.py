@@ -493,3 +493,23 @@ def _check_regex_format(table_name, column_name, regex):
                 f"{regex}', which you have provided for table '{table_name}', column '{column_name}"
                 "'. Please use a simplified format or update to a different sdtype."
             ) from e
+
+
+def warn_load_deprecated():
+    """Warn that the `load` function is deprecated."""
+    warnings.warn(
+        "The 'load' function will be deprecated in future versions of SDV. Please use"
+        " 'utils.load_synthesizer' instead.",
+        FutureWarning,
+    )
+
+
+def _validate_correct_synthesizer_loading(synthesizer, cls):
+    """Validate that the loaded synthesizer is of the correct type."""
+    synthesizer_name = synthesizer.__class__.__name__
+    if synthesizer_name != cls.__name__:
+        raise SynthesizerInputError(
+            f"Expected loading a synthesizer of type '{cls.__name__}', "
+            f"but got '{synthesizer_name}'. Please ensure you are loading the correct "
+            f'synthesizer type.'
+        )

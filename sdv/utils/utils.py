@@ -1,15 +1,27 @@
 """Utils module."""
 
+import datetime
 import sys
 from copy import deepcopy
 
+import cloudpickle
 import numpy as np
 import pandas as pd
 
-from sdv._utils import _validate_foreign_keys_not_null
-from sdv.errors import InvalidDataError, SynthesizerInputError
+from sdv._utils import (
+    _validate_foreign_keys_not_null,
+    check_sdv_versions_and_warn,
+    check_synthesizer_version,
+    generate_synthesizer_id,
+)
+from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError
+from sdv.logging import get_sdv_logger
 from sdv.metadata.metadata import Metadata
+from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.multi_table.utils import _drop_rows
+
+SINGLE_TABLE_SYNTHESIZER_LOGGER = get_sdv_logger('SingleTableSynthesizer')
+MULTI_TABLE_SYNTHESIZER_LOGGER = get_sdv_logger('MultiTableSynthesizer')
 
 
 def drop_unknown_references(data, metadata, drop_missing_values=False, verbose=True):
@@ -133,3 +145,48 @@ def get_random_sequence_subset(
             return pd.concat(subsetted_sequences, ignore_index=True)
 
     return subset
+
+
+def load_synthesizer(filepath):
+    """Load a synthesizer from a file.
+
+    Args:
+        filepath (str):
+            The path to the file containing the synthesizer.
+    """
+    with open(filepath, 'rb') as f:
+        try:
+            synthesizer = cloudpickle.load(f)
+        except RuntimeError as e:
+            err_msg = (
+                'Attempting to deserialize object on a CUDA device but '
+                'torch.cuda.is_available() is False. If you are running on a CPU-only machine,'
+                " please use torch.load with map_location=torch.device('cpu') "
+                'to map your storages to the CPU.'
+            )
+            if str(e) == err_msg:
+                raise SamplingError(
+                    'This synthesizer was created on a machine with GPU but the current '
+                    'machine is CPU-only. This feature is currently unsupported. We recommend'
+                    ' sampling on the same GPU-enabled machine.'
+                )
+            raise e
+
+    check_synthesizer_version(synthesizer)
+    check_sdv_versions_and_warn(synthesizer)
+    if getattr(synthesizer, '_synthesizer_id', None) is None:
+        synthesizer._synthesizer_id = generate_synthesizer_id(synthesizer)
+
+    logger = (
+        MULTI_TABLE_SYNTHESIZER_LOGGER
+        if isinstance(synthesizer, BaseMultiTableSynthesizer)
+        else SINGLE_TABLE_SYNTHESIZER_LOGGER
+    )
+    logger.info({
+        'EVENT': 'Load',
+        'TIMESTAMP': datetime.datetime.now(),
+        'SYNTHESIZER CLASS NAME': synthesizer.__class__.__name__,
+        'SYNTHESIZER ID': synthesizer._synthesizer_id,
+    })
+
+    return synthesizer

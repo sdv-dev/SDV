@@ -14,12 +14,18 @@ from tqdm import tqdm
 
 from sdv import version
 from sdv._utils import (
+    _validate_correct_synthesizer_loading,
     check_sdv_versions_and_warn,
     check_synthesizer_version,
     generate_synthesizer_id,
+    warn_load_deprecated,
 )
 from sdv.cag._errors import ConstraintNotMetError
-from sdv.cag._utils import _convert_to_snake_case, _get_invalid_rows, _validate_constraints
+from sdv.cag._utils import (
+    _convert_to_snake_case,
+    _get_invalid_rows,
+    _validate_constraints,
+)
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
 from sdv.errors import (
     InvalidDataError,
@@ -835,6 +841,7 @@ class BaseMultiTableSynthesizer:
             MultiTableSynthesizer:
                 The loaded synthesizer.
         """
+        warn_load_deprecated()
         with open(filepath, 'rb') as f:
             try:
                 synthesizer = cloudpickle.load(f)
@@ -853,6 +860,7 @@ class BaseMultiTableSynthesizer:
                     )
                 raise e
 
+        _validate_correct_synthesizer_loading(synthesizer, cls)
         check_synthesizer_version(synthesizer)
         check_sdv_versions_and_warn(synthesizer)
         if getattr(synthesizer, '_synthesizer_id', None) is None:

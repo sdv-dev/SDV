@@ -24,9 +24,11 @@ from sdv import version
 from sdv._utils import (
     _check_regex_format,
     _groupby_list,
+    _validate_correct_synthesizer_loading,
     check_sdv_versions_and_warn,
     check_synthesizer_version,
     generate_synthesizer_id,
+    warn_load_deprecated,
 )
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
@@ -715,6 +717,7 @@ class BaseSynthesizer:
             SingleTableSynthesizer:
                 The loaded synthesizer.
         """
+        warn_load_deprecated()
         with open(filepath, 'rb') as f:
             try:
                 synthesizer = cloudpickle.load(f)
@@ -733,6 +736,7 @@ class BaseSynthesizer:
                     )
                 raise e
 
+        _validate_correct_synthesizer_loading(synthesizer, cls)
         check_synthesizer_version(synthesizer)
         check_sdv_versions_and_warn(synthesizer)
         if getattr(synthesizer, '_synthesizer_id', None) is None:
