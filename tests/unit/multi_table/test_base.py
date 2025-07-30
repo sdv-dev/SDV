@@ -2018,8 +2018,12 @@ class TestBaseMultiTableSynthesizer:
     @patch('sdv.multi_table.base.check_sdv_versions_and_warn')
     @patch('sdv.multi_table.base.cloudpickle')
     @patch('builtins.open', new_callable=mock_open)
+    @patch('sdv.multi_table.base.warn_load_deprecated')
+    @patch('sdv.multi_table.base._validate_correct_synthesizer_loading')
     def test_load(
         self,
+        mock_validate_correct_synthesizer_loading,
+        warn_load_deprecated,
         mock_file,
         cloudpickle_mock,
         mock_check_sdv_versions_and_warn,
@@ -2041,6 +2045,10 @@ class TestBaseMultiTableSynthesizer:
             loaded_instance = BaseMultiTableSynthesizer.load('synth.pkl')
 
         # Assert
+        mock_validate_correct_synthesizer_loading.assert_called_once_with(
+            synthesizer_mock, BaseMultiTableSynthesizer
+        )
+        warn_load_deprecated.assert_called_once_with()
         mock_file.assert_called_once_with('synth.pkl', 'rb')
         mock_check_sdv_versions_and_warn.assert_called_once_with(loaded_instance)
         cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)

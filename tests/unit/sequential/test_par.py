@@ -1000,7 +1000,11 @@ class TestPARSynthesizer:
 
     @patch('sdv.single_table.base.cloudpickle')
     @patch('builtins.open', new_callable=mock_open)
-    def test_load(self, mock_file, cloudpickle_mock):
+    @patch('sdv.single_table.base.warn_load_deprecated')
+    @patch('sdv.single_table.base._validate_correct_synthesizer_loading')
+    def test_load(
+        self, mock_validate_correct_synthesizer_loading, warn_load_mock, mock_file, cloudpickle_mock
+    ):
         """Test that the ``load`` method loads a stored synthesizer."""
         # Setup
         synthesizer_mock = Mock(
@@ -1013,6 +1017,10 @@ class TestPARSynthesizer:
         loaded_instance = PARSynthesizer.load('synth.pkl')
 
         # Assert
+        mock_validate_correct_synthesizer_loading.assert_called_once_with(
+            synthesizer_mock, PARSynthesizer
+        )
+        warn_load_mock.assert_called_once()
         mock_file.assert_called_once_with('synth.pkl', 'rb')
         cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
         assert loaded_instance == synthesizer_mock

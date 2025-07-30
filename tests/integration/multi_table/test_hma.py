@@ -1970,8 +1970,59 @@ def test_hma_0_1_grandparent():
     child_df = synthetic_data['child']
     data_col_max = child_df['data'].max()
     data_col_min = child_df['data'].min()
-    assert child_df[child_df['data'] == data_col_max].shape[0] == 2
-    assert child_df[child_df['data'] == data_col_min].shape[0] == 1
+    assert child_df[child_df['data'] == data_col_max].shape[0] == 3
+    assert child_df[child_df['data'] == data_col_min].shape[0] == 3
+
+
+def test_parent_default_distribution_non_beta():
+    # Setup
+    data = {
+        'child': pd.DataFrame({'id': range(10), 'parent_id': range(10)}),
+        'parent': pd.DataFrame({
+            'id': range(10),
+            'grandparent_id': range(10),
+            'categories': list(np.random.choice(['T', 'F'], size=10)),
+        }),
+        'grandparent': pd.DataFrame({'id': range(10)}),
+    }
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'child': {
+                'primary_key': 'id',
+                'columns': {'id': {'sdtype': 'id'}, 'parent_id': {'sdtype': 'id'}},
+            },
+            'parent': {
+                'primary_key': 'id',
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'grandparent_id': {'sdtype': 'id'},
+                    'categories': {'sdtype': 'categorical'},
+                },
+            },
+            'grandparent': {'primary_key': 'id', 'columns': {'id': {'sdtype': 'id'}}},
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'child',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'parent_id',
+            },
+            {
+                'parent_table_name': 'grandparent',
+                'child_table_name': 'parent',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'grandparent_id',
+            },
+        ],
+        'METADATA_SPEC_VERSION': 'V1',
+    })
+    synthesizer = HMASynthesizer(metadata)
+    synthesizer.set_table_parameters('parent', {'default_distribution': 'norm'})
+    synthesizer.fit(data)
+
+    # Run
+    synthesizer.sample(1)
 
 
 parametrization = [
