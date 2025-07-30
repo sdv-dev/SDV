@@ -1399,3 +1399,15 @@ def test_loading_invalid_single_table_metadata():
     # Run and Assert
     with pytest.raises(ValueError, match=expected_error):
         Metadata.load_from_dict(metadata_dict)
+
+
+def test_validate_empty_metadata():
+    """Test that the metadata is invalid if it is empty."""
+    # Setup
+    metadata = Metadata()
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+
+    # Run and Assert
+    err_msg = 'The metadata is empty. Please add at least one table to the metadata.'
+    with pytest.raises(InvalidMetadataError, match=err_msg):
+        synthesizer.fit(pd.DataFrame())
