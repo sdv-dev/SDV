@@ -132,11 +132,11 @@ class TestDatetimeFormatter:
         # Setup
         formatter = DatetimeFormatter('%d %B %Y')
         formatter._dtype = 'O'
-        column = pd.Series(['31 May 2021', '02-04-2021'])
+        column = pd.Series(['31 May 2021', '23-04-2021'])
 
         # Run
         result = formatter.format_data(column)
 
         # Assert
-        expected = pd.Series(['31 May 2021', '02-04-2021'])
+        expected = pd.Series(['31 May 2021', '23-04-2021'])
         assert all(result == expected)
