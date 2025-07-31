@@ -126,3 +126,17 @@ class TestDatetimeFormatter:
         # Assert
         expected = pd.Series(['2024/06/01', '2025/06/01'])
         pd.testing.assert_series_equal(result, expected)
+
+    def test_format_data_fallback_with_indepth_value_errors(self):
+        """Test fallback formatting when parsing with format raises ValueError."""
+        # Setup
+        formatter = DatetimeFormatter('%d %B %Y')
+        formatter._dtype = 'O'
+        column = pd.Series(['31 May 2021', '02-04-2021'])
+
+        # Run
+        result = formatter.format_data(column)
+
+        # Assert
+        expected = pd.Series(['31 May 2021', '02-04-2021'])
+        assert all(result == expected)

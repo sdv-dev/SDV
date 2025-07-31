@@ -58,9 +58,10 @@ class DatetimeFormatter:
             try:
                 datetime_column = pd.to_datetime(column, format=self.datetime_format)
                 column = datetime_column.dt.strftime(self.datetime_format)
-            except ValueError:
-                column = pd.to_datetime(column).dt.strftime(self.datetime_format)
             except (AttributeError, ValueError):
-                return column
+                try:
+                    column = pd.to_datetime(column).dt.strftime(self.datetime_format)
+                except (AttributeError, ValueError):
+                    return column
 
         return column.astype(self._dtype)
