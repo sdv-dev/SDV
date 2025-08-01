@@ -11,7 +11,7 @@ import pandas as pd
 import tqdm
 from rdt.transformers import FloatFormatter
 
-from sdv._utils import _cast_to_iterable, _groupby_list
+from sdv._utils import MODELABLE_SDTYPES, _cast_to_iterable, _groupby_list
 from sdv.cag import ProgrammableConstraint
 from sdv.cag._utils import _validate_constraints_single_table
 from sdv.errors import SamplingError, SynthesizerInputError
@@ -110,12 +110,13 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                 Updated context column metadata.
         """
         default_transformers_by_sdtype = deepcopy(self._data_processor._transformers_by_sdtype)
-        table_metadata = self.metadata.tables[self._table_name]
+        table_metadata = self._get_table_metadata()
         for column in self.context_columns:
-            sdtype = table_metadata.columns[column]['sdtype']
-            if sdtype == 'id':
-                context_columns_dict[column] = {'sdtype': 'categorical'}
-            elif default_transformers_by_sdtype.get(sdtype):
+            column_metadata = table_metadata.columns[column]
+            if (
+                default_transformers_by_sdtype.get(column_metadata['sdtype'])
+                and column_metadata['sdtype'] not in MODELABLE_SDTYPES
+            ):
                 context_columns_dict[column] = {'sdtype': 'numerical'}
 
         return context_columns_dict
@@ -125,8 +126,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         default_transformers_by_sdtype = deepcopy(self._data_processor._transformers_by_sdtype)
         table_metadata = self._get_table_metadata()
         for column in self.context_columns:
-            sdtype = table_metadata.columns[column]['sdtype']
-            if sdtype != 'id' and default_transformers_by_sdtype.get(sdtype):
+            if default_transformers_by_sdtype.get(table_metadata.columns[column]['sdtype']):
                 columns_to_be_processed.append(column)
 
         return columns_to_be_processed
@@ -377,18 +377,19 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                 The preprocessed data.
         """
         self._extra_context_columns = {}
-        sequence_key_transformers = {sequence_key: None for sequence_key in self._sequence_key}
-        context_id_transformers = {}
-        table_metadata = self.metadata.tables[self._table_name]
-        for column in self.context_columns:
-            if table_metadata.columns[column]['sdtype'] == 'id':
-                context_id_transformers[column] = None
+        id_context_columns = [
+            col
+            for col in self.context_columns
+            if self._get_table_metadata().columns[col]['sdtype'] not in MODELABLE_SDTYPES
+        ]
+        sequence_key_transformers = {
+            sequence_key: None for sequence_key in self._sequence_key + id_context_columns
+        }
 
         if not self._data_processor._prepared_for_fitting:
             self.auto_assign_transformers(data)
 
-        all_transformers = {**sequence_key_transformers, **context_id_transformers}
-        self.update_transformers(all_transformers)
+        self.update_transformers(sequence_key_transformers)
         preprocessed = super()._preprocess(data)
 
         if self._sequence_index:
@@ -405,17 +406,17 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
 
         Raises:
             ValueError:
-                Raise when the transformer of a context column is passed (except for None).
+                Raise when the transformer of a context column is passed.
         """
-        context_columns_being_updated = set(column_name_to_transformer).intersection(
-            set(self.context_columns)
-        )
-        if context_columns_being_updated:
-            for column in context_columns_being_updated:
-                if column_name_to_transformer[column] is not None:
-                    raise SynthesizerInputError(
-                        'Transformers for context columns are not allowed to be updated.'
-                    )
+        forbidden_updates = []
+        for column in set(column_name_to_transformer).intersection(set(self.context_columns)):
+            if self._get_table_metadata().columns[column]['sdtype'] not in MODELABLE_SDTYPES:
+                forbidden_updates.append(column)
+
+        if forbidden_updates:
+            raise SynthesizerInputError(
+                'Transformers for context columns are not allowed to be updated.'
+            )
 
         super().update_transformers(column_name_to_transformer)
 
@@ -465,6 +466,22 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             self._sequence_index,
             drop_sequence_index=False,
         )
+        id_context_columns = [
+            col
+            for col in self.context_columns
+            if self._get_table_metadata().columns[col]['sdtype'] not in MODELABLE_SDTYPES
+        ]
+        if id_context_columns:
+            id_indices = [
+                i for i, col in enumerate(self.context_columns) if col in id_context_columns
+            ]
+            if id_indices:
+                for seq in sequences:
+                    if 'context' in seq and isinstance(seq['context'], (list, tuple)):
+                        seq['context'] = [
+                            v for i, v in enumerate(seq['context']) if i not in id_indices
+                        ]
+
         data_types = []
         context_types = []
         for field in self._output_columns:
@@ -490,10 +507,11 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
 
             if field in self._data_columns:
                 data_types.append(data_type)
-            elif field in self.context_columns or field in self._extra_context_columns.keys():
+            elif (
+                field in self.context_columns and field not in id_context_columns
+            ) or field in self._extra_context_columns.keys():
                 context_types.append(data_type)
 
-        # Validate and fit
         self._model.fit_sequences(sequences, context_types, data_types)
 
     def _fit(self, processed_data):

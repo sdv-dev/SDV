@@ -607,3 +607,39 @@ def test_par_unique_sequence_key_with_regex():
     assert sample['sequence_key'].nunique() == 20
     transformer = synthesizer._context_synthesizer.get_transformers()['sequence_key']
     transformer.cardinality_rule == 'unique'
+
+
+def test_par_with_context_column_as_id():
+    """Test PARSynthesizer with a context column as an id column."""
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'event_id': ['event-000'] * 5 + ['event-001'] * 2 + ['event-002'] * 3,
+            'event_source': ['source-AAA'] * 5 + ['source-BBB'] * 2 + ['source-CCC'] * 3,
+            'column_A': np.random.randint(low=0, high=10, size=10),
+            'column_B': np.random.choice(['Yes', 'No', 'Maybe'], size=10),
+        }
+    )
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'sequence_key': 'event_id',
+                'columns': {
+                    'event_id': {'sdtype': 'id', 'regex_format': 'event-[0-9]{3,4}'},
+                    'event_source': {'sdtype': 'id', 'regex_format': 'source-[A-Z]{3,5}'},
+                    'column_A': {'sdtype': 'numerical'},
+                    'column_B': {'sdtype': 'categorical'},
+                },
+            }
+        }
+    })
+
+    # Run
+    synthesizer = PARSynthesizer(metadata, epochs=1, context_columns=['event_source'])
+    synthesizer.fit(data)
+    sampled = synthesizer.sample(num_sequences=2)
+
+    # Assert
+    assert sampled['event_id'].isin(data['event_id']).all()
+    assert sampled['column_B'].isin(data['column_B']).all()
