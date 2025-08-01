@@ -110,7 +110,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                 Updated context column metadata.
         """
         default_transformers_by_sdtype = deepcopy(self._data_processor._transformers_by_sdtype)
-        table_metadata = self.metadata.tables[self._table_name]
+        table_metadata = self._get_table_metadata()
         for column in self.context_columns:
             column_metadata = table_metadata.columns[column]
             if (
@@ -126,8 +126,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         default_transformers_by_sdtype = deepcopy(self._data_processor._transformers_by_sdtype)
         table_metadata = self._get_table_metadata()
         for column in self.context_columns:
-            sdtype = table_metadata.columns[column]['sdtype']
-            if sdtype != 'id' and default_transformers_by_sdtype.get(sdtype):
+            if default_transformers_by_sdtype.get(table_metadata.columns[column]['sdtype']):
                 columns_to_be_processed.append(column)
 
         return columns_to_be_processed
@@ -393,8 +392,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         if not self._data_processor._prepared_for_fitting:
             self.auto_assign_transformers(data)
 
-        all_transformers = {**sequence_key_transformers, **context_id_transformers}
-        self.update_transformers(all_transformers)
+        self.update_transformers(sequence_key_transformers)
         preprocessed = super()._preprocess(data)
 
         if self._sequence_index:
@@ -411,7 +409,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
 
         Raises:
             ValueError:
-                Raise when the transformer of a context column is passed (except for None).
+                Raise when the transformer of a context column is passed.
         """
         forbidden_updates = []
         for column in set(column_name_to_transformer).intersection(set(self.context_columns)):
