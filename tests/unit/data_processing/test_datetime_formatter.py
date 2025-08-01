@@ -138,5 +138,14 @@ class TestDatetimeFormatter:
         result = formatter.format_data(column)
 
         # Assert
-        expected = pd.Series(['31 May 2021', '23-04-2021'])
+
+        try:
+            # Pandas 1.4 has different behavior to newer versions
+            # This works with lower pandas versions and casts the second string as the first format
+            expected = pd.to_datetime(column).dt.strftime('%d %B %Y')
+        except ValueError:
+            # For pandas 2.0 or bigger, the second string won't be casted and error is raised
+            # Therefore the original column is being returned
+            expected = pd.Series(['31 May 2021', '23-04-2021'])
+
         assert all(result == expected)
