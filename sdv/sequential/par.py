@@ -9,7 +9,7 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 import tqdm
-from rdt.transformers import FloatFormatter
+from rdt.transformers import FloatFormatter, LabelEncoder
 
 from sdv._utils import _cast_to_iterable, _groupby_list
 from sdv.cag import ProgrammableConstraint
@@ -112,10 +112,13 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         default_transformers_by_sdtype = deepcopy(self._data_processor._transformers_by_sdtype)
         table_metadata = self.metadata.tables[self._table_name]
         for column in self.context_columns:
-            sdtype = table_metadata.columns[column]['sdtype']
-            if sdtype == 'id':
-                context_columns_dict[column] = {'sdtype': 'categorical'}
-            elif default_transformers_by_sdtype.get(sdtype):
+            column_metadata = table_metadata.columns[column]
+            # Don't convert 'id' columns to 'numerical' - let them keep their 'id' sdtype
+            # so the context synthesizer can use RegexGenerator to generate new values
+            if (
+                default_transformers_by_sdtype.get(column_metadata['sdtype'])
+                and column_metadata['sdtype'] != 'id'
+            ):
                 context_columns_dict[column] = {'sdtype': 'numerical'}
 
         return context_columns_dict
@@ -125,8 +128,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         default_transformers_by_sdtype = deepcopy(self._data_processor._transformers_by_sdtype)
         table_metadata = self._get_table_metadata()
         for column in self.context_columns:
-            sdtype = table_metadata.columns[column]['sdtype']
-            if sdtype != 'id' and default_transformers_by_sdtype.get(sdtype):
+            if default_transformers_by_sdtype.get(table_metadata.columns[column]['sdtype']):
                 columns_to_be_processed.append(column)
 
         return columns_to_be_processed
@@ -367,6 +369,8 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         """Transform the raw data to numerical space.
 
         For PAR, none of the sequence keys are transformed.
+        For 'id' context columns, use categorical transformer instead of RegexGenerator
+        so the values are preserved for PAR training.
 
         Args:
             data (pandas.DataFrame):
@@ -377,18 +381,20 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                 The preprocessed data.
         """
         self._extra_context_columns = {}
-        sequence_key_transformers = {sequence_key: None for sequence_key in self._sequence_key}
-        context_id_transformers = {}
-        table_metadata = self.metadata.tables[self._table_name]
+        transformers_to_update = {sequence_key: None for sequence_key in self._sequence_key}
+
+        # Override transformers for 'id' context columns to use categorical transformer
+        # instead of RegexGenerator so values are preserved for PAR
+        table_metadata = self._get_table_metadata()
         for column in self.context_columns:
-            if table_metadata.columns[column]['sdtype'] == 'id':
-                context_id_transformers[column] = None
+            column_metadata = table_metadata.columns[column]
+            if column_metadata['sdtype'] == 'id':
+                transformers_to_update[column] = LabelEncoder()
 
         if not self._data_processor._prepared_for_fitting:
             self.auto_assign_transformers(data)
 
-        all_transformers = {**sequence_key_transformers, **context_id_transformers}
-        self.update_transformers(all_transformers)
+        self.update_transformers(transformers_to_update)
         preprocessed = super()._preprocess(data)
 
         if self._sequence_index:
@@ -405,17 +411,19 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
 
         Raises:
             ValueError:
-                Raise when the transformer of a context column is passed (except for None).
+                Raise when the transformer of a context column is passed.
         """
-        context_columns_being_updated = set(column_name_to_transformer).intersection(
-            set(self.context_columns)
-        )
-        if context_columns_being_updated:
-            for column in context_columns_being_updated:
-                if column_name_to_transformer[column] is not None:
-                    raise SynthesizerInputError(
-                        'Transformers for context columns are not allowed to be updated.'
-                    )
+        table_metadata = self._get_table_metadata()
+        forbidden_updates = []
+        for column in set(column_name_to_transformer).intersection(set(self.context_columns)):
+            column_metadata = table_metadata.columns[column]
+            if column_metadata['sdtype'] != 'id':
+                forbidden_updates.append(column)
+
+        if forbidden_updates:
+            raise SynthesizerInputError(
+                'Transformers for context columns are not allowed to be updated.'
+            )
 
         super().update_transformers(column_name_to_transformer)
 
@@ -488,6 +496,13 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             else:
                 raise ValueError(f'Unsupported dtype {dtype}')
 
+            # Treat 'id' columns as 'continuous' so PAR can handle newly generated values
+            sdtype = (
+                self.metadata.tables[self._table_name].columns.get(field, {}).get('sdtype', None)
+            )
+            if field in self.context_columns and sdtype == 'id':
+                data_type = 'continuous'
+
             if field in self._data_columns:
                 data_types.append(data_type)
             elif field in self.context_columns or field in self._extra_context_columns.keys():
@@ -538,8 +553,24 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
 
         output = []
         for sequence_key_values, context_values in iterator:
-            context_values = context_values.tolist()
-            sequence = self._model.sample_sequence(context_values, sequence_length)
+            original_context_values = context_values.tolist()
+            numeric_context_values = context_values.tolist()
+
+            # Convert 'id' context column string values to numeric values
+            table_metadata = self._get_table_metadata()
+            for i, column in enumerate(context_columns):
+                column_metadata = table_metadata.columns.get(column, {})
+                if column_metadata.get('sdtype') == 'id' and isinstance(
+                    numeric_context_values[i], str
+                ):
+                    transformer = self.get_transformers().get(column)
+                    if transformer:
+                        # Convert the string value to numeric using the transformer
+                        temp_df = pd.DataFrame({column: [numeric_context_values[i]]})
+                        transformed = transformer.transform(temp_df)
+                        numeric_context_values[i] = transformed[column].iloc[0]
+
+            sequence = self._model.sample_sequence(numeric_context_values, sequence_length)
             if self._sequence_index:
                 sequence_index_idx = self._data_columns.index(self._sequence_index)
                 diffs = sequence[sequence_index_idx]
@@ -557,8 +588,16 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             )
             sequence_df[self._sequence_key] = sequence_key_values
             context_columns = self.context_columns + list(self._extra_context_columns.keys())
-            for column, value in zip(context_columns, context_values):
-                sequence_df[column] = value
+            # For 'id' context columns, use original string values to preserve generated values
+            # For other context columns, use the processed values
+            for i, (column, original_value) in enumerate(
+                zip(context_columns, original_context_values)
+            ):
+                column_metadata = table_metadata.columns.get(column, {})
+                if column_metadata.get('sdtype') == 'id':
+                    sequence_df[column] = original_value
+                else:
+                    sequence_df[column] = numeric_context_values[i]
 
             output.append(sequence_df)
 
@@ -575,7 +614,47 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
 
     def _sample(self, context_columns, sequence_length=None):
         sampled = self._sample_from_par(context_columns, sequence_length)
-        sampled = self._data_processor.reverse_transform(sampled)
+
+        table_metadata = self._get_table_metadata()
+        columns_to_reverse = []
+        id_context_data = {}
+
+        for column in sampled.columns:
+            if column in self.context_columns:
+                column_metadata = table_metadata.columns.get(column, {})
+                if column_metadata.get('sdtype') == 'id':
+                    # Keep the newly generated id values as-is
+                    id_context_data[column] = sampled[column].copy()
+                else:
+                    columns_to_reverse.append(column)
+            else:
+                columns_to_reverse.append(column)
+
+        # Reverse transform only non-id columns
+        if columns_to_reverse:
+            subset_to_reverse = sampled[columns_to_reverse]
+            temp_transformers = {}
+            for column in self.context_columns:
+                column_metadata = table_metadata.columns.get(column, {})
+                if column_metadata.get('sdtype') == 'id':
+                    transformer = self._data_processor._hyper_transformer.field_transformers.get(
+                        column
+                    )
+                    if transformer is not None:
+                        temp_transformers[column] = transformer
+                        del self._data_processor._hyper_transformer.field_transformers[column]
+
+            try:
+                reversed_data = self._data_processor.reverse_transform(subset_to_reverse)
+            finally:
+                for column, transformer in temp_transformers.items():
+                    self._data_processor._hyper_transformer.field_transformers[column] = transformer
+
+            for column, values in id_context_data.items():
+                reversed_data[column] = values
+
+            sampled = reversed_data
+
         return self.reverse_transform_constraints(sampled)
 
     def sample(self, num_sequences, sequence_length=None):
