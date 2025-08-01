@@ -138,7 +138,6 @@ class TestDatetimeFormatter:
         result = formatter.format_data(column)
 
         # Assert
-
         try:
             # Pandas 1.4 has different behavior to newer versions
             # This works with lower pandas versions and casts the second string as the first format
