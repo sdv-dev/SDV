@@ -877,6 +877,7 @@ class TestPARSynthesizer:
 
         # Assert
         par._sample_from_par.assert_called_once_with(context_columns, 5)
+        par._data_processor.reverse_transform.assert_called_once_with(fake_sampled)
 
     def test_sample(self):
         """Test that the method samples the context columns and uses them to sample from PAR."""

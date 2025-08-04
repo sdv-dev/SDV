@@ -110,12 +110,12 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                 Updated context column metadata.
         """
         default_transformers_by_sdtype = deepcopy(self._data_processor._transformers_by_sdtype)
-        table_metadata = self._get_table_metadata()
+        table_metadata = self.metadata.tables[self._table_name]
         for column in self.context_columns:
             column_metadata = table_metadata.columns[column]
             if (
                 default_transformers_by_sdtype.get(column_metadata['sdtype'])
-                and column_metadata['sdtype'] not in MODELABLE_SDTYPES
+                and column_metadata['sdtype'] in MODELABLE_SDTYPES
             ):
                 context_columns_dict[column] = {'sdtype': 'numerical'}
 
@@ -410,7 +410,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         """
         forbidden_updates = []
         for column in set(column_name_to_transformer).intersection(set(self.context_columns)):
-            if self._get_table_metadata().columns[column]['sdtype'] not in MODELABLE_SDTYPES:
+            if self._get_table_metadata().columns[column]['sdtype'] in MODELABLE_SDTYPES:
                 forbidden_updates.append(column)
 
         if forbidden_updates:
@@ -512,6 +512,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             ) or field in self._extra_context_columns.keys():
                 context_types.append(data_type)
 
+        # Validate and fit
         self._model.fit_sequences(sequences, context_types, data_types)
 
     def _fit(self, processed_data):
