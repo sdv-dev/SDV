@@ -363,6 +363,13 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             ):
                 sequence_index_transformer.enforce_min_max_values = False
 
+    def _get_id_context_columns(self):
+        return [
+            col
+            for col in self.context_columns
+            if self._get_table_metadata().columns[col]['sdtype'] not in MODELABLE_SDTYPES
+        ]
+
     def _preprocess(self, data):
         """Transform the raw data to numerical space.
 
@@ -377,13 +384,9 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                 The preprocessed data.
         """
         self._extra_context_columns = {}
-        id_context_columns = [
-            col
-            for col in self.context_columns
-            if self._get_table_metadata().columns[col]['sdtype'] not in MODELABLE_SDTYPES
-        ]
         sequence_key_transformers = {
-            sequence_key: None for sequence_key in self._sequence_key + id_context_columns
+            sequence_key: None
+            for sequence_key in self._sequence_key + self._get_id_context_columns()
         }
 
         if not self._data_processor._prepared_for_fitting:
@@ -445,19 +448,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         context = context.groupby(self._sequence_key).first().reset_index()
         self._context_synthesizer.fit(context)
 
-    def _fit_sequence_columns(self, timeseries_data):
-        self._model = PARModel(**self._model_kwargs)
-
-        self._output_columns = list(timeseries_data.columns)
-        self._data_columns = [
-            column
-            for column in timeseries_data.columns
-            if column
-            not in (
-                self._sequence_key + self.context_columns + list(self._extra_context_columns.keys())
-            )
-        ]
-
+    def _generate_sequences(self, timeseries_data):
         sequences = assemble_sequences(
             timeseries_data,
             self._sequence_key,
@@ -466,22 +457,22 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             self._sequence_index,
             drop_sequence_index=False,
         )
-        id_context_columns = [
-            col
-            for col in self.context_columns
-            if self._get_table_metadata().columns[col]['sdtype'] not in MODELABLE_SDTYPES
-        ]
+        id_context_columns = self._get_id_context_columns()
         if id_context_columns:
             id_indices = [
                 i for i, col in enumerate(self.context_columns) if col in id_context_columns
             ]
-            if id_indices:
-                for seq in sequences:
-                    if 'context' in seq and isinstance(seq['context'], (list, tuple)):
-                        seq['context'] = [
-                            v for i, v in enumerate(seq['context']) if i not in id_indices
-                        ]
+            for seq in sequences:
+                seq['context'] = [
+                    context_value
+                    for i, context_value in enumerate(seq['context'])
+                    if i not in id_indices
+                ]
 
+        return sequences
+
+    def _generate_context_and_data_types(self, timeseries_data):
+        id_context_columns = self._get_id_context_columns()
         data_types = []
         context_types = []
         for field in self._output_columns:
@@ -511,6 +502,23 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                 field in self.context_columns and field not in id_context_columns
             ) or field in self._extra_context_columns.keys():
                 context_types.append(data_type)
+
+        return context_types, data_types
+
+    def _fit_sequence_columns(self, timeseries_data):
+        self._model = PARModel(**self._model_kwargs)
+        self._output_columns = list(timeseries_data.columns)
+        self._data_columns = [
+            column
+            for column in timeseries_data.columns
+            if column
+            not in (
+                self._sequence_key + self.context_columns + list(self._extra_context_columns.keys())
+            )
+        ]
+
+        sequences = self._generate_sequences(timeseries_data)
+        context_types, data_types = self._generate_context_and_data_types(timeseries_data)
 
         # Validate and fit
         self._model.fit_sequences(sequences, context_types, data_types)
@@ -555,10 +563,11 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         should_disable = not self._model_kwargs['verbose']
         iterator = tqdm.tqdm(context.iterrows(), disable=should_disable, total=len(context))
 
+        id_context_columns = self._get_id_context_columns()
         output = []
         for sequence_key_values, context_values in iterator:
-            context_values = context_values.tolist()
-            sequence = self._model.sample_sequence(context_values, sequence_length)
+            context_values_list = context_values.drop(id_context_columns, errors='ignore').tolist()
+            sequence = self._model.sample_sequence(context_values_list, sequence_length)
             if self._sequence_index:
                 sequence_index_idx = self._data_columns.index(self._sequence_index)
                 diffs = sequence[sequence_index_idx]
@@ -626,7 +635,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         return self._sample(context_columns, sequence_length)
 
     def sample_sequential_columns(self, context_columns, sequence_length=None):
-        """Sample the sequential columns based ont he provided context columns.
+        """Sample the sequential columns based on the provided context columns.
 
         Args:
             context_columns (pandas.DataFrame):
