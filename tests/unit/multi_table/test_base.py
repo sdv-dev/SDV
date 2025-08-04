@@ -1228,6 +1228,53 @@ class TestBaseMultiTableSynthesizer:
         instance.fit_processed_data.assert_not_called()
         instance._check_metadata_updated.assert_not_called()
 
+    def test_fit_raises_error_empty_dataframe(self):
+        """Test that fit raises a ValueError when a table contains an empty dataframe."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        data = {
+            'nesreca': pd.DataFrame({
+                'id_nesreca': [1, 2, 3],
+                'upravna_enota': [1, 2, 3],
+                'nesreca_val': [10, 20, 30],
+            }),
+            'oseba': pd.DataFrame(),  # Empty dataframe
+            'upravna_enota': pd.DataFrame({
+                'id_upravna_enota': [1, 2, 3],
+                'upravna_val': [100, 200, 300],
+            }),
+        }
+
+        # Run and Assert
+        expected_error = re.escape(
+            "The fit dataframe for table(s) ['oseba'] is empty, synthesizer will not be fitted."
+        )
+        with pytest.raises(ValueError, match=expected_error):
+            instance.fit(data)
+
+    def test_fit_raises_error_empty_dataframe_multiple_tables(self):
+        """Test that fit raises a ValueError for the first empty table found."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        data = {
+            'nesreca': pd.DataFrame(),
+            'oseba': pd.DataFrame(),
+            'upravna_enota': pd.DataFrame({
+                'id_upravna_enota': [1, 2, 3],
+                'upravna_val': [100, 200, 300],
+            }),
+        }
+
+        # Run and Assert
+        expected_error = re.escape(
+            "The fit dataframe for table(s) ['nesreca', 'oseba'] is empty, "
+            'synthesizer will not be fitted.'
+        )
+        with pytest.raises(ValueError, match=expected_error):
+            instance.fit(data)
+
     def test_reset_sampling(self):
         """Test that ``reset_sampling`` resets the numpy seed and the synthesizers."""
         # Setup
@@ -1971,8 +2018,12 @@ class TestBaseMultiTableSynthesizer:
     @patch('sdv.multi_table.base.check_sdv_versions_and_warn')
     @patch('sdv.multi_table.base.cloudpickle')
     @patch('builtins.open', new_callable=mock_open)
+    @patch('sdv.multi_table.base.warn_load_deprecated')
+    @patch('sdv.multi_table.base._validate_correct_synthesizer_loading')
     def test_load(
         self,
+        mock_validate_correct_synthesizer_loading,
+        warn_load_deprecated,
         mock_file,
         cloudpickle_mock,
         mock_check_sdv_versions_and_warn,
@@ -1994,6 +2045,10 @@ class TestBaseMultiTableSynthesizer:
             loaded_instance = BaseMultiTableSynthesizer.load('synth.pkl')
 
         # Assert
+        mock_validate_correct_synthesizer_loading.assert_called_once_with(
+            synthesizer_mock, BaseMultiTableSynthesizer
+        )
+        warn_load_deprecated.assert_called_once_with()
         mock_file.assert_called_once_with('synth.pkl', 'rb')
         mock_check_sdv_versions_and_warn.assert_called_once_with(loaded_instance)
         cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)

@@ -24,9 +24,11 @@ from sdv import version
 from sdv._utils import (
     _check_regex_format,
     _groupby_list,
+    _validate_correct_synthesizer_loading,
     check_sdv_versions_and_warn,
     check_synthesizer_version,
     generate_synthesizer_id,
+    warn_load_deprecated,
 )
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
@@ -43,8 +45,10 @@ from sdv.errors import (
     SynthesizerInputError,
 )
 from sdv.logging import get_sdv_logger
+from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
 from sdv.metadata.single_table import SingleTableMetadata
+from sdv.sampling import Condition, DataFrameCondition
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
 
 LOGGER = logging.getLogger(__name__)
@@ -416,6 +420,11 @@ class BaseSynthesizer:
         return info
 
     def _preprocess(self, data):
+        if not self.metadata.tables:
+            raise InvalidMetadataError(
+                'The metadata is empty. Please add at least one table to the metadata.'
+            )
+
         self._data_processor.fit(data)
         return self._data_processor.transform(data)
 
@@ -708,6 +717,7 @@ class BaseSynthesizer:
             SingleTableSynthesizer:
                 The loaded synthesizer.
         """
+        warn_load_deprecated()
         with open(filepath, 'rb') as f:
             try:
                 synthesizer = cloudpickle.load(f)
@@ -726,6 +736,7 @@ class BaseSynthesizer:
                     )
                 raise e
 
+        _validate_correct_synthesizer_loading(synthesizer, cls)
         check_synthesizer_version(synthesizer)
         check_sdv_versions_and_warn(synthesizer)
         if getattr(synthesizer, '_synthesizer_id', None) is None:
@@ -1000,10 +1011,11 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         """Transform ``conditions`` into a list of dataframes.
 
         Args:
-            conditions (list[sdv.sampling.Condition]):
-                A list of ``sdv.sampling.Condition``, where each ``Condition`` object
-                represents a desired column value mapping and the number of rows
-                to generate for that condition.
+            conditions (list[sdv.sampling.Condition, sdv.sampling.DataFrameCondition]):
+                A list of ``sdv.sampling.Condition`` or ``sdv.sampling.DataFrameCondition``.
+                Each ``Condition`` object represents a desired column value mapping and
+                the number of rows to generate for that condition.
+                Each ``DataFrameCondition`` represents the dataframe to match for the condition.
 
         Returns:
             list[pandas.DataFrame]:
@@ -1011,11 +1023,17 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         """
         condition_dataframes = defaultdict(list)
         for condition in conditions:
-            column_values = condition.get_column_values()
-            condition_dataframes[tuple(column_values.keys())].append(
-                pd.DataFrame(column_values, index=range(condition.get_num_rows()))
-            )
-
+            if isinstance(condition, Condition):
+                column_values = condition.get_column_values()
+                condition_dataframes[tuple(column_values.keys())].append(
+                    pd.DataFrame(column_values, index=range(condition.get_num_rows()))
+                )
+            elif isinstance(condition, DataFrameCondition):
+                dataframe = condition.get_dataframe()
+                columns = dataframe.columns.tolist()
+                condition_dataframes[tuple(columns)].append(dataframe)
+            else:
+                raise ValueError('`conditions` must be list of Condition or DataFrameCondition')
         return [
             pd.concat(condition_list, ignore_index=True)
             for condition_list in condition_dataframes.values()
@@ -1031,6 +1049,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         float_rtol=0.01,
         progress_bar=None,
         output_file_path=None,
+        keep_extra_columns=False,
     ):
         sampled = []
         batch_size = batch_size if num_rows > batch_size else num_rows
@@ -1043,6 +1062,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 float_rtol=float_rtol,
                 progress_bar=progress_bar,
                 output_file_path=output_file_path,
+                keep_extra_columns=keep_extra_columns,
             )
             sampled.append(sampled_rows)
 
@@ -1060,6 +1080,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         graceful_reject_sampling=True,
         progress_bar=None,
         output_file_path=None,
+        keep_extra_columns=False,
     ):
         batch_size = batch_size or len(dataframe)
         sampled_rows = self._sample_in_batches(
@@ -1071,6 +1092,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             float_rtol=float_rtol,
             progress_bar=progress_bar,
             output_file_path=output_file_path,
+            keep_extra_columns=keep_extra_columns,
         )
 
         if len(sampled_rows) > 0:
@@ -1130,6 +1152,13 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return sampled
 
+    def _validate_fit_before_sample(self):
+        if not self._fitted:
+            raise SamplingError(
+                'This synthesizer has not been fitted. Please fit your synthesizer first before'
+                ' sampling synthetic data.'
+            )
+
     def sample(self, num_rows, max_tries_per_batch=100, batch_size=None, output_file_path=None):
         """Sample rows from this table.
 
@@ -1148,12 +1177,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             pandas.DataFrame:
                 Sampled data.
         """
-        if not self._fitted:
-            raise SamplingError(
-                'This synthesizer has not been fitted. Please fit your synthesizer first before'
-                ' sampling synthetic data.'
-            )
-
+        self._validate_fit_before_sample()
         self._check_input_metadata_updated()
         sample_timestamp = datetime.datetime.now()
         has_constraints = bool(self._data_processor._constraints)
@@ -1200,7 +1224,13 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         return transformed_condition
 
     def _sample_with_conditions(
-        self, conditions, max_tries_per_batch, batch_size, progress_bar=None, output_file_path=None
+        self,
+        conditions,
+        max_tries_per_batch,
+        batch_size,
+        progress_bar=None,
+        output_file_path=None,
+        keep_extra_columns=False,
     ):
         """Sample rows with conditions.
 
@@ -1215,6 +1245,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 The progress bar to update.
             output_file_path (str or None):
                 The file to periodically write sampled rows to. Defaults to None.
+            keep_extra_columns (bool):
+                Whether to keep extra columns from the sampled data. Defaults to False.
 
         Returns:
             pandas.DataFrame:
@@ -1271,6 +1303,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     batch_size=batch_size,
                     progress_bar=progress_bar,
                     output_file_path=output_file_path,
+                    keep_extra_columns=keep_extra_columns,
                 )
                 all_sampled_rows.append(sampled_rows)
             else:
@@ -1290,6 +1323,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                         batch_size=batch_size,
                         progress_bar=progress_bar,
                         output_file_path=output_file_path,
+                        keep_extra_columns=keep_extra_columns,
                     )
                     all_sampled_rows.append(sampled_rows)
 
@@ -1314,7 +1348,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     )
                 if column == self._original_metadata.tables[self._table_name].primary_key:
                     raise ValueError(
-                        f"Cannot condtionally sample column name '{column}' because it is "
+                        f"Cannot conditionally sample column name '{column}' because it is "
                         'the primary key.'
                     )
             else:
@@ -1335,10 +1369,10 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         """Sample rows from this table with the given conditions.
 
         Args:
-            conditions (list[sdv.sampling.Condition]):
-                A list of sdv.sampling.Condition objects, which specify the column
-                values in a condition, along with the number of rows for that
-                condition.
+            conditions (list[sdv.sampling.Condition, sdv.sampling.DataFrameCondition]):
+                A list of sdv.sampling.Condition and sdv.sampling.DataFrameCondition objects,
+                which specify the column values in a condition, along with the number of
+                rows for that condition.
             max_tries_per_batch (int):
                 Number of times to retry sampling until the batch size is met. Defaults to 100.
             batch_size (int):
@@ -1358,6 +1392,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     * any of the conditions' columns are not valid.
                     * no rows could be generated.
         """
+        self._validate_fit_before_sample()
         output_file_path = validate_file_path(output_file_path)
 
         num_rows = functools.reduce(

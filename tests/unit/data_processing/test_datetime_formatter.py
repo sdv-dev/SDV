@@ -126,3 +126,25 @@ class TestDatetimeFormatter:
         # Assert
         expected = pd.Series(['2024/06/01', '2025/06/01'])
         pd.testing.assert_series_equal(result, expected)
+
+    def test_format_data_fallback_with_indepth_value_errors(self):
+        """Test fallback formatting when parsing with format raises ValueError."""
+        # Setup
+        formatter = DatetimeFormatter('%d %B %Y')
+        formatter._dtype = 'O'
+        column = pd.Series(['31 May 2021', '23-04-2021'])
+
+        # Run
+        result = formatter.format_data(column)
+
+        # Assert
+        try:
+            # Pandas 1.4 has different behavior to newer versions
+            # This works with lower pandas versions and casts the second string as the first format
+            expected = pd.to_datetime(column).dt.strftime('%d %B %Y')
+        except ValueError:
+            # For pandas 2.0 or bigger, the second string won't be casted and error is raised
+            # Therefore the original column is being returned
+            expected = pd.Series(['31 May 2021', '23-04-2021'])
+
+        assert all(result == expected)

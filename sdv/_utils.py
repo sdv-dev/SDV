@@ -127,7 +127,9 @@ def _validate_datetime_format(column, datetime_format):
 
     Args:
         column (pd.Series):
-            Column to evaluate.
+            Column to evaluate. It must contain pd.Timestamp/string/datetime values.
+            A column can contain multiple timezones, a single timezone, or no timezone.
+            The column can be object, string or datetime64[ns] dtype.
         datetime_format (str):
             The datetime format.
 
@@ -136,7 +138,11 @@ def _validate_datetime_format(column, datetime_format):
             A set of values from the column that do not match the datetime format.
     """
     pandas_datetime_format = datetime_format.replace('%-', '%')
-    datetime_column = pd.to_datetime(column, errors='coerce', format=pandas_datetime_format)
+    utc = '%z' in datetime_format.lower()
+
+    datetime_column = pd.to_datetime(
+        column, errors='coerce', format=pandas_datetime_format, utc=utc
+    )
     valid = pd.isna(column) | ~pd.isna(datetime_column)
 
     return set(column[~valid])
@@ -487,3 +493,23 @@ def _check_regex_format(table_name, column_name, regex):
                 f"{regex}', which you have provided for table '{table_name}', column '{column_name}"
                 "'. Please use a simplified format or update to a different sdtype."
             ) from e
+
+
+def warn_load_deprecated():
+    """Warn that the `load` function is deprecated."""
+    warnings.warn(
+        "The 'load' function will be deprecated in future versions of SDV. Please use"
+        " 'utils.load_synthesizer' instead.",
+        FutureWarning,
+    )
+
+
+def _validate_correct_synthesizer_loading(synthesizer, cls):
+    """Validate that the loaded synthesizer is of the correct type."""
+    synthesizer_name = synthesizer.__class__.__name__
+    if synthesizer_name != cls.__name__:
+        raise SynthesizerInputError(
+            f"Expected loading a synthesizer of type '{cls.__name__}', "
+            f"but got '{synthesizer_name}'. Please ensure you are loading the correct "
+            f'synthesizer type.'
+        )

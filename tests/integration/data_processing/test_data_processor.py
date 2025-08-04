@@ -454,3 +454,48 @@ class TestDataProcessor:
         assert transformed_data.dtypes.unique() == 'float'
         assert reverse_transformed_data[column_name].dtype == column_name
         assert reverse_transformed_with_nans[column_name].dtype == expected_dtype_with_nans
+
+    def test_id_columns_use_old_behavior_integration(self):
+        """Test end-to-end behavior of id_columns_use_old_behavior parameter."""
+        # Setup
+        data = pd.DataFrame({
+            'user_id': ['user_001', 'user_002', 'user_003', 'user_004'],
+            'session_id': ['sess_101', 'sess_102', 'sess_103', 'sess_104'],
+            'transaction_id': ['tx_201', 'tx_202', 'tx_203', 'tx_204'],
+            'amount': [100.0, 250.5, 75.0, 300.0],
+        })
+
+        metadata = SingleTableMetadata()
+        metadata.add_column('user_id', sdtype='id')
+        metadata.add_column('session_id', sdtype='id')
+        metadata.add_column('transaction_id', sdtype='id')
+        metadata.add_column('amount', sdtype='numerical')
+        metadata.set_primary_key('transaction_id')
+
+        # Only user_id should use old behavior
+        dp = DataProcessor(metadata, id_columns_use_old_behavior=['user_id'])
+
+        # Run
+        dp.fit(data)
+        transformed_data = dp.transform(data)
+        synthetic_data = dp.reverse_transform(transformed_data)
+
+        # Assert - Check that transformers are set correctly
+        config = dp._hyper_transformer.get_config()
+        user_id_transformer = config['transformers']['user_id']
+        assert isinstance(user_id_transformer, AnonymizedFaker)
+        assert user_id_transformer.function_name == 'bothify'
+
+        session_id_transformer = config['transformers']['session_id']
+        assert isinstance(session_id_transformer, UniformEncoder)
+
+        transaction_id_transformer = config['transformers']['transaction_id']
+        assert isinstance(transaction_id_transformer, AnonymizedFaker)
+        assert transaction_id_transformer.cardinality_rule == 'unique'
+
+        # Verify synthetic data has expected structure
+        assert len(synthetic_data) == len(data)
+        assert set(synthetic_data.columns) == set(data.columns)
+        assert synthetic_data['user_id'].dtype == object
+        assert synthetic_data['session_id'].dtype == object
+        assert 'transaction_id' in synthetic_data.columns

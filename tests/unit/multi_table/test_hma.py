@@ -472,6 +472,7 @@ class TestHMASynthesizer:
         instance._table_parameters = {'users': {'a': 1}}
         instance._table_synthesizers = {'users': table_synthesizer}
         instance._default_parameters = {'users': {'colA': 'default_param', 'colB': 'default_param'}}
+        instance._parent_extended_columns = {'users': []}
 
         # Run
         synthesizer = HMASynthesizer._recreate_child_synthesizer(
@@ -493,6 +494,47 @@ class TestHMASynthesizer:
             {'colA': 'default_param', 'colB': 'default_param'},
         )
         instance._extract_parameters.assert_called_once_with(parent_row, table_name, 'session_id')
+        instance._set_extended_columns_distributions.assert_not_called()
+
+    def test__recreate_child_synthesizer_set_extended_columns_distributions(self):
+        """Test that this method returns a synthesizer for the given child table."""
+        # Setup
+        instance = Mock()
+        parent_row = 'row'
+        table_name = 'users'
+        parent_table_name = 'sessions'
+        table_meta = Mock()
+        table_synthesizer = Mock()
+        instance.metadata.tables = {'users': table_meta}
+        instance.metadata._get_foreign_keys.return_value = ['session_id']
+        instance._table_parameters = {'users': {'a': 1}}
+        instance._table_synthesizers = {'users': table_synthesizer}
+        instance._default_parameters = {'users': {'colA': 'default_param', 'colB': 'default_param'}}
+        instance._parent_extended_columns = {'users': ['mock_extended_column']}
+
+        # Run
+        synthesizer = HMASynthesizer._recreate_child_synthesizer(
+            instance,
+            table_name,
+            parent_table_name,
+            parent_row,
+        )
+
+        # Assert
+        assert synthesizer == instance._synthesizer.return_value
+        assert synthesizer._data_processor == table_synthesizer._data_processor
+        instance.metadata.get_table_metadata.assert_called_once_with('users')
+        instance._synthesizer.assert_called_once_with(
+            instance.metadata.get_table_metadata.return_value, a=1
+        )
+        synthesizer._set_parameters.assert_called_once_with(
+            instance._extract_parameters.return_value,
+            {'colA': 'default_param', 'colB': 'default_param'},
+        )
+        instance._extract_parameters.assert_called_once_with(parent_row, table_name, 'session_id')
+        instance._set_extended_columns_distributions.assert_called_once_with(
+            synthesizer, table_name, ['mock_extended_column']
+        )
 
     def test__get_likelihoods(self):
         """Test that ``_get_likelihoods`` computes the likelihoods.

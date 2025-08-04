@@ -122,10 +122,11 @@ class SingleTablePreset:
         """Sample rows from this table with the given conditions.
 
         Args:
-            conditions (list[sdv.sampling.Condition]):
-                A list of sdv.sampling.Condition objects, which specify the column
-                values in a condition, along with the number of rows for that
-                condition.
+            conditions (list[sdv.sampling.Condition, sdv.sampling.DataFrameCondition]):
+                A list of ``sdv.sampling.Condition`` or ``sdv.sampling.DataFrameCondition``.
+                Each ``Condition`` specifies the column values in a condition, along with
+                the number of rows for that condition.
+                Each ``DataFrameCondition`` represents the dataframe to match for the condition.
             max_tries_per_batch (int):
                 Number of times to try sampling discarded rows. Defaults to 100.
             batch_size (int):

@@ -80,3 +80,6 @@ class VersionError(ValueError):
     def __init__(self, message):
         self.message = message
         super().__init__(self.message)
+
+
+TableNameError = ValueError('`table_name` must be a string or None.')

@@ -1000,7 +1000,11 @@ class TestPARSynthesizer:
 
     @patch('sdv.single_table.base.cloudpickle')
     @patch('builtins.open', new_callable=mock_open)
-    def test_load(self, mock_file, cloudpickle_mock):
+    @patch('sdv.single_table.base.warn_load_deprecated')
+    @patch('sdv.single_table.base._validate_correct_synthesizer_loading')
+    def test_load(
+        self, mock_validate_correct_synthesizer_loading, warn_load_mock, mock_file, cloudpickle_mock
+    ):
         """Test that the ``load`` method loads a stored synthesizer."""
         # Setup
         synthesizer_mock = Mock(
@@ -1013,6 +1017,10 @@ class TestPARSynthesizer:
         loaded_instance = PARSynthesizer.load('synth.pkl')
 
         # Assert
+        mock_validate_correct_synthesizer_loading.assert_called_once_with(
+            synthesizer_mock, PARSynthesizer
+        )
+        warn_load_mock.assert_called_once()
         mock_file.assert_called_once_with('synth.pkl', 'rb')
         cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
         assert loaded_instance == synthesizer_mock
@@ -1142,3 +1150,124 @@ class TestPARSynthesizer:
 
         # Assert
         pd.testing.assert_frame_equal(result, expected_result)
+
+    @patch('sdv.sequential.par.tqdm')
+    def test__sample_from_par_with_all_null_column(self, tqdm_mock):
+        """Test that the method handles all-null columns correctly."""
+        # Setup
+        metadata = self.get_metadata()
+        par = PARSynthesizer(metadata=metadata)
+        model_mock = Mock()
+        par._model = model_mock
+        par._data_columns = ['time', 'gender', 'measurement']
+        par._output_columns = ['time', 'gender', 'name', 'measurement', 'all_null_col']
+        model_mock.sample_sequence.return_value = [[18000, 20000, 22000], [1, 1, 1], [55, 60, 65]]
+        context_columns = pd.DataFrame({'name': ['John Doe']})
+        tqdm_mock.tqdm.return_value = context_columns.set_index('name').iterrows()
+
+        # Run
+        sampled = par._sample_from_par(context_columns, 3)
+
+        # Assert
+        expected_output = pd.DataFrame({
+            'time': [18000, 20000, 22000],
+            'gender': [1, 1, 1],
+            'name': ['John Doe', 'John Doe', 'John Doe'],
+            'measurement': [55, 60, 65],
+            'all_null_col': [np.nan, np.nan, np.nan],
+        })
+        pd.testing.assert_frame_equal(sampled, expected_output)
+
+    def test_sample_with_all_null_column_numerical(self):
+        """Test that sampling works correctly with all-null numerical columns."""
+        # Setup
+        data = pd.DataFrame({
+            'time': ['2020-01-01', '2020-01-02', '2020-01-03'] * 3,
+            'gender': ['F', 'M', 'M'] * 3,
+            'name': ['Jane', 'Jane', 'Jane', 'John', 'John', 'John', 'Doe', 'Doe', 'Doe'],
+            'measurement': [55, 60, 65] * 3,
+            'all_null_col': [np.nan] * 9,
+        })
+
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('time', 'table', sdtype='datetime')
+        metadata.add_column('gender', 'table', sdtype='categorical')
+        metadata.add_column('name', 'table', sdtype='id')
+        metadata.add_column('measurement', 'table', sdtype='numerical')
+        metadata.add_column('all_null_col', 'table', sdtype='numerical')
+        metadata.set_sequence_key('name', 'table')
+
+        # Run
+        synthesizer = PARSynthesizer(metadata=metadata, epochs=1)
+        synthesizer.fit(data)
+        result = synthesizer.sample(num_sequences=2)
+
+        # Assert
+        assert 'all_null_col' in result.columns
+        assert result['all_null_col'].isna().all()
+        assert len(result) > 0
+
+    def test_sample_with_all_null_column_categorical(self):
+        """Test that sampling works correctly with all-null categorical columns."""
+        # Setup
+        data = pd.DataFrame({
+            'time': ['2020-01-01', '2020-01-02', '2020-01-03'] * 3,
+            'gender': ['F', 'M', 'M'] * 3,
+            'name': ['Jane', 'Jane', 'Jane', 'John', 'John', 'John', 'Doe', 'Doe', 'Doe'],
+            'measurement': [55, 60, 65] * 3,
+            'all_null_cat_col': [np.nan] * 9,
+        })
+
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('time', 'table', sdtype='datetime')
+        metadata.add_column('gender', 'table', sdtype='categorical')
+        metadata.add_column('name', 'table', sdtype='id')
+        metadata.add_column('measurement', 'table', sdtype='numerical')
+        metadata.add_column('all_null_cat_col', 'table', sdtype='categorical')
+        metadata.set_sequence_key('name', 'table')
+
+        # Run
+        synthesizer = PARSynthesizer(metadata=metadata, epochs=1)
+        synthesizer.fit(data)
+        result = synthesizer.sample(num_sequences=2)
+
+        # Assert
+        assert 'all_null_cat_col' in result.columns
+        assert result['all_null_cat_col'].isna().all()
+        assert len(result) > 0
+
+    def test_sample_with_multiple_all_null_columns(self):
+        """Test that sampling works correctly with multiple all-null columns."""
+        # Setup
+        data = pd.DataFrame({
+            'time': ['2020-01-01', '2020-01-02', '2020-01-03'] * 3,
+            'gender': ['F', 'M', 'M'] * 3,
+            'name': ['Jane', 'Jane', 'Jane', 'John', 'John', 'John', 'Doe', 'Doe', 'Doe'],
+            'measurement': [55, 60, 65] * 3,
+            'all_null_col1': [np.nan] * 9,
+            'all_null_col2': [np.nan] * 9,
+        })
+
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('time', 'table', sdtype='datetime')
+        metadata.add_column('gender', 'table', sdtype='categorical')
+        metadata.add_column('name', 'table', sdtype='id')
+        metadata.add_column('measurement', 'table', sdtype='numerical')
+        metadata.add_column('all_null_col1', 'table', sdtype='numerical')
+        metadata.add_column('all_null_col2', 'table', sdtype='categorical')
+        metadata.set_sequence_key('name', 'table')
+
+        # Run
+        synthesizer = PARSynthesizer(metadata=metadata, epochs=1)
+        synthesizer.fit(data)
+        result = synthesizer.sample(num_sequences=2)
+
+        # Assert
+        assert 'all_null_col1' in result.columns
+        assert 'all_null_col2' in result.columns
+        assert result['all_null_col1'].isna().all()
+        assert result['all_null_col2'].isna().all()
+        assert len(result) > 0

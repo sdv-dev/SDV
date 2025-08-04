@@ -30,7 +30,7 @@ from sdv.errors import (
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
 from sdv.metadata.single_table import SingleTableMetadata
-from sdv.sampling.tabular import Condition
+from sdv.sampling.tabular import Condition, DataFrameCondition
 from sdv.single_table import (
     CopulaGANSynthesizer,
     CTGANSynthesizer,
@@ -1183,8 +1183,12 @@ class TestBaseSynthesizer:
     @patch('sdv.single_table.base.check_sdv_versions_and_warn')
     @patch('sdv.single_table.base.cloudpickle')
     @patch('builtins.open', new_callable=mock_open)
+    @patch('sdv.single_table.base.warn_load_deprecated')
+    @patch('sdv.single_table.base._validate_correct_synthesizer_loading')
     def test_load(
         self,
+        mock_validate_correct_synthesizer_loading,
+        mock_warn_load_deprecated,
         mock_file,
         cloudpickle_mock,
         mock_check_sdv_versions_and_warn,
@@ -1206,6 +1210,10 @@ class TestBaseSynthesizer:
             loaded_instance = BaseSynthesizer.load('synth.pkl')
 
         # Assert
+        mock_validate_correct_synthesizer_loading.assert_called_once_with(
+            synthesizer_mock, BaseSynthesizer
+        )
+        mock_warn_load_deprecated.assert_called_once()
         mock_file.assert_called_once_with('synth.pkl', 'rb')
         cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
         mock_check_sdv_versions_and_warn.assert_called_once_with(loaded_instance)
@@ -1755,7 +1763,7 @@ class TestBaseSingleTableSynthesizer:
         mock_progress_bar.update.call_count == 3
 
     def test__make_condition_dfs(self):
-        """Test that the condition dfs are being created as expected."""
+        """Test _make_condition_dfs works with Condition conditions."""
         # Setup
         condition_a = Condition({'name': 'John Doe'})
         condition_b = Condition({'salary': 80.0})
@@ -1768,9 +1776,58 @@ class TestBaseSingleTableSynthesizer:
             pd.DataFrame({'name': ['John Doe']}),
             pd.DataFrame({'salary': [80.0]}),
         ]
-
         for res, exp in zip(result, expected_result):
             pd.testing.assert_frame_equal(res, exp)
+
+    def test__make_condition_dfs_dataframe_condition(self):
+        """Test _make_condition_dfs works with DataFrameCondition conditions."""
+        # Setup
+        dataframe = pd.DataFrame({
+            'name': ['John Doe'],
+            'salary': [80.0],
+        })
+        users_condition = DataFrameCondition(table_name='table', dataframe=dataframe)
+
+        # Run
+        result = BaseSingleTableSynthesizer._make_condition_dfs([users_condition])
+
+        # Assert
+        expected_result = [dataframe]
+        for res, exp in zip(result, expected_result):
+            pd.testing.assert_frame_equal(res, exp)
+
+    def test__make_condition_dfs_condition_and_dataframe_conditions(self):
+        """Test _make_condition_dfs works with Condition and DataFrameCondition conditions."""
+        # Setup
+        condition_ = Condition({'name': 'John Doe'})
+        dataframe = pd.DataFrame({'salary': [80.0]})
+        dataframe_condition = DataFrameCondition(table_name=None, dataframe=dataframe)
+
+        # Run
+        result = BaseSingleTableSynthesizer._make_condition_dfs([condition_, dataframe_condition])
+
+        # Assert
+        expected_result = [
+            pd.DataFrame({'name': ['John Doe']}),
+            pd.DataFrame({'salary': [80.0]}),
+        ]
+        for res, exp in zip(result, expected_result):
+            pd.testing.assert_frame_equal(res, exp)
+
+    def test__make_condition_dfs_raises(self):
+        """Test _make_condition_dfs raises an error with invalid condition"""
+
+        # Setup
+        msg = '`conditions` must be list of Condition or DataFrameCondition'
+
+        class CustomCondition:
+            pass
+
+        condition = CustomCondition()
+
+        # Run
+        with pytest.raises(ValueError, match=msg):
+            BaseSingleTableSynthesizer._make_condition_dfs([condition])
 
     def test__sample_in_batches(self):
         """Test that this method calls and concatenates the output of ``_sample_batch``."""
@@ -1814,6 +1871,7 @@ class TestBaseSingleTableSynthesizer:
             float_rtol=0.02,
             progress_bar='progress_bar',
             output_file_path='output_file_path',
+            keep_extra_columns=False,
         )
         assert expected_call == instance._sample_batch.call_args_list[0]
         assert expected_call == instance._sample_batch.call_args_list[1]
@@ -1855,6 +1913,7 @@ class TestBaseSingleTableSynthesizer:
             float_rtol=0.01,
             progress_bar=None,
             output_file_path=None,
+            keep_extra_columns=False,
         )
 
     def test__conditionally_sample_rows_no_rows_sampled_error(self):
@@ -2055,6 +2114,14 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         instance = Mock()
         instance._fitted = False
+
+        def raise_sampling_error():
+            raise SamplingError(
+                'This synthesizer has not been fitted. Please fit your synthesizer first before'
+                ' sampling synthetic data.'
+            )
+
+        instance._validate_fit_before_sample = Mock(side_effect=raise_sampling_error)
         expected_message = re.escape(
             'This synthesizer has not been fitted. Please fit your synthesizer first before'
             ' sampling synthetic data.'
@@ -2248,7 +2315,7 @@ class TestBaseSingleTableSynthesizer:
 
         # Run and Assert
         error_msg = re.escape(
-            "Cannot condtionally sample column name 'name' because it is the primary key."
+            "Cannot conditionally sample column name 'name' because it is the primary key."
         )
         with pytest.raises(ValueError, match=error_msg):
             BaseSingleTableSynthesizer._validate_conditions_unseen_columns(instance, conditions)
@@ -2328,6 +2395,7 @@ class TestBaseSingleTableSynthesizer:
             'batch_size': 10,
             'progress_bar': None,
             'output_file_path': None,
+            'keep_extra_columns': False,
         }
         assert second_call_kwargs == {
             'condition': {'name': 'Johanna'},
@@ -2336,6 +2404,7 @@ class TestBaseSingleTableSynthesizer:
             'batch_size': 10,
             'progress_bar': None,
             'output_file_path': None,
+            'keep_extra_columns': False,
         }
 
     def test__transform_conditions_chained_constraints_no_transformed_conditions(self):
@@ -2390,7 +2459,7 @@ class TestBaseSingleTableSynthesizer:
         instance._sample_with_conditions = Mock()
         instance._model = GaussianMultivariate()
         instance._sample_with_conditions.return_value = pd.DataFrame({'name': ['John Doe']})
-
+        instance._validate_fit_before_sample = Mock()
         progress_bar = MagicMock()
         mock_tqdm.tqdm.return_value = progress_bar
 
@@ -2449,6 +2518,7 @@ class TestBaseSingleTableSynthesizer:
 
         instance._validate_known_columns = Mock()
         instance._sample_with_conditions = Mock()
+        instance._validate_fit_before_sample = Mock()
         instance._model = GaussianMultivariate()
         instance._sample_with_conditions.return_value = pd.DataFrame({'name': ['John Doe']})
         mock_validate_file_path.return_value = '.sample.csv.temp'
@@ -2502,3 +2572,42 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame())
         mock_handle_sampling_error.assert_called_once_with('temp_file', keyboard_error)
+
+    def test__validate_fit_before_sample_fitted(self):
+        """Test that ``_validate_fit_before_sample`` does nothing when synthesizer is fitted."""
+        # Setup
+        instance = Mock()
+        instance._fitted = True
+
+        # Run
+        BaseSingleTableSynthesizer._validate_fit_before_sample(instance)
+
+    def test__validate_fit_before_sample_not_fitted(self):
+        """Test that ``_validate_fit_before_sample`` raises SamplingError when not fitted."""
+        # Setup
+        instance = Mock()
+        instance._fitted = False
+        expected_message = re.escape(
+            'This synthesizer has not been fitted. Please fit your synthesizer first before'
+            ' sampling synthetic data.'
+        )
+
+        # Run and Assert
+        with pytest.raises(SamplingError, match=expected_message):
+            BaseSingleTableSynthesizer._validate_fit_before_sample(instance)
+
+    def test_sample_calls_validate_fit_before_sample(self):
+        """Test that ``sample`` calls ``_validate_fit_before_sample``."""
+        # Setup
+        instance = Mock()
+        instance._fitted = True
+        instance._check_input_metadata_updated = Mock()
+        instance._sample_with_progress_bar = Mock(return_value=pd.DataFrame())
+        instance._original_columns = pd.Index([])
+        instance._validate_fit_before_sample = Mock()
+
+        # Run
+        BaseSingleTableSynthesizer.sample(instance, 10)
+
+        # Assert
+        instance._validate_fit_before_sample.assert_called_once_with()

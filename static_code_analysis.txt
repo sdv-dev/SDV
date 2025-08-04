@@ -1,15 +1,15 @@
-Run started:2025-07-11 23:56:22.937880
+Run started:2025-08-01 18:43:35.938617
 
 Test results:
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b110_try_except_pass.html
-   Location: ./sdv/_utils.py:343:8
-342	
-343	        except Exception:
-344	            pass
-345	
+   Location: ./sdv/_utils.py:349:8
+348	
+349	        except Exception:
+350	            pass
+351	
 
 --------------------------------------------------
 >> Issue: [B105:hardcoded_password_string] Possible hardcoded password: '#'
@@ -77,7 +77,7 @@ Test results:
 --------------------------------------------------
 
 Code scanned:
-	Total lines of code: 15851
+	Total lines of code: 16071
 	Total lines skipped (#nosec): 0
 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
 

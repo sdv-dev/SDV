@@ -216,6 +216,24 @@ class TestDataProcessor:
         assert data_processor._transformers_by_sdtype == expected_default_transformers
         detect_multi_column_transformers_mock.assert_called_once()
         assert data_processor.grouped_columns_to_transformers == {}
+        assert data_processor._id_columns_use_old_behavior == []
+
+    def test___init___with_id_columns_use_old_behavior(self):
+        """Test the ``__init__`` method with id_columns_use_old_behavior parameter."""
+        # Setup
+        metadata = SingleTableMetadata()
+        metadata.add_column('id_col_1', sdtype='id')
+        metadata.add_column('id_col_2', sdtype='id')
+        metadata.add_column('regular_col', sdtype='categorical')
+        id_columns_use_old_behavior = ['id_col_1', 'id_col_2']
+
+        # Run
+        data_processor = DataProcessor(
+            metadata=metadata, id_columns_use_old_behavior=id_columns_use_old_behavior
+        )
+
+        # Assert
+        assert data_processor._id_columns_use_old_behavior == ['id_col_1', 'id_col_2']
 
     def test___init___without_mocks(self):
         """Test the ``__init__`` method without using mocks.
@@ -1135,6 +1153,25 @@ class TestDataProcessor:
         # Assert
         dp._get_transformer_instance.assert_called_once_with('categorical', {'sdtype': 'id'})
         assert config['transformers']['id_column'] == dp._get_transformer_instance.return_value
+
+    def test__get_id_column_config_with_old_behavior(self):
+        """Test _get_id_column_config with a column in id_columns_use_old_behavior."""
+        # Setup
+        metadata = SingleTableMetadata()
+        metadata.add_column('id_col', sdtype='id')
+        data = pd.DataFrame({'id_col': ['id1', 'id2', 'id3']})
+
+        dp = DataProcessor(metadata, id_columns_use_old_behavior=['id_col'])
+
+        # Run
+        sdtype, transformer = dp._get_id_column_config('id_col', 'id', data)
+
+        # Assert
+        assert sdtype == 'id'
+        assert isinstance(transformer, AnonymizedFaker)
+        assert transformer.function_name == 'bothify'
+        assert transformer.function_kwargs == {'text': 'sdv-id-??????'}
+        assert transformer.cardinality_rule is None
 
     def test_update_transformers_not_fitted(self):
         """Test when ``self._hyper_transformer`` is ``None`` raises a ``NotFittedError``."""
@@ -2143,3 +2180,19 @@ class TestDataProcessor:
             'f': ['test@gmail.com'] * 3,
         })
         pd.testing.assert_frame_equal(reverse_transformed, expected_output)
+
+    def test__get_id_column_config_with_pii_behavior(self):
+        """Test _get_id_column_config behavior with PII columns using a non-id sdtype."""
+        # Setup - use a PII sdtype instead of 'id' with pii=True
+        metadata = SingleTableMetadata()
+        metadata.add_column('ssn_col', sdtype='ssn')  # Use a PII sdtype
+        data = pd.DataFrame({'ssn_col': ['123-45-6789', '987-65-4321', '555-55-5555']})
+
+        dp = DataProcessor(metadata, id_columns_use_old_behavior=['ssn_col'])
+
+        # Run - this should go through the PII path since 'ssn' is not in _transformers_by_sdtype
+        sdtype, transformer = dp._get_column_config('ssn_col', data)
+
+        # Assert - should return 'pii' sdtype and AnonymizedFaker
+        assert sdtype == 'pii'
+        assert isinstance(transformer, AnonymizedFaker)
