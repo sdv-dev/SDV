@@ -8,7 +8,7 @@ import pytest
 from deepecho import load_demo
 from rdt.transformers.categorical import UniformEncoder
 
-from sdv.cag import FixedCombinations
+from sdv.cag import FixedCombinations, OneHotEncoding
 from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError
 from sdv.metadata.metadata import Metadata
@@ -908,3 +908,98 @@ def test_par_save_load_with_id_context_columns(tmp_path):
     # Validate samples from loaded synthesizer
     loaded_synthesizer.validate(loaded_sample)
     synthesizer.validate(loaded_sample)
+
+
+def test_add_constraints_mixed_context_and_non_context():
+    """Test adding mixed constraints (some context, some non-context)."""
+    from sdv.cag import FixedCombinations
+
+    # Setup
+    data = pd.DataFrame({
+        'seq_id': ['seq_0'] * 4 + ['seq_1'] * 3 + ['seq_2'] * 3,
+        'context_col': ['A'] * 4 + ['B'] * 3 + ['A'] * 3,
+        'other_context': ['X'] * 4 + ['Y'] * 3 + ['Z'] * 3,
+        'seq_col': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        'numerical': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+    })
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'sequence_key': 'seq_id',
+                'columns': {
+                    'seq_id': {'sdtype': 'id'},
+                    'context_col': {'sdtype': 'categorical'},
+                    'other_context': {'sdtype': 'categorical'},
+                    'seq_col': {'sdtype': 'numerical'},
+                    'numerical': {'sdtype': 'numerical'},
+                },
+            }
+        }
+    })
+
+    synthesizer = PARSynthesizer(
+        metadata, epochs=1, context_columns=['context_col', 'other_context']
+    )
+
+    context_constraint = FixedCombinations(column_names=['context_col', 'other_context'])
+
+    # Run
+    synthesizer.add_constraints([context_constraint])
+    synthesizer.fit(data)
+    samples = synthesizer.sample(num_sequences=5)
+
+    # Assert
+    real_data_pairs = set(zip(data['context_col'], data['other_context']))
+    sample_pairs = set(zip(samples['context_col'], samples['other_context']))
+    assert sample_pairs.issubset(real_data_pairs)
+
+    synthesizer.validate(samples)
+
+
+def test_add_constraints_with_context_columns():
+    """Test adding constraints with context columns."""
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'seq_id': ['seq_0'] * 4 + ['seq_1'] * 3 + ['seq_2'] * 3,
+            'context_0': [0] * 4 + [1] * 3 + [0] * 3,
+            'context_1': [1] * 4 + [0] * 3 + [0] * 3,
+            'context_2': [0] * 4 + [0] * 3 + [1] * 3,
+            'other_context_col': [0.10] * 4 + [0.23] * 3 + [0.24] * 3,
+            'seq_0': [0, 0, 1, 0, 0, 0, 1, 1, 0, 0],
+            'seq_1': [1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+            'seq_2': [0, 1, 0, 1, 0, 1, 0, 0, 0, 1],
+            'numerical': [0.23, 0.34, 0.56, 0.67, 0.22, 0.23, 0.26, 0.20, 0.34, 0.45],
+        }
+    )
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'sequence_key': 'seq_id',
+                'columns': {
+                    'seq_id': {'sdtype': 'id', 'regex_format': r'seq_\d{1,2}'},
+                    'context_0': {'sdtype': 'categorical'},
+                    'context_1': {'sdtype': 'categorical'},
+                    'context_2': {'sdtype': 'categorical'},
+                    'other_context_col': {'sdtype': 'numerical'},
+                    'seq_0': {'sdtype': 'categorical'},
+                    'seq_1': {'sdtype': 'categorical'},
+                    'seq_2': {'sdtype': 'categorical'},
+                    'numerical': {'sdtype': 'numerical'},
+                },
+            }
+        }
+    })
+
+    synthesizer = PARSynthesizer(metadata, context_columns=['context_0', 'context_1', 'context_2'])
+
+    context_constraint = OneHotEncoding(column_names=['context_0', 'context_1', 'context_2'])
+
+    seq_constraint = OneHotEncoding(column_names=['seq_0', 'seq_1', 'seq_2'])
+
+    synthesizer.add_constraints([context_constraint, seq_constraint])
+    synthesizer.fit(data)
+    samples = synthesizer.sample(5)
+    synthesizer.validate(samples)
