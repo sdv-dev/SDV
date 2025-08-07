@@ -11,7 +11,7 @@ import pandas as pd
 import tqdm
 from rdt.transformers import FloatFormatter
 
-from sdv._utils import _cast_to_iterable, _groupby_list
+from sdv._utils import MODELABLE_SDTYPES, _cast_to_iterable, _groupby_list
 from sdv.cag import ProgrammableConstraint
 from sdv.cag._utils import _validate_constraints_single_table
 from sdv.errors import SamplingError, SynthesizerInputError
@@ -113,7 +113,10 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         table_metadata = self.metadata.tables[self._table_name]
         for column in self.context_columns:
             column_metadata = table_metadata.columns[column]
-            if default_transformers_by_sdtype.get(column_metadata['sdtype']):
+            if (
+                default_transformers_by_sdtype.get(column_metadata['sdtype'])
+                and column_metadata['sdtype'] in MODELABLE_SDTYPES
+            ):
                 context_columns_dict[column] = {'sdtype': 'numerical'}
 
         return context_columns_dict
@@ -247,11 +250,15 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                     )
                 constraint_cols.append(col)
 
-        all_context = all(col in context_set for col in constraint_cols)
-        no_context = all(col not in context_set for col in constraint_cols)
-        if all_context or no_context:
-            super().add_constraints(constraints)
-            self._data_processor._transformers_by_sdtype = transformer_by_sdtype
+            all_context = all(col in context_set for col in columns)
+            no_context = all(col not in context_set for col in columns)
+            if not (all_context or no_context):
+                raise SynthesizerInputError(
+                    'The PARSynthesizer cannot accommodate constraints '
+                    'with a mix of context and non-context columns.'
+                )
+
+            super().add_constraints([constraint])
             if all_context:
                 new_columns = self.metadata.get_column_names()
                 extra_columns = set(new_columns).difference(set(metadata_columns))
@@ -260,11 +267,8 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                 )
                 context_metadata = self._get_context_metadata()
                 self._context_synthesizer.metadata = context_metadata
-        else:
-            raise SynthesizerInputError(
-                'The PARSynthesizer cannot accommodate constraints '
-                'with a mix of context and non-context columns.'
-            )
+
+        self._data_processor._transformers_by_sdtype = transformer_by_sdtype
 
     def load_custom_constraint_classes(self, filepath, class_names):
         """Error that tells the user custom constraints can't be used in the ``PARSynthesizer``."""
@@ -360,6 +364,13 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             ):
                 sequence_index_transformer.enforce_min_max_values = False
 
+    def _get_id_context_columns(self):
+        return [
+            col
+            for col in self.context_columns
+            if self._get_table_metadata().columns[col]['sdtype'] not in MODELABLE_SDTYPES
+        ]
+
     def _preprocess(self, data):
         """Transform the raw data to numerical space.
 
@@ -374,7 +385,11 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                 The preprocessed data.
         """
         self._extra_context_columns = {}
-        sequence_key_transformers = {sequence_key: None for sequence_key in self._sequence_key}
+        sequence_key_transformers = {
+            sequence_key: None
+            for sequence_key in self._sequence_key + self._get_id_context_columns()
+        }
+
         if not self._data_processor._prepared_for_fitting:
             self.auto_assign_transformers(data)
 
@@ -397,7 +412,12 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             ValueError:
                 Raise when the transformer of a context column is passed.
         """
-        if set(column_name_to_transformer).intersection(set(self.context_columns)):
+        forbidden_updates = []
+        for column in set(column_name_to_transformer).intersection(set(self.context_columns)):
+            if self._get_table_metadata().columns[column]['sdtype'] in MODELABLE_SDTYPES:
+                forbidden_updates.append(column)
+
+        if forbidden_updates:
             raise SynthesizerInputError(
                 'Transformers for context columns are not allowed to be updated.'
             )
@@ -429,19 +449,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         context = context.groupby(self._sequence_key).first().reset_index()
         self._context_synthesizer.fit(context)
 
-    def _fit_sequence_columns(self, timeseries_data):
-        self._model = PARModel(**self._model_kwargs)
-
-        self._output_columns = list(timeseries_data.columns)
-        self._data_columns = [
-            column
-            for column in timeseries_data.columns
-            if column
-            not in (
-                self._sequence_key + self.context_columns + list(self._extra_context_columns.keys())
-            )
-        ]
-
+    def _generate_sequences(self, timeseries_data):
         sequences = assemble_sequences(
             timeseries_data,
             self._sequence_key,
@@ -450,6 +458,22 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             self._sequence_index,
             drop_sequence_index=False,
         )
+        id_context_columns = self._get_id_context_columns()
+        if id_context_columns:
+            id_indices = [
+                i for i, col in enumerate(self.context_columns) if col in id_context_columns
+            ]
+            for seq in sequences:
+                seq['context'] = [
+                    context_value
+                    for i, context_value in enumerate(seq['context'])
+                    if i not in id_indices
+                ]
+
+        return sequences
+
+    def _generate_context_and_data_types(self, timeseries_data):
+        id_context_columns = self._get_id_context_columns()
         data_types = []
         context_types = []
         for field in self._output_columns:
@@ -475,8 +499,27 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
 
             if field in self._data_columns:
                 data_types.append(data_type)
-            elif field in self.context_columns or field in self._extra_context_columns.keys():
+            elif (
+                field in self.context_columns and field not in id_context_columns
+            ) or field in self._extra_context_columns.keys():
                 context_types.append(data_type)
+
+        return context_types, data_types
+
+    def _fit_sequence_columns(self, timeseries_data):
+        self._model = PARModel(**self._model_kwargs)
+        self._output_columns = list(timeseries_data.columns)
+        self._data_columns = [
+            column
+            for column in timeseries_data.columns
+            if column
+            not in (
+                self._sequence_key + self.context_columns + list(self._extra_context_columns.keys())
+            )
+        ]
+
+        sequences = self._generate_sequences(timeseries_data)
+        context_types, data_types = self._generate_context_and_data_types(timeseries_data)
 
         # Validate and fit
         self._model.fit_sequences(sequences, context_types, data_types)
@@ -521,10 +564,11 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         should_disable = not self._model_kwargs['verbose']
         iterator = tqdm.tqdm(context.iterrows(), disable=should_disable, total=len(context))
 
+        id_context_columns = self._get_id_context_columns()
         output = []
         for sequence_key_values, context_values in iterator:
-            context_values = context_values.tolist()
-            sequence = self._model.sample_sequence(context_values, sequence_length)
+            context_values_list = context_values.drop(id_context_columns, errors='ignore').tolist()
+            sequence = self._model.sample_sequence(context_values_list, sequence_length)
             if self._sequence_index:
                 sequence_index_idx = self._data_columns.index(self._sequence_index)
                 diffs = sequence[sequence_index_idx]
@@ -592,7 +636,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         return self._sample(context_columns, sequence_length)
 
     def sample_sequential_columns(self, context_columns, sequence_length=None):
-        """Sample the sequential columns based ont he provided context columns.
+        """Sample the sequential columns based on the provided context columns.
 
         Args:
             context_columns (pandas.DataFrame):
