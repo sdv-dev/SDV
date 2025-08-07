@@ -1,5 +1,31 @@
 # Release Notes
 
+## v1.25.0 - 2025-08-04
+
+### New Features
+
+* Streamline the loading of a synthesizer into a single function - Issue [#2619](https://github.com/sdv-dev/SDV/issues/2619) by @R-Palazzo
+* Add `InterTableCondition` condition class - Issue [#2611](https://github.com/sdv-dev/SDV/issues/2611) by @frances-h
+* Add `DataFrameCondition` condition class - Issue [#2610](https://github.com/sdv-dev/SDV/issues/2610) by @gsheni
+* Add ability to specify old transformer behavior for ID columns - Issue [#2450](https://github.com/sdv-dev/SDV/issues/2450) by @fealho
+
+### Bugs Fixed
+
+* Sample not backwards compatible with older synthesizers - Issue [#2635](https://github.com/sdv-dev/SDV/issues/2635) by @rwedge
+* Add custom error message when using a multi table synthesizer with empty data - Issue [#2633](https://github.com/sdv-dev/SDV/issues/2633) by @fealho
+* Rename `InterTableCondition` to `MultiTableCondition` - Issue [#2622](https://github.com/sdv-dev/SDV/issues/2622) by @frances-h
+* Error when sampling using HMA after changing the default distributions and grandparent - parent - child table relationship - Issue [#2606](https://github.com/sdv-dev/SDV/issues/2606) by @rwedge
+* auto_assign_transformers crashes if the datetime column is represented as Timestamps - Issue [#2594](https://github.com/sdv-dev/SDV/issues/2594) by @gsheni
+* Metadata validation should error if metadata is empty - Issue [#2553](https://github.com/sdv-dev/SDV/issues/2553) by @fealho
+* PARSynthesizer crashes during sample if there was an all-null column in the input data - Issue [#2473](https://github.com/sdv-dev/SDV/issues/2473) by @fealho
+* PARSynthesizer can create different sequences with the same sequence key (uniqueness is not enforced) - Issue [#2467](https://github.com/sdv-dev/SDV/issues/2467) by @fealho
+* In PARSynthesizer, I cannot apply a context column that is sdtype `id` (or another PII type) - Issue [#2466](https://github.com/sdv-dev/SDV/issues/2466) by @fealho
+* Improve error message when trying to conditionally sample before fitting - Issue [#2366](https://github.com/sdv-dev/SDV/issues/2366) by @fealho
+
+### Internal
+
+* `DatetimeFormatter`: When `ValueError` occurs, the `pd.to_datetime` can fail due to format miss-match - Issue [#2541](https://github.com/sdv-dev/SDV/issues/2541) by @pvk-developer
+
 ## v1.24.1 - 2025-07-14
 
 ### Bugs Fixed
