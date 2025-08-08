@@ -339,16 +339,41 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
             numpy.ndarray:
                 rebuilt correlation matrix.
         """
+                # 如果输入是字典格式，转换为列表格式
+        if isinstance(triangular_correlation, dict):
+            # 找到最大的行索引来确定矩阵大小
+            max_row = max(triangular_correlation.keys()) if triangular_correlation else 0
+            size = max_row + 1
+            
+            # 转换为列表格式
+            triangular_list = []
+            for row_idx in range(size):  # 从1开始，因为对角线不包含
+                if row_idx in triangular_correlation:
+                    row_data = []
+                    row_dict = triangular_correlation[row_idx]
+                    for col_idx in range(row_idx + 1):  # 只取下三角部分
+                        if col_idx in row_dict:
+                            row_data.append(row_dict[col_idx])
+                        else:
+                            row_data.append(0.0)  # 缺失值用0填充
+                    triangular_list.append(row_data)
+                else:
+                    # 如果整行缺失，用0填充
+                    triangular_list.append([0.0] * (row_idx+1))
+            
+            triangular_correlation = triangular_list
+        
         zero = [0.0]
-        size = len(triangular_correlation) + 1
+        size = len(triangular_correlation) + 1 
         left = np.zeros((size, size))
         right = np.zeros((size, size))
         for idx, values in enumerate(triangular_correlation):
-            values = values + zero * (size - idx - 1)
-            left[idx + 1, :] = values
-            right[:, idx + 1] = values
-
-        correlation = left + right
+            zeros_needed = size - len(values)
+            values = values + zero * zeros_needed
+            left[idx, :] = values
+            right[:, idx] = values
+        correlation = left + right 
+        # 填充上三角部分（对称矩阵）
         max_value = np.abs(correlation).max()
         if max_value > 1:
             correlation /= max_value
