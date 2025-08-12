@@ -110,7 +110,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                 Updated context column metadata.
         """
         default_transformers_by_sdtype = deepcopy(self._data_processor._transformers_by_sdtype)
-        table_metadata = self.metadata.tables[self._table_name]
+        table_metadata = self._get_table_metadata()
         for column in self.context_columns:
             column_metadata = table_metadata.columns[column]
             if (
@@ -250,11 +250,15 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                     )
                 constraint_cols.append(col)
 
-        all_context = all(col in context_set for col in constraint_cols)
-        no_context = all(col not in context_set for col in constraint_cols)
-        if all_context or no_context:
-            super().add_constraints(constraints)
-            self._data_processor._transformers_by_sdtype = transformer_by_sdtype
+            all_context = all(col in context_set for col in columns)
+            no_context = all(col not in context_set for col in columns)
+            if not (all_context or no_context):
+                raise SynthesizerInputError(
+                    'The PARSynthesizer cannot accommodate constraints '
+                    'with a mix of context and non-context columns.'
+                )
+
+            super().add_constraints([constraint])
             if all_context:
                 new_columns = self.metadata.get_column_names()
                 extra_columns = set(new_columns).difference(set(metadata_columns))
@@ -263,11 +267,8 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                 )
                 context_metadata = self._get_context_metadata()
                 self._context_synthesizer.metadata = context_metadata
-        else:
-            raise SynthesizerInputError(
-                'The PARSynthesizer cannot accommodate constraints '
-                'with a mix of context and non-context columns.'
-            )
+
+        self._data_processor._transformers_by_sdtype = transformer_by_sdtype
 
     def load_custom_constraint_classes(self, filepath, class_names):
         """Error that tells the user custom constraints can't be used in the ``PARSynthesizer``."""
