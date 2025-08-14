@@ -275,18 +275,6 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
 
         self._data_processor._transformers_by_sdtype = transformer_by_sdtype
 
-    def load_custom_constraint_classes(self, filepath, class_names):
-        """Load a custom constraint class for the current synthesizer.
-
-        Args:
-            filepath (str):
-                String representing the absolute or relative path to the python file where
-                the custom constraints are declared.
-            class_names (list):
-                A list of custom constraint classes to be imported.
-        """
-        super().load_custom_constraint_classes(filepath, class_names)
-
     def _validate_sequence_key_and_context_columns(self):
         """Check that the sequence key is not present in the context colums.
 

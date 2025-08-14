@@ -185,7 +185,7 @@ class TestPARSynthesizer:
         synthesizer.load_custom_constraint_classes(filepath='test', class_names=['TestClass'])
 
         # Assert
-        base_load_mock.assert_called_once_with('test', ['TestClass'])
+        base_load_mock.assert_called_once_with(filepath='test', class_names=['TestClass'])
 
     def test_get_parameters(self):
         """Test that it returns every ``init`` parameter without the ``metadata``."""
