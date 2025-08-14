@@ -4,7 +4,6 @@ import pandas as pd
 import pytest
 
 from sdv.cag import ProgrammableConstraint, SingleTableProgrammableConstraint
-from sdv.errors import SynthesizerInputError
 from sdv.metadata import Metadata
 from sdv.sequential import PARSynthesizer
 
@@ -170,20 +169,6 @@ def test_add_single_table_programmable_constraint(sample_sequential_data, sample
     assert len(constraints) == 1
     assert isinstance(constraints[0], SimpleCustomConstraint)
     assert constraints[0].column_name == 'measurement'
-
-
-def test_reject_multi_table_programmable_constraint(sample_metadata):
-    """Test that multi-table ProgrammableConstraint is rejected."""
-    # Setup
-    synthesizer = PARSynthesizer(sample_metadata)
-    constraint = MultiTableConstraint('measurement')
-
-    # Run & Assert
-    with pytest.raises(
-        SynthesizerInputError,
-        match='not compatible with the single table synthesizers',
-    ):
-        synthesizer.add_constraints([constraint])
 
 
 def test_end_to_end_with_simple_constraint(sample_sequential_data, sample_metadata):

@@ -12,7 +12,7 @@ import tqdm
 from rdt.transformers import FloatFormatter
 
 from sdv._utils import MODELABLE_SDTYPES, _cast_to_iterable, _groupby_list
-from sdv.cag import ProgrammableConstraint, SingleTableProgrammableConstraint
+from sdv.cag import ProgrammableConstraint
 from sdv.cag._utils import _validate_constraints_single_table
 from sdv.errors import SamplingError, SynthesizerInputError
 from sdv.metadata.errors import InvalidMetadataError
@@ -224,11 +224,6 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         constraint_cols = []
         for constraint in constraints:
             if isinstance(constraint, ProgrammableConstraint):
-                if not isinstance(constraint, SingleTableProgrammableConstraint):
-                    raise SynthesizerInputError(
-                        'The PARSynthesizer only supports SingleTableProgrammableConstraint '
-                        'custom constraints.'
-                    )
                 super().add_constraints([constraint])
                 continue
 
