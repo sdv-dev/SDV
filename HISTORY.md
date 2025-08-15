@@ -1,5 +1,16 @@
 # Release Notes
 
+## v1.26.0 - 2025-08-18
+
+### New Features
+
+* Allow me to add a custom constraint to PARSynthesizer - Issue [#2641](https://github.com/sdv-dev/SDV/issues/2641) by @fealho
+
+### Bugs Fixed
+
+* Cannot apply multiple constraints to PARSynthesizer (one with all context cols, and one with all non-context cols) - Issue [#2630](https://github.com/sdv-dev/SDV/issues/2630) by @fealho
+* In PARSynthesizer, I cannot apply a context column that is sdtype `id` (or another PII type) - Issue [#2466](https://github.com/sdv-dev/SDV/issues/2466) by @fealho
+
 ## v1.25.0 - 2025-08-04
 
 ### New Features
