@@ -203,12 +203,13 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
     def add_constraints(self, constraints):
         """Add constraints to the synthesizer.
 
-        For PARSynthesizers only allow a list of constraints that follow these rules:
+        For PARSynthesizers allow SingleTableProgrammableConstraints and built-in constraints
+        that follow these rules:
 
         1) All constraints must be either for all contextual columns or non-contextual column.
            No mixing constraints that cover both contextual and non-contextual columns
         2) No overlapping constraints (there are no constraints that act on the same column)
-        3) No custom constraints
+        3) Any custom constraint is allowed, as long as it is a SingleTableProgrammableConstraint
 
         Args:
             constraints (list):
@@ -223,9 +224,8 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         constraint_cols = []
         for constraint in constraints:
             if isinstance(constraint, ProgrammableConstraint):
-                raise SynthesizerInputError(
-                    'The PARSynthesizer cannot accommodate with programmable constraints.'
-                )
+                super().add_constraints([constraint])
+                continue
 
             columns = []
             init_signature = inspect.signature(constraint.__class__.__init__)
@@ -269,10 +269,6 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                 self._context_synthesizer.metadata = context_metadata
 
         self._data_processor._transformers_by_sdtype = transformer_by_sdtype
-
-    def load_custom_constraint_classes(self, filepath, class_names):
-        """Error that tells the user custom constraints can't be used in the ``PARSynthesizer``."""
-        raise SynthesizerInputError('The PARSynthesizer cannot accommodate custom constraints.')
 
     def _validate_sequence_key_and_context_columns(self):
         """Check that the sequence key is not present in the context colums.
