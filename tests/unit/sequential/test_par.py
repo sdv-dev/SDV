@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from rdt.transformers import FloatFormatter, UnixTimestampEncoder
 
-from sdv.cag import ProgrammableConstraint
+from sdv.cag import ProgrammableConstraint, SingleTableProgrammableConstraint
 from sdv.cag.base import BaseConstraint
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import InvalidDataError, NotFittedError, SamplingError, SynthesizerInputError
@@ -131,7 +131,7 @@ class TestPARSynthesizer:
 
     @patch.object(BaseSynthesizer, 'add_constraints')
     def test_add_constraints(self, add_constraints_mock):
-        """Test that that only simple constraints can be added to PARSynthesizer."""
+        """Test that constraints can be added to PARSynthesizer with proper validation."""
 
         # Setup
         class MockConstraint(BaseConstraint):
@@ -142,11 +142,15 @@ class TestPARSynthesizer:
 
         metadata = self.get_metadata(add_sequence_key=True)
         synthesizer = PARSynthesizer(metadata=metadata, context_columns=['gender', 'measurement'])
-        programmable_constraint = ProgrammableConstraint()
-        programmable_constraint._is_single_table = True
-        programmable_constraint_error_msg = re.escape(
-            'The PARSynthesizer cannot accommodate with programmable constraints.'
+
+        multi_table_programmable_constraint = ProgrammableConstraint()
+        multi_table_programmable_constraint._is_single_table = False
+        multi_table_error_msg = re.escape(
+            'Constraint `ProgrammableConstraint` is not compatible '
+            'with the single table synthesizers.'
         )
+
+        single_table_programmable_constraint = SingleTableProgrammableConstraint()
         constraint_1 = MockConstraint(column_names=['time'])
         constraint_2 = MockConstraint(column_names=['time', 'gender'])
         overlapping_error_msg = re.escape(
@@ -159,8 +163,10 @@ class TestPARSynthesizer:
         )
 
         # Run and Assert
-        with pytest.raises(SynthesizerInputError, match=programmable_constraint_error_msg):
-            synthesizer.add_constraints([programmable_constraint])
+        with pytest.raises(SynthesizerInputError, match=multi_table_error_msg):
+            synthesizer.add_constraints([multi_table_programmable_constraint])
+
+        synthesizer.add_constraints([single_table_programmable_constraint])
 
         with pytest.raises(SynthesizerInputError, match=overlapping_error_msg):
             synthesizer.add_constraints([constraint_1, constraint_2])
@@ -168,16 +174,18 @@ class TestPARSynthesizer:
         with pytest.raises(SynthesizerInputError, match=mixed_constraint_error_msg):
             synthesizer.add_constraints([constraint_2])
 
-    def test_load_custom_constraint_classes(self):
-        """Test that if custom constraint is being added, an error is raised."""
+    @patch.object(BaseSynthesizer, 'load_custom_constraint_classes')
+    def test_load_custom_constraint_classes(self, base_load_mock):
+        """Test that custom constraint classes can be loaded (delegates to base class)."""
         # Setup
         metadata = self.get_metadata()
         synthesizer = PARSynthesizer(metadata=metadata)
 
-        # Run and Assert
-        error_message = re.escape('The PARSynthesizer cannot accommodate custom constraints.')
-        with pytest.raises(SynthesizerInputError, match=error_message):
-            synthesizer.load_custom_constraint_classes(filepath='test', class_names=[])
+        # Run
+        synthesizer.load_custom_constraint_classes(filepath='test', class_names=['TestClass'])
+
+        # Assert
+        base_load_mock.assert_called_once_with(filepath='test', class_names=['TestClass'])
 
     def test_get_parameters(self):
         """Test that it returns every ``init`` parameter without the ``metadata``."""
@@ -877,7 +885,6 @@ class TestPARSynthesizer:
 
         # Assert
         par._sample_from_par.assert_called_once_with(context_columns, 5)
-        par._data_processor.reverse_transform.assert_called_once_with(fake_sampled)
 
     def test_sample(self):
         """Test that the method samples the context columns and uses them to sample from PAR."""

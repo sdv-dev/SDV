@@ -8,7 +8,7 @@ import pytest
 from deepecho import load_demo
 from rdt.transformers.categorical import UniformEncoder
 
-from sdv.cag import FixedCombinations
+from sdv.cag import FixedCombinations, OneHotEncoding
 from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError
 from sdv.metadata.metadata import Metadata
@@ -607,3 +607,399 @@ def test_par_unique_sequence_key_with_regex():
     assert sample['sequence_key'].nunique() == 20
     transformer = synthesizer._context_synthesizer.get_transformers()['sequence_key']
     transformer.cardinality_rule == 'unique'
+
+
+def test_par_with_context_column_as_id():
+    """Test PARSynthesizer with a context column as an id column."""
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'event_id': ['event-000'] * 5 + ['event-001'] * 2 + ['event-002'] * 3,
+            'event_source': ['source-AAA'] * 5 + ['source-BBB'] * 2 + ['source-CCC'] * 3,
+            'column_A': np.random.randint(low=0, high=10, size=10),
+            'column_B': np.random.choice(['Yes', 'No', 'Maybe'], size=10),
+        }
+    )
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'sequence_key': 'event_id',
+                'columns': {
+                    'event_id': {'sdtype': 'id', 'regex_format': 'event-[0-9]{3,4}'},
+                    'event_source': {'sdtype': 'id', 'regex_format': 'source-[A-Z]{3,5}'},
+                    'column_A': {'sdtype': 'numerical'},
+                    'column_B': {'sdtype': 'categorical'},
+                },
+            }
+        }
+    })
+
+    # Run
+    synthesizer = PARSynthesizer(metadata, epochs=1, context_columns=['event_source'])
+    synthesizer.fit(data)
+    sampled = synthesizer.sample(num_sequences=2)
+
+    # Assert
+    assert sampled['event_id'].isin(data['event_id']).all()
+    assert sampled['column_B'].isin(data['column_B']).all()
+
+
+def test_par_with_multiple_id_context_columns():
+    """Test PARSynthesizer with multiple context columns of id sdtype."""
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'sequence_id': ['seq-001'] * 4 + ['seq-002'] * 4 + ['seq-003'] * 2,
+            'user_id': ['user-A01'] * 4 + ['user-B02'] * 4 + ['user-C03'] * 2,
+            'device_id': ['device-X'] * 4 + ['device-Y'] * 4 + ['device-Z'] * 2,
+            'session_id': ['sess-123'] * 4 + ['sess-456'] * 4 + ['sess-789'] * 2,
+            'timestamp': ['2023-06-21', '2023-06-22', '2023-06-23', '2023-06-24', '2023-06-25'] * 2,
+            'value': np.random.randint(10, 100, size=10),
+        }
+    )
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'sequence_key': 'sequence_id',
+                'sequence_index': 'timestamp',
+                'columns': {
+                    'sequence_id': {'sdtype': 'id', 'regex_format': 'seq-[0-9]{3}'},
+                    'user_id': {'sdtype': 'id', 'regex_format': 'user-[A-Z][0-9]{2}'},
+                    'device_id': {'sdtype': 'id', 'regex_format': 'device-[A-Z]'},
+                    'session_id': {'sdtype': 'id', 'regex_format': 'sess-[0-9]{3}'},
+                    'timestamp': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                    'value': {'sdtype': 'numerical'},
+                },
+            }
+        }
+    })
+
+    # Run
+    synthesizer = PARSynthesizer(
+        metadata, epochs=1, context_columns=['user_id', 'device_id', 'session_id']
+    )
+    synthesizer.fit(data)
+    sampled = synthesizer.sample(num_sequences=4)
+
+    # Assert
+    assert len(sampled) > 0
+    assert set(sampled.columns) == set(data.columns)
+    for seq_id in sampled['sequence_id'].unique():
+        seq_data = sampled[sampled['sequence_id'] == seq_id]
+        assert seq_data['user_id'].nunique() == 1
+        assert seq_data['device_id'].nunique() == 1
+        assert seq_data['session_id'].nunique() == 1
+
+
+def test_par_with_pii_context_columns():
+    """Test PARSynthesizer with PII context columns."""
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'sequence_id': ['seq-001'] * 4 + ['seq-002'] * 4 + ['seq-003'] * 2,
+            'user_id': ['user-A01'] * 4 + ['user-B02'] * 4 + ['user-C03'] * 2,
+            'device_id': ['device-X'] * 4 + ['device-Y'] * 4 + ['device-Z'] * 2,
+            'session_id': ['sess-123'] * 4 + ['sess-456'] * 4 + ['sess-789'] * 2,
+            'timestamp': ['2023-06-21', '2023-06-22', '2023-06-23', '2023-06-24', '2023-06-25'] * 2,
+            'value': np.random.randint(10, 100, size=10),
+        }
+    )
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'sequence_key': 'sequence_id',
+                'sequence_index': 'timestamp',
+                'columns': {
+                    'sequence_id': {'sdtype': 'id', 'regex_format': 'seq-[0-9]{3}'},
+                    'user_id': {'sdtype': 'ssn'},
+                    'device_id': {'sdtype': 'email'},
+                    'session_id': {'sdtype': 'id', 'regex_format': 'sess-[0-9]{3}'},
+                    'timestamp': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                    'value': {'sdtype': 'numerical'},
+                },
+            }
+        }
+    })
+
+    # Run
+    synthesizer = PARSynthesizer(
+        metadata, epochs=1, context_columns=['user_id', 'device_id', 'session_id']
+    )
+    synthesizer.fit(data)
+    sampled = synthesizer.sample(num_sequences=4)
+
+    # Assert
+    assert len(sampled) > 0
+    assert set(sampled.columns) == set(data.columns)
+    for seq_id in sampled['sequence_id'].unique():
+        seq_data = sampled[sampled['sequence_id'] == seq_id]
+        assert seq_data['user_id'].nunique() == 1
+        assert seq_data['device_id'].nunique() == 1
+        assert seq_data['session_id'].nunique() == 1
+
+
+def test_par_with_mixed_context_columns_including_id():
+    """Test PARSynthesizer with mixed context columns including id sdtype."""
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'patient_id': ['P001'] * 5 + ['P002'] * 5 + ['P003'] * 5,
+            'hospital_id': ['H_123'] * 5 + ['H_456'] * 5 + ['H_789'] * 5,
+            'doctor_category': ['Cardiology'] * 5 + ['Neurology'] * 5 + ['Orthopedics'] * 5,
+            'treatment_date': pd.date_range('2023-01-01', periods=15, freq='1D'),
+            'vital_reading': np.random.uniform(70, 120, size=15),
+            'recovery_score': np.random.randint(1, 11, size=15),
+        }
+    )
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'sequence_key': 'patient_id',
+                'sequence_index': 'treatment_date',
+                'columns': {
+                    'patient_id': {'sdtype': 'id', 'regex_format': 'P[0-9]{3}'},
+                    'hospital_id': {'sdtype': 'id', 'regex_format': 'H_[0-9]{3}'},
+                    'doctor_category': {'sdtype': 'categorical'},
+                    'treatment_date': {'sdtype': 'datetime'},
+                    'vital_reading': {'sdtype': 'numerical'},
+                    'recovery_score': {'sdtype': 'numerical'},
+                },
+            }
+        }
+    })
+
+    # Run
+    synthesizer = PARSynthesizer(
+        metadata, epochs=1, context_columns=['hospital_id', 'doctor_category']
+    )
+    synthesizer.fit(data)
+    sampled = synthesizer.sample(num_sequences=4)
+
+    # Assert
+    assert len(sampled) > 0
+    assert set(sampled.columns) == set(data.columns)
+
+    # Check context columns remain constant within sequences
+    for patient_id in sampled['patient_id'].unique():
+        patient_data = sampled[sampled['patient_id'] == patient_id]
+        assert patient_data['hospital_id'].nunique() == 1
+        assert patient_data['doctor_category'].nunique() == 1
+
+
+def test_par_sample_sequential_columns_with_id_context():
+    """Test sample_sequential_columns method with id sdtype context columns."""
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'order_id': ['ORD-001'] * 3 + ['ORD-002'] * 3 + ['ORD-003'] * 4,
+            'customer_id': ['CUST-A'] * 3 + ['CUST-B'] * 3 + ['CUST-C'] * 4,
+            'product_category': ['Electronics'] * 3 + ['Books'] * 3 + ['Clothing'] * 4,
+            'order_date': pd.to_datetime(
+                ['2023-01-01', '2023-01-02', '2023-01-03'] * 3 + ['2023-01-01']
+            ),
+            'quantity': [1, 2, 1, 3, 1, 2, 2, 1, 1, 3],
+        }
+    )
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'sequence_key': 'order_id',
+                'sequence_index': 'order_date',
+                'columns': {
+                    'order_id': {'sdtype': 'id', 'regex_format': 'ORD-[0-9]{3}'},
+                    'customer_id': {'sdtype': 'id', 'regex_format': 'CUST-[A-Z]'},
+                    'product_category': {'sdtype': 'categorical'},
+                    'order_date': {'sdtype': 'datetime'},
+                    'quantity': {'sdtype': 'numerical'},
+                },
+            }
+        }
+    })
+
+    # Prepare context columns for conditional sampling
+    context_df = pd.DataFrame({
+        'order_id': ['ORD-NEW1', 'ORD-NEW2'],
+        'customer_id': ['CUST-A', 'CUST-B'],
+        'product_category': ['Electronics', 'Books'],
+    })
+
+    # Run
+    synthesizer = PARSynthesizer(
+        metadata, epochs=1, context_columns=['customer_id', 'product_category']
+    )
+    synthesizer.fit(data)
+    sampled = synthesizer.sample_sequential_columns(context_columns=context_df, sequence_length=3)
+
+    # Assert
+    assert len(sampled) == 6  # 2 sequences * 3 length
+    assert set(sampled.columns) == set(data.columns)
+
+    seq1_data = sampled[sampled['order_id'] == 'ORD-NEW1']
+    seq2_data = sampled[sampled['order_id'] == 'ORD-NEW2']
+
+    assert all(seq1_data['product_category'] == 'Electronics')
+    assert all(seq2_data['product_category'] == 'Books')
+
+
+def test_par_save_load_with_id_context_columns(tmp_path):
+    """Test save and load functionality with id sdtype context columns."""
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'machine_id': ['M001'] * 5 + ['M002'] * 5,
+            'operator_id': ['OP_A'] * 5 + ['OP_B'] * 5,
+            'shift_id': ['SHIFT_DAY'] * 5 + ['SHIFT_NIGHT'] * 5,
+            'timestamp': pd.date_range('2023-05-01', periods=10, freq='4H'),
+            'temperature': np.random.uniform(20, 80, size=10),
+            'pressure': np.random.uniform(100, 200, size=10),
+        }
+    )
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'sequence_key': 'machine_id',
+                'sequence_index': 'timestamp',
+                'columns': {
+                    'machine_id': {'sdtype': 'id', 'regex_format': 'M[0-9]{3}'},
+                    'operator_id': {'sdtype': 'id', 'regex_format': 'OP_[A-Z]'},
+                    'shift_id': {'sdtype': 'id', 'regex_format': 'SHIFT_[A-Z]+'},
+                    'timestamp': {'sdtype': 'datetime'},
+                    'temperature': {'sdtype': 'numerical'},
+                    'pressure': {'sdtype': 'numerical'},
+                },
+            }
+        }
+    })
+
+    # Create and fit synthesizer
+    synthesizer = PARSynthesizer(metadata, epochs=1, context_columns=['operator_id', 'shift_id'])
+    synthesizer.fit(data)
+
+    # Save synthesizer
+    save_path = tmp_path / 'par_synthesizer_with_id_context.pkl'
+    synthesizer.save(save_path)
+
+    # Load synthesizer
+    loaded_synthesizer = PARSynthesizer.load(save_path)
+    loaded_sample = loaded_synthesizer.sample(num_sequences=2)
+
+    # Assert
+    assert save_path.exists()
+    assert isinstance(loaded_synthesizer, PARSynthesizer)
+    assert loaded_synthesizer.context_columns == synthesizer.context_columns
+    assert loaded_synthesizer.metadata.to_dict() == synthesizer.metadata.to_dict()
+
+    # Test that loaded synthesizer produces valid samples
+    assert len(loaded_sample) > 0
+    assert set(loaded_sample.columns) == set(data.columns)
+
+    # Verify context columns remain constant in loaded synthesizer samples
+    for machine_id in loaded_sample['machine_id'].unique():
+        machine_data = loaded_sample[loaded_sample['machine_id'] == machine_id]
+        assert machine_data['operator_id'].nunique() == 1
+        assert machine_data['shift_id'].nunique() == 1
+
+    # Validate samples from loaded synthesizer
+    loaded_synthesizer.validate(loaded_sample)
+    synthesizer.validate(loaded_sample)
+
+
+def test_add_constraints_mixed_context_and_non_context():
+    """Test adding mixed constraints (some context, some non-context)."""
+    from sdv.cag import FixedCombinations
+
+    # Setup
+    data = pd.DataFrame({
+        'seq_id': ['seq_0'] * 4 + ['seq_1'] * 3 + ['seq_2'] * 3,
+        'context_col': ['A'] * 4 + ['B'] * 3 + ['A'] * 3,
+        'other_context': ['X'] * 4 + ['Y'] * 3 + ['Z'] * 3,
+        'seq_col': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        'numerical': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+    })
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'sequence_key': 'seq_id',
+                'columns': {
+                    'seq_id': {'sdtype': 'id'},
+                    'context_col': {'sdtype': 'categorical'},
+                    'other_context': {'sdtype': 'categorical'},
+                    'seq_col': {'sdtype': 'numerical'},
+                    'numerical': {'sdtype': 'numerical'},
+                },
+            }
+        }
+    })
+
+    synthesizer = PARSynthesizer(
+        metadata, epochs=1, context_columns=['context_col', 'other_context']
+    )
+
+    context_constraint = FixedCombinations(column_names=['context_col', 'other_context'])
+
+    # Run
+    synthesizer.add_constraints([context_constraint])
+    synthesizer.fit(data)
+    samples = synthesizer.sample(num_sequences=5)
+
+    # Assert
+    real_data_pairs = set(zip(data['context_col'], data['other_context']))
+    sample_pairs = set(zip(samples['context_col'], samples['other_context']))
+    assert sample_pairs.issubset(real_data_pairs)
+
+    synthesizer.validate(samples)
+
+
+def test_add_constraints_with_context_columns():
+    """Test adding constraints with context columns."""
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'seq_id': ['seq_0'] * 4 + ['seq_1'] * 3 + ['seq_2'] * 3,
+            'context_0': [0] * 4 + [1] * 3 + [0] * 3,
+            'context_1': [1] * 4 + [0] * 3 + [0] * 3,
+            'context_2': [0] * 4 + [0] * 3 + [1] * 3,
+            'other_context_col': [0.10] * 4 + [0.23] * 3 + [0.24] * 3,
+            'seq_0': [0, 0, 1, 0, 0, 0, 1, 1, 0, 0],
+            'seq_1': [1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+            'seq_2': [0, 1, 0, 1, 0, 1, 0, 0, 0, 1],
+            'numerical': [0.23, 0.34, 0.56, 0.67, 0.22, 0.23, 0.26, 0.20, 0.34, 0.45],
+        }
+    )
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'sequence_key': 'seq_id',
+                'columns': {
+                    'seq_id': {'sdtype': 'id', 'regex_format': r'seq_\d{1,2}'},
+                    'context_0': {'sdtype': 'categorical'},
+                    'context_1': {'sdtype': 'categorical'},
+                    'context_2': {'sdtype': 'categorical'},
+                    'other_context_col': {'sdtype': 'numerical'},
+                    'seq_0': {'sdtype': 'categorical'},
+                    'seq_1': {'sdtype': 'categorical'},
+                    'seq_2': {'sdtype': 'categorical'},
+                    'numerical': {'sdtype': 'numerical'},
+                },
+            }
+        }
+    })
+
+    synthesizer = PARSynthesizer(metadata, context_columns=['context_0', 'context_1', 'context_2'])
+
+    context_constraint = OneHotEncoding(column_names=['context_0', 'context_1', 'context_2'])
+
+    seq_constraint = OneHotEncoding(column_names=['seq_0', 'seq_1', 'seq_2'])
+
+    synthesizer.add_constraints([context_constraint, seq_constraint])
+    synthesizer.fit(data)
+    samples = synthesizer.sample(5)
+    synthesizer.validate(samples)
