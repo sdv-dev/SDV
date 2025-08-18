@@ -256,9 +256,9 @@ def _key_order(key_value):
     parts = []
     for part in key_value[0].split('__'):
         if part.isdigit():
-            part = int(part)
-
-        parts.append(part)
+            parts.append((0, int(part)))
+        else:
+            parts.append((1, part))
 
     return parts
 
@@ -285,23 +285,10 @@ def unflatten_dict(flat):
                 column_index = int(name)
                 row_index = int(subkey)
 
-                array = unflattened.setdefault(key, [])
-
-                if len(array) == row_index:
-                    row = []
-                    array.append(row)
-                elif len(array) == row_index + 1:
-                    row = array[row_index]
-                else:
-                    # This should never happen
-                    raise ValueError('There was an error unflattening the extension.')
-
-                if len(row) == column_index:
-                    row.append(value)
-                else:
-                    # This should never happen
-                    raise ValueError('There was an error unflattening the extension.')
-
+                # 使用字典来处理稀疏矩阵，避免非连续索引问题
+                matrix_dict = unflattened.setdefault(key, {})
+                row_dict = matrix_dict.setdefault(row_index, {})
+                row_dict[column_index] = value
             else:
                 subdict = unflattened.setdefault(key, {})
                 if subkey.isdigit() and key != 'univariates':
