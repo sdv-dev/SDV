@@ -1274,6 +1274,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
             condition = dict(zip(condition_columns, group))
             condition_df = dataframe.iloc[0].to_frame().T
+            dtypes = conditions.dtypes.to_dict()
+            condition_df = condition_df.astype(dtypes)
             if hasattr(self, '_chained_constraints'):
                 transformed_condition = self._transform_conditions_chained_constraints(condition_df)
             else:
