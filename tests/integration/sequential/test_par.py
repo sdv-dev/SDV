@@ -993,12 +993,11 @@ def test_add_constraints_with_context_columns():
         }
     })
 
-    synthesizer = PARSynthesizer(metadata, context_columns=['context_0', 'context_1', 'context_2'])
-
+    synthesizer = PARSynthesizer(
+        metadata, context_columns=['context_0', 'context_1', 'context_2', 'other_context_col']
+    )
     context_constraint = OneHotEncoding(column_names=['context_0', 'context_1', 'context_2'])
-
     seq_constraint = OneHotEncoding(column_names=['seq_0', 'seq_1', 'seq_2'])
-
     synthesizer.add_constraints([context_constraint, seq_constraint])
     synthesizer.fit(data)
     samples = synthesizer.sample(5)

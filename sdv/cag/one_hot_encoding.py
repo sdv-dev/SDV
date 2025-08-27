@@ -11,7 +11,7 @@ from sdv.cag._utils import (
 )
 from sdv.cag.base import BaseConstraint
 
-EPSILON = np.finfo(np.float32).eps
+EPSILON = float(np.finfo(np.float32).eps)
 
 
 class OneHotEncoding(BaseConstraint):
@@ -111,11 +111,7 @@ class OneHotEncoding(BaseConstraint):
         """
         table_name = self._get_single_table_name(self.metadata)
         one_hot_data = data[table_name][self._column_names]
-        one_hot_data = np.where(
-            one_hot_data == 0,
-            np.random.uniform(0, EPSILON, size=one_hot_data.shape),
-            1 - np.random.uniform(0, EPSILON, size=one_hot_data.shape),
-        )
+        one_hot_data = np.where(one_hot_data == 0, EPSILON, 1 - EPSILON)
         data[table_name][self._column_names] = one_hot_data
 
         return data

@@ -159,11 +159,8 @@ class TestOneHotEncoding:
         zeros_mask = original == 0
         ones_mask = original == 1
 
-        assert np.all(result[zeros_mask] > 0)
-        assert np.all(result[zeros_mask] < eps)
-
-        assert np.all(result[ones_mask] < 1)
-        assert np.all(result[ones_mask] > 1 - eps)
+        assert np.all(result[zeros_mask] == eps)
+        assert np.all(result[ones_mask] == 1 - eps)
 
     def test_reverse_transform(self):
         """Test it reverses the transformation correctly."""
