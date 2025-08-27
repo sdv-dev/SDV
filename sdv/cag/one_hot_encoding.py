@@ -11,6 +11,8 @@ from sdv.cag._utils import (
 )
 from sdv.cag.base import BaseConstraint
 
+EPSILON = np.finfo(np.float32).eps
+
 
 class OneHotEncoding(BaseConstraint):
     """Ensure the appropriate columns are one hot encoded.
@@ -88,6 +90,14 @@ class OneHotEncoding(BaseConstraint):
         """
         pass
 
+    def _get_updated_metadata(self, metadata):
+        table_name = self._get_single_table_name(metadata)
+        for column in self._column_names:
+            if metadata.tables[table_name].columns[column]['sdtype'] == 'categorical':
+                metadata.tables[table_name].columns[column]['sdtype'] = 'numerical'
+
+        return metadata
+
     def _transform(self, data):
         """Transform the data.
 
@@ -99,6 +109,15 @@ class OneHotEncoding(BaseConstraint):
             dict[str, pd.DataFrame]:
                 Transformed data.
         """
+        table_name = self._get_single_table_name(self.metadata)
+        one_hot_data = data[table_name][self._column_names]
+        one_hot_data = np.where(
+            one_hot_data == 0,
+            np.random.uniform(0, EPSILON, size=one_hot_data.shape),
+            1 - np.random.uniform(0, EPSILON, size=one_hot_data.shape),
+        )
+        data[table_name][self._column_names] = one_hot_data
+
         return data
 
     def _reverse_transform(self, data):

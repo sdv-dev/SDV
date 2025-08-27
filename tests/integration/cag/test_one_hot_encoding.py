@@ -7,6 +7,7 @@ import pytest
 from sdv.cag import OneHotEncoding
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.metadata import Metadata
+from sdv.single_table import GaussianCopulaSynthesizer
 from tests.utils import run_copula, run_hma
 
 
@@ -138,3 +139,33 @@ def test_end_to_end_multi_raises(data_multi, metadata_multi):
     with pytest.raises(ConstraintNotMetError, match=msg):
         synthesizer = run_hma(data_multi, metadata_multi, [constraint])
         synthesizer.validate_constraints(synthetic_data=invalid_data)
+
+
+def test_end_to_end_numerical_and_categorical():
+    """Test end to end with OneHotEncoding with numerical and categorical data."""
+    # Setup one hot data
+    categories = ['A', 'B', 'C']
+    num_rows = 1000
+    rng = np.random.default_rng(42)
+    probabilities = [0.8, 0.15, 0.05]
+    choices = rng.choice(len(categories), size=num_rows, p=probabilities)
+    data = np.zeros((num_rows, len(categories)), dtype=int)
+    data[np.arange(num_rows), choices] = 1
+    columns = [f'cat_{c}' for c in categories]
+    df = pd.DataFrame(data, columns=columns)
+
+    # Setup metadata
+    metadata = Metadata.detect_from_dataframe(df, table_name='one_hot')
+    for sdtype in ['numerical', 'categorical']:
+        metadata.update_columns(columns, sdtype=sdtype)
+        synthesizer = GaussianCopulaSynthesizer(metadata)
+        constraint = OneHotEncoding(column_names=columns)
+
+        # Run
+        synthesizer.add_constraints([constraint])
+        synthesizer.fit(df)
+        samples = synthesizer.sample(100)
+
+        # Assert
+        for col in columns:
+            assert sorted(samples[col].unique().tolist()) == [0, 1]
