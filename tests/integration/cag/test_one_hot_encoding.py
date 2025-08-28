@@ -69,8 +69,8 @@ def test_end_to_end(data, metadata):
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
+    assert (synthetic_data.sum(axis=1) == 1).all()
     for col in ['a', 'b', 'c']:
-        assert synthetic_data[col].nunique() == 2
         assert sorted(synthetic_data[col].unique().tolist()) == [0, 1]
 
 
@@ -108,8 +108,8 @@ def test_end_to_end_multi(data_multi, metadata_multi):
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
+    assert (synthetic_data['table1'].sum(axis=1) == 1).all()
     for col in ['a', 'b', 'c']:
-        assert synthetic_data['table1'][col].nunique() == 2
         assert sorted(synthetic_data['table1'][col].unique().tolist()) == [0, 1]
 
 
@@ -167,5 +167,6 @@ def test_end_to_end_numerical_and_categorical():
         samples = synthesizer.sample(100)
 
         # Assert
+        assert (samples.sum(axis=1) == 1).all()
         for col in columns:
             assert sorted(samples[col].unique().tolist()) == [0, 1]

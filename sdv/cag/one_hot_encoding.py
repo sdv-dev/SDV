@@ -1,5 +1,7 @@
 """One Hot Encoding constraint."""
 
+from copy import deepcopy
+
 import numpy as np
 
 from sdv.cag._errors import ConstraintNotMetError
@@ -92,6 +94,7 @@ class OneHotEncoding(BaseConstraint):
 
     def _get_updated_metadata(self, metadata):
         table_name = self._get_single_table_name(metadata)
+        metadata = deepcopy(metadata)
         for column in self._column_names:
             if metadata.tables[table_name].columns[column]['sdtype'] == 'categorical':
                 metadata.tables[table_name].columns[column]['sdtype'] = 'numerical'
