@@ -1,5 +1,7 @@
 """One Hot Encoding constraint."""
 
+from copy import deepcopy
+
 import numpy as np
 
 from sdv.cag._errors import ConstraintNotMetError
@@ -10,6 +12,8 @@ from sdv.cag._utils import (
     _validate_table_name_if_defined,
 )
 from sdv.cag.base import BaseConstraint
+
+EPSILON = float(np.finfo(np.float32).eps)
 
 
 class OneHotEncoding(BaseConstraint):
@@ -88,6 +92,15 @@ class OneHotEncoding(BaseConstraint):
         """
         pass
 
+    def _get_updated_metadata(self, metadata):
+        table_name = self._get_single_table_name(metadata)
+        metadata = deepcopy(metadata)
+        for column in self._column_names:
+            if metadata.tables[table_name].columns[column]['sdtype'] in ['categorical', 'boolean']:
+                metadata.tables[table_name].columns[column]['sdtype'] = 'numerical'
+
+        return metadata
+
     def _transform(self, data):
         """Transform the data.
 
@@ -99,6 +112,11 @@ class OneHotEncoding(BaseConstraint):
             dict[str, pd.DataFrame]:
                 Transformed data.
         """
+        table_name = self._get_single_table_name(self.metadata)
+        one_hot_data = data[table_name][self._column_names]
+        one_hot_data = np.where(one_hot_data == 0, EPSILON, 1 - EPSILON)
+        data[table_name][self._column_names] = one_hot_data
+
         return data
 
     def _reverse_transform(self, data):
