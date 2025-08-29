@@ -124,12 +124,23 @@ class OneHotEncoding(BaseConstraint):
 
     def _get_updated_metadata(self, metadata):
         table_name = self._get_single_table_name(metadata)
-        metadata = deepcopy(metadata)
-        for column in self._column_names:
-            if metadata.tables[table_name].columns[column]['sdtype'] in ['categorical', 'boolean']:
-                metadata.tables[table_name].columns[column]['sdtype'] = 'numerical'
+        if self.learning_strategy == 'categorical':
+            categorical_column = _create_unique_name(
+                self._categorical_column, metadata.tables[table_name].columns
+            )
+            md = metadata.to_dict()
+            md['tables'][table_name]['columns'][categorical_column] = {'sdtype': 'categorical'}
+            return _remove_columns_from_metadata(md, table_name, columns_to_drop=self._column_names)
 
-        return metadata
+        else:
+            metadata = deepcopy(metadata)
+            for column in self._column_names:
+                if metadata.tables[table_name].columns[column]['sdtype'] in [
+                    'categorical',
+                    'boolean',
+                ]:
+                    metadata.tables[table_name].columns[column]['sdtype'] = 'numerical'
+            return metadata
 
     def _transform(self, data):
         """Transform the data.
