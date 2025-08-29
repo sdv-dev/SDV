@@ -283,7 +283,11 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         for extended_column in self._parent_extended_columns[table_name]:
             if extended_column in valid_columns:
                 numerical_distributions[extended_column] = DEFAULT_EXTENDED_COLUMNS_DISTRIBUTION
-        synthesizer._set_numerical_distributions(numerical_distributions)
+
+        if numerical_distributions:
+            existing = getattr(synthesizer, 'numerical_distributions', {}) or {}
+            merged = {**existing, **numerical_distributions}
+            synthesizer._set_numerical_distributions(merged)
 
     def _get_extension(self, child_name, child_table, foreign_key, progress_bar_desc):
         """Generate the extension columns for this child table.
