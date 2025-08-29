@@ -93,24 +93,6 @@ class OneHotEncoding(BaseConstraint):
             error_message = self._format_error_message_constraint(invalid_rows, table_name)
             raise ConstraintNotMetError(error_message)
 
-    def _get_updated_metadata(self, metadata):
-        """Get updated metadata reflecting the chosen learning strategy.
-
-        If learning_strategy is 'categorical', drop the one-hot columns and add a single
-        categorical column used internally during modeling.
-        """
-        if self.learning_strategy != 'categorical':
-            return metadata
-
-        table_name = self._get_single_table_name(metadata)
-        categorical_column = _create_unique_name(
-            self._categorical_column, metadata.tables[table_name].columns
-        )
-
-        md = metadata.to_dict()
-        md['tables'][table_name]['columns'][categorical_column] = {'sdtype': 'categorical'}
-        return _remove_columns_from_metadata(md, table_name, columns_to_drop=self._column_names)
-
     def _fit(self, data, metadata):
         """Fit the constraint.
 
@@ -125,11 +107,13 @@ class OneHotEncoding(BaseConstraint):
     def _get_updated_metadata(self, metadata):
         table_name = self._get_single_table_name(metadata)
         if self.learning_strategy == 'categorical':
-            categorical_column = _create_unique_name(
+            self._categorical_column = _create_unique_name(
                 self._categorical_column, metadata.tables[table_name].columns
             )
             md = metadata.to_dict()
-            md['tables'][table_name]['columns'][categorical_column] = {'sdtype': 'categorical'}
+            md['tables'][table_name]['columns'][self._categorical_column] = {
+                'sdtype': 'categorical'
+            }
             return _remove_columns_from_metadata(md, table_name, columns_to_drop=self._column_names)
 
         else:
