@@ -96,7 +96,7 @@ class OneHotEncoding(BaseConstraint):
         table_name = self._get_single_table_name(metadata)
         metadata = deepcopy(metadata)
         for column in self._column_names:
-            if metadata.tables[table_name].columns[column]['sdtype'] == 'categorical':
+            if metadata.tables[table_name].columns[column]['sdtype'] in ['categorical', 'boolean']:
                 metadata.tables[table_name].columns[column]['sdtype'] = 'numerical'
 
         return metadata

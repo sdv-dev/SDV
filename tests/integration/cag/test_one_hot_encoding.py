@@ -170,3 +170,34 @@ def test_end_to_end_numerical_and_categorical():
         assert (samples.sum(axis=1) == 1).all()
         for col in columns:
             assert sorted(samples[col].unique().tolist()) == [0, 1]
+
+
+def test_end_to_end_boolean():
+    """Test end to end with OneHotEncoding with boolean data."""
+    # Setup one hot data
+    categories = ['A', 'B', 'C']
+    num_rows = 1000
+    rng = np.random.default_rng(42)
+    probabilities = [0.8, 0.15, 0.05]
+    choices = rng.choice(len(categories), size=num_rows, p=probabilities)
+    data = np.zeros((num_rows, len(categories)), dtype=bool)
+    data[np.arange(num_rows), choices] = True
+    columns = [f'cat_{c}' for c in categories]
+    df = pd.DataFrame(data, columns=columns)
+
+    # Setup metadata
+    metadata = Metadata.detect_from_dataframe(df, table_name='one_hot')
+    metadata.update_columns(columns, sdtype='boolean')
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    constraint = OneHotEncoding(column_names=columns)
+
+    # Run
+    synthesizer.add_constraints([constraint])
+    synthesizer.fit(df)
+    samples = synthesizer.sample(100)
+
+    # Assert
+    assert samples.dtypes.tolist() == [bool, bool, bool]
+    assert (samples.sum(axis=1) == 1).all()
+    for col in columns:
+        assert sorted(samples[col].unique().tolist()) == [0, 1]
