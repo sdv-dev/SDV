@@ -2341,7 +2341,7 @@ class TestBaseSingleTableSynthesizer:
         conditions = pd.DataFrame({'name': ['Johanna', 'Doe'], 'salary': [100.0, 90.0]})
         instance = Mock()
         delattr(instance, '_chained_constraints')
-        instance._data_processor.transform.side_effect = [ConstraintsNotMetError]
+        instance._transform_conditions.side_effect = [ConstraintsNotMetError]
 
         # Run and Assert
         error_msg = 'Provided conditions are not valid for the given constraints.'
@@ -2407,6 +2407,17 @@ class TestBaseSingleTableSynthesizer:
             'keep_extra_columns': False,
         }
 
+    def test__transform_conditions(self):
+        # Setup
+        conditions = pd.DataFrame({'name': ['Johanna']})
+        instance = Mock()
+
+        # Run
+        BaseSingleTableSynthesizer._transform_conditions(instance, conditions)
+
+        # Assert
+        instance._data_processor.transform.assert_called_once_with(conditions, is_condition=True)
+
     def test__transform_conditions_chained_constraints_no_transformed_conditions(self):
         """Test when the conditions are not being transformed.
 
@@ -2417,7 +2428,7 @@ class TestBaseSingleTableSynthesizer:
         conditions = pd.DataFrame({'name': ['Johanna']})
         instance = Mock()
         instance._validate_transform_constraints.side_effect = [KeyError]
-        instance._data_processor.transform.side_effect = [
+        instance._transform_conditions.side_effect = [
             pd.DataFrame(),
             pd.DataFrame(),
         ]
