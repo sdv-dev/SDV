@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from sdv.cag._errors import ConstraintNotMetError
-from sdv.errors import SynthesizerInputError, TableNameError
+from sdv.errors import RefitWarning, SynthesizerInputError, TableNameError
 from sdv.metadata import Metadata
 
 
@@ -185,7 +185,8 @@ def _validate_constraints(constraints, synthesizer_fitted):
 
     if synthesizer_fitted:
         warnings.warn(
-            "For these constraints to take effect, please refit the synthesizer using 'fit'."
+            "For these constraints to take effect, please refit the synthesizer using 'fit'.",
+            RefitWarning,
         )
 
     return _filter_old_style_constraints(constraints)

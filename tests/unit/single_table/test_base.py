@@ -23,6 +23,7 @@ from sdv.cag.programmable_constraint import SingleTableProgrammableConstraint
 from sdv.errors import (
     ConstraintsNotMetError,
     InvalidDataError,
+    RefitWarning,
     SamplingError,
     SynthesizerInputError,
     VersionError,
@@ -665,7 +666,7 @@ class TestBaseSynthesizer:
         result = BaseSynthesizer._preprocess_helper(instance, data)
 
         # Assert
-        mock_warnings.warn.assert_called_once_with(expected_warning)
+        mock_warnings.warn.assert_called_once_with(expected_warning, RefitWarning)
         instance.validate.assert_called_once_with(data)
         instance._validate_transform_constraints.assert_called_once_with(data)
         pd.testing.assert_frame_equal(result, data)

@@ -41,6 +41,7 @@ from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import (
     ConstraintsNotMetError,
     InvalidDataError,
+    RefitWarning,
     SamplingError,
     SynthesizerInputError,
 )
@@ -306,7 +307,7 @@ class BaseSynthesizer:
         self._data_processor.update_transformers(column_name_to_transformer)
         if self._fitted:
             msg = 'For this change to take effect, please refit the synthesizer using `fit`.'
-            warnings.warn(msg, UserWarning)
+            warnings.warn(msg, RefitWarning)
 
     def get_parameters(self):
         """Return the parameters used to instantiate the synthesizer."""
@@ -587,10 +588,12 @@ class BaseSynthesizer:
         """
         self.validate(data)
         if self._fitted:
-            warnings.warn(
+            msg = (
                 'This model has already been fitted. To use the new preprocessed data, '
                 "please refit the model using 'fit' or 'fit_processed_data'."
             )
+            warnings.warn(msg, RefitWarning)
+
         data = self._validate_transform_constraints(data)
 
         return data
