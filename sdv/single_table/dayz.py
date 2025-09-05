@@ -41,11 +41,11 @@ def detect_column_parameters(data, metadata, table_name):
     for column_name, column_metadata in table_metadata.columns.items():
         column_parameters[column_name] = {}
         sdtype = column_metadata['sdtype']
-        if sdtype == 'numeric':
+        if sdtype == 'numerical':
             column_parameters[column_name] = {
                 'num_decimal_digits': learn_rounding_digits(data[column_name]),
-                'min_value': data[column_name].min(),
-                'max_value': data[column_name].max(),
+                'min_value': data[column_name].min().item(),
+                'max_value': data[column_name].max().item(),
             }
         elif sdtype == 'datetime':
             datetime_column = pd.to_datetime(data[column_name], errors='coerce')
@@ -53,12 +53,14 @@ def detect_column_parameters(data, metadata, table_name):
                 'start_timestamp': datetime_column.min(),
                 'end_timestamp': datetime_column.max(),
             }
-        elif sdtype == 'categorical':
+        elif sdtype in ['categorical', 'boolean']:
             column_parameters[column_name] = {
                 'category_values': data[column_name].dropna().unique().tolist()
             }
 
-        column_parameters[column_name]['missing_value_proportion'] = data[column_name].isna().mean()
+        column_parameters[column_name]['missing_value_proportion'] = (
+            data[column_name].isna().mean().item()
+        )
 
     return {'columns': column_parameters}
 
@@ -66,9 +68,9 @@ def detect_column_parameters(data, metadata, table_name):
 def create_parameters(data, metadata):
     """Detect and create a parameter dict for the DayZ model."""
     metadata.validate()
-    metadata.validate_data(data)
-    parameters = {'DAYZ_SPEC_VERSION': 'V1', 'tables': {}}
     datas = data if isinstance(data, dict) else {metadata._get_single_table_name(): data}
+    metadata.validate_data(datas)
+    parameters = {'DAYZ_SPEC_VERSION': 'V1', 'tables': {}}
     for table_name, table_data in datas.items():
         parameters['tables'][table_name] = {}
         parameters['tables'][table_name].update(detect_table_parameters(table_data))
