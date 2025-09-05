@@ -83,3 +83,11 @@ class VersionError(ValueError):
 
 
 TableNameError = ValueError('`table_name` must be a string or None.')
+
+
+class RefitWarning(UserWarning):
+    """Warning to be raised if the synthesizer needs to be refit.
+
+    Warning to be raised if a change to a synthesizer requires the synthesizer
+    to be refit for the change to be applied.
+    """

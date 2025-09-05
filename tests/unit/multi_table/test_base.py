@@ -17,6 +17,7 @@ from sdv.cag.programmable_constraint import ProgrammableConstraint, Programmable
 from sdv.errors import (
     InvalidDataError,
     NotFittedError,
+    RefitWarning,
     SamplingError,
     SynthesizerInputError,
     VersionError,
@@ -1013,7 +1014,8 @@ class TestBaseMultiTableSynthesizer:
         assert args[0].equals(data['upravna_enota'])
         mock_warnings.warn.assert_called_once_with(
             'This model has already been fitted. To use the new preprocessed data, '
-            "please refit the model using 'fit' or 'fit_processed_data'."
+            "please refit the model using 'fit' or 'fit_processed_data'.",
+            RefitWarning,
         )
 
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_metadata_matches_data')
