@@ -83,3 +83,11 @@ class VersionError(ValueError):
 
 
 TableNameError = ValueError('`table_name` must be a string or None.')
+
+
+class DemoResourceNotFoundError(Exception):
+    """Raised when a demo dataset or one of its resources cannot be found.
+
+    This error is intended for missing demo assets such as the dataset archive,
+    metadata, license, README, or other auxiliary files in the demo bucket.
+    """

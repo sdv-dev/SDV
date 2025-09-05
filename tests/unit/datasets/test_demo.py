@@ -1,11 +1,24 @@
+import io
+import json
 import re
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.datasets.demo import _download, _get_data_from_bucket, download_demo, get_available_demos
+from sdv.datasets.demo import (
+    _collect_json_keys,
+    _download,
+    _find_data_zip_key,
+    _get_data_from_bucket,
+    _iter_metainfo_yaml_entries,
+    _list_objects,
+    _select_metadata_v1_bytes,
+    download_demo,
+    get_available_demos,
+)
+from sdv.errors import DemoResourceNotFoundError
 
 
 def test_download_demo_invalid_modality():
@@ -27,27 +40,51 @@ def test_download_demo_folder_already_exists(tmpdir):
         download_demo('single_table', 'dataset_name', tmpdir)
 
 
-def test_download_demo_dataset_doesnt_exist():
-    """Test it crashes when ``dataset_name`` doesn't exist."""
-    # Run and Assert
-    err_msg = re.escape(
-        "Invalid dataset name 'invalid_dataset'. "
-        'Make sure you have the correct modality for the dataset name or '
-        "use 'get_available_demos' to get a list of demo datasets."
-    )
-    with pytest.raises(ValueError, match=err_msg):
+@patch('sdv.datasets.demo._list_objects', return_value=[])
+def test_download_demo_dataset_doesnt_exist(_mock_list):
+    """Test it raises DemoResourceNotFoundError when dataset doesn't exist."""
+    with pytest.raises(DemoResourceNotFoundError, match="Dataset 'invalid_dataset'.*was not found"):
         download_demo('single_table', 'invalid_dataset')
 
 
-def test_download_demo_single_table(tmpdir):
-    """Test it can download a single table dataset."""
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_single_table(mock_list, mock_get, tmpdir):
+    """Test it can download a single table dataset using the new structure."""
+    mock_list.return_value = [
+        {'Key': 'single_table/ring/data.zip'},
+        {'Key': 'single_table/ring/metadata.json'},
+    ]
+    df = pd.DataFrame({'0': [0, 0], '1': [0, 0]})
+    zip_bytes = _make_zip_with_csv('ring.csv', df)
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'ring': {
+                'columns': {
+                    '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                }
+            }
+        },
+        'relationships': [],
+    }).encode()
+
+    def side_effect(key):
+        if key.endswith('data.zip'):
+            return zip_bytes
+        if key.endswith('metadata.json'):
+            return meta_bytes
+        raise KeyError(key)
+
+    mock_get.side_effect = side_effect
+
     # Run
     table, metadata = download_demo('single_table', 'ring', tmpdir / 'test_folder')
 
     # Assert
     expected_table = pd.DataFrame({'0': [0, 0], '1': [0, 0]})
     pd.testing.assert_frame_equal(table.head(2), expected_table)
-
     expected_metadata_dict = {
         'tables': {
             'ring': {
@@ -82,27 +119,52 @@ def test__get_data_from_bucket(session_mock):
 
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
-def test__download(mock_get_data_from_bucket):
-    """Test the ``_download`` method."""
-    # Setup
-    mock_get_data_from_bucket.return_value = b''
+@patch('sdv.datasets.demo._list_objects')
+def test__download(mock_list, mock_get_data_from_bucket):
+    """Test the ``_download`` method with new structure."""
+    mock_list.return_value = [
+        {'Key': 'single_table/ring/data.zip'},
+        {'Key': 'single_table/ring/metadata.json'},
+    ]
+    # Return bytes for any key
+    mock_get_data_from_bucket.return_value = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
 
     # Run
-    _download('single_table', 'ring')
+    data_io, metadata_bytes = _download('single_table', 'ring')
 
     # Assert
-    mock_get_data_from_bucket.assert_called_once_with('SINGLE_TABLE/ring.zip')
+    assert isinstance(data_io, io.BytesIO)
+    assert isinstance(metadata_bytes, (bytes, bytearray))
 
 
-def test_download_demo_single_table_no_output_folder():
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_single_table_no_output_folder(mock_list, mock_get):
     """Test it can download a single table dataset when no output folder is passed."""
-    # Run
+    mock_list.return_value = [
+        {'Key': 'single_table/ring/data.zip'},
+        {'Key': 'single_table/ring/metadata.json'},
+    ]
+    df = pd.DataFrame({'0': [0, 0], '1': [0, 0]})
+    zip_bytes = _make_zip_with_csv('ring.csv', df)
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'ring': {
+                'columns': {
+                    '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                }
+            }
+        },
+        'relationships': [],
+    }).encode()
+    mock_get.side_effect = lambda key: zip_bytes if key.endswith('data.zip') else meta_bytes
+
     table, metadata = download_demo('single_table', 'ring')
 
-    # Assert
     expected_table = pd.DataFrame({'0': [0, 0], '1': [0, 0]})
     pd.testing.assert_frame_equal(table.head(2), expected_table)
-
     expected_metadata_dict = {
         'tables': {
             'ring': {
@@ -115,16 +177,43 @@ def test_download_demo_single_table_no_output_folder():
         'METADATA_SPEC_VERSION': 'V1',
         'relationships': [],
     }
-
     assert metadata.to_dict() == expected_metadata_dict
 
 
-def test_download_demo_timeseries(tmpdir):
-    """Test it can download a timeseries dataset."""
-    # Run
-    table, metadata = download_demo('sequential', 'Libras', tmpdir / 'test_folder')
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_timeseries(mock_list, mock_get, tmpdir):
+    """Test it can download a timeseries dataset using new structure."""
+    mock_list.return_value = [
+        {'Key': 'sequential/Libras/data.zip'},
+        {'Key': 'sequential/Libras/metadata.json'},
+    ]
+    df = pd.DataFrame({
+        'ml_class': [1, 1],
+        'e_id': [0, 0],
+        's_index': [0, 1],
+        'tt_split': [1, 1],
+        'dim_0': [0.67892, 0.68085],
+        'dim_1': [0.27315, 0.27315],
+    })
+    zip_bytes = _make_zip_with_csv('Libras.csv', df)
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'relationships': [],
+        'tables': {
+            'Libras': {
+                'columns': {
+                    'e_id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'dim_0': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'dim_1': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'ml_class': {'sdtype': 'categorical'},
+                }
+            }
+        },
+    }).encode()
+    mock_get.side_effect = lambda key: zip_bytes if key.endswith('data.zip') else meta_bytes
 
-    # Assert
+    table, metadata = download_demo('sequential', 'Libras', tmpdir / 'test_folder')
     expected_table = pd.DataFrame({
         'ml_class': [1, 1],
         'e_id': [0, 0],
@@ -134,7 +223,6 @@ def test_download_demo_timeseries(tmpdir):
         'dim_1': [0.27315, 0.27315],
     })
     pd.testing.assert_frame_equal(table.head(2), expected_table)
-
     expected_metadata_dict = {
         'METADATA_SPEC_VERSION': 'V1',
         'relationships': [],
@@ -152,34 +240,31 @@ def test_download_demo_timeseries(tmpdir):
     assert metadata.to_dict() == expected_metadata_dict
 
 
-def test_download_demo_multi_table(tmpdir):
-    """Test it can download a multi table dataset."""
-    # Run
-    tables, metadata = download_demo('multi_table', 'got_families', tmpdir / 'test_folder')
-
-    # Assert
-    expected_families = pd.DataFrame({
-        'family_id': [1, 2],
-        'name': ['Stark', 'Tully'],
-    })
-    pd.testing.assert_frame_equal(tables['families'].head(2), expected_families)
-
-    expected_character_families = pd.DataFrame({
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_multi_table(mock_list, mock_get, tmpdir):
+    """Test it can download a multi table dataset using new structure."""
+    mock_list.return_value = [
+        {'Key': 'multi_table/got_families/data.zip'},
+        {'Key': 'multi_table/got_families/metadata.json'},
+    ]
+    families = pd.DataFrame({'family_id': [1, 2], 'name': ['Stark', 'Tully']})
+    character_families = pd.DataFrame({
         'character_id': [1, 1],
         'family_id': [1, 4],
         'generation': [8, 5],
         'type': ['father', 'mother'],
     })
-    pd.testing.assert_frame_equal(tables['character_families'].head(2), expected_character_families)
+    characters = pd.DataFrame({'age': [20, 16], 'character_id': [1, 2], 'name': ['Jon', 'Arya']})
+    import zipfile
 
-    expected_characters = pd.DataFrame({
-        'age': [20, 16],
-        'character_id': [1, 2],
-        'name': ['Jon', 'Arya'],
-    })
-    pd.testing.assert_frame_equal(tables['characters'].head(2), expected_characters)
-
-    expected_metadata_dict = {
+    zip_buf = io.BytesIO()
+    with zipfile.ZipFile(zip_buf, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('families.csv', families.to_csv(index=False))
+        zf.writestr('character_families.csv', character_families.to_csv(index=False))
+        zf.writestr('characters.csv', characters.to_csv(index=False))
+    zip_bytes = zip_buf.getvalue()
+    meta_bytes = json.dumps({
         'tables': {
             'characters': {
                 'columns': {
@@ -220,7 +305,14 @@ def test_download_demo_multi_table(tmpdir):
             },
         ],
         'METADATA_SPEC_VERSION': 'V1',
-    }
+    }).encode()
+    mock_get.side_effect = lambda key: zip_bytes if key.endswith('data.zip') else meta_bytes
+
+    tables, metadata = download_demo('multi_table', 'got_families', tmpdir / 'test_folder')
+    pd.testing.assert_frame_equal(tables['families'].head(2), families.head(2))
+    pd.testing.assert_frame_equal(tables['character_families'].head(2), character_families.head(2))
+    pd.testing.assert_frame_equal(tables['characters'].head(2), characters.head(2))
+    expected_metadata_dict = json.loads(meta_bytes.decode())
     assert metadata.to_dict() == expected_metadata_dict
 
 
@@ -232,59 +324,172 @@ def test_get_available_demos_invalid_modality():
         get_available_demos('invalid_modality')
 
 
-@patch('boto3.client')
-def test_get_available_demos(client_mock):
-    """Test it gets the correct output."""
-    # Setup
-    contents_objects = {
-        'Contents': [{'Key': 'SINGLE_TABLE/dataset1.zip'}, {'Key': 'SINGLE_TABLE/dataset2.zip'}]
+def _make_zip_with_csv(csv_name: str, df: pd.DataFrame) -> bytes:
+    import zipfile
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr(csv_name, df.to_csv(index=False))
+    return buf.getvalue()
+
+
+def test__list_objects_pagination():
+    class FakeClient:
+        def __init__(self):
+            self.calls = []
+            self.page = 0
+
+        def list_objects_v2(self, **kwargs):
+            self.calls.append(kwargs)
+            if self.page == 0:
+                self.page += 1
+                return {
+                    'IsTruncated': True,
+                    'NextContinuationToken': 'token-1',
+                    'Contents': [{'Key': 'single_table/d1/metainfo.yaml'}],
+                }
+            return {
+                'IsTruncated': False,
+                'Contents': [{'Key': 'single_table/d2/metainfo.yaml'}],
+            }
+
+    with patch('sdv.datasets.demo._create_s3_client', return_value=FakeClient()):
+        contents = _list_objects('single_table/')
+        keys = [c['Key'] for c in contents]
+        assert keys == ['single_table/d1/metainfo.yaml', 'single_table/d2/metainfo.yaml']
+
+
+def test__find_data_zip_key_and__collect_json_keys():
+    contents = [
+        {'Key': 'single_table/dataset/data.ZIP'},
+        {'Key': 'single_table/dataset/metadata.json'},
+        {'Key': 'single_table/dataset/aaa_wrong.json'},
+        {'Key': 'single_table/dataset/README.txt'},
+    ]
+    dataset_prefix = 'single_table/dataset/'
+    zip_key = _find_data_zip_key(contents, dataset_prefix)
+    assert zip_key == 'single_table/dataset/data.ZIP'
+    json_keys = _collect_json_keys(contents, dataset_prefix)
+    assert set(json_keys) == {
+        'single_table/dataset/metadata.json',
+        'single_table/dataset/aaa_wrong.json',
     }
-    client_mock.return_value.list_objects = Mock(return_value=contents_objects)
-
-    def metadata_func(Bucket, Key):  # noqa: N803
-        if Key == 'SINGLE_TABLE/dataset1.zip':
-            return {'Metadata': {'size-mb': 123, 'num-tables': 321}}
-
-        return {'Metadata': {'size-mb': 456, 'num-tables': 654}}
-
-    client_mock.return_value.head_object = MagicMock(side_effect=metadata_func)
-
-    # Run
-    tables_info = get_available_demos('single_table')
-
-    # Assert
-    expected_table = pd.DataFrame({
-        'dataset_name': ['dataset1', 'dataset2'],
-        'size_MB': [123.00, 456.00],
-        'num_tables': [321, 654],
-    })
-    pd.testing.assert_frame_equal(tables_info, expected_table)
 
 
-@patch('boto3.client')
-def test_get_available_demos_missing_metadata(client_mock):
-    """Test it can handle data with missing metadata information."""
-    # Setup
-    contents_objects = {
-        'Contents': [{'Key': 'SINGLE_TABLE/dataset1.zip'}, {'Key': 'SINGLE_TABLE/dataset2.zip'}]
-    }
-    client_mock.return_value.list_objects = Mock(return_value=contents_objects)
+@patch('sdv.datasets.demo._get_data_from_bucket')
+def test__select_metadata_v1_bytes(mock_get):
+    v2 = json.dumps({'METADATA_SPEC_VERSION': 'V2'}).encode()
+    bad = b'not-json'
+    v1 = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
 
-    def metadata_func(Bucket, Key):  # noqa: N803
-        if Key == 'SINGLE_TABLE/dataset1.zip':
-            return {'Metadata': {}}
+    def side_effect(key):
+        return {'k1.json': v2, 'k2.json': bad, 'k3.json': v1}[key]
 
-        return {'Metadata': {'size-mb': 456, 'num-tables': 654}}
+    mock_get.side_effect = side_effect
+    got = _select_metadata_v1_bytes(['k1.json', 'k2.json', 'k3.json'])
+    assert got == v1
 
-    client_mock.return_value.head_object = MagicMock(side_effect=metadata_func)
 
-    # Run
-    tables_info = get_available_demos('single_table')
+def test__iter_metainfo_yaml_entries_filters():
+    contents = [
+        {'Key': 'single_table/d1/metainfo.yaml'},
+        {'Key': 'single_table/d1/METAINFO.YAML'},
+        {'Key': 'single_table/d2/not.yaml'},
+        {'Key': 'multi_table/d3/metainfo.yaml'},
+        {'Key': 'single_table/metainfo.yaml'},
+    ]
+    got = list(_iter_metainfo_yaml_entries(contents, 'single_table'))
+    assert ('d1', 'single_table/d1/metainfo.yaml') in got
+    assert ('d1', 'single_table/d1/METAINFO.YAML') in got
+    assert all(name != 'd3' for name, _ in got)
+    assert all(key != 'single_table/metainfo.yaml' for _, key in got)
 
-    # Assert
-    expected_table = pd.DataFrame({
-        'dataset_name': ['dataset1', 'dataset2'],
-        'size_MB': [np.nan, 456.00],
-        'num_tables': [np.nan, 654],
-    })
-    pd.testing.assert_frame_equal(tables_info, expected_table)
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_get_available_demos_robust_parsing(mock_list, mock_get):
+    mock_list.return_value = [
+        {'Key': 'single_table/d1/metainfo.yaml'},
+        {'Key': 'single_table/d2/metainfo.yaml'},
+        {'Key': 'single_table/bad/metainfo.yaml'},
+        {'Key': 'single_table/ignore.txt'},
+    ]
+
+    def side_effect(key):
+        if key.endswith('d1/metainfo.yaml'):
+            return b'dataset-name: d1\nnum-tables: 2\ndataset-size-mb: 10.5\nsource: EXTERNAL\n'
+        if key.endswith('d2/metainfo.yaml'):
+            return b'dataset-name: d2\nnum-tables: not_a_number\ndataset-size-mb: NaN\n'
+        raise ValueError('invalid yaml')
+
+    mock_get.side_effect = side_effect
+    df = get_available_demos('single_table')
+    assert set(df['dataset_name']) == {'d1', 'd2'}
+    # d1 parsed correctly
+    row1 = df[df['dataset_name'] == 'd1'].iloc[0]
+    assert row1['num_tables'] == 2
+    assert row1['size_MB'] == 10.5
+    # d2 falls back to NaN
+    row2 = df[df['dataset_name'] == 'd2'].iloc[0]
+    assert np.isnan(row2['num_tables']) or row2['num_tables'] is None
+    assert np.isnan(row2['size_MB']) or row2['size_MB'] is None
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_success_single_table(mock_list, mock_get):
+    mock_list.return_value = [
+        {'Key': 'single_table/word/data.ZIP'},
+        {'Key': 'single_table/word/metadata.json'},
+    ]
+    df = pd.DataFrame({'id': [1, 2], 'name': ['a', 'b']})
+    zip_bytes = _make_zip_with_csv('word.csv', df)
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'word': {
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'name': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'id',
+            }
+        },
+        'relationships': [],
+    }).encode()
+
+    def side_effect(key):
+        if key.endswith('data.ZIP'):
+            return zip_bytes
+        if key.endswith('metadata.json'):
+            return meta_bytes
+        raise KeyError(key)
+
+    mock_get.side_effect = side_effect
+
+    data, metadata = download_demo('single_table', 'word')
+    assert isinstance(data, pd.DataFrame)
+    assert set(data.columns) == {'id', 'name'}
+    assert metadata.to_dict()['tables']['word']['primary_key'] == 'id'
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket', return_value=b'{}')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_missing_zip_raises(mock_list, _mock_get):
+    mock_list.return_value = [
+        {'Key': 'single_table/word/metadata.json'},
+    ]
+    with pytest.raises(DemoResourceNotFoundError, match="Could not find 'data.zip'"):
+        download_demo('single_table', 'word')
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_no_v1_metadata_raises(mock_list, mock_get):
+    mock_list.return_value = [
+        {'Key': 'single_table/word/data.zip'},
+        {'Key': 'single_table/word/metadata.json'},
+    ]
+    mock_get.side_effect = lambda key: json.dumps({'METADATA_SPEC_VERSION': 'V2'}).encode()
+    with pytest.raises(DemoResourceNotFoundError, match='METADATA_SPEC_VERSION'):
+        download_demo('single_table', 'word')
