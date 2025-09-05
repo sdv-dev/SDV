@@ -12,11 +12,15 @@ import pytest
 from sdv.datasets.demo import (
     _download,
     _find_data_zip_key,
+    _find_text_key,
     _get_data_from_bucket,
     _get_first_v1_metadata_bytes,
+    _get_text_file_content,
     _iter_metainfo_yaml_entries,
     download_demo,
     get_available_demos,
+    get_readme,
+    get_source,
 )
 from sdv.errors import DemoResourceNotFoundError
 
@@ -165,7 +169,6 @@ def test_download_demo_single_table_no_output_folder(mock_list, mock_get):
     # Run
     table, metadata = download_demo('single_table', 'ring')
 
-    # Assert
     expected_table = pd.DataFrame({'0': [0, 0], '1': [0, 0]})
     pd.testing.assert_frame_equal(table.head(2), expected_table)
     expected_metadata_dict = {
@@ -219,8 +222,6 @@ def test_download_demo_timeseries(mock_list, mock_get, tmpdir):
 
     # Run
     table, metadata = download_demo('sequential', 'Libras', tmpdir / 'test_folder')
-
-    # Assert
     expected_table = pd.DataFrame({
         'ml_class': [1, 1],
         'e_id': [0, 0],
@@ -579,3 +580,189 @@ def test_download_demo_no_v1_metadata_raises(mock_list, mock_get):
     # Run and Assert
     with pytest.raises(DemoResourceNotFoundError, match='METADATA_SPEC_VERSION'):
         download_demo('single_table', 'word')
+
+
+def test__find_text_key_returns_none_when_missing():
+    """Test it returns None when the key is missing."""
+    # Setup
+    contents = [
+        {'Key': 'single_table/dataset/metadata.json'},
+        {'Key': 'single_table/dataset/data.zip'},
+    ]
+    dataset_prefix = 'single_table/dataset/'
+
+    # Run
+    key = _find_text_key(contents, dataset_prefix, 'README.txt')
+
+    # Assert
+    assert key is None
+
+
+def test__find_text_key_ignores_nested_paths():
+    """Test it ignores files in nested folders under the dataset prefix."""
+    # Setup
+    contents = [
+        {'Key': 'single_table/dataset1/bad_folder/SOURCE.txt'},
+    ]
+    dataset_prefix = 'single_table/dataset1/'
+
+    # Run
+    key = _find_text_key(contents, dataset_prefix, 'SOURCE.txt')
+
+    # Assert
+    assert key is None
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test__get_text_file_content_happy_path(mock_list, mock_get, tmpdir):
+    """Test it gets the text file content when it exists."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/README.txt'},
+    ]
+    mock_get.return_value = 'Hello README'.encode()
+
+    # Run
+    text = _get_text_file_content('single_table', 'dataset1', 'README.txt')
+
+    # Assert
+    assert text == 'Hello README'
+
+
+@patch('sdv.datasets.demo._list_objects')
+def test__get_text_file_content_missing_key_returns_none(mock_list):
+    """Test it returns None when the key is missing."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/metadata.json'},
+    ]
+
+    # Run
+    text = _get_text_file_content('single_table', 'dataset1', 'README.txt')
+
+    # Assert
+    assert text is None
+
+
+@patch('sdv.datasets.demo._list_objects')
+def test__get_text_file_content_logs_when_missing_key(mock_list, caplog):
+    """It logs an info when the key is missing under the dataset prefix."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/metadata.json'},
+    ]
+
+    # Run
+    caplog.set_level(logging.INFO, logger='sdv.datasets.demo')
+    text = _get_text_file_content('single_table', 'dataset1', 'README.txt')
+
+    # Assert
+    assert text is None
+    assert 'No README.txt found for dataset dataset1.' in caplog.text
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test__get_text_file_content_fetch_error_returns_none(mock_list, mock_get):
+    """Test it returns None when the fetch error occurs."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/SOURCE.txt'},
+    ]
+    mock_get.side_effect = Exception('boom')
+
+    # Run
+    text = _get_text_file_content('single_table', 'dataset1', 'SOURCE.txt')
+
+    # Assert
+    assert text is None
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test__get_text_file_content_logs_on_fetch_error(mock_list, mock_get, caplog):
+    """It logs an info when fetching the key raises an error."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/SOURCE.txt'},
+    ]
+    mock_get.side_effect = Exception('boom')
+
+    # Run
+    caplog.set_level(logging.INFO, logger='sdv.datasets.demo')
+    text = _get_text_file_content('single_table', 'dataset1', 'SOURCE.txt')
+
+    # Assert
+    assert text is None
+    assert 'Error fetching SOURCE.txt for dataset dataset1.' in caplog.text
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test__get_text_file_content_writes_file_when_output_filepath_given(
+    mock_list, mock_get, tmp_path
+):
+    """Test it writes the file when the output filepath is given."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/README.txt'},
+    ]
+    mock_get.return_value = 'Write me'.encode()
+    out = tmp_path / 'subdir' / 'readme.txt'
+
+    # Run
+    text = _get_text_file_content('single_table', 'dataset1', 'README.txt', str(out))
+
+    # Assert
+    assert text == 'Write me'
+    with open(out, 'r', encoding='utf-8') as f:
+        assert f.read() == 'Write me'
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test__get_text_file_content_logs_on_save_error(
+    mock_list, mock_get, tmp_path, caplog, monkeypatch
+):
+    """It logs an info when saving to disk fails."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/README.txt'},
+    ]
+    mock_get.return_value = 'Write me'.encode()
+    out = tmp_path / 'subdir' / 'readme.txt'
+
+    def _fail_open(*args, **kwargs):
+        raise OSError('fail-open')
+
+    monkeypatch.setattr('builtins.open', _fail_open)
+
+    # Run
+    caplog.set_level(logging.INFO, logger='sdv.datasets.demo')
+    text = _get_text_file_content('single_table', 'dataset1', 'README.txt', str(out))
+
+    # Assert
+    assert text == 'Write me'
+    assert 'Error saving README.txt for dataset dataset1.' in caplog.text
+
+
+def test_get_readme_and_get_source_call_wrapper(monkeypatch):
+    """Test it calls the wrapper function when the output filepath is given."""
+    # Setup
+    calls = []
+
+    def fake(modality, dataset_name, filename, output_filepath=None):
+        calls.append((modality, dataset_name, filename, output_filepath))
+        return 'X'
+
+    monkeypatch.setattr('sdv.datasets.demo._get_text_file_content', fake)
+
+    # Run
+    r = get_readme('single_table', 'dataset1', '/tmp/readme')
+    s = get_source('single_table', 'dataset1', '/tmp/source')
+
+    # Assert
+    assert r == 'X' and s == 'X'
+    assert calls[0] == ('single_table', 'dataset1', 'README.txt', '/tmp/readme')
+    assert calls[1] == ('single_table', 'dataset1', 'SOURCE.txt', '/tmp/source')

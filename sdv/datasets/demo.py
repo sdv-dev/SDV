@@ -338,3 +338,113 @@ def get_available_demos(modality):
             continue
 
     return pd.DataFrame(tables_info)
+
+
+def _find_text_key(contents, dataset_prefix, filename):
+    """Find a text file key (README.txt or SOURCE.txt).
+
+    Performs a case-insensitive search for ``filename`` directly under ``dataset_prefix``.
+
+    Args:
+        contents (list[dict]):
+            List of objects from S3.
+        dataset_prefix (str):
+            Prefix like 'single_table/dataset/'.
+        filename (str):
+            The filename to look for (e.g., 'README.txt').
+
+    Returns:
+        str or None:
+            The key if found, otherwise ``None``.
+    """
+    expected_lower = f'{dataset_prefix}{filename}'.lower()
+    for entry in contents:
+        key = entry.get('Key') or ''
+        if key.lower() == expected_lower:
+            return key
+
+    return None
+
+
+def _get_text_file_content(modality, dataset_name, filename, output_filepath=None):
+    """Fetch text file content under the dataset prefix.
+
+    Args:
+        modality (str):
+            The modality of the dataset: ``'single_table'``, ``'multi_table'``, ``'sequential'``.
+        dataset_name (str):
+            The name of the dataset.
+        filename (str):
+            The filename to fetch (``'README.txt'`` or ``'SOURCE.txt'``).
+        output_filepath (str or None):
+            If provided, save the file contents at this path.
+
+    Returns:
+        str or None:
+            The decoded text contents if the file exists, otherwise ``None``.
+    """
+    _validate_modalities(modality)
+    dataset_prefix = f'{modality}/{dataset_name}/'
+    contents = _list_objects(dataset_prefix)
+
+    key = _find_text_key(contents, dataset_prefix, filename)
+    if not key:
+        LOGGER.info(f'No {filename} found for dataset {dataset_name}.')
+        return None
+
+    try:
+        raw = _get_data_from_bucket(key)
+    except Exception:
+        LOGGER.info(f'Error fetching {filename} for dataset {dataset_name}.')
+        return None
+
+    text = raw.decode('utf-8', errors='replace')
+    if output_filepath:
+        try:
+            parent = os.path.dirname(str(output_filepath))
+            if parent:
+                os.makedirs(parent, exist_ok=True)
+            with open(output_filepath, 'w', encoding='utf-8') as f:
+                f.write(text)
+
+        except Exception:
+            LOGGER.info(f'Error saving {filename} for dataset {dataset_name}.')
+            pass
+
+    return text
+
+
+def get_source(modality, dataset_name, output_filepath=None):
+    """Get dataset source/citation text.
+
+    Args:
+        modality (str):
+            The modality of the dataset: ``'single_table'``, ``'multi_table'``, ``'sequential'``.
+        dataset_name (str):
+            The name of the dataset to get the source information for.
+        output_filepath (str or None):
+            Optional path where to save the file.
+
+    Returns:
+        str or None:
+            The contents of the source file if it exists; otherwise ``None``.
+    """
+    return _get_text_file_content(modality, dataset_name, 'SOURCE.txt', output_filepath)
+
+
+def get_readme(modality, dataset_name, output_filepath=None):
+    """Get dataset README text.
+
+    Args:
+        modality (str):
+            The modality of the dataset: ``'single_table'``, ``'multi_table'``, ``'sequential'``.
+        dataset_name (str):
+            The name of the dataset to get the README for.
+        output_filepath (str or None):
+            Optional path where to save the file.
+
+    Returns:
+        str or None:
+            The contents of the README file if it exists; otherwise ``None``.
+    """
+    return _get_text_file_content(modality, dataset_name, 'README.txt', output_filepath)
