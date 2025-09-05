@@ -1,0 +1,62 @@
+"""Integration tests for DayZ parameter detection."""
+
+import pandas as pd
+
+from sdv.datasets.demo import download_demo
+from sdv.single_table import DayZSynthesizer
+
+
+class TestDayZSynthesizer:
+    def test_create_parameters_end_to_end(self):
+        """Test the `create_parameters` method end to end."""
+        # Setup
+        data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
+
+        # Run
+        parameters = DayZSynthesizer.create_parameters(data, metadata)
+
+        # Assert
+        expected_results = {
+            'DAYZ_SPEC_VERSION': 'V1',
+            'tables': {
+                'fake_hotel_guests': {
+                    'num_rows': 500,
+                    'columns': {
+                        'guest_email': {'missing_value_proportion': 0.0},
+                        'has_rewards': {
+                            'category_values': [False, True],
+                            'missing_value_proportion': 0.0,
+                        },
+                        'room_type': {
+                            'category_values': ['BASIC', 'DELUXE', 'SUITE'],
+                            'missing_value_proportion': 0.0,
+                        },
+                        'amenities_fee': {
+                            'num_decimal_digits': 2,
+                            'min_value': 0.0,
+                            'max_value': 48.12,
+                            'missing_value_proportion': 0.09,
+                        },
+                        'checkin_date': {
+                            'start_timestamp': pd.Timestamp('2020-01-05 00:00:00'),
+                            'end_timestamp': pd.Timestamp('2021-01-07 00:00:00'),
+                            'missing_value_proportion': 0.0,
+                        },
+                        'checkout_date': {
+                            'start_timestamp': pd.Timestamp('2020-01-07 00:00:00'),
+                            'end_timestamp': pd.Timestamp('2021-01-08 00:00:00'),
+                            'missing_value_proportion': 0.04,
+                        },
+                        'room_rate': {
+                            'num_decimal_digits': 2,
+                            'min_value': 83.8,
+                            'max_value': 424.84,
+                            'missing_value_proportion': 0.0,
+                        },
+                        'billing_address': {'missing_value_proportion': 0.0},
+                        'credit_card_number': {'missing_value_proportion': 0.0},
+                    },
+                },
+            },
+        }
+        assert parameters == expected_results
