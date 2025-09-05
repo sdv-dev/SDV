@@ -36,7 +36,7 @@ def test_detect_column_parameter():
         'tables': {
             'table_name': {
                 'columns': {
-                    'num_col': {'sdtype': 'numeric'},
+                    'num_col': {'sdtype': 'numerical'},
                     'cat_col': {'sdtype': 'categorical'},
                     'date_col': {'sdtype': 'datetime'},
                 }
@@ -90,7 +90,7 @@ def test_create_parameters(mock_detect_table, mock_detect_column):
 
     # Assert
     metadata.validate.assert_called_once()
-    metadata.validate_data.assert_called_once_with(data)
+    metadata.validate_data.assert_called_once_with({'table_name': data})
     mock_detect_table.assert_called_once_with(data)
     mock_detect_column.assert_called_once_with(data, metadata, 'table_name')
     assert result == {
