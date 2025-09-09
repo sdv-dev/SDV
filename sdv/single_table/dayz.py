@@ -161,6 +161,27 @@ def _validate_parameters(metadata, dayz_parameters):
         _validate_table_parameters(table, table_metadata, table_parameters)
 
 
+def validate_parameters(metadata, my_parameters):
+    """Validate a DayZSynthesizer parameters dictionary.
+
+    Args:
+        metadata (sdv.Metadata):
+            Metadata for the data.
+        my_parameters (dict):
+            The DayZ parameter dictionary.
+    """
+    metadata.validate()
+    _validate_parameter_structure(my_parameters)
+    if 'relationships' in my_parameters:
+        msg = (
+            "Invalid DayZ parameter 'relationships' for single-table DayZSynthesizer. "
+            'Please muse multi-table DayZSynthesizer instead.'
+        )
+        raise SynthesizerProcessingError(msg)
+
+    _validate_parameters(metadata, my_parameters)
+
+
 class DayZSynthesizer:
     """Single-Table DayZSynthesizer for public SDV."""
 
@@ -179,13 +200,4 @@ class DayZSynthesizer:
             my_parameters (dict):
                 The DayZ parameter dictionary.
         """
-        metadata.validate()
-        _validate_parameter_structure(my_parameters)
-        if 'relationships' in my_parameters:
-            msg = (
-                "Invalid DayZ parameter 'relationships' for single-table DayZSynthesizer. "
-                'Please muse multi-table DayZSynthesizer instead.'
-            )
-            raise SynthesizerProcessingError(msg)
-
-        _validate_parameters(metadata, my_parameters)
+        validate_parameters(metadata, my_parameters)
