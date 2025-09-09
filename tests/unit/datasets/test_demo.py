@@ -169,6 +169,7 @@ def test_download_demo_single_table_no_output_folder(mock_list, mock_get):
     # Run
     table, metadata = download_demo('single_table', 'ring')
 
+    # Assert
     expected_table = pd.DataFrame({'0': [0, 0], '1': [0, 0]})
     pd.testing.assert_frame_equal(table.head(2), expected_table)
     expected_metadata_dict = {
@@ -222,6 +223,8 @@ def test_download_demo_timeseries(mock_list, mock_get, tmpdir):
 
     # Run
     table, metadata = download_demo('sequential', 'Libras', tmpdir / 'test_folder')
+
+    # Assert
     expected_table = pd.DataFrame({
         'ml_class': [1, 1],
         'e_id': [0, 0],
