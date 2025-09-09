@@ -28,10 +28,14 @@ def _validate_parameter_structure(dayz_parameters):
     if unknown_base_keys:
         unknown_base_keys = "', '".join(unknown_base_keys)
         raise SynthesizerProcessingError(
-            f"DayZ parameters contains unexpected key(s): {unknown_base_keys}'."
+            f"DayZ parameters contains unexpected key(s): '{unknown_base_keys}'."
         )
 
-    if not isinstance(dayz_parameters.get('tables', {}), dict):
+    table_parameters = dayz_parameters.get('tables', {})
+    if (
+        not isinstance(table_parameters, dict) or
+        not all(isinstance(value, dict) for value in table_parameters.values())
+    ):
         raise SynthesizerProcessingError(
             "The 'tables' value must be a dictionary of table parameters."
         )
@@ -53,13 +57,13 @@ def _validate_column_parameters(table, column, column_metadata, column_parameter
     unknown_column_parameters = column_parameters.keys() - set(sdtype_parameters)
     if unknown_column_parameters:
         unknown_column_parameters = "', '".join(unknown_column_parameters)
-        msg = f"{column_table_msg}' contains unexpected key(s) {unknown_column_parameters}."
+        msg = f"The {column_table_msg} contains unexpected key(s) '{unknown_column_parameters}'."
         raise SynthesizerProcessingError(msg)
 
     if sdtype == 'numerical':
         for param in ['min_value', 'max_value']:
             if param in column_parameters and not _is_numerical(column_parameters[param]):
-                msg = f"'{param}' for {column_table_msg}' must be a float."
+                msg = f"'{param}' for {column_table_msg} must be a float."
                 raise SynthesizerProcessingError(msg)
 
         if 'min_value' in column_parameters and 'max_value' in column_parameters:
@@ -73,7 +77,7 @@ def _validate_column_parameters(table, column, column_metadata, column_parameter
         datetime_format = column_metadata.get('datetime_format')
         for param in ['start_timestamp', 'end_timestamp']:
             if param in column_parameters and not isinstance(column_parameters[param], str):
-                msg = f"'{param}' for {column_table_msg}' must be a string."
+                msg = f"'{param}' for {column_table_msg} must be a string."
                 raise SynthesizerProcessingError(msg)
 
             try:
@@ -104,16 +108,16 @@ def _validate_column_parameters(table, column, column_metadata, column_parameter
                 raise SynthesizerProcessingError(msg)
     elif sdtype == 'categorical':
         if not isinstance(column_parameters.get('category_values', []), list):
-            msg = f"'category_values' for {column_table_msg}' must be a list."
+            msg = f"'category_values' for {column_table_msg} must be a list."
             raise SynthesizerProcessingError(msg)
 
-    if 'missing_value_proportion' in column_parameters:
-        missing_value_proportion = column_parameters['missin_value_proportion']
-        if not _is_numerical(missing_value_proportion) or (
-            missing_value_proportion < 0.0 or missing_value_proportion > 1.0
+    if 'missing_values_proportion' in column_parameters:
+        missing_values_proportion = column_parameters['missing_values_proportion']
+        if not _is_numerical(missing_values_proportion) or (
+            missing_values_proportion < 0.0 or missing_values_proportion > 1.0
         ):
             msg = (
-                f"'missing_value_proportion' for {column_table_msg}' "
+                f"'missing_values_proportion' for {column_table_msg} "
                 'must be a float between 0.0 and 1.0.'
             )
             raise SynthesizerProcessingError(msg)
@@ -138,7 +142,7 @@ def _validate_table_parameters(table, table_metadata, table_parameters):
         raise SynthesizerProcessingError(msg)
 
     for column, column_parameters in table_parameters.get('columns', {}).items():
-        _validate_column_parameters(table, column, table_metadata.colums[column], column_parameters)
+        _validate_column_parameters(table, column, table_metadata.columns[column], column_parameters)
 
 
 def _validate_parameters(metadata, dayz_parameters):
@@ -152,7 +156,7 @@ def _validate_parameters(metadata, dayz_parameters):
         )
         raise SynthesizerProcessingError(msg)
 
-    for table, table_parameters in dayz_parameters.get(tables, {}).items():
+    for table, table_parameters in dayz_parameters.get('tables', {}).items():
         table_metadata = metadata.tables[table]
         _validate_table_parameters(table, table_metadata, table_parameters)
 
@@ -162,7 +166,7 @@ class DayZSynthesizer:
 
     def __init__(*args, **kwargs):
         raise SynthesizerProcessingError(
-            'DayZSynthesizer is not available, please contact SDV-dev for $$$'
+            'DayZSynthesizer is not available.'
         )
 
     @staticmethod

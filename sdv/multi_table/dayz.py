@@ -11,7 +11,7 @@ REQUIRED_RELATIONSHIP_KEYS = [
 ]
 RELATIONSHIP_PARAMETER_KEYS = REQUIRED_RELATIONSHIP_KEYS + [
     'min_cardinality',
-    'cardinality',
+    'max_cardinality',
 ]
 
 DEFAULT_NUM_ROWS = 1000
@@ -19,7 +19,7 @@ DEFAULT_NUM_ROWS = 1000
 
 def _validate_relationship_structure(dayz_parameters):
     if not isinstance(dayz_parameters.get('relationships', []), list):
-        raise SynthesizerProcessingError("The 'relationships' key must be a list.")
+        raise SynthesizerProcessingError("The 'relationships' value must be a list.")
 
     for relationship in dayz_parameters.get('relationships', []):
         unknown_relationship_parameters = relationship.keys() - set(RELATIONSHIP_PARAMETER_KEYS)
@@ -33,6 +33,31 @@ def _validate_relationship_structure(dayz_parameters):
             msg = f"Relationship missing required key(s) '{missing_relationship_parameters}'."
             raise SynthesizerProcessingError(msg)
 
+        if 'min_cardinality' in relationship:
+            min_cardinality = relationship['min_cardinality']
+            if not isinstance(min_cardinality, int) or min_cardinality < 0:
+                msg = (
+                    f"Invalid 'min_cardinality' {min_cardinality}. 'min_cardinality' "
+                    'must be an integer greater than or equal to zero.'
+                )
+                raise SynthesizerProcessingError(msg)
+        if 'max_cardinality' in relationship:
+            max_cardinality = relationship['max_cardinality']
+            if not isinstance(max_cardinality, int) or max_cardinality <= 0:
+                msg = (
+                    f"Invalid 'max_cardinality' {max_cardinality}. 'max_cardinality' "
+                    'must be an integer greater than zero.'
+                )
+                raise SynthesizerProcessingError(msg)
+
+        if 'max_cardinality' in relationship and 'min_cardinality' in relationship:
+            if relationship['min_cardinality'] > relationship['max_cardinality']:
+                msg = (
+                    "Invalid cardinality, 'min_cardinality' must be less than or "
+                    "equal to 'max_cardinality'."
+                )
+                raise SynthesizerProcessingError(msg)
+
 
 def _validate_cardinality(relationship_parameters, parent_num_rows, child_num_rows):
     """Validate that the relationship cardinality works with the set number of rows."""
@@ -41,19 +66,19 @@ def _validate_cardinality(relationship_parameters, parent_num_rows, child_num_ro
     min_cardinality = relationship_parameters.get('min_cardinality', 0)
     max_cardinality = relationship_parameters.get('max_cardinality')
 
-    min_parent_size = min_cardinality * child_num_rows
-    max_parent_size = max_cardinality * child_num_rows if max_cardinality else None
+    min_child_size = min_cardinality * parent_num_rows
+    max_child_size = max_cardinality * parent_num_rows if max_cardinality else None
 
-    if parent_num_rows < min_parent_size:
+    if child_num_rows < min_child_size:
         msg = (
             f'Invalid cardinality for relationship {relationship_parameters}. '
-            f'Minimum cardinality requires parent table to be at least {min_parent_size} rows.'
+            f'Minimum cardinality requires child table to be at least {min_child_size} rows.'
         )
         raise SynthesizerProcessingError(msg)
-    if max_parent_size and parent_num_rows > max_parent_size:
+    if max_child_size and child_num_rows > max_child_size:
         msg = (
             f'Invalid cardinality for relationship {relationship_parameters}. '
-            f'Maximum cardinality requires parent table to be less than {max_parent_size} rows.'
+            f'Maximum cardinality requires child table to be less than {max_child_size} rows.'
         )
         raise SynthesizerProcessingError(msg)
 
@@ -72,6 +97,7 @@ def _validate_relationship_parameters(metadata, dayz_parameters):
             raise SynthesizerProcessingError(msg)
         elif relationship in seen_relationships:
             msg = f'Multiple entries for relationship {relationship} in parameters.'
+            raise SynthesizerProcessingError(msg)
 
         seen_relationships.append(relationship)
 
@@ -84,6 +110,11 @@ def _validate_relationship_parameters(metadata, dayz_parameters):
 
 class DayZSynthesizer:
     """Multi-Table DayZSynthesizer for public SDV."""
+
+    def __init__(*args, **kwargs):
+        raise SynthesizerProcessingError(
+            'DayZSynthesizer is not available.'
+        )
 
     @staticmethod
     def validate_parameters(metadata, my_parameters):
