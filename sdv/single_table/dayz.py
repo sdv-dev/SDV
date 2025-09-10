@@ -32,9 +32,8 @@ def _validate_parameter_structure(dayz_parameters):
         )
 
     table_parameters = dayz_parameters.get('tables', {})
-    if (
-        not isinstance(table_parameters, dict) or
-        not all(isinstance(value, dict) for value in table_parameters.values())
+    if not isinstance(table_parameters, dict) or not all(
+        isinstance(value, dict) for value in table_parameters.values()
     ):
         raise SynthesizerProcessingError(
             "The 'tables' value must be a dictionary of table parameters."
@@ -142,10 +141,12 @@ def _validate_table_parameters(table, table_metadata, table_parameters):
         raise SynthesizerProcessingError(msg)
 
     for column, column_parameters in table_parameters.get('columns', {}).items():
-        _validate_column_parameters(table, column, table_metadata.columns[column], column_parameters)
+        _validate_column_parameters(
+            table, column, table_metadata.columns[column], column_parameters
+        )
 
 
-def _validate_parameters(metadata, dayz_parameters):
+def _validate_tables_parameter(metadata, dayz_parameters):
     tables = dayz_parameters.get('tables', {}).keys()
     missing_tables = tables - metadata.tables.keys()
     if missing_tables:
@@ -161,7 +162,7 @@ def _validate_parameters(metadata, dayz_parameters):
         _validate_table_parameters(table, table_metadata, table_parameters)
 
 
-def validate_parameters(metadata, my_parameters):
+def _validate_parameters(metadata, my_parameters):
     """Validate a DayZSynthesizer parameters dictionary.
 
     Args:
@@ -175,20 +176,18 @@ def validate_parameters(metadata, my_parameters):
     if 'relationships' in my_parameters:
         msg = (
             "Invalid DayZ parameter 'relationships' for single-table DayZSynthesizer. "
-            'Please muse multi-table DayZSynthesizer instead.'
+            'Please use multi-table DayZSynthesizer instead.'
         )
         raise SynthesizerProcessingError(msg)
 
-    _validate_parameters(metadata, my_parameters)
+    _validate_tables_parameter(metadata, my_parameters)
 
 
 class DayZSynthesizer:
     """Single-Table DayZSynthesizer for public SDV."""
 
     def __init__(*args, **kwargs):
-        raise SynthesizerProcessingError(
-            'DayZSynthesizer is not available.'
-        )
+        raise SynthesizerProcessingError('DayZSynthesizer is not available.')
 
     @staticmethod
     def validate_parameters(metadata, my_parameters):
@@ -200,4 +199,4 @@ class DayZSynthesizer:
             my_parameters (dict):
                 The DayZ parameter dictionary.
         """
-        validate_parameters(metadata, my_parameters)
+        _validate_parameters(metadata, my_parameters)

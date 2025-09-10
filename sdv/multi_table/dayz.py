@@ -1,7 +1,7 @@
 """Multi-table DayZSynthesizer."""
 
 from sdv.errors import SynthesizerProcessingError
-from sdv.single_table.dayz import _validate_parameter_structure, _validate_parameters
+from sdv.single_table.dayz import _validate_parameter_structure, _validate_tables_parameter
 
 REQUIRED_RELATIONSHIP_KEYS = [
     'parent_table_name',
@@ -108,7 +108,7 @@ def _validate_relationship_parameters(metadata, dayz_parameters):
         _validate_cardinality(relationship_parameters, parent_num_rows, child_num_rows)
 
 
-def validate_parameters(metadata, my_parameters):
+def _validate_parameters(metadata, my_parameters):
     """Validate a DayZSynthesizer parameters dictionary.
 
     Args:
@@ -120,7 +120,7 @@ def validate_parameters(metadata, my_parameters):
     metadata.validate()
     _validate_parameter_structure(my_parameters)
     _validate_relationship_structure(my_parameters)
-    _validate_parameters(metadata, my_parameters)
+    _validate_tables_parameter(metadata, my_parameters)
     _validate_relationship_parameters(metadata, my_parameters)
 
 
@@ -128,9 +128,7 @@ class DayZSynthesizer:
     """Multi-Table DayZSynthesizer for public SDV."""
 
     def __init__(*args, **kwargs):
-        raise SynthesizerProcessingError(
-            'DayZSynthesizer is not available.'
-        )
+        raise SynthesizerProcessingError('DayZSynthesizer is not available.')
 
     @staticmethod
     def validate_parameters(metadata, my_parameters):
@@ -142,4 +140,4 @@ class DayZSynthesizer:
             my_parameters (dict):
                 The DayZ parameter dictionary.
         """
-        validate_parameters(metadata, my_parameters)
+        _validate_parameters(metadata, my_parameters)

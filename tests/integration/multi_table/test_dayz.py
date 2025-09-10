@@ -24,7 +24,7 @@ def test_validate_parameters():
                     'numerical': {'sdtype': 'numerical'},
                     'pii': {'sdtype': 'ssn'},
                 }
-            }
+            },
         },
         'relationships': [
             {
@@ -33,7 +33,7 @@ def test_validate_parameters():
                 'parent_primary_key': 'id',
                 'child_foreign_key': 'child_fk',
             }
-        ]
+        ],
     })
 
     dayz_parameters = {
@@ -57,7 +57,7 @@ def test_validate_parameters():
                 'min_cardinality': 1,
                 'max_cardinality': 10,
             }
-        ]
+        ],
     }
 
     # Run and Assert

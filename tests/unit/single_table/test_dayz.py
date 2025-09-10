@@ -12,6 +12,7 @@ from sdv.single_table.dayz import (
     _validate_parameter_structure,
     _validate_parameters,
     _validate_table_parameters,
+    _validate_tables_parameter,
 )
 
 
@@ -217,7 +218,7 @@ def test__validate_table_parameters(mock__validate_column_parameters, metadata, 
 
 
 @patch('sdv.single_table.dayz._validate_table_parameters')
-def test__validate_parameters(mock__validate_table_parameters, metadata, dayz_parameters):
+def test__validate_tables_parameter(mock__validate_table_parameters, metadata, dayz_parameters):
     """Test validating DayZ parameters."""
     # Setup
     bad_table_parameters = {'tables': {'bad_table': {}}}
@@ -227,14 +228,53 @@ def test__validate_parameters(mock__validate_table_parameters, metadata, dayz_pa
         "Invalid DayZ parameters provided, table(s) 'bad_table' are missing from the metadata."
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_msg):
-        _validate_parameters(metadata, bad_table_parameters)
+        _validate_tables_parameter(metadata, bad_table_parameters)
 
-    _validate_parameters(metadata, dayz_parameters)
+    _validate_tables_parameter(metadata, dayz_parameters)
 
     # Assert
     mock__validate_table_parameters.assert_called_once_with(
         'table', metadata.tables['table'], dayz_parameters['tables']['table']
     )
+
+
+@patch('sdv.single_table.dayz._validate_tables_parameter')
+@patch('sdv.single_table.dayz._validate_parameter_structure')
+def test__validate_parameters(
+    mock__validate_parameter_structure,
+    mock__validate_tables_parameter,
+    metadata,
+    dayz_parameters,
+):
+    """Test the ``_validate_parameters`` function"""
+    # Run
+    _validate_parameters(metadata, dayz_parameters)
+
+    # Assert
+    mock__validate_parameter_structure.assert_called_once_with(dayz_parameters)
+    mock__validate_tables_parameter.assert_called_once_with(metadata, dayz_parameters)
+
+
+@patch('sdv.single_table.dayz._validate_parameter_structure')
+def test_validate_parameters_errors_with_relationship(
+    mock__validate_parameter_structure,
+    metadata,
+    dayz_parameters,
+):
+    """Test ``validate_parameters`` errors if relationships provided.."""
+    # Setup
+    dayz_parameters = {**dayz_parameters, 'relationships': [{}]}
+
+    # Run and Assert
+    expected_error_msg = re.escape(
+        "Invalid DayZ parameter 'relationships' for single-table DayZSynthesizer. "
+        'Please use multi-table DayZSynthesizer instead.'
+    )
+    with pytest.raises(SynthesizerProcessingError, match=expected_error_msg):
+        _validate_parameters(metadata, dayz_parameters)
+
+    # Assert
+    mock__validate_parameter_structure.assert_called_once_with(dayz_parameters)
 
 
 class TestDayZSynthesizer:
@@ -245,12 +285,10 @@ class TestDayZSynthesizer:
         with pytest.raises(SynthesizerProcessingError, match=expected_error_msg):
             DayZSynthesizer(metadata)
 
-    @patch('sdv.single_table.dayz._validate_parameter_structure')
     @patch('sdv.single_table.dayz._validate_parameters')
     def test_validate_parameters(
         self,
         mock__validate_parameters,
-        mock__validate_parameter_structure,
         metadata,
         dayz_parameters,
     ):
@@ -259,27 +297,4 @@ class TestDayZSynthesizer:
         DayZSynthesizer.validate_parameters(metadata, dayz_parameters)
 
         # Assert
-        mock__validate_parameter_structure.assert_called_once_with(dayz_parameters)
         mock__validate_parameters.assert_called_once_with(metadata, dayz_parameters)
-
-    @patch('sdv.single_table.dayz._validate_parameter_structure')
-    def test_validate_parameters_errors_with_relationship(
-        self,
-        mock__validate_parameter_structure,
-        metadata,
-        dayz_parameters,
-    ):
-        """Test the ``validate_parameters`` method."""
-        # Setup
-        dayz_parameters = {**dayz_parameters, 'relationships': []}
-
-        # Run and Assert
-        expected_error_msg = re.escape(
-            "Invalid DayZ parameter 'relationships' for single-table DayZSynthesizer. "
-            'Please muse multi-table DayZSynthesizer instead.'
-        )
-        with pytest.raises(SynthesizerProcessingError, match=expected_error_msg):
-            DayZSynthesizer.validate_parameters(metadata, dayz_parameters)
-
-        # Assert
-        mock__validate_parameter_structure.assert_called_once_with(dayz_parameters)
