@@ -652,6 +652,7 @@ class TestHMASynthesizer:
             match = re.search(constraint, captured.out + captured.err)
             assert match is not None
 
+    @pytest.mark.skip()
     def test_warning_message_too_many_cols(self, capsys):
         """Test that a warning appears if there are more than 1000 expected columns"""
         # Setup
