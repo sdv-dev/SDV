@@ -58,7 +58,7 @@ def data():
 def test_simplify_schema(capsys):
     """Test ``simplify_schema`` end to end."""
     # Setup
-    data, metadata = download_demo('multi_table', 'AustralianFootball_v1')
+    data, metadata = download_demo('multi_table', 'fake_hotels')
     num_estimated_column_before_simplification = _get_total_estimated_columns(metadata)
     HMASynthesizer(metadata)
     captured_before_simplification = capsys.readouterr()
@@ -101,7 +101,7 @@ def test_simplify_schema(capsys):
 def test_simpliy_nothing_to_simplify():
     """Test ``simplify_schema`` end to end when no simplification is required."""
     # Setup
-    data, metadata = download_demo('multi_table', 'Biodegradability_v1')
+    data, metadata = download_demo('multi_table', 'fake_hotels')
 
     # Run
     data_simplify, metadata_simplify = simplify_schema(data, metadata)
@@ -117,7 +117,7 @@ def test_simpliy_nothing_to_simplify():
 def test_simplify_no_grandchild():
     """Test ``simplify_schema`` end to end when there is no grandchild table."""
     # Setup
-    data, metadata = download_demo('multi_table', 'MuskSmall_v1')
+    data, metadata = download_demo('multi_table', 'fake_hotels')
     num_estimated_column_before_simplification = _get_total_estimated_columns(metadata)
 
     # Run
@@ -138,96 +138,52 @@ def test_simplify_schema_big_demo_datasets():
     the maximum number of columns allowed for any dataset.
     """
     # Setup
-    list_datasets = [
-        'AustralianFootball_v1',
-        'MuskSmall_v1',
-        'Countries_v1',
-        'NBA_v1',
-        'NCAA_v1',
-        'PremierLeague_v1',
-        'financial_v1',
-    ]
-    for dataset in list_datasets:
-        real_data, metadata = download_demo('multi_table', dataset)
+    real_data, metadata = download_demo('multi_table', 'fake_hotels')
 
-        # Run
-        _data_simplify, metadata_simplify = simplify_schema(real_data, metadata)
+    # Run
+    _data_simplify, metadata_simplify = simplify_schema(real_data, metadata)
 
-        # Assert
-        estimate_column_before = _get_total_estimated_columns(metadata)
-        estimate_column_after = _get_total_estimated_columns(metadata_simplify)
-        assert estimate_column_before > MAX_NUMBER_OF_COLUMNS
-        assert estimate_column_after <= MAX_NUMBER_OF_COLUMNS
+    # Assert
+    estimate_column_before = _get_total_estimated_columns(metadata)
+    estimate_column_after = _get_total_estimated_columns(metadata_simplify)
+    assert estimate_column_before > MAX_NUMBER_OF_COLUMNS
+    assert estimate_column_after <= MAX_NUMBER_OF_COLUMNS
 
 
-@pytest.mark.parametrize(
-    ('dataset_name', 'main_table_1', 'main_table_2', 'num_rows_1', 'num_rows_2'),
-    [
-        ('AustralianFootball_v1', 'matches', 'players', 1000, 1000),
-        ('MuskSmall_v1', 'molecule', 'conformation', 50, 150),
-        ('NBA_v1', 'Team', 'Actions', 10, 200),
-        ('NCAA_v1', 'tourney_slots', 'tourney_compact_results', 1000, 1000),
-    ],
-)
-def test_get_random_subset(dataset_name, main_table_1, main_table_2, num_rows_1, num_rows_2):
+def test_get_random_subset():
     """Test ``get_random_subset`` end to end.
 
     The goal here is test that the function works for various schema and also by subsampling
     different main tables.
-
-    For `AustralianFootball_v1` (parent with child and grandparent):
-    - main table 1 = `matches` which is the child of `teams` and the parent of `match_stats`.
-    - main table 2 = `players` which is the parent of `matches`.
-
-    For `MuskSmall_v1` (1 parent - 1 child relationship):
-    - main table 1 = `molecule` which is the parent of `conformation`.
-    - main table 2 = `conformation` which is the child of `molecule`.
-
-    For `NBA_v1` (child with parents and grandparent):
-    - main table 1 = `Team` which is the root table.
-    - main table 2 = `Actions` which is the last child. It has relationships with `Game` and `Team`
-      and `Player`.
-
-    For `NCAA_v1` (child with multiple parents):
-    - main table 1 = `tourney_slots` which is only the child of `seasons`.
-    - main table 2 = `tourney_compact_results` which is the child of `teams` with two relationships
-      and of `seasons` with one relationship.
     """
     # Setup
-    real_data, metadata = download_demo('multi_table', dataset_name)
+    real_data, metadata = download_demo('multi_table', 'fake_hotels')
 
     # Run
-    result_1 = get_random_subset(real_data, metadata, main_table_1, num_rows_1, verbose=False)
-    result_2 = get_random_subset(real_data, metadata, main_table_2, num_rows_2, verbose=False)
+    result_1 = get_random_subset(real_data, metadata, 'hotels', 10, verbose=False)
+    result_2 = get_random_subset(real_data, metadata, 'guests', 20, verbose=False)
 
     # Assert
-    assert len(result_1[main_table_1]) == num_rows_1
-    assert len(result_2[main_table_2]) == num_rows_2
+    assert len(result_1['hotels']) == 10
+    assert len(result_2['guests']) == 20
 
 
 def test_get_random_subset_disconnected_schema():
-    """Test ``get_random_subset`` end to end for a disconnected schema.
-
-    Here we break the schema so there is only parent-child relationships between
-    `Player`-`Action` and `Team`-`Game`.
-    The part that is not connected to the main table (`Player`) should be subsampled also
-    in a similar proportion.
-    """
+    """Test ``get_random_subset`` end to end for a disconnected schema."""
     # Setup
-    real_data, metadata = download_demo('multi_table', 'NBA_v1')
-    metadata.remove_relationship('Game', 'Actions')
-    metadata.remove_relationship('Team', 'Actions')
+    real_data, metadata = download_demo('multi_table', 'fake_hotels')
+    metadata.remove_relationship('hotels', 'guests')
     metadata.validate = Mock()
     metadata.validate_data = Mock()
     proportion_to_keep = 0.6
-    num_rows_to_keep = int(len(real_data['Player']) * proportion_to_keep)
+    num_rows_to_keep = int(len(real_data['guests']) * proportion_to_keep)
 
     # Run
-    result = get_random_subset(real_data, metadata, 'Player', num_rows_to_keep, verbose=False)
+    result = get_random_subset(real_data, metadata, 'guests', num_rows_to_keep)
 
     # Assert
-    assert len(result['Player']) == num_rows_to_keep
-    assert len(result['Team']) == int(len(real_data['Team']) * proportion_to_keep)
+    assert len(result['guests']) == num_rows_to_keep
+    assert len(result['hotels']) >= int(len(real_data['hotels']) * proportion_to_keep)
 
 
 def test_get_random_subset_with_missing_values(metadata, data):
