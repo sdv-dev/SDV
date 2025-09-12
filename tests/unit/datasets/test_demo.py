@@ -617,6 +617,7 @@ def test__find_text_key_returns_none_when_missing():
     assert key is None
 
 
+<<<<<<< HEAD
 def test__find_text_key_ignores_nested_paths():
     """Test it ignores files in nested folders under the dataset prefix."""
     # Setup
@@ -632,6 +633,8 @@ def test__find_text_key_ignores_nested_paths():
     assert key is None
 
 
+=======
+>>>>>>> cb8aa49a (Rebase)
 @patch('sdv.datasets.demo._get_data_from_bucket')
 @patch('sdv.datasets.demo._list_objects')
 def test__get_text_file_content_happy_path(mock_list, mock_get, tmpdir):
@@ -664,6 +667,7 @@ def test__get_text_file_content_missing_key_returns_none(mock_list):
     assert text is None
 
 
+<<<<<<< HEAD
 @patch('sdv.datasets.demo._list_objects')
 def test__get_text_file_content_logs_when_missing_key(mock_list, caplog):
     """It logs an info when the key is missing under the dataset prefix."""
@@ -681,6 +685,8 @@ def test__get_text_file_content_logs_when_missing_key(mock_list, caplog):
     assert 'No README.txt found for dataset dataset1.' in caplog.text
 
 
+=======
+>>>>>>> cb8aa49a (Rebase)
 @patch('sdv.datasets.demo._get_data_from_bucket')
 @patch('sdv.datasets.demo._list_objects')
 def test__get_text_file_content_fetch_error_returns_none(mock_list, mock_get):
@@ -700,6 +706,7 @@ def test__get_text_file_content_fetch_error_returns_none(mock_list, mock_get):
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
 @patch('sdv.datasets.demo._list_objects')
+<<<<<<< HEAD
 def test__get_text_file_content_logs_on_fetch_error(mock_list, mock_get, caplog):
     """It logs an info when fetching the key raises an error."""
     # Setup
@@ -719,6 +726,8 @@ def test__get_text_file_content_logs_on_fetch_error(mock_list, mock_get, caplog)
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
 @patch('sdv.datasets.demo._list_objects')
+=======
+>>>>>>> cb8aa49a (Rebase)
 def test__get_text_file_content_writes_file_when_output_filepath_given(
     mock_list, mock_get, tmp_path
 ):
@@ -739,6 +748,7 @@ def test__get_text_file_content_writes_file_when_output_filepath_given(
         assert f.read() == 'Write me'
 
 
+<<<<<<< HEAD
 @patch('sdv.datasets.demo._get_data_from_bucket')
 @patch('sdv.datasets.demo._list_objects')
 def test__get_text_file_content_logs_on_save_error(
@@ -766,6 +776,8 @@ def test__get_text_file_content_logs_on_save_error(
     assert 'Error saving README.txt for dataset dataset1.' in caplog.text
 
 
+=======
+>>>>>>> cb8aa49a (Rebase)
 def test_get_readme_and_get_source_call_wrapper(monkeypatch):
     """Test it calls the wrapper function when the output filepath is given."""
     # Setup
