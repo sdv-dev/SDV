@@ -652,11 +652,28 @@ class TestHMASynthesizer:
             match = re.search(constraint, captured.out + captured.err)
             assert match is not None
 
-    @pytest.mark.skip()
     def test_warning_message_too_many_cols(self, capsys):
         """Test that a warning appears if there are more than 1000 expected columns"""
         # Setup
-        (_, metadata) = download_demo(modality='multi_table', dataset_name='fake_hotels')
+        parent_columns = {'parent_id': {'sdtype': 'id'}, 'parent_data': {'sdtype': 'categorical'}}
+        child_columns = {'child_id': {'sdtype': 'id'}, 'parent_id': {'sdtype': 'id'}}
+        for i in range(999):
+            child_columns[f'col_{i}'] = {'sdtype': 'categorical'}
+
+        large_metadata = Metadata.load_from_dict({
+            'tables': {
+                'parent': {'columns': parent_columns, 'primary_key': 'parent_id'},
+                'child': {'columns': child_columns, 'primary_key': 'child_id'},
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'parent_id',
+                    'child_table_name': 'child',
+                    'child_foreign_key': 'parent_id',
+                }
+            ],
+        })
 
         key_phrases = [
             r'PerformanceAlert:',
@@ -665,7 +682,7 @@ class TestHMASynthesizer:
         ]
 
         # Run
-        HMASynthesizer(metadata)
+        HMASynthesizer(large_metadata)
 
         captured = capsys.readouterr()
 
@@ -673,7 +690,35 @@ class TestHMASynthesizer:
         for constraint in key_phrases:
             match = re.search(constraint, captured.out + captured.err)
             assert match is not None
-        (_, small_metadata) = download_demo(modality='multi_table', dataset_name='trains_v1')
+
+        # Setup small metadata that shouldn't trigger warning
+        small_metadata = Metadata.load_from_dict({
+            'tables': {
+                'parent': {
+                    'columns': {
+                        'parent_id': {'sdtype': 'id'},
+                        'parent_data': {'sdtype': 'categorical'},
+                    },
+                    'primary_key': 'parent_id',
+                },
+                'child': {
+                    'columns': {
+                        'child_id': {'sdtype': 'id'},
+                        'parent_id': {'sdtype': 'id'},
+                        'child_data': {'sdtype': 'categorical'},
+                    },
+                    'primary_key': 'child_id',
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'parent_id',
+                    'child_table_name': 'child',
+                    'child_foreign_key': 'parent_id',
+                }
+            ],
+        })
 
         # Run
         HMASynthesizer(small_metadata)
