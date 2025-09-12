@@ -4,7 +4,6 @@ import io
 import json
 import logging
 import os
-import warnings
 from collections import defaultdict
 from pathlib import Path
 from zipfile import ZipFile
@@ -12,15 +11,16 @@ from zipfile import ZipFile
 import boto3
 import numpy as np
 import pandas as pd
+import yaml
 from botocore import UNSIGNED
 from botocore.client import Config
-from botocore.exceptions import ClientError
 
+from sdv.errors import DemoResourceNotFoundError
 from sdv.metadata.metadata import Metadata
 
 LOGGER = logging.getLogger(__name__)
-BUCKET = 'sdv-demo-datasets'
-BUCKET_URL = 'https://sdv-demo-datasets.s3.amazonaws.com'
+BUCKET = 'sdv-datasets-public'
+BUCKET_URL = 'https://sdv-datasets-public.s3.amazonaws.com'
 SIGNATURE_VERSION = UNSIGNED
 METADATA_FILENAME = 'metadata.json'
 
@@ -39,27 +39,113 @@ def _validate_output_folder(output_folder_name):
         )
 
 
+def _create_s3_client():
+    """Create and return an S3 client with unsigned requests."""
+    return boto3.client('s3', config=Config(signature_version=SIGNATURE_VERSION))
+
+
 def _get_data_from_bucket(object_key):
-    session = boto3.Session()
-    s3 = session.client('s3', config=Config(signature_version=SIGNATURE_VERSION))
+    s3 = _create_s3_client()
     response = s3.get_object(Bucket=BUCKET, Key=object_key)
     return response['Body'].read()
 
 
-def _download(modality, dataset_name):
-    dataset_url = f'{BUCKET_URL}/{modality.upper()}/{dataset_name}.zip'
-    object_key = f'{modality.upper()}/{dataset_name}.zip'
-    LOGGER.info(f'Downloading dataset {dataset_name} from {dataset_url}')
-    try:
-        file_content = _get_data_from_bucket(object_key)
-    except ClientError:
-        raise ValueError(
-            f"Invalid dataset name '{dataset_name}'. "
-            'Make sure you have the correct modality for the dataset name or '
-            "use 'get_available_demos' to get a list of demo datasets."
-        )
+def _list_objects(prefix):
+    """List all objects under a given prefix using pagination.
 
-    return io.BytesIO(file_content)
+    Args:
+        prefix (str):
+            The S3 prefix to list.
+
+    Returns:
+        list[dict]:
+            A list of object summaries.
+    """
+    client = _create_s3_client()
+    contents = []
+    paginator = client.get_paginator('list_objects_v2')
+    for resp in paginator.paginate(Bucket=BUCKET, Prefix=prefix):
+        contents.extend(resp.get('Contents') or [])
+
+    if not contents:
+        raise DemoResourceNotFoundError(f"No objects found under '{prefix}' in bucket '{BUCKET}'.")
+
+    return contents
+
+
+def _find_data_zip_key(contents, dataset_prefix):
+    """Find the 'data.zip' object key under dataset prefix, case-insensitive.
+
+    Args:
+        contents (list[dict]):
+            List of objects from S3.
+        dataset_prefix (str):
+            Prefix like 'single_table/dataset/'.
+
+    Returns:
+        str:
+            The key to the data zip if found.
+    """
+    prefix_lower = dataset_prefix.lower()
+    for entry in contents:
+        key = entry.get('Key') or ''
+        key_lower = key.lower()
+        if key_lower.startswith(prefix_lower) and key_lower.endswith('/data.zip'):
+            return key
+
+    raise DemoResourceNotFoundError("Could not find 'data.zip' for the requested dataset.")
+
+
+def _get_first_v1_metadata_bytes(contents, dataset_prefix):
+    """Find and return bytes of the first V1 metadata JSON under `dataset_prefix`.
+
+    Scans S3 listing `contents` and, for any JSON file directly under the dataset prefix,
+    downloads and returns its bytes if it contains METADATA_SPEC_VERSION == 'V1'.
+
+    Returns:
+        bytes:
+            The bytes of the first V1 metadata JSON.
+    """
+    prefix_lower = dataset_prefix.lower()
+    for entry in contents:
+        key = entry.get('Key') or ''
+        key_lower = key.lower()
+        if not (key_lower.startswith(prefix_lower) and key_lower.endswith('.json')):
+            continue
+
+        try:
+            raw = _get_data_from_bucket(key)
+            metadict = json.loads(raw)
+            if isinstance(metadict, dict) and metadict.get('METADATA_SPEC_VERSION') == 'V1':
+                return raw
+
+        except Exception:
+            continue
+
+    raise DemoResourceNotFoundError(
+        'Could not find a valid metadata JSON with METADATA_SPEC_VERSION "V1".'
+    )
+
+
+def _download(modality, dataset_name):
+    """Download dataset resources from a bucket.
+
+    Returns:
+        tuple:
+            (BytesIO(zip_bytes), metadata_bytes)
+    """
+    dataset_prefix = f'{modality}/{dataset_name}/'
+    LOGGER.info(
+        f"Downloading dataset '{dataset_name}' for modality '{modality}' from "
+        f'{BUCKET_URL}/{dataset_prefix}'
+    )
+    contents = _list_objects(dataset_prefix)
+
+    zip_key = _find_data_zip_key(contents, dataset_prefix)
+    zip_bytes = _get_data_from_bucket(zip_key)
+    metadata_bytes = _get_first_v1_metadata_bytes(contents, dataset_prefix)
+
+    return io.BytesIO(zip_bytes), metadata_bytes
 
 
 def _extract_data(bytes_io, output_folder_name):
@@ -70,10 +156,13 @@ def _extract_data(bytes_io, output_folder_name):
             metadata_v0_filepath = os.path.join(output_folder_name, 'metadata_v0.json')
             if os.path.isfile(metadata_v0_filepath):
                 os.remove(metadata_v0_filepath)
-            os.rename(
-                os.path.join(output_folder_name, 'metadata_v1.json'),
-                os.path.join(output_folder_name, METADATA_FILENAME),
-            )
+
+            metadata_v1_filepath = os.path.join(output_folder_name, 'metadata_v1.json')
+            if os.path.isfile(metadata_v1_filepath):
+                os.rename(
+                    metadata_v1_filepath,
+                    os.path.join(output_folder_name, METADATA_FILENAME),
+                )
 
         else:
             in_memory_directory = {}
@@ -104,24 +193,6 @@ def _get_data(modality, output_folder_name, in_memory_directory):
     return data
 
 
-def _get_metadata(output_folder_name, in_memory_directory, dataset_name):
-    metadata = Metadata()
-    if output_folder_name:
-        metadata_path = os.path.join(output_folder_name, METADATA_FILENAME)
-        metadata = metadata.load_from_json(metadata_path, dataset_name)
-
-    else:
-        metadata_path = 'metadata_v2.json'
-        if metadata_path not in in_memory_directory:
-            warnings.warn(f'Metadata for {dataset_name} is missing updated version v2.')
-            metadata_path = 'metadata_v1.json'
-
-        metadict = json.loads(in_memory_directory[metadata_path])
-        metadata = metadata.load_from_dict(metadict, dataset_name)
-
-    return metadata
-
-
 def download_demo(modality, dataset_name, output_folder_name=None):
     """Download a demo dataset.
 
@@ -129,7 +200,7 @@ def download_demo(modality, dataset_name, output_folder_name=None):
         modality (str):
             The modality of the dataset: ``'single_table'``, ``'multi_table'``, ``'sequential'``.
         dataset_name (str):
-            Name of the dataset to be downloaded from the sdv-datasets S3 bucket.
+            Name of the dataset to be downloaded from the sdv-datasets-public S3 bucket.
         output_folder_name (str or None):
             The name of the local folder where the metadata and data should be stored.
             If ``None`` the data is not saved locally and is loaded as a Python object.
@@ -149,12 +220,40 @@ def download_demo(modality, dataset_name, output_folder_name=None):
     """
     _validate_modalities(modality)
     _validate_output_folder(output_folder_name)
-    bytes_io = _download(modality, dataset_name)
-    in_memory_directory = _extract_data(bytes_io, output_folder_name)
+    data_io, metadata_bytes = _download(modality, dataset_name)
+    in_memory_directory = _extract_data(data_io, output_folder_name)
     data = _get_data(modality, output_folder_name, in_memory_directory)
-    metadata = _get_metadata(output_folder_name, in_memory_directory, dataset_name)
+
+    try:
+        metadict = json.loads(metadata_bytes)
+        metadata = Metadata().load_from_dict(metadict, dataset_name)
+    except Exception as e:
+        raise DemoResourceNotFoundError('Failed to parse metadata JSON for the dataset.') from e
 
     return data, metadata
+
+
+def _iter_metainfo_yaml_entries(contents, modality):
+    """Yield (dataset_name, yaml_key) for metainfo.yaml files under a modality.
+
+    This matches keys like '<modality>/<dataset>/metainfo.yaml'.
+    """
+    modality_lower = (modality or '').lower()
+    for entry in contents or []:
+        key = entry.get('Key') or ''
+        parts = key.split('/')
+        if len(parts) < 3:
+            continue
+        if parts[0].lower() != modality_lower:
+            continue
+        filename = parts[-1]
+        if filename.lower() != 'metainfo.yaml':
+            continue
+        dataset_name = parts[1]
+        if not dataset_name:
+            continue
+
+        yield dataset_name, key
 
 
 def get_available_demos(modality):
@@ -170,23 +269,41 @@ def get_available_demos(modality):
                 ``dataset_name``: The name of the dataset.
                 ``size_MB``: The unzipped folder size in MB.
                 ``num_tables``: The number of tables in the dataset.
-
-    Raises:
-        Error:
-            * If ``modality`` is not ``'single_table'``, ``'multi_table'`` or ``'sequential'``.
     """
     _validate_modalities(modality)
-    client = boto3.client('s3', config=Config(signature_version=SIGNATURE_VERSION))
+    contents = _list_objects(f'{modality}/')
     tables_info = defaultdict(list)
-    for item in client.list_objects(Bucket=BUCKET)['Contents']:
-        dataset_modality, dataset = item['Key'].split('/', 1)
-        if dataset_modality == modality.upper():
-            tables_info['dataset_name'].append(dataset.replace('.zip', ''))
-            headers = client.head_object(Bucket=BUCKET, Key=item['Key'])['Metadata']
-            size_mb = headers.get('size-mb', np.nan)
-            tables_info['size_MB'].append(round(float(size_mb), 2))
-            tables_info['num_tables'].append(headers.get('num-tables', np.nan))
+    for dataset_name, yaml_key in _iter_metainfo_yaml_entries(contents, modality):
+        try:
+            raw = _get_data_from_bucket(yaml_key)
+            info = yaml.safe_load(raw) or {}
+            name = info.get('dataset-name') or dataset_name
+
+            size_mb_val = info.get('dataset-size-mb')
+            try:
+                size_mb = float(size_mb_val) if size_mb_val is not None else np.nan
+            except Exception:
+                size_mb = np.nan
+
+            num_tables_val = info.get('num-tables')
+            try:
+                num_tables = int(num_tables_val)
+            except Exception:
+                try:
+                    num_tables = int(float(num_tables_val))
+                except Exception:
+                    num_tables = np.nan
+
+            tables_info['dataset_name'].append(name)
+            tables_info['size_MB'].append(size_mb)
+            tables_info['num_tables'].append(num_tables)
+
+        except Exception:
+            continue
 
     df = pd.DataFrame(tables_info)
-    df['num_tables'] = pd.to_numeric(df['num_tables'])
+    if not df.empty:
+        df['num_tables'] = pd.to_numeric(df['num_tables'], errors='coerce')
+        df['size_MB'] = pd.to_numeric(df['size_MB'], errors='coerce')
+
     return df

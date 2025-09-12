@@ -91,3 +91,11 @@ class RefitWarning(UserWarning):
     Warning to be raised if a change to a synthesizer requires the synthesizer
     to be refit for the change to be applied.
     """
+
+
+class DemoResourceNotFoundError(Exception):
+    """Raised when a demo dataset or one of its resources cannot be found.
+
+    This error is intended for missing demo assets such as the dataset archive,
+    metadata, license, README, or other auxiliary files in the demo bucket.
+    """
