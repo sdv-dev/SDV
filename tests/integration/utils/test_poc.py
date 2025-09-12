@@ -195,7 +195,6 @@ def test_simpliy_nothing_to_simplify():
         pd.testing.assert_frame_equal(data[table], data_simplify[table])
 
 
-@pytest.mark.skip()
 def test_simplify_no_grandchild():
     """Test ``simplify_schema`` end to end when there is no grandchild table."""
     # Setup
