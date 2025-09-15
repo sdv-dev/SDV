@@ -1,7 +1,5 @@
 """Integration tests for DayZ parameter detection."""
 
-import pandas as pd
-
 from sdv.datasets.demo import download_demo
 from sdv.multi_table import DayZSynthesizer
 
@@ -39,13 +37,13 @@ class TestDayZSynthesizer:
                             'missing_value_proportion': 0.07598784194528875,
                         },
                         'checkin_date': {
-                            'start_timestamp': pd.Timestamp('2020-01-03 00:00:00'),
-                            'end_timestamp': pd.Timestamp('2021-01-05 00:00:00'),
+                            'start_timestamp': '03 Jan 2020',
+                            'end_timestamp': '05 Jan 2021',
                             'missing_value_proportion': 0.0,
                         },
                         'checkout_date': {
-                            'start_timestamp': pd.Timestamp('2020-01-04 00:00:00'),
-                            'end_timestamp': pd.Timestamp('2021-01-07 00:00:00'),
+                            'start_timestamp': '04 Jan 2020',
+                            'end_timestamp': '07 Jan 2021',
                             'missing_value_proportion': 0.04559270516717325,
                         },
                         'room_rate': {

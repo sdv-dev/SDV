@@ -50,10 +50,22 @@ def detect_column_parameters(data, metadata, table_name):
                 'max_value': data[column_name].max().item(),
             }
         elif sdtype == 'datetime':
-            datetime_column = pd.to_datetime(data[column_name], errors='coerce')
+            datetime_format = column_metadata.get('datetime_format', None)
+            if datetime_format:
+                datetime_column = pd.to_datetime(
+                    data[column_name], format=datetime_format, errors='coerce'
+                )
+                start_timestamp = datetime_column.min().strftime(datetime_format)
+                end_timestamp = datetime_column.max().strftime(datetime_format)
+
+            else:
+                datetime_column = pd.to_datetime(data[column_name], errors='coerce')
+                start_timestamp = str(datetime_column.min())
+                end_timestamp = str(datetime_column.max())
+
             column_parameters[column_name] = {
-                'start_timestamp': datetime_column.min(),
-                'end_timestamp': datetime_column.max(),
+                'start_timestamp': start_timestamp,
+                'end_timestamp': end_timestamp,
             }
         elif sdtype in ['categorical', 'boolean']:
             column_parameters[column_name] = {
