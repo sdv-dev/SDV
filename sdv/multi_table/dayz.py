@@ -32,7 +32,7 @@ def detect_relationship_parameters(data, metadata):
         cardinality_table = pd.DataFrame(index=data[rel_tuple[0]][rel_tuple[2]].copy())
         cardinality_table['cardinality'] = data[rel_tuple[1]][rel_tuple[3]].value_counts()
         cardinality_table = cardinality_table.fillna(0)
-        relationship_parameters[rel_tuple] = {
+        relationship_parameters[json.dumps(rel_tuple)] = {
             'min_cardinality': cardinality_table['cardinality'].min(),
             'max_cardinality': cardinality_table['cardinality'].max(),
         }
@@ -40,10 +40,14 @@ def detect_relationship_parameters(data, metadata):
     return relationship_parameters
 
 
-def create_parameters_multi_table(data, metadata):
+def create_parameters_multi_table(data, metadata, output_filename):
     """Create parameters for the DayZSynthesizer."""
-    parameters = create_parameters(data, metadata)
+    parameters = create_parameters(data, metadata, None)
     parameters['relationships'] = detect_relationship_parameters(data, metadata)
+    if output_filename:
+        with open(output_filename, 'w') as f:
+            json.dump(parameters, f, indent=4)
+
     return parameters
 
 
@@ -69,9 +73,4 @@ class DayZSynthesizer:
         Returns:
             dict: The created parameters.
         """
-        parameters = create_parameters_multi_table(data, metadata)
-        if output_filename:
-            with open(output_filename, 'w') as f:
-                json.dump(parameters, f, indent=4)
-
-        return parameters
+        return create_parameters_multi_table(data, metadata, output_filename)

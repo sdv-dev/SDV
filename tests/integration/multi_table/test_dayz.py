@@ -94,7 +94,7 @@ class TestDayZSynthesizer:
                 },
             },
             'relationships': {
-                ('hotels', 'guests', 'hotel_id', 'hotel_id'): {
+                '["hotels", "guests", "hotel_id", "hotel_id"]': {
                     'min_cardinality': 15,
                     'max_cardinality': 137,
                 }

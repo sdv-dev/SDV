@@ -47,7 +47,7 @@ def test_detect_relationship_parameters():
 
     # Assert
     expected = {
-        ('parent', 'child', 'parent_id', 'parent_id'): {
+        '["parent", "child", "parent_id", "parent_id"]': {
             'min_cardinality': 0,
             'max_cardinality': 3,
         }
@@ -57,13 +57,14 @@ def test_detect_relationship_parameters():
 
 @patch('sdv.multi_table.dayz.detect_relationship_parameters')
 @patch('sdv.multi_table.dayz.create_parameters')
-def test_create_parameters_multi_table(mock_create_parameters, mock_detect_relationship):
+def test_create_parameters_multi_table(mock_create_parameters, mock_detect_relationship, tmp_path):
     """Test the `create_parameters_multi_table` method."""
     # Setup
     data = pd.DataFrame()
     metadata = Metadata()
+    output_filename = str(tmp_path / 'output.json')
     mock_detect_relationship.return_value = {
-        ('parent_table', 'child_table', 'parent_pk', 'child_fk'): {
+        '["parent_table", "child_table", "parent_pk", "child_fk"]': {
             'min_cardinality': 0,
             'max_cardinality': 10,
         }
@@ -82,10 +83,10 @@ def test_create_parameters_multi_table(mock_create_parameters, mock_detect_relat
     }
 
     # Run
-    result = create_parameters_multi_table(data, metadata)
+    result = create_parameters_multi_table(data, metadata, output_filename)
 
     # Assert
-    mock_create_parameters.assert_called_once_with(data, metadata)
+    mock_create_parameters.assert_called_once_with(data, metadata, None)
     mock_detect_relationship.assert_called_once_with(data, metadata)
     assert result == {
         'DAYZ_SPEC_VERSION': 'V1',
@@ -99,12 +100,17 @@ def test_create_parameters_multi_table(mock_create_parameters, mock_detect_relat
             }
         },
         'relationships': {
-            ('parent_table', 'child_table', 'parent_pk', 'child_fk'): {
+            '["parent_table", "child_table", "parent_pk", "child_fk"]': {
                 'min_cardinality': 0,
                 'max_cardinality': 10,
             }
         },
     }
+    assert result == mock_create_parameters.return_value
+    with open(output_filename) as f:
+        output = json.load(f)
+
+    assert output == result
 
 
 class TestDayZSynthesizer:
@@ -122,12 +128,11 @@ class TestDayZSynthesizer:
         with pytest.raises(SynthesizerInputError, match=expected_error):
             DayZSynthesizer(metadata, locales=['es_ES'])
 
-    @patch('sdv.multi_table.dayz.create_parameters')
-    def test_create_parameters(self, mock_create_parameters, tmp_path):
+    @patch('sdv.multi_table.dayz.create_parameters_multi_table')
+    def test_create_parameters(self, mock_create_parameters):
         # Setup
         data = pd.DataFrame()
         metadata = Metadata()
-        output_filename = tmp_path / 'output.json'
         mock_create_parameters.return_value = {
             'DAYZ_SPEC_VERSION': 'V1',
             'tables': {
@@ -148,12 +153,8 @@ class TestDayZSynthesizer:
         }
 
         # Run
-        result = DayZSynthesizer.create_parameters(data, metadata, output_filename)
+        result = DayZSynthesizer.create_parameters(data, metadata, 'output_filename')
 
         # Assert
-        mock_create_parameters.assert_called_once_with(data, metadata)
+        mock_create_parameters.assert_called_once_with(data, metadata, 'output_filename')
         assert result == mock_create_parameters.return_value
-        with open(output_filename) as f:
-            output = json.load(f)
-
-        assert output == result
