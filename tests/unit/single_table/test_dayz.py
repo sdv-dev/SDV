@@ -34,6 +34,7 @@ def test_detect_column_parameter():
         'num_col': [1.0, 2.5, 3.0, None],
         'cat_col': ['A', 'B', 'A', None],
         'date_col': ['2020-01-01', '2020-01-02', None, None],
+        'date_col_2': ['2020 Jan 01', '2020 Jan 02', '2020 Jan 03', None],
     })
     metadata = Metadata.load_from_dict({
         'tables': {
@@ -41,7 +42,8 @@ def test_detect_column_parameter():
                 'columns': {
                     'num_col': {'sdtype': 'numerical'},
                     'cat_col': {'sdtype': 'categorical'},
-                    'date_col': {'sdtype': 'datetime'},
+                    'date_col': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                    'date_col_2': {'sdtype': 'datetime'},
                 }
             }
         }
@@ -63,9 +65,14 @@ def test_detect_column_parameter():
                 'missing_value_proportion': 0.25,
             },
             'date_col': {
-                'start_timestamp': pd.Timestamp('2020-01-01'),
-                'end_timestamp': pd.Timestamp('2020-01-02'),
+                'start_timestamp': '2020-01-01',
+                'end_timestamp': '2020-01-02',
                 'missing_value_proportion': 0.5,
+            },
+            'date_col_2': {
+                'start_timestamp': '2020-01-01 00:00:00',
+                'end_timestamp': '2020-01-03 00:00:00',
+                'missing_value_proportion': 0.25,
             },
         }
     }
