@@ -79,7 +79,7 @@ def detect_column_parameters(data, metadata, table_name):
     return {'columns': column_parameters}
 
 
-def create_parameters(data, metadata):
+def create_parameters(data, metadata, output_filename):
     """Detect and create a parameter dict for the DayZ model."""
     metadata.validate()
     datas = data if isinstance(data, dict) else {metadata._get_single_table_name(): data}
@@ -91,6 +91,10 @@ def create_parameters(data, metadata):
         parameters['tables'][table_name].update(
             detect_column_parameters(table_data, metadata, table_name)
         )
+
+    if output_filename:
+        with open(output_filename, 'w') as f:
+            json.dump(parameters, f, indent=4)
 
     return parameters
 
@@ -117,9 +121,4 @@ class DayZSynthesizer:
         Returns:
             dict: The created parameters.
         """
-        parameters = create_parameters(data, metadata)
-        if output_filename:
-            with open(output_filename, 'w') as f:
-                json.dump(parameters, f, indent=4)
-
-        return parameters
+        return create_parameters(data, metadata, output_filename)

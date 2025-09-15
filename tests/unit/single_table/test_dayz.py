@@ -80,9 +80,10 @@ def test_detect_column_parameter():
 
 @patch('sdv.single_table.dayz.detect_column_parameters')
 @patch('sdv.single_table.dayz.detect_table_parameters')
-def test_create_parameters(mock_detect_table, mock_detect_column):
+def test_create_parameters(mock_detect_table, mock_detect_column, tmp_path):
     """Test the `create_parameters` method."""
     # Setup
+    output_filename = tmp_path / 'output.json'
     mock_detect_table.return_value = {'num_rows': 100}
     mock_detect_column.return_value = {
         'columns': {
@@ -96,7 +97,7 @@ def test_create_parameters(mock_detect_table, mock_detect_column):
     metadata._get_single_table_name.return_value = 'table_name'
 
     # Run
-    result = create_parameters(data, metadata)
+    result = create_parameters(data, metadata, output_filename=output_filename)
 
     # Assert
     metadata.validate.assert_called_once()
@@ -115,6 +116,10 @@ def test_create_parameters(mock_detect_table, mock_detect_column):
             }
         },
     }
+    with open(output_filename, 'r') as f:
+        output = json.load(f)
+
+    assert output == result
 
 
 class TestDayZSynthesizer:
@@ -133,12 +138,11 @@ class TestDayZSynthesizer:
             DayZSynthesizer(metadata, locales=['es_ES'])
 
     @patch('sdv.single_table.dayz.create_parameters')
-    def test_create_parameters(self, mock_create, tmp_path):
+    def test_create_parameters(self, mock_create):
         """Test the `create_parameters` method."""
         # Setup
         data = pd.DataFrame()
         metadata = Metadata()
-        output_filename = tmp_path / 'output.json'
         mock_create.return_value = {
             'DAYZ_SPEC_VERSION': 'V1',
             'tables': {
@@ -162,14 +166,8 @@ class TestDayZSynthesizer:
         }
 
         # Run
-        result = DayZSynthesizer.create_parameters(
-            data, metadata, output_filename=str(output_filename)
-        )
+        result = DayZSynthesizer.create_parameters(data, metadata, 'output_filename')
 
         # Assert
-        mock_create.assert_called_once_with(data, metadata)
+        mock_create.assert_called_once_with(data, metadata, 'output_filename')
         assert result == mock_create.return_value
-        with open(output_filename, 'r') as f:
-            output = json.load(f)
-
-        assert output == mock_create.return_value
