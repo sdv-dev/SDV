@@ -41,6 +41,7 @@ from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import (
     ConstraintsNotMetError,
     InvalidDataError,
+    RefitWarning,
     SamplingError,
     SynthesizerInputError,
 )
@@ -306,7 +307,7 @@ class BaseSynthesizer:
         self._data_processor.update_transformers(column_name_to_transformer)
         if self._fitted:
             msg = 'For this change to take effect, please refit the synthesizer using `fit`.'
-            warnings.warn(msg, UserWarning)
+            warnings.warn(msg, RefitWarning)
 
     def get_parameters(self):
         """Return the parameters used to instantiate the synthesizer."""
@@ -587,10 +588,12 @@ class BaseSynthesizer:
         """
         self.validate(data)
         if self._fitted:
-            warnings.warn(
+            msg = (
                 'This model has already been fitted. To use the new preprocessed data, '
                 "please refit the model using 'fit' or 'fit_processed_data'."
             )
+            warnings.warn(msg, RefitWarning)
+
         data = self._validate_transform_constraints(data)
 
         return data
@@ -1208,18 +1211,19 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return sampled_data
 
+    def _transform_conditions(self, condition_df):
+        return self._data_processor.transform(condition_df, is_condition=True)
+
     def _transform_conditions_chained_constraints(self, condition_df):
         try:
             transformed_condition = self._validate_transform_constraints(condition_df)
-            transformed_condition = self._data_processor.transform(
-                transformed_condition, is_condition=True
-            )
+            transformed_condition = self._transform_conditions(transformed_condition)
         except ConstraintNotMetError:
             raise ConstraintNotMetError(
                 'Provided conditions are not valid for the given constraints.'
             )
         except Exception:
-            transformed_condition = self._data_processor.transform(condition_df, is_condition=True)
+            transformed_condition = self._transform_conditions(condition_df)
 
         return transformed_condition
 
@@ -1274,13 +1278,13 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
             condition = dict(zip(condition_columns, group))
             condition_df = dataframe.iloc[0].to_frame().T
+            dtypes = conditions.dtypes.to_dict()
+            condition_df = condition_df.astype(dtypes)
             if hasattr(self, '_chained_constraints'):
                 transformed_condition = self._transform_conditions_chained_constraints(condition_df)
             else:
                 try:
-                    transformed_condition = self._data_processor.transform(
-                        condition_df, is_condition=True
-                    )
+                    transformed_condition = self._transform_conditions(condition_df)
                 except ConstraintsNotMetError as error:
                     raise ConstraintsNotMetError(
                         'Provided conditions are not valid for the given constraints.'

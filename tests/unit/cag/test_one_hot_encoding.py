@@ -126,23 +126,41 @@ class TestOneHotEncoding:
         # Run
         instance._fit({}, Metadata())
 
-    def test__transform(self):
-        """Test it returns the data unchanged."""
+    def test__transform_injects_near_zero_one_noise(self):
+        """Test it pushes 0s toward [0, eps) and 1s toward (1-eps, 1]."""
         # Setup
-        table_data = {
-            'table': pd.DataFrame({
-                'a': [1, 2, 3],
-                'b': [4, 5, 6],
-                'c': [7, 8, 9],
-            })
-        }
+        data = pd.DataFrame({
+            'a': [1, 0, 0],
+            'b': [0, 1, 0],
+            'c': [0, 0, 1],
+            'd': [10, 20, 30],
+        })
+        metadata = Metadata.load_from_dict({
+            'columns': {
+                'a': {'sdtype': 'numerical'},
+                'b': {'sdtype': 'numerical'},
+                'c': {'sdtype': 'numerical'},
+                'd': {'sdtype': 'numerical'},
+            }
+        })
         instance = OneHotEncoding(column_names=['a', 'b', 'c'])
+        instance.fit(data, metadata)
 
         # Run
-        out = instance._transform(table_data)
+        transformed = instance.transform(data)
 
         # Assert
-        pd.testing.assert_frame_equal(out['table'], table_data['table'])
+        pd.testing.assert_series_equal(transformed['d'], data['d'])
+
+        eps = np.finfo(np.float32).eps
+        original = data[['a', 'b', 'c']].to_numpy()
+        result = transformed[['a', 'b', 'c']].to_numpy()
+
+        zeros_mask = original == 0
+        ones_mask = original == 1
+
+        assert np.all(result[zeros_mask] == eps)
+        assert np.all(result[ones_mask] == 1 - eps)
 
     def test_reverse_transform(self):
         """Test it reverses the transformation correctly."""
@@ -164,6 +182,87 @@ class TestOneHotEncoding:
         # Assert
         expected_out = pd.DataFrame({'a': [0.0, 1.0, 0.0], 'b': [1.0, 0.0, 1.0], 'c': [1, 2, 3]})
         pd.testing.assert_frame_equal(expected_out, out['table'])
+
+    def test_transform_then_reverse_transform_restores_one_hot(self):
+        """Test reverse_transform restores original one-hot."""
+        # Setup
+        data = pd.DataFrame({
+            'a': [1, 0, 0, 1],
+            'b': [0, 1, 0, 0],
+            'c': [0, 0, 1, 0],
+        })
+        metadata = Metadata.load_from_dict({
+            'columns': {
+                'a': {'sdtype': 'numerical'},
+                'b': {'sdtype': 'numerical'},
+                'c': {'sdtype': 'numerical'},
+            }
+        })
+        instance = OneHotEncoding(column_names=['a', 'b', 'c'])
+        instance.fit(data, metadata)
+
+        # Run
+        transformed = instance.transform(data)
+        restored = instance.reverse_transform(transformed)
+
+        # Assert
+        pd.testing.assert_frame_equal(data, restored)
+
+    def test__get_updated_metadata_single_table(self):
+        """Test columns in column_names switch from categorical to numerical in single table."""
+        # Setup
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'a': {'sdtype': 'categorical'},
+                        'b': {'sdtype': 'categorical'},
+                        'c': {'sdtype': 'numerical'},
+                        'd': {'sdtype': 'id'},
+                    }
+                }
+            }
+        })
+        instance = OneHotEncoding(column_names=['a', 'b'])
+
+        # Run
+        updated = instance._get_updated_metadata(metadata)
+
+        # Assert
+        assert updated.tables['table'].columns['a']['sdtype'] == 'numerical'
+        assert updated.tables['table'].columns['b']['sdtype'] == 'numerical'
+        assert updated.tables['table'].columns['c']['sdtype'] == 'numerical'
+        assert updated.tables['table'].columns['d']['sdtype'] == 'id'
+
+    def test__get_updated_metadata_multi_table(self):
+        """Test columns in column_names switch from categorical to numerical in multi table."""
+        # Setup
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table1': {
+                    'columns': {
+                        'a': {'sdtype': 'categorical'},
+                        'b': {'sdtype': 'categorical'},
+                        'c': {'sdtype': 'numerical'},
+                    }
+                },
+                'table2': {
+                    'columns': {
+                        'x': {'sdtype': 'categorical'},
+                    }
+                },
+            }
+        })
+        instance = OneHotEncoding(column_names=['a', 'b'], table_name='table1')
+
+        # Run
+        updated = instance._get_updated_metadata(metadata)
+
+        # Assert
+        assert updated.tables['table1'].columns['a']['sdtype'] == 'numerical'
+        assert updated.tables['table1'].columns['b']['sdtype'] == 'numerical'
+        assert updated.tables['table1'].columns['c']['sdtype'] == 'numerical'
+        assert updated.tables['table2'].columns['x']['sdtype'] == 'categorical'
 
     def test_is_valid(self):
         """Test it checks if the data is valid."""
@@ -188,3 +287,136 @@ class TestOneHotEncoding:
         }
         for table, series in out.items():
             pd.testing.assert_series_equal(expected_out[table], series)
+
+    def test___init___invalid_learning_strategy(self):
+        """Test it raises if learning_strategy is invalid."""
+        # Run and Assert
+        err_msg = "`learning_strategy` must be either 'one_hot' or 'categorical'."
+        with pytest.raises(ValueError, match=err_msg):
+            OneHotEncoding(column_names=['a', 'b', 'c'], learning_strategy='bad')
+
+    def test_get_updated_metadata_categorical_single(self):
+        """Test updated metadata drops one-hot columns and adds a categorical column."""
+        # Setup
+        metadata = Metadata.load_from_dict({
+            'columns': {
+                'a': {'sdtype': 'numerical'},
+                'b': {'sdtype': 'numerical'},
+                'c': {'sdtype': 'numerical'},
+            }
+        })
+        instance = OneHotEncoding(column_names=['a', 'b', 'c'], learning_strategy='categorical')
+
+        # Run
+        updated = instance.get_updated_metadata(metadata)
+
+        # Assert
+        cols = updated.get_column_names()
+        assert cols == ['a#b#c']
+
+        table_name = updated._get_single_table_name()
+        assert updated.tables[table_name].columns[cols[0]]['sdtype'] == 'categorical'
+
+        assert 'a' not in cols
+        assert 'b' not in cols
+        assert 'c' not in cols
+
+    def test_get_updated_metadata_categorical_repeated_column_names(self):
+        """Test updated metadata drops one-hot columns and adds a categorical column."""
+        # Setup
+        metadata = Metadata.load_from_dict({
+            'columns': {
+                'a': {'sdtype': 'numerical'},
+                'b': {'sdtype': 'numerical'},
+                'c': {'sdtype': 'numerical'},
+                'a#b#c': {'sdtype': 'numerical'},
+            }
+        })
+        instance = OneHotEncoding(column_names=['a', 'b', 'c'], learning_strategy='categorical')
+
+        # Run
+        updated = instance.get_updated_metadata(metadata)
+
+        # Assert
+        cols = updated.get_column_names()
+        assert cols == ['a#b#c', 'a#b#c_']
+
+        table_name = updated._get_single_table_name()
+        assert updated.tables[table_name].columns[cols[0]]['sdtype'] == 'numerical'
+        assert updated.tables[table_name].columns[cols[1]]['sdtype'] == 'categorical'
+
+        assert 'a' not in cols
+        assert 'b' not in cols
+        assert 'c' not in cols
+
+    def test_transform_and_reverse_categorical_single(self):
+        """Test transform collapses to categorical and reverse restores one-hot (single table)."""
+        # Setup
+        data = pd.DataFrame({
+            'a': [1, 0, 0, 1],
+            'b': [0, 1, 0, 0],
+            'c': [0, 0, 1, 0],
+        })
+        metadata = Metadata.load_from_dict({
+            'columns': {
+                'a': {'sdtype': 'numerical'},
+                'b': {'sdtype': 'numerical'},
+                'c': {'sdtype': 'numerical'},
+            }
+        })
+        instance = OneHotEncoding(column_names=['a', 'b', 'c'], learning_strategy='categorical')
+
+        # Run
+        instance.fit(data, metadata)
+        transformed = instance.transform(data)
+        reversed_df = instance.reverse_transform(transformed)
+
+        # Assert
+        pd.testing.assert_frame_equal(transformed, pd.DataFrame({'a#b#c': ['a', 'b', 'c', 'a']}))
+        pd.testing.assert_frame_equal(data, reversed_df)
+
+    def test_transform_and_reverse_categorical_multi(self):
+        """Test transform/reverse with categorical strategy (multi table)."""
+        # Setup
+        data = {
+            'table1': pd.DataFrame({
+                'a': [1, 0, 0, 1],
+                'b': [0, 1, 0, 0],
+                'c': [0, 0, 1, 0],
+            }),
+            'table2': pd.DataFrame({'id': range(4)}),
+        }
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table1': {
+                    'columns': {
+                        'a': {'sdtype': 'numerical'},
+                        'b': {'sdtype': 'numerical'},
+                        'c': {'sdtype': 'numerical'},
+                    }
+                },
+                'table2': {
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                    }
+                },
+            }
+        })
+        instance = OneHotEncoding(
+            column_names=['a', 'b', 'c'], table_name='table1', learning_strategy='categorical'
+        )
+
+        # Run
+        instance.fit(data, metadata)
+        transformed = instance.transform(data)
+        reversed_data = instance.reverse_transform(transformed)
+
+        # Assert
+        pd.testing.assert_frame_equal(
+            transformed['table1'], pd.DataFrame({'a#b#c': ['a', 'b', 'c', 'a']})
+        )
+        pd.testing.assert_frame_equal(data['table2'], transformed['table2'])
+
+        # Assert
+        pd.testing.assert_frame_equal(data['table1'], reversed_data['table1'])
+        pd.testing.assert_frame_equal(data['table2'], reversed_data['table2'])

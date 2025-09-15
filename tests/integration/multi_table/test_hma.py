@@ -1069,6 +1069,52 @@ class TestHMASynthesizer:
         for table_name, table in samples.items():
             assert set(data[table_name].columns) == set(table.columns)
 
+    def test_numerical_distributions_propagation_and_learned(self):
+        """Ensure user-set numerical_distributions persist and affect learned distributions."""
+        # Setup
+        data, metadata = download_demo('multi_table', 'fake_hotels')
+        synthesizer = HMASynthesizer(metadata)
+
+        synthesizer.set_table_parameters(
+            table_name='hotels',
+            table_parameters={
+                'default_distribution': 'truncnorm',
+                'numerical_distributions': {'classification': 'uniform'},
+            },
+        )
+        synthesizer.set_table_parameters(
+            table_name='guests',
+            table_parameters={
+                'default_distribution': 'norm',
+                'numerical_distributions': {'amenities_fee': 'uniform'},
+            },
+        )
+
+        # Run
+        synthesizer.fit(data)
+
+        # Assert
+        column_parameters = synthesizer.get_table_parameters('hotels')['synthesizer_parameters']
+        for column_name, distribution in column_parameters['numerical_distributions'].items():
+            if column_name == 'classification':
+                assert distribution == 'uniform'
+            else:
+                assert distribution == 'truncnorm'
+
+        column_parameters = synthesizer.get_table_parameters('guests')['synthesizer_parameters']
+        for column_name, distribution in column_parameters['numerical_distributions'].items():
+            if column_name == 'amenities_fee':
+                assert distribution == 'uniform'
+            else:
+                assert distribution == 'norm'
+
+        learned = synthesizer.get_learned_distributions(table_name='hotels')
+        for column_name, distribution in learned.items():
+            if column_name == 'classification':
+                assert distribution['distribution'] == 'uniform'
+            else:
+                assert distribution['distribution'] == 'truncnorm'
+
     def test_get_learned_distributions_error_msg(self):
         """Ensure the error message is correct when calling ``get_learned_distributions``."""
         # Setup

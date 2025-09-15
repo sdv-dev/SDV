@@ -29,6 +29,7 @@ from sdv.cag._utils import (
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
 from sdv.errors import (
     InvalidDataError,
+    RefitWarning,
     SamplingError,
     SynthesizerInputError,
 )
@@ -551,10 +552,11 @@ class BaseMultiTableSynthesizer:
         self.validate(data)
         data = self._validate_transform_constraints(data)
         if self._fitted:
-            warnings.warn(
+            msg = (
                 'This model has already been fitted. To use the new preprocessed data, '
                 "please refit the model using 'fit' or 'fit_processed_data'."
             )
+            warnings.warn(msg, RefitWarning)
 
         processed_data = {}
         pbar_args = self._get_pbar_args(desc='Preprocess Tables')
