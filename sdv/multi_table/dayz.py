@@ -4,6 +4,7 @@ import json
 
 import pandas as pd
 
+from sdv.errors import SynthesizerInputError
 from sdv.single_table.dayz import create_parameters
 
 
@@ -48,6 +49,13 @@ def create_parameters_multi_table(data, metadata):
 
 class DayZSynthesizer:
     """Multi-Table DayZSynthesizer for public SDV."""
+
+    def __init__(self, metadata, locales=['en_US']):
+        raise SynthesizerInputError(
+            "Only the 'DayZSynthesizer.create_parameters' is a SDV public feature. "
+            'To define and use and use a DayZSynthesizer object you must have an SDV-Enterprise'
+            ' version.'
+        )
 
     @classmethod
     def create_parameters(cls, data, metadata, output_filename=None):

@@ -1,8 +1,11 @@
 import json
+import re
 from unittest.mock import Mock, patch
 
 import pandas as pd
+import pytest
 
+from sdv.errors import SynthesizerInputError
 from sdv.metadata import Metadata
 from sdv.single_table.dayz import (
     DayZSynthesizer,
@@ -108,6 +111,20 @@ def test_create_parameters(mock_detect_table, mock_detect_column):
 
 
 class TestDayZSynthesizer:
+    def test__init__(self):
+        """Test the `__init__` method."""
+        # Setup
+        metadata = Metadata()
+        expected_error = re.escape(
+            "Only the 'DayZSynthesizer.create_parameters' is a SDV public feature. "
+            'To define and use and use a DayZSynthesizer object you must have an SDV-Enterprise'
+            ' version.'
+        )
+
+        # Run and Assert
+        with pytest.raises(SynthesizerInputError, match=expected_error):
+            DayZSynthesizer(metadata, locales=['es_ES'])
+
     @patch('sdv.single_table.dayz.create_parameters')
     def test_create_parameters(self, mock_create, tmp_path):
         """Test the `create_parameters` method."""
