@@ -1,5 +1,21 @@
 # Release Notes
 
+## v1.27.0 - 2025-09-15
+
+### New Features
+
+* Create a specific warning type for the purposes of refitting a synthesizer - Issue [#2662](https://github.com/sdv-dev/SDV/issues/2662) by @frances-h
+* [OneHotEncoding constraint] Allow me to specify whether to keep the one-hot columns or collapse them into one categorical column - Issue [#2650](https://github.com/sdv-dev/SDV/issues/2650) by @fealho
+
+### Bugs Fixed
+
+* "numerical_distributions" in HMASynthesizer get ignored - Issue [#2648](https://github.com/sdv-dev/SDV/issues/2648) by @fealho
+
+### Internal
+
+* Add helper method for transforming conditions - Issue [#2660](https://github.com/sdv-dev/SDV/issues/2660) by @rwedge
+* [OneHotEncoding Constraint] For higher quality, ensure the model creates floating point numbers - Issue [#2649](https://github.com/sdv-dev/SDV/issues/2649) by @fealho
+
 ## v1.26.0 - 2025-08-18
 
 ### New Features
