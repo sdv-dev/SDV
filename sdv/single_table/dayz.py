@@ -5,6 +5,8 @@ import json
 import pandas as pd
 from rdt.transformers.utils import learn_rounding_digits
 
+from sdv.errors import SynthesizerInputError
+
 
 def detect_table_parameters(data):
     """Detect all table-level Dayz parameters.
@@ -83,6 +85,13 @@ def create_parameters(data, metadata):
 
 class DayZSynthesizer:
     """Single-Table DayZSynthesizer for public SDV."""
+
+    def __init__(self, metadata, locales=['en_US']):
+        raise SynthesizerInputError(
+            "Only the 'DayZSynthesizer.create_parameters' is a SDV public feature. "
+            'To define and use and use a DayZSynthesizer object you must have an SDV-Enterprise'
+            ' version.'
+        )
 
     @classmethod
     def create_parameters(cls, data, metadata, output_filename=None):
