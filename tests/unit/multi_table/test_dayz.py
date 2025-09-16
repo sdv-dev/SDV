@@ -16,8 +16,7 @@ class TestDayZSynthesizer:
         metadata = Metadata()
         expected_error = re.escape(
             "Only the 'DayZSynthesizer.create_parameters' is a SDV public feature. "
-            'To define and use and use a DayZSynthesizer object you must have an SDV-Enterprise'
-            ' version.'
+            'To define and use and use a DayZSynthesizer object you must have SDV-Enterprise.'
         )
 
         # Run and Assert

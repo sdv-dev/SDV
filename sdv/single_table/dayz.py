@@ -10,8 +10,7 @@ class DayZSynthesizer:
     def __init__(self, metadata, locales=['en_US']):
         raise SynthesizerInputError(
             "Only the 'DayZSynthesizer.create_parameters' is a SDV public feature. "
-            'To define and use and use a DayZSynthesizer object you must have an SDV-Enterprise'
-            ' version.'
+            'To define and use and use a DayZSynthesizer object you must have SDV-Enterprise.'
         )
 
     @classmethod
@@ -21,7 +20,7 @@ class DayZSynthesizer:
         Args:
             data (pd.DataFrame): The input data.
             metadata (Metadata): The metadata object.
-            output_filename (str, optional): The output filename for the parameters JSON.
+            output_filename (str, optional): The output filename for the parameters.
 
         Returns:
             dict: The created parameters.
