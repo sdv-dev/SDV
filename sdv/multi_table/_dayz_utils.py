@@ -12,7 +12,7 @@ def detect_relationship_parameters(data, metadata):
     - The min and max cardinality
 
     Args:
-        data (pd.DataFrame): The input data.
+        data (dict[str, pd.DataFrame]): The input data.
         metadata (Metadata): The metadata object.
 
     Returns:
