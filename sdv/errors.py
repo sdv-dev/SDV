@@ -91,3 +91,7 @@ class RefitWarning(UserWarning):
     Warning to be raised if a change to a synthesizer requires the synthesizer
     to be refit for the change to be applied.
     """
+
+
+class SynthesizerProcessingError(Exception):
+    """Error to raise when synthesizer parameters are invalid."""
