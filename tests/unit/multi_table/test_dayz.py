@@ -34,8 +34,8 @@ class TestDayZSynthesizer:
                 'table_name': {
                     'num_rows': 100,
                     'columns': {
-                        'col1': {'missing_value_proportion': 0.1},
-                        'col2': {'missing_value_proportion': 0.2},
+                        'col1': {'missing_values_proportion': 0.1},
+                        'col2': {'missing_values_proportion': 0.2},
                     },
                 }
             },

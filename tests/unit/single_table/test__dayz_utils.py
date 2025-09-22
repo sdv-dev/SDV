@@ -54,21 +54,21 @@ def test_detect_column_parameter():
                 'num_decimal_digits': 1,
                 'min_value': 1.0,
                 'max_value': 3.0,
-                'missing_value_proportion': 0.25,
+                'missing_values_proportion': 0.25,
             },
             'cat_col': {
                 'category_values': ['A', 'B'],
-                'missing_value_proportion': 0.25,
+                'missing_values_proportion': 0.25,
             },
             'date_col': {
                 'start_timestamp': '2020-01-01',
                 'end_timestamp': '2020-01-02',
-                'missing_value_proportion': 0.5,
+                'missing_values_proportion': 0.5,
             },
             'date_col_2': {
                 'start_timestamp': '2020-01-01 00:00:00',
                 'end_timestamp': '2020-01-03 00:00:00',
-                'missing_value_proportion': 0.25,
+                'missing_values_proportion': 0.25,
             },
         }
     }
@@ -83,8 +83,8 @@ def test_create_parameters(mock_detect_table, mock_detect_column, tmp_path):
     mock_detect_table.return_value = {'num_rows': 100}
     mock_detect_column.return_value = {
         'columns': {
-            'col1': {'missing_value_proportion': 0.1},
-            'col2': {'missing_value_proportion': 0.2},
+            'col1': {'missing_values_proportion': 0.1},
+            'col2': {'missing_values_proportion': 0.2},
         }
     }
 
@@ -106,8 +106,8 @@ def test_create_parameters(mock_detect_table, mock_detect_column, tmp_path):
             'table_name': {
                 'num_rows': 100,
                 'columns': {
-                    'col1': {'missing_value_proportion': 0.1},
-                    'col2': {'missing_value_proportion': 0.2},
+                    'col1': {'missing_values_proportion': 0.1},
+                    'col2': {'missing_values_proportion': 0.2},
                 },
             }
         },

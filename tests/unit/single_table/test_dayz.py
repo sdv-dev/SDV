@@ -35,13 +35,13 @@ class TestDayZSynthesizer:
                 'guests': {
                     'num_rows': 658,
                     'columns': {
-                        'guest_email': {'missing_value_proportion': 0.0},
+                        'guest_email': {'missing_values_proportion': 0.0},
                         'room_type': {
                             'category_values': ['BASIC', 'DELUXE', 'SUITE'],
-                            'missing_value_proportion': 0.0,
+                            'missing_values_proportion': 0.0,
                         },
                         'numerical_feature': {
-                            'missing_value_proportion': 0.0,
+                            'missing_values_proportion': 0.0,
                             'num_decimal_digits': 2,
                             'min_value': 0,
                             'max_value': 100,

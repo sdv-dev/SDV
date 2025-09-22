@@ -20,46 +20,46 @@ class TestDayZSynthesizer:
                 'guests': {
                     'num_rows': 658,
                     'columns': {
-                        'guest_email': {'missing_value_proportion': 0.0},
-                        'hotel_id': {'missing_value_proportion': 0.0},
+                        'guest_email': {'missing_values_proportion': 0.0},
+                        'hotel_id': {'missing_values_proportion': 0.0},
                         'has_rewards': {
                             'category_values': [False, True],
-                            'missing_value_proportion': 0.0,
+                            'missing_values_proportion': 0.0,
                         },
                         'room_type': {
                             'category_values': ['BASIC', 'DELUXE', 'SUITE'],
-                            'missing_value_proportion': 0.0,
+                            'missing_values_proportion': 0.0,
                         },
                         'amenities_fee': {
                             'num_decimal_digits': 2,
                             'min_value': 0.0,
                             'max_value': 46.64,
-                            'missing_value_proportion': 0.07598784194528875,
+                            'missing_values_proportion': 0.07598784194528875,
                         },
                         'checkin_date': {
                             'start_timestamp': '03 Jan 2020',
                             'end_timestamp': '05 Jan 2021',
-                            'missing_value_proportion': 0.0,
+                            'missing_values_proportion': 0.0,
                         },
                         'checkout_date': {
                             'start_timestamp': '04 Jan 2020',
                             'end_timestamp': '07 Jan 2021',
-                            'missing_value_proportion': 0.04559270516717325,
+                            'missing_values_proportion': 0.04559270516717325,
                         },
                         'room_rate': {
                             'num_decimal_digits': 2,
                             'min_value': 48.33,
                             'max_value': 481.61,
-                            'missing_value_proportion': 0.0,
+                            'missing_values_proportion': 0.0,
                         },
-                        'billing_address': {'missing_value_proportion': 0.0},
-                        'credit_card_number': {'missing_value_proportion': 0.0},
+                        'billing_address': {'missing_values_proportion': 0.0},
+                        'credit_card_number': {'missing_values_proportion': 0.0},
                     },
                 },
                 'hotels': {
                     'num_rows': 10,
                     'columns': {
-                        'hotel_id': {'missing_value_proportion': 0.0},
+                        'hotel_id': {'missing_values_proportion': 0.0},
                         'city': {
                             'category_values': [
                                 'Boston',
@@ -68,7 +68,7 @@ class TestDayZSynthesizer:
                                 'Austin',
                                 'Los Angeles',
                             ],
-                            'missing_value_proportion': 0.0,
+                            'missing_values_proportion': 0.0,
                         },
                         'state': {
                             'category_values': [
@@ -78,17 +78,17 @@ class TestDayZSynthesizer:
                                 'New York',
                                 'Texas',
                             ],
-                            'missing_value_proportion': 0.0,
+                            'missing_values_proportion': 0.0,
                         },
                         'rating': {
                             'num_decimal_digits': 1,
                             'min_value': 3.7,
                             'max_value': 4.9,
-                            'missing_value_proportion': 0.1,
+                            'missing_values_proportion': 0.1,
                         },
                         'classification': {
                             'category_values': ['RESORT', 'CHAIN', 'MOTEL'],
-                            'missing_value_proportion': 0.0,
+                            'missing_values_proportion': 0.0,
                         },
                     },
                 },
