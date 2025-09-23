@@ -18,6 +18,35 @@ RELATIONSHIP_PARAMETER_KEYS = REQUIRED_RELATIONSHIP_KEYS + [
 DEFAULT_NUM_ROWS = 1000
 
 
+def _validate_min_cardinality(relationship):
+    min_cardinality = relationship['min_cardinality']
+    if not isinstance(min_cardinality, int) or min_cardinality < 0:
+        msg = (
+            f"Invalid 'min_cardinality' {min_cardinality}. 'min_cardinality' "
+            'must be an integer greater than or equal to zero.'
+        )
+        raise SynthesizerProcessingError(msg)
+
+
+def _validate_max_cardinality(relationship):
+    max_cardinality = relationship['max_cardinality']
+    if not isinstance(max_cardinality, int) or max_cardinality <= 0:
+        msg = (
+            f"Invalid 'max_cardinality' {max_cardinality}. 'max_cardinality' "
+            'must be an integer greater than zero.'
+        )
+        raise SynthesizerProcessingError(msg)
+
+
+def _validate_cardinality_bounds(relationship):
+    if relationship['min_cardinality'] > relationship['max_cardinality']:
+        msg = (
+            "Invalid cardinality, 'min_cardinality' must be less than or "
+            "equal to 'max_cardinality'."
+        )
+        raise SynthesizerProcessingError(msg)
+
+
 def _validate_relationship_structure(dayz_parameters):
     if not isinstance(dayz_parameters.get('relationships', []), list):
         raise SynthesizerProcessingError("The 'relationships' value must be a list.")
@@ -35,29 +64,11 @@ def _validate_relationship_structure(dayz_parameters):
             raise SynthesizerProcessingError(msg)
 
         if 'min_cardinality' in relationship:
-            min_cardinality = relationship['min_cardinality']
-            if not isinstance(min_cardinality, int) or min_cardinality < 0:
-                msg = (
-                    f"Invalid 'min_cardinality' {min_cardinality}. 'min_cardinality' "
-                    'must be an integer greater than or equal to zero.'
-                )
-                raise SynthesizerProcessingError(msg)
+            _validate_min_cardinality(relationship)
         if 'max_cardinality' in relationship:
-            max_cardinality = relationship['max_cardinality']
-            if not isinstance(max_cardinality, int) or max_cardinality <= 0:
-                msg = (
-                    f"Invalid 'max_cardinality' {max_cardinality}. 'max_cardinality' "
-                    'must be an integer greater than zero.'
-                )
-                raise SynthesizerProcessingError(msg)
-
-        if 'max_cardinality' in relationship and 'min_cardinality' in relationship:
-            if relationship['min_cardinality'] > relationship['max_cardinality']:
-                msg = (
-                    "Invalid cardinality, 'min_cardinality' must be less than or "
-                    "equal to 'max_cardinality'."
-                )
-                raise SynthesizerProcessingError(msg)
+            _validate_max_cardinality(relationship)
+        if 'min_cardinality' in relationship and 'max_cardinality' in relationship:
+            _validate_cardinality_bounds(relationship)
 
 
 def _validate_cardinality(relationship_parameters, parent_num_rows, child_num_rows):

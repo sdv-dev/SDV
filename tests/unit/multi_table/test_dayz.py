@@ -205,6 +205,7 @@ def test__validate_parameters(
     mock__validate_parameter_structure,
     metadata,
 ):
+    """Test ``_validate_parameters`` validates relationship and parameters."""
     # Setup
     dayz_parameters = {
         'tables': {
@@ -284,6 +285,7 @@ class TestDayZSynthesizer:
 
     @patch('sdv.multi_table.dayz._validate_parameters')
     def test_validate_parameters(self, mock__validate_parameters, metadata):
+        """Test the ``validate_parameters`` method."""
         # Setup
         dayz_parameters = {
             'tables': {

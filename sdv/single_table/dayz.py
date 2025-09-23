@@ -2,7 +2,7 @@
 
 import pandas as pd
 
-from sdv._utils import _is_numerical
+from sdv._utils import _datetime_string_matches_format, _is_numerical
 from sdv.errors import SynthesizerInputError, SynthesizerProcessingError
 from sdv.single_table._dayz_utils import create_parameters
 
@@ -19,18 +19,32 @@ SDTYPE_TO_PARAMETERS = {
 }
 
 
-def _validate_parameter_structure(dayz_parameters):
-    if not isinstance(dayz_parameters, dict):
-        raise SynthesizerProcessingError(
-            'DayZ parameters must be a dictionary of DayZSynthesizer parameters.'
-        )
-
+def _validate_parameter_dict_keys(dayz_parameters):
     unknown_base_keys = dayz_parameters.keys() - DAYZ_PARAMETER_KEYS
     if unknown_base_keys:
         unknown_base_keys = "', '".join(unknown_base_keys)
         raise SynthesizerProcessingError(
             f"DayZ parameters contains unexpected key(s): '{unknown_base_keys}'."
         )
+
+
+def _validate_table_parameter_dict_keys(table, table_parameters):
+    unknown_table_keys = table_parameters.keys() - TABLE_PARAMETER_KEYS
+    if unknown_table_keys:
+        unknown_table_keys = "', '".join(unknown_table_keys)
+        msg = (
+            f"DayZ parameters contain unexpected key(s) '{unknown_table_keys}' for table '{table}'."
+        )
+        raise SynthesizerProcessingError(msg)
+
+
+def _validate_parameter_structure(dayz_parameters):
+    if not isinstance(dayz_parameters, dict):
+        raise SynthesizerProcessingError(
+            'DayZ parameters must be a dictionary of DayZSynthesizer parameters.'
+        )
+
+    _validate_parameter_dict_keys(dayz_parameters)
 
     table_parameters = dayz_parameters.get('tables', {})
     if not isinstance(table_parameters, dict) or not all(
@@ -40,14 +54,74 @@ def _validate_parameter_structure(dayz_parameters):
             "The 'tables' value must be a dictionary of table parameters."
         )
     for table, table_parameters in dayz_parameters.get('tables', {}).items():
-        unknown_table_keys = table_parameters.keys() - TABLE_PARAMETER_KEYS
-        if unknown_table_keys:
-            unknown_table_keys = "', '".join(unknown_table_keys)
+        _validate_table_parameter_dict_keys(table, table_parameters)
+
+
+def _validate_numerical_parameters(column_parameters, column_table_msg):
+    for param in ['min_value', 'max_value']:
+        if param in column_parameters and not _is_numerical(column_parameters[param]):
+            msg = f"'{param}' for {column_table_msg} must be a float."
+            raise SynthesizerProcessingError(msg)
+
+    if 'min_value' in column_parameters and 'max_value' in column_parameters:
+        if column_parameters['min_value'] > column_parameters['max_value']:
             msg = (
-                f"DayZ parameters contain unexpected key(s) '{unknown_table_keys}' "
-                f"for table '{table}'."
+                f"Invalid parameters for {column_table_msg}. 'min_value' "
+                "must be less than 'max_value'"
             )
             raise SynthesizerProcessingError(msg)
+
+
+def _validate_datetime_parameters(column_parameters, column_metadata, column_table_msg):
+    datetime_format = column_metadata.get('datetime_format')
+    for param in ['start_timestamp', 'end_timestamp']:
+        if param in column_parameters and not isinstance(column_parameters[param], str):
+            msg = f"'{param}' for {column_table_msg} must be a string."
+            raise SynthesizerProcessingError(msg)
+
+        if not _datetime_string_matches_format(column_parameters[param], datetime_format):
+            if datetime_format:
+                msg = (
+                    f"The '{param}' for {column_table_msg} is not a valid datetime string "
+                    f'or does not match the date time format ({datetime_format}).'
+                )
+            else:
+                msg = f"The '{param}' for {column_table_msg} is not a valid datetime string."
+
+        try:
+            pd.to_datetime(column_parameters[param], format=datetime_format)
+        except Exception as e:
+            raise SynthesizerProcessingError(msg) from e
+
+    if 'start_timestamp' in column_parameters and 'end_timestamp' in column_parameters:
+        start_datetime = pd.to_datetime(
+            column_parameters['start_timestamp'], format=datetime_format
+        )
+        end_datetime = pd.to_datetime(column_parameters['end_timestamp'], format=datetime_format)
+        if start_datetime > end_datetime:
+            msg = (
+                f"Invalid parameters for {column_table_msg}. The 'start_timestamp' must be "
+                "less than the 'end_timestamp'."
+            )
+            raise SynthesizerProcessingError(msg)
+
+
+def _validate_categorical_parameters(column_parameters, column_table_msg):
+    if not isinstance(column_parameters.get('category_values', []), list):
+        msg = f"'category_values' for {column_table_msg} must be a list."
+        raise SynthesizerProcessingError(msg)
+
+
+def _validate_missing_value_parameters(column_parameters, column_table_msg):
+    missing_values_proportion = column_parameters['missing_values_proportion']
+    if not _is_numerical(missing_values_proportion) or (
+        missing_values_proportion < 0.0 or missing_values_proportion > 1.0
+    ):
+        msg = (
+            f"'missing_values_proportion' for {column_table_msg} "
+            'must be a float between 0.0 and 1.0.'
+        )
+        raise SynthesizerProcessingError(msg)
 
 
 def _validate_column_parameters(table, column, column_metadata, column_parameters):
@@ -61,66 +135,14 @@ def _validate_column_parameters(table, column, column_metadata, column_parameter
         raise SynthesizerProcessingError(msg)
 
     if sdtype == 'numerical':
-        for param in ['min_value', 'max_value']:
-            if param in column_parameters and not _is_numerical(column_parameters[param]):
-                msg = f"'{param}' for {column_table_msg} must be a float."
-                raise SynthesizerProcessingError(msg)
-
-        if 'min_value' in column_parameters and 'max_value' in column_parameters:
-            if column_parameters['min_value'] > column_parameters['max_value']:
-                msg = (
-                    f"Invalid parameters for {column_table_msg}. 'min_value' "
-                    "must be less than 'max_value'"
-                )
-                raise SynthesizerProcessingError(msg)
+        _validate_numerical_parameters(column_parameters, column_table_msg)
     elif sdtype == 'datetime':
-        datetime_format = column_metadata.get('datetime_format')
-        for param in ['start_timestamp', 'end_timestamp']:
-            if param in column_parameters and not isinstance(column_parameters[param], str):
-                msg = f"'{param}' for {column_table_msg} must be a string."
-                raise SynthesizerProcessingError(msg)
-
-            try:
-                pd.to_datetime(column_parameters[param], format=datetime_format)
-            except Exception as e:
-                if datetime_format:
-                    msg = (
-                        f"The '{param}' for {column_table_msg} is not a valid datetime string "
-                        f'or does not match the date time format ({datetime_format}).'
-                    )
-                else:
-                    msg = f"The '{param}' for {column_table_msg} is not a valid datetime string."
-
-                raise SynthesizerProcessingError(msg) from e
-
-        if 'start_timestamp' in column_parameters and 'end_timestamp' in column_parameters:
-            start_datetime = pd.to_datetime(
-                column_parameters['start_timestamp'], format=datetime_format
-            )
-            end_datetime = pd.to_datetime(
-                column_parameters['end_timestamp'], format=datetime_format
-            )
-            if start_datetime > end_datetime:
-                msg = (
-                    f"Invalid parameters for {column_table_msg}. The 'start_timestamp' must be "
-                    "less than the 'end_timestamp'."
-                )
-                raise SynthesizerProcessingError(msg)
+        _validate_datetime_parameters(column_parameters, column_metadata, column_table_msg)
     elif sdtype == 'categorical':
-        if not isinstance(column_parameters.get('category_values', []), list):
-            msg = f"'category_values' for {column_table_msg} must be a list."
-            raise SynthesizerProcessingError(msg)
+        _validate_categorical_parameters(column_parameters, column_table_msg)
 
     if 'missing_values_proportion' in column_parameters:
-        missing_values_proportion = column_parameters['missing_values_proportion']
-        if not _is_numerical(missing_values_proportion) or (
-            missing_values_proportion < 0.0 or missing_values_proportion > 1.0
-        ):
-            msg = (
-                f"'missing_values_proportion' for {column_table_msg} "
-                'must be a float between 0.0 and 1.0.'
-            )
-            raise SynthesizerProcessingError(msg)
+        _validate_missing_value_parameters(column_parameters, column_table_msg)
 
 
 def _validate_table_parameters(table, table_metadata, table_parameters):
