@@ -118,6 +118,7 @@ def test__validate_column_parameters_numerical():
     # Setup
     column_metadata = {'sdtype': 'numerical'}
     bad_parameter_value = {'min_value': '0'}
+    bad_parameter_combination = {'min_value': 0}
     bad_min_max_combination = {'min_value': 100, 'max_value': 0}
 
     # Run and Assert
@@ -126,6 +127,13 @@ def test__validate_column_parameters_numerical():
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_parameter_value_msg):
         _validate_column_parameters('table', 'column', column_metadata, bad_parameter_value)
+
+    expected_bad_combination_msg = re.escape(
+        "Invalid parameters for column 'column' in table 'table'. Both a "
+        "'min_value' and a 'max_value' must be set."
+    )
+    with pytest.raises(SynthesizerProcessingError, match=expected_bad_combination_msg):
+        _validate_column_parameters('table', 'column', column_metadata, bad_parameter_combination)
 
     expected_bad_min_max_msg = re.escape(
         "Invalid parameters for column 'column' in table 'table'. 'min_value' "
@@ -141,6 +149,7 @@ def test__validate_column_parameters_datetime():
     column_metadata = {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'}
     bad_parameter_value = {'start_timestamp': pd.Timestamp('01-01-2000')}
     bad_datetime_value = {'start_timestamp': 'not a date'}
+    missing_parameter = {'start_timestamp': '31 Dec 2020'}
     bad_start_end_combination = {'start_timestamp': '31 Dec 2020', 'end_timestamp': '01 Jan 2020'}
 
     # Run and Assert
@@ -162,6 +171,13 @@ def test__validate_column_parameters_datetime():
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_value_no_format_msg):
         _validate_column_parameters('table', 'column', {'sdtype': 'datetime'}, bad_datetime_value)
+
+    expected_missing_parameter_msg = re.escape(
+        "Invalid parameters for column 'column' in table 'table'. Both a "
+        "'start_timestamp' and an 'end_timestamp' must be set."
+    )
+    with pytest.raises(SynthesizerProcessingError, match=expected_missing_parameter_msg):
+        _validate_column_parameters('table', 'column', column_metadata, missing_parameter)
 
     expected_bad_start_end_msg = re.escape(
         "Invalid parameters for column 'column' in table 'table'. The 'start_timestamp' "

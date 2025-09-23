@@ -70,11 +70,19 @@ def _validate_numerical_parameters(column_parameters, column_table_msg):
                 "must be less than 'max_value'"
             )
             raise SynthesizerProcessingError(msg)
+    elif 'min_value' in column_parameters or 'max_value' in column_parameters:
+        raise SynthesizerProcessingError(
+            f'Invalid parameters for {column_table_msg}. Both a '
+            "'min_value' and a 'max_value' must be set."
+        )
 
 
 def _validate_datetime_parameters(column_parameters, column_metadata, column_table_msg):
     datetime_format = column_metadata.get('datetime_format')
     for param in ['start_timestamp', 'end_timestamp']:
+        if param not in column_parameters:
+            continue
+
         if param in column_parameters and not isinstance(column_parameters[param], str):
             msg = f"'{param}' for {column_table_msg} must be a string."
             raise SynthesizerProcessingError(msg)
@@ -104,6 +112,11 @@ def _validate_datetime_parameters(column_parameters, column_metadata, column_tab
                 "less than the 'end_timestamp'."
             )
             raise SynthesizerProcessingError(msg)
+    elif 'start_timestamp' in column_parameters or 'end_timestamp' in column_parameters:
+        raise SynthesizerProcessingError(
+            f'Invalid parameters for {column_table_msg}. Both a '
+            "'start_timestamp' and an 'end_timestamp' must be set."
+        )
 
 
 def _validate_categorical_parameters(column_parameters, column_table_msg):

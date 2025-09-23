@@ -84,7 +84,11 @@ class TestDayZSynthesizer:
                 'table': {
                     'num_rows': 250,
                     'columns': {
-                        'numerical': {'min_value': 18, 'missing_values_proportion': 0.15},
+                        'numerical': {
+                            'min_value': 18,
+                            'max_value': 38,
+                            'missing_values_proportion': 0.15,
+                        },
                         'datetime': {
                             'start_timestamp': '01 Apr 2018',
                             'end_timestamp': '08 Dec 2024',
