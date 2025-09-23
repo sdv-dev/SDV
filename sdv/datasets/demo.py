@@ -65,7 +65,7 @@ def _list_objects(prefix):
     contents = []
     paginator = client.get_paginator('list_objects_v2')
     for resp in paginator.paginate(Bucket=BUCKET, Prefix=prefix):
-        contents.extend(resp.get('Contents') or [])
+        contents.extend(resp.get('Contents', []))
 
     if not contents:
         raise DemoResourceNotFoundError(f"No objects found under '{prefix}' in bucket '{BUCKET}'.")
@@ -88,7 +88,7 @@ def _find_data_zip_key(contents, dataset_prefix):
     """
     prefix_lower = dataset_prefix.lower()
     for entry in contents:
-        key = entry.get('Key') or ''
+        key = entry.get('Key', '')
         key_lower = key.lower()
         if key_lower.startswith(prefix_lower) and key_lower.endswith('/data.zip'):
             return key
@@ -108,7 +108,7 @@ def _get_first_v1_metadata_bytes(contents, dataset_prefix):
     """
     prefix_lower = dataset_prefix.lower()
     for entry in contents:
-        key = entry.get('Key') or ''
+        key = entry.get('Key', '')
         key_lower = key.lower()
         if not (key_lower.startswith(prefix_lower) and key_lower.endswith('.json')):
             continue
@@ -153,16 +153,6 @@ def _extract_data(bytes_io, output_folder_name):
         if output_folder_name:
             os.makedirs(output_folder_name, exist_ok=True)
             zf.extractall(output_folder_name)
-            metadata_v0_filepath = os.path.join(output_folder_name, 'metadata_v0.json')
-            if os.path.isfile(metadata_v0_filepath):
-                os.remove(metadata_v0_filepath)
-
-            metadata_v1_filepath = os.path.join(output_folder_name, 'metadata_v1.json')
-            if os.path.isfile(metadata_v1_filepath):
-                os.rename(
-                    metadata_v1_filepath,
-                    os.path.join(output_folder_name, METADATA_FILENAME),
-                )
 
         else:
             in_memory_directory = {}
@@ -240,9 +230,9 @@ def _iter_metainfo_yaml_entries(contents, modality):
     """
     modality_lower = (modality or '').lower()
     for entry in contents or []:
-        key = entry.get('Key') or ''
+        key = entry.get('Key', '')
         parts = key.split('/')
-        if len(parts) < 3:
+        if len(parts) != 3:
             continue
         if parts[0].lower() != modality_lower:
             continue
@@ -282,16 +272,16 @@ def get_available_demos(modality):
             size_mb_val = info.get('dataset-size-mb')
             try:
                 size_mb = float(size_mb_val) if size_mb_val is not None else np.nan
-            except Exception:
+            except (ValueError, TypeError):
                 size_mb = np.nan
 
-            num_tables_val = info.get('num-tables')
+            num_tables_val = info.get('num-tables', np.nan)
             try:
                 num_tables = int(num_tables_val)
-            except Exception:
+            except (ValueError, TypeError):
                 try:
                     num_tables = int(float(num_tables_val))
-                except Exception:
+                except (ValueError, TypeError):
                     num_tables = np.nan
 
             tables_info['dataset_name'].append(name)
@@ -301,9 +291,4 @@ def get_available_demos(modality):
         except Exception:
             continue
 
-    df = pd.DataFrame(tables_info)
-    if not df.empty:
-        df['num_tables'] = pd.to_numeric(df['num_tables'], errors='coerce')
-        df['size_MB'] = pd.to_numeric(df['size_MB'], errors='coerce')
-
-    return df
+    return pd.DataFrame(tables_info)
