@@ -42,12 +42,16 @@ def test_detect_relationship_parameters():
     result = detect_relationship_parameters(data, metadata)
 
     # Assert
-    expected = {
-        '["parent", "child", "parent_id", "parent_id"]': {
+    expected = [
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'child',
+            'parent_primary_key': 'parent_id',
+            'child_foreign_key': 'parent_id',
             'min_cardinality': 0,
             'max_cardinality': 3,
         }
-    }
+    ]
     assert result == expected
 
 

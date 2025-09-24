@@ -94,12 +94,16 @@ class TestDayZSynthesizer:
                     },
                 },
             },
-            'relationships': {
-                '["hotels", "guests", "hotel_id", "hotel_id"]': {
+            'relationships': [
+                {
+                    'parent_table_name': 'hotels',
+                    'child_table_name': 'guests',
+                    'parent_primary_key': 'hotel_id',
+                    'child_foreign_key': 'hotel_id',
                     'min_cardinality': 15,
                     'max_cardinality': 137,
-                }
-            },
+                },
+            ],
         }
         assert parameters == expected_results
 
