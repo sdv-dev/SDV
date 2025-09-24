@@ -27,6 +27,7 @@ from sdv.utils.mixins import MissingModuleMixin
 try:
     from deepecho import PARModel
     from deepecho.sequences import assemble_sequences
+    from deepecho.models._utils import _validate_gpu_parameters
 
     import_error = None
 except ModuleNotFoundError as e:
@@ -70,8 +71,11 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             The number of times to sample (before choosing and
             returning the sample which maximizes the likelihood).
             Defaults to 1.
+        enable_gpu (bool):
+            Whether to attempt to use GPU for computation.
+            Defaults to ``True``.
         cuda (bool):
-            Whether to attempt to use cuda for GPU computation.
+            **Deprecated** Whether to attempt to use cuda for GPU computation.
             If this is False or CUDA is not available, CPU will be used.
             Defaults to ``True``.
         verbose (bool):
@@ -143,6 +147,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         sample_size=1,
         enable_gpu=True,
         verbose=False,
+        cuda=None,
     ):
         if PARModel is None:
             self.raise_module_not_found_error(import_error)
@@ -175,7 +180,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         self._model_kwargs = {
             'epochs': epochs,
             'sample_size': sample_size,
-            'enable_gpu': enable_gpu,
+            'enable_gpu': _validate_gpu_parameters(enable_gpu, cuda),
             'verbose': verbose,
         }
         context_metadata = self._get_context_metadata()

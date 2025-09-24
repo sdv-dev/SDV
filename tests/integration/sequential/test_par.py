@@ -13,6 +13,8 @@ from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError
 from sdv.metadata.metadata import Metadata
 from sdv.sequential import PARSynthesizer
+import platform
+import torch
 
 
 def _get_par_data_and_metadata():
@@ -1002,3 +1004,56 @@ def test_add_constraints_with_context_columns():
     synthesizer.fit(data)
     samples = synthesizer.sample(5)
     synthesizer.validate(samples)
+
+
+def test_with_enable_gpu():
+    """Test PARSynthesizer with GPU enabled."""
+    # Setup
+    data, metadata = _get_par_data_and_metadata()
+    synthesizer_1 = PARSynthesizer(metadata, epochs=1)
+    synthesizer_2 = PARSynthesizer(metadata, epochs=1, enable_gpu=False)
+    expected_warning = re.escape(
+        '`cuda` parameter is deprecated and will be removed in a future release. '
+        'Please use `enable_gpu` instead.'
+    )
+    expected_error = re.escape(
+        'Cannot resolve the provided values of `cuda` and `enable_gpu` parameters. '
+        'Please use only `enable_gpu`.'
+    )
+
+
+    # Run
+    with pytest.warns(FutureWarning, match=expected_warning):
+        synthesizer_3 = PARSynthesizer(metadata, epochs=1, cuda=True)
+
+    with pytest.raises(ValueError, match=expected_error):
+        PARSynthesizer(metadata, cuda=True, enable_gpu=False)
+    
+    synthesizer_1.fit(data)
+    synthesizer_2.fit(data)
+    synthesizer_3.fit(data)
+    samples_1 = synthesizer_1.sample(5)
+    samples_2 = synthesizer_2.sample(5)
+    samples_3 = synthesizer_3.sample(5)
+
+    # Assert
+    data_columns = data.columns.to_list()
+    if (
+        platform.machine() == 'arm64'
+        and getattr(torch.backends, 'mps', None)
+        and torch.backends.mps.is_available()
+    ):
+        expected_device = torch.device('mps')
+    elif torch.cuda.is_available():
+        expected_device = torch.device('cuda')
+    else:
+        expected_device = torch.device('cpu')
+    synthesizer_1._model._enable_gpu is True
+    synthesizer_2._model._enable_gpu is False
+    synthesizer_3._model._enable_gpu is True
+    assert synthesizer_1._model.device == synthesizer_3._model.device
+    assert synthesizer_1._model.device == expected_device
+    assert synthesizer_2._model.device == torch.device('cpu')
+    assert samples_1.shape == samples_2.shape == samples_3.shape
+    assert samples_1.columns.to_list() == samples_2.columns.to_list() == samples_3.columns.to_list()
+    assert samples_1.columns.to_list() == data_columns
