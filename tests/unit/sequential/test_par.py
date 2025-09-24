@@ -62,7 +62,7 @@ class TestPARSynthesizer:
             segment_size=10,
             epochs=10,
             sample_size=5,
-            cuda=False,
+            enable_gpu=False,
             verbose=False,
         )
 
@@ -75,7 +75,7 @@ class TestPARSynthesizer:
         assert synthesizer._model_kwargs == {
             'epochs': 10,
             'sample_size': 5,
-            'cuda': False,
+            'enable_gpu': False,
             'verbose': False,
         }
         assert isinstance(synthesizer._data_processor, DataProcessor)
@@ -111,7 +111,7 @@ class TestPARSynthesizer:
                 segment_size=10,
                 epochs=10,
                 sample_size=5,
-                cuda=False,
+                enable_gpu=False,
                 verbose=False,
             )
 
@@ -200,7 +200,7 @@ class TestPARSynthesizer:
             segment_size=10,
             epochs=10,
             sample_size=5,
-            cuda=False,
+            enable_gpu=False,
             verbose=False,
         )
 
@@ -217,7 +217,7 @@ class TestPARSynthesizer:
             'segment_size': 10,
             'epochs': 10,
             'sample_size': 5,
-            'cuda': False,
+            'enable_gpu': False,
             'verbose': False,
         }
 
@@ -233,7 +233,7 @@ class TestPARSynthesizer:
             segment_size=10,
             epochs=10,
             sample_size=5,
-            cuda=False,
+            enable_gpu=False,
             verbose=False,
         )
 
@@ -592,7 +592,9 @@ class TestPARSynthesizer:
         assemble_sequences_mock.assert_called_once_with(
             data, ['name'], ['gender'], None, None, drop_sequence_index=False
         )
-        model_mock.assert_called_once_with(epochs=128, sample_size=1, cuda=True, verbose=False)
+        model_mock.assert_called_once_with(
+            epochs=128, sample_size=1, enable_gpu=True, verbose=False
+        )
         model_mock.return_value.fit_sequences.assert_called_once_with(
             sequences, ['categorical'], ['categorical', 'continuous']
         )
@@ -629,7 +631,9 @@ class TestPARSynthesizer:
         assemble_sequences_mock.assert_called_once_with(
             data, ['name'], ['gender'], None, None, drop_sequence_index=False
         )
-        model_mock.assert_called_once_with(epochs=128, sample_size=1, cuda=True, verbose=False)
+        model_mock.assert_called_once_with(
+            epochs=128, sample_size=1, enable_gpu=True, verbose=False
+        )
         model_mock.return_value.fit_sequences.assert_called_once_with(
             sequences, ['categorical'], ['categorical', 'categorical']
         )
@@ -681,7 +685,9 @@ class TestPARSynthesizer:
                 'data': [[2, 2, 3], [65, 65, 70], [3, 3, 3]],
             },
         ]
-        model_mock.assert_called_once_with(epochs=128, sample_size=1, cuda=True, verbose=False)
+        model_mock.assert_called_once_with(
+            epochs=128, sample_size=1, enable_gpu=True, verbose=False
+        )
         model_mock.return_value.fit_sequences.assert_called_once_with(
             expected_sequences, ['categorical'], ['continuous', 'continuous']
         )

@@ -139,7 +139,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
         verbose=False,
         epochs=300,
         pac=10,
-        cuda=True,
+        enable_gpu=True,
         numerical_distributions=None,
         default_distribution=None,
     ):
@@ -161,7 +161,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             verbose=verbose,
             epochs=epochs,
             pac=pac,
-            cuda=cuda,
+            enable_gpu=enable_gpu,
         )
 
         validate_numerical_distributions(

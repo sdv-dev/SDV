@@ -43,7 +43,7 @@ class TestCopulaGANSynthesizer:
         assert instance.verbose is False
         assert instance.epochs == 300
         assert instance.pac == 10
-        assert instance.cuda is True
+        assert instance.enable_gpu is True
         assert instance.numerical_distributions == {}
         assert instance.default_distribution == 'beta'
         assert instance._numerical_distributions == {}
@@ -79,7 +79,7 @@ class TestCopulaGANSynthesizer:
         assert instance.verbose is False
         assert instance.epochs == 300
         assert instance.pac == 10
-        assert instance.cuda is True
+        assert instance.enable_gpu is True
         assert instance.numerical_distributions == {}
         assert instance.default_distribution == 'beta'
         assert instance._numerical_distributions == {}
@@ -128,7 +128,7 @@ class TestCopulaGANSynthesizer:
             verbose=verbose,
             epochs=epochs,
             pac=pac,
-            cuda=cuda,
+            enable_gpu=cuda,
             numerical_distributions=numerical_distributions,
             default_distribution=default_distribution,
         )
@@ -149,7 +149,7 @@ class TestCopulaGANSynthesizer:
         assert instance.verbose is True
         assert instance.epochs == epochs
         assert instance.pac == pac
-        assert instance.cuda is False
+        assert instance.enable_gpu is False
         assert instance.numerical_distributions == {'field': 'gamma'}
         assert instance._numerical_distributions == {'field': GammaUnivariate}
         assert instance.default_distribution == 'uniform'
@@ -208,7 +208,7 @@ class TestCopulaGANSynthesizer:
             'verbose': False,
             'epochs': 300,
             'pac': 10,
-            'cuda': True,
+            'enable_gpu': True,
             'numerical_distributions': {},
             'default_distribution': 'beta',
         }

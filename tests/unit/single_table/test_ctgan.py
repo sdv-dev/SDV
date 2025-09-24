@@ -60,7 +60,7 @@ class TestCTGANSynthesizer:
         assert instance.verbose is False
         assert instance.epochs == 300
         assert instance.pac == 10
-        assert instance.cuda is True
+        assert instance.enable_gpu is True
 
     def test___init__with_unified_metadata(self):
         """Test creating an instance of ``CTGANSynthesizer`` with Metadata."""
@@ -92,7 +92,7 @@ class TestCTGANSynthesizer:
         assert instance.verbose is False
         assert instance.epochs == 300
         assert instance.pac == 10
-        assert instance.cuda is True
+        assert instance.enable_gpu is True
 
     def test___init__custom(self):
         """Test creating an instance of ``CTGANSynthesizer`` with custom parameters."""
@@ -133,7 +133,7 @@ class TestCTGANSynthesizer:
             verbose=verbose,
             epochs=epochs,
             pac=pac,
-            cuda=cuda,
+            enable_gpu=cuda,
         )
 
         # Assert
@@ -152,7 +152,7 @@ class TestCTGANSynthesizer:
         assert instance.verbose is True
         assert instance.epochs == epochs
         assert instance.pac == pac
-        assert instance.cuda is False
+        assert instance.enable_gpu is False
 
     @patch('sdv.single_table.ctgan.CTGAN', None)
     @patch('sdv.single_table.ctgan.import_error')
@@ -195,7 +195,7 @@ class TestCTGANSynthesizer:
             'verbose': False,
             'epochs': 300,
             'pac': 10,
-            'cuda': True,
+            'enable_gpu': True,
         }
 
     def test__estimate_num_columns(self):
@@ -305,7 +305,7 @@ class TestCTGANSynthesizer:
         assert args[2] == instance._data_processor._hyper_transformer.field_transformers
         mock_ctgan.assert_called_once_with(
             batch_size=500,
-            cuda=True,
+            enable_gpu=True,
             discriminator_decay=1e-6,
             discriminator_dim=(256, 256),
             discriminator_lr=2e-4,
@@ -408,7 +408,7 @@ class TestTVAESynthesizer:
         assert instance.verbose is False
         assert instance.epochs == 300
         assert instance.loss_factor == 2
-        assert instance.cuda is True
+        assert instance.enable_gpu is True
 
     def test___init__custom(self):
         """Test creating an instance of ``TVAESynthesizer`` with custom parameters."""
@@ -439,7 +439,7 @@ class TestTVAESynthesizer:
             verbose=verbose,
             epochs=epochs,
             loss_factor=loss_factor,
-            cuda=cuda,
+            enable_gpu=cuda,
         )
 
         # Assert
@@ -453,7 +453,7 @@ class TestTVAESynthesizer:
         assert instance.verbose is True
         assert instance.epochs == 150
         assert instance.loss_factor == 4
-        assert instance.cuda is False
+        assert instance.enable_gpu is False
 
     @patch('sdv.single_table.ctgan.TVAE', None)
     @patch('sdv.single_table.ctgan.import_error')
@@ -490,7 +490,7 @@ class TestTVAESynthesizer:
             'verbose': False,
             'epochs': 300,
             'loss_factor': 2,
-            'cuda': True,
+            'enable_gpu': True,
         }
 
     @patch('sdv.single_table.ctgan.TVAE')
@@ -524,7 +524,7 @@ class TestTVAESynthesizer:
         mock_tvae.assert_called_once_with(
             batch_size=500,
             compress_dims=(128, 128),
-            cuda=True,
+            enable_gpu=True,
             decompress_dims=(128, 128),
             embedding_dim=128,
             verbose=False,

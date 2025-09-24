@@ -180,7 +180,7 @@ class CTGANSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynth
         verbose=False,
         epochs=300,
         pac=10,
-        cuda=True,
+        enable_gpu=True,
     ):
         if CTGAN is None:
             self.raise_module_not_found_error(import_error)
@@ -204,7 +204,7 @@ class CTGANSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynth
         self.verbose = verbose
         self.epochs = epochs
         self.pac = pac
-        self.cuda = cuda
+        self.enable_gpu = enable_gpu
 
         self._model_kwargs = {
             'embedding_dim': embedding_dim,
@@ -220,7 +220,7 @@ class CTGANSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynth
             'verbose': verbose,
             'epochs': epochs,
             'pac': pac,
-            'cuda': cuda,
+            'enable_gpu': enable_gpu,
         }
 
     def _estimate_num_columns(self, data):
@@ -373,7 +373,7 @@ class TVAESynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynthe
         verbose=False,
         epochs=300,
         loss_factor=2,
-        cuda=True,
+        enable_gpu=True,
     ):
         if TVAE is None:
             self.raise_module_not_found_error(import_error)
@@ -390,7 +390,7 @@ class TVAESynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynthe
         self.verbose = verbose
         self.epochs = epochs
         self.loss_factor = loss_factor
-        self.cuda = cuda
+        self.enable_gpu = enable_gpu
 
         self._model_kwargs = {
             'embedding_dim': embedding_dim,
@@ -401,7 +401,7 @@ class TVAESynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynthe
             'verbose': verbose,
             'epochs': epochs,
             'loss_factor': loss_factor,
-            'cuda': cuda,
+            'enable_gpu': enable_gpu,
         }
 
     def _fit(self, processed_data):

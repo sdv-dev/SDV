@@ -141,7 +141,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         segment_size=None,
         epochs=128,
         sample_size=1,
-        cuda=True,
+        enable_gpu=True,
         verbose=False,
     ):
         if PARModel is None:
@@ -175,7 +175,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         self._model_kwargs = {
             'epochs': epochs,
             'sample_size': sample_size,
-            'cuda': cuda,
+            'enable_gpu': enable_gpu,
             'verbose': verbose,
         }
         context_metadata = self._get_context_metadata()
