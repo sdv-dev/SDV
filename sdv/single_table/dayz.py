@@ -71,6 +71,14 @@ def _validate_numerical_parameters(column_parameters, column_table_msg):
             )
             raise SynthesizerProcessingError(msg)
 
+    num_decimal_digits = column_parameters.get('num_decimal_digits')
+    if 'num_decimal_digits' in column_parameters:
+        if not isinstance(num_decimal_digits, int) or num_decimal_digits < 0:
+            raise SynthesizerProcessingError(
+                f"The 'num_decimal_digits' parameter for {column_table_msg} must be an "
+                'integer greater than or equal to zero.'
+            )
+
 
 def _validate_datetime_parameters(column_parameters, column_metadata, column_table_msg):
     """Validate that the timestamps are valid and match the datetime format.

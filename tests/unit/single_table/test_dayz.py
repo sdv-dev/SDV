@@ -120,6 +120,7 @@ def test__validate_column_parameters_numerical():
     column_metadata = {'sdtype': 'numerical'}
     bad_parameter_value = {'min_value': '0'}
     bad_min_max_combination = {'min_value': 100, 'max_value': 0}
+    bad_num_decimal_digits = {'num_decimal_digits': -4}
 
     # Run and Assert
     expected_bad_parameter_value_msg = re.escape(
@@ -134,6 +135,13 @@ def test__validate_column_parameters_numerical():
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_min_max_msg):
         _validate_column_parameters('table', 'column', column_metadata, bad_min_max_combination)
+
+    expected_bad_num_decimal_digits_msg = re.escape(
+        "The 'num_decimal_digits' parameter for column 'column' in table 'table' must be an "
+        'integer greater than or equal to zero.'
+    )
+    with pytest.raises(SynthesizerProcessingError, match=expected_bad_num_decimal_digits_msg):
+        _validate_column_parameters('table', 'column', column_metadata, bad_num_decimal_digits)
 
 
 def test__validate_column_parameters_datetime():
