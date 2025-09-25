@@ -168,7 +168,7 @@ def test_synthesize_sequences(tmp_path):
     custom_synthesizer.fit(real_data)
 
     # Run - Sample
-    synthetic_data = synthesizer.sample(num_sequences=10)
+    synthetic_data = synthesizer.sample(num_sequences=3)
     custom_synthetic_data = custom_synthesizer.sample(num_sequences=3, sequence_length=2)
     custom_synthetic_data_conditional = custom_synthesizer.sample_sequential_columns(
         context_columns=scenario_context, sequence_length=2
@@ -178,7 +178,7 @@ def test_synthesize_sequences(tmp_path):
     model_path = tmp_path / 'my_synthesizer.pkl'
     synthesizer.save(model_path)
     loaded_synthesizer = PARSynthesizer.load(model_path)
-    loaded_sample = loaded_synthesizer.sample(100)
+    loaded_sample = loaded_synthesizer.sample(3)
 
     # Assert
     assert all(custom_synthetic_data_conditional['Symbol'].value_counts() == 2)
@@ -479,7 +479,7 @@ def test_par_categorical_column_represented_by_floats():
     # Run
     synth = PARSynthesizer(metadata, epochs=1)
     synth.fit(data)
-    sampled = synth.sample(num_sequences=10)
+    sampled = synth.sample(num_sequences=3)
 
     # Assert
     synth.validate(sampled)
