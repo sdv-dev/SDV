@@ -914,17 +914,20 @@ class MultiTableMetadata:
 
         return [error_msg] if error_msg else []
 
-    def validate_data(self, data):
+    def validate_data(self, data, table_name=None):
         """Validate the data matches the metadata.
 
         Checks the following rules:
-            * all tables of the metadata are present in the data
             * every table of the data satisfies its own metadata
-            * all foreign keys belong to a primay key
+            * if no table_name provided, all tables of the metadata are present in the data
+            * if no table_name provided, that all foreign keys belong to a primay key
 
         Args:
             data (dict):
                 A dictionary of table names to pd.DataFrames.
+            table_name (str, optional):
+                The specific table to validate. If set, only validates the data for the
+                table. If None, validates the data for all tables. Defaults to None.
 
         Raises:
             InvalidDataError:
@@ -938,9 +941,9 @@ class MultiTableMetadata:
             raise InvalidMetadataError('Please pass in a dictionary mapping tables to dataframes.')
 
         errors = []
-        errors += self._validate_missing_tables(data)
+        errors += self._validate_missing_tables(data) if not table_name else []
         errors += self._validate_all_tables(data)
-        errors += self._validate_foreign_keys(data)
+        errors += self._validate_foreign_keys(data) if not table_name else []
 
         if errors:
             raise InvalidDataError(errors)

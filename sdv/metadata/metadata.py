@@ -297,7 +297,8 @@ class Metadata(MultiTableMetadata):
                 'to validate.'
             )
 
-        return self.validate_data({table_name: data})
+        self._validate_table_exists(table_name)
+        return self.validate_data({table_name: data}, table_name)
 
     def get_column_names(self, table_name=None, **kwargs):
         """Return a list of column names that match the given metadata keyword arguments."""
