@@ -279,21 +279,23 @@ def get_available_demos(modality):
                 size_mb = np.nan
 
             num_tables_val = info.get('num-tables', np.nan)
-            try:
-                num_tables = int(num_tables_val)
-            except (ValueError, TypeError):
-                LOGGER.info(
-                    f'Invalid num-tables {num_tables_val} for dataset {name} when parsing as int; '
-                    'trying float.',
-                )
+            if isinstance(num_tables_val, str):
                 try:
-                    num_tables = int(float(num_tables_val))
+                    num_tables_val = float(num_tables_val)
                 except (ValueError, TypeError):
                     LOGGER.info(
-                        f'Invalid num-tables {num_tables_val} for dataset {name}; '
-                        'defaulting to NaN.'
+                        f'Could not cast num_tables_val {num_tables_val} to float for '
+                        f'dataset {name}; defaulting to NaN.'
                     )
-                    num_tables = np.nan
+                    num_tables_val = np.nan
+
+            try:
+                num_tables = int(num_tables_val) if not pd.isna(num_tables_val) else np.nan
+            except (ValueError, TypeError):
+                LOGGER.info(
+                    f'Invalid num-tables {num_tables_val} for dataset {name} when parsing as int.'
+                )
+                num_tables = np.nan
 
             tables_info['dataset_name'].append(name)
             tables_info['size_MB'].append(size_mb)
