@@ -20,7 +20,7 @@ from sdv.metadata.metadata import Metadata
 
 LOGGER = logging.getLogger(__name__)
 BUCKET = 'sdv-datasets-public'
-BUCKET_URL = 'https://sdv-datasets-public.s3.amazonaws.com'
+BUCKET_URL = f'https://{BUCKET}.s3.amazonaws.com'
 SIGNATURE_VERSION = UNSIGNED
 METADATA_FILENAME = 'metadata.json'
 
@@ -90,7 +90,7 @@ def _find_data_zip_key(contents, dataset_prefix):
     for entry in contents:
         key = entry.get('Key', '')
         key_lower = key.lower()
-        if key_lower.startswith(prefix_lower) and key_lower.endswith('/data.zip'):
+        if key_lower == f'{prefix_lower}data.zip':
             return key
 
     raise DemoResourceNotFoundError("Could not find 'data.zip' for the requested dataset.")
@@ -110,7 +110,13 @@ def _get_first_v1_metadata_bytes(contents, dataset_prefix):
     for entry in contents:
         key = entry.get('Key', '')
         key_lower = key.lower()
-        if not (key_lower.startswith(prefix_lower) and key_lower.endswith('.json')):
+
+        # Check if key matches pattern: {modality}/{dataset_name}/*.json
+        if not (
+            key_lower.startswith(prefix_lower)
+            and key_lower.endswith('.json')
+            and key_lower.count('/') == prefix_lower.count('/')
+        ):
             continue
 
         try:
