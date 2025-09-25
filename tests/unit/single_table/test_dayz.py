@@ -75,7 +75,7 @@ def test__validate_parameter_structure(dayz_parameters):
         _validate_parameter_structure(bad_parameters_key)
 
     expected_bad_tables_parameters_msg = re.escape(
-        "The 'tables' value must be a dictionary of table parameters."
+        "The 'tables' value in the DayZ parameters must be a dictionary of table parameters."
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_tables_parameters_msg):
         _validate_parameter_structure(bad_tables_parameters)
@@ -100,13 +100,14 @@ def test__validate_column_parameter():
 
     # Run and Assert
     expected_bad_column_msg = re.escape(
-        "The column 'column' in table 'table' contains unexpected key(s) 'invalid_key'."
+        "The parameters for column 'column' in table 'table' contains unexpected "
+        "key(s) 'invalid_key'."
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_column_msg):
         _validate_column_parameters('table', 'column', column_metadata, bad_column_parameters)
 
     expected_bad_missing_value_msg = re.escape(
-        "'missing_values_proportion' for column 'column' in table 'table' "
+        "The 'missing_values_proportion' parameter for column 'column' in table 'table' "
         'must be a float between 0.0 and 1.0.'
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_missing_value_msg):
@@ -123,21 +124,21 @@ def test__validate_column_parameters_numerical():
 
     # Run and Assert
     expected_bad_parameter_value_msg = re.escape(
-        "'min_value' for column 'column' in table 'table' must be a float."
+        "The 'min_value' parameter for column 'column' in table 'table' must be a float."
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_parameter_value_msg):
         _validate_column_parameters('table', 'column', column_metadata, bad_parameter_value)
 
     expected_bad_combination_msg = re.escape(
-        "Invalid parameters for column 'column' in table 'table'. Both a "
-        "'min_value' and a 'max_value' must be set."
+        "Invalid parameters for column 'column' in table 'table'. Both the "
+        "'min_value' and 'max_value' parameters must be set."
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_combination_msg):
         _validate_column_parameters('table', 'column', column_metadata, bad_parameter_combination)
 
     expected_bad_min_max_msg = re.escape(
-        "Invalid parameters for column 'column' in table 'table'. 'min_value' "
-        "must be less than 'max_value'"
+        "Invalid parameters for column 'column' in table 'table'. The 'min_value' "
+        "must be less than the 'max_value'"
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_min_max_msg):
         _validate_column_parameters('table', 'column', column_metadata, bad_min_max_combination)
@@ -154,27 +155,28 @@ def test__validate_column_parameters_datetime():
 
     # Run and Assert
     expected_bad_parameter_value_msg = re.escape(
-        "'start_timestamp' for column 'column' in table 'table' must be a string."
+        "The 'start_timestamp' parameter for column 'column' in table 'table' must be a string."
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_parameter_value_msg):
         _validate_column_parameters('table', 'column', column_metadata, bad_parameter_value)
 
     expected_bad_datetime_value_msg = re.escape(
-        "The 'start_timestamp' for column 'column' in table 'table' is not a valid datetime "
-        'string or does not match the date time format (%d %b %Y).'
+        "The 'start_timestamp' parameter for column 'column' in table 'table' is not a valid "
+        'datetime string or does not match the date time format (%d %b %Y).'
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_datetime_value_msg):
         _validate_column_parameters('table', 'column', column_metadata, bad_datetime_value)
 
     expected_bad_value_no_format_msg = re.escape(
-        "The 'start_timestamp' for column 'column' in table 'table' is not a valid datetime string."
+        "The 'start_timestamp' parameter for column 'column' in table 'table' is not a "
+        'valid datetime string.'
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_value_no_format_msg):
         _validate_column_parameters('table', 'column', {'sdtype': 'datetime'}, bad_datetime_value)
 
     expected_missing_parameter_msg = re.escape(
-        "Invalid parameters for column 'column' in table 'table'. Both a "
-        "'start_timestamp' and an 'end_timestamp' must be set."
+        "Invalid parameters for column 'column' in table 'table'. Both the "
+        "'start_timestamp' and 'end_timestamp' parameters must be set."
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_missing_parameter_msg):
         _validate_column_parameters('table', 'column', column_metadata, missing_parameter)
@@ -195,7 +197,7 @@ def test__validate_column_parameters_categorical():
 
     # Run and Assert
     expected_msg = re.escape(
-        "'category_values' for column 'column' in table 'table' must be a list."
+        "The 'category_values' parameter for column 'column' in table 'table' must be a list."
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_msg):
         _validate_column_parameters('table', 'column', column_metadata, bad_category_values)
@@ -211,13 +213,14 @@ def test__validate_table_parameters(mock__validate_column_parameters, metadata, 
 
     # Run and Assert
     expected_bad_column_msg = re.escape(
-        "Invalid DayZ parameters provided, column(s) 'bad_column' are missing from table 'table'."
+        "Invalid DayZ parameters provided, column(s) 'bad_column' are missing from table 'table' "
+        'in the metadata.'
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_column_msg):
         _validate_table_parameters('table', table_metadata, bad_table_columns)
 
     expected_bad_num_rows_msg = re.escape(
-        "Invalid DayZ parameter 'num_rows' for table 'table'. num_rows must "
+        "Invalid DayZ parameter 'num_rows' for table 'table'. The 'num_rows' parameter must "
         'be an integer greater than zero.'
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_num_rows_msg):

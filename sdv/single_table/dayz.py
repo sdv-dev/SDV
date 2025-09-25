@@ -2,7 +2,7 @@
 
 import pandas as pd
 
-from sdv._utils import _datetime_string_matches_format, _is_numerical
+from sdv._utils import _datetime_string_matches_format, _get_datetime_format, _is_numerical
 from sdv.errors import SynthesizerInputError, SynthesizerProcessingError
 from sdv.single_table._dayz_utils import create_parameters
 
@@ -51,7 +51,7 @@ def _validate_parameter_structure(dayz_parameters):
         isinstance(value, dict) for value in table_parameters.values()
     ):
         raise SynthesizerProcessingError(
-            "The 'tables' value must be a dictionary of table parameters."
+            "The 'tables' value in the DayZ parameters must be a dictionary of table parameters."
         )
     for table, table_parameters in dayz_parameters.get('tables', {}).items():
         _validate_table_parameter_dict_keys(table, table_parameters)
@@ -60,46 +60,55 @@ def _validate_parameter_structure(dayz_parameters):
 def _validate_numerical_parameters(column_parameters, column_table_msg):
     for param in ['min_value', 'max_value']:
         if param in column_parameters and not _is_numerical(column_parameters[param]):
-            msg = f"'{param}' for {column_table_msg} must be a float."
+            msg = f"The '{param}' parameter for {column_table_msg} must be a float."
             raise SynthesizerProcessingError(msg)
 
     if 'min_value' in column_parameters and 'max_value' in column_parameters:
         if column_parameters['min_value'] > column_parameters['max_value']:
             msg = (
-                f"Invalid parameters for {column_table_msg}. 'min_value' "
-                "must be less than 'max_value'"
+                f"Invalid parameters for {column_table_msg}. The 'min_value' "
+                "must be less than the 'max_value'"
             )
             raise SynthesizerProcessingError(msg)
     elif 'min_value' in column_parameters or 'max_value' in column_parameters:
         raise SynthesizerProcessingError(
-            f'Invalid parameters for {column_table_msg}. Both a '
-            "'min_value' and a 'max_value' must be set."
+            f'Invalid parameters for {column_table_msg}. Both the '
+            "'min_value' and 'max_value' parameters must be set."
         )
 
 
 def _validate_datetime_parameters(column_parameters, column_metadata, column_table_msg):
+    """Validate that the timestamps are valid and match the datetime format.
+
+    If a datetime format has not been provided in the metadata, the datetime format
+    is detected from the provided timestamp. If the detected datetime format is None
+    or if the provided timestamp does not match the datetime format, the validation
+    errors.
+    """
     datetime_format = column_metadata.get('datetime_format')
     for param in ['start_timestamp', 'end_timestamp']:
         if param not in column_parameters:
             continue
 
-        if param in column_parameters and not isinstance(column_parameters[param], str):
-            msg = f"'{param}' for {column_table_msg} must be a string."
+        timestamp = column_parameters[param]
+        if not isinstance(timestamp, str):
+            msg = f"The '{param}' parameter for {column_table_msg} must be a string."
             raise SynthesizerProcessingError(msg)
 
-        if not _datetime_string_matches_format(column_parameters[param], datetime_format):
-            if datetime_format:
+        datetime_format = datetime_format if datetime_format else _get_datetime_format(timestamp)
+        if not datetime_format or not _datetime_string_matches_format(timestamp, datetime_format):
+            if column_metadata.get('datetime_format'):
                 msg = (
-                    f"The '{param}' for {column_table_msg} is not a valid datetime string "
-                    f'or does not match the date time format ({datetime_format}).'
+                    f"The '{param}' parameter for {column_table_msg} is not a valid datetime "
+                    f'string or does not match the date time format ({datetime_format}).'
                 )
             else:
-                msg = f"The '{param}' for {column_table_msg} is not a valid datetime string."
+                msg = (
+                    f"The '{param}' parameter for {column_table_msg} is not a "
+                    'valid datetime string.'
+                )
 
-        try:
-            pd.to_datetime(column_parameters[param], format=datetime_format)
-        except Exception as e:
-            raise SynthesizerProcessingError(msg) from e
+            raise SynthesizerProcessingError(msg)
 
     if 'start_timestamp' in column_parameters and 'end_timestamp' in column_parameters:
         start_datetime = pd.to_datetime(
@@ -114,14 +123,14 @@ def _validate_datetime_parameters(column_parameters, column_metadata, column_tab
             raise SynthesizerProcessingError(msg)
     elif 'start_timestamp' in column_parameters or 'end_timestamp' in column_parameters:
         raise SynthesizerProcessingError(
-            f'Invalid parameters for {column_table_msg}. Both a '
-            "'start_timestamp' and an 'end_timestamp' must be set."
+            f'Invalid parameters for {column_table_msg}. Both the '
+            "'start_timestamp' and 'end_timestamp' parameters must be set."
         )
 
 
 def _validate_categorical_parameters(column_parameters, column_table_msg):
     if not isinstance(column_parameters.get('category_values', []), list):
-        msg = f"'category_values' for {column_table_msg} must be a list."
+        msg = f"The 'category_values' parameter for {column_table_msg} must be a list."
         raise SynthesizerProcessingError(msg)
 
 
@@ -131,7 +140,7 @@ def _validate_missing_value_parameters(column_parameters, column_table_msg):
         missing_values_proportion < 0.0 or missing_values_proportion > 1.0
     ):
         msg = (
-            f"'missing_values_proportion' for {column_table_msg} "
+            f"The 'missing_values_proportion' parameter for {column_table_msg} "
             'must be a float between 0.0 and 1.0.'
         )
         raise SynthesizerProcessingError(msg)
@@ -144,7 +153,10 @@ def _validate_column_parameters(table, column, column_metadata, column_parameter
     unknown_column_parameters = column_parameters.keys() - set(sdtype_parameters)
     if unknown_column_parameters:
         unknown_column_parameters = "', '".join(unknown_column_parameters)
-        msg = f"The {column_table_msg} contains unexpected key(s) '{unknown_column_parameters}'."
+        msg = (
+            f'The parameters for {column_table_msg} contains unexpected key(s) '
+            f"'{unknown_column_parameters}'."
+        )
         raise SynthesizerProcessingError(msg)
 
     if sdtype == 'numerical':
@@ -164,15 +176,15 @@ def _validate_table_parameters(table, table_metadata, table_parameters):
         missing_cols = "', '".join(missing_cols)
         msg = (
             f"Invalid DayZ parameters provided, column(s) '{missing_cols}' are missing from "
-            f"table '{table}'."
+            f"table '{table}' in the metadata."
         )
         raise SynthesizerProcessingError(msg)
 
     num_rows = table_parameters.get('num_rows')
-    if num_rows is not None and (not isinstance(num_rows, int) or num_rows <= 0):
+    if 'num_rows' in table_parameters and (not isinstance(num_rows, int) or num_rows <= 0):
         msg = (
-            f"Invalid DayZ parameter 'num_rows' for table '{table}'. num_rows must "
-            'be an integer greater than zero.'
+            f"Invalid DayZ parameter 'num_rows' for table '{table}'. The 'num_rows' parameter "
+            'must be an integer greater than zero.'
         )
         raise SynthesizerProcessingError(msg)
 
@@ -198,25 +210,25 @@ def _validate_tables_parameter(metadata, dayz_parameters):
         _validate_table_parameters(table, table_metadata, table_parameters)
 
 
-def _validate_parameters(metadata, my_parameters):
+def _validate_parameters(metadata, parameters):
     """Validate a DayZSynthesizer parameters dictionary.
 
     Args:
         metadata (sdv.Metadata):
             Metadata for the data.
-        my_parameters (dict):
+        parameters (dict):
             The DayZ parameter dictionary.
     """
     metadata.validate()
-    _validate_parameter_structure(my_parameters)
-    if 'relationships' in my_parameters:
+    _validate_parameter_structure(parameters)
+    if 'relationships' in parameters:
         msg = (
             "Invalid DayZ parameter 'relationships' for single-table DayZSynthesizer. "
             'Please use multi-table DayZSynthesizer instead.'
         )
         raise SynthesizerProcessingError(msg)
 
-    _validate_tables_parameter(metadata, my_parameters)
+    _validate_tables_parameter(metadata, parameters)
 
 
 class DayZSynthesizer:
@@ -244,13 +256,13 @@ class DayZSynthesizer:
         return create_parameters(data, metadata, output_filename)
 
     @staticmethod
-    def validate_parameters(metadata, my_parameters):
+    def validate_parameters(metadata, parameters):
         """Validate a DayZSynthesizer parameters dictionary.
 
         Args:
             metadata (sdv.Metadata):
                 Metadata for the data.
-            my_parameters (dict):
+            parameters (dict):
                 The DayZ parameter dictionary.
         """
-        _validate_parameters(metadata, my_parameters)
+        _validate_parameters(metadata, parameters)

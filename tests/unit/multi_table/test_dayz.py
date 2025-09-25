@@ -73,35 +73,41 @@ def test__validate_relationship_structure():
     bad_min_max_cardinality = {**relationship, 'min_cardinality': 5, 'max_cardinality': 3}
 
     # Run and Assert
-    expected_bad_relationships_value_msg = re.escape("The 'relationships' value must be a list.")
+    expected_bad_relationships_value_msg = re.escape(
+        "The 'relationships' parameter value must be a list."
+    )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_relationships_value_msg):
         _validate_relationship_structure(bad_relationships_value)
 
-    expected_unknown_key_msg = re.escape("Relationship contains unexpected key(s) 'bad_key'.")
+    expected_unknown_key_msg = re.escape(
+        "Relationship parameter contains unexpected key(s) 'bad_key'."
+    )
     with pytest.raises(SynthesizerProcessingError, match=expected_unknown_key_msg):
         _validate_relationship_structure({'relationships': [bad_relationship_unknown_key]})
 
     expected_missing_key_msg = re.escape(
-        "Relationship missing required key(s) 'parent_primary_key'."
+        "Relationship parameter missing required key(s) 'parent_primary_key'."
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_missing_key_msg):
         _validate_relationship_structure({'relationships': [bad_relationship_missing_key]})
 
     expected_bad_min_cardinality_msg = re.escape(
-        "Invalid 'min_cardinality' -5. 'min_cardinality' "
+        "Invalid 'min_cardinality' parameter (-5). The 'min_cardinality' parameter "
         'must be an integer greater than or equal to zero.'
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_min_cardinality_msg):
         _validate_relationship_structure({'relationships': [bad_min_cardinality]})
 
     expected_bad_max_cardinality_msg = re.escape(
-        "Invalid 'max_cardinality' 0. 'max_cardinality' must be an integer greater than zero."
+        "Invalid 'max_cardinality' parameter (0). The 'max_cardinality' parameter "
+        'must be an integer greater than zero.'
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_max_cardinality_msg):
         _validate_relationship_structure({'relationships': [bad_max_cardinality]})
 
     expected_bad_min_max_cardinality_msg = re.escape(
-        "Invalid cardinality, 'min_cardinality' must be less than or equal to 'max_cardinality'."
+        "Invalid cardinality parameters, the 'min_cardinality' must be less than "
+        "or equal to the 'max_cardinality'."
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_min_max_cardinality_msg):
         _validate_relationship_structure({'relationships': [bad_min_max_cardinality]})
@@ -121,14 +127,14 @@ def test__validate_cardinality():
 
     # Run and Assert
     expected_min_cardinality_msg = re.escape(
-        f'Invalid cardinality for relationship {relationship_parameters}. '
+        f'Invalid cardinality parameters for relationship {relationship_parameters}. '
         'Minimum cardinality requires child table to be at least 100 rows.'
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_min_cardinality_msg):
         _validate_cardinality(relationship_parameters, parent_num_rows=100, child_num_rows=50)
 
     expected_max_cardinality_msg = re.escape(
-        f'Invalid cardinality for relationship {relationship_parameters}. '
+        f'Invalid cardinality parameters for relationship {relationship_parameters}. '
         f'Maximum cardinality requires child table to be less than 100 rows.'
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_max_cardinality_msg):
@@ -170,7 +176,8 @@ def test__validate_relationship_parameters(mock__validate_cardinality, metadata)
 
     # Run and Assert
     expected_bad_relationship_msg = re.escape(
-        f'Relationship {bad_relationship} does not exist in the metadata.'
+        'Invalid relationship parameter: '
+        f'relationship {bad_relationship} does not exist in the metadata.'
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_relationship_msg):
         _validate_relationship_parameters(
@@ -178,7 +185,8 @@ def test__validate_relationship_parameters(mock__validate_cardinality, metadata)
         )
 
     expected_duplicate_error_msg = re.escape(
-        f'Multiple entries for relationship {relationship} in parameters.'
+        'Invalid relationship parameter: '
+        f'multiple entries for relationship {relationship} in parameters.'
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_duplicate_error_msg):
         _validate_relationship_parameters(
