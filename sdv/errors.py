@@ -95,3 +95,11 @@ class RefitWarning(UserWarning):
 
 class SynthesizerProcessingError(Exception):
     """Error to raise when synthesizer parameters are invalid."""
+
+
+class DemoResourceNotFoundError(Exception):
+    """Raised when a demo dataset or one of its resources cannot be found.
+
+    This error is intended for missing demo assets such as the dataset archive,
+    metadata, license, README, or other auxiliary files in the demo bucket.
+    """
