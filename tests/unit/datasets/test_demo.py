@@ -1,5 +1,6 @@
 import io
 import json
+import logging
 import re
 import zipfile
 from unittest.mock import Mock, patch
@@ -431,6 +432,57 @@ def test_get_available_demos_robust_parsing(mock_list, mock_get):
     row2 = df[df['dataset_name'] == 'd2'].iloc[0]
     assert np.isnan(row2['num_tables']) or row2['num_tables'] is None
     assert np.isnan(row2['size_MB']) or row2['size_MB'] is None
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_get_available_demos_logs_invalid_size_mb(mock_list, mock_get, caplog):
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dsize/metainfo.yaml'},
+    ]
+
+    def side_effect(key):
+        return b'dataset-name: dsize\nnum-tables: 2\ndataset-size-mb: invalid\n'
+
+    mock_get.side_effect = side_effect
+
+    # Run
+    caplog.set_level(logging.INFO, logger='sdv.datasets.demo')
+    df = get_available_demos('single_table')
+
+    # Assert
+    assert 'Invalid dataset-size-mb' in caplog.text
+    assert 'dsize' in caplog.text
+    row = df[df['dataset_name'] == 'dsize'].iloc[0]
+    assert row['num_tables'] == 2
+    assert np.isnan(row['size_MB']) or row['size_MB'] is None
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_get_available_demos_logs_invalid_num_tables(mock_list, mock_get, caplog):
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dnum/metainfo.yaml'},
+    ]
+
+    def side_effect(key):
+        return b'dataset-name: dnum\nnum-tables: not_a_number\ndataset-size-mb: 1.1\n'
+
+    mock_get.side_effect = side_effect
+
+    # Run
+    caplog.set_level(logging.INFO, logger='sdv.datasets.demo')
+    df = get_available_demos('single_table')
+
+    # Assert two infos: int parse fail, then float parse fail
+    assert 'Invalid num-tables' in caplog.text
+    assert 'defaulting to NaN' in caplog.text
+    assert 'dnum' in caplog.text
+    row = df[df['dataset_name'] == 'dnum'].iloc[0]
+    assert np.isnan(row['num_tables']) or row['num_tables'] is None
+    assert row['size_MB'] == 1.1
 
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
