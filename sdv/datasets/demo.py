@@ -140,6 +140,7 @@ def _get_first_v1_metadata_bytes(contents, dataset_prefix):
         return (
             key_lower.startswith(prefix_lower)
             and key_lower.endswith('.json')
+            and 'metadata' in key_lower
             and key_lower.count('/') == prefix_lower.count('/')
         )
 

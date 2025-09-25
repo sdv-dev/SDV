@@ -362,14 +362,14 @@ def test__get_first_v1_metadata_bytes(mock_get):
         return {
             'single_table/dataset/k1.json': v2,
             'single_table/dataset/k2.json': bad,
-            'single_table/dataset/k3.json': v1,
+            'single_table/dataset/k_metadata_k.json': v1,
         }[key]
 
     mock_get.side_effect = side_effect
     contents = [
         {'Key': 'single_table/dataset/k1.json'},
         {'Key': 'single_table/dataset/k2.json'},
-        {'Key': 'single_table/dataset/k3.json'},
+        {'Key': 'single_table/dataset/k_metadata_k.json'},
     ]
 
     # Run
