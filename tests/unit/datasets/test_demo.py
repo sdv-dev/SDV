@@ -456,13 +456,8 @@ def test_get_available_demos_logs_invalid_size_mb(mock_list, mock_get, caplog):
     df = get_available_demos('single_table')
 
     # Assert
-<<<<<<< HEAD
     expected = 'Invalid dataset-size-mb invalid for dataset dsize; defaulting to NaN.'
     assert expected in caplog.messages
-=======
-    assert 'Invalid dataset-size-mb' in caplog.text
-    assert 'dsize' in caplog.text
->>>>>>> 2916c0d6 (Add logging)
     row = df[df['dataset_name'] == 'dsize'].iloc[0]
     assert row['num_tables'] == 2
     assert np.isnan(row['size_MB']) or row['size_MB'] is None
@@ -470,11 +465,7 @@ def test_get_available_demos_logs_invalid_size_mb(mock_list, mock_get, caplog):
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
 @patch('sdv.datasets.demo._list_objects')
-<<<<<<< HEAD
 def test_get_available_demos_logs_num_tables_str_cast_fail_exact(mock_list, mock_get, caplog):
-=======
-def test_get_available_demos_logs_invalid_num_tables(mock_list, mock_get, caplog):
->>>>>>> 2916c0d6 (Add logging)
     # Setup
     mock_list.return_value = [
         {'Key': 'single_table/dnum/metainfo.yaml'},
@@ -489,7 +480,6 @@ def test_get_available_demos_logs_invalid_num_tables(mock_list, mock_get, caplog
     caplog.set_level(logging.INFO, logger='sdv.datasets.demo')
     df = get_available_demos('single_table')
 
-<<<<<<< HEAD
     # Assert
     expected = (
         'Could not cast num_tables_val not_a_number to float for dataset dnum; defaulting to NaN.'
@@ -520,12 +510,6 @@ def test_get_available_demos_logs_num_tables_int_parse_fail_exact(mock_list, moc
     # Assert
     expected = 'Invalid num-tables [1, 2] for dataset dnum when parsing as int.'
     assert expected in caplog.messages
-=======
-    # Assert two infos: int parse fail, then float parse fail
-    assert 'Invalid num-tables' in caplog.text
-    assert 'defaulting to NaN' in caplog.text
-    assert 'dnum' in caplog.text
->>>>>>> 2916c0d6 (Add logging)
     row = df[df['dataset_name'] == 'dnum'].iloc[0]
     assert np.isnan(row['num_tables']) or row['num_tables'] is None
     assert row['size_MB'] == 1.1
@@ -617,7 +601,6 @@ def test__find_text_key_returns_none_when_missing():
     assert key is None
 
 
-<<<<<<< HEAD
 def test__find_text_key_ignores_nested_paths():
     """Test it ignores files in nested folders under the dataset prefix."""
     # Setup
@@ -633,8 +616,6 @@ def test__find_text_key_ignores_nested_paths():
     assert key is None
 
 
-=======
->>>>>>> cb8aa49a (Rebase)
 @patch('sdv.datasets.demo._get_data_from_bucket')
 @patch('sdv.datasets.demo._list_objects')
 def test__get_text_file_content_happy_path(mock_list, mock_get, tmpdir):
@@ -667,7 +648,6 @@ def test__get_text_file_content_missing_key_returns_none(mock_list):
     assert text is None
 
 
-<<<<<<< HEAD
 @patch('sdv.datasets.demo._list_objects')
 def test__get_text_file_content_logs_when_missing_key(mock_list, caplog):
     """It logs an info when the key is missing under the dataset prefix."""
@@ -685,8 +665,6 @@ def test__get_text_file_content_logs_when_missing_key(mock_list, caplog):
     assert 'No README.txt found for dataset dataset1.' in caplog.text
 
 
-=======
->>>>>>> cb8aa49a (Rebase)
 @patch('sdv.datasets.demo._get_data_from_bucket')
 @patch('sdv.datasets.demo._list_objects')
 def test__get_text_file_content_fetch_error_returns_none(mock_list, mock_get):
@@ -706,7 +684,6 @@ def test__get_text_file_content_fetch_error_returns_none(mock_list, mock_get):
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
 @patch('sdv.datasets.demo._list_objects')
-<<<<<<< HEAD
 def test__get_text_file_content_logs_on_fetch_error(mock_list, mock_get, caplog):
     """It logs an info when fetching the key raises an error."""
     # Setup
@@ -726,8 +703,6 @@ def test__get_text_file_content_logs_on_fetch_error(mock_list, mock_get, caplog)
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
 @patch('sdv.datasets.demo._list_objects')
-=======
->>>>>>> cb8aa49a (Rebase)
 def test__get_text_file_content_writes_file_when_output_filepath_given(
     mock_list, mock_get, tmp_path
 ):
@@ -748,7 +723,6 @@ def test__get_text_file_content_writes_file_when_output_filepath_given(
         assert f.read() == 'Write me'
 
 
-<<<<<<< HEAD
 @patch('sdv.datasets.demo._get_data_from_bucket')
 @patch('sdv.datasets.demo._list_objects')
 def test__get_text_file_content_logs_on_save_error(
@@ -776,8 +750,6 @@ def test__get_text_file_content_logs_on_save_error(
     assert 'Error saving README.txt for dataset dataset1.' in caplog.text
 
 
-=======
->>>>>>> cb8aa49a (Rebase)
 def test_get_readme_and_get_source_call_wrapper(monkeypatch):
     """Test it calls the wrapper function when the output filepath is given."""
     # Setup
