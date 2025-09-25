@@ -73,6 +73,31 @@ def _list_objects(prefix):
     return contents
 
 
+def _search_contents_keys(contents, match_fn):
+    """Return list of keys from ``contents`` that satisfy ``match_fn``.
+
+    Args:
+        contents (list[dict]):
+            S3 list_objects-like contents entries.
+        match_fn (callable):
+            Function that receives a key (str) and returns True if it matches.
+
+    Returns:
+        list[str]:
+            Keys in their original order that matched the predicate.
+    """
+    matches = []
+    for entry in contents or []:
+        key = entry.get('Key', '')
+        try:
+            if match_fn(key):
+                matches.append(key)
+        except Exception:
+            continue
+
+    return matches
+
+
 def _find_data_zip_key(contents, dataset_prefix):
     """Find the 'data.zip' object key under dataset prefix, case-insensitive.
 
@@ -87,11 +112,13 @@ def _find_data_zip_key(contents, dataset_prefix):
             The key to the data zip if found.
     """
     prefix_lower = dataset_prefix.lower()
-    for entry in contents:
-        key = entry.get('Key', '')
-        key_lower = key.lower()
-        if key_lower == f'{prefix_lower}data.zip':
-            return key
+
+    def is_data_zip(key):
+        return key.lower() == f'{prefix_lower}data.zip'
+
+    matches = _search_contents_keys(contents, is_data_zip)
+    if matches:
+        return matches[0]
 
     raise DemoResourceNotFoundError("Could not find 'data.zip' for the requested dataset.")
 
@@ -107,18 +134,18 @@ def _get_first_v1_metadata_bytes(contents, dataset_prefix):
             The bytes of the first V1 metadata JSON.
     """
     prefix_lower = dataset_prefix.lower()
-    for entry in contents:
-        key = entry.get('Key', '')
-        key_lower = key.lower()
 
-        # Check if key matches pattern: {modality}/{dataset_name}/*.json
-        if not (
+    def is_direct_json_under_prefix(key):
+        key_lower = key.lower()
+        return (
             key_lower.startswith(prefix_lower)
             and key_lower.endswith('.json')
             and key_lower.count('/') == prefix_lower.count('/')
-        ):
-            continue
+        )
 
+    candidate_keys = _search_contents_keys(contents, is_direct_json_under_prefix)
+
+    for key in candidate_keys:
         try:
             raw = _get_data_from_bucket(key)
             metadict = json.loads(raw)
@@ -235,20 +262,19 @@ def _iter_metainfo_yaml_entries(contents, modality):
     This matches keys like '<modality>/<dataset>/metainfo.yaml'.
     """
     modality_lower = (modality or '').lower()
-    for entry in contents or []:
-        key = entry.get('Key', '')
+
+    def is_metainfo_yaml(key):
         parts = key.split('/')
         if len(parts) != 3:
-            continue
+            return False
         if parts[0].lower() != modality_lower:
-            continue
-        filename = parts[-1]
-        if filename.lower() != 'metainfo.yaml':
-            continue
-        dataset_name = parts[1]
-        if not dataset_name:
-            continue
+            return False
+        if parts[-1].lower() != 'metainfo.yaml':
+            return False
+        return bool(parts[1])
 
+    for key in _search_contents_keys(contents, is_metainfo_yaml):
+        dataset_name = key.split('/')[1]
         yield dataset_name, key
 
 
