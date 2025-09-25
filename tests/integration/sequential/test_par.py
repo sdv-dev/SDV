@@ -1,10 +1,12 @@
 import datetime
+import platform
 import re
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
 import pytest
+import torch
 from deepecho import load_demo
 from rdt.transformers.categorical import UniformEncoder
 
@@ -13,8 +15,6 @@ from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError
 from sdv.metadata.metadata import Metadata
 from sdv.sequential import PARSynthesizer
-import platform
-import torch
 
 
 def _get_par_data_and_metadata():
@@ -1021,14 +1021,13 @@ def test_with_enable_gpu():
         'Please use only `enable_gpu`.'
     )
 
-
     # Run
     with pytest.warns(FutureWarning, match=expected_warning):
         synthesizer_3 = PARSynthesizer(metadata, epochs=1, cuda=True)
 
     with pytest.raises(ValueError, match=expected_error):
         PARSynthesizer(metadata, cuda=True, enable_gpu=False)
-    
+
     synthesizer_1.fit(data)
     synthesizer_2.fit(data)
     synthesizer_3.fit(data)

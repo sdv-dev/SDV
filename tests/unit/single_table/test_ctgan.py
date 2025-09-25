@@ -113,7 +113,7 @@ class TestCTGANSynthesizer:
         verbose = True
         epochs = 150
         pac = 5
-        cuda = False
+        enable_gpu = False
 
         # Run
         instance = CTGANSynthesizer(
@@ -133,7 +133,7 @@ class TestCTGANSynthesizer:
             verbose=verbose,
             epochs=epochs,
             pac=pac,
-            enable_gpu=cuda,
+            enable_gpu=enable_gpu,
         )
 
         # Assert

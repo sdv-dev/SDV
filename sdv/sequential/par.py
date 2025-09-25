@@ -26,8 +26,8 @@ from sdv.utils.mixins import MissingModuleMixin
 
 try:
     from deepecho import PARModel
-    from deepecho.sequences import assemble_sequences
     from deepecho.models._utils import _validate_gpu_parameters
+    from deepecho.sequences import assemble_sequences
 
     import_error = None
 except ModuleNotFoundError as e:
@@ -197,7 +197,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         parameters = inspect.signature(self.__init__).parameters
         instantiated_parameters = {}
         for parameter_name in parameters:
-            if parameter_name != 'metadata':
+            if parameter_name not in ['metadata', 'cuda']:
                 instantiated_parameters[parameter_name] = self.__dict__.get(parameter_name)
 
         for parameter_name, value in self._model_kwargs.items():

@@ -1,9 +1,11 @@
+import platform
 import re
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
 import pytest
+import torch
 from rdt.transformers import FloatFormatter, LabelEncoder
 
 from sdv.cag import FixedCombinations
@@ -11,9 +13,8 @@ from sdv.datasets.demo import download_demo
 from sdv.errors import InvalidDataTypeError
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata.metadata import Metadata
-from sdv.single_table import CTGANSynthesizer, TVAESynthesizer, CopulaGANSynthesizer
-import torch
-import platform
+from sdv.single_table import CopulaGANSynthesizer, CTGANSynthesizer, TVAESynthesizer
+
 
 def test__estimate_num_columns():
     """Test the number of columns is estimated correctly."""
@@ -333,7 +334,10 @@ def test_tvae___init___without_torch(mock_import_error):
     with pytest.raises(ModuleNotFoundError, match=msg):
         TVAESynthesizer(metadata)
 
-@pytest.mark.parametrize('synthesizer_class', [CTGANSynthesizer, TVAESynthesizer, CopulaGANSynthesizer])
+
+@pytest.mark.parametrize(
+    'synthesizer_class', [CTGANSynthesizer, TVAESynthesizer, CopulaGANSynthesizer]
+)
 def test_enable_gpu_parameter(synthesizer_class):
     """Test that the `enable_gpu` parameter is correctly passed to the underlying model."""
     # Setup
@@ -352,7 +356,6 @@ def test_enable_gpu_parameter(synthesizer_class):
     synthesizer_2 = synthesizer_class(metadata, enable_gpu=False)
     with pytest.warns(FutureWarning, match=expected_warning):
         synthesizer_3 = synthesizer_class(metadata, cuda=True)
-        
 
     with pytest.raises(ValueError, match=expected_error):
         synthesizer_class(metadata, enable_gpu=False, cuda=True)
