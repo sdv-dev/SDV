@@ -456,8 +456,13 @@ def test_get_available_demos_logs_invalid_size_mb(mock_list, mock_get, caplog):
     df = get_available_demos('single_table')
 
     # Assert
+<<<<<<< HEAD
     expected = 'Invalid dataset-size-mb invalid for dataset dsize; defaulting to NaN.'
     assert expected in caplog.messages
+=======
+    assert 'Invalid dataset-size-mb' in caplog.text
+    assert 'dsize' in caplog.text
+>>>>>>> 2916c0d6 (Add logging)
     row = df[df['dataset_name'] == 'dsize'].iloc[0]
     assert row['num_tables'] == 2
     assert np.isnan(row['size_MB']) or row['size_MB'] is None
@@ -465,7 +470,11 @@ def test_get_available_demos_logs_invalid_size_mb(mock_list, mock_get, caplog):
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
 @patch('sdv.datasets.demo._list_objects')
+<<<<<<< HEAD
 def test_get_available_demos_logs_num_tables_str_cast_fail_exact(mock_list, mock_get, caplog):
+=======
+def test_get_available_demos_logs_invalid_num_tables(mock_list, mock_get, caplog):
+>>>>>>> 2916c0d6 (Add logging)
     # Setup
     mock_list.return_value = [
         {'Key': 'single_table/dnum/metainfo.yaml'},
@@ -480,6 +489,7 @@ def test_get_available_demos_logs_num_tables_str_cast_fail_exact(mock_list, mock
     caplog.set_level(logging.INFO, logger='sdv.datasets.demo')
     df = get_available_demos('single_table')
 
+<<<<<<< HEAD
     # Assert
     expected = (
         'Could not cast num_tables_val not_a_number to float for dataset dnum; defaulting to NaN.'
@@ -510,6 +520,12 @@ def test_get_available_demos_logs_num_tables_int_parse_fail_exact(mock_list, moc
     # Assert
     expected = 'Invalid num-tables [1, 2] for dataset dnum when parsing as int.'
     assert expected in caplog.messages
+=======
+    # Assert two infos: int parse fail, then float parse fail
+    assert 'Invalid num-tables' in caplog.text
+    assert 'defaulting to NaN' in caplog.text
+    assert 'dnum' in caplog.text
+>>>>>>> 2916c0d6 (Add logging)
     row = df[df['dataset_name'] == 'dnum'].iloc[0]
     assert np.isnan(row['num_tables']) or row['num_tables'] is None
     assert row['size_MB'] == 1.1
