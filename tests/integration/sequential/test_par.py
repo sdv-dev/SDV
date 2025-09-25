@@ -1047,9 +1047,7 @@ def test_with_enable_gpu():
         expected_device = torch.device('cuda')
     else:
         expected_device = torch.device('cpu')
-    synthesizer_1._model._enable_gpu is True
-    synthesizer_2._model._enable_gpu is False
-    synthesizer_3._model._enable_gpu is True
+
     assert synthesizer_1._model.device == synthesizer_3._model.device
     assert synthesizer_1._model.device == expected_device
     assert synthesizer_2._model.device == torch.device('cpu')

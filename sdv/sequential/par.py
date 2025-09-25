@@ -26,7 +26,7 @@ from sdv.utils.mixins import MissingModuleMixin
 
 try:
     from deepecho import PARModel
-    from deepecho.models._utils import _validate_gpu_parameters
+    from deepecho.models._utils import _get_enable_gpu_value
     from deepecho.sequences import assemble_sequences
 
     import_error = None
@@ -180,7 +180,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         self._model_kwargs = {
             'epochs': epochs,
             'sample_size': sample_size,
-            'enable_gpu': _validate_gpu_parameters(enable_gpu, cuda),
+            'enable_gpu': _get_enable_gpu_value(enable_gpu, cuda),
             'verbose': verbose,
         }
         context_metadata = self._get_context_metadata()

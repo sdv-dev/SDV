@@ -14,7 +14,7 @@ from sdv.utils.mixins import MissingModuleMixin
 
 try:
     from ctgan import CTGAN, TVAE
-    from ctgan.synthesizers._utils import _validate_gpu_parameters
+    from ctgan.synthesizers._utils import _get_enable_gpu_value
 
     import_error = None
 except ModuleNotFoundError as e:
@@ -210,7 +210,7 @@ class CTGANSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynth
         self.verbose = verbose
         self.epochs = epochs
         self.pac = pac
-        self.enable_gpu = _validate_gpu_parameters(enable_gpu, cuda)
+        self.enable_gpu = _get_enable_gpu_value(enable_gpu, cuda)
         self._model_kwargs = {
             'embedding_dim': embedding_dim,
             'generator_dim': generator_dim,
@@ -400,7 +400,7 @@ class TVAESynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynthe
         self.verbose = verbose
         self.epochs = epochs
         self.loss_factor = loss_factor
-        self.enable_gpu = _validate_gpu_parameters(enable_gpu, cuda)
+        self.enable_gpu = _get_enable_gpu_value(enable_gpu, cuda)
         self._model_kwargs = {
             'embedding_dim': embedding_dim,
             'compress_dims': compress_dims,
