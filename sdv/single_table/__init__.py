@@ -6,6 +6,7 @@ from sdv.single_table.ctgan import CTGANSynthesizer, TVAESynthesizer
 from sdv.single_table.dayz import DayZSynthesizer
 
 __all__ = (
+    'DayZSynthesizer',
     'GaussianCopulaSynthesizer',
     'CTGANSynthesizer',
     'TVAESynthesizer',

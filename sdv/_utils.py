@@ -152,7 +152,7 @@ def _datetime_string_matches_format(value, datetime_format):
     if pd.isna(value):
         return True
     try:
-        parsed = datetime.strptime(str(value), datetime_format)
+        parsed = pd.to_datetime(str(value), format=datetime_format, errors='coerce')
         return value == parsed.strftime(datetime_format)
     except ValueError:
         return False

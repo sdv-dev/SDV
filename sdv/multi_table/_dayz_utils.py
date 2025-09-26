@@ -16,9 +16,9 @@ def detect_relationship_parameters(data, metadata):
         metadata (Metadata): The metadata object.
 
     Returns:
-        dict: A dictionary containing the detected parameters.
+        dict: A list containing the detected parameters.
     """
-    relationship_parameters = {}
+    relationship_parameters = []
     for relationship in metadata.relationships:
         rel_tuple = (
             relationship['parent_table_name'],
@@ -29,10 +29,14 @@ def detect_relationship_parameters(data, metadata):
         cardinality_table = pd.DataFrame(index=data[rel_tuple[0]][rel_tuple[2]].copy())
         cardinality_table['cardinality'] = data[rel_tuple[1]][rel_tuple[3]].value_counts()
         cardinality_table = cardinality_table.fillna(0)
-        relationship_parameters[json.dumps(rel_tuple)] = {
+        relationship_parameters.append({
+            'parent_table_name': rel_tuple[0],
+            'child_table_name': rel_tuple[1],
+            'parent_primary_key': rel_tuple[2],
+            'child_foreign_key': rel_tuple[3],
             'min_cardinality': cardinality_table['cardinality'].min(),
             'max_cardinality': cardinality_table['cardinality'].max(),
-        }
+        })
 
     return relationship_parameters
 
