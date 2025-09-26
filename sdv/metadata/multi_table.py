@@ -914,8 +914,8 @@ class MultiTableMetadata:
 
         return [error_msg] if error_msg else []
 
-    def validate_data(self, data, table_name=None):
-        """Validate the data matches the metadata.
+    def _validate_data(self, data, table_name=None):
+        """Validate the given data matches the metadata.
 
         Checks the following rules:
             * every table of the data satisfies its own metadata
@@ -947,6 +947,28 @@ class MultiTableMetadata:
 
         if errors:
             raise InvalidDataError(errors)
+
+    def validate_data(self, data):
+        """Validate the data matches the metadata.
+
+        Checks the following rules:
+            * every table of the data satisfies its own metadata
+            * all tables of the metadata are present in the data
+            * all foreign keys belong to a primay key
+
+        Args:
+            data (dict):
+                A dictionary of table names to pd.DataFrames.
+
+        Raises:
+            InvalidDataError:
+                This error is being raised if the data is not matching its sdtype requirements.
+
+        Warns:
+            A warning is being raised if ``datetime_format`` is missing from a column represented
+            as ``object`` in the dataframe and its sdtype is ``datetime``.
+        """
+        self._validate_data(data)
 
     def add_table(self, table_name):
         """Add a table to the metadata.
