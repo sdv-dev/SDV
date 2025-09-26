@@ -131,7 +131,7 @@ def test__validate_column_parameters_numerical():
 
     expected_bad_min_max_msg = re.escape(
         "Invalid parameters for column 'column' in table 'table'. The 'min_value' "
-        "must be less than the 'max_value'"
+        "must be less than or equal to the 'max_value'"
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_min_max_msg):
         _validate_column_parameters('table', 'column', column_metadata, bad_min_max_combination)

@@ -67,7 +67,7 @@ def _validate_numerical_parameters(column_parameters, column_table_msg):
         if column_parameters['min_value'] > column_parameters['max_value']:
             msg = (
                 f"Invalid parameters for {column_table_msg}. The 'min_value' "
-                "must be less than the 'max_value'"
+                "must be less than or equal to the 'max_value'"
             )
             raise SynthesizerProcessingError(msg)
 
