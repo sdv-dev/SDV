@@ -4,7 +4,6 @@ from unittest.mock import Mock, call, mock_open, patch
 import pandas as pd
 import pytest
 
-from sdv.errors import InvalidDataError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
 from sdv.metadata.single_table import SingleTableMetadata
@@ -584,10 +583,7 @@ class TestMetadataClass:
         )
         table = get_multi_table_data()['nesreca']
 
-        expected_error_wrong_name = re.escape(
-            'The provided data does not match the metadata:\n'
-            "The provided data is missing the tables {'nesreca'}."
-        )
+        expected_error_wrong_name = re.escape("Unknown table name ('wrong_name').")
         expected_error_mutli_table = re.escape(
             'Metadata contains more than one table, please specify the `table_name` to validate.'
         )
@@ -595,7 +591,7 @@ class TestMetadataClass:
         # Run and Assert
         metadata_single_table.validate_table(table)
         metadata_single_table.validate_table(table, 'nesreca')
-        with pytest.raises(InvalidDataError, match=expected_error_wrong_name):
+        with pytest.raises(InvalidMetadataError, match=expected_error_wrong_name):
             metadata_single_table.validate_table(table, 'wrong_name')
         with pytest.raises(InvalidMetadataError, match=expected_error_mutli_table):
             metadata_multi_table.validate_table(table)
