@@ -42,8 +42,8 @@ def detect_column_parameters(data, metadata, table_name):
         if sdtype == 'numerical':
             column_parameters[column_name] = {
                 'num_decimal_digits': learn_rounding_digits(data[column_name]),
-                'min_value': data[column_name].min().item(),
-                'max_value': data[column_name].max().item(),
+                'min_value': data[column_name].min(),
+                'max_value': data[column_name].max(),
             }
         elif sdtype == 'datetime':
             datetime_format = column_metadata.get('datetime_format', None)
