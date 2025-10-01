@@ -63,13 +63,13 @@ def detect_column_parameters(data, metadata, table_name):
                 'start_timestamp': start_timestamp,
                 'end_timestamp': end_timestamp,
             }
-        elif sdtype in ['categorical', 'boolean']:
+        elif sdtype == 'categorical':
             column_parameters[column_name] = {
                 'category_values': data[column_name].dropna().unique().tolist()
             }
 
-        column_parameters[column_name]['missing_values_proportion'] = (
-            data[column_name].isna().mean().item()
+        column_parameters[column_name]['missing_values_proportion'] = float(
+            data[column_name].isna().mean()
         )
 
     return {'columns': column_parameters}
