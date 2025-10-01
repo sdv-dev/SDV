@@ -23,7 +23,6 @@ class TestDayZSynthesizer:
                     'columns': {
                         'guest_email': {'missing_values_proportion': 0.0},
                         'has_rewards': {
-                            'category_values': [False, True],
                             'missing_values_proportion': 0.0,
                         },
                         'room_type': {
