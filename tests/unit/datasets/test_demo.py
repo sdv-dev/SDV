@@ -762,13 +762,13 @@ def test_get_readme_and_get_source_call_wrapper(monkeypatch):
     monkeypatch.setattr('sdv.datasets.demo._get_text_file_content', fake)
 
     # Run
-    r = get_readme('single_table', 'dataset1', '/tmp/readme.txt')
-    s = get_source('single_table', 'dataset1', '/tmp/source.txt')
+    readme = get_readme('single_table', 'dataset1', '/tmp/readme.txt')
+    source = get_source('single_table', 'dataset1', '/tmp/source.txt')
 
     # Assert
-    assert r == 'X' and s == 'X'
-    assert calls[0] == ('single_table', 'dataset1', 'README.txt', '/tmp/readme')
-    assert calls[1] == ('single_table', 'dataset1', 'SOURCE.txt', '/tmp/source')
+    assert readme == 'X' and source == 'X'
+    assert calls[0] == ('single_table', 'dataset1', 'README.txt', '/tmp/readme.txt')
+    assert calls[1] == ('single_table', 'dataset1', 'SOURCE.txt', '/tmp/source.txt')
 
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
