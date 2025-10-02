@@ -36,7 +36,7 @@ dependencies = [
     "pandas>=2.2.3;python_version>='3.13'",
     'tqdm>=4.29',
     'copulas>=0.12.1',
-    'ctgan @ git+https://github.com/sdv-dev/CTGAN.git@issue-462-enable-gpu',
+    'ctgan @ git+https://github.com/sdv-dev/CTGAN.git@main',
     'deepecho>=0.7.0',
     'rdt>=1.17.0',
     'sdmetrics>=0.21.0',
