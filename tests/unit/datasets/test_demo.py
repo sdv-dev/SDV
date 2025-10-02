@@ -769,3 +769,41 @@ def test_get_readme_and_get_source_call_wrapper(monkeypatch):
     assert r == 'X' and s == 'X'
     assert calls[0] == ('single_table', 'dataset1', 'README.txt', '/tmp/readme')
     assert calls[1] == ('single_table', 'dataset1', 'SOURCE.txt', '/tmp/source')
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_get_readme_raises_if_output_file_exists(mock_list, mock_get, tmp_path):
+    """get_readme should raise ValueError if output file already exists."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/README.txt'},
+    ]
+    mock_get.return_value = b'Readme contents'
+    out = tmp_path / 'subdir' / 'readme.txt'
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text('already here', encoding='utf-8')
+
+    # Run / Assert
+    err = f"A file named '{out}' already exists. Please specify a different filepath."
+    with pytest.raises(ValueError, match=re.escape(err)):
+        get_readme('single_table', 'dataset1', str(out))
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_get_source_raises_if_output_file_exists(mock_list, mock_get, tmp_path):
+    """get_source should raise ValueError if output file already exists."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/SOURCE.txt'},
+    ]
+    mock_get.return_value = b'Source contents'
+    out = tmp_path / 'subdir' / 'source.txt'
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text('already here', encoding='utf-8')
+
+    # Run / Assert
+    err = f"A file named '{out}' already exists. Please specify a different filepath."
+    with pytest.raises(ValueError, match=re.escape(err)):
+        get_source('single_table', 'dataset1', str(out))
