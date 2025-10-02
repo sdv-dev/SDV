@@ -314,7 +314,7 @@ class BaseSynthesizer:
         parameters = inspect.signature(self.__init__).parameters
         instantiated_parameters = {}
         for parameter_name in parameters:
-            if parameter_name != 'metadata':
+            if parameter_name not in ['metadata', 'cuda']:
                 instantiated_parameters[parameter_name] = self.__dict__.get(parameter_name)
 
         return instantiated_parameters
