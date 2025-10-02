@@ -762,8 +762,8 @@ def test_get_readme_and_get_source_call_wrapper(monkeypatch):
     monkeypatch.setattr('sdv.datasets.demo._get_text_file_content', fake)
 
     # Run
-    r = get_readme('single_table', 'dataset1', '/tmp/readme')
-    s = get_source('single_table', 'dataset1', '/tmp/source')
+    r = get_readme('single_table', 'dataset1', '/tmp/readme.txt')
+    s = get_source('single_table', 'dataset1', '/tmp/source.txt')
 
     # Assert
     assert r == 'X' and s == 'X'
@@ -807,3 +807,17 @@ def test_get_source_raises_if_output_file_exists(mock_list, mock_get, tmp_path):
     err = f"A file named '{out}' already exists. Please specify a different filepath."
     with pytest.raises(ValueError, match=re.escape(err)):
         get_source('single_table', 'dataset1', str(out))
+
+
+def test_get_readme_raises_for_non_txt_output():
+    """get_readme should raise ValueError if output path is not .txt."""
+    err = "The README can only be saved as a txt file. Please provide a filepath ending in '.txt'"
+    with pytest.raises(ValueError, match=re.escape(err)):
+        get_readme('single_table', 'dataset1', '/tmp/readme.md')
+
+
+def test_get_source_raises_for_non_txt_output():
+    """get_source should raise ValueError if output path is not .txt."""
+    err = "The source can only be saved as a txt file. Please provide a filepath ending in '.txt'"
+    with pytest.raises(ValueError, match=re.escape(err)):
+        get_source('single_table', 'dataset1', '/tmp/source.pdf')
