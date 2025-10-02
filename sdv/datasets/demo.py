@@ -400,6 +400,11 @@ def _get_text_file_content(modality, dataset_name, filename, output_filepath=Non
 
     text = raw.decode('utf-8', errors='replace')
     if output_filepath:
+        if os.path.exists(str(output_filepath)):
+            raise ValueError(
+                f"A file named '{output_filepath}' already exists. "
+                'Please specify a different filepath.'
+            )
         try:
             parent = os.path.dirname(str(output_filepath))
             if parent:
