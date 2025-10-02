@@ -26,7 +26,6 @@ from sdv.utils.mixins import MissingModuleMixin
 
 try:
     from deepecho import PARModel
-    from deepecho.models._utils import _get_enable_gpu_value
     from deepecho.sequences import assemble_sequences
 
     import_error = None
@@ -71,11 +70,8 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             The number of times to sample (before choosing and
             returning the sample which maximizes the likelihood).
             Defaults to 1.
-        enable_gpu (bool):
-            Whether to attempt to use GPU for computation.
-            Defaults to ``True``.
         cuda (bool):
-            **Deprecated** Whether to attempt to use cuda for GPU computation.
+            Whether to attempt to use cuda for GPU computation.
             If this is False or CUDA is not available, CPU will be used.
             Defaults to ``True``.
         verbose (bool):
@@ -145,9 +141,8 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         segment_size=None,
         epochs=128,
         sample_size=1,
-        enable_gpu=True,
+        cuda=True,
         verbose=False,
-        cuda=None,
     ):
         if PARModel is None:
             self.raise_module_not_found_error(import_error)
@@ -180,7 +175,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         self._model_kwargs = {
             'epochs': epochs,
             'sample_size': sample_size,
-            'enable_gpu': _get_enable_gpu_value(enable_gpu, cuda),
+            'cuda': cuda,
             'verbose': verbose,
         }
         context_metadata = self._get_context_metadata()
@@ -197,7 +192,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         parameters = inspect.signature(self.__init__).parameters
         instantiated_parameters = {}
         for parameter_name in parameters:
-            if parameter_name not in ['metadata', 'cuda']:
+            if parameter_name != 'metadata':
                 instantiated_parameters[parameter_name] = self.__dict__.get(parameter_name)
 
         for parameter_name, value in self._model_kwargs.items():
