@@ -384,6 +384,14 @@ def _get_text_file_content(modality, dataset_name, filename, output_filepath=Non
             The decoded text contents if the file exists, otherwise ``None``.
     """
     _validate_modalities(modality)
+    if output_filepath is not None and not str(output_filepath).endswith('.txt'):
+        fname = (filename or '').lower()
+        file_type = 'README' if 'readme' in fname else 'source'
+        raise ValueError(
+            f'The {file_type} can only be saved as a txt file. '
+            "Please provide a filepath ending in '.txt'"
+        )
+
     dataset_prefix = f'{modality}/{dataset_name}/'
     contents = _list_objects(dataset_prefix)
 
