@@ -103,3 +103,12 @@ class DemoResourceNotFoundError(Exception):
     This error is intended for missing demo assets such as the dataset archive,
     metadata, license, README, or other auxiliary files in the demo bucket.
     """
+
+
+class DemoResourceNotFoundWarning(UserWarning):
+    """Warning raised when an optional demo resource is not available.
+
+    This warning indicates that a non-critical artifact (e.g., README or SOURCE
+    information) is not present for a given demo dataset. The operation can
+    continue, but the requested information cannot be provided.
+    """
