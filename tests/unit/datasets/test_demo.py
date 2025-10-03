@@ -22,7 +22,7 @@ from sdv.datasets.demo import (
     get_readme,
     get_source,
 )
-from sdv.errors import DemoResourceNotFoundError
+from sdv.errors import DemoResourceNotFoundError, DemoResourceNotFoundWarning
 
 
 def _make_zip_with_csv(csv_name: str, df: pd.DataFrame) -> bytes:
@@ -648,23 +648,6 @@ def test__get_text_file_content_missing_key_returns_none(mock_list):
     assert text is None
 
 
-@patch('sdv.datasets.demo._list_objects')
-def test__get_text_file_content_logs_when_missing_key(mock_list, caplog):
-    """It logs an info when the key is missing under the dataset prefix."""
-    # Setup
-    mock_list.return_value = [
-        {'Key': 'single_table/dataset1/metadata.json'},
-    ]
-
-    # Run
-    caplog.set_level(logging.INFO, logger='sdv.datasets.demo')
-    text = _get_text_file_content('single_table', 'dataset1', 'README.txt')
-
-    # Assert
-    assert text is None
-    assert 'No README.txt found for dataset dataset1.' in caplog.text
-
-
 @patch('sdv.datasets.demo._get_data_from_bucket')
 @patch('sdv.datasets.demo._list_objects')
 def test__get_text_file_content_fetch_error_returns_none(mock_list, mock_get):
@@ -821,3 +804,75 @@ def test_get_source_raises_for_non_txt_output():
     err = "The source can only be saved as a txt file. Please provide a filepath ending in '.txt'"
     with pytest.raises(ValueError, match=re.escape(err)):
         get_source('single_table', 'dataset1', '/tmp/source.pdf')
+
+
+@patch('sdv.datasets.demo._list_objects')
+def test_get_readme_missing_emits_warning(mock_list):
+    """When README is missing, warn the user with DemoResourceNotFoundWarning."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/metadata.json'},
+    ]
+
+    # Run / Assert
+    warn_msg = 'No README information is available for this dataset.'
+    with pytest.warns(DemoResourceNotFoundWarning, match=warn_msg):
+        result = get_readme('single_table', 'dataset1')
+
+    assert result is None
+
+
+@patch('sdv.datasets.demo._list_objects')
+def test_get_source_missing_emits_warning(mock_list):
+    """When SOURCE is missing, warn the user with DemoResourceNotFoundWarning."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/metadata.json'},
+    ]
+
+    # Run / Assert
+    warn_msg = 'No source information is available for this dataset.'
+    with pytest.warns(DemoResourceNotFoundWarning, match=warn_msg):
+        result = get_source('single_table', 'dataset1')
+
+    assert result is None
+
+
+@patch('sdv.datasets.demo._list_objects')
+def test_get_source_missing_emits_warning_and_does_not_create_file(mock_list, tmp_path):
+    """When source is missing and output path provided, warn and do not create a file."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/metadata.json'},
+    ]
+    out = tmp_path / 'subdir' / 'source.txt'
+
+    # Run / Assert
+    warn_msg = re.escape(
+        'No source information is available for this dataset.'
+        f' The requested file ({str(out)}) will not be created.'
+    )
+    with pytest.warns(DemoResourceNotFoundWarning, match=warn_msg):
+        result = get_source('single_table', 'dataset1', str(out))
+
+    assert result is None
+
+
+@patch('sdv.datasets.demo._list_objects')
+def test_get_readmemissing_emits_warning_and_does_not_create_file(mock_list, tmp_path):
+    """When README is missing and output path provided, warn and do not create a file."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/metadata.json'},
+    ]
+    out = tmp_path / 'subdir' / 'source.txt'
+
+    # Run / Assert
+    warn_msg = re.escape(
+        'No README information is available for this dataset.'
+        f' The requested file ({str(out)}) will not be created.'
+    )
+    with pytest.warns(DemoResourceNotFoundWarning, match=warn_msg):
+        result = get_readme('single_table', 'dataset1', str(out))
+
+    assert result is None
