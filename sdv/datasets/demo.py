@@ -200,11 +200,12 @@ def _extract_data(bytes_io, output_folder_name):
 def _get_data(modality, output_folder_name, in_memory_directory):
     data = {}
     if output_folder_name:
-        for filename in os.listdir(output_folder_name):
-            if filename.endswith('.csv'):
-                table_name = Path(filename).stem
-                data_path = os.path.join(output_folder_name, filename)
-                data[table_name] = pd.read_csv(data_path)
+        for root, _dirs, files in os.walk(output_folder_name):
+            for filename in files:
+                if filename.endswith('.csv'):
+                    table_name = Path(filename).stem
+                    data_path = os.path.join(root, filename)
+                    data[table_name] = pd.read_csv(data_path)
 
     else:
         for filename, file_ in in_memory_directory.items():
@@ -221,6 +222,44 @@ def _get_data(modality, output_folder_name, in_memory_directory):
         data = data.popitem()[1]
 
     return data
+
+
+def _get_metadata(metadata_bytes, dataset_name, output_folder_name=None):
+    """Parse metadata bytes and optionally persist to ``output_folder_name``.
+
+    Args:
+        metadata_bytes (bytes):
+            Raw bytes of the metadata JSON file.
+        dataset_name (str):
+            The dataset name used when loading into ``Metadata``.
+        output_folder_name (str or None):
+            Optional folder path where to write ``metadata.json``.
+
+    Returns:
+        Metadata:
+            Parsed metadata object.
+    """
+    try:
+        metadict = json.loads(metadata_bytes)
+        metadata = Metadata().load_from_dict(metadict, dataset_name)
+    except Exception as e:
+        raise DemoResourceNotFoundError('Failed to parse metadata JSON for the dataset.') from e
+
+    if output_folder_name:
+        try:
+            metadata_path = os.path.join(str(output_folder_name), METADATA_FILENAME)
+            with open(metadata_path, 'wb') as f:
+                f.write(metadata_bytes)
+
+        except Exception:
+            warnings.warn(
+                (
+                    f'Error saving {METADATA_FILENAME} for dataset {dataset_name} into '
+                    f'{output_folder_name}.'
+                )
+            )
+
+    return metadata
 
 
 def download_demo(modality, dataset_name, output_folder_name=None):
@@ -250,15 +289,11 @@ def download_demo(modality, dataset_name, output_folder_name=None):
     """
     _validate_modalities(modality)
     _validate_output_folder(output_folder_name)
+
     data_io, metadata_bytes = _download(modality, dataset_name)
     in_memory_directory = _extract_data(data_io, output_folder_name)
     data = _get_data(modality, output_folder_name, in_memory_directory)
-
-    try:
-        metadict = json.loads(metadata_bytes)
-        metadata = Metadata().load_from_dict(metadict, dataset_name)
-    except Exception as e:
-        raise DemoResourceNotFoundError('Failed to parse metadata JSON for the dataset.') from e
+    metadata = _get_metadata(metadata_bytes, dataset_name, output_folder_name)
 
     return data, metadata
 
