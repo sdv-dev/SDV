@@ -212,6 +212,11 @@ def _get_data(modality, output_folder_name, in_memory_directory):
                 table_name = Path(filename).stem
                 data[table_name] = pd.read_csv(io.StringIO(file_.decode()), low_memory=False)
 
+    if not data:
+        raise DemoResourceNotFoundError(
+            'Demo data could not be downloaded because no csv files were found in data.zip'
+        )
+
     if modality != 'multi_table':
         data = data.popitem()[1]
 
