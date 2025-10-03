@@ -17,6 +17,7 @@ from botocore.client import Config
 
 from sdv.errors import DemoResourceNotFoundError, DemoResourceNotFoundWarning
 from sdv.metadata.metadata import Metadata
+import warnings
 
 LOGGER = logging.getLogger(__name__)
 BUCKET = 'sdv-datasets-public'
