@@ -876,3 +876,29 @@ def test_get_readmemissing_emits_warning_and_does_not_create_file(mock_list, tmp
         result = get_readme('single_table', 'dataset1', str(out))
 
     assert result is None
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_raises_when_no_csv_in_zip_single_table(mock_list, mock_get):
+    """It should raise a helpful error if the zip contains no CSVs (single_table)."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/word/data.zip'},
+        {'Key': 'single_table/word/metadata.json'},
+    ]
+
+    # Create a zip with a non-CSV file only
+    zip_buf = io.BytesIO()
+    with zipfile.ZipFile(zip_buf, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('README.txt', 'no tables here')
+
+    zip_bytes = zip_buf.getvalue()
+    meta_bytes = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
+
+    mock_get.side_effect = lambda key: zip_bytes if key.endswith('data.zip') else meta_bytes
+
+    # Run and Assert
+    msg = 'Demo data could not be downloaded because no csv files were found in data.zip'
+    with pytest.raises(DemoResourceNotFoundError, match=re.escape(msg)):
+        download_demo('single_table', 'word')
