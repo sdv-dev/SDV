@@ -4,6 +4,7 @@ import io
 import json
 import logging
 import os
+import warnings
 from collections import defaultdict
 from pathlib import Path
 from zipfile import ZipFile
@@ -15,7 +16,7 @@ import yaml
 from botocore import UNSIGNED
 from botocore.client import Config
 
-from sdv.errors import DemoResourceNotFoundError
+from sdv.errors import DemoResourceNotFoundError, DemoResourceNotFoundWarning
 from sdv.metadata.metadata import Metadata
 
 LOGGER = logging.getLogger(__name__)
@@ -397,7 +398,17 @@ def _get_text_file_content(modality, dataset_name, filename, output_filepath=Non
 
     key = _find_text_key(contents, dataset_prefix, filename)
     if not key:
-        LOGGER.info(f'No {filename} found for dataset {dataset_name}.')
+        if filename.upper() == 'README.TXT':
+            msg = 'No README information is available for this dataset.'
+        elif filename.upper() == 'SOURCE.TXT':
+            msg = 'No source information is available for this dataset.'
+        else:
+            msg = f'No {filename} information is available for this dataset.'
+
+        if output_filepath:
+            msg = f'{msg} The requested file ({output_filepath}) will not be created.'
+
+        warnings.warn(msg, DemoResourceNotFoundWarning)
         return None
 
     try:
