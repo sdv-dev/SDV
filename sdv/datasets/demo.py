@@ -197,21 +197,65 @@ def _extract_data(bytes_io, output_folder_name):
             return in_memory_directory
 
 
-def _get_data(modality, output_folder_name, in_memory_directory):
-    data = {}
-    if output_folder_name:
-        for root, _dirs, files in os.walk(output_folder_name):
-            for filename in files:
-                if filename.endswith('.csv'):
-                    table_name = Path(filename).stem
-                    data_path = os.path.join(root, filename)
-                    data[table_name] = pd.read_csv(data_path)
+def _get_data_with_output_folder(modality, output_folder_name):
+    """Load CSV tables from an extracted folder on disk.
 
+    Returns a tuple of (data_dict, failed_files_list).
+    Non-CSV files are ignored.
+    """
+    data = {}
+    skipped_files = []
+    for root, _dirs, files in os.walk(output_folder_name):
+        for filename in files:
+            if not filename.lower().endswith('.csv'):
+                skipped_files.append(filename)
+                continue
+
+            table_name = Path(filename).stem
+            data_path = os.path.join(root, filename)
+            try:
+                data[table_name] = pd.read_csv(data_path)
+            except UnicodeDecodeError:
+                data[table_name] = pd.read_csv(data_path, encoding='latin-1')
+            except Exception as e:
+                rel = os.path.relpath(data_path, output_folder_name)
+                skipped_files.append(f'{rel}: {e}')
+
+    return data, skipped_files
+
+
+def _get_data_without_output_folder(modality, in_memory_directory):
+    """Load CSV tables directly from in-memory zip contents.
+
+    Returns a tuple of (data_dict, failed_files_list).
+    Non-CSV entries are ignored.
+    """
+    data = {}
+    skipped_files = []
+    for filename, file_ in in_memory_directory.items():
+        if not filename.lower().endswith('.csv'):
+            skipped_files.append(filename)
+            continue
+
+        table_name = Path(filename).stem
+        try:
+            data[table_name] = pd.read_csv(io.BytesIO(file_), low_memory=False)
+        except UnicodeDecodeError:
+            data[table_name] = pd.read_csv(io.BytesIO(file_), low_memory=False, encoding='latin-1')
+        except Exception as e:
+            skipped_files.append(f'{filename}: {e}')
+
+    return data, skipped_files
+
+
+def _get_data(modality, output_folder_name, in_memory_directory):
+    if output_folder_name:
+        data, skipped_files = _get_data_with_output_folder(modality, output_folder_name)
     else:
-        for filename, file_ in in_memory_directory.items():
-            if filename.endswith('.csv'):
-                table_name = Path(filename).stem
-                data[table_name] = pd.read_csv(io.StringIO(file_.decode()), low_memory=False)
+        data, skipped_files = _get_data_without_output_folder(modality, in_memory_directory)
+
+    if skipped_files:
+        warnings.warn('Skipped files: ' + ', '.join(sorted(skipped_files)))
 
     if not data:
         raise DemoResourceNotFoundError(
