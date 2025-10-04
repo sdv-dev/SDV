@@ -613,6 +613,14 @@ def test__get_metadata_warns_on_save_error(_mock_open, tmp_path):
     assert md.to_dict() == meta
 
 
+def test__get_metadata_raises_on_invalid_json():
+    """_get_metadata should raise a helpful error when JSON is invalid."""
+    # Run / Assert
+    err = 'Failed to parse metadata JSON for the dataset.'
+    with pytest.raises(DemoResourceNotFoundError, match=re.escape(err)):
+        _get_metadata(b'not-json', 'dataset1')
+
+
 @patch('sdv.datasets.demo._get_data_from_bucket')
 @patch('sdv.datasets.demo._list_objects')
 def test_download_demo_writes_metadata_and_discovers_nested_csv(mock_list, mock_get, tmp_path):
