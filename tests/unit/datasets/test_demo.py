@@ -15,6 +15,7 @@ from sdv.datasets.demo import (
     _find_text_key,
     _get_data_from_bucket,
     _get_first_v1_metadata_bytes,
+    _get_metadata,
     _get_text_file_content,
     _iter_metainfo_yaml_entries,
     download_demo,
@@ -517,6 +518,31 @@ def test_get_available_demos_logs_num_tables_int_parse_fail_exact(mock_list, moc
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
 @patch('sdv.datasets.demo._list_objects')
+def test_get_available_demos_ignores_yaml_dataset_name_mismatch(mock_list, mock_get):
+    """When YAML dataset-name mismatches folder, use folder name from S3 path."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/folder_name/metainfo.yaml'},
+    ]
+
+    # YAML uses a different name; should be ignored for dataset_name field
+    def side_effect(key):
+        return b'dataset-name: DIFFERENT\nnum-tables: 3\ndataset-size-mb: 2.5\n'
+
+    mock_get.side_effect = side_effect
+
+    # Run
+    df = get_available_demos('single_table')
+
+    # Assert
+    assert set(df['dataset_name']) == {'folder_name'}
+    row = df[df['dataset_name'] == 'folder_name'].iloc[0]
+    assert row['num_tables'] == 3
+    assert row['size_MB'] == 2.5
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
 def test_download_demo_success_single_table(mock_list, mock_get):
     # Setup
     mock_list.return_value = [
@@ -583,6 +609,97 @@ def test_download_demo_no_v1_metadata_raises(mock_list, mock_get):
     # Run and Assert
     with pytest.raises(DemoResourceNotFoundError, match='METADATA_SPEC_VERSION'):
         download_demo('single_table', 'word')
+
+
+@patch('builtins.open', side_effect=OSError('fail-open'))
+def test__get_metadata_warns_on_save_error(_mock_open, tmp_path):
+    """_get_metadata should emit a warning if writing metadata.json fails."""
+    # Setup
+    meta = {
+        'METADATA_SPEC_VERSION': 'V1',
+        'relationships': [],
+        'tables': {
+            't': {
+                'columns': {
+                    'a': {'sdtype': 'numerical'},
+                }
+            }
+        },
+    }
+    meta_bytes = json.dumps(meta).encode()
+    out_dir = tmp_path / 'out'
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Run and Assert
+    warn_msg = 'Error saving metadata.json'
+    with pytest.warns(DemoResourceNotFoundWarning, match=warn_msg):
+        md = _get_metadata(meta_bytes, 'dataset1', str(out_dir))
+
+    assert md.to_dict() == meta
+
+
+def test__get_metadata_raises_on_invalid_json():
+    """_get_metadata should raise a helpful error when JSON is invalid."""
+    # Run / Assert
+    err = 'Failed to parse metadata JSON for the dataset.'
+    with pytest.raises(DemoResourceNotFoundError, match=re.escape(err)):
+        _get_metadata(b'not-json', 'dataset1')
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_writes_metadata_and_discovers_nested_csv(mock_list, mock_get, tmp_path):
+    """When output folder is set, it writes metadata.json and finds nested CSVs."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/nested/data.zip'},
+        {'Key': 'single_table/nested/metadata.json'},
+    ]
+
+    df = pd.DataFrame({'a': [1, 2], 'b': ['x', 'y']})
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('level1/level2/my_table.csv', df.to_csv(index=False))
+    zip_bytes = buf.getvalue()
+
+    meta_dict = {
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'my_table': {
+                'columns': {
+                    'a': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'b': {'sdtype': 'categorical'},
+                }
+            }
+        },
+        'relationships': [],
+    }
+    meta_bytes = json.dumps(meta_dict).encode()
+
+    def side_effect(key):
+        if key.endswith('data.zip'):
+            return zip_bytes
+        if key.endswith('metadata.json'):
+            return meta_bytes
+        raise KeyError(key)
+
+    mock_get.side_effect = side_effect
+
+    out = tmp_path / 'outdir'
+
+    # Run
+    data, metadata = download_demo('single_table', 'nested', out)
+
+    # Assert
+    pd.testing.assert_frame_equal(data, df)
+    assert metadata.to_dict() == meta_dict
+
+    meta_path = out / 'metadata.json'
+    assert meta_path.is_file()
+
+    with open(meta_path, 'rb') as f:
+        on_disk = f.read()
+    assert on_disk == meta_bytes
 
 
 def test__find_text_key_returns_none_when_missing():
