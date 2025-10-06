@@ -200,11 +200,12 @@ def _extract_data(bytes_io, output_folder_name):
 def _get_data(modality, output_folder_name, in_memory_directory):
     data = {}
     if output_folder_name:
-        for filename in os.listdir(output_folder_name):
-            if filename.endswith('.csv'):
-                table_name = Path(filename).stem
-                data_path = os.path.join(output_folder_name, filename)
-                data[table_name] = pd.read_csv(data_path)
+        for root, _dirs, files in os.walk(output_folder_name):
+            for filename in files:
+                if filename.endswith('.csv'):
+                    table_name = Path(filename).stem
+                    data_path = os.path.join(root, filename)
+                    data[table_name] = pd.read_csv(data_path)
 
     else:
         for filename, file_ in in_memory_directory.items():
@@ -221,6 +222,45 @@ def _get_data(modality, output_folder_name, in_memory_directory):
         data = data.popitem()[1]
 
     return data
+
+
+def _get_metadata(metadata_bytes, dataset_name, output_folder_name=None):
+    """Parse metadata bytes and optionally persist to ``output_folder_name``.
+
+    Args:
+        metadata_bytes (bytes):
+            Raw bytes of the metadata JSON file.
+        dataset_name (str):
+            The dataset name used when loading into ``Metadata``.
+        output_folder_name (str or None):
+            Optional folder path where to write ``metadata.json``.
+
+    Returns:
+        Metadata:
+            Parsed metadata object.
+    """
+    try:
+        metadict = json.loads(metadata_bytes)
+        metadata = Metadata().load_from_dict(metadict, dataset_name)
+    except Exception as e:
+        raise DemoResourceNotFoundError('Failed to parse metadata JSON for the dataset.') from e
+
+    if output_folder_name:
+        try:
+            metadata_path = os.path.join(str(output_folder_name), METADATA_FILENAME)
+            with open(metadata_path, 'wb') as f:
+                f.write(metadata_bytes)
+
+        except Exception:
+            warnings.warn(
+                (
+                    f'Error saving {METADATA_FILENAME} for dataset {dataset_name} into '
+                    f'{output_folder_name}.',
+                ),
+                DemoResourceNotFoundWarning,
+            )
+
+    return metadata
 
 
 def download_demo(modality, dataset_name, output_folder_name=None):
@@ -250,15 +290,11 @@ def download_demo(modality, dataset_name, output_folder_name=None):
     """
     _validate_modalities(modality)
     _validate_output_folder(output_folder_name)
+
     data_io, metadata_bytes = _download(modality, dataset_name)
     in_memory_directory = _extract_data(data_io, output_folder_name)
     data = _get_data(modality, output_folder_name, in_memory_directory)
-
-    try:
-        metadict = json.loads(metadata_bytes)
-        metadata = Metadata().load_from_dict(metadict, dataset_name)
-    except Exception as e:
-        raise DemoResourceNotFoundError('Failed to parse metadata JSON for the dataset.') from e
+    metadata = _get_metadata(metadata_bytes, dataset_name, output_folder_name)
 
     return data, metadata
 
@@ -306,14 +342,14 @@ def get_available_demos(modality):
         try:
             raw = _get_data_from_bucket(yaml_key)
             info = yaml.safe_load(raw) or {}
-            name = info.get('dataset-name') or dataset_name
 
             size_mb_val = info.get('dataset-size-mb')
             try:
                 size_mb = float(size_mb_val) if size_mb_val is not None else np.nan
             except (ValueError, TypeError):
                 LOGGER.info(
-                    f'Invalid dataset-size-mb {size_mb_val} for dataset {name}; defaulting to NaN.'
+                    f'Invalid dataset-size-mb {size_mb_val} for dataset '
+                    f'{dataset_name}; defaulting to NaN.'
                 )
                 size_mb = np.nan
 
@@ -324,7 +360,7 @@ def get_available_demos(modality):
                 except (ValueError, TypeError):
                     LOGGER.info(
                         f'Could not cast num_tables_val {num_tables_val} to float for '
-                        f'dataset {name}; defaulting to NaN.'
+                        f'dataset {dataset_name}; defaulting to NaN.'
                     )
                     num_tables_val = np.nan
 
@@ -332,11 +368,12 @@ def get_available_demos(modality):
                 num_tables = int(num_tables_val) if not pd.isna(num_tables_val) else np.nan
             except (ValueError, TypeError):
                 LOGGER.info(
-                    f'Invalid num-tables {num_tables_val} for dataset {name} when parsing as int.'
+                    f'Invalid num-tables {num_tables_val} for '
+                    f'dataset {dataset_name} when parsing as int.'
                 )
                 num_tables = np.nan
 
-            tables_info['dataset_name'].append(name)
+            tables_info['dataset_name'].append(dataset_name)
             tables_info['size_MB'].append(size_mb)
             tables_info['num_tables'].append(num_tables)
 
