@@ -56,7 +56,7 @@ def test_detect_column_parameter():
     # Assert
     assert result == {
         'columns': {
-            'pk': {},
+            'pk': {'missing_values_proportion': 0.0},
             'num_col': {
                 'num_decimal_digits': 1,
                 'min_value': 1.0,
@@ -77,7 +77,7 @@ def test_detect_column_parameter():
                 'end_timestamp': '2020-01-03 00:00:00',
                 'missing_values_proportion': 0.25,
             },
-            'alt_key': {},
+            'alt_key': {'missing_values_proportion': 0.0},
         }
     }
 

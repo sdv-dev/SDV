@@ -98,6 +98,7 @@ def test__validate_column_parameter():
     column_metadata = {'sdtype': 'id'}
     bad_column_parameters = {'invalid_key': None}
     bad_missing_value = {'missing_values_proportion': 100}
+    bad_key_missing_value = {'missing_values_proportion': 0.5}
 
     # Run and Assert
     expected_bad_column_msg = re.escape(
@@ -118,10 +119,10 @@ def test__validate_column_parameter():
 
     expected_missing_values_with_key_msg = re.escape(
         "Invalid 'missing_values_proportion' parameter for column 'column' in table 'table'. "
-        "Primary and alternate keys can not have the 'missing_values_proportion' parameter set."
+        "Primary and alternate keys must have 'missing_values_proportion' parameter be zero."
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_missing_values_with_key_msg):
-        _validate_column_parameters('table', 'column', column_metadata, bad_missing_value, True)
+        _validate_column_parameters('table', 'column', column_metadata, bad_key_missing_value, True)
 
 
 def test__validate_column_parameters_numerical():
