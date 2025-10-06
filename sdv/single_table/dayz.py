@@ -57,6 +57,15 @@ def _validate_parameter_structure(dayz_parameters):
         _validate_table_parameter_dict_keys(table, table_parameters)
 
 
+def _validate_key_column(column_parameters, column_table_msg):
+    if 'missing_values_proportion' in column_parameters:
+        msg = (
+            f"Invalid 'missing_values_proportion' parameter for {column_table_msg}. Primary "
+            "and alternate keys can not have the 'missing_values_proportion' parameter set."
+        )
+        raise SynthesizerProcessingError(msg)
+
+
 def _validate_numerical_parameters(column_parameters, column_table_msg):
     for param in ['min_value', 'max_value']:
         if param in column_parameters and not _is_numerical(column_parameters[param]):
@@ -144,7 +153,7 @@ def _validate_missing_value_parameters(column_parameters, column_table_msg):
         raise SynthesizerProcessingError(msg)
 
 
-def _validate_column_parameters(table, column, column_metadata, column_parameters):
+def _validate_column_parameters(table, column, column_metadata, column_parameters, is_key_column):
     column_table_msg = f"column '{column}' in table '{table}'"
     sdtype = column_metadata['sdtype']
     sdtype_parameters = SDTYPE_TO_PARAMETERS.get(sdtype, COLUMN_PARAMETER_KEYS)
@@ -156,6 +165,9 @@ def _validate_column_parameters(table, column, column_metadata, column_parameter
             f"'{unknown_column_parameters}'."
         )
         raise SynthesizerProcessingError(msg)
+
+    if is_key_column:
+        _validate_key_column(column_parameters, column_table_msg)
 
     if sdtype == 'numerical':
         _validate_numerical_parameters(column_parameters, column_table_msg)
@@ -186,9 +198,11 @@ def _validate_table_parameters(table, table_metadata, table_parameters):
         )
         raise SynthesizerProcessingError(msg)
 
+    key_columns = table_metadata._get_primary_and_alternate_keys()
     for column, column_parameters in table_parameters.get('columns', {}).items():
+        is_key_column = column in key_columns
         _validate_column_parameters(
-            table, column, table_metadata.columns[column], column_parameters
+            table, column, table_metadata.columns[column], column_parameters, is_key_column
         )
 
 

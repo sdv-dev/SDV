@@ -28,7 +28,8 @@ def metadata():
                     'categorical': {'sdtype': 'categorical'},
                     'pii': {'sdtype': 'ssn'},
                     'extra_column': {'sdtype': 'numerical'},
-                }
+                },
+                'primary_key': 'id',
             }
         }
     })
@@ -104,14 +105,23 @@ def test__validate_column_parameter():
         "key(s) 'invalid_key'."
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_column_msg):
-        _validate_column_parameters('table', 'column', column_metadata, bad_column_parameters)
+        _validate_column_parameters(
+            'table', 'column', column_metadata, bad_column_parameters, False
+        )
 
     expected_bad_missing_value_msg = re.escape(
         "The 'missing_values_proportion' parameter for column 'column' in table 'table' "
         'must be a float between 0.0 and 1.0.'
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_missing_value_msg):
-        _validate_column_parameters('table', 'column', column_metadata, bad_missing_value)
+        _validate_column_parameters('table', 'column', column_metadata, bad_missing_value, False)
+
+    expected_missing_values_with_key_msg = re.escape(
+        "Invalid 'missing_values_proportion' parameter for column 'column' in table 'table'. "
+        "Primary and alternate keys can not have the 'missing_values_proportion' parameter set."
+    )
+    with pytest.raises(SynthesizerProcessingError, match=expected_missing_values_with_key_msg):
+        _validate_column_parameters('table', 'column', column_metadata, bad_missing_value, True)
 
 
 def test__validate_column_parameters_numerical():
@@ -127,21 +137,25 @@ def test__validate_column_parameters_numerical():
         "The 'min_value' parameter for column 'column' in table 'table' must be a float."
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_parameter_value_msg):
-        _validate_column_parameters('table', 'column', column_metadata, bad_parameter_value)
+        _validate_column_parameters('table', 'column', column_metadata, bad_parameter_value, False)
 
     expected_bad_min_max_msg = re.escape(
         "Invalid parameters for column 'column' in table 'table'. The 'min_value' "
         "must be less than or equal to the 'max_value'"
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_min_max_msg):
-        _validate_column_parameters('table', 'column', column_metadata, bad_min_max_combination)
+        _validate_column_parameters(
+            'table', 'column', column_metadata, bad_min_max_combination, False
+        )
 
     expected_bad_num_decimal_digits_msg = re.escape(
         "The 'num_decimal_digits' parameter for column 'column' in table 'table' must be an "
         'integer greater than or equal to zero.'
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_num_decimal_digits_msg):
-        _validate_column_parameters('table', 'column', column_metadata, bad_num_decimal_digits)
+        _validate_column_parameters(
+            'table', 'column', column_metadata, bad_num_decimal_digits, False
+        )
 
 
 def test__validate_column_parameters_datetime():
@@ -157,28 +171,32 @@ def test__validate_column_parameters_datetime():
         "The 'start_timestamp' parameter for column 'column' in table 'table' must be a string."
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_parameter_value_msg):
-        _validate_column_parameters('table', 'column', column_metadata, bad_parameter_value)
+        _validate_column_parameters('table', 'column', column_metadata, bad_parameter_value, False)
 
     expected_bad_datetime_value_msg = re.escape(
         "The 'start_timestamp' parameter for column 'column' in table 'table' is not a valid "
         'datetime string or does not match the date time format (%d %b %Y).'
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_datetime_value_msg):
-        _validate_column_parameters('table', 'column', column_metadata, bad_datetime_value)
+        _validate_column_parameters('table', 'column', column_metadata, bad_datetime_value, False)
 
     expected_bad_value_no_format_msg = re.escape(
         "The 'start_timestamp' parameter for column 'column' in table 'table' is not a "
         'valid datetime string.'
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_value_no_format_msg):
-        _validate_column_parameters('table', 'column', {'sdtype': 'datetime'}, bad_datetime_value)
+        _validate_column_parameters(
+            'table', 'column', {'sdtype': 'datetime'}, bad_datetime_value, False
+        )
 
     expected_bad_start_end_msg = re.escape(
         "Invalid parameters for column 'column' in table 'table'. The 'start_timestamp' "
         "must be less than the 'end_timestamp'"
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_start_end_msg):
-        _validate_column_parameters('table', 'column', column_metadata, bad_start_end_combination)
+        _validate_column_parameters(
+            'table', 'column', column_metadata, bad_start_end_combination, False
+        )
 
 
 def test__validate_column_parameters_categorical():
@@ -192,7 +210,7 @@ def test__validate_column_parameters_categorical():
         "The 'category_values' parameter for column 'column' in table 'table' must be a list."
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_msg):
-        _validate_column_parameters('table', 'column', column_metadata, bad_category_values)
+        _validate_column_parameters('table', 'column', column_metadata, bad_category_values, False)
 
 
 @patch('sdv.single_table.dayz._validate_column_parameters')
@@ -202,6 +220,7 @@ def test__validate_table_parameters(mock__validate_column_parameters, metadata, 
     table_metadata = metadata.tables['table']
     bad_table_columns = {'columns': {'bad_column': {}}}
     bad_num_rows = {'num_rows': -1}
+    keys = ['id']
 
     # Run and Assert
     expected_bad_column_msg = re.escape(
@@ -222,7 +241,7 @@ def test__validate_table_parameters(mock__validate_column_parameters, metadata, 
 
     # Assert
     expected_calls = [
-        call('table', col, table_metadata.columns[col], col_parameters)
+        call('table', col, table_metadata.columns[col], col_parameters, col in keys)
         for col, col_parameters in dayz_parameters['tables']['table']['columns'].items()
     ]
     mock__validate_column_parameters.assert_has_calls(expected_calls)

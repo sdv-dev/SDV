@@ -35,6 +35,7 @@ def detect_column_parameters(data, metadata, table_name):
         dict: A dictionary containing the detected parameters.
     """
     table_metadata = metadata.tables[table_name]
+    table_keys = table_metadata._get_primary_and_alternate_keys()
     column_parameters = {}
     for column_name, column_metadata in table_metadata.columns.items():
         column_parameters[column_name] = {}
@@ -68,9 +69,10 @@ def detect_column_parameters(data, metadata, table_name):
                 'category_values': data[column_name].dropna().unique().tolist()
             }
 
-        column_parameters[column_name]['missing_values_proportion'] = (
-            data[column_name].isna().mean().item()
-        )
+        if column_name not in table_keys:
+            column_parameters[column_name]['missing_values_proportion'] = (
+                data[column_name].isna().mean().item()
+            )
 
     return {'columns': column_parameters}
 
