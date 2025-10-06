@@ -283,6 +283,7 @@ class TestPARSynthesizer:
         with pytest.raises(InvalidDataError, match=err_msg):
             instance.validate(data)
 
+    @pytest.mark.filterwarnings('error::FutureWarning')
     def test__transform_sequence(self):
         # Setup
         metadata = self.get_metadata(add_sequence_index=True)
@@ -310,6 +311,7 @@ class TestPARSynthesizer:
         assert list(par.extended_columns.keys()) == ['time']
         assert par.extended_columns['time'].enforce_min_max_values is True
 
+    @pytest.mark.filterwarnings('error::FutureWarning')
     def test__transform_sequence_index_single_instances(self):
         # Setup
         metadata = self.get_metadata(add_sequence_index=True)
@@ -332,6 +334,7 @@ class TestPARSynthesizer:
         assert list(par.extended_columns.keys()) == ['time']
         assert par.extended_columns['time'].enforce_min_max_values is True
 
+    @pytest.mark.filterwarnings('error::FutureWarning')
     def test__transform_sequence_index_non_unique_sequence_key(self):
         # Setup
         metadata = self.get_metadata(add_sequence_index=True)
@@ -833,6 +836,7 @@ class TestPARSynthesizer:
         })
         pd.testing.assert_frame_equal(sampled, expected_output)
 
+    @pytest.mark.filterwarnings('error::FutureWarning')
     @patch('sdv.sequential.par.tqdm')
     def test__sample_from_par_with_sequence_index(self, tqdm_mock):
         """Test that the method handles the sequence index properly.
@@ -1245,6 +1249,9 @@ class TestPARSynthesizer:
         assert result['all_null_cat_col'].isna().all()
         assert len(result) > 0
 
+    @pytest.mark.filterwarnings(
+        'error:Series.__getitem__ treating keys as positions is deprecated:FutureWarning'
+    )
     def test_sample_with_multiple_all_null_columns(self):
         """Test that sampling works correctly with multiple all-null columns."""
         # Setup
@@ -1257,15 +1264,21 @@ class TestPARSynthesizer:
             'all_null_col2': [np.nan] * 9,
         })
 
-        metadata = Metadata()
-        metadata.add_table('table')
-        metadata.add_column('time', 'table', sdtype='datetime')
-        metadata.add_column('gender', 'table', sdtype='categorical')
-        metadata.add_column('name', 'table', sdtype='id')
-        metadata.add_column('measurement', 'table', sdtype='numerical')
-        metadata.add_column('all_null_col1', 'table', sdtype='numerical')
-        metadata.add_column('all_null_col2', 'table', sdtype='categorical')
-        metadata.set_sequence_key('name', 'table')
+        metadata = Metadata().load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'time': {'sdtype': 'datetime'},
+                        'gender': {'sdtype': 'categorical'},
+                        'name': {'sdtype': 'id'},
+                        'measurement': {'sdtype': 'numerical'},
+                        'all_null_col1': {'sdtype': 'numerical'},
+                        'all_null_col2': {'sdtype': 'categorical'},
+                    },
+                    'sequence_key': 'name',
+                }
+            }
+        })
 
         # Run
         synthesizer = PARSynthesizer(metadata=metadata, epochs=1)
