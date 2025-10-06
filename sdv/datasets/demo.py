@@ -342,14 +342,14 @@ def get_available_demos(modality):
         try:
             raw = _get_data_from_bucket(yaml_key)
             info = yaml.safe_load(raw) or {}
-            name = info.get('dataset-name') or dataset_name
 
             size_mb_val = info.get('dataset-size-mb')
             try:
                 size_mb = float(size_mb_val) if size_mb_val is not None else np.nan
             except (ValueError, TypeError):
                 LOGGER.info(
-                    f'Invalid dataset-size-mb {size_mb_val} for dataset {name}; defaulting to NaN.'
+                    f'Invalid dataset-size-mb {size_mb_val} for dataset '
+                    f'{dataset_name}; defaulting to NaN.'
                 )
                 size_mb = np.nan
 
@@ -360,7 +360,7 @@ def get_available_demos(modality):
                 except (ValueError, TypeError):
                     LOGGER.info(
                         f'Could not cast num_tables_val {num_tables_val} to float for '
-                        f'dataset {name}; defaulting to NaN.'
+                        f'dataset {dataset_name}; defaulting to NaN.'
                     )
                     num_tables_val = np.nan
 
@@ -368,11 +368,12 @@ def get_available_demos(modality):
                 num_tables = int(num_tables_val) if not pd.isna(num_tables_val) else np.nan
             except (ValueError, TypeError):
                 LOGGER.info(
-                    f'Invalid num-tables {num_tables_val} for dataset {name} when parsing as int.'
+                    f'Invalid num-tables {num_tables_val} for '
+                    f'dataset {dataset_name} when parsing as int.'
                 )
                 num_tables = np.nan
 
-            tables_info['dataset_name'].append(name)
+            tables_info['dataset_name'].append(dataset_name)
             tables_info['size_MB'].append(size_mb)
             tables_info['num_tables'].append(num_tables)
 
