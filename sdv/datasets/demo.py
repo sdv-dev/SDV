@@ -4,6 +4,7 @@ import io
 import json
 import logging
 import os
+import warnings
 from collections import defaultdict
 from pathlib import Path
 from zipfile import ZipFile
@@ -17,7 +18,6 @@ from botocore.client import Config
 
 from sdv.errors import DemoResourceNotFoundError, DemoResourceNotFoundWarning
 from sdv.metadata.metadata import Metadata
-import warnings
 
 LOGGER = logging.getLogger(__name__)
 BUCKET = 'sdv-datasets-public'
@@ -197,10 +197,10 @@ def _extract_data(bytes_io, output_folder_name):
             return in_memory_directory
 
 
-def _get_data_with_output_folder(modality, output_folder_name):
+def _get_data_with_output_folder(output_folder_name):
     """Load CSV tables from an extracted folder on disk.
 
-    Returns a tuple of (data_dict, failed_files_list).
+    Returns a tuple of (data_dict, skipped_files).
     Non-CSV files are ignored.
     """
     data = {}
@@ -224,10 +224,10 @@ def _get_data_with_output_folder(modality, output_folder_name):
     return data, skipped_files
 
 
-def _get_data_without_output_folder(modality, in_memory_directory):
+def _get_data_without_output_folder(in_memory_directory):
     """Load CSV tables directly from in-memory zip contents.
 
-    Returns a tuple of (data_dict, failed_files_list).
+    Returns a tuple of (data_dict, skipped_files).
     Non-CSV entries are ignored.
     """
     data = {}
@@ -250,9 +250,9 @@ def _get_data_without_output_folder(modality, in_memory_directory):
 
 def _get_data(modality, output_folder_name, in_memory_directory):
     if output_folder_name:
-        data, skipped_files = _get_data_with_output_folder(modality, output_folder_name)
+        data, skipped_files = _get_data_with_output_folder(output_folder_name)
     else:
-        data, skipped_files = _get_data_without_output_folder(modality, in_memory_directory)
+        data, skipped_files = _get_data_without_output_folder(in_memory_directory)
 
     if skipped_files:
         warnings.warn('Skipped files: ' + ', '.join(sorted(skipped_files)))
