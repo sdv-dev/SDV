@@ -183,8 +183,23 @@ def test__validate_parameter_structure(dayz_parameters):
     bad_tables_parameters = {'tables': None}
     bad_tables_parameters_value = {'tables': {'table': None}}
     bad_tables_key = {'tables': {'table': {'invalid_key': None}}}
+    bad_spec_version = {'DAYZ_SPEC_VERSION': 'V2', 'tables': {}}
+    valid_parameters = {
+        'DAYZ_SPEC_VERSION': 'V1',
+        'tables': {
+            'table': {
+                'num_rows': 100,
+                'columns': {
+                    'id': {},
+                    'numerical': {},
+                },
+            }
+        },
+        'relationships': [],
+    }
 
     # Run and Assert
+    _validate_parameter_structure(valid_parameters)
     expected_bad_parameters_type_msg = re.escape(
         'DayZ parameters must be a dictionary of DayZSynthesizer parameters.'
     )
@@ -196,6 +211,12 @@ def test__validate_parameter_structure(dayz_parameters):
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_parameters_key_msg):
         _validate_parameter_structure(bad_parameters_key)
+
+    expected_bad_spec_version_msg = re.escape(
+        "Unsupported DayZ parameter spec version: 'V2'. Supported version is: 'V1'."
+    )
+    with pytest.raises(SynthesizerProcessingError, match=expected_bad_spec_version_msg):
+        _validate_parameter_structure(bad_spec_version)
 
     expected_bad_tables_parameters_msg = re.escape(
         "The 'tables' value in the DayZ parameters must be a dictionary of table parameters."

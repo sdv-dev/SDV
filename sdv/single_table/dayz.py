@@ -173,7 +173,7 @@ def create_parameters(data, metadata, output_filename):
     metadata.validate()
     datas = data if isinstance(data, dict) else {metadata._get_single_table_name(): data}
     metadata.validate_data(datas)
-    parameters = {'DAYZ_SPEC_VERSION': 'V1', 'tables': {}}
+    parameters = {'DAYZ_SPEC_VERSION': DAYZ_SPEC_VERSION, 'tables': {}}
     for table_name, table_data in datas.items():
         parameters['tables'][table_name] = {}
         parameters['tables'][table_name].update(_detect_table_parameters(table_data))
@@ -194,6 +194,13 @@ def _validate_parameter_dict_keys(dayz_parameters):
         unknown_base_keys = "', '".join(unknown_base_keys)
         raise SynthesizerProcessingError(
             f"DayZ parameters contains unexpected key(s): '{unknown_base_keys}'."
+        )
+
+    dayz_spec_version = dayz_parameters.get('DAYZ_SPEC_VERSION', DAYZ_SPEC_VERSION)
+    if dayz_spec_version != DAYZ_SPEC_VERSION:
+        raise SynthesizerProcessingError(
+            f"Unsupported DayZ parameter spec version: '{dayz_spec_version}'."
+            f" Supported version is: '{DAYZ_SPEC_VERSION}'."
         )
 
 
