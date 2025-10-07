@@ -258,7 +258,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         for table, est_cols in self._estimate_num_columns(self.metadata, distributions).items():
             entry = []
             entry.append(table)
-            entry.append(metadata_columns[table])
+            entry.append(sum(metadata_columns[table]))
             total_est_cols += est_cols
             entry.append(est_cols)
             print_table.append(entry)
