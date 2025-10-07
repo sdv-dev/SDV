@@ -185,14 +185,14 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         self._default_parameters = {}
         self._parent_extended_columns = defaultdict(list)
         self.verbose = verbose
+        BaseHierarchicalSampler.__init__(
+            self, self.metadata, self._table_synthesizers, self._table_sizes
+        )
         child_tables = set()
         for relationship in metadata.relationships:
             child_tables.add(relationship['child_table_name'])
         for child_table_name in child_tables:
             self.set_table_parameters(child_table_name, {'default_distribution': 'norm'})
-        BaseHierarchicalSampler.__init__(
-            self, self.metadata, self._table_synthesizers, self._table_sizes
-        )
         self._print_estimate_warning()
 
     def set_table_parameters(self, table_name, table_parameters):
