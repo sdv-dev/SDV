@@ -404,6 +404,7 @@ class BaseMultiTableSynthesizer:
         self._table_synthesizers[table_name] = self._synthesizer(
             metadata=table_metadata, **table_parameters
         )
+        self._table_synthesizers[table_name]._data_processor.table_name = table_name
         self._table_parameters[table_name].update(deepcopy(table_parameters))
 
     def _validate_all_tables(self, data):
