@@ -69,7 +69,7 @@ def detect_column_parameters(data, metadata, table_name):
             }
 
         column_parameters[column_name]['missing_values_proportion'] = (
-            data[column_name].isna().mean().item()
+            data[column_name].isna().mean()
         )
 
     return {'columns': column_parameters}
