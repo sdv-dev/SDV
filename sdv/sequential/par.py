@@ -320,11 +320,9 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         if all(sequence_index[self._sequence_key].nunique() == 1):
             diff_series = sequence_index[self._sequence_index].diff().bfill()
         else:
-            diff_series = (
-                sequence_index
-                .groupby(self._sequence_key, group_keys=False)[self._sequence_index]
-                .transform(lambda s: s.diff().bfill())
-            )
+            diff_series = sequence_index.groupby(self._sequence_key, group_keys=False)[
+                self._sequence_index
+            ].transform(lambda s: s.diff().bfill())
 
         sequence_index_sequence = diff_series.to_frame(name=self._sequence_index)
         if all(sequence_index_sequence[self._sequence_index].isna()):
