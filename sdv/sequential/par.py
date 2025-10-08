@@ -318,14 +318,15 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             ).astype(np.int64)
 
         if all(sequence_index[self._sequence_key].nunique() == 1):
-            sequence_index_sequence = sequence_index[[self._sequence_index]].diff().bfill()
+            diff_series = sequence_index[self._sequence_index].diff().bfill()
         else:
-            sequence_index_sequence = (
-                sequence_index.groupby(self._sequence_key, group_keys=False)
-                .apply(lambda x: x[self._sequence_index].diff().bfill(), include_groups=False)
-                .reset_index()
+            diff_series = (
+                sequence_index
+                .groupby(self._sequence_key, group_keys=False)[self._sequence_index]
+                .transform(lambda s: s.diff().bfill())
             )
 
+        sequence_index_sequence = diff_series.to_frame(name=self._sequence_index)
         if all(sequence_index_sequence[self._sequence_index].isna()):
             fill_value = 0
         else:
