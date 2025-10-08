@@ -198,15 +198,6 @@ def _extract_data(bytes_io, output_folder_name):
             return in_memory_directory
 
 
-def _read_csv_with_fallback(filepath_or_buffer, **kwargs):
-    """Read a CSV with a fallback encoding on UnicodeDecodeError."""
-    try:
-        return pd.read_csv(filepath_or_buffer, **kwargs)
-    except UnicodeDecodeError:
-        kwargs = {**kwargs, 'encoding': FALLBACK_ENCODING}
-        return pd.read_csv(filepath_or_buffer, **kwargs)
-
-
 def _get_data_with_output_folder(output_folder_name):
     """Load CSV tables from an extracted folder on disk.
 
@@ -224,7 +215,9 @@ def _get_data_with_output_folder(output_folder_name):
             table_name = Path(filename).stem
             data_path = os.path.join(root, filename)
             try:
-                data[table_name] = _read_csv_with_fallback(data_path)
+                data[table_name] = pd.read_csv(data_path)
+            except UnicodeDecodeError:
+                data[table_name] = pd.read_csv(data_path, encoding=FALLBACK_ENCODING)
             except Exception as e:
                 rel = os.path.relpath(data_path, output_folder_name)
                 skipped_files.append(f'{rel}: {e}')
@@ -247,7 +240,9 @@ def _get_data_without_output_folder(in_memory_directory):
 
         table_name = Path(filename).stem
         try:
-            data[table_name] = _read_csv_with_fallback(io.BytesIO(file_), low_memory=False)
+            data[table_name] = pd.read_csv(io.BytesIO(file_), low_memory=False)
+        except UnicodeDecodeError:
+            data[table_name] = pd.read_csv(io.BytesIO(file_), low_memory=False, encoding='latin-1')
         except Exception as e:
             skipped_files.append(f'{filename}: {e}')
 
