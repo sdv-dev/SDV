@@ -242,7 +242,9 @@ def _get_data_without_output_folder(in_memory_directory):
         try:
             data[table_name] = pd.read_csv(io.BytesIO(file_), low_memory=False)
         except UnicodeDecodeError:
-            data[table_name] = pd.read_csv(io.BytesIO(file_), low_memory=False, encoding='latin-1')
+            data[table_name] = pd.read_csv(
+                io.BytesIO(file_), low_memory=False, encoding=FALLBACK_ENCODING
+            )
         except Exception as e:
             skipped_files.append(f'{filename}: {e}')
 
