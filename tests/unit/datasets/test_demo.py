@@ -1019,3 +1019,181 @@ def test_download_demo_raises_when_no_csv_in_zip_single_table(mock_list, mock_ge
     msg = 'Demo data could not be downloaded because no csv files were found in data.zip'
     with pytest.raises(DemoResourceNotFoundError, match=re.escape(msg)):
         download_demo('single_table', 'word')
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_skips_non_csv_in_memory_no_warning(mock_list, mock_get):
+    """In-memory path: ignore non-CSV files silently; load valid CSVs."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/mix/data.zip'},
+        {'Key': 'single_table/mix/metadata.json'},
+    ]
+
+    df = pd.DataFrame({'id': [1, 2], 'name': ['a', 'b']})
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('good.csv', df.to_csv(index=False))
+        zf.writestr('note.txt', 'hello world')
+        zf.writestr('nested/readme.md', '# readme')
+        # Add a directory entry explicitly
+        zf.writestr('empty_dir/', '')
+    zip_bytes = buf.getvalue()
+
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'good': {
+                'columns': {
+                    'id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'name': {'sdtype': 'categorical'},
+                }
+            }
+        },
+        'relationships': [],
+    }).encode()
+
+    mock_get.side_effect = lambda key: zip_bytes if key.endswith('data.zip') else meta_bytes
+
+    # Run and Assert
+    warn_msg = 'Skipped files: empty_dir/, nested/readme.md, note.txt'
+    with pytest.warns(UserWarning, match=warn_msg) as rec:
+        data, _ = download_demo('single_table', 'mix')
+
+    assert len(rec) == 1
+    expected = pd.DataFrame({'id': [1, 2], 'name': ['a', 'b']})
+    pd.testing.assert_frame_equal(data, expected)
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_on_disk_warns_failed_csv_only(mock_list, mock_get, tmp_path, monkeypatch):
+    """On-disk path: warn only for failed CSVs; non-CSV are skipped silently."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/mix/data.zip'},
+        {'Key': 'single_table/mix/metadata.json'},
+    ]
+
+    good = pd.DataFrame({'x': [1, 2]})
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('good.csv', good.to_csv(index=False))
+        zf.writestr('bad.csv', 'will_fail')
+        zf.writestr('info.txt', 'ignore me')
+    zip_bytes = buf.getvalue()
+
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'good': {
+                'columns': {
+                    'x': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                }
+            }
+        },
+        'relationships': [],
+    }).encode()
+
+    mock_get.side_effect = lambda key: zip_bytes if key.endswith('data.zip') else meta_bytes
+
+    # Force read_csv to fail on bad.csv only
+    orig_read_csv = pd.read_csv
+
+    def fake_read_csv(path_or_buf, *args, **kwargs):
+        if isinstance(path_or_buf, str) and path_or_buf.endswith('bad.csv'):
+            raise ValueError('bad-parse')
+        return orig_read_csv(path_or_buf, *args, **kwargs)
+
+    monkeypatch.setattr('pandas.read_csv', fake_read_csv)
+
+    out_dir = tmp_path / 'mix_out'
+
+    # Run and Assert
+    warn_msg = 'Skipped files: bad.csv: bad-parse, info.txt'
+    with pytest.warns(UserWarning, match=warn_msg) as rec:
+        data, _ = download_demo('single_table', 'mix', out_dir)
+
+    assert len(rec) == 1
+    pd.testing.assert_frame_equal(data, good)
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_handles_non_utf8_in_memory(mock_list, mock_get):
+    """It should successfully read Latin-1 encoded CSVs from in-memory extraction."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/nonutf/data.zip'},
+        {'Key': 'single_table/nonutf/metadata.json'},
+    ]
+
+    df = pd.DataFrame({'id': [1], 'name': ['café']})
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('nonutf.csv', df.to_csv(index=False).encode('latin-1'))
+    zip_bytes = buf.getvalue()
+
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'nonutf': {
+                'columns': {
+                    'id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'name': {'sdtype': 'categorical'},
+                }
+            }
+        },
+        'relationships': [],
+    }).encode()
+
+    mock_get.side_effect = lambda key: zip_bytes if key.endswith('data.zip') else meta_bytes
+
+    # Run
+    data, _ = download_demo('single_table', 'nonutf')
+
+    # Assert
+    expected = pd.DataFrame({'id': [1], 'name': ['café']})
+    pd.testing.assert_frame_equal(data, expected)
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_handles_non_utf8_on_disk(mock_list, mock_get, tmp_path):
+    """It should successfully read Latin-1 encoded CSVs when extracted to disk."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/nonutf/data.zip'},
+        {'Key': 'single_table/nonutf/metadata.json'},
+    ]
+
+    df = pd.DataFrame({'id': [1], 'name': ['café']})
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('nonutf.csv', df.to_csv(index=False).encode('latin-1'))
+    zip_bytes = buf.getvalue()
+
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'nonutf': {
+                'columns': {
+                    'id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'name': {'sdtype': 'categorical'},
+                }
+            }
+        },
+        'relationships': [],
+    }).encode()
+
+    mock_get.side_effect = lambda key: zip_bytes if key.endswith('data.zip') else meta_bytes
+
+    out_dir = tmp_path / 'latin_out'
+
+    # Run
+    data, _ = download_demo('single_table', 'nonutf', out_dir)
+
+    # Assert
+    expected = pd.DataFrame({'id': [1], 'name': ['café']})
+    pd.testing.assert_frame_equal(data, expected)
