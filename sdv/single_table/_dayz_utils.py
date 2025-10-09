@@ -77,6 +77,11 @@ def detect_column_parameters(data, metadata, table_name):
 
 def create_parameters(data, metadata, output_filename):
     """Detect and create a parameter dict for the DayZ model."""
+    if len(data) == 0:
+        raise ValueError('Data is empty')
+    if len(metadata.tables) == 0:
+        raise ValueError('Metadata is empty')
+
     metadata.validate()
     datas = data if isinstance(data, dict) else {metadata._get_single_table_name(): data}
     metadata.validate_data(datas)

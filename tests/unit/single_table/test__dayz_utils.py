@@ -88,9 +88,10 @@ def test_create_parameters(mock_detect_table, mock_detect_column, tmp_path):
         }
     }
 
-    data = pd.DataFrame()
+    data = pd.DataFrame({'col1': [1, 2, 3], 'col2': [4, 5, 6]})
     metadata = Mock()
     metadata._get_single_table_name.return_value = 'table_name'
+    metadata.tables = {'table_name': Mock()}
 
     # Run
     result = create_parameters(data, metadata, output_filename=output_filename)
