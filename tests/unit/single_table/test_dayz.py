@@ -1,6 +1,7 @@
 import re
 from unittest.mock import call, patch
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -374,6 +375,7 @@ class TestDayZSynthesizer:
         # Assert
         mock__validate_parameters.assert_called_once_with(metadata, dayz_parameters)
 
+<<<<<<< HEAD
     def test__validate_parameters_errors_with_multi_table_metadata(self):
         """Test that single-table validation errors if multi-table metadata is provided."""
         # Setup
@@ -432,3 +434,94 @@ class TestDayZSynthesizer:
         )
         with pytest.raises(SynthesizerProcessingError, match=expected_error_msg):
             DayZSynthesizer.validate_parameters(metadata, dayz_parameters)
+=======
+    def test_create_parameters_with_empty_dataframe_returns_valid_defaults(self):
+        """create_parameters should not emit invalid values for empty dataframes."""
+        # Setup
+        data = pd.DataFrame({'col': []})
+        metadata = Metadata.detect_from_dataframe(data)
+
+        # Run
+        params = DayZSynthesizer.create_parameters(data, metadata)
+
+        # Assert
+        assert params == {
+            'tables': {
+                'table': {
+                    'columns': {
+                        'col': {'missing_values_proportion': 0.0},
+                    },
+                    'num_rows': 0,
+                },
+            },
+            'DAYZ_SPEC_VERSION': 'V1',
+        }
+
+    def test_create_parameters_all_null_categorical_column(self):
+        """Categorical column with all nulls should produce empty category_values."""
+        # Setup
+        data = pd.DataFrame({'col': [None, None, np.nan, pd.NA]})
+        metadata = Metadata.detect_from_dataframe(data)
+
+        # Run
+        params = DayZSynthesizer.create_parameters(data, metadata)
+
+        # Assert
+        assert params == {
+            'tables': {
+                'table': {
+                    'columns': {
+                        'col': {'missing_values_proportion': 1.0},
+                    },
+                    'num_rows': 4,
+                },
+            },
+            'DAYZ_SPEC_VERSION': 'V1',
+        }
+
+    def test_create_parameters_all_null_numerical_column(self):
+        """Numerical column with all nulls should produce empty min/max values."""
+        # Setup
+        data = pd.DataFrame({'col': [np.nan]})
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('col', 'table', sdtype='numerical')
+
+        # Run
+        params = DayZSynthesizer.create_parameters(data, metadata)
+
+        # Assert
+        assert params == {
+            'tables': {
+                'table': {
+                    'columns': {
+                        'col': {'missing_values_proportion': 1.0},
+                    },
+                    'num_rows': 1,
+                },
+            },
+            'DAYZ_SPEC_VERSION': 'V1',
+        }
+
+    def test_create_parameters_all_null_datetime_column(self):
+        """Datetime column with all nulls should omit start/end timestamps."""
+        # Setup
+        data = pd.DataFrame({'col': pd.to_datetime([None, None])})
+        metadata = Metadata.detect_from_dataframe(data)
+
+        # Run
+        params = DayZSynthesizer.create_parameters(data, metadata)
+
+        # Assert
+        assert params == {
+            'tables': {
+                'table': {
+                    'columns': {
+                        'col': {'missing_values_proportion': 1.0},
+                    },
+                    'num_rows': 2,
+                },
+            },
+            'DAYZ_SPEC_VERSION': 'V1',
+        }
+>>>>>>> eb252ea1 (Implement fallback)
