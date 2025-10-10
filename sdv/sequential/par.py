@@ -38,6 +38,11 @@ except ModuleNotFoundError as e:
 LOGGER = logging.getLogger(__name__)
 
 
+def _diff_and_bfill(series):
+    """Compute the diff of a pandas Series and backfill the first NaN."""
+    return series.diff().bfill()
+
+
 class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
     """Synthesizer for sequential data.
 
@@ -322,7 +327,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         else:
             diff_series = sequence_index.groupby(self._sequence_key, group_keys=False)[
                 self._sequence_index
-            ].transform(lambda s: s.diff().bfill())
+            ].transform(_diff_and_bfill)
 
         sequence_index_sequence = diff_series.to_frame(name=self._sequence_index)
         if all(sequence_index_sequence[self._sequence_index].isna()):

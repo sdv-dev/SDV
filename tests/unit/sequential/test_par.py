@@ -14,9 +14,22 @@ from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling import Condition
-from sdv.sequential.par import PARSynthesizer
+from sdv.sequential.par import PARSynthesizer, _diff_and_bfill
 from sdv.single_table.base import BaseSynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
+
+
+def test__diff_and_bfill():
+    """Test the ``_diff_and_bfill`` method."""
+    # Setup
+    data = pd.Series([10, 15, 20, 30])
+
+    # Run
+    result = _diff_and_bfill(data)
+
+    # Assert
+    expected = pd.Series([5.0, 5.0, 5.0, 10.0])
+    pd.testing.assert_series_equal(result, expected)
 
 
 class TestPARSynthesizer:
