@@ -181,7 +181,7 @@ class TestDayZSynthesizer:
     def test_create_parameters_empty_data(self):
         """Test creating parameters with empty data."""
         # Setup
-        data = pd.DataFrame()
+        data = {}
         metadata = Metadata()
 
         # Run and Assert
@@ -191,7 +191,7 @@ class TestDayZSynthesizer:
     def test_create_parameters_empty_metadata(self):
         """Test creating parameters with empty metadata."""
         # Setup
-        data = pd.DataFrame({'col1': [1, 2, 3]})
+        data = {'table': pd.DataFrame({'col1': [1, 2, 3]})}
         metadata = Metadata()
 
         # Run and Assert
