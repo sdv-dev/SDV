@@ -1535,12 +1535,12 @@ class TestHMASynthesizer:
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
                     values = table[col].astype(str)
-                    assert all(
-                        len(str(v)) == 17 for v in values
-                    ), f'ID length mismatch in {table_name}.{col}'
-                    assert all(
-                        v.isdigit() for v in values
-                    ), f'Non-digit characters in {table_name}.{col}'
+                    assert all(len(str(v)) == 17 for v in values), (
+                        f'ID length mismatch in {table_name}.{col}'
+                    )
+                    assert all(v.isdigit() for v in values), (
+                        f'Non-digit characters in {table_name}.{col}'
+                    )
 
         # Check relationships are preserved
         child_fks = set(synthetic_data['table_2']['col_A'])
@@ -1614,12 +1614,12 @@ class TestHMASynthesizer:
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
                     values = table[col].astype(str)
-                    assert all(
-                        len(str(v)) == 21 for v in values
-                    ), f'ID length mismatch in {table_name}.{col}'
-                    assert all(
-                        v.isdigit() for v in values
-                    ), f'Non-digit characters in {table_name}.{col}'
+                    assert all(len(str(v)) == 21 for v in values), (
+                        f'ID length mismatch in {table_name}.{col}'
+                    )
+                    assert all(v.isdigit() for v in values), (
+                        f'Non-digit characters in {table_name}.{col}'
+                    )
 
         # Check relationships are preserved
         child_fks = set(synthetic_data['table_2']['col_A'])
@@ -1716,12 +1716,12 @@ class TestHMASynthesizer:
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
                     values = table[col].astype(str)
-                    assert all(
-                        len(str(v)) == 20 for v in values
-                    ), f'ID length mismatch in {table_name}.{col}'
-                    assert all(
-                        v.isdigit() for v in values
-                    ), f'Non-digit characters in {table_name}.{col}'
+                    assert all(len(str(v)) == 20 for v in values), (
+                        f'ID length mismatch in {table_name}.{col}'
+                    )
+                    assert all(v.isdigit() for v in values), (
+                        f'Non-digit characters in {table_name}.{col}'
+                    )
 
         # Check relationships are preserved
         child_fks = set(synthetic_data['table_1']['col_0'])
@@ -1800,12 +1800,12 @@ class TestHMASynthesizer:
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
                     values = table[col].astype(str)
-                    assert all(
-                        len(str(v)) == 20 for v in values
-                    ), f'ID length mismatch in {table_name}.{col}'
-                    assert all(
-                        v.isdigit() for v in values
-                    ), f'Non-digit characters in {table_name}.{col}'
+                    assert all(len(str(v)) == 20 for v in values), (
+                        f'ID length mismatch in {table_name}.{col}'
+                    )
+                    assert all(v.isdigit() for v in values), (
+                        f'Non-digit characters in {table_name}.{col}'
+                    )
 
         # Check relationships are preserved
         child_fks = set(synthetic_data['table_2']['col_A'])
@@ -1875,12 +1875,12 @@ class TestHMASynthesizer:
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
                     values = table[col].astype(str)
-                    assert all(
-                        len(str(v)) == 1 for v in values
-                    ), f'ID length mismatch in {table_name}.{col}'
-                    assert all(
-                        v.isdigit() for v in values
-                    ), f'Non-digit characters in {table_name}.{col}'
+                    assert all(len(str(v)) == 1 for v in values), (
+                        f'ID length mismatch in {table_name}.{col}'
+                    )
+                    assert all(v.isdigit() for v in values), (
+                        f'Non-digit characters in {table_name}.{col}'
+                    )
 
         # Check relationships are preserved
         child_fks = set(synthetic_data['table_2']['col_A'])

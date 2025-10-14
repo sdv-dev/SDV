@@ -5,7 +5,6 @@ import logging
 import warnings
 from copy import deepcopy
 
-import copulas
 import copulas.univariate
 import numpy as np
 import pandas as pd
