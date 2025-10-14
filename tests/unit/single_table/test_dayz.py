@@ -130,6 +130,7 @@ def test_detect_column_parameter():
         }
     }
 
+
 @patch('sdv.single_table.dayz._detect_column_parameters')
 @patch('sdv.single_table.dayz._detect_table_parameters')
 def test_create_parameters(mock_detect_table, mock_detect_column, tmp_path):

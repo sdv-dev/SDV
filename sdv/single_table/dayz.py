@@ -153,26 +153,6 @@ def create_parameters(data, metadata, output_filename):
     metadata.validate()
     datas = data if isinstance(data, dict) else {metadata._get_single_table_name(): data}
     metadata.validate_data(datas)
-    parameters = {'DAYZ_SPEC_VERSION': 'V1', 'tables': {}}
-    for table_name, table_data in datas.items():
-        parameters['tables'][table_name] = {}
-        parameters['tables'][table_name].update(_detect_table_parameters(table_data))
-        parameters['tables'][table_name].update(
-            _detect_column_parameters(table_data, metadata, table_name)
-        )
-
-    if output_filename:
-        with open(output_filename, 'w') as f:
-            json.dump(parameters, f, indent=4)
-
-    return parameters
-
-
-def create_parameters(data, metadata, output_filename):
-    """Detect and create a parameter dict for the DayZ model."""
-    metadata.validate()
-    datas = data if isinstance(data, dict) else {metadata._get_single_table_name(): data}
-    metadata.validate_data(datas)
     parameters = {'DAYZ_SPEC_VERSION': DAYZ_SPEC_VERSION, 'tables': {}}
     for table_name, table_data in datas.items():
         parameters['tables'][table_name] = {}
