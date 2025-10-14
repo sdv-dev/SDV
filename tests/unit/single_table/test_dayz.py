@@ -458,7 +458,7 @@ class TestDayZSynthesizer:
         }
 
     def test_create_parameters_all_null_categorical_column(self):
-        """Categorical column with all nulls should produce empty category_values."""
+        """Categorical column with all nulls should not have the category_values key parameter."""
         # Setup
         data = pd.DataFrame({'col': [None, None, np.nan, pd.NA]})
         metadata = Metadata.detect_from_dataframe(data)
