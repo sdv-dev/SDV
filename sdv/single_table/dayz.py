@@ -219,6 +219,13 @@ def _validate_parameters(metadata, parameters):
     """
     metadata.validate()
     _validate_parameter_structure(parameters)
+
+    if len(metadata.tables) > 1:
+        raise SynthesizerProcessingError(
+            'Invalid metadata provided for single-table DayZSynthesizer. The metadata contains '
+            'multiple tables. Please use multi-table DayZSynthesizer instead.'
+        )
+
     if 'relationships' in parameters:
         msg = (
             "Invalid DayZ parameter 'relationships' for single-table DayZSynthesizer. "
