@@ -310,9 +310,9 @@ class BaseSynthesizer:
             warnings.warn(msg, RefitWarning)
 
     def _resolve_gpu_parameters(self, parameters):
-        if parameters.get('cuda') is not None:
-            del parameters['enable_gpu']
-        elif 'cuda' in parameters:
+        if parameters.get('cuda') is not None:  # Ensure backward-compatibility
+            parameters.pop('enable_gpu', None)
+        elif 'cuda' in parameters:  # Removed because deprecated
             del parameters['cuda']
 
         return parameters
@@ -320,7 +320,6 @@ class BaseSynthesizer:
     def get_parameters(self):
         """Return the parameters used to instantiate the synthesizer."""
         parameters = inspect.signature(self.__init__).parameters
-        breakpoint()
         instantiated_parameters = {}
         for parameter_name in parameters:
             if parameter_name not in ['metadata']:
