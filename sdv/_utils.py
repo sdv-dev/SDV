@@ -278,6 +278,7 @@ def check_sdv_versions_and_warn(synthesizer):
         fitted_enterprise_version = getattr(synthesizer, '_fitted_sdv_enterprise_version', None)
         community_mismatch = current_community_version != fitted_community_version
         enterprise_mismatch = current_enterprise_version != fitted_enterprise_version
+
         if community_mismatch or enterprise_mismatch:
             static_message = (
                 'The latest bug fixes and features may not be available for this synthesizer. '

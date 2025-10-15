@@ -410,7 +410,7 @@ def test_check_sdv_versions_and_warn_no_mismatch(mock_warnings):
 
 @patch('sdv._utils.warnings')
 def test_check_sdv_versions_and_warn_dayz(mock_warnings):
-    """Test that the method work for ``DayZSynthesizer``."""
+    """Test that the method works for ``DayZSynthesizer``."""
     # Setup
     synthesizer = Mock()
     synthesizer._fitted = False
