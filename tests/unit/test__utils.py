@@ -408,6 +408,22 @@ def test_check_sdv_versions_and_warn_no_mismatch(mock_warnings):
     mock_warnings.warn.assert_not_called()
 
 
+@patch('sdv._utils.warnings')
+def test_check_sdv_versions_and_warn_dayz(mock_warnings):
+    """Test that the method work for ``DayZSynthesizer``."""
+    # Setup
+    synthesizer = Mock()
+    synthesizer._fitted = False
+
+    # Run
+    check_sdv_versions_and_warn(synthesizer)
+    synthesizer.__class__.__name__ = 'DayZSynthesizer'
+    check_sdv_versions_and_warn(synthesizer)
+
+    # Assert
+    mock_warnings.warn.assert_not_called()
+
+
 def test_check_sdv_versions_and_warn_community_mismatch():
     """Test that warnings is raised when community version is mismatched."""
     # Setup
