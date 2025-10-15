@@ -86,6 +86,7 @@ def install_minimum(c):
     if minimum_versions:
         install_deps = ' '.join(minimum_versions)
         c.run(f'python -m pip install {install_deps}')
+        c.run(f'python -m pip install "torch<2.9.0"')
 
 
 @task
