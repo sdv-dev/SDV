@@ -76,8 +76,8 @@ def _detect_datetime_column_parameters(series, column_metadata):
         params['start_timestamp'] = start_dt.strftime(datetime_format)
         params['end_timestamp'] = end_dt.strftime(datetime_format)
     else:
-        params['start_timestamp'] = str(start_dt)
-        params['end_timestamp'] = str(end_dt)
+        params['start_timestamp'] = start_dt.strftime('%Y-%m-%d %H:%M:%S')
+        params['end_timestamp'] = end_dt.strftime('%Y-%m-%d %H:%M:%S')
 
     return params
 
