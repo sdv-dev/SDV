@@ -168,7 +168,6 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
 
         self._sequence_index = self._get_table_metadata().sequence_index
         self.context_columns = context_columns or []
-        self._column_order = []
         self._validate_sequence_key_and_context_columns()
         self._extra_context_columns = {}
         self.extended_columns = {}
@@ -558,8 +557,6 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                 Table containing the sampled sequences in the same
                 format as that he training data had.
         """
-        print('context ', self.context_columns)
-        print('output ', self._output_columns)
         # Set the sequence_key as index to properly iterate over them
         if self._sequence_key:
             context = context.set_index(self._sequence_key)
@@ -611,7 +608,6 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
     def _sample(self, context_columns, sequence_length=None):
         sampled = self._sample_from_par(context_columns, sequence_length)
         sampled = self._data_processor.reverse_transform(sampled)
-        print('sampled ', sampled.columns)
         return self.reverse_transform_constraints(sampled)
 
     def sample(self, num_sequences, sequence_length=None):
