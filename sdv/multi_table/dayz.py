@@ -1,5 +1,6 @@
 """Multi-Table DayZ parameter detection and creation."""
 
+from sdv.cag._utils import _is_list_of_type
 from sdv.errors import SynthesizerInputError, SynthesizerProcessingError
 from sdv.multi_table._dayz_utils import create_parameters_multi_table
 from sdv.single_table.dayz import _validate_parameter_structure, _validate_tables_parameter
@@ -48,8 +49,10 @@ def _validate_cardinality_bounds(relationship):
 
 
 def _validate_relationship_structure(dayz_parameters):
-    if not isinstance(dayz_parameters.get('relationships', []), list):
-        raise SynthesizerProcessingError("The 'relationships' parameter value must be a list.")
+    if not _is_list_of_type(dayz_parameters.get('relationships', []), dict):
+        raise SynthesizerProcessingError(
+            "The 'relationships' parameter value must be a list of dictionaries."
+        )
 
     for relationship in dayz_parameters.get('relationships', []):
         unknown_relationship_parameters = relationship.keys() - set(RELATIONSHIP_PARAMETER_KEYS)
