@@ -310,8 +310,8 @@ class BaseSynthesizer:
             warnings.warn(msg, RefitWarning)
 
     def _resolve_gpu_parameters(self, parameters):
-        if parameters.get('cuda') is not None:  # Ensure backward-compatibility
-            parameters.pop('enable_gpu', None)
+        if parameters.get('cuda') is not None and parameters.get('enable_gpu') is None:
+            parameters.pop('enable_gpu', None)  # Ensure backward-compatibilty
         elif 'cuda' in parameters:  # Removed because deprecated
             del parameters['cuda']
 

@@ -386,7 +386,7 @@ class TestBaseSynthesizer:
         result_without_cuda = instance._resolve_gpu_parameters(parameters_without_cuda)
 
         # Assert
-        assert result_with_cuda == {'cuda': True}
+        assert result_with_cuda == {'cuda': True, 'enable_gpu': True}
         assert result_with_cuda_only == {'cuda': True}
         assert result_with_cuda_none == {'enable_gpu': True}
         assert result_without_cuda == {'enable_gpu': False}
