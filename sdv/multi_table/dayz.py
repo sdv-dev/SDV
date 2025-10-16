@@ -163,18 +163,18 @@ class DayZSynthesizer:
         )
 
     @classmethod
-    def create_parameters(cls, data, metadata, output_filename=None):
+    def create_parameters(cls, data, metadata, filepath=None):
         """Create parameters for the DayZSynthesizer.
 
         Args:
             data (dict[str, pd.DataFrame]): The input data.
             metadata (Metadata): The metadata object.
-            output_filename (str, optional): The output filename for the parameters.
+            filepath (str, optional): The output filename for the parameters.
 
         Returns:
             dict: The created parameters.
         """
-        return create_parameters_multi_table(data, metadata, output_filename)
+        return create_parameters_multi_table(data, metadata, filepath)
 
     @staticmethod
     def validate_parameters(metadata, parameters):
