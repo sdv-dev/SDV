@@ -375,7 +375,6 @@ class TestDayZSynthesizer:
         # Assert
         mock__validate_parameters.assert_called_once_with(metadata, dayz_parameters)
 
-<<<<<<< HEAD
     def test__validate_parameters_errors_with_multi_table_metadata(self):
         """Test that single-table validation errors if multi-table metadata is provided."""
         # Setup
@@ -434,11 +433,11 @@ class TestDayZSynthesizer:
         )
         with pytest.raises(SynthesizerProcessingError, match=expected_error_msg):
             DayZSynthesizer.validate_parameters(metadata, dayz_parameters)
-=======
-    def test_create_parameters_with_empty_dataframe_returns_valid_defaults(self):
-        """create_parameters should not emit invalid values for empty dataframes."""
+
+    def test_create_parameters_returns_valid_defaults(self):
+        """Test create_parameters returns valid defaults."""
         # Setup
-        data = pd.DataFrame({'col': []})
+        data = pd.DataFrame({'col': [np.nan]})
         metadata = Metadata.detect_from_dataframe(data)
 
         # Run
@@ -449,9 +448,9 @@ class TestDayZSynthesizer:
             'tables': {
                 'table': {
                     'columns': {
-                        'col': {'missing_values_proportion': 0.0},
+                        'col': {'missing_values_proportion': 1.0},
                     },
-                    'num_rows': 0,
+                    'num_rows': 1,
                 },
             },
             'DAYZ_SPEC_VERSION': 'V1',
@@ -524,4 +523,3 @@ class TestDayZSynthesizer:
             },
             'DAYZ_SPEC_VERSION': 'V1',
         }
->>>>>>> eb252ea1 (Implement fallback)

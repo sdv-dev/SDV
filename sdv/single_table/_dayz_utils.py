@@ -82,7 +82,7 @@ def _detect_datetime_column_parameters(series, column_metadata):
     return params
 
 
-def _detect_categorical_or_boolean_column_parameters(series):
+def _detect_categorical_column_parameters(series):
     """Detect categorical/boolean parameters."""
     categorical_values = series.dropna().unique()
     if len(categorical_values) == 0:
@@ -113,37 +113,14 @@ def detect_column_parameters(data, metadata, table_name):
         sdtype = column_metadata['sdtype']
         params = {}
         if sdtype == 'numerical':
-            column_parameters[column_name] = {
-                'num_decimal_digits': learn_rounding_digits(data[column_name]),
-                'min_value': data[column_name].min(),
-                'max_value': data[column_name].max(),
-            }
+            params.update(_detect_numerical_column_parameters(data[column_name]))
         elif sdtype == 'datetime':
-            datetime_format = column_metadata.get('datetime_format', None)
-            if datetime_format:
-                datetime_column = pd.to_datetime(
-                    data[column_name], format=datetime_format, errors='coerce'
-                )
-                start_timestamp = datetime_column.min().strftime(datetime_format)
-                end_timestamp = datetime_column.max().strftime(datetime_format)
-
-            else:
-                datetime_column = pd.to_datetime(data[column_name], errors='coerce')
-                start_timestamp = str(datetime_column.min())
-                end_timestamp = str(datetime_column.max())
-
-            column_parameters[column_name] = {
-                'start_timestamp': start_timestamp,
-                'end_timestamp': end_timestamp,
-            }
+            params.update(_detect_datetime_column_parameters(data[column_name], column_metadata))
         elif sdtype == 'categorical':
-            column_parameters[column_name] = {
-                'category_values': data[column_name].dropna().unique().tolist()
-            }
+            params.update(_detect_categorical_column_parameters(data[column_name]))
 
-        column_parameters[column_name]['missing_values_proportion'] = float(
-            data[column_name].isna().mean()
-        )
+        params['missing_values_proportion'] = _compute_missing_values_proportion(data[column_name])
+        column_parameters[column_name] = params
 
     return {'columns': column_parameters}
 
