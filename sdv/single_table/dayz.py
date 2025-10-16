@@ -145,7 +145,7 @@ def _validate_missing_value_parameters(column_parameters, column_table_msg, is_k
     elif is_key_column and missing_values_proportion != 0:
         msg = (
             f"Invalid 'missing_values_proportion' parameter for {column_table_msg}. Primary "
-            "and alternate keys must have 'missing_values_proportion' parameter be zero."
+            "and alternate keys must have 'missing_values_proportion' parameter set to zero."
         )
         raise SynthesizerProcessingError(msg)
 
