@@ -13,7 +13,9 @@ from packaging.requirements import Requirement
 from packaging.version import Version
 
 COMPARISONS = {'>=': operator.ge, '>': operator.gt, '<': operator.lt, '<=': operator.le}
-
+EXTERNAL_DEPENDENCY_CAPS = {
+    'torch': '2.9.0'
+}
 
 if not hasattr(inspect, 'getargspec'):
     inspect.getargspec = inspect.getfullargspec
@@ -86,6 +88,8 @@ def install_minimum(c):
     if minimum_versions:
         install_deps = ' '.join(minimum_versions)
         c.run(f'python -m pip install {install_deps}')
+        for dep, cap in EXTERNAL_DEPENDENCY_CAPS.items():
+            c.run(f'python -m pip install "{dep}<{cap}"')
 
 
 @task
