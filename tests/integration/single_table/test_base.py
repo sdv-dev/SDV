@@ -34,10 +34,12 @@ METADATA = Metadata.load_from_dict({
 })
 
 SYNTHESIZERS = [
-    pytest.param(CTGANSynthesizer(METADATA, epochs=1, cuda=False), id='CTGANSynthesizer'),
-    pytest.param(TVAESynthesizer(METADATA, epochs=1, cuda=False), id='TVAESynthesizer'),
+    pytest.param(CTGANSynthesizer(METADATA, epochs=1, enable_gpu=False), id='CTGANSynthesizer'),
+    pytest.param(TVAESynthesizer(METADATA, epochs=1, enable_gpu=False), id='TVAESynthesizer'),
     pytest.param(GaussianCopulaSynthesizer(METADATA), id='GaussianCopulaSynthesizer'),
-    pytest.param(CopulaGANSynthesizer(METADATA, epochs=1, cuda=False), id='CopulaGANSynthesizer'),
+    pytest.param(
+        CopulaGANSynthesizer(METADATA, epochs=1, enable_gpu=False), id='CopulaGANSynthesizer'
+    ),
 ]
 
 
@@ -270,7 +272,7 @@ def test_sampling_reset_sampling(synthesizer):
     })
 
     if isinstance(synthesizer, (CTGANSynthesizer, TVAESynthesizer)):
-        synthesizer = synthesizer.__class__(metadata, cuda=False)
+        synthesizer = synthesizer.__class__(metadata, enable_gpu=False)
     else:
         synthesizer = synthesizer.__class__(metadata)
 
