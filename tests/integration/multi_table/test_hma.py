@@ -37,7 +37,7 @@ class TestHMASynthesizer:
         a 0.5 scale and one with 1.5 scale.
         """
         # Setup
-        data, metadata = download_demo('multi_table', 'got_families')
+        data, metadata = download_demo('multi_table', 'fake_hotels')
         hmasynthesizer = HMASynthesizer(metadata)
 
         # Run
@@ -46,8 +46,8 @@ class TestHMASynthesizer:
         increased_sample = hmasynthesizer.sample(1.5)
 
         # Assert
-        assert set(normal_sample) == {'characters', 'character_families', 'families'}
-        assert set(increased_sample) == {'characters', 'character_families', 'families'}
+        assert set(normal_sample) == set(data.keys())
+        assert set(increased_sample) == set(data.keys())
         for table_name, table in normal_sample.items():
             assert set(table.columns) == set(data[table_name])
 
@@ -62,7 +62,7 @@ class TestHMASynthesizer:
         a 0.5 scale and one with 1.5 scale.
         """
         # Setup
-        data, multi_metadata = download_demo('multi_table', 'got_families')
+        data, multi_metadata = download_demo('multi_table', 'fake_hotels')
         metadata = Metadata.load_from_dict(multi_metadata.to_dict())
         hmasynthesizer = HMASynthesizer(metadata)
 
@@ -72,8 +72,8 @@ class TestHMASynthesizer:
         increased_sample = hmasynthesizer.sample(1.5)
 
         # Assert
-        assert set(normal_sample) == {'characters', 'character_families', 'families'}
-        assert set(increased_sample) == {'characters', 'character_families', 'families'}
+        assert set(normal_sample) == set(data.keys())
+        assert set(increased_sample) == set(data.keys())
         for table_name, table in normal_sample.items():
             assert set(table.columns) == set(data[table_name])
 
@@ -88,13 +88,13 @@ class TestHMASynthesizer:
         """
         # Setup
         faker = Faker()
-        data, metadata = download_demo('multi_table', 'got_families')
+        data, metadata = download_demo('multi_table', 'fake_hotels')
         metadata.add_column(
             'ssn',
-            'characters',
+            'guests',
             sdtype='ssn',
         )
-        data['characters']['ssn'] = [faker.lexify() for _ in range(len(data['characters']))]
+        data['guests']['ssn'] = [faker.lexify() for _ in range(len(data['guests']))]
         for table in metadata.tables.values():
             table.alternate_keys = []
 
@@ -164,16 +164,15 @@ class TestHMASynthesizer:
         Validate that the ``set_table_parameters`` sets new parameters to the synthesizers.
         """
         # Setup
-        _data, metadata = download_demo('multi_table', 'got_families')
+        _data, metadata = download_demo('multi_table', 'fake_hotels')
         hmasynthesizer = HMASynthesizer(metadata)
 
         # Run
-        hmasynthesizer.set_table_parameters('characters', {'default_distribution': 'gamma'})
-        hmasynthesizer.set_table_parameters('families', {'default_distribution': 'uniform'})
-        hmasynthesizer.set_table_parameters('character_families', {'default_distribution': 'norm'})
+        hmasynthesizer.set_table_parameters('hotels', {'default_distribution': 'gamma'})
+        hmasynthesizer.set_table_parameters('guests', {'default_distribution': 'uniform'})
 
         # Assert
-        character_params = hmasynthesizer.get_table_parameters('characters')
+        character_params = hmasynthesizer.get_table_parameters('hotels')
         assert character_params['synthesizer_name'] == 'GaussianCopulaSynthesizer'
         assert character_params['synthesizer_parameters'] == {
             'default_distribution': 'gamma',
@@ -182,7 +181,7 @@ class TestHMASynthesizer:
             'locales': ['en_US'],
             'numerical_distributions': {},
         }
-        families_params = hmasynthesizer.get_table_parameters('families')
+        families_params = hmasynthesizer.get_table_parameters('guests')
         assert families_params['synthesizer_name'] == 'GaussianCopulaSynthesizer'
         assert families_params['synthesizer_parameters'] == {
             'default_distribution': 'uniform',
@@ -191,21 +190,8 @@ class TestHMASynthesizer:
             'locales': ['en_US'],
             'numerical_distributions': {},
         }
-        char_families_params = hmasynthesizer.get_table_parameters('character_families')
-        assert char_families_params['synthesizer_name'] == 'GaussianCopulaSynthesizer'
-        assert char_families_params['synthesizer_parameters'] == {
-            'default_distribution': 'norm',
-            'enforce_min_max_values': True,
-            'enforce_rounding': True,
-            'locales': ['en_US'],
-            'numerical_distributions': {},
-        }
-
-        assert hmasynthesizer._table_synthesizers['characters'].default_distribution == 'gamma'
-        assert hmasynthesizer._table_synthesizers['families'].default_distribution == 'uniform'
-        assert (
-            hmasynthesizer._table_synthesizers['character_families'].default_distribution == 'norm'
-        )
+        assert hmasynthesizer._table_synthesizers['hotels'].default_distribution == 'gamma'
+        assert hmasynthesizer._table_synthesizers['guests'].default_distribution == 'uniform'
 
     def get_custom_constraint_data_and_metadata(self):
         """Return data and metadata for the custom constraint tests."""
@@ -531,7 +517,7 @@ class TestHMASynthesizer:
         )
 
         # Run - load CSVs
-        datasets = load_csvs(data_folder)
+        datasets = load_csvs(data_folder / 'data')
 
         # Assert - loaded CSVs correctly
         assert datasets.keys() == {'guests', 'hotels'}
@@ -646,14 +632,13 @@ class TestHMASynthesizer:
     def test_progress_bar_print(self, capsys):
         """Test that the progress bar prints correctly."""
         # Setup
-        data, metadata = download_demo('multi_table', 'got_families')
+        data, metadata = download_demo('multi_table', 'fake_hotels')
         hmasynthesizer = HMASynthesizer(metadata)
 
         key_phrases = [
             r'Preprocess Tables:',
             r'Learning relationships:',
-            r"\(1/2\) Tables 'characters' and 'character_families' \('character_id'\):",
-            r"\(2/2\) Tables 'families' and 'character_families' \('family_id'\):",
+            r"Tables 'hotels' and 'guests' \('hotel_id'\):",
         ]
 
         # Run
@@ -670,7 +655,25 @@ class TestHMASynthesizer:
     def test_warning_message_too_many_cols(self, capsys):
         """Test that a warning appears if there are more than 1000 expected columns"""
         # Setup
-        (_, metadata) = download_demo(modality='multi_table', dataset_name='NBA_v1')
+        parent_columns = {'parent_id': {'sdtype': 'id'}, 'parent_data': {'sdtype': 'categorical'}}
+        child_columns = {'child_id': {'sdtype': 'id'}, 'parent_id': {'sdtype': 'id'}}
+        for i in range(999):
+            child_columns[f'col_{i}'] = {'sdtype': 'categorical'}
+
+        large_metadata = Metadata.load_from_dict({
+            'tables': {
+                'parent': {'columns': parent_columns, 'primary_key': 'parent_id'},
+                'child': {'columns': child_columns, 'primary_key': 'child_id'},
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'parent_id',
+                    'child_table_name': 'child',
+                    'child_foreign_key': 'parent_id',
+                }
+            ],
+        })
 
         key_phrases = [
             r'PerformanceAlert:',
@@ -679,7 +682,7 @@ class TestHMASynthesizer:
         ]
 
         # Run
-        HMASynthesizer(metadata)
+        HMASynthesizer(large_metadata)
 
         captured = capsys.readouterr()
 
@@ -687,7 +690,35 @@ class TestHMASynthesizer:
         for constraint in key_phrases:
             match = re.search(constraint, captured.out + captured.err)
             assert match is not None
-        (_, small_metadata) = download_demo(modality='multi_table', dataset_name='trains_v1')
+
+        # Setup small metadata that shouldn't trigger warning
+        small_metadata = Metadata.load_from_dict({
+            'tables': {
+                'parent': {
+                    'columns': {
+                        'parent_id': {'sdtype': 'id'},
+                        'parent_data': {'sdtype': 'categorical'},
+                    },
+                    'primary_key': 'parent_id',
+                },
+                'child': {
+                    'columns': {
+                        'child_id': {'sdtype': 'id'},
+                        'parent_id': {'sdtype': 'id'},
+                        'child_data': {'sdtype': 'categorical'},
+                    },
+                    'primary_key': 'child_id',
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'parent_id',
+                    'child_table_name': 'child',
+                    'child_foreign_key': 'parent_id',
+                }
+            ],
+        })
 
         # Run
         HMASynthesizer(small_metadata)
@@ -1135,31 +1166,27 @@ class TestHMASynthesizer:
     def test__get_likelihoods(self):
         """Test ``_get_likelihoods`` generates likelihoods for parents."""
         # Setup
-        data, metadata = download_demo('multi_table', 'got_families')
+        data, metadata = download_demo('multi_table', 'fake_hotels')
         hmasynthesizer = HMASynthesizer(metadata)
         hmasynthesizer.fit(data)
 
         sampled_data = {}
-        sampled_data['characters'] = hmasynthesizer._sample_rows(
-            hmasynthesizer._table_synthesizers['characters'], len(data['characters'])
+        sampled_data['hotels'] = hmasynthesizer._sample_rows(
+            hmasynthesizer._table_synthesizers['hotels'], len(data['hotels'])
         )
-        hmasynthesizer._sample_children('characters', sampled_data)
+        hmasynthesizer._sample_children('hotels', sampled_data)
 
         # Run
         likelihoods = hmasynthesizer._get_likelihoods(
-            sampled_data['character_families'],
-            sampled_data['characters'].set_index('character_id'),
-            'character_families',
-            'character_id',
+            sampled_data['guests'],
+            sampled_data['hotels'].set_index('hotel_id'),
+            'guests',
+            'hotel_id',
         )
 
         # Assert
-        not_nan_cols = [1, 3, 6]
-        nan_cols = [2, 4, 5, 7]
-        assert set(likelihoods.columns) == {1, 2, 3, 4, 5, 6, 7}
-        assert len(likelihoods) == len(sampled_data['character_families'])
-        assert not any(likelihoods[not_nan_cols].isna().any())
-        assert all(likelihoods[nan_cols].isna())
+        assert len(likelihoods) == len(sampled_data['guests'])
+        assert not likelihoods.isna().any().any()
 
     def test__extract_parameters(self):
         """Test it when parameters are out of bounds."""
@@ -1267,7 +1294,7 @@ class TestHMASynthesizer:
                 initialization, but is saved to a file before fitting.
         """
         # Setup
-        data, multi_metadata = download_demo('multi_table', 'got_families')
+        data, multi_metadata = download_demo('multi_table', 'fake_hotels')
         metadata = Metadata.load_from_dict(multi_metadata.to_dict())
 
         # Run 1
@@ -1305,7 +1332,7 @@ class TestHMASynthesizer:
         # Run 3
         instance = HMASynthesizer(metadata_detect)
         metadata_detect.update_column(
-            table_name='characters', column_name='age', sdtype='categorical'
+            table_name='guests', column_name='room_rate', sdtype='numerical'
         )
         file_name = tmp_path / 'multitable_2.json'
         metadata_detect.save_to_json(file_name)
@@ -1323,7 +1350,7 @@ class TestHMASynthesizer:
         not be raised again when calling ``fit``.
         """
         # Setup
-        data, metadata = download_demo('multi_table', 'got_families')
+        data, metadata = download_demo('multi_table', 'fake_hotels')
         metadata_detect = Metadata.detect_from_dataframes(data)
 
         metadata_detect.relationships = metadata.relationships
@@ -2243,7 +2270,7 @@ def test_fit_raises_version_error():
 def test_hma_relationship_validity():
     """Test the quality of the HMA synthesizer GH#1834."""
     # Setup
-    data, metadata = download_demo('multi_table', 'Dunur_v1')
+    data, metadata = download_demo('multi_table', 'fake_hotels')
     synthesizer = HMASynthesizer(metadata)
     report = DiagnosticReport()
 
@@ -2259,7 +2286,7 @@ def test_hma_relationship_validity():
 def test_hma_not_fit_raises_sampling_error():
     """Test that ``HMA`` will raise a ``SamplingError`` if it wasn't fit."""
     # Setup
-    _data, metadata = download_demo('multi_table', 'Dunur_v1')
+    _data, metadata = download_demo('multi_table', 'fake_hotels')
     synthesizer = HMASynthesizer(metadata)
 
     # Run and Assert
@@ -2402,7 +2429,7 @@ def test_table_name_logging(caplog):
 def test_disjointed_tables():
     """Test to see if synthesizer works with disjointed tables."""
     # Setup
-    real_data, metadata = download_demo('multi_table', 'Bupa_v1')
+    real_data, metadata = download_demo('multi_table', 'fake_hotels')
 
     # Delete Some Relationships to make it disjointed
     remove_some_dict = metadata.to_dict()
