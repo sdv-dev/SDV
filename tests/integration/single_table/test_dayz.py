@@ -1,5 +1,8 @@
 """Integration tests for DayZ parameter detection."""
 
+import pandas as pd
+import pytest
+
 from sdv.datasets.demo import download_demo
 from sdv.metadata import Metadata
 from sdv.single_table import DayZSynthesizer
@@ -100,3 +103,23 @@ class TestDayZSynthesizer:
 
         # Run and Assert
         DayZSynthesizer.validate_parameters(metadata, dayz_parameters)
+
+    def test_create_parameters_empty_data(self):
+        """Test creating parameters with empty data."""
+        # Setup
+        data = pd.DataFrame()
+        metadata = Metadata()
+
+        # Run and Assert
+        with pytest.raises(ValueError, match='Data is empty'):
+            DayZSynthesizer.create_parameters(data, metadata)
+
+    def test_create_parameters_empty_metadata(self):
+        """Test creating parameters with empty metadata."""
+        # Setup
+        data = pd.DataFrame({'col1': [1, 2, 3]})
+        metadata = Metadata()
+
+        # Run and Assert
+        with pytest.raises(ValueError, match='Metadata is empty'):
+            DayZSynthesizer.create_parameters(data, metadata)

@@ -227,6 +227,13 @@ def _validate_parameters(metadata, parameters):
     """
     metadata.validate()
     _validate_parameter_structure(parameters)
+
+    if len(metadata.tables) > 1:
+        raise SynthesizerProcessingError(
+            'Invalid metadata provided for single-table DayZSynthesizer. The metadata contains '
+            'multiple tables. Please use multi-table DayZSynthesizer instead.'
+        )
+
     if 'relationships' in parameters:
         msg = (
             "Invalid DayZ parameter 'relationships' for single-table DayZSynthesizer. "
@@ -248,18 +255,18 @@ class DayZSynthesizer:
         )
 
     @classmethod
-    def create_parameters(cls, data, metadata, output_filename=None):
+    def create_parameters(cls, data, metadata, filepath=None):
         """Create parameters for the DayZ synthesizer.
 
         Args:
             data (pd.DataFrame): The input data.
             metadata (Metadata): The metadata object.
-            output_filename (str, optional): The output filename for the parameters.
+            filepath (str, optional): The output filename for the parameters.
 
         Returns:
             dict: The created parameters.
         """
-        return create_parameters(data, metadata, output_filename)
+        return create_parameters(data, metadata, filepath)
 
     @staticmethod
     def validate_parameters(metadata, parameters):
