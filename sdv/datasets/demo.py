@@ -487,10 +487,8 @@ def _get_text_file_content(modality, dataset_name, filename, output_filepath=Non
 
     key = _find_text_key(contents, dataset_prefix, filename)
     if not key:
-        if filename.upper() == 'README.TXT':
-            msg = 'No README information is available for this dataset.'
-        elif filename.upper() == 'SOURCE.TXT':
-            msg = 'No source information is available for this dataset.'
+        if file_type in ('README', 'SOURCE'):
+            msg = f'No {file_type} information is available for this dataset.
         else:
             msg = f'No {filename} information is available for this dataset.'
 
