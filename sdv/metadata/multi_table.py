@@ -914,12 +914,46 @@ class MultiTableMetadata:
 
         return [error_msg] if error_msg else []
 
+    def _validate_data(self, data, table_name=None):
+        """Validate the given data matches the metadata.
+
+        Checks the following rules:
+            * every table of the data satisfies its own metadata
+            * if no table_name provided, all tables of the metadata are present in the data
+            * if no table_name provided, that all foreign keys belong to a primay key
+
+        Args:
+            data (dict):
+                A dictionary of table names to pd.DataFrames.
+            table_name (str, optional):
+                The specific table to validate. If set, only validates the data for the
+                table. If None, validates the data for all tables. Defaults to None.
+
+        Raises:
+            InvalidDataError:
+                This error is being raised if the data is not matching its sdtype requirements.
+
+        Warns:
+            A warning is being raised if ``datetime_format`` is missing from a column represented
+            as ``object`` in the dataframe and its sdtype is ``datetime``.
+        """
+        if not isinstance(data, dict):
+            raise InvalidMetadataError('Please pass in a dictionary mapping tables to dataframes.')
+
+        errors = []
+        errors += self._validate_missing_tables(data) if not table_name else []
+        errors += self._validate_all_tables(data)
+        errors += self._validate_foreign_keys(data) if not table_name else []
+
+        if errors:
+            raise InvalidDataError(errors)
+
     def validate_data(self, data):
         """Validate the data matches the metadata.
 
         Checks the following rules:
-            * all tables of the metadata are present in the data
             * every table of the data satisfies its own metadata
+            * all tables of the metadata are present in the data
             * all foreign keys belong to a primay key
 
         Args:
@@ -934,16 +968,7 @@ class MultiTableMetadata:
             A warning is being raised if ``datetime_format`` is missing from a column represented
             as ``object`` in the dataframe and its sdtype is ``datetime``.
         """
-        if not isinstance(data, dict):
-            raise InvalidMetadataError('Please pass in a dictionary mapping tables to dataframes.')
-
-        errors = []
-        errors += self._validate_missing_tables(data)
-        errors += self._validate_all_tables(data)
-        errors += self._validate_foreign_keys(data)
-
-        if errors:
-            raise InvalidDataError(errors)
+        self._validate_data(data)
 
     def add_table(self, table_name):
         """Add a table to the metadata.

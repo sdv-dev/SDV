@@ -152,7 +152,7 @@ def _datetime_string_matches_format(value, datetime_format):
     if pd.isna(value):
         return True
     try:
-        parsed = datetime.strptime(str(value), datetime_format)
+        parsed = pd.to_datetime(str(value), format=datetime_format, errors='coerce')
         return value == parsed.strftime(datetime_format)
     except ValueError:
         return False
@@ -273,7 +273,7 @@ def check_sdv_versions_and_warn(synthesizer):
     """
     current_community_version = getattr(version, 'community', None)
     current_enterprise_version = getattr(version, 'enterprise', None)
-    if synthesizer._fitted:
+    if getattr(synthesizer, '_fitted', False):
         fitted_community_version = getattr(synthesizer, '_fitted_sdv_version', None)
         fitted_enterprise_version = getattr(synthesizer, '_fitted_sdv_enterprise_version', None)
         community_mismatch = current_community_version != fitted_community_version
