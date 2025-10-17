@@ -435,6 +435,38 @@ class TestPARSynthesizer:
         with pytest.raises(SynthesizerInputError, match=err_msg):
             instance.update_transformers({'time': FloatFormatter()})
 
+    def test__fit_reorder_context_columns_incorrect_order(self):
+        """Test that the context columns are reordered according to data."""
+        # Setup
+        metadata = self.get_metadata()
+        data = self.get_data()
+
+        data.insert(1, 'height', [160, 170, 180])
+        metadata.add_column('height', 'table', sdtype='numerical')
+        instance = PARSynthesizer(metadata, context_columns=['gender', 'height'])
+
+        # Run
+        instance.fit(data)
+
+        # Assert
+        assert instance.context_columns == ['height', 'gender']
+
+    def test__fit_reorder_context_columns_correct_order(self):
+        """Test that the context columns is still the same order."""
+        # Setup
+        metadata = self.get_metadata()
+        data = self.get_data()
+
+        data.insert(2, 'height', [160, 170, 180])
+        metadata.add_column('height', 'table', sdtype='numerical')
+        instance = PARSynthesizer(metadata, context_columns=['gender', 'height'])
+
+        # Run
+        instance.fit(data)
+
+        # Assert
+        assert instance.context_columns == ['gender', 'height']
+
     @patch('sdv.sequential.par.GaussianCopulaSynthesizer')
     def test__fit_context_model_with_context_columns(self, gaussian_copula_mock):
         """Test that the method fits a synthesizer to the context columns.
