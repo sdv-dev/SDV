@@ -4,6 +4,7 @@ from unittest.mock import call, patch
 import pandas as pd
 import pytest
 
+from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError, SynthesizerProcessingError
 from sdv.metadata import Metadata
 from sdv.multi_table.dayz import (
@@ -74,7 +75,7 @@ def test__validate_relationship_structure():
 
     # Run and Assert
     expected_bad_relationships_value_msg = re.escape(
-        "The 'relationships' parameter value must be a list."
+        "The 'relationships' parameter value must be a list of dictionaries."
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_relationships_value_msg):
         _validate_relationship_structure(bad_relationships_value)
@@ -320,3 +321,33 @@ class TestDayZSynthesizer:
 
         # Assert
         mock__validate_parameters.assert_called_once_with(metadata, dayz_parameters)
+
+    def test__validate_relationships_is_list_of_dicts(self, metadata):
+        """Test that 'relationships' must be a list of dicts."""
+        # Run and Assert
+        expected_msg = re.escape(
+            "The 'relationships' parameter value must be a list of dictionaries."
+        )
+        with pytest.raises(SynthesizerProcessingError, match=expected_msg):
+            DayZSynthesizer.validate_parameters(metadata, {'relationships': {'a', 'b', 'c'}})
+
+        with pytest.raises(SynthesizerProcessingError, match=expected_msg):
+            DayZSynthesizer.validate_parameters(metadata, {'relationships': ['a', 'b', 'c']})
+
+    def test__validate_min_cardinality_allows_zero(self):
+        """Test that min_cardinality=0 is allowed and does not raise."""
+        # Setup
+        data, metadata = download_demo('multi_table', 'financial_v1')
+        dayz_parameters = DayZSynthesizer.create_parameters(data, metadata)
+        dayz_parameters['relationships'] = [
+            {
+                'parent_table_name': 'district',
+                'parent_primary_key': 'district_id',
+                'child_table_name': 'account',
+                'child_foreign_key': 'district_id',
+                'min_cardinality': 0,
+            }
+        ]
+
+        # Run
+        DayZSynthesizer.validate_parameters(metadata, dayz_parameters)

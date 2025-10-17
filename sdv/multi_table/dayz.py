@@ -1,5 +1,6 @@
 """Multi-Table DayZ parameter detection and creation."""
 
+from sdv.cag._utils import _is_list_of_type
 from sdv.errors import SynthesizerInputError, SynthesizerProcessingError
 from sdv.multi_table._dayz_utils import create_parameters_multi_table
 from sdv.single_table.dayz import _validate_parameter_structure, _validate_tables_parameter
@@ -48,8 +49,10 @@ def _validate_cardinality_bounds(relationship):
 
 
 def _validate_relationship_structure(dayz_parameters):
-    if not isinstance(dayz_parameters.get('relationships', []), list):
-        raise SynthesizerProcessingError("The 'relationships' parameter value must be a list.")
+    if not _is_list_of_type(dayz_parameters.get('relationships', []), dict):
+        raise SynthesizerProcessingError(
+            "The 'relationships' parameter value must be a list of dictionaries."
+        )
 
     for relationship in dayz_parameters.get('relationships', []):
         unknown_relationship_parameters = relationship.keys() - set(RELATIONSHIP_PARAMETER_KEYS)
@@ -160,18 +163,18 @@ class DayZSynthesizer:
         )
 
     @classmethod
-    def create_parameters(cls, data, metadata, output_filename=None):
+    def create_parameters(cls, data, metadata, filepath=None):
         """Create parameters for the DayZSynthesizer.
 
         Args:
             data (dict[str, pd.DataFrame]): The input data.
             metadata (Metadata): The metadata object.
-            output_filename (str, optional): The output filename for the parameters.
+            filepath (str, optional): The output filename for the parameters.
 
         Returns:
             dict: The created parameters.
         """
-        return create_parameters_multi_table(data, metadata, output_filename)
+        return create_parameters_multi_table(data, metadata, filepath)
 
     @staticmethod
     def validate_parameters(metadata, parameters):

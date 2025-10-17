@@ -1,11 +1,14 @@
 import re
 from unittest.mock import call, patch
 
+import numpy as np
 import pandas as pd
 import pytest
 
+from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError, SynthesizerProcessingError
 from sdv.metadata import Metadata
+from sdv.multi_table.dayz import DayZSynthesizer as MultiTableDayZSynthesizer
 from sdv.single_table.dayz import (
     DayZSynthesizer,
     _validate_column_parameters,
@@ -371,3 +374,152 @@ class TestDayZSynthesizer:
 
         # Assert
         mock__validate_parameters.assert_called_once_with(metadata, dayz_parameters)
+
+    def test__validate_parameters_errors_with_multi_table_metadata(self):
+        """Test that single-table validation errors if multi-table metadata is provided."""
+        # Setup
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'parent': {
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                    },
+                    'primary_key': 'id',
+                },
+                'child': {
+                    'columns': {
+                        'child_fk': {'sdtype': 'id'},
+                    },
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'parent',
+                    'child_table_name': 'child',
+                    'parent_primary_key': 'id',
+                    'child_foreign_key': 'child_fk',
+                }
+            ],
+        })
+
+        dayz_parameters = {
+            'DAYZ_SPEC_VERSION': 'V1',
+            'tables': {
+                'parent': {
+                    'columns': {},
+                }
+            },
+        }
+
+        # Run and Assert
+        expected_error_msg = re.escape(
+            'Invalid metadata provided for single-table DayZSynthesizer. The metadata contains '
+            'multiple tables. Please use multi-table DayZSynthesizer instead.'
+        )
+        with pytest.raises(SynthesizerProcessingError, match=expected_error_msg):
+            _validate_parameters(metadata, dayz_parameters)
+
+    def test__validate_parameters_errors_with_relationships(self):
+        """Test that single-table validation errors if relationships are provided."""
+        # Setup
+        data, metadata = download_demo('multi_table', 'financial_v1')
+        dayz_parameters = MultiTableDayZSynthesizer.create_parameters(data, metadata)
+        del dayz_parameters['relationships']
+
+        # Run and Assert
+        expected_error_msg = re.escape(
+            'Invalid metadata provided for single-table DayZSynthesizer. The metadata contains '
+            'multiple tables. Please use multi-table DayZSynthesizer instead.'
+        )
+        with pytest.raises(SynthesizerProcessingError, match=expected_error_msg):
+            DayZSynthesizer.validate_parameters(metadata, dayz_parameters)
+
+    def test_create_parameters_returns_valid_defaults(self):
+        """Test create_parameters returns valid defaults."""
+        # Setup
+        data = pd.DataFrame({'col': [np.nan]})
+        metadata = Metadata.detect_from_dataframe(data)
+
+        # Run
+        params = DayZSynthesizer.create_parameters(data, metadata)
+
+        # Assert
+        assert params == {
+            'tables': {
+                'table': {
+                    'columns': {
+                        'col': {'missing_values_proportion': 1.0},
+                    },
+                    'num_rows': 1,
+                },
+            },
+            'DAYZ_SPEC_VERSION': 'V1',
+        }
+
+    def test_create_parameters_all_null_categorical_column(self):
+        """Categorical column with all nulls should not have the category_values key parameter."""
+        # Setup
+        data = pd.DataFrame({'col': [None, None, np.nan, pd.NA]})
+        metadata = Metadata.detect_from_dataframe(data)
+
+        # Run
+        params = DayZSynthesizer.create_parameters(data, metadata)
+
+        # Assert
+        assert params == {
+            'tables': {
+                'table': {
+                    'columns': {
+                        'col': {'missing_values_proportion': 1.0},
+                    },
+                    'num_rows': 4,
+                },
+            },
+            'DAYZ_SPEC_VERSION': 'V1',
+        }
+
+    def test_create_parameters_all_null_numerical_column(self):
+        """Numerical column with all nulls should produce empty min/max values."""
+        # Setup
+        data = pd.DataFrame({'col': [np.nan]})
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('col', 'table', sdtype='numerical')
+
+        # Run
+        params = DayZSynthesizer.create_parameters(data, metadata)
+
+        # Assert
+        assert params == {
+            'tables': {
+                'table': {
+                    'columns': {
+                        'col': {'missing_values_proportion': 1.0},
+                    },
+                    'num_rows': 1,
+                },
+            },
+            'DAYZ_SPEC_VERSION': 'V1',
+        }
+
+    def test_create_parameters_all_null_datetime_column(self):
+        """Datetime column with all nulls should omit start/end timestamps."""
+        # Setup
+        data = pd.DataFrame({'col': pd.to_datetime([None, None])})
+        metadata = Metadata.detect_from_dataframe(data)
+
+        # Run
+        params = DayZSynthesizer.create_parameters(data, metadata)
+
+        # Assert
+        assert params == {
+            'tables': {
+                'table': {
+                    'columns': {
+                        'col': {'missing_values_proportion': 1.0},
+                    },
+                    'num_rows': 2,
+                },
+            },
+            'DAYZ_SPEC_VERSION': 'V1',
+        }

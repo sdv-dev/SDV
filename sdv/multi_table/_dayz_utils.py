@@ -34,8 +34,8 @@ def detect_relationship_parameters(data, metadata):
             'child_table_name': rel_tuple[1],
             'parent_primary_key': rel_tuple[2],
             'child_foreign_key': rel_tuple[3],
-            'min_cardinality': cardinality_table['cardinality'].min(),
-            'max_cardinality': cardinality_table['cardinality'].max(),
+            'min_cardinality': int(cardinality_table['cardinality'].min()),
+            'max_cardinality': int(cardinality_table['cardinality'].max()),
         })
 
     return relationship_parameters
