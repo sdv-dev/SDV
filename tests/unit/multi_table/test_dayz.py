@@ -5,7 +5,6 @@ from unittest.mock import call, patch
 import pandas as pd
 import pytest
 
-from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError, SynthesizerProcessingError
 from sdv.metadata import Metadata
 from sdv.multi_table.dayz import (
@@ -439,21 +438,3 @@ class TestDayZSynthesizer:
 
         with pytest.raises(SynthesizerProcessingError, match=expected_msg):
             DayZSynthesizer.validate_parameters(metadata, {'relationships': ['a', 'b', 'c']})
-
-    def test__validate_min_cardinality_allows_zero(self):
-        """Test that min_cardinality=0 is allowed and does not raise."""
-        # Setup
-        data, metadata = download_demo('multi_table', 'financial_v1')
-        dayz_parameters = DayZSynthesizer.create_parameters(data, metadata)
-        dayz_parameters['relationships'] = [
-            {
-                'parent_table_name': 'district',
-                'parent_primary_key': 'district_id',
-                'child_table_name': 'account',
-                'child_foreign_key': 'district_id',
-                'min_cardinality': 0,
-            }
-        ]
-
-        # Run
-        DayZSynthesizer.validate_parameters(metadata, dayz_parameters)

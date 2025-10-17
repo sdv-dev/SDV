@@ -368,6 +368,44 @@ def _iter_metainfo_yaml_entries(contents, modality):
         yield dataset_name, key
 
 
+def _get_info_from_yaml_key(yaml_key):
+    """Load and parse YAML metadata from an S3 key."""
+    raw = _get_data_from_bucket(yaml_key)
+    return yaml.safe_load(raw) or {}
+
+
+def _parse_size_mb(size_mb_val, dataset_name):
+    """Parse the size (MB) value into a float or NaN with logging on failures."""
+    try:
+        return float(size_mb_val) if size_mb_val is not None else np.nan
+    except (ValueError, TypeError):
+        LOGGER.info(
+            f'Invalid dataset-size-mb {size_mb_val} for dataset {dataset_name}; defaulting to NaN.'
+        )
+        return np.nan
+
+
+def _parse_num_tables(num_tables_val, dataset_name):
+    """Parse the num-tables value into an int or NaN with logging on failures."""
+    if isinstance(num_tables_val, str):
+        try:
+            num_tables_val = float(num_tables_val)
+        except (ValueError, TypeError):
+            LOGGER.info(
+                f'Could not cast num_tables_val {num_tables_val} to float for '
+                f'dataset {dataset_name}; defaulting to NaN.'
+            )
+            num_tables_val = np.nan
+
+    try:
+        return int(num_tables_val) if not pd.isna(num_tables_val) else np.nan
+    except (ValueError, TypeError):
+        LOGGER.info(
+            f'Invalid num-tables {num_tables_val} for dataset {dataset_name} when parsing as int.'
+        )
+        return np.nan
+
+
 def get_available_demos(modality):
     """Get demo datasets available for a ``modality``.
 
@@ -387,38 +425,10 @@ def get_available_demos(modality):
     tables_info = defaultdict(list)
     for dataset_name, yaml_key in _iter_metainfo_yaml_entries(contents, modality):
         try:
-            raw = _get_data_from_bucket(yaml_key)
-            info = yaml.safe_load(raw) or {}
+            info = _get_info_from_yaml_key(yaml_key)
 
-            size_mb_val = info.get('dataset-size-mb')
-            try:
-                size_mb = float(size_mb_val) if size_mb_val is not None else np.nan
-            except (ValueError, TypeError):
-                LOGGER.info(
-                    f'Invalid dataset-size-mb {size_mb_val} for dataset '
-                    f'{dataset_name}; defaulting to NaN.'
-                )
-                size_mb = np.nan
-
-            num_tables_val = info.get('num-tables', np.nan)
-            if isinstance(num_tables_val, str):
-                try:
-                    num_tables_val = float(num_tables_val)
-                except (ValueError, TypeError):
-                    LOGGER.info(
-                        f'Could not cast num_tables_val {num_tables_val} to float for '
-                        f'dataset {dataset_name}; defaulting to NaN.'
-                    )
-                    num_tables_val = np.nan
-
-            try:
-                num_tables = int(num_tables_val) if not pd.isna(num_tables_val) else np.nan
-            except (ValueError, TypeError):
-                LOGGER.info(
-                    f'Invalid num-tables {num_tables_val} for '
-                    f'dataset {dataset_name} when parsing as int.'
-                )
-                num_tables = np.nan
+            size_mb = _parse_size_mb(info.get('dataset-size-mb'), dataset_name)
+            num_tables = _parse_num_tables(info.get('num-tables', np.nan), dataset_name)
 
             tables_info['dataset_name'].append(dataset_name)
             tables_info['size_MB'].append(size_mb)
@@ -456,6 +466,53 @@ def _find_text_key(contents, dataset_prefix, filename):
     return None
 
 
+def _validate_text_file_content(modality, output_filepath, filename):
+    """Validation for the text file content method."""
+    _validate_modalities(modality)
+    if output_filepath is not None and not str(output_filepath).endswith('.txt'):
+        fname = (filename or '').lower()
+        file_type = 'README' if 'readme' in fname else 'source'
+        raise ValueError(
+            f'The {file_type} can only be saved as a txt file. '
+            "Please provide a filepath ending in '.txt'"
+        )
+
+
+def _raise_warnings(filename, output_filepath):
+    """Warn about missing text resources for a dataset."""
+    if (filename or '').upper() == 'README.TXT':
+        msg = 'No README information is available for this dataset.'
+    elif (filename or '').upper() == 'SOURCE.TXT':
+        msg = 'No source information is available for this dataset.'
+    else:
+        msg = f'No {filename} information is available for this dataset.'
+
+    if output_filepath:
+        msg = f'{msg} The requested file ({output_filepath}) will not be created.'
+
+    warnings.warn(msg, DemoResourceNotFoundWarning)
+
+
+def _save_document(text, output_filepath, filename, dataset_name):
+    """Persist ``text`` to ``output_filepath`` if provided."""
+    if not output_filepath:
+        return
+
+    if os.path.exists(str(output_filepath)):
+        raise ValueError(
+            f"A file named '{output_filepath}' already exists. Please specify a different filepath."
+        )
+
+    try:
+        parent = os.path.dirname(str(output_filepath))
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        with open(output_filepath, 'w', encoding='utf-8') as f:
+            f.write(text)
+    except Exception:
+        LOGGER.info(f'Error saving {filename} for dataset {dataset_name}.')
+
+
 def _get_text_file_content(modality, dataset_name, filename, output_filepath=None):
     """Fetch text file content under the dataset prefix.
 
@@ -473,29 +530,13 @@ def _get_text_file_content(modality, dataset_name, filename, output_filepath=Non
         str or None:
             The decoded text contents if the file exists, otherwise ``None``.
     """
-    _validate_modalities(modality)
-    if output_filepath is not None and not str(output_filepath).endswith('.txt'):
-        fname = (filename or '').lower()
-        file_type = 'README' if 'readme' in fname else 'source'
-        raise ValueError(
-            f'The {file_type} can only be saved as a txt file. '
-            "Please provide a filepath ending in '.txt'"
-        )
+    _validate_text_file_content(modality, output_filepath, filename)
 
     dataset_prefix = f'{modality}/{dataset_name}/'
     contents = _list_objects(dataset_prefix)
-
     key = _find_text_key(contents, dataset_prefix, filename)
     if not key:
-        if file_type in ('README', 'SOURCE'):
-            msg = f'No {file_type} information is available for this dataset.
-        else:
-            msg = f'No {filename} information is available for this dataset.'
-
-        if output_filepath:
-            msg = f'{msg} The requested file ({output_filepath}) will not be created.'
-
-        warnings.warn(msg, DemoResourceNotFoundWarning)
+        _raise_warnings(filename, output_filepath)
         return None
 
     try:
@@ -505,22 +546,7 @@ def _get_text_file_content(modality, dataset_name, filename, output_filepath=Non
         return None
 
     text = raw.decode('utf-8', errors='replace')
-    if output_filepath:
-        if os.path.exists(str(output_filepath)):
-            raise ValueError(
-                f"A file named '{output_filepath}' already exists. "
-                'Please specify a different filepath.'
-            )
-        try:
-            parent = os.path.dirname(str(output_filepath))
-            if parent:
-                os.makedirs(parent, exist_ok=True)
-            with open(output_filepath, 'w', encoding='utf-8') as f:
-                f.write(text)
-
-        except Exception:
-            LOGGER.info(f'Error saving {filename} for dataset {dataset_name}.')
-            pass
+    _save_document(text, output_filepath, filename, dataset_name)
 
     return text
 
