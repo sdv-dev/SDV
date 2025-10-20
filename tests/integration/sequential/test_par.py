@@ -1002,3 +1002,49 @@ def test_add_constraints_with_context_columns():
     synthesizer.fit(data)
     samples = synthesizer.sample(5)
     synthesizer.validate(samples)
+
+
+def test_par_context_columns_invariance():
+    """Test par is invariate to the order of context columns."""
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'sequence': ['id-0'] * 3 + ['id-1'] * 4 + ['id-2'] * 3,
+            'context1': ['M'] * 3 + ['F'] * 4 + ['M'] * 3,
+            'context2': [12.0] * 3 + [np.nan] * 4 + [34.0] * 3,
+            'seq1': [12, 34, 12, 78, 12, 56, 34, 78, 12, 67],
+            'seq2': ['Yes', 'Yes', 'No', 'No', 'No', 'No', 'Yes', 'Yes', 'No', 'No'],
+        }
+    )
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'columns': {
+                    'sequence': {'sdtype': 'id'},
+                    'context1': {'sdtype': 'categorical'},
+                    'context2': {'sdtype': 'numerical'},
+                    'seq1': {'sdtype': 'numerical'},
+                    'seq2': {'sdtype': 'categorical'},
+                },
+                'sequence_key': 'sequence',
+            }
+        }
+    })
+
+    synthesizer1 = PARSynthesizer(metadata, epochs=1, context_columns=['context1', 'context2'])
+
+    synthesizer2 = PARSynthesizer(metadata, epochs=1, context_columns=['context2', 'context1'])
+
+    # Run
+    synthesizer1.fit(data)
+    samples1 = synthesizer1.sample(num_sequences=3, sequence_length=2)
+
+    synthesizer2.fit(data)
+    samples2 = synthesizer2.sample(num_sequences=3, sequence_length=2)
+
+    # Assert
+    assert samples1.shape == samples2.shape
+    assert samples1.columns.equals(samples2.columns)
+    synthesizer1.validate(samples2)
+    synthesizer2.validate(samples1)
