@@ -1,17 +1,21 @@
+import json
 import re
 from unittest.mock import call, patch
 
 import pandas as pd
 import pytest
 
+from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError, SynthesizerProcessingError
 from sdv.metadata import Metadata
 from sdv.multi_table.dayz import (
     DayZSynthesizer,
+    _detect_relationship_parameters,
     _validate_cardinality,
     _validate_parameters,
     _validate_relationship_parameters,
     _validate_relationship_structure,
+    create_parameters_multi_table,
 )
 
 
@@ -51,6 +55,109 @@ def metadata():
     })
 
 
+def test__detect_relationship_parameters():
+    """Test the `_detect_relationship_parameters` method."""
+    # Setup
+    parent_data = pd.DataFrame({'parent_id': [1, 2, 3, 4, 5]})
+    child_data = pd.DataFrame({
+        'child_id': [10, 11, 12, 13, 14, 15, 16],
+        'parent_id': [1, 1, 2, 2, 2, 3, None],
+    })
+    data = {'parent': parent_data, 'child': child_data}
+    metadata_dict = {
+        'tables': {
+            'parent': {'columns': {'parent_id': {'sdtype': 'id'}}, 'primary_key': 'parent_id'},
+            'child': {
+                'columns': {'child_id': {'sdtype': 'id'}, 'parent_id': {'sdtype': 'id'}},
+                'primary_key': 'child_id',
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'child',
+                'parent_primary_key': 'parent_id',
+                'child_foreign_key': 'parent_id',
+            }
+        ],
+    }
+    metadata = Metadata.load_from_dict(metadata_dict)
+
+    # Run
+    result = _detect_relationship_parameters(data, metadata)
+
+    # Assert
+    expected = [
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'child',
+            'parent_primary_key': 'parent_id',
+            'child_foreign_key': 'parent_id',
+            'min_cardinality': 0,
+            'max_cardinality': 3,
+        }
+    ]
+    assert result == expected
+
+
+@patch('sdv.multi_table.dayz._detect_relationship_parameters')
+@patch('sdv.multi_table.dayz.create_parameters')
+def test_create_parameters_multi_table(mock_create_parameters, mock_detect_relationship, tmp_path):
+    """Test the `create_parameters_multi_table` method."""
+    # Setup
+    data = pd.DataFrame()
+    metadata = Metadata()
+    output_filename = str(tmp_path / 'output.json')
+    mock_detect_relationship.return_value = {
+        '["parent_table", "child_table", "parent_pk", "child_fk"]': {
+            'min_cardinality': 0,
+            'max_cardinality': 10,
+        }
+    }
+    mock_create_parameters.return_value = {
+        'DAYZ_SPEC_VERSION': 'V1',
+        'tables': {
+            'table_name': {
+                'num_rows': 100,
+                'columns': {
+                    'col1': {'missing_values_proportion': 0.1},
+                    'col2': {'missing_values_proportion': 0.2},
+                },
+            }
+        },
+    }
+
+    # Run
+    result = create_parameters_multi_table(data, metadata, output_filename)
+
+    # Assert
+    mock_create_parameters.assert_called_once_with(data, metadata, None)
+    mock_detect_relationship.assert_called_once_with(data, metadata)
+    assert result == {
+        'DAYZ_SPEC_VERSION': 'V1',
+        'tables': {
+            'table_name': {
+                'num_rows': 100,
+                'columns': {
+                    'col1': {'missing_values_proportion': 0.1},
+                    'col2': {'missing_values_proportion': 0.2},
+                },
+            }
+        },
+        'relationships': {
+            '["parent_table", "child_table", "parent_pk", "child_fk"]': {
+                'min_cardinality': 0,
+                'max_cardinality': 10,
+            }
+        },
+    }
+    assert result == mock_create_parameters.return_value
+    with open(output_filename) as f:
+        output = json.load(f)
+
+    assert output == result
+
+
 def test__validate_relationship_structure():
     """Test validating the relationship parameters structure."""
     # Setup
@@ -74,7 +181,7 @@ def test__validate_relationship_structure():
 
     # Run and Assert
     expected_bad_relationships_value_msg = re.escape(
-        "The 'relationships' parameter value must be a list."
+        "The 'relationships' parameter value must be a list of dictionaries."
     )
     with pytest.raises(SynthesizerProcessingError, match=expected_bad_relationships_value_msg):
         _validate_relationship_structure(bad_relationships_value)
@@ -320,3 +427,33 @@ class TestDayZSynthesizer:
 
         # Assert
         mock__validate_parameters.assert_called_once_with(metadata, dayz_parameters)
+
+    def test__validate_relationships_is_list_of_dicts(self, metadata):
+        """Test that 'relationships' must be a list of dicts."""
+        # Run and Assert
+        expected_msg = re.escape(
+            "The 'relationships' parameter value must be a list of dictionaries."
+        )
+        with pytest.raises(SynthesizerProcessingError, match=expected_msg):
+            DayZSynthesizer.validate_parameters(metadata, {'relationships': {'a', 'b', 'c'}})
+
+        with pytest.raises(SynthesizerProcessingError, match=expected_msg):
+            DayZSynthesizer.validate_parameters(metadata, {'relationships': ['a', 'b', 'c']})
+
+    def test__validate_min_cardinality_allows_zero(self):
+        """Test that min_cardinality=0 is allowed and does not raise."""
+        # Setup
+        data, metadata = download_demo('multi_table', 'financial_v1')
+        dayz_parameters = DayZSynthesizer.create_parameters(data, metadata)
+        dayz_parameters['relationships'] = [
+            {
+                'parent_table_name': 'district',
+                'parent_primary_key': 'district_id',
+                'child_table_name': 'account',
+                'child_foreign_key': 'district_id',
+                'min_cardinality': 0,
+            }
+        ]
+
+        # Run
+        DayZSynthesizer.validate_parameters(metadata, dayz_parameters)

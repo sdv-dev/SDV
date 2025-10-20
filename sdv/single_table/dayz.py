@@ -1,12 +1,15 @@
 """DayZ parameter detection and creation."""
 
+import json
+
 import pandas as pd
+from rdt.transformers.utils import learn_rounding_digits
 
 from sdv._utils import _datetime_string_matches_format, _get_datetime_format, _is_numerical
 from sdv.errors import SynthesizerInputError, SynthesizerProcessingError
-from sdv.single_table._dayz_utils import create_parameters
 
 DAYZ_PARAMETER_KEYS = ['DAYZ_SPEC_VERSION', 'tables', 'relationships']
+DAYZ_SPEC_VERSION = 'V1'
 TABLE_PARAMETER_KEYS = ['columns', 'num_rows']
 COLUMN_PARAMETER_KEYS = ['missing_values_proportion']
 NUMERICAL_PARAMETER_KEYS = COLUMN_PARAMETER_KEYS + ['num_decimal_digits', 'min_value', 'max_value']
@@ -19,12 +22,165 @@ SDTYPE_TO_PARAMETERS = {
 }
 
 
+def _detect_table_parameters(data):
+    """Detect all table-level Dayz parameters.
+
+    - Detect the `num_rows` of the table.
+
+    Args:
+        data (pd.DataFrame): The input data.
+
+    Returns:
+        dict: A dictionary containing the detected parameters.
+    """
+    return {'num_rows': len(data)}
+
+
+def _compute_missing_values_proportion(series):
+    """Compute missing value proportion with a safe fallback for empty series."""
+    if len(series) == 0:
+        return 0.0
+
+    value = float(series.isna().mean())
+    return 0.0 if pd.isna(value) else value
+
+
+def _detect_numerical_column_parameters(series):
+    """Detect numerical-specific parameters with fallbacks when undetectable.
+
+    Returns only keys that can be reliably detected (no None values).
+    """
+    params = {}
+    non_null = series.dropna()
+    if non_null.empty:
+        return params
+
+    try:
+        num_decimal_digits = learn_rounding_digits(series)
+        if isinstance(num_decimal_digits, int) and num_decimal_digits >= 0:
+            params['num_decimal_digits'] = num_decimal_digits
+    except Exception:
+        pass
+
+    min_value = non_null.min()
+    max_value = non_null.max()
+    if not pd.isna(min_value):
+        params['min_value'] = min_value.item() if hasattr(min_value, 'item') else float(min_value)
+    if not pd.isna(max_value):
+        params['max_value'] = max_value.item() if hasattr(max_value, 'item') else float(max_value)
+
+    return params
+
+
+def _detect_datetime_column_parameters(series, column_metadata):
+    """Detect datetime-specific parameters with fallbacks when undetectable.
+
+    Returns only keys that can be reliably detected (no None values).
+    """
+    params = {}
+    datetime_format = column_metadata.get('datetime_format', None)
+    if datetime_format:
+        datetime_column = pd.to_datetime(series, format=datetime_format, errors='coerce')
+    else:
+        datetime_column = pd.to_datetime(series, errors='coerce')
+
+    non_na = datetime_column[~pd.isna(datetime_column)]
+    if non_na.empty:
+        return params
+
+    start_dt = non_na.min()
+    end_dt = non_na.max()
+    if datetime_format:
+        params['start_timestamp'] = start_dt.strftime(datetime_format)
+        params['end_timestamp'] = end_dt.strftime(datetime_format)
+    else:
+        params['start_timestamp'] = start_dt.strftime('%Y-%m-%d %H:%M:%S')
+        params['end_timestamp'] = end_dt.strftime('%Y-%m-%d %H:%M:%S')
+
+    return params
+
+
+def _detect_categorical_column_parameters(series):
+    """Detect categorical/boolean parameters."""
+    categorical_values = series.dropna().unique()
+    if len(categorical_values) == 0:
+        return {}
+
+    return {'category_values': categorical_values.tolist()}
+
+
+def _detect_column_parameters(data, metadata, table_name):
+    """Detect all column-level Dayz parameters.
+
+    The column-level parameters are:
+    - The missing value proportion
+    - The boundaries for numerical and datetime columns
+    - The categories for categorical columns
+    - The 'num_decimal_digits' for numerical columns
+
+    Args:
+        data (pd.DataFrame): The input data.
+        metadata (Metadata): The metadata object.
+
+    Returns:
+        dict: A dictionary containing the detected parameters.
+    """
+    table_metadata = metadata.tables[table_name]
+    column_parameters = {}
+    for column_name, column_metadata in table_metadata.columns.items():
+        sdtype = column_metadata['sdtype']
+        params = {}
+        if sdtype == 'numerical':
+            params.update(_detect_numerical_column_parameters(data[column_name]))
+        elif sdtype == 'datetime':
+            params.update(_detect_datetime_column_parameters(data[column_name], column_metadata))
+        elif sdtype == 'categorical':
+            params.update(_detect_categorical_column_parameters(data[column_name]))
+
+        params['missing_values_proportion'] = _compute_missing_values_proportion(data[column_name])
+        column_parameters[column_name] = params
+
+    return {'columns': column_parameters}
+
+
+def create_parameters(data, metadata, output_filename):
+    """Detect and create a parameter dict for the DayZ model."""
+    if len(data) == 0:
+        raise ValueError('Data is empty')
+    if len(metadata.tables) == 0:
+        raise ValueError('Metadata is empty')
+
+    metadata.validate()
+    datas = data if isinstance(data, dict) else {metadata._get_single_table_name(): data}
+    metadata.validate_data(datas)
+    parameters = {'DAYZ_SPEC_VERSION': DAYZ_SPEC_VERSION, 'tables': {}}
+    for table_name, table_data in datas.items():
+        parameters['tables'][table_name] = {}
+        parameters['tables'][table_name].update(_detect_table_parameters(table_data))
+        parameters['tables'][table_name].update(
+            _detect_column_parameters(table_data, metadata, table_name)
+        )
+
+    if output_filename:
+        with open(output_filename, 'w') as f:
+            json.dump(parameters, f, indent=4)
+
+    return parameters
+
+
 def _validate_parameter_dict_keys(dayz_parameters):
     unknown_base_keys = dayz_parameters.keys() - DAYZ_PARAMETER_KEYS
     if unknown_base_keys:
         unknown_base_keys = "', '".join(unknown_base_keys)
         raise SynthesizerProcessingError(
             f"DayZ parameters contains unexpected key(s): '{unknown_base_keys}'."
+        )
+
+    dayz_spec_version = dayz_parameters.get('DAYZ_SPEC_VERSION', DAYZ_SPEC_VERSION)
+    if dayz_spec_version != DAYZ_SPEC_VERSION:
+        raise SynthesizerProcessingError(
+            f"Unsupported DayZ parameter spec version: '{dayz_spec_version}'."
+            f" Supported version is: '{DAYZ_SPEC_VERSION}'."
         )
 
 
@@ -227,6 +383,13 @@ def _validate_parameters(metadata, parameters):
     """
     metadata.validate()
     _validate_parameter_structure(parameters)
+
+    if len(metadata.tables) > 1:
+        raise SynthesizerProcessingError(
+            'Invalid metadata provided for single-table DayZSynthesizer. The metadata contains '
+            'multiple tables. Please use multi-table DayZSynthesizer instead.'
+        )
+
     if 'relationships' in parameters:
         msg = (
             "Invalid DayZ parameter 'relationships' for single-table DayZSynthesizer. "
@@ -248,18 +411,18 @@ class DayZSynthesizer:
         )
 
     @classmethod
-    def create_parameters(cls, data, metadata, output_filename=None):
+    def create_parameters(cls, data, metadata, filepath=None):
         """Create parameters for the DayZ synthesizer.
 
         Args:
             data (pd.DataFrame): The input data.
             metadata (Metadata): The metadata object.
-            output_filename (str, optional): The output filename for the parameters.
+            filepath (str, optional): The output filename for the parameters.
 
         Returns:
             dict: The created parameters.
         """
-        return create_parameters(data, metadata, output_filename)
+        return create_parameters(data, metadata, filepath)
 
     @staticmethod
     def validate_parameters(metadata, parameters):

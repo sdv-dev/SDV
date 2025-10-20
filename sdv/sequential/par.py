@@ -11,9 +11,10 @@ import pandas as pd
 import tqdm
 from rdt.transformers import FloatFormatter
 
-from sdv._utils import MODELABLE_SDTYPES, _cast_to_iterable, _groupby_list
+from sdv._utils import MODELABLE_SDTYPES, _cast_to_iterable, _groupby_list, _is_datetime_type
 from sdv.cag import ProgrammableConstraint
 from sdv.cag._utils import _validate_constraints_single_table
+from sdv.constraints.utils import cast_to_datetime64
 from sdv.errors import SamplingError, SynthesizerInputError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
@@ -35,6 +36,11 @@ except ModuleNotFoundError as e:
     import_error = e
 
 LOGGER = logging.getLogger(__name__)
+
+
+def _diff_and_bfill(series):
+    """Compute the diff of a pandas Series and backfill the first NaN."""
+    return series.diff().bfill()
 
 
 class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
@@ -310,20 +316,25 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         sequence_index_context = sequence_index_context.rename(
             columns={self._sequence_index: f'{self._sequence_index}.context'}
         )
-        if all(sequence_index[self._sequence_key].nunique() == 1):
-            sequence_index_sequence = sequence_index[[self._sequence_index]].diff().bfill()
-        else:
-            sequence_index_sequence = (
-                sequence_index.groupby(self._sequence_key)
-                .apply(lambda x: x[self._sequence_index].diff().bfill())
-                .droplevel(1)
-                .reset_index()
-            )
 
+        if _is_datetime_type(sequence_index[self._sequence_index]):
+            sequence_index[self._sequence_index] = cast_to_datetime64(
+                sequence_index[self._sequence_index]
+            ).astype(np.int64)
+
+        if all(sequence_index[self._sequence_key].nunique() == 1):
+            diff_series = sequence_index[self._sequence_index].diff().bfill()
+        else:
+            diff_series = sequence_index.groupby(self._sequence_key, group_keys=False)[
+                self._sequence_index
+            ].transform(_diff_and_bfill)
+
+        sequence_index_sequence = diff_series.to_frame(name=self._sequence_index)
         if all(sequence_index_sequence[self._sequence_index].isna()):
             fill_value = 0
         else:
             fill_value = min(sequence_index_sequence[self._sequence_index].dropna())
+
         sequence_index_sequence = sequence_index_sequence.fillna(fill_value)
 
         data[self._sequence_index] = sequence_index_sequence[self._sequence_index].to_numpy()
@@ -579,7 +590,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                     pd.DataFrame({self._sequence_index: diffs})
                 )[self._sequence_index].to_numpy()
                 start_index = context_columns.index(f'{self._sequence_index}.context')
-                start = context_values[start_index]
+                start = context_values.iloc[start_index]
                 sequence[sequence_index_idx] = np.cumsum(diffs) - diffs[0] + start
 
             # Reformat as a DataFrame
