@@ -35,14 +35,6 @@ jobs:
       - name: Upgrade pip
         run: python -m pip install --upgrade pip
 
-      - name: Relax requires-python lower bound for installation
-        run: |
-          sed -i.bak -E "s/requires-python = '>=3\.[0-9]+/requires-python = '>=${{ matrix.python-version }}/" pyproject.toml
-          grep -n "requires-python" pyproject.toml
-
-      - name: Install package and test dependencies
-        run: python -m pip install --no-deps .[test]
-    
       - name: Install specified dependencies (unpinned)
         run: |
             # Install the provided dependency set without version pins
