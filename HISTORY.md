@@ -1,5 +1,25 @@
 # Release Notes
 
+## v1.28.0 - 2025-10-17
+
+### New Features
+
+* Unable to validate just 1 table of a multi-table schema - Issue [#2678](https://github.com/sdv-dev/SDV/issues/2678) by @frances-h
+* Allow users to validate the DayZ parameters - Issue [#2667](https://github.com/sdv-dev/SDV/issues/2667) by @frances-h
+* Allow users to estimate parameters for DayZSynthesizer - Issue [#2666](https://github.com/sdv-dev/SDV/issues/2666) by @R-Palazzo
+
+### Bugs Fixed
+
+* Minimum tests failing - OSError: [WinError 1114] A dynamic link library (DLL) initialization routine failed - Issue [#2725](https://github.com/sdv-dev/SDV/issues/2725) by @amontanez24
+* [DayZ Parameters] `'missing_values_proportion'` must be zero for any key columns - Issue [#2708](https://github.com/sdv-dev/SDV/issues/2708) by @frances-h
+* [DayZ Parameters] Validation results in unexpected errors for some edge cases - Issue [#2703](https://github.com/sdv-dev/SDV/issues/2703) by @fealho
+* [DayZ Parameters] `create_parameters` should fall back to default parameters if parameters cannot be detected - Issue [#2702](https://github.com/sdv-dev/SDV/issues/2702) by @fealho
+* [DayZ Parameters] DayZ parameter validation does not validate DAYZ_SPEC_VERSION - Issue [#2701](https://github.com/sdv-dev/SDV/issues/2701) by @R-Palazzo
+* [DayZParameters] `KeyError` when creating parameters with empty data and metadata - Issue [#2700](https://github.com/sdv-dev/SDV/issues/2700) by @fealho
+* Unable to load the DayZSynthesizer after saving it - Issue [#2698](https://github.com/sdv-dev/SDV/issues/2698) by @R-Palazzo
+* `DayZSynthesizer.create_parameters` errors in Colab with numeric columns - Issue [#2683](https://github.com/sdv-dev/SDV/issues/2683) by @frances-h
+* PARSynthesizer: `FutureWarnings` in `groupby.apply` and `Series.__getitem__` from pandas - Issue [#2682](https://github.com/sdv-dev/SDV/issues/2682) by @R-Palazzo
+
 ## v1.27.0 - 2025-09-15
 
 ### New Features

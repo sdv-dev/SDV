@@ -378,6 +378,10 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             if self._get_table_metadata().columns[col]['sdtype'] not in MODELABLE_SDTYPES
         ]
 
+    def _reorder_context_columns(self, context_columns, timeseries_data):
+        order = {column: i for i, column in enumerate(timeseries_data.columns)}
+        return sorted(context_columns, key=lambda x: order.get(x, float('inf')))
+
     def _preprocess(self, data):
         """Transform the raw data to numerical space.
 
@@ -539,6 +543,8 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                 pandas.DataFrame containing both the sequences,
                 the entity columns and the context columns.
         """
+        self.context_columns = self._reorder_context_columns(self.context_columns, processed_data)
+
         if self._sequence_key:
             self._fit_context_model(processed_data)
 
