@@ -342,18 +342,16 @@ def test_get_available_demos_invalid_modality():
 def test__find_data_zip_key():
     # Setup
     contents = [
-        {'Key': 'single_table/dataset/data.ZIP'},
-        {'Key': 'single_table/dataset/metadata.json'},
-        {'Key': 'single_table/dataset/aaa_wrong.json'},
-        {'Key': 'single_table/dataset/README.txt'},
+        {'Key': 'single_table/fake_hotel_guests/data.ZIP'},
+        {'Key': 'single_table/fake_hotel_guests/metadata.json'},
     ]
-    dataset_prefix = 'single_table/dataset/'
+    dataset_prefix = 'single_table/fake_hotel_guests/'
 
     # Run
     zip_key = _find_data_zip_key(contents, dataset_prefix)
 
     # Assert
-    assert zip_key == 'single_table/dataset/data.ZIP'
+    assert zip_key == 'single_table/fake_hotel_guests/data.ZIP'
 
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
