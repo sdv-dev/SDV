@@ -635,7 +635,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             # Some rows got singular matrix error and the rest were 0
             # Fallback to num_rows on the singular matrix rows and
             # keep 0s on the rest.
-            likelihoods = likelihoods.fillna(num_rows)
+            likelihoods = likelihoods.astype(float).fillna(num_rows)
         else:
             # at least one row got a valid likelihood, so fill the
             # rows that got a singular matrix error with the mean

@@ -1038,6 +1038,7 @@ class TestHMASynthesizer:
 
             assert num_table_cols == estimated_num_columns[table_name]
 
+    @pytest.mark.filterwarnings('error::FutureWarning')
     def test__estimate_num_columns_to_be_modeled(self):
         """Test the estimated number of columns is exactly the number of columns to be modeled.
 
