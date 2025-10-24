@@ -172,7 +172,9 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 metadata, table_name, columns_per_table, visited, distributions
             )
 
-        return {key: sum(value) for key, value in columns_per_table.items()}
+        return {
+            table_name: sum(columns_list) for table_name, columns_list in columns_per_table.items()
+        }
 
     def __init__(self, metadata, locales=['en_US'], verbose=True):
         BaseMultiTableSynthesizer.__init__(self, metadata, locales=locales)
