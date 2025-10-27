@@ -388,6 +388,7 @@ class TestHMASynthesizer:
         assert loaded_synthesizer.get_info() == synthesizer.get_info()
         assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
 
+    @pytest.mark.filterwarnings('error::FutureWarning')
     def test_hma_primary_key_and_foreign_key_only(self):
         """Test that ``HMASynthesizer`` can handle tables with primary and foreign keys only."""
         # Setup
