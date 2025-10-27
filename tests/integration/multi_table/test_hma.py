@@ -2610,9 +2610,10 @@ def test__estimate_num_columns_to_be_modeled_various_sdtypes():
     })
     synthesizer = HMASynthesizer(metadata)
     synthesizer._finalize = Mock(return_value=data)
+    distributions = synthesizer._get_distributions()
 
     # Run estimation
-    estimated_num_columns = synthesizer._estimate_num_columns(metadata)
+    estimated_num_columns = synthesizer._estimate_num_columns(metadata, distributions)
 
     # Run actual modeling
     synthesizer.fit(data)

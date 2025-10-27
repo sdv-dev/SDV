@@ -26,8 +26,8 @@ class TestHMASynthesizer:
         assert isinstance(instance._table_synthesizers['oseba'], GaussianCopulaSynthesizer)
         assert isinstance(instance._table_synthesizers['upravna_enota'], GaussianCopulaSynthesizer)
         assert instance._table_parameters == {
-            'nesreca': {'default_distribution': 'beta'},
-            'oseba': {'default_distribution': 'beta'},
+            'nesreca': {'default_distribution': 'norm'},
+            'oseba': {'default_distribution': 'norm'},
             'upravna_enota': {'default_distribution': 'beta'},
         }
         instance.metadata.validate.assert_called_once_with()
@@ -70,8 +70,6 @@ class TestHMASynthesizer:
 
         # Assert
         expected = pd.DataFrame({
-            '__nesreca__upravna_enota__univariates__id_nesreca__a': [1.0, 1.0, 1.0, 1.0],
-            '__nesreca__upravna_enota__univariates__id_nesreca__b': [1.0, 1.0, 1.0, 1.0],
             '__nesreca__upravna_enota__univariates__id_nesreca__loc': [0.0, 1.0, 2.0, 3.0],
             '__nesreca__upravna_enota__univariates__id_nesreca__scale': [np.nan] * 4,
             '__nesreca__upravna_enota__num_rows': [1.0, 1.0, 1.0, 1.0],
@@ -187,12 +185,8 @@ class TestHMASynthesizer:
             'nesreca_val': [0, 1, 2, 3],
             'value': [0, 1, 2, 3],
             '__oseba__id_nesreca__correlation__0__0': [0.0] * 4,
-            '__oseba__id_nesreca__univariates__oseba_val__a': [1.0] * 4,
-            '__oseba__id_nesreca__univariates__oseba_val__b': [1.0] * 4,
             '__oseba__id_nesreca__univariates__oseba_val__loc': [0.0, 1.0, 2.0, 3.0],
             '__oseba__id_nesreca__univariates__oseba_val__scale': [1e-6] * 4,
-            '__oseba__id_nesreca__univariates__oseba_value__a': [1.0] * 4,
-            '__oseba__id_nesreca__univariates__oseba_value__b': [1.0] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__loc': [0.0, 1.0, 2.0, 3.0],
             '__oseba__id_nesreca__univariates__oseba_value__scale': [1e-6] * 4,
             '__oseba__id_nesreca__num_rows': [1.0] * 4,
@@ -877,9 +871,10 @@ class TestHMASynthesizer:
         })
         synthesizer = HMASynthesizer(metadata)
         synthesizer._finalize = Mock(return_value=data)
+        distributions = synthesizer._get_distributions()
 
         # Run estimation
-        estimated_num_columns = synthesizer._estimate_num_columns(metadata)
+        estimated_num_columns = synthesizer._estimate_num_columns(metadata, distributions)
 
         # Run actual modeling
         synthesizer.fit(data)
@@ -1152,9 +1147,10 @@ class TestHMASynthesizer:
         })
         synthesizer = HMASynthesizer(metadata)
         synthesizer._finalize = Mock(return_value=data)
+        distributions = synthesizer._get_distributions()
 
         # Run estimation
-        estimated_num_columns = synthesizer._estimate_num_columns(metadata)
+        estimated_num_columns = synthesizer._estimate_num_columns(metadata, distributions)
 
         # Run actual modeling
         synthesizer.fit(data)
@@ -1264,9 +1260,10 @@ class TestHMASynthesizer:
         })
         synthesizer = HMASynthesizer(metadata)
         synthesizer._finalize = Mock(return_value=data)
+        distributions = synthesizer._get_distributions()
 
         # Run estimation
-        estimated_num_columns = synthesizer._estimate_num_columns(metadata)
+        estimated_num_columns = synthesizer._estimate_num_columns(metadata, distributions)
 
         # Run actual modeling
         synthesizer.fit(data)
