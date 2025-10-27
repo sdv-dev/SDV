@@ -18,6 +18,11 @@ from sdv.sampling import BaseHierarchicalSampler
 LOGGER = logging.getLogger(__name__)
 MAX_NUMBER_OF_COLUMNS = 1000
 DEFAULT_EXTENDED_COLUMNS_DISTRIBUTION = 'truncnorm'
+PERFORMANCE_ALERT_DISPLAY_CAP = 1_000_000
+
+
+class _EarlyStopEstimation(Exception):
+    pass
 
 
 class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
@@ -102,7 +107,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
     @classmethod
     def _estimate_columns_traversal(
-        cls, metadata, table_name, columns_per_table, visited, distributions=None
+        cls, metadata, table_name, columns_per_table, visited, distributions=None, max_total=None
     ):
         """Given a table, estimate how many columns each parent will model.
 
@@ -118,16 +123,21 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         """
         for child_name in metadata._get_child_map()[table_name]:
             if child_name not in visited:
-                cls._estimate_columns_traversal(metadata, child_name, columns_per_table, visited)
+                cls._estimate_columns_traversal(
+                    metadata, child_name, columns_per_table, visited, distributions, max_total
+                )
 
             columns_per_table[table_name] += cls._get_num_extended_columns(
                 metadata, child_name, table_name, columns_per_table, distributions
             )
 
+            if max_total is not None and sum(columns_per_table.values()) > max_total:
+                raise _EarlyStopEstimation
+
         visited.add(table_name)
 
     @classmethod
-    def _estimate_num_columns(cls, metadata, distributions=None):
+    def _estimate_num_columns(cls, metadata, distributions=None, max_total=None):
         """Estimate the number of columns that will be modeled for each table.
 
         This method estimates how many extended columns will be generated during the
@@ -153,9 +163,14 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         # each table will model
         visited = set()
         for table_name in _get_root_tables(metadata.relationships):
-            cls._estimate_columns_traversal(
-                metadata, table_name, columns_per_table, visited, distributions
-            )
+            try:
+                cls._estimate_columns_traversal(
+                    metadata, table_name, columns_per_table, visited, distributions, max_total
+                )
+            except _EarlyStopEstimation:
+                break
+            if max_total is not None and sum(columns_per_table.values()) > max_total:
+                break
 
         return columns_per_table
 
@@ -235,19 +250,29 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         metadata_columns = self._get_num_data_columns(self.metadata)
         print_table = []
         distributions = self._get_distributions()
-        for table, est_cols in self._estimate_num_columns(self.metadata, distributions).items():
+        estimated_columns = self._estimate_num_columns(
+            self.metadata, distributions, max_total=PERFORMANCE_ALERT_DISPLAY_CAP
+        )
+        for table, est_cols in estimated_columns.items():
             entry = []
             entry.append(table)
             entry.append(metadata_columns[table])
             total_est_cols += est_cols
             entry.append(est_cols)
             print_table.append(entry)
+            if total_est_cols > PERFORMANCE_ALERT_DISPLAY_CAP:
+                break
 
         if total_est_cols > MAX_NUMBER_OF_COLUMNS:
+            display_total = (
+                f'{PERFORMANCE_ALERT_DISPLAY_CAP}+'
+                if total_est_cols > PERFORMANCE_ALERT_DISPLAY_CAP
+                else f'{total_est_cols}'
+            )
             self._print(
                 'PerformanceAlert: Using the HMASynthesizer on this metadata '
                 'schema is not recommended. To model this data, HMA will '
-                f'generate a large number of columns. ({total_est_cols} columns)\n\n'
+                f'generate a large number of columns. ({display_total} columns)\n\n'
             )
             self._print(
                 pd.DataFrame(

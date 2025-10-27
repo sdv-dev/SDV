@@ -7,7 +7,11 @@ import pytest
 
 from sdv.errors import SynthesizerInputError
 from sdv.metadata.metadata import Metadata
-from sdv.multi_table.hma import HMASynthesizer
+from sdv.multi_table.hma import (
+    PERFORMANCE_ALERT_DISPLAY_CAP,
+    HMASynthesizer,
+    _EarlyStopEstimation,
+)
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from tests.utils import get_multi_table_data, get_multi_table_metadata
 
@@ -1285,3 +1289,43 @@ class TestHMASynthesizer:
                 num_table_cols -= 1
 
             assert num_table_cols == estimated_num_columns[table_name]
+
+    @patch('sdv.multi_table.hma.HMASynthesizer._estimate_num_columns')
+    @patch('sdv.multi_table.hma.HMASynthesizer._get_distributions')
+    def test__print_estimate_warning_capped_display_and_break(
+        self, get_distributions_mock, estimate_mock, capsys
+    ):
+        """When exceeding the cap, display 1_000_000+ and stop listing rows."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        estimate_mock.return_value = {
+            'nesreca': PERFORMANCE_ALERT_DISPLAY_CAP + 5,
+            'oseba': 10,
+        }
+
+        # Run
+        HMASynthesizer(metadata)
+        captured = capsys.readouterr()
+
+        # Assert
+        assert 'PerformanceAlert:' in captured.out
+        assert f'{PERFORMANCE_ALERT_DISPLAY_CAP}+' in captured.out
+        assert 'nesreca' in captured.out
+        assert 'oseba' not in captured.out
+
+    def test__estimate_num_columns_early_stop_exception_is_handled(self):
+        """_estimate_num_columns should handle internal early-stop and return partial results."""
+        # Setup
+        metadata = get_multi_table_metadata()
+
+        with patch('sdv.multi_table.hma.HMASynthesizer._estimate_columns_traversal') as tr_mock:
+            tr_mock.side_effect = _EarlyStopEstimation
+
+            # Run
+            result = HMASynthesizer._estimate_num_columns(metadata, max_total=1)
+
+        # Assert
+        assert isinstance(result, dict)
+        for table_name in ['nesreca', 'oseba', 'upravna_enota']:
+            assert table_name in result
+            assert isinstance(result[table_name], int)
