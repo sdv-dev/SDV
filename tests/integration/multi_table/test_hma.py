@@ -388,6 +388,7 @@ class TestHMASynthesizer:
         assert loaded_synthesizer.get_info() == synthesizer.get_info()
         assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
 
+    @pytest.mark.filterwarnings('error::FutureWarning')
     def test_hma_primary_key_and_foreign_key_only(self):
         """Test that ``HMASynthesizer`` can handle tables with primary and foreign keys only."""
         # Setup
@@ -2610,9 +2611,10 @@ def test__estimate_num_columns_to_be_modeled_various_sdtypes():
     })
     synthesizer = HMASynthesizer(metadata)
     synthesizer._finalize = Mock(return_value=data)
+    distributions = synthesizer._get_distributions()
 
     # Run estimation
-    estimated_num_columns = synthesizer._estimate_num_columns(metadata)
+    estimated_num_columns = synthesizer._estimate_num_columns(metadata, distributions)
 
     # Run actual modeling
     synthesizer.fit(data)

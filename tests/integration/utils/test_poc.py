@@ -70,12 +70,12 @@ def test_simplify_schema(capsys):
     # Assert
     expected_message_before = re.compile(
         r'PerformanceAlert: Using the HMASynthesizer on this metadata schema is not recommended\.'
-        r' To model this data, HMA will generate a large number of columns\. \(173818 columns\)\s+'
+        r' To model this data, HMA will generate a large number of columns\. \(135934 columns\)\s+'
         r'Table Name\s*#\s*Columns in Metadata\s*Est # Columns\s*'
         r'match_stats\s*24\s*24\s*'
-        r'matches\s*39\s*412\s*'
-        r'players\s*5\s*378\s*'
-        r'teams\s*1\s*173004\s*'
+        r'matches\s*39\s*364\s*'
+        r'players\s*5\s*330\s*'
+        r'teams\s*1\s*135216\s*'
         r'We recommend simplifying your metadata schema using '
         r"'sdv.utils.poc.simplify_schema'\.\s*"
         r'If this is not possible, please visit '
