@@ -140,7 +140,8 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 metadata, child_name, table_name, columns_per_table, distributions
             )
 
-            if sum(columns_per_table.values()) > PERFORMANCE_ALERT_DISPLAY_CAP:
+            total_cols = sum(columns_list[1] for columns_list in columns_per_table.values())
+            if total_cols > PERFORMANCE_ALERT_DISPLAY_CAP:
                 return
 
         visited.add(table_name)
@@ -175,7 +176,8 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             cls._estimate_columns_traversal(
                 metadata, table_name, columns_per_table, visited, distributions
             )
-            if sum(columns_per_table.values()) > PERFORMANCE_ALERT_DISPLAY_CAP:
+            total_cols = sum(columns_list[1] for columns_list in columns_per_table.values())
+            if total_cols > PERFORMANCE_ALERT_DISPLAY_CAP:
                 break
 
         return {
