@@ -7,7 +7,9 @@ import pytest
 
 from sdv.errors import SynthesizerInputError
 from sdv.metadata.metadata import Metadata
-from sdv.multi_table.hma import HMASynthesizer
+from sdv.multi_table.hma import (
+    HMASynthesizer,
+)
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from tests.utils import get_multi_table_data, get_multi_table_metadata
 
@@ -128,6 +130,30 @@ class TestHMASynthesizer:
         for constraint in key_phrases:
             match = re.search(constraint, captured.out + captured.err)
             assert match is None
+
+    @patch('sdv.multi_table.hma.HMASynthesizer._estimate_num_columns')
+    @patch('sdv.multi_table.hma.HMASynthesizer._get_distributions')
+    def test__print_estimate_warning_many_cols(self, get_distributions_mock, estimate_mock, capsys):
+        """Test that a warning appears if there are more than 1_000_000 expected columns"""
+        # Setup
+        metadata = get_multi_table_metadata()
+        estimate_mock.side_effect = [{'nesreca': 1_000_010}, {'nesreca': 10}]
+
+        # Run
+        HMASynthesizer(metadata)
+        captured = capsys.readouterr()
+
+        # Assert
+        expected_output = (
+            'PerformanceAlert: Using the HMASynthesizer on this metadata schema is not recommended.'
+            ' To model this data, HMA will generate a large number of columns. (1000000+ columns)\n'
+            '\n\nTable Name  # Columns in Metadata  Est # Columns\n'
+            '   nesreca                      1        1000000\n\n'
+            "We recommend simplifying your metadata schema using 'sdv.utils.poc.simplify_schema'."
+            '\nIf this is not possible, please visit datacebo.com and reach out to us for '
+            'enterprise solutions.\n\n'
+        )
+        assert captured.out == expected_output
 
     def test__get_extension_foreign_key_only(self):
         """Test the ``_get_extension`` method.

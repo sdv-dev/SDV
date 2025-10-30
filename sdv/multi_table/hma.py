@@ -16,8 +16,9 @@ from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.sampling import BaseHierarchicalSampler
 
 LOGGER = logging.getLogger(__name__)
-MAX_NUMBER_OF_COLUMNS = 1000
+PERFORMANCE_ALERT_DISPLAY_CAP = 1_000_000
 DEFAULT_EXTENDED_COLUMNS_DISTRIBUTION = 'truncnorm'
+MAX_NUMBER_OF_COLUMNS = 1000
 
 
 class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
@@ -139,6 +140,10 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 metadata, child_name, table_name, columns_per_table, distributions
             )
 
+            total_cols = sum(columns_list[1] for columns_list in columns_per_table.values())
+            if total_cols > PERFORMANCE_ALERT_DISPLAY_CAP:
+                return
+
         visited.add(table_name)
 
     @classmethod
@@ -171,6 +176,9 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             cls._estimate_columns_traversal(
                 metadata, table_name, columns_per_table, visited, distributions
             )
+            total_cols = sum(columns_list[1] for columns_list in columns_per_table.values())
+            if total_cols > PERFORMANCE_ALERT_DISPLAY_CAP:
+                break
 
         return {
             table_name: sum(columns_list) for table_name, columns_list in columns_per_table.items()
@@ -257,19 +265,25 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         metadata_columns = self._get_num_data_columns(self.metadata)
         print_table = []
         distributions = self._get_distributions()
-        for table, est_cols in self._estimate_num_columns(self.metadata, distributions).items():
+        estimated_columns = self._estimate_num_columns(self.metadata, distributions)
+        for table, est_cols in estimated_columns.items():
             entry = []
             entry.append(table)
             entry.append(sum(metadata_columns[table]))
             total_est_cols += est_cols
-            entry.append(est_cols)
+            entry.append(min(est_cols, PERFORMANCE_ALERT_DISPLAY_CAP))
             print_table.append(entry)
 
         if total_est_cols > MAX_NUMBER_OF_COLUMNS:
+            display_total = (
+                f'{PERFORMANCE_ALERT_DISPLAY_CAP}+'
+                if total_est_cols > PERFORMANCE_ALERT_DISPLAY_CAP
+                else f'{total_est_cols}'
+            )
             self._print(
                 'PerformanceAlert: Using the HMASynthesizer on this metadata '
                 'schema is not recommended. To model this data, HMA will '
-                f'generate a large number of columns. ({total_est_cols} columns)\n\n'
+                f'generate a large number of columns. ({display_total} columns)\n\n'
             )
             self._print(
                 pd.DataFrame(
