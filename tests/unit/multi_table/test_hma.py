@@ -148,7 +148,7 @@ class TestHMASynthesizer:
             'PerformanceAlert: Using the HMASynthesizer on this metadata schema is not recommended.'
             ' To model this data, HMA will generate a large number of columns. (1000000+ columns)\n'
             '\n\nTable Name  # Columns in Metadata  Est # Columns\n'
-            '   nesreca                      1        1000010\n\n'
+            '   nesreca                      1        1000000\n\n'
             "We recommend simplifying your metadata schema using 'sdv.utils.poc.simplify_schema'."
             '\nIf this is not possible, please visit datacebo.com and reach out to us for '
             'enterprise solutions.\n\n'

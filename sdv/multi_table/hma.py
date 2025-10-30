@@ -271,7 +271,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             entry.append(table)
             entry.append(sum(metadata_columns[table]))
             total_est_cols += est_cols
-            entry.append(est_cols)
+            entry.append(min(est_cols, PERFORMANCE_ALERT_DISPLAY_CAP))
             print_table.append(entry)
 
         if total_est_cols > MAX_NUMBER_OF_COLUMNS:
