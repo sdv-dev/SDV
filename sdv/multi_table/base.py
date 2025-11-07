@@ -90,6 +90,9 @@ class BaseMultiTableSynthesizer:
                 self._table_synthesizers[table_name] = self._synthesizer(
                     metadata=metadata, **synthesizer_parameters
                 )
+                # Mark synthesizer as embedded in a multi-table setting
+                # so it can suppres datetime_format warnings that are aggregated here
+                self._table_synthesizers[table_name]._suppress_datetime_format_warning = True
                 self._table_synthesizers[table_name]._data_processor.table_name = table_name
 
     def _get_pbar_args(self, **kwargs):

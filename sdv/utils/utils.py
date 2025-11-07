@@ -2,6 +2,7 @@
 
 import datetime
 import sys
+import warnings
 from copy import deepcopy
 
 import cloudpickle
@@ -55,7 +56,14 @@ def drop_unknown_references(data, metadata, drop_missing_values=False, verbose=T
     })
     metadata.validate()
     try:
-        metadata.validate_data(data)
+        # Suppress duplicate datetime_format warnings during referential integrity validation.
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore',
+                message=r"No 'datetime_format' is present.*",
+                category=UserWarning,
+            )
+            metadata.validate_data(data)
         if drop_missing_values:
             _validate_foreign_keys_not_null(metadata, data)
 
