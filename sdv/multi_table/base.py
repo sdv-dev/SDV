@@ -407,6 +407,8 @@ class BaseMultiTableSynthesizer:
         self._table_synthesizers[table_name] = self._synthesizer(
             metadata=table_metadata, **table_parameters
         )
+        # Mark synthesizer as embedded in a multi-table setting to avoid duplicate datetime warnings
+        self._table_synthesizers[table_name]._suppress_datetime_format_warning = True
         self._table_synthesizers[table_name]._data_processor.table_name = table_name
         self._table_parameters[table_name].update(deepcopy(table_parameters))
 
