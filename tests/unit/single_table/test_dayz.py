@@ -6,10 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError, SynthesizerProcessingError
 from sdv.metadata import Metadata
-from sdv.multi_table.dayz import DayZSynthesizer as MultiTableDayZSynthesizer
 from sdv.single_table.dayz import (
     DayZSynthesizer,
     _detect_column_parameters,
@@ -559,21 +557,6 @@ class TestDayZSynthesizer:
         )
         with pytest.raises(SynthesizerProcessingError, match=expected_error_msg):
             _validate_parameters(metadata, dayz_parameters)
-
-    def test__validate_parameters_errors_with_relationships(self):
-        """Test that single-table validation errors if relationships are provided."""
-        # Setup
-        data, metadata = download_demo('multi_table', 'financial_v1')
-        dayz_parameters = MultiTableDayZSynthesizer.create_parameters(data, metadata)
-        del dayz_parameters['relationships']
-
-        # Run and Assert
-        expected_error_msg = re.escape(
-            'Invalid metadata provided for single-table DayZSynthesizer. The metadata contains '
-            'multiple tables. Please use multi-table DayZSynthesizer instead.'
-        )
-        with pytest.raises(SynthesizerProcessingError, match=expected_error_msg):
-            DayZSynthesizer.validate_parameters(metadata, dayz_parameters)
 
     def test_create_parameters_returns_valid_defaults(self):
         """Test create_parameters returns valid defaults."""

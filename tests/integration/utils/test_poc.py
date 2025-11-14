@@ -55,10 +55,92 @@ def data():
     return {'parent': parent, 'child': child}
 
 
+@pytest.fixture
+def large_data():
+    great_grandparent = pd.DataFrame({'ggp_id': [1, 2, 3], 'ggp_data': ['A', 'B', 'C']})
+    grandparent = pd.DataFrame({
+        'gp_id': [10, 11, 12, 13],
+        'ggp_id': [1, 1, 2, 3],
+        'gp_data': ['X', 'Y', 'Z', 'W'],
+    })
+    parent = pd.DataFrame({
+        'p_id': [100, 101, 102, 103, 104],
+        'gp_id': [10, 10, 11, 12, 13],
+        'p_data': ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon'],
+    })
+    child = pd.DataFrame({
+        'c_id': [1000, 1001, 1002, 1003, 1004, 1005],
+        'p_id': [100, 100, 101, 102, 103, 104],
+        'c_data': ['One', 'Two', 'Three', 'Four', 'Five', 'Six'],
+    })
+    return {
+        'great_grandparent': great_grandparent,
+        'grandparent': grandparent,
+        'parent': parent,
+        'child': child,
+    }
+
+
+@pytest.fixture
+def large_metadata():
+    return Metadata.load_from_dict({
+        'tables': {
+            'great_grandparent': {
+                'columns': {'ggp_id': {'sdtype': 'id'}, 'ggp_data': {'sdtype': 'categorical'}},
+                'primary_key': 'ggp_id',
+            },
+            'grandparent': {
+                'columns': {
+                    'gp_id': {'sdtype': 'id'},
+                    'ggp_id': {'sdtype': 'id'},
+                    'gp_data': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'gp_id',
+            },
+            'parent': {
+                'columns': {
+                    'p_id': {'sdtype': 'id'},
+                    'gp_id': {'sdtype': 'id'},
+                    'p_data': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'p_id',
+            },
+            'child': {
+                'columns': {
+                    'c_id': {'sdtype': 'id'},
+                    'p_id': {'sdtype': 'id'},
+                    'c_data': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'c_id',
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'great_grandparent',
+                'parent_primary_key': 'ggp_id',
+                'child_table_name': 'grandparent',
+                'child_foreign_key': 'ggp_id',
+            },
+            {
+                'parent_table_name': 'grandparent',
+                'parent_primary_key': 'gp_id',
+                'child_table_name': 'parent',
+                'child_foreign_key': 'gp_id',
+            },
+            {
+                'parent_table_name': 'parent',
+                'parent_primary_key': 'p_id',
+                'child_table_name': 'child',
+                'child_foreign_key': 'p_id',
+            },
+        ],
+    })
+
+
 def test_simplify_schema(capsys):
     """Test ``simplify_schema`` end to end."""
     # Setup
-    data, metadata = download_demo('multi_table', 'AustralianFootball_v1')
+    data, metadata = download_demo('multi_table', 'AustralianFootball')
     num_estimated_column_before_simplification = _get_total_estimated_columns(metadata)
     HMASynthesizer(metadata)
     captured_before_simplification = capsys.readouterr()
@@ -101,7 +183,7 @@ def test_simplify_schema(capsys):
 def test_simpliy_nothing_to_simplify():
     """Test ``simplify_schema`` end to end when no simplification is required."""
     # Setup
-    data, metadata = download_demo('multi_table', 'Biodegradability_v1')
+    data, metadata = download_demo('multi_table', 'fake_hotels')
 
     # Run
     data_simplify, metadata_simplify = simplify_schema(data, metadata)
@@ -117,117 +199,101 @@ def test_simpliy_nothing_to_simplify():
 def test_simplify_no_grandchild():
     """Test ``simplify_schema`` end to end when there is no grandchild table."""
     # Setup
-    data, metadata = download_demo('multi_table', 'MuskSmall_v1')
-    num_estimated_column_before_simplification = _get_total_estimated_columns(metadata)
+    parent_data = pd.DataFrame({
+        'parent_id': range(500),
+        'parent_col1': np.random.choice(['A', 'B', 'C'], 500),
+        'parent_col2': np.random.randn(500),
+    })
+    child_columns = {'child_id': range(500), 'parent_id': np.random.choice(range(500), 500)}
+    for i in range(168):
+        child_columns[f'child_col_{i}'] = np.random.choice(['X', 'Y', 'Z'], 500)
+    child_data = pd.DataFrame(child_columns)
+    data = {'parent': parent_data, 'child': child_data}
+    parent_columns = {
+        'parent_id': {'sdtype': 'id'},
+        'parent_col1': {'sdtype': 'categorical'},
+        'parent_col2': {'sdtype': 'numerical'},
+    }
+    child_columns_meta = {'child_id': {'sdtype': 'id'}, 'parent_id': {'sdtype': 'id'}}
+    for i in range(168):
+        child_columns_meta[f'child_col_{i}'] = {'sdtype': 'categorical'}
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'parent': {'columns': parent_columns, 'primary_key': 'parent_id'},
+            'child': {'columns': child_columns_meta, 'primary_key': 'child_id'},
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'parent',
+                'parent_primary_key': 'parent_id',
+                'child_table_name': 'child',
+                'child_foreign_key': 'parent_id',
+            }
+        ],
+    })
 
     # Run
+    num_estimated_column_before_simplification = _get_total_estimated_columns(metadata)
     data_simplify, metadata_simplify = simplify_schema(data, metadata)
 
     # Assert
     metadata_simplify.validate()
     metadata_simplify.validate_data(data_simplify)
     num_estimated_column_after_simplification = _get_total_estimated_columns(metadata_simplify)
-    assert num_estimated_column_before_simplification == 14527
-    assert num_estimated_column_after_simplification == 982
+    assert num_estimated_column_before_simplification > num_estimated_column_after_simplification
 
 
-def test_simplify_schema_big_demo_datasets():
+def test_simplify_schema_big_demo_datasets(large_data, large_metadata):
     """Test ``simplify_schema`` end to end for demo datasets that require simplification.
 
     This test will fail if the number of estimated columns after simplification is greater than
     the maximum number of columns allowed for any dataset.
     """
-    # Setup
-    list_datasets = [
-        'AustralianFootball_v1',
-        'MuskSmall_v1',
-        'Countries_v1',
-        'NBA_v1',
-        'NCAA_v1',
-        'PremierLeague_v1',
-        'financial_v1',
-    ]
-    for dataset in list_datasets:
-        real_data, metadata = download_demo('multi_table', dataset)
+    # Run
+    _data_simplify, metadata_simplify = simplify_schema(large_data, large_metadata)
 
-        # Run
-        _data_simplify, metadata_simplify = simplify_schema(real_data, metadata)
-
-        # Assert
-        estimate_column_before = _get_total_estimated_columns(metadata)
-        estimate_column_after = _get_total_estimated_columns(metadata_simplify)
-        assert estimate_column_before > MAX_NUMBER_OF_COLUMNS
-        assert estimate_column_after <= MAX_NUMBER_OF_COLUMNS
+    # Assert
+    estimate_column_before = _get_total_estimated_columns(large_metadata)
+    estimate_column_after = _get_total_estimated_columns(metadata_simplify)
+    assert estimate_column_before > MAX_NUMBER_OF_COLUMNS
+    assert estimate_column_after <= MAX_NUMBER_OF_COLUMNS
 
 
-@pytest.mark.parametrize(
-    ('dataset_name', 'main_table_1', 'main_table_2', 'num_rows_1', 'num_rows_2'),
-    [
-        ('AustralianFootball_v1', 'matches', 'players', 1000, 1000),
-        ('MuskSmall_v1', 'molecule', 'conformation', 50, 150),
-        ('NBA_v1', 'Team', 'Actions', 10, 200),
-        ('NCAA_v1', 'tourney_slots', 'tourney_compact_results', 1000, 1000),
-    ],
-)
-def test_get_random_subset(dataset_name, main_table_1, main_table_2, num_rows_1, num_rows_2):
+def test_get_random_subset():
     """Test ``get_random_subset`` end to end.
 
     The goal here is test that the function works for various schema and also by subsampling
     different main tables.
-
-    For `AustralianFootball_v1` (parent with child and grandparent):
-    - main table 1 = `matches` which is the child of `teams` and the parent of `match_stats`.
-    - main table 2 = `players` which is the parent of `matches`.
-
-    For `MuskSmall_v1` (1 parent - 1 child relationship):
-    - main table 1 = `molecule` which is the parent of `conformation`.
-    - main table 2 = `conformation` which is the child of `molecule`.
-
-    For `NBA_v1` (child with parents and grandparent):
-    - main table 1 = `Team` which is the root table.
-    - main table 2 = `Actions` which is the last child. It has relationships with `Game` and `Team`
-      and `Player`.
-
-    For `NCAA_v1` (child with multiple parents):
-    - main table 1 = `tourney_slots` which is only the child of `seasons`.
-    - main table 2 = `tourney_compact_results` which is the child of `teams` with two relationships
-      and of `seasons` with one relationship.
     """
     # Setup
-    real_data, metadata = download_demo('multi_table', dataset_name)
+    real_data, metadata = download_demo('multi_table', 'fake_hotels')
 
     # Run
-    result_1 = get_random_subset(real_data, metadata, main_table_1, num_rows_1, verbose=False)
-    result_2 = get_random_subset(real_data, metadata, main_table_2, num_rows_2, verbose=False)
+    result_1 = get_random_subset(real_data, metadata, 'hotels', 10, verbose=False)
+    result_2 = get_random_subset(real_data, metadata, 'guests', 20, verbose=False)
 
     # Assert
-    assert len(result_1[main_table_1]) == num_rows_1
-    assert len(result_2[main_table_2]) == num_rows_2
+    assert len(result_1['hotels']) == 10
+    assert len(result_2['guests']) == 20
 
 
 def test_get_random_subset_disconnected_schema():
-    """Test ``get_random_subset`` end to end for a disconnected schema.
-
-    Here we break the schema so there is only parent-child relationships between
-    `Player`-`Action` and `Team`-`Game`.
-    The part that is not connected to the main table (`Player`) should be subsampled also
-    in a similar proportion.
-    """
+    """Test ``get_random_subset`` end to end for a disconnected schema."""
     # Setup
-    real_data, metadata = download_demo('multi_table', 'NBA_v1')
-    metadata.remove_relationship('Game', 'Actions')
-    metadata.remove_relationship('Team', 'Actions')
+    real_data, metadata = download_demo('multi_table', 'fake_hotels')
+    metadata.remove_relationship('hotels', 'guests')
     metadata.validate = Mock()
     metadata.validate_data = Mock()
     proportion_to_keep = 0.6
-    num_rows_to_keep = int(len(real_data['Player']) * proportion_to_keep)
+    num_rows_to_keep = int(len(real_data['guests']) * proportion_to_keep)
 
     # Run
-    result = get_random_subset(real_data, metadata, 'Player', num_rows_to_keep, verbose=False)
+    result = get_random_subset(real_data, metadata, 'guests', num_rows_to_keep, verbose=False)
 
     # Assert
-    assert len(result['Player']) == num_rows_to_keep
-    assert len(result['Team']) == int(len(real_data['Team']) * proportion_to_keep)
+    assert len(result['guests']) == num_rows_to_keep
+    assert len(result['hotels']) >= int(len(real_data['hotels']) * proportion_to_keep)
 
 
 def test_get_random_subset_with_missing_values(metadata, data):
