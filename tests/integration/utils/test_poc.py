@@ -137,26 +137,27 @@ def large_metadata():
     })
 
 
-def test_simplify_schema(capsys, large_data, large_metadata):
+def test_simplify_schema(capsys):
     """Test ``simplify_schema`` end to end."""
     # Setup
-    num_estimated_column_before_simplification = _get_total_estimated_columns(large_metadata)
-    HMASynthesizer(large_metadata)
+    data, metadata = download_demo('multi_table', 'AustralianFootball')
+    num_estimated_column_before_simplification = _get_total_estimated_columns(metadata)
+    HMASynthesizer(metadata)
     captured_before_simplification = capsys.readouterr()
 
     # Run
-    data_simplify, metadata_simplify = simplify_schema(large_data, large_metadata)
+    data_simplify, metadata_simplify = simplify_schema(data, metadata)
     captured_after_simplification = capsys.readouterr()
 
     # Assert
     expected_message_before = re.compile(
         r'PerformanceAlert: Using the HMASynthesizer on this metadata schema is not recommended\.'
-        r' To model this data, HMA will generate a large number of columns\. \(1034 columns\)\s+'
+        r' To model this data, HMA will generate a large number of columns\. \(135934 columns\)\s+'
         r'Table Name\s*#\s*Columns in Metadata\s*Est # Columns\s*'
-        r'great_grandparent\s*1\s*986\s*'
-        r'grandparent\s*1\s*41\s*'
-        r'parent\s*1\s*6\s*'
-        r'child\s*1\s*1\s*'
+        r'match_stats\s*24\s*24\s*'
+        r'matches\s*39\s*364\s*'
+        r'players\s*5\s*330\s*'
+        r'teams\s*1\s*135216\s*'
         r'We recommend simplifying your metadata schema using '
         r"'sdv.utils.poc.simplify_schema'\.\s*"
         r'If this is not possible, please visit '
@@ -165,18 +166,18 @@ def test_simplify_schema(capsys, large_data, large_metadata):
     expected_message_after = re.compile(
         r'Success! The schema has been simplified\.\s+'
         r'Table Name\s*#\s*Columns \(Before\)\s*#\s*Columns \(After\)\s*'
-        r'child\s*3\s*0\s*'
-        r'grandparent\s*3\s*3\s*'
-        r'great_grandparent\s*2\s*2\s*'
-        r'parent\s*3\s*2'
+        r'match_stats\s*28\s*3\s*'
+        r'matches\s*42\s*21\s*'
+        r'players\s*6\s*0\s*'
+        r'teams\s*2\s*2'
     )
     assert expected_message_before.match(captured_before_simplification.out.strip())
     assert expected_message_after.match(captured_after_simplification.out.strip())
     metadata_simplify.validate()
     metadata_simplify.validate_data(data_simplify)
     num_estimated_column_after_simplification = _get_total_estimated_columns(metadata_simplify)
-    assert num_estimated_column_before_simplification == 1034
-    assert num_estimated_column_after_simplification == 13
+    assert num_estimated_column_before_simplification == 173818
+    assert num_estimated_column_after_simplification == 517
 
 
 def test_simpliy_nothing_to_simplify():
