@@ -561,7 +561,18 @@ class BaseSynthesizer:
             data (pandas.DataFrame):
                 The data to validate.
         """
-        self._original_metadata.validate_data({self._table_name: data})
+        # Suppress duplicate datetime_format warning only when this single-table synthesizer
+        # is embedded inside a multi-table synthesizer
+        if getattr(self, '_suppress_datetime_format_warning', False):
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    'ignore',
+                    message=r"No 'datetime_format' is present.*",
+                    category=UserWarning,
+                )
+                self._original_metadata.validate_data({self._table_name: data})
+        else:
+            self._original_metadata.validate_data({self._table_name: data})
         self._validate_transform_constraints(data, enforce_constraint_fitting=True)
 
         # Retaining the logic of returning errors and raising them here to maintain consistency
