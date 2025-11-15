@@ -1,4 +1,4 @@
-Run started:2025-10-17 19:38:52.414320
+Run started:2025-11-14 21:11:19.372743
 
 Test results:
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
@@ -30,6 +30,39 @@ Test results:
 16	    """
 17	    assert path.exists(), 'The expected file was not found.'
 18	    module_path = path.parent
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b112_try_except_continue.html
+   Location: ./sdv/datasets/demo.py:97:8
+96	                matches.append(key)
+97	        except Exception:
+98	            continue
+99	
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b112_try_except_continue.html
+   Location: ./sdv/datasets/demo.py:158:8
+157	
+158	        except Exception:
+159	            continue
+160	
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b112_try_except_continue.html
+   Location: ./sdv/datasets/demo.py:437:8
+436	
+437	        except Exception:
+438	            continue
+439	
 
 --------------------------------------------------
 >> Issue: [B306:blacklist] Use of insecure and deprecated function (mktemp).
@@ -67,12 +100,12 @@ Test results:
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b110_try_except_pass.html
-   Location: ./sdv/multi_table/hma.py:365:12
-364	                    index.append(foreign_key_value)
-365	            except Exception:
-366	                # Skip children rows subsets that fail
-367	                pass
-368	
+   Location: ./sdv/multi_table/hma.py:401:12
+400	                    index.append(foreign_key_value)
+401	            except Exception:
+402	                # Skip children rows subsets that fail
+403	                pass
+404	
 
 --------------------------------------------------
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
@@ -88,19 +121,19 @@ Test results:
 --------------------------------------------------
 
 Code scanned:
-	Total lines of code: 16761
+	Total lines of code: 17119
 	Total lines skipped (#nosec): 0
 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
 
 Run metrics:
 	Total issues (by severity):
 		Undefined: 0
-		Low: 7
+		Low: 10
 		Medium: 1
 		High: 0
 	Total issues (by confidence):
 		Undefined: 0
 		Low: 0
 		Medium: 2
-		High: 6
+		High: 9
 Files skipped (0):
