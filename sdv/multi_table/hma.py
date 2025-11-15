@@ -16,8 +16,9 @@ from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.sampling import BaseHierarchicalSampler
 
 LOGGER = logging.getLogger(__name__)
-MAX_NUMBER_OF_COLUMNS = 1000
+PERFORMANCE_ALERT_DISPLAY_CAP = 1_000_000
 DEFAULT_EXTENDED_COLUMNS_DISTRIBUTION = 'truncnorm'
+MAX_NUMBER_OF_COLUMNS = 1000
 
 
 class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
@@ -53,7 +54,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         columns_per_table = {}
         for table_name, table in metadata.tables.items():
             key_columns = metadata._get_all_keys(table_name)
-            columns_per_table[table_name] = sum([
+            num_data_columns = sum([
                 1
                 for col_name, col_meta in table.columns.items()
                 if (
@@ -61,6 +62,8 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                     or (col_name not in key_columns and col_meta.get('pii', False) is False)
                 )
             ])
+            num_extended_columns = 0
+            columns_per_table[table_name] = [num_data_columns, num_extended_columns]
 
         return columns_per_table
 
@@ -85,18 +88,29 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 table_name, cls.DEFAULT_SYNTHESIZER_KWARGS['default_distribution']
             )
 
-        num_parameters = cls.DISTRIBUTIONS_TO_NUM_PARAMETER_COLUMNS[distribution]
-
+        num_params_data = cls.DISTRIBUTIONS_TO_NUM_PARAMETER_COLUMNS[distribution]
+        num_params_extended = cls.DISTRIBUTIONS_TO_NUM_PARAMETER_COLUMNS[
+            DEFAULT_EXTENDED_COLUMNS_DISTRIBUTION
+        ]
         num_rows_columns = len(metadata._get_foreign_keys(parent_table, table_name))
 
-        # no parameter columns are generated if there are no data columns
-        num_data_columns = columns_per_table[table_name]
-        if num_data_columns == 0:
+        # no parameter columns are generated if there are no data or extended columns
+        num_data_columns = columns_per_table[table_name][0]
+        num_extended_columns = columns_per_table[table_name][1]
+
+        if (num_data_columns + num_extended_columns) == 0:
             return num_rows_columns
 
-        num_parameters_columns = num_rows_columns * num_data_columns * num_parameters
+        num_parameters_columns = (num_rows_columns * num_data_columns * num_params_data) + (
+            num_rows_columns * num_extended_columns * num_params_extended
+        )
 
-        num_correlation_columns = num_rows_columns * (num_data_columns - 1) * num_data_columns // 2
+        num_correlation_columns = (
+            num_rows_columns
+            * (num_data_columns + num_extended_columns - 1)
+            * (num_data_columns + num_extended_columns)
+            // 2
+        )
 
         return num_correlation_columns + num_rows_columns + num_parameters_columns
 
@@ -118,11 +132,17 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         """
         for child_name in metadata._get_child_map()[table_name]:
             if child_name not in visited:
-                cls._estimate_columns_traversal(metadata, child_name, columns_per_table, visited)
+                cls._estimate_columns_traversal(
+                    metadata, child_name, columns_per_table, visited, distributions
+                )
 
-            columns_per_table[table_name] += cls._get_num_extended_columns(
+            columns_per_table[table_name][1] += cls._get_num_extended_columns(
                 metadata, child_name, table_name, columns_per_table, distributions
             )
+
+            total_cols = sum(columns_list[1] for columns_list in columns_per_table.values())
+            if total_cols > PERFORMANCE_ALERT_DISPLAY_CAP:
+                return
 
         visited.add(table_name)
 
@@ -156,8 +176,13 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             cls._estimate_columns_traversal(
                 metadata, table_name, columns_per_table, visited, distributions
             )
+            total_cols = sum(columns_list[1] for columns_list in columns_per_table.values())
+            if total_cols > PERFORMANCE_ALERT_DISPLAY_CAP:
+                break
 
-        return columns_per_table
+        return {
+            table_name: sum(columns_list) for table_name, columns_list in columns_per_table.items()
+        }
 
     def __init__(self, metadata, locales=['en_US'], verbose=True):
         BaseMultiTableSynthesizer.__init__(self, metadata, locales=locales)
@@ -173,6 +198,11 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         BaseHierarchicalSampler.__init__(
             self, self.metadata, self._table_synthesizers, self._table_sizes
         )
+        child_tables = set()
+        for relationship in metadata.relationships:
+            child_tables.add(relationship['child_table_name'])
+        for child_table_name in child_tables:
+            self.set_table_parameters(child_table_name, {'default_distribution': 'norm'})
         self._print_estimate_warning()
 
     def set_table_parameters(self, table_name, table_parameters):
@@ -235,19 +265,25 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         metadata_columns = self._get_num_data_columns(self.metadata)
         print_table = []
         distributions = self._get_distributions()
-        for table, est_cols in self._estimate_num_columns(self.metadata, distributions).items():
+        estimated_columns = self._estimate_num_columns(self.metadata, distributions)
+        for table, est_cols in estimated_columns.items():
             entry = []
             entry.append(table)
-            entry.append(metadata_columns[table])
+            entry.append(sum(metadata_columns[table]))
             total_est_cols += est_cols
-            entry.append(est_cols)
+            entry.append(min(est_cols, PERFORMANCE_ALERT_DISPLAY_CAP))
             print_table.append(entry)
 
         if total_est_cols > MAX_NUMBER_OF_COLUMNS:
+            display_total = (
+                f'{PERFORMANCE_ALERT_DISPLAY_CAP}+'
+                if total_est_cols > PERFORMANCE_ALERT_DISPLAY_CAP
+                else f'{total_est_cols}'
+            )
             self._print(
                 'PerformanceAlert: Using the HMASynthesizer on this metadata '
                 'schema is not recommended. To model this data, HMA will '
-                f'generate a large number of columns. ({total_est_cols} columns)\n\n'
+                f'generate a large number of columns. ({display_total} columns)\n\n'
             )
             self._print(
                 pd.DataFrame(
@@ -613,7 +649,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             # Some rows got singular matrix error and the rest were 0
             # Fallback to num_rows on the singular matrix rows and
             # keep 0s on the rest.
-            likelihoods = likelihoods.fillna(num_rows)
+            likelihoods = likelihoods.astype(float).fillna(num_rows)
         else:
             # at least one row got a valid likelihood, so fill the
             # rows that got a singular matrix error with the mean
@@ -679,6 +715,9 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             parameters = self._extract_parameters(row, table_name, foreign_key)
             table_meta = self._table_synthesizers[table_name].get_metadata()
             synthesizer = self._synthesizer(table_meta, **self._table_parameters[table_name])
+            extended_columns = getattr(self, '_parent_extended_columns', {}).get(table_name, [])
+            if extended_columns:
+                self._set_extended_columns_distributions(synthesizer, table_name, extended_columns)
             synthesizer._set_parameters(parameters)
             try:
                 likelihoods[parent_id] = synthesizer._get_likelihood(table_rows)

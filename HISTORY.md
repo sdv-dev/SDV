@@ -1,5 +1,34 @@
 # Release Notes
 
+## v1.29.0 - 2025-11-14
+
+### New Features
+
+* Prevent users from accidentally overriding the source or README files - Issue [#2686](https://github.com/sdv-dev/SDV/issues/2686) by @fealho
+* Ensure that the source/readme files can only be downloaded in `txt` format - Issue [#2685](https://github.com/sdv-dev/SDV/issues/2685) by @fealho
+* If a source or readme does not exist for a dataset, show a warning - Issue [#2684](https://github.com/sdv-dev/SDV/issues/2684) by @fealho
+* Add get_source and get_readme functions for demo datasets - Issue [#2663](https://github.com/sdv-dev/SDV/issues/2663) by @fealho
+* Update the download_demo  and get_available_demos functions - Issue [#2661](https://github.com/sdv-dev/SDV/issues/2661) by @fealho
+
+### Bugs Fixed
+
+* PARSynthesizer crashes if context columns are listed in a different order than the data - Issue [#2719](https://github.com/sdv-dev/SDV/issues/2719) by @sarahmish
+* HMASynthesizer - Cap displayed column count in PerformanceAlert Message - Issue [#2716](https://github.com/sdv-dev/SDV/issues/2716) by @fealho
+* HMA sampling raises a pandas FutureWarning: Downcasting object dtype arrays - Issue [#2711](https://github.com/sdv-dev/SDV/issues/2711) by @frances-h
+* download_demo errors if the dataset_name in the metainfo does not match the dataset name in the folder - Issue [#2691](https://github.com/sdv-dev/SDV/issues/2691) by @fealho
+* download_demo should ignore non-csv files in data.zip - Issue [#2690](https://github.com/sdv-dev/SDV/issues/2690) by @fealho
+* Improve error message when no csv file are found for a dataset when using download_demo - Issue [#2689](https://github.com/sdv-dev/SDV/issues/2689) by @fealho
+* `download_demo` may fail for some `data.zip` files - Issue [#2688](https://github.com/sdv-dev/SDV/issues/2688) by @fealho
+* `download_demo` failing when `output_folder_path` is set - Issue [#2687](https://github.com/sdv-dev/SDV/issues/2687) by @fealho
+
+### Internal
+
+* HMASynthesizer - model child tables with norm distribution - Issue [#2665](https://github.com/sdv-dev/SDV/issues/2665) by @rwedge
+
+### Maintenance
+
+* Remove support for Python 3.8 - Issue [#2681](https://github.com/sdv-dev/SDV/issues/2681) by @fealho
+
 ## v1.28.0 - 2025-10-17
 
 ### New Features

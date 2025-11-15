@@ -8,7 +8,6 @@ classifiers = [
     'License :: Free for non-commercial use',
     'Natural Language :: English',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
@@ -19,7 +18,7 @@ classifiers = [
 keywords = ['sdv', 'synthetic-data', 'synhtetic-data-generation', 'timeseries', 'single-table', 'multi-table']
 dynamic = ['version']
 license = { text = 'BSL-1.1' }
-requires-python = '>=3.8,<3.14'
+requires-python = '>=3.9,<3.14'
 readme = 'README.md'
 dependencies = [
     'boto3>=1.28,<2.0.0',
@@ -143,7 +142,7 @@ namespaces = false
 version = {attr = 'sdv.__version__'}
 
 [tool.bumpversion]
-current_version = "1.28.0"
+current_version = "1.29.0.dev0"
 parse = '(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(\.(?P<release>[a-z]+)(?P<candidate>\d+))?'
 serialize = [
     '{major}.{minor}.{patch}.{release}{candidate}',

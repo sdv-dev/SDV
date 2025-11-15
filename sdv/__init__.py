@@ -6,7 +6,7 @@
 
 __author__ = 'DataCebo, Inc.'
 __email__ = 'info@sdv.dev'
-__version__ = '1.28.0'
+__version__ = '1.29.0.dev0'
 
 
 import sys
