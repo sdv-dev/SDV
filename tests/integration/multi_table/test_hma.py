@@ -2802,3 +2802,57 @@ def test_end_to_end_with_constraints():
 
     # Assert
     synthesizer.validate(synthetic_data)
+
+
+def test_datetime_warning_doesnt_repeat():
+    """Test that the datetime warning doesn't repeat GH#2739."""
+    # Setup
+    composite_data = {
+        'main': pd.DataFrame({
+            'pk': [1, 2, 3, 4, 5],
+            'denormalized_primary_key_1': [1, 1, 2, 2, 5],
+            'denormalized_primary_key_2': ['a', 'a', 'b', 'c', 'c'],
+            'denormalized_column': [
+                '2020-01-01',
+                '2020-01-01',
+                '2020-01-02',
+                '2020-01-02',
+                '2020-01-03',
+            ],
+            'other_col': ['2020-01-01', '2020-01-02', '2020-01-03', '2020-01-04', '2020-01-05'],
+        })
+    }
+
+    composite_metadata = Metadata.load_from_dict({
+        'tables': {
+            'main': {
+                'columns': {
+                    'pk': {'sdtype': 'id'},
+                    'denormalized_primary_key_1': {'sdtype': 'id'},
+                    'denormalized_primary_key_2': {'sdtype': 'categorical'},
+                    'denormalized_column': {'sdtype': 'datetime'},
+                    'other_col': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                },
+                'primary_key': 'pk',
+            },
+        },
+    })
+
+    comp_synth = HMASynthesizer(composite_metadata)
+
+    # Run
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+        comp_synth.fit(composite_data)
+        comp_synth.sample(1)
+
+    # Assert
+    assert len(w) == 1
+    msg = (
+        "No 'datetime_format' is present in the metadata for the following columns:\n"
+        ' Table Name         Column Name   sdtype datetime_format\n'
+        '      main denormalized_column datetime            None\n'
+        'Without this specification, SDV may not be able to accurately parse the data. '
+        "We recommend adding datetime formats using 'update_column'."
+    )
+    assert str(w[0].message) == msg
