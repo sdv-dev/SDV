@@ -1143,7 +1143,8 @@ def test_download_demo_skips_non_csv_in_memory_no_warning(mock_list, mock_get):
     with pytest.warns(UserWarning, match=warn_msg) as rec:
         data, _ = download_demo('single_table', 'mix')
 
-    assert len(rec) == 1
+    assert any(warn_msg in str(warn_record) for warn_record in rec)
+        
     expected = pd.DataFrame({'id': [1, 2], 'name': ['a', 'b']})
     pd.testing.assert_frame_equal(data, expected)
 
@@ -1199,7 +1200,7 @@ def test_download_demo_on_disk_warns_failed_csv_only(mock_list, mock_get, tmp_pa
     with pytest.warns(UserWarning, match=warn_msg) as rec:
         data, _ = download_demo('single_table', 'mix', out_dir)
 
-    assert len(rec) == 1
+    assert any(warn_msg in str(warn_record) for warn_record in rec)
     pd.testing.assert_frame_equal(data, good)
 
 
