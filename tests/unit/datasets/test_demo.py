@@ -133,7 +133,7 @@ def test__download(mock_list, mock_get_data_from_bucket):
 
     # Run
     data_io, metadata_bytes = _download(
-        'single_table', 'ring', bucket='test_bucket', credentials=None
+        'single_table', 'ring', bucket='sdv-datasets-public', credentials=None
     )
 
     # Assert
@@ -561,7 +561,7 @@ def test_get_available_demos_credentials_raises_error():
     with pytest.raises(ValueError, match=error_message):
         get_available_demos(
             'single_table',
-            bucket='sdv-datasets-public',
+            s3_bucket_name='sdv-datasets-public',
             credentials={'username': 'test@gmail.com', 'license_key': 'FakeKey123'},
         )
 

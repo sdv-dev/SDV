@@ -40,13 +40,10 @@ def _validate_output_folder(output_folder_name):
         )
 
 
-def _validate_bucket(bucket):
-    if bucket != PUBLIC_BUCKET:
-        raise ValueError('Private buckets are only supported in SDV Enterprise.')
-
-
-def _create_s3_client(credentials=None):
+def _create_s3_client(credentials=None, bucket=None):
     """Create and return an S3 client with unsigned requests."""
+    if bucket is not None and bucket != PUBLIC_BUCKET:
+        raise ValueError('Private buckets are only supported in SDV Enterprise.')
     if credentials is not None:
         raise ValueError(
             'DataCebo credentials for private buckets are only supported in SDV Enterprise.'
@@ -181,7 +178,7 @@ def _download(modality, dataset_name, bucket, credentials=None):
         tuple:
             (BytesIO(zip_bytes), metadata_bytes)
     """
-    client = _create_s3_client(credentials)
+    client = _create_s3_client(credentials, bucket)
     dataset_prefix = f'{modality}/{dataset_name}/'
     bucket_url = f'https://{bucket}.s3.amazonaws.com'
     LOGGER.info(
@@ -325,7 +322,7 @@ def _get_metadata(metadata_bytes, dataset_name, output_folder_name=None):
 
 
 def download_demo(
-    modality, dataset_name, output_folder_name=None, bucket=PUBLIC_BUCKET, credentials=None
+    modality, dataset_name, output_folder_name=None, s3_bucket_name=PUBLIC_BUCKET, credentials=None
 ):
     """Download a demo dataset.
 
@@ -338,7 +335,7 @@ def download_demo(
             The name of the local folder where the metadata and data should be stored.
             If ``None`` the data is not saved locally and is loaded as a Python object.
             Defaults to ``None``.
-        bucket (str):
+        s3_bucket_name (str):
             The name of the bucket to download from. Only 'sdv-datasets-public' is supported in
             SDV Community. SDV Enterprise is required for other buckets.
         credentials (str):
@@ -362,9 +359,8 @@ def download_demo(
     """
     _validate_modalities(modality)
     _validate_output_folder(output_folder_name)
-    _validate_bucket(bucket=bucket)
 
-    data_io, metadata_bytes = _download(modality, dataset_name, bucket, credentials)
+    data_io, metadata_bytes = _download(modality, dataset_name, s3_bucket_name, credentials)
     in_memory_directory = _extract_data(data_io, output_folder_name)
     data = _get_data(modality, output_folder_name, in_memory_directory)
     metadata = _get_metadata(metadata_bytes, dataset_name, output_folder_name)
@@ -432,13 +428,13 @@ def _parse_num_tables(num_tables_val, dataset_name):
         return np.nan
 
 
-def get_available_demos(modality, bucket=PUBLIC_BUCKET, credentials=None):
+def get_available_demos(modality, s3_bucket_name=PUBLIC_BUCKET, credentials=None):
     """Get demo datasets available for a ``modality``.
 
     Args:
         modality (str):
             The modality of the dataset: ``'single_table'``, ``'multi_table'``, ``'sequential'``.
-        bucket (str):
+        s3_bucket_name (str):
             The name of the bucket to download from. Only 'sdv-datasets-public' is supported in
             SDV Community. SDV Enterprise is required for other buckets.
         credentials (str):
@@ -456,13 +452,12 @@ def get_available_demos(modality, bucket=PUBLIC_BUCKET, credentials=None):
                 ``num_tables``: The number of tables in the dataset.
     """
     _validate_modalities(modality)
-    _validate_bucket(bucket=bucket)
-    s3_client = _create_s3_client(credentials=credentials)
-    contents = _list_objects(f'{modality}/', bucket=bucket, client=s3_client)
+    s3_client = _create_s3_client(credentials=credentials, bucket=s3_bucket_name)
+    contents = _list_objects(f'{modality}/', bucket=s3_bucket_name, client=s3_client)
     tables_info = defaultdict(list)
     for dataset_name, yaml_key in _iter_metainfo_yaml_entries(contents, modality):
         try:
-            info = _get_info_from_yaml_key(yaml_key, bucket=bucket, client=s3_client)
+            info = _get_info_from_yaml_key(yaml_key, bucket=s3_bucket_name, client=s3_client)
 
             size_mb = _parse_size_mb(info.get('dataset-size-mb'), dataset_name)
             num_tables = _parse_num_tables(info.get('num-tables', np.nan), dataset_name)
@@ -579,10 +574,9 @@ def _get_text_file_content(
             The decoded text contents if the file exists, otherwise ``None``.
     """
     _validate_text_file_content(modality, output_filepath, filename)
-    _validate_bucket(bucket=bucket)
 
     dataset_prefix = f'{modality}/{dataset_name}/'
-    s3_client = _create_s3_client(credentials=credentials)
+    s3_client = _create_s3_client(credentials=credentials, bucket=bucket)
     contents = _list_objects(dataset_prefix, bucket=bucket, client=s3_client)
     key = _find_text_key(contents, dataset_prefix, filename)
     if not key:
@@ -602,7 +596,7 @@ def _get_text_file_content(
 
 
 def get_source(
-    modality, dataset_name, output_filepath=None, bucket=PUBLIC_BUCKET, credentials=None
+    modality, dataset_name, output_filepath=None, s3_bucket_name=PUBLIC_BUCKET, credentials=None
 ):
     """Get dataset source/citation text.
 
@@ -613,7 +607,7 @@ def get_source(
             The name of the dataset to get the source information for.
         output_filepath (str or None):
             Optional path where to save the file.
-        bucket (str):
+        s3_bucket_name (str):
             The name of the bucket to download from. Only 'sdv-datasets-public' is supported in
             SDV Community. SDV Enterprise is required for other buckets.
         credentials (str):
@@ -632,13 +626,13 @@ def get_source(
         dataset_name=dataset_name,
         filename='SOURCE.txt',
         output_filepath=output_filepath,
-        bucket=bucket,
+        bucket=s3_bucket_name,
         credentials=credentials,
     )
 
 
 def get_readme(
-    modality, dataset_name, output_filepath=None, bucket=PUBLIC_BUCKET, credentials=None
+    modality, dataset_name, output_filepath=None, s3_bucket_name=PUBLIC_BUCKET, credentials=None
 ):
     """Get dataset README text.
 
@@ -649,7 +643,7 @@ def get_readme(
             The name of the dataset to get the README for.
         output_filepath (str or None):
             Optional path where to save the file.
-        bucket (str):
+        s3_bucket_name (str):
             The name of the bucket to download from. Only 'sdv-datasets-public' is supported in
             SDV Community. SDV Enterprise is required for other buckets.
         credentials (str):
@@ -668,6 +662,6 @@ def get_readme(
         dataset_name=dataset_name,
         filename='README.txt',
         output_filepath=output_filepath,
-        bucket=bucket,
+        bucket=s3_bucket_name,
         credentials=credentials,
     )
