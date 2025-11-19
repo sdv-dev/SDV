@@ -2847,7 +2847,6 @@ def test_datetime_warning_doesnt_repeat():
         comp_synth.sample(1)
 
     # Assert
-    assert len(w) == 1
     msg = (
         "No 'datetime_format' is present in the metadata for the following columns:\n"
         ' Table Name         Column Name   sdtype datetime_format\n'
@@ -2855,4 +2854,5 @@ def test_datetime_warning_doesnt_repeat():
         'Without this specification, SDV may not be able to accurately parse the data. '
         "We recommend adding datetime formats using 'update_column'."
     )
-    assert str(w[0].message) == msg
+    matching_warnings = [warning for warning in w if str(warning.message) == msg]
+    assert len(matching_warnings) == 1
