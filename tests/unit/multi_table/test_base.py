@@ -1489,7 +1489,7 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         instance = Mock()
         instance.metadata = get_multi_table_metadata()
-        instance._has_seen_single_table_constraint = False
+        instance._single_table_constraints = []
         instance._table_synthesizers = {
             'table1': Mock(),
             'table2': Mock(),
@@ -1513,9 +1513,10 @@ class TestBaseMultiTableSynthesizer:
         idx_single_table_2 = BaseMultiTableSynthesizer._detect_single_table_constraints(
             instance, [constraint3, constraint4]
         )
+        instance._single_table_constraints = [constraint3, constraint4]
         with pytest.raises(SynthesizerInputError, match=expected_error):
             BaseMultiTableSynthesizer._detect_single_table_constraints(instance, [constraint1])
-        instance._has_seen_single_table_constraint = False
+        instance._single_table_constraints = []
         with pytest.raises(SynthesizerInputError, match=expected_error):
             BaseMultiTableSynthesizer._detect_single_table_constraints(
                 instance, [constraint1, constraint3, constraint2]
@@ -1535,6 +1536,7 @@ class TestBaseMultiTableSynthesizer:
         instance.metadata = original_metadata
         instance._original_metadata = original_metadata
         instance.constraints = []
+        instance._single_table_constraints = []
         constraint1 = Mock()
         constraint2 = Mock()
         constraint3 = ProgrammableConstraint()
@@ -1585,6 +1587,7 @@ class TestBaseMultiTableSynthesizer:
         instance.metadata = original_metadata
         instance._original_metadata = original_metadata
         instance.constraints = []
+        instance._single_table_constraints = []
         constraint1 = Mock()
         constraint1.table_name = 'table1'
         constraint2 = Mock()
@@ -1635,6 +1638,7 @@ class TestBaseMultiTableSynthesizer:
         constraint1 = Mock()
         constraint2 = Mock()
         instance.constraints = [constraint1]
+        instance._single_table_constraints = []
         instance._detect_single_table_constraints = Mock(return_value=None)
         mock_validate_constraints.return_value = [constraint2]
 
