@@ -1296,6 +1296,7 @@ class SingleTableMetadata:
             A warning is being raised if ``datetime_format`` is missing from a column represented
             as ``object`` in the dataframe and its sdtype is ``datetime``.
         """
+        _datetime_format_warning_flag = sdtype_warnings is not None
         sdtype_warnings = sdtype_warnings if sdtype_warnings is not None else defaultdict(list)
         if not isinstance(data, pd.DataFrame):
             raise ValueError(f'Data must be a DataFrame, not a {type(data)}.')
@@ -1315,7 +1316,7 @@ class SingleTableMetadata:
             errors += self._validate_column_data(data[column], sdtype_warnings)
 
         errors += self._validate_primary_key(data)
-        if sdtype_warnings is not None and len(sdtype_warnings):
+        if (not _datetime_format_warning_flag) and len(sdtype_warnings):
             df = pd.DataFrame(sdtype_warnings)
             message = (
                 "No 'datetime_format' is present in the metadata for the following columns:\n"
