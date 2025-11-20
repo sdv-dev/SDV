@@ -48,6 +48,7 @@ class TestBaseMultiTableSynthesizer:
         }
         instance.locales = locales
         instance.metadata = get_multi_table_metadata()
+        instance._modified_multi_table_metadata = instance.metadata
 
         # Run
         BaseMultiTableSynthesizer._initialize_models(instance)

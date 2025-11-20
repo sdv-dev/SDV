@@ -82,7 +82,7 @@ class BaseMultiTableSynthesizer:
 
     def _initialize_models(self):
         with disable_single_table_logger():
-            for table_name, table_metadata in self.metadata.tables.items():
+            for table_name, table_metadata in self._modified_multi_table_metadata.tables.items():
                 synthesizer_parameters = {'locales': self.locales}
                 synthesizer_parameters.update(self._table_parameters.get(table_name, {}))
                 metadata_dict = {'tables': {table_name: table_metadata.to_dict()}}
