@@ -82,7 +82,7 @@ class BaseMultiTableSynthesizer:
 
     def _initialize_models(self):
         with disable_single_table_logger():
-            for table_name, table_metadata in self.metadata.tables.items():
+            for table_name, table_metadata in self._modified_multi_table_metadata.tables.items():
                 synthesizer_parameters = {'locales': self.locales}
                 synthesizer_parameters.update(self._table_parameters.get(table_name, {}))
                 metadata_dict = {'tables': {table_name: table_metadata.to_dict()}}
@@ -132,7 +132,7 @@ class BaseMultiTableSynthesizer:
         self._original_metadata = deepcopy(self.metadata)
         self._modified_multi_table_metadata = deepcopy(self.metadata)
         self.constraints = []
-        self._has_seen_single_table_constraint = False
+        self._single_table_constraints = []
         if synthesizer_kwargs is not None:
             warn_message = (
                 'The `synthesizer_kwargs` parameter is deprecated as of SDV 1.2.0 and does not '
@@ -180,9 +180,10 @@ class BaseMultiTableSynthesizer:
             constraints (list):
                 A list of constraints to filter.
         """
-        idx_single_table_constraint = 0 if self._has_seen_single_table_constraint else None
+        has_seen_single_table_constraint = len(self._single_table_constraints) > 0
+        idx_single_table_constraint = 0 if has_seen_single_table_constraint else None
         for idx, constraint in enumerate(constraints):
-            if self._has_seen_single_table_constraint and constraint._is_single_table is False:
+            if has_seen_single_table_constraint and constraint._is_single_table is False:
                 raise SynthesizerInputError(
                     'Cannot apply multi-table constraint after single-table constraint has '
                     'been applied.'
@@ -191,8 +192,8 @@ class BaseMultiTableSynthesizer:
             if not constraint._is_single_table:
                 continue
 
-            if not self._has_seen_single_table_constraint:
-                self._has_seen_single_table_constraint = True
+            if not has_seen_single_table_constraint:
+                has_seen_single_table_constraint = True
                 idx_single_table_constraint = idx
 
         return idx_single_table_constraint
@@ -234,8 +235,8 @@ class BaseMultiTableSynthesizer:
         self.constraints += multi_table_constraints
         self._constraints_fitted = False
         self._initialize_models()
-        if single_table_constraints:
-            for constraint in single_table_constraints:
+        if self._single_table_constraints or single_table_constraints:
+            for constraint in [*self._single_table_constraints, *single_table_constraints]:
                 table_name = constraint.table_name
                 self._table_synthesizers[table_name].add_constraints([constraint])
                 try:
@@ -243,11 +244,12 @@ class BaseMultiTableSynthesizer:
                 except ConstraintNotMetError:
                     constraint.get_updated_metadata(self._modified_multi_table_metadata)
 
+        self._single_table_constraints += single_table_constraints
+
     def get_constraints(self):
         """Get a copy of the list of constraints applied to the synthesizer."""
         if not hasattr(self, 'constraints'):
             return []
-
         constraints = []
         for constraint in self.constraints:
             if isinstance(constraint, ProgrammableConstraintHarness):
