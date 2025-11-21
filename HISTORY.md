@@ -1,5 +1,12 @@
 # Release Notes
 
+## v1.29.1 - 2025-11-21
+
+### Bugs Fixed
+
+* Warning raised multiple times when metadata does not have the 'datetime_format' key - Issue [#2739](https://github.com/sdv-dev/SDV/issues/2739) by @fealho
+* Adding constraints to multi-table synthesizer in multiple steps causes fit to crash - Issue [#2736](https://github.com/sdv-dev/SDV/issues/2736) by @frances-h
+
 ## v1.29.0 - 2025-11-14
 
 ### New Features
