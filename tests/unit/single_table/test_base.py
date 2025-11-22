@@ -369,6 +369,52 @@ class TestBaseSynthesizer:
                 ['country_column', 'city_column'], anonymization_level='full'
             )
 
+    def test__resolve_gpu_parameters(self):
+        """Test the `_resolve_gpu_parameters` method."""
+        # Setup
+        metadata = Metadata()
+        instance = BaseSingleTableSynthesizer(metadata)
+        parameters_with_cuda = {'cuda': True, 'enable_gpu': True}
+        parameters_with_cuda_only = {'cuda': True}
+        parameters_with_cuda_none = {'cuda': None, 'enable_gpu': True}
+        parameters_without_cuda = {'enable_gpu': False}
+
+        # Run
+        result_with_cuda = instance._resolve_gpu_parameters(parameters_with_cuda)
+        result_with_cuda_only = instance._resolve_gpu_parameters(parameters_with_cuda_only)
+        result_with_cuda_none = instance._resolve_gpu_parameters(parameters_with_cuda_none)
+        result_without_cuda = instance._resolve_gpu_parameters(parameters_without_cuda)
+
+        # Assert
+        assert result_with_cuda == {'enable_gpu': True}
+        assert result_with_cuda_only == {'cuda': True}
+        assert result_with_cuda_none == {'enable_gpu': True}
+        assert result_without_cuda == {'enable_gpu': False}
+
+    def test_get_parameters_mock(self):
+        """Test that `get_parameters` calls `_resolve_gpu_parameters`"""
+        metadata = Metadata()
+        instance = BaseSynthesizer(
+            metadata, enforce_min_max_values=False, enforce_rounding=False, locales='en_CA'
+        )
+        expected_parameters = {
+            'enforce_min_max_values': False,
+            'enforce_rounding': True,
+            'locales': 'en_CA',
+        }
+        instance._resolve_gpu_parameters = Mock(return_value=expected_parameters)
+
+        # Run
+        parameters = instance.get_parameters()
+
+        # Assert
+        assert parameters == expected_parameters
+        instance._resolve_gpu_parameters.assert_called_once_with({
+            'enforce_min_max_values': False,
+            'enforce_rounding': False,
+            'locales': 'en_CA',
+        })
+
     def test_get_parameters(self):
         """Test that it returns every ``init`` parameter without the ``metadata``."""
         # Setup
