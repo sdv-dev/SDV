@@ -89,7 +89,11 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             Whether to print fit progress on stdout. Defaults to ``False``.
         epochs (int):
             Number of training epochs. Defaults to 300.
+        enable_gpu (bool):
+            Whether to attempt to use GPU for computation.
+            Defaults to ``True``.
         cuda (bool or str):
+            **Deprecated**
             If ``True``, use CUDA. If an ``str``, use the indicated device.
             If ``False``, do not use cuda at all.
         numerical_distributions (dict):
@@ -139,9 +143,10 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
         verbose=False,
         epochs=300,
         pac=10,
-        cuda=True,
+        enable_gpu=True,
         numerical_distributions=None,
         default_distribution=None,
+        cuda=None,
     ):
         super().__init__(
             metadata,
@@ -161,6 +166,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             verbose=verbose,
             epochs=epochs,
             pac=pac,
+            enable_gpu=enable_gpu,
             cuda=cuda,
         )
 
