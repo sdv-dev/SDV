@@ -1,5 +1,11 @@
 # Release Notes
 
+## v1.30.0 - 2025-12-05
+
+### New Features
+
+* When using PyTorch, enable GPU usage for MacOS - Issue [#2672](https://github.com/sdv-dev/SDV/issues/2672) by @R-Palazzo
+
 ## v1.29.1 - 2025-11-21
 
 ### Bugs Fixed
