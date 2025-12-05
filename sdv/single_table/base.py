@@ -309,15 +309,23 @@ class BaseSynthesizer:
             msg = 'For this change to take effect, please refit the synthesizer using `fit`.'
             warnings.warn(msg, RefitWarning)
 
+    def _resolve_gpu_parameters(self, parameters):
+        if parameters.get('cuda') is not None and parameters.get('enable_gpu') is None:
+            parameters.pop('enable_gpu', None)  # Ensure backward-compatibility
+        elif 'cuda' in parameters:  # Removed because deprecated
+            del parameters['cuda']
+
+        return parameters
+
     def get_parameters(self):
         """Return the parameters used to instantiate the synthesizer."""
         parameters = inspect.signature(self.__init__).parameters
         instantiated_parameters = {}
         for parameter_name in parameters:
-            if parameter_name != 'metadata':
+            if parameter_name not in ['metadata']:
                 instantiated_parameters[parameter_name] = self.__dict__.get(parameter_name)
 
-        return instantiated_parameters
+        return self._resolve_gpu_parameters(instantiated_parameters)
 
     def get_metadata(self, version='original'):
         """Get the metadata, either original or modified after applying constraints.
