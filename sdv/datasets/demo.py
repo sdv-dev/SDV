@@ -338,7 +338,7 @@ def download_demo(
         s3_bucket_name (str):
             The name of the bucket to download from. Only 'sdv-datasets-public' is supported in
             SDV Community. SDV Enterprise is required for other buckets.
-        credentials (str):
+        credentials (dict):
             Dictionary containing DataCebo license key and username. It takes the form:
             {
                 'username': 'example@datacebo.com',
@@ -437,7 +437,7 @@ def get_available_demos(modality, s3_bucket_name=PUBLIC_BUCKET, credentials=None
         s3_bucket_name (str):
             The name of the bucket to download from. Only 'sdv-datasets-public' is supported in
             SDV Community. SDV Enterprise is required for other buckets.
-        credentials (str):
+        credentials (dict):
             Dictionary containing DataCebo license key and username. It takes the form:
             {
                 'username': 'example@datacebo.com',
@@ -562,7 +562,7 @@ def _get_text_file_content(
         bucket (str):
             The name of the bucket to download from. Only 'sdv-datasets-public' is supported in
             SDV Community. SDV Enterprise is required for other buckets.
-        credentials (str):
+        credentials (dict):
             Dictionary containing DataCebo license key and username. It takes the form:
             {
                 'username': 'example@datacebo.com',
@@ -610,7 +610,7 @@ def get_source(
         s3_bucket_name (str):
             The name of the bucket to download from. Only 'sdv-datasets-public' is supported in
             SDV Community. SDV Enterprise is required for other buckets.
-        credentials (str):
+        credentials (dict):
             Dictionary containing DataCebo license key and username. It takes the form:
             {
                 'username': 'example@datacebo.com',
@@ -646,7 +646,7 @@ def get_readme(
         s3_bucket_name (str):
             The name of the bucket to download from. Only 'sdv-datasets-public' is supported in
             SDV Community. SDV Enterprise is required for other buckets.
-        credentials (str):
+        credentials (dict):
             Dictionary containing DataCebo license key and username. It takes the form:
             {
                 'username': 'example@datacebo.com',
