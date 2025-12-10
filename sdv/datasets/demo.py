@@ -40,7 +40,7 @@ def _validate_output_folder(output_folder_name):
         )
 
 
-def _create_s3_client(credentials=None, bucket=None):
+def _create_s3_client(bucket=None, credentials=None):
     """Create and return an S3 client with unsigned requests."""
     if bucket is not None and bucket != PUBLIC_BUCKET:
         raise ValueError('Private buckets are only supported in SDV Enterprise.')
@@ -178,7 +178,7 @@ def _download(modality, dataset_name, bucket, credentials=None):
         tuple:
             (BytesIO(zip_bytes), metadata_bytes)
     """
-    client = _create_s3_client(credentials, bucket)
+    client = _create_s3_client(bucket=bucket, credentials=credentials)
     dataset_prefix = f'{modality}/{dataset_name}/'
     bucket_url = f'https://{bucket}.s3.amazonaws.com'
     LOGGER.info(
@@ -452,7 +452,7 @@ def get_available_demos(modality, s3_bucket_name=PUBLIC_BUCKET, credentials=None
                 ``num_tables``: The number of tables in the dataset.
     """
     _validate_modalities(modality)
-    s3_client = _create_s3_client(credentials=credentials, bucket=s3_bucket_name)
+    s3_client = _create_s3_client(bucket=s3_bucket_name, credentials=credentials)
     contents = _list_objects(f'{modality}/', bucket=s3_bucket_name, client=s3_client)
     tables_info = defaultdict(list)
     for dataset_name, yaml_key in _iter_metainfo_yaml_entries(contents, modality):
@@ -576,7 +576,7 @@ def _get_text_file_content(
     _validate_text_file_content(modality, output_filepath, filename)
 
     dataset_prefix = f'{modality}/{dataset_name}/'
-    s3_client = _create_s3_client(credentials=credentials, bucket=bucket)
+    s3_client = _create_s3_client(bucket=bucket, credentials=credentials)
     contents = _list_objects(dataset_prefix, bucket=bucket, client=s3_client)
     key = _find_text_key(contents, dataset_prefix, filename)
     if not key:
