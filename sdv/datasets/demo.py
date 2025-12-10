@@ -40,9 +40,9 @@ def _validate_output_folder(output_folder_name):
         )
 
 
-def _create_s3_client(bucket=None, credentials=None):
+def _create_s3_client(bucket, credentials=None):
     """Create and return an S3 client with unsigned requests."""
-    if bucket is not None and bucket != PUBLIC_BUCKET:
+    if bucket != PUBLIC_BUCKET:
         raise ValueError('Private buckets are only supported in SDV Enterprise.')
     if credentials is not None:
         raise ValueError(
