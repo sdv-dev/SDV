@@ -30,6 +30,7 @@ def _make_zip_with_csv(csv_name: str, df: pd.DataFrame) -> bytes:
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr(csv_name, df.to_csv(index=False))
+
     return buf.getvalue()
 
 
@@ -80,6 +81,7 @@ def test_download_demo_single_table(mock_list, mock_get, tmpdir):
             return zip_bytes
         if key.endswith('metadata.json'):
             return meta_bytes
+
         raise KeyError(key)
 
     mock_get.side_effect = side_effect
@@ -608,16 +610,19 @@ def test_download_demo_success_single_table(mock_list, mock_get):
     assert metadata.to_dict()['tables']['word']['primary_key'] == 'id'
 
 
-@patch('sdv.datasets.demo._get_data_from_bucket', return_value=b'{}')
 @patch('sdv.datasets.demo._list_objects')
-def test_download_demo_missing_zip_raises(mock_list, _mock_get):
+def test_download_demo_missing_zip_raises(mock_list):
     # Setup
     mock_list.return_value = [
         {'Key': 'single_table/word/metadata.json'},
     ]
 
     # Run and Assert
-    with pytest.raises(DemoResourceNotFoundError, match="Could not find 'data.zip'"):
+    expected_msg = (
+        'Could not download dataset word from bucket sdv-datasets-public. '
+        "The dataset is missing 'data.zip' file."
+    )
+    with pytest.raises(DemoResourceNotFoundError, match=expected_msg):
         download_demo('single_table', 'word')
 
 
@@ -634,7 +639,11 @@ def test_download_demo_no_v1_metadata_raises(mock_list, mock_get):
     )
 
     # Run and Assert
-    with pytest.raises(DemoResourceNotFoundError, match='METADATA_SPEC_VERSION'):
+    error_msg = (
+        'Could not download dataset word from bucket sdv-datasets-public. '
+        'The dataset is missing a valid metadata.'
+    )
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
         download_demo('single_table', 'word')
 
 
@@ -687,8 +696,8 @@ def test_download_demo_writes_metadata_and_discovers_nested_csv(mock_list, mock_
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr('level1/level2/my_table.csv', df.to_csv(index=False))
-    zip_bytes = buf.getvalue()
 
+    zip_bytes = buf.getvalue()
     meta_dict = {
         'METADATA_SPEC_VERSION': 'V1',
         'tables': {
