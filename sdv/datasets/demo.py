@@ -6,6 +6,7 @@ import logging
 import os
 import warnings
 from collections import defaultdict
+from functools import wraps
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -171,6 +172,56 @@ def _get_first_v1_metadata_bytes(contents, dataset_prefix, bucket, client):
     )
 
 
+def handle_download_failure():
+    """Decorator to handle download exceptions.
+
+    Returns:
+        func:
+            A wrapped function.
+    """
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                function_result = func(*args, **kwargs)
+            except DemoResourceNotFoundError as error:
+                bucket = kwargs.get('bucket', args[2])
+                dataset_name = kwargs.get('dataset_name', args[1])
+                error_msg = error.message
+                if 'No objects found under' in error_msg:
+                    raise DemoResourceNotFoundError(
+                        f'Could not download dataset {dataset_name} from bucket {bucket}. '
+                        'Make sure the bucket name is correct. If the bucket is private '
+                        'make sure to provide your credentials.'
+                    ) from error
+
+                if 'METADATA_SPEC_VERSION' in error_msg or 'metadata' in error_msg:
+                    raise DemoResourceNotFoundError(
+                        f'Could not download dataset {dataset_name} from bucket {bucket}. '
+                        'The dataset is missing a valid metadata.'
+                    ) from error
+
+                if 'no csv files were found in data.zip' in error_msg:
+                    raise DemoResourceNotFoundError(
+                        f'Could not download dataset {dataset_name} from bucket {bucket}. '
+                        'The dataset is missing `csv` file/s.'
+                    ) from error
+
+                if "Could not find 'data.zip'" in error_msg:
+                    raise DemoResourceNotFoundError(
+                        f'Could not download dataset {dataset_name} from bucket {bucket}. '
+                        "The dataset is missing 'data.zip' file."
+                    ) from error
+
+            return function_result
+
+        return wrapper
+
+    return decorator
+
+
+@handle_download_failure()
 def _download(modality, dataset_name, bucket, credentials=None):
     """Download dataset resources from a bucket.
 
