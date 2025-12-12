@@ -355,7 +355,7 @@ def test__find_data_zip_key():
     dataset_prefix = 'single_table/fake_hotel_guests/'
 
     # Run
-    zip_key = _find_data_zip_key(contents, dataset_prefix)
+    zip_key = _find_data_zip_key(contents, dataset_prefix, 'bucket')
 
     # Assert
     assert zip_key == 'single_table/fake_hotel_guests/data.ZIP'
@@ -619,7 +619,7 @@ def test_download_demo_missing_zip_raises(mock_list):
 
     # Run and Assert
     expected_msg = (
-        'Could not download dataset word from bucket sdv-datasets-public. '
+        "Could not download dataset 'word' from bucket 'sdv-datasets-public'. "
         "The dataset is missing 'data.zip' file."
     )
     with pytest.raises(DemoResourceNotFoundError, match=expected_msg):
@@ -640,7 +640,7 @@ def test_download_demo_no_v1_metadata_raises(mock_list, mock_get):
 
     # Run and Assert
     error_msg = (
-        'Could not download dataset word from bucket sdv-datasets-public. '
+        "Could not download dataset 'word' from bucket 'sdv-datasets-public'. "
         'The dataset is missing a valid metadata.'
     )
     with pytest.raises(DemoResourceNotFoundError, match=error_msg):
@@ -677,8 +677,11 @@ def test__get_metadata_warns_on_save_error(_mock_open, tmp_path):
 def test__get_metadata_raises_on_invalid_json():
     """_get_metadata should raise a helpful error when JSON is invalid."""
     # Run / Assert
-    err = 'Failed to parse metadata JSON for the dataset.'
-    with pytest.raises(DemoResourceNotFoundError, match=re.escape(err)):
+    error_msg = (
+        "Could not parse the metadata for dataset 'dataset1'. "
+        'The dataset is missing a valid metadata file.'
+    )
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
         _get_metadata(b'not-json', 'dataset1')
 
 
@@ -1105,8 +1108,11 @@ def test_download_demo_raises_when_no_csv_in_zip_single_table(mock_list, mock_ge
     )
 
     # Run and Assert
-    msg = 'Demo data could not be downloaded because no csv files were found in data.zip'
-    with pytest.raises(DemoResourceNotFoundError, match=re.escape(msg)):
+    error_msg = (
+        "Could not download dataset 'word' from bucket 'sdv-datasets-public'. "
+        'The dataset is missing `csv` file/s.'
+    )
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
         download_demo('single_table', 'word')
 
 

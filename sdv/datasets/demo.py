@@ -6,7 +6,6 @@ import logging
 import os
 import warnings
 from collections import defaultdict
-from functools import wraps
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -58,6 +57,10 @@ def _get_data_from_bucket(object_key, bucket, client):
     return response['Body'].read()
 
 
+def _get_dataset_name_from_prefix(prefix):
+    return prefix.split('/')[1]
+
+
 def _list_objects(prefix, bucket, client):
     """List all objects under a given prefix using pagination.
 
@@ -79,7 +82,21 @@ def _list_objects(prefix, bucket, client):
         contents.extend(resp.get('Contents', []))
 
     if not contents:
-        raise DemoResourceNotFoundError(f"No objects found under '{prefix}' in bucket '{bucket}'.")
+        prefix_parts = prefix.split('/')
+        modality = prefix_parts[0]
+        dataset_name = _get_dataset_name_from_prefix(prefix)
+        if dataset_name:
+            raise DemoResourceNotFoundError(
+                f'Could not download dataset {dataset_name} from bucket {bucket}. '
+                'Make sure the bucket name is correct. If the bucket is private '
+                'make sure to provide your credentials.'
+            )
+        else:
+            raise DemoResourceNotFoundError(
+                f'Could not list datasets in modality {modality} from bucket {bucket}. '
+                'Make sure the bucket name is correct. If the bucket is private '
+                'make sure to provide your credentials.'
+            )
 
     return contents
 
@@ -109,7 +126,7 @@ def _search_contents_keys(contents, match_fn):
     return matches
 
 
-def _find_data_zip_key(contents, dataset_prefix):
+def _find_data_zip_key(contents, dataset_prefix, bucket):
     """Find the 'data.zip' object key under dataset prefix, case-insensitive.
 
     Args:
@@ -131,7 +148,11 @@ def _find_data_zip_key(contents, dataset_prefix):
     if matches:
         return matches[0]
 
-    raise DemoResourceNotFoundError("Could not find 'data.zip' for the requested dataset.")
+    dataset_name = _get_dataset_name_from_prefix(dataset_prefix)
+    raise DemoResourceNotFoundError(
+        f"Could not download dataset '{dataset_name}' from bucket '{bucket}'. "
+        "The dataset is missing 'data.zip' file."
+    )
 
 
 def _get_first_v1_metadata_bytes(contents, dataset_prefix, bucket, client):
@@ -167,61 +188,13 @@ def _get_first_v1_metadata_bytes(contents, dataset_prefix, bucket, client):
         except Exception:
             continue
 
+    dataset_name = _get_dataset_name_from_prefix(dataset_prefix)
     raise DemoResourceNotFoundError(
-        'Could not find a valid metadata JSON with METADATA_SPEC_VERSION "V1".'
+        f"Could not download dataset '{dataset_name}' from bucket '{bucket}'. "
+        'The dataset is missing a valid metadata.'
     )
 
 
-def handle_download_failure():
-    """Decorator to handle download exceptions.
-
-    Returns:
-        func:
-            A wrapped function.
-    """
-
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            try:
-                function_result = func(*args, **kwargs)
-            except DemoResourceNotFoundError as error:
-                bucket = kwargs.get('bucket', args[2])
-                dataset_name = kwargs.get('dataset_name', args[1])
-                error_msg = error.message
-                if 'No objects found under' in error_msg:
-                    raise DemoResourceNotFoundError(
-                        f'Could not download dataset {dataset_name} from bucket {bucket}. '
-                        'Make sure the bucket name is correct. If the bucket is private '
-                        'make sure to provide your credentials.'
-                    ) from error
-
-                if 'METADATA_SPEC_VERSION' in error_msg or 'metadata' in error_msg:
-                    raise DemoResourceNotFoundError(
-                        f'Could not download dataset {dataset_name} from bucket {bucket}. '
-                        'The dataset is missing a valid metadata.'
-                    ) from error
-
-                if 'no csv files were found in data.zip' in error_msg:
-                    raise DemoResourceNotFoundError(
-                        f'Could not download dataset {dataset_name} from bucket {bucket}. '
-                        'The dataset is missing `csv` file/s.'
-                    ) from error
-
-                if "Could not find 'data.zip'" in error_msg:
-                    raise DemoResourceNotFoundError(
-                        f'Could not download dataset {dataset_name} from bucket {bucket}. '
-                        "The dataset is missing 'data.zip' file."
-                    ) from error
-
-            return function_result
-
-        return wrapper
-
-    return decorator
-
-
-@handle_download_failure()
 def _download(modality, dataset_name, bucket, credentials=None):
     """Download dataset resources from a bucket.
 
@@ -237,7 +210,7 @@ def _download(modality, dataset_name, bucket, credentials=None):
         f'{bucket_url}/{dataset_prefix}'
     )
     contents = _list_objects(dataset_prefix, bucket=bucket, client=client)
-    zip_key = _find_data_zip_key(contents, dataset_prefix)
+    zip_key = _find_data_zip_key(contents, dataset_prefix, bucket)
     zip_bytes = _get_data_from_bucket(zip_key, bucket=bucket, client=client)
     metadata_bytes = _get_first_v1_metadata_bytes(
         contents, dataset_prefix, bucket=bucket, client=client
@@ -313,7 +286,7 @@ def _get_data_without_output_folder(in_memory_directory):
     return data, skipped_files
 
 
-def _get_data(modality, output_folder_name, in_memory_directory):
+def _get_data(modality, output_folder_name, in_memory_directory, bucket, dataset_name):
     if output_folder_name:
         data, skipped_files = _get_data_with_output_folder(output_folder_name)
     else:
@@ -324,7 +297,8 @@ def _get_data(modality, output_folder_name, in_memory_directory):
 
     if not data:
         raise DemoResourceNotFoundError(
-            'Demo data could not be downloaded because no csv files were found in data.zip'
+            f"Could not download dataset '{dataset_name}' from bucket '{bucket}'. "
+            'The dataset is missing `csv` file/s.'
         )
 
     if modality != 'multi_table':
@@ -352,7 +326,10 @@ def _get_metadata(metadata_bytes, dataset_name, output_folder_name=None):
         metadict = json.loads(metadata_bytes)
         metadata = Metadata().load_from_dict(metadict, dataset_name)
     except Exception as e:
-        raise DemoResourceNotFoundError('Failed to parse metadata JSON for the dataset.') from e
+        raise DemoResourceNotFoundError(
+            f"Could not parse the metadata for dataset '{dataset_name}'. "
+            'The dataset is missing a valid metadata file.'
+        ) from e
 
     if output_folder_name:
         try:
@@ -413,7 +390,13 @@ def download_demo(
 
     data_io, metadata_bytes = _download(modality, dataset_name, s3_bucket_name, credentials)
     in_memory_directory = _extract_data(data_io, output_folder_name)
-    data = _get_data(modality, output_folder_name, in_memory_directory)
+    data = _get_data(
+        modality,
+        output_folder_name,
+        in_memory_directory,
+        s3_bucket_name,
+        dataset_name,
+    )
     metadata = _get_metadata(metadata_bytes, dataset_name, output_folder_name)
 
     return data, metadata
