@@ -87,13 +87,13 @@ def _list_objects(prefix, bucket, client):
         dataset_name = _get_dataset_name_from_prefix(prefix)
         if dataset_name:
             raise DemoResourceNotFoundError(
-                f'Could not download dataset {dataset_name} from bucket {bucket}. '
+                f"Could not download dataset '{dataset_name}' from bucket '{bucket}'. "
                 'Make sure the bucket name is correct. If the bucket is private '
                 'make sure to provide your credentials.'
             )
         else:
             raise DemoResourceNotFoundError(
-                f'Could not list datasets in modality {modality} from bucket {bucket}. '
+                f"Could not list datasets in modality '{modality}' from bucket '{bucket}'. "
                 'Make sure the bucket name is correct. If the bucket is private '
                 'make sure to provide your credentials.'
             )
