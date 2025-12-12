@@ -18,6 +18,7 @@ from sdv.datasets.demo import (
     _get_metadata,
     _get_text_file_content,
     _iter_metainfo_yaml_entries,
+    _list_objects,
     download_demo,
     get_available_demos,
     get_readme,
@@ -1323,3 +1324,59 @@ def test_download_demo_credentials_raises_error():
             'sdv-datasets-public',
             {'username': 'test@gmail.com', 'license_key': 'FakeKey123'},
         )
+
+
+def test__list_objects_returns_all_contents():
+    """Test that `_list_objects` returns all object summaries across paginator pages."""
+    # Setup
+    mock_client = Mock()
+    paginator = mock_client.get_paginator.return_value
+    paginator.paginate.return_value = [
+        {'Contents': [{'Key': 'path/file1.txt'}]},
+        {'Contents': [{'Key': 'path/file2.txt'}]},
+    ]
+
+    # Run
+    result = _list_objects(prefix='single_table/', bucket='mybucket', client=mock_client)
+
+    # Assert
+    assert result == [
+        {'Key': 'path/file1.txt'},
+        {'Key': 'path/file2.txt'},
+    ]
+    mock_client.get_paginator.assert_called_once_with('list_objects_v2')
+    paginator.paginate.assert_called_once_with(Bucket='mybucket', Prefix='single_table/')
+
+
+def test__list_objects_raises_when_no_contents_and_dataset_found():
+    """Test that `_list_objects` raise a dataset-specific error when dataset name is known."""
+    # Setup
+    mock_client = Mock()
+    paginator = mock_client.get_paginator.return_value
+    paginator.paginate.return_value = [{'Contents': []}]  # no objects found
+
+    # Run / Assert
+    error_msg = (
+        "Could not download dataset 'mydataset' from bucket 'bucket'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
+        _list_objects(prefix='single_table/mydataset/', bucket='bucket', client=mock_client)
+
+
+def test_list_objects_raises_when_no_contents_and_no_dataset():
+    """Test that `_list_objects` raise a modality-specific error when dataset name is unknown."""
+    # Setup
+    mock_client = Mock()
+    paginator = mock_client.get_paginator.return_value
+    paginator.paginate.return_value = [{'Contents': []}]
+
+    # Run / Assert
+    error_msg = (
+        "Could not list datasets in modality 'single_table' from bucket 'bucket'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
+        _list_objects(prefix='single_table/', bucket='bucket', client=mock_client)
