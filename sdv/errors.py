@@ -104,6 +104,10 @@ class DemoResourceNotFoundError(Exception):
     metadata, license, README, or other auxiliary files in the demo bucket.
     """
 
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
 
 class DemoResourceNotFoundWarning(UserWarning):
     """Warning raised when an optional demo resource is not available.

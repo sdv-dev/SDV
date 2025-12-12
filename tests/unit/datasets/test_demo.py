@@ -18,6 +18,7 @@ from sdv.datasets.demo import (
     _get_metadata,
     _get_text_file_content,
     _iter_metainfo_yaml_entries,
+    _list_objects,
     download_demo,
     get_available_demos,
     get_readme,
@@ -30,6 +31,7 @@ def _make_zip_with_csv(csv_name: str, df: pd.DataFrame) -> bytes:
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr(csv_name, df.to_csv(index=False))
+
     return buf.getvalue()
 
 
@@ -80,6 +82,7 @@ def test_download_demo_single_table(mock_list, mock_get, tmpdir):
             return zip_bytes
         if key.endswith('metadata.json'):
             return meta_bytes
+
         raise KeyError(key)
 
     mock_get.side_effect = side_effect
@@ -353,7 +356,7 @@ def test__find_data_zip_key():
     dataset_prefix = 'single_table/fake_hotel_guests/'
 
     # Run
-    zip_key = _find_data_zip_key(contents, dataset_prefix)
+    zip_key = _find_data_zip_key(contents, dataset_prefix, 'bucket')
 
     # Assert
     assert zip_key == 'single_table/fake_hotel_guests/data.ZIP'
@@ -608,16 +611,19 @@ def test_download_demo_success_single_table(mock_list, mock_get):
     assert metadata.to_dict()['tables']['word']['primary_key'] == 'id'
 
 
-@patch('sdv.datasets.demo._get_data_from_bucket', return_value=b'{}')
 @patch('sdv.datasets.demo._list_objects')
-def test_download_demo_missing_zip_raises(mock_list, _mock_get):
+def test_download_demo_missing_zip_raises(mock_list):
     # Setup
     mock_list.return_value = [
         {'Key': 'single_table/word/metadata.json'},
     ]
 
     # Run and Assert
-    with pytest.raises(DemoResourceNotFoundError, match="Could not find 'data.zip'"):
+    expected_msg = (
+        "Could not download dataset 'word' from bucket 'sdv-datasets-public'. "
+        "The dataset is missing 'data.zip' file."
+    )
+    with pytest.raises(DemoResourceNotFoundError, match=expected_msg):
         download_demo('single_table', 'word')
 
 
@@ -634,7 +640,11 @@ def test_download_demo_no_v1_metadata_raises(mock_list, mock_get):
     )
 
     # Run and Assert
-    with pytest.raises(DemoResourceNotFoundError, match='METADATA_SPEC_VERSION'):
+    error_msg = (
+        "Could not download dataset 'word' from bucket 'sdv-datasets-public'. "
+        'The dataset is missing a valid metadata.'
+    )
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
         download_demo('single_table', 'word')
 
 
@@ -668,8 +678,11 @@ def test__get_metadata_warns_on_save_error(_mock_open, tmp_path):
 def test__get_metadata_raises_on_invalid_json():
     """_get_metadata should raise a helpful error when JSON is invalid."""
     # Run / Assert
-    err = 'Failed to parse metadata JSON for the dataset.'
-    with pytest.raises(DemoResourceNotFoundError, match=re.escape(err)):
+    error_msg = (
+        "Could not parse the metadata for dataset 'dataset1'. "
+        'The dataset is missing a valid metadata file.'
+    )
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
         _get_metadata(b'not-json', 'dataset1')
 
 
@@ -687,8 +700,8 @@ def test_download_demo_writes_metadata_and_discovers_nested_csv(mock_list, mock_
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr('level1/level2/my_table.csv', df.to_csv(index=False))
-    zip_bytes = buf.getvalue()
 
+    zip_bytes = buf.getvalue()
     meta_dict = {
         'METADATA_SPEC_VERSION': 'V1',
         'tables': {
@@ -1096,8 +1109,11 @@ def test_download_demo_raises_when_no_csv_in_zip_single_table(mock_list, mock_ge
     )
 
     # Run and Assert
-    msg = 'Demo data could not be downloaded because no csv files were found in data.zip'
-    with pytest.raises(DemoResourceNotFoundError, match=re.escape(msg)):
+    error_msg = (
+        "Could not download dataset 'word' from bucket 'sdv-datasets-public'. "
+        'The dataset is missing `csv` file/s.'
+    )
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
         download_demo('single_table', 'word')
 
 
@@ -1308,3 +1324,59 @@ def test_download_demo_credentials_raises_error():
             'sdv-datasets-public',
             {'username': 'test@gmail.com', 'license_key': 'FakeKey123'},
         )
+
+
+def test__list_objects_returns_all_contents():
+    """Test that `_list_objects` returns all object summaries across paginator pages."""
+    # Setup
+    mock_client = Mock()
+    paginator = mock_client.get_paginator.return_value
+    paginator.paginate.return_value = [
+        {'Contents': [{'Key': 'path/file1.txt'}]},
+        {'Contents': [{'Key': 'path/file2.txt'}]},
+    ]
+
+    # Run
+    result = _list_objects(prefix='single_table/', bucket='mybucket', client=mock_client)
+
+    # Assert
+    assert result == [
+        {'Key': 'path/file1.txt'},
+        {'Key': 'path/file2.txt'},
+    ]
+    mock_client.get_paginator.assert_called_once_with('list_objects_v2')
+    paginator.paginate.assert_called_once_with(Bucket='mybucket', Prefix='single_table/')
+
+
+def test__list_objects_raises_when_no_contents_and_dataset_found():
+    """Test that `_list_objects` raise a dataset-specific error when dataset name is known."""
+    # Setup
+    mock_client = Mock()
+    paginator = mock_client.get_paginator.return_value
+    paginator.paginate.return_value = [{'Contents': []}]  # no objects found
+
+    # Run / Assert
+    error_msg = (
+        "Could not download dataset 'mydataset' from bucket 'bucket'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
+        _list_objects(prefix='single_table/mydataset/', bucket='bucket', client=mock_client)
+
+
+def test_list_objects_raises_when_no_contents_and_no_dataset():
+    """Test that `_list_objects` raise a modality-specific error when dataset name is unknown."""
+    # Setup
+    mock_client = Mock()
+    paginator = mock_client.get_paginator.return_value
+    paginator.paginate.return_value = [{'Contents': []}]
+
+    # Run / Assert
+    error_msg = (
+        "Could not list datasets in modality 'single_table' from bucket 'bucket'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
+        _list_objects(prefix='single_table/', bucket='bucket', client=mock_client)
