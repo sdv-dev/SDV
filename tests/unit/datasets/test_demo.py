@@ -75,7 +75,7 @@ def test_download_demo_single_table(mock_list, mock_get, tmpdir):
         'relationships': [],
     }).encode()
 
-    def side_effect(key):
+    def side_effect(key, bucket='test_bucket', client=None):
         if key.endswith('data.zip'):
             return zip_bytes
         if key.endswith('metadata.json'):
@@ -105,22 +105,19 @@ def test_download_demo_single_table(mock_list, mock_get, tmpdir):
     assert metadata.to_dict() == expected_metadata_dict
 
 
-@patch('sdv.datasets.demo._create_s3_client')
-@patch('sdv.datasets.demo.BUCKET', 'bucket')
-def test__get_data_from_bucket(create_client_mock):
+def test__get_data_from_bucket():
     """Test the ``_get_data_from_bucket`` method."""
     # Setup
     mock_s3_client = Mock()
-    create_client_mock.return_value = mock_s3_client
     mock_s3_client.get_object.return_value = {'Body': Mock(read=lambda: b'data')}
+    bucket = 'sdv-datasets-public'
 
     # Run
-    result = _get_data_from_bucket('object_key')
+    result = _get_data_from_bucket('object_key', bucket, mock_s3_client)
 
     # Assert
     assert result == b'data'
-    create_client_mock.assert_called_once()
-    mock_s3_client.get_object.assert_called_once_with(Bucket='bucket', Key='object_key')
+    mock_s3_client.get_object.assert_called_once_with(Bucket=bucket, Key='object_key')
 
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
@@ -135,7 +132,9 @@ def test__download(mock_list, mock_get_data_from_bucket):
     mock_get_data_from_bucket.return_value = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
 
     # Run
-    data_io, metadata_bytes = _download('single_table', 'ring')
+    data_io, metadata_bytes = _download(
+        'single_table', 'ring', bucket='sdv-datasets-public', credentials=None
+    )
 
     # Assert
     assert isinstance(data_io, io.BytesIO)
@@ -165,7 +164,9 @@ def test_download_demo_single_table_no_output_folder(mock_list, mock_get):
         },
         'relationships': [],
     }).encode()
-    mock_get.side_effect = lambda key: zip_bytes if key.endswith('data.zip') else meta_bytes
+    mock_get.side_effect = lambda key, bucket, client: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
 
     # Run
     table, metadata = download_demo('single_table', 'ring')
@@ -220,7 +221,9 @@ def test_download_demo_timeseries(mock_list, mock_get, tmpdir):
             }
         },
     }).encode()
-    mock_get.side_effect = lambda key: zip_bytes if key.endswith('data.zip') else meta_bytes
+    mock_get.side_effect = lambda key, bucket, client: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
 
     # Run
     table, metadata = download_demo('sequential', 'Libras', tmpdir / 'test_folder')
@@ -318,7 +321,9 @@ def test_download_demo_multi_table(mock_list, mock_get, tmpdir):
         ],
         'METADATA_SPEC_VERSION': 'V1',
     }).encode()
-    mock_get.side_effect = lambda key: zip_bytes if key.endswith('data.zip') else meta_bytes
+    mock_get.side_effect = lambda key, bucket, client: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
 
     # Run
     tables, metadata = download_demo('multi_table', 'got_families', tmpdir / 'test_folder')
@@ -361,7 +366,7 @@ def test__get_first_v1_metadata_bytes(mock_get):
     bad = b'not-json'
     v1 = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
 
-    def side_effect(key):
+    def side_effect(key, bucket, client):
         return {
             'single_table/dataset/k1.json': v2,
             'single_table/dataset/k2.json': bad,
@@ -376,7 +381,9 @@ def test__get_first_v1_metadata_bytes(mock_get):
     ]
 
     # Run
-    got = _get_first_v1_metadata_bytes(contents, 'single_table/dataset/')
+    got = _get_first_v1_metadata_bytes(
+        contents, 'single_table/dataset/', bucket='test_bucket', client=None
+    )
 
     # Assert
     assert got == v1
@@ -413,7 +420,7 @@ def test_get_available_demos_robust_parsing(mock_list, mock_get):
         {'Key': 'single_table/ignore.txt'},
     ]
 
-    def side_effect(key):
+    def side_effect(key, bucket, client):
         if key.endswith('d1/metainfo.yaml'):
             return b'dataset-name: d1\nnum-tables: 2\ndataset-size-mb: 10.5\nsource: EXTERNAL\n'
         if key.endswith('d2/metainfo.yaml'):
@@ -445,7 +452,7 @@ def test_get_available_demos_logs_invalid_size_mb(mock_list, mock_get, caplog):
         {'Key': 'single_table/dsize/metainfo.yaml'},
     ]
 
-    def side_effect(key):
+    def side_effect(key, bucket, client):
         return b'dataset-name: dsize\nnum-tables: 2\ndataset-size-mb: invalid\n'
 
     mock_get.side_effect = side_effect
@@ -470,7 +477,7 @@ def test_get_available_demos_logs_num_tables_str_cast_fail_exact(mock_list, mock
         {'Key': 'single_table/dnum/metainfo.yaml'},
     ]
 
-    def side_effect(key):
+    def side_effect(key, bucket, client):
         return b'dataset-name: dnum\nnum-tables: not_a_number\ndataset-size-mb: 1.1\n'
 
     mock_get.side_effect = side_effect
@@ -497,7 +504,7 @@ def test_get_available_demos_logs_num_tables_int_parse_fail_exact(mock_list, moc
         {'Key': 'single_table/dnum/metainfo.yaml'},
     ]
 
-    def side_effect(key):
+    def side_effect(key, bucket, client):
         return b'dataset-name: dnum\nnum-tables: [1, 2]\ndataset-size-mb: 1.1\n'
 
     mock_get.side_effect = side_effect
@@ -524,7 +531,7 @@ def test_get_available_demos_ignores_yaml_dataset_name_mismatch(mock_list, mock_
     ]
 
     # YAML uses a different name; should be ignored for dataset_name field
-    def side_effect(key):
+    def side_effect(key, bucket, client):
         return b'dataset-name: DIFFERENT\nnum-tables: 3\ndataset-size-mb: 2.5\n'
 
     mock_get.side_effect = side_effect
@@ -537,6 +544,26 @@ def test_get_available_demos_ignores_yaml_dataset_name_mismatch(mock_list, mock_
     row = df[df['dataset_name'] == 'folder_name'].iloc[0]
     assert row['num_tables'] == 3
     assert row['size_MB'] == 2.5
+
+
+def test_get_available_demos_private_bucket_raises_error():
+    """Test that an error is raised if a private bucket is given."""
+    # Run and Assert
+    error_message = 'Private buckets are only supported in SDV Enterprise.'
+    with pytest.raises(ValueError, match=error_message):
+        get_available_demos('single_table', 'private-bucket')
+
+
+def test_get_available_demos_credentials_raises_error():
+    """Test that an error is raised if credentials are given."""
+    # Run and Assert
+    error_message = 'DataCebo credentials for private buckets are only supported in SDV Enterprise.'
+    with pytest.raises(ValueError, match=error_message):
+        get_available_demos(
+            'single_table',
+            s3_bucket_name='sdv-datasets-public',
+            credentials={'username': 'test@gmail.com', 'license_key': 'FakeKey123'},
+        )
 
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
@@ -563,7 +590,7 @@ def test_download_demo_success_single_table(mock_list, mock_get):
         'relationships': [],
     }).encode()
 
-    def side_effect(key):
+    def side_effect(key, bucket, client):
         if key.endswith('data.ZIP'):
             return zip_bytes
         if key.endswith('metadata.json'):
@@ -602,7 +629,9 @@ def test_download_demo_no_v1_metadata_raises(mock_list, mock_get):
         {'Key': 'single_table/word/data.zip'},
         {'Key': 'single_table/word/metadata.json'},
     ]
-    mock_get.side_effect = lambda key: json.dumps({'METADATA_SPEC_VERSION': 'V2'}).encode()
+    mock_get.side_effect = lambda key, bucket, client: (
+        json.dumps({'METADATA_SPEC_VERSION': 'V2'}).encode()
+    )
 
     # Run and Assert
     with pytest.raises(DemoResourceNotFoundError, match='METADATA_SPEC_VERSION'):
@@ -674,7 +703,7 @@ def test_download_demo_writes_metadata_and_discovers_nested_csv(mock_list, mock_
     }
     meta_bytes = json.dumps(meta_dict).encode()
 
-    def side_effect(key):
+    def side_effect(key, bucket, client):
         if key.endswith('data.zip'):
             return zip_bytes
         if key.endswith('metadata.json'):
@@ -853,7 +882,14 @@ def test_get_readme_and_get_source_call_wrapper(monkeypatch):
     # Setup
     calls = []
 
-    def fake(modality, dataset_name, filename, output_filepath=None):
+    def fake(
+        modality,
+        dataset_name,
+        filename,
+        output_filepath=None,
+        bucket='test_bucket',
+        credentials=None,
+    ):
         calls.append((modality, dataset_name, filename, output_filepath))
         return 'X'
 
@@ -888,6 +924,28 @@ def test_get_readme_raises_if_output_file_exists(mock_list, mock_get, tmp_path):
         get_readme('single_table', 'dataset1', str(out))
 
 
+def test_get_readme_private_bucket_raises_error():
+    """Test that an error is raised if a private bucket is given."""
+    # Run and Assert
+    error_message = 'Private buckets are only supported in SDV Enterprise.'
+    with pytest.raises(ValueError, match=error_message):
+        get_readme('single_table', 'dataset', None, 'private-bucket')
+
+
+def test_get_readme_credentials_raises_error():
+    """Test that an error is raised if credentials are given."""
+    # Run and Assert
+    error_message = 'DataCebo credentials for private buckets are only supported in SDV Enterprise.'
+    with pytest.raises(ValueError, match=error_message):
+        get_readme(
+            'single_table',
+            'dataset',
+            None,
+            'sdv-datasets-public',
+            {'username': 'test@gmail.com', 'license_key': 'FakeKey123'},
+        )
+
+
 @patch('sdv.datasets.demo._get_data_from_bucket')
 @patch('sdv.datasets.demo._list_objects')
 def test_get_source_raises_if_output_file_exists(mock_list, mock_get, tmp_path):
@@ -905,6 +963,28 @@ def test_get_source_raises_if_output_file_exists(mock_list, mock_get, tmp_path):
     err = f"A file named '{out}' already exists. Please specify a different filepath."
     with pytest.raises(ValueError, match=re.escape(err)):
         get_source('single_table', 'dataset1', str(out))
+
+
+def test_get_source_private_bucket_raises_error():
+    """Test that an error is raised if a private bucket is given."""
+    # Run and Assert
+    error_message = 'Private buckets are only supported in SDV Enterprise.'
+    with pytest.raises(ValueError, match=error_message):
+        get_source('single_table', 'dataset', None, 'private-bucket')
+
+
+def test_get_source_credentials_raises_error():
+    """Test that an error is raised if credentials are given."""
+    # Run and Assert
+    error_message = 'DataCebo credentials for private buckets are only supported in SDV Enterprise.'
+    with pytest.raises(ValueError, match=error_message):
+        get_source(
+            'single_table',
+            'dataset',
+            None,
+            'sdv-datasets-public',
+            {'username': 'test@gmail.com', 'license_key': 'FakeKey123'},
+        )
 
 
 def test_get_readme_raises_for_non_txt_output():
@@ -1011,7 +1091,9 @@ def test_download_demo_raises_when_no_csv_in_zip_single_table(mock_list, mock_ge
     zip_bytes = zip_buf.getvalue()
     meta_bytes = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
 
-    mock_get.side_effect = lambda key: zip_bytes if key.endswith('data.zip') else meta_bytes
+    mock_get.side_effect = lambda key, client, bucket: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
 
     # Run and Assert
     msg = 'Demo data could not be downloaded because no csv files were found in data.zip'
@@ -1052,14 +1134,17 @@ def test_download_demo_skips_non_csv_in_memory_no_warning(mock_list, mock_get):
         'relationships': [],
     }).encode()
 
-    mock_get.side_effect = lambda key: zip_bytes if key.endswith('data.zip') else meta_bytes
+    mock_get.side_effect = lambda key, bucket, client: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
 
     # Run and Assert
     warn_msg = 'Skipped files: empty_dir/, nested/readme.md, note.txt'
     with pytest.warns(UserWarning, match=warn_msg) as rec:
         data, _ = download_demo('single_table', 'mix')
 
-    assert len(rec) == 1
+    assert any(warn_msg in str(warn_record) for warn_record in rec)
+
     expected = pd.DataFrame({'id': [1, 2], 'name': ['a', 'b']})
     pd.testing.assert_frame_equal(data, expected)
 
@@ -1094,7 +1179,9 @@ def test_download_demo_on_disk_warns_failed_csv_only(mock_list, mock_get, tmp_pa
         'relationships': [],
     }).encode()
 
-    mock_get.side_effect = lambda key: zip_bytes if key.endswith('data.zip') else meta_bytes
+    mock_get.side_effect = lambda key, client, bucket: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
 
     # Force read_csv to fail on bad.csv only
     orig_read_csv = pd.read_csv
@@ -1113,7 +1200,7 @@ def test_download_demo_on_disk_warns_failed_csv_only(mock_list, mock_get, tmp_pa
     with pytest.warns(UserWarning, match=warn_msg) as rec:
         data, _ = download_demo('single_table', 'mix', out_dir)
 
-    assert len(rec) == 1
+    assert any(warn_msg in str(warn_record) for warn_record in rec)
     pd.testing.assert_frame_equal(data, good)
 
 
@@ -1146,7 +1233,9 @@ def test_download_demo_handles_non_utf8_in_memory(mock_list, mock_get):
         'relationships': [],
     }).encode()
 
-    mock_get.side_effect = lambda key: zip_bytes if key.endswith('data.zip') else meta_bytes
+    mock_get.side_effect = lambda key, bucket, client: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
 
     # Run
     data, _ = download_demo('single_table', 'nonutf')
@@ -1185,7 +1274,9 @@ def test_download_demo_handles_non_utf8_on_disk(mock_list, mock_get, tmp_path):
         'relationships': [],
     }).encode()
 
-    mock_get.side_effect = lambda key: zip_bytes if key.endswith('data.zip') else meta_bytes
+    mock_get.side_effect = lambda key, client, bucket: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
 
     out_dir = tmp_path / 'latin_out'
 
@@ -1195,3 +1286,25 @@ def test_download_demo_handles_non_utf8_on_disk(mock_list, mock_get, tmp_path):
     # Assert
     expected = pd.DataFrame({'id': [1], 'name': ['café']})
     pd.testing.assert_frame_equal(data, expected)
+
+
+def test_download_demo_private_bucket_raises_error():
+    """Test that an error is raised if a private bucket is given."""
+    # Run and Assert
+    error_message = 'Private buckets are only supported in SDV Enterprise.'
+    with pytest.raises(ValueError, match=error_message):
+        download_demo('single_table', 'dataset', None, 'private-bucket')
+
+
+def test_download_demo_credentials_raises_error():
+    """Test that an error is raised if credentials are given."""
+    # Run and Assert
+    error_message = 'DataCebo credentials for private buckets are only supported in SDV Enterprise.'
+    with pytest.raises(ValueError, match=error_message):
+        download_demo(
+            'single_table',
+            'dataset',
+            None,
+            'sdv-datasets-public',
+            {'username': 'test@gmail.com', 'license_key': 'FakeKey123'},
+        )

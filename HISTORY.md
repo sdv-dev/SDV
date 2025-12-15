@@ -1,5 +1,11 @@
 # Release Notes
 
+## v1.31.0 - 2025-12-15
+
+### New Features
+
+* Add bucket and credentials parameter to download_demo - Issue [#2747](https://github.com/sdv-dev/SDV/issues/2747) by @amontanez24
+
 ## v1.30.0 - 2025-12-05
 
 ### New Features
