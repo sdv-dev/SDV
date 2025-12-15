@@ -6,10 +6,12 @@ import logging
 import os
 import warnings
 from collections import defaultdict
+from functools import wraps
 from pathlib import Path
 from zipfile import ZipFile
 
 import boto3
+import botocore
 import numpy as np
 import pandas as pd
 import yaml
@@ -195,6 +197,63 @@ def _get_first_v1_metadata_bytes(contents, dataset_prefix, bucket, client):
     )
 
 
+def _download_error_message(
+    modality,
+    dataset_name,
+    output_folder_name=None,
+    s3_bucket_name=PUBLIC_BUCKET,
+    credentials=None,
+    **kwargs,
+):
+    return (
+        f"Could not download dataset '{dataset_name}' from bucket '{s3_bucket_name}'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+
+
+def _list_modality_error_message(modality, s3_bucket_name, **kwargs):
+    return (
+        f"Could not list datasets in modality '{modality}' from bucket '{s3_bucket_name}'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+
+
+def handle_aws_client_errors(error_message_builder):
+    """Decorate a function to translate AWS client errors into more descriptive errors.
+
+    This decorator catches ``botocore.exceptions.ClientError`` raised by the wrapped
+    function and re-raises it as a ``DemoResourceNotFoundError`` with a custom error
+    message. The error message is generated dynamically using the provided
+    ``error_message_builder`` function.
+
+    Args:
+        error_message_builder (Callable):
+            A callable that receives the same ``*args`` and ``**kwargs`` as the wrapped
+            function and returns an error message.
+
+    Returns:
+        func:
+            A wrapped function.
+    """
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                function_result = func(*args, **kwargs)
+            except botocore.exceptions.ClientError as error:
+                message = error_message_builder(*args, **kwargs)
+                raise DemoResourceNotFoundError(message) from error
+
+            return function_result
+
+        return wrapper
+
+    return decorator
+
+
 def _download(modality, dataset_name, bucket, credentials=None):
     """Download dataset resources from a bucket.
 
@@ -349,6 +408,7 @@ def _get_metadata(metadata_bytes, dataset_name, output_folder_name=None):
     return metadata
 
 
+@handle_aws_client_errors(_download_error_message)
 def download_demo(
     modality, dataset_name, output_folder_name=None, s3_bucket_name=PUBLIC_BUCKET, credentials=None
 ):
@@ -462,6 +522,7 @@ def _parse_num_tables(num_tables_val, dataset_name):
         return np.nan
 
 
+@handle_aws_client_errors(_list_modality_error_message)
 def get_available_demos(modality, s3_bucket_name=PUBLIC_BUCKET, credentials=None):
     """Get demo datasets available for a ``modality``.
 
@@ -629,6 +690,7 @@ def _get_text_file_content(
     return text
 
 
+@handle_aws_client_errors(_download_error_message)
 def get_source(
     modality, dataset_name, output_filepath=None, s3_bucket_name=PUBLIC_BUCKET, credentials=None
 ):
@@ -665,6 +727,7 @@ def get_source(
     )
 
 
+@handle_aws_client_errors(_download_error_message)
 def get_readme(
     modality, dataset_name, output_filepath=None, s3_bucket_name=PUBLIC_BUCKET, credentials=None
 ):

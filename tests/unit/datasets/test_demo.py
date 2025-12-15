@@ -8,6 +8,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 import pytest
+from botocore.exceptions import ClientError
 
 from sdv.datasets.demo import (
     _download,
@@ -1365,7 +1366,7 @@ def test__list_objects_raises_when_no_contents_and_dataset_found():
         _list_objects(prefix='single_table/mydataset/', bucket='bucket', client=mock_client)
 
 
-def test_list_objects_raises_when_no_contents_and_no_dataset():
+def test__list_objects_raises_when_no_contents_and_no_dataset():
     """Test that `_list_objects` raise a modality-specific error when dataset name is unknown."""
     # Setup
     mock_client = Mock()
@@ -1380,3 +1381,133 @@ def test_list_objects_raises_when_no_contents_and_no_dataset():
     )
     with pytest.raises(DemoResourceNotFoundError, match=error_msg):
         _list_objects(prefix='single_table/', bucket='bucket', client=mock_client)
+
+
+@patch('sdv.datasets.demo._create_s3_client')
+def test_download_with_client_error(mock__create_s3_client):
+    """Raise DemoResourceNotFoundError when an AWS ClientError occurs during dataset download."""
+    # Setup
+    client = Mock()
+    client.get_paginator.side_effect = ClientError(
+        error_response={
+            'Error': {'Code': 'AccessDenied', 'Message': 'Access Denied'},
+            'ResponseMetadata': {'HTTPStatusCode': 403},
+        },
+        operation_name='ListObjectsV2',
+    )
+    mock__create_s3_client.return_value = client
+
+    # Run and Assert
+    error_msg = (
+        "Could not download dataset 'fake_hotels' from bucket 'private_bucket'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
+        download_demo(
+            'single_table',
+            'fake_hotels',
+            None,
+            'private_bucket',
+        )
+
+
+@patch('sdv.datasets.demo._create_s3_client')
+def test_get_available_demos_with_client_error(mock__create_s3_client):
+    """Raise `DemoResourceNotFoundError` when an AWS `ClientError` occurs while listing demos."""
+    # Setup
+    client = Mock()
+    client.get_paginator.side_effect = ClientError(
+        error_response={
+            'Error': {
+                'Code': 'AccessDenied',
+                'Message': 'Access Denied',
+            },
+            'ResponseMetadata': {
+                'HTTPStatusCode': 403,
+            },
+        },
+        operation_name='ListObjectsV2',
+    )
+    mock__create_s3_client.return_value = client
+
+    # Run and Assert
+    error_msg = (
+        "Could not list datasets in modality 'single_table' from bucket 'private_bucket'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
+        get_available_demos(
+            modality='single_table',
+            s3_bucket_name='private_bucket',
+        )
+
+
+@patch('sdv.datasets.demo._create_s3_client')
+def test_get_source_with_client_error(mock__create_s3_client):
+    """Raise DemoResourceNotFoundError when an AWS ClientError occurs while fetching SOURCE."""
+    # Setup
+    client = Mock()
+    client.get_paginator.side_effect = ClientError(
+        error_response={
+            'Error': {
+                'Code': 'AccessDenied',
+                'Message': 'Access Denied',
+            },
+            'ResponseMetadata': {
+                'HTTPStatusCode': 403,
+            },
+        },
+        operation_name='ListObjectsV2',
+    )
+    mock__create_s3_client.return_value = client
+
+    error_msg = (
+        "Could not download dataset 'fake_hotels' from bucket 'private_bucket'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+
+    # Run and Assert
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
+        get_source(
+            modality='single_table',
+            dataset_name='fake_hotels',
+            s3_bucket_name='private_bucket',
+        )
+
+
+@patch('sdv.datasets.demo._create_s3_client')
+def test_get_readme_with_client_error(mock__create_s3_client):
+    """Raise `DemoResourceNotFoundError` when an AWS ClientError occurs while fetching README."""
+    # Setup
+    client = Mock()
+    client.get_paginator.side_effect = ClientError(
+        error_response={
+            'Error': {
+                'Code': 'AccessDenied',
+                'Message': 'Access Denied',
+            },
+            'ResponseMetadata': {
+                'HTTPStatusCode': 403,
+            },
+        },
+        operation_name='ListObjectsV2',
+    )
+    mock__create_s3_client.return_value = client
+
+    error_msg = (
+        "Could not download dataset 'fake_hotels' from bucket 'private_bucket'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+
+    # Run and Assert
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
+        get_readme(
+            modality='single_table',
+            dataset_name='fake_hotels',
+            s3_bucket_name='private_bucket',
+        )
