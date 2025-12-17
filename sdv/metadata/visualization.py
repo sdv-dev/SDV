@@ -8,6 +8,7 @@ import graphviz
 DEFAULT_SDTYPES = ['id', 'numerical', 'categorical', 'datetime', 'boolean']
 BACKGROUND_COLOR = '#B7E9FF'
 
+
 def create_columns_node(columns):
     """Convert columns into text for ``graphviz`` node.
 
