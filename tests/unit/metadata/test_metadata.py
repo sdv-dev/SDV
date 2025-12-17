@@ -877,6 +877,19 @@ class TestMetadataClass:
         assert isinstance(copied_metadata, Metadata)
         assert metadata_instance.to_dict() == copied_metadata.to_dict()
 
+    @patch('graphviz.Digraph')
+    def test_visualize_properties(self, mock_digraph, metadata_instance):
+        """Test the ``visualize`` method properties"""
+        # Run
+        metadata_instance.visualize()
+
+        # Assert
+        mock_digraph.assert_called_with(
+            'Metadata',
+            format=None,
+            node_attr={'shape': 'Mrecord', 'fillcolor': '#B7E9FF', 'style': 'filled'},
+        )
+
     @patch('sdv.metadata.multi_table.visualize_graph')
     def test_visualize_with_sequence_key_and_index(self, visualize_graph_mock):
         """Test the ``visualize`` method with sequence key and index"""
