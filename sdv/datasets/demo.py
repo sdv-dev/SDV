@@ -6,10 +6,12 @@ import logging
 import os
 import warnings
 from collections import defaultdict
+from functools import wraps
 from pathlib import Path
 from zipfile import ZipFile
 
 import boto3
+import botocore
 import numpy as np
 import pandas as pd
 import yaml
@@ -57,6 +59,10 @@ def _get_data_from_bucket(object_key, bucket, client):
     return response['Body'].read()
 
 
+def _get_dataset_name_from_prefix(prefix):
+    return prefix.split('/')[1]
+
+
 def _list_objects(prefix, bucket, client):
     """List all objects under a given prefix using pagination.
 
@@ -78,7 +84,21 @@ def _list_objects(prefix, bucket, client):
         contents.extend(resp.get('Contents', []))
 
     if not contents:
-        raise DemoResourceNotFoundError(f"No objects found under '{prefix}' in bucket '{bucket}'.")
+        prefix_parts = prefix.split('/')
+        modality = prefix_parts[0]
+        dataset_name = _get_dataset_name_from_prefix(prefix)
+        if dataset_name:
+            raise DemoResourceNotFoundError(
+                f"Could not download dataset '{dataset_name}' from bucket '{bucket}'. "
+                'Make sure the bucket name is correct. If the bucket is private '
+                'make sure to provide your credentials.'
+            )
+        else:
+            raise DemoResourceNotFoundError(
+                f"Could not list datasets in modality '{modality}' from bucket '{bucket}'. "
+                'Make sure the bucket name is correct. If the bucket is private '
+                'make sure to provide your credentials.'
+            )
 
     return contents
 
@@ -108,7 +128,7 @@ def _search_contents_keys(contents, match_fn):
     return matches
 
 
-def _find_data_zip_key(contents, dataset_prefix):
+def _find_data_zip_key(contents, dataset_prefix, bucket):
     """Find the 'data.zip' object key under dataset prefix, case-insensitive.
 
     Args:
@@ -130,7 +150,11 @@ def _find_data_zip_key(contents, dataset_prefix):
     if matches:
         return matches[0]
 
-    raise DemoResourceNotFoundError("Could not find 'data.zip' for the requested dataset.")
+    dataset_name = _get_dataset_name_from_prefix(dataset_prefix)
+    raise DemoResourceNotFoundError(
+        f"Could not download dataset '{dataset_name}' from bucket '{bucket}'. "
+        "The dataset is missing 'data.zip' file."
+    )
 
 
 def _get_first_v1_metadata_bytes(contents, dataset_prefix, bucket, client):
@@ -166,9 +190,84 @@ def _get_first_v1_metadata_bytes(contents, dataset_prefix, bucket, client):
         except Exception:
             continue
 
+    dataset_name = _get_dataset_name_from_prefix(dataset_prefix)
     raise DemoResourceNotFoundError(
-        'Could not find a valid metadata JSON with METADATA_SPEC_VERSION "V1".'
+        f"Could not download dataset '{dataset_name}' from bucket '{bucket}'. "
+        'The dataset is missing a valid metadata.'
     )
+
+
+def _download_text_file_error_message(
+    modality,
+    dataset_name,
+    output_filepath=None,
+    bucket=PUBLIC_BUCKET,
+    filename=None,
+    **kwargs,
+):
+    return (
+        f"Could not retrieve '{filename}' for dataset '{dataset_name}' "
+        f"from bucket '{bucket}'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+
+
+def _download_error_message(
+    modality,
+    dataset_name,
+    output_folder_name=None,
+    s3_bucket_name=PUBLIC_BUCKET,
+    credentials=None,
+    **kwargs,
+):
+    return (
+        f"Could not download dataset '{dataset_name}' from bucket '{s3_bucket_name}'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+
+
+def _list_modality_error_message(modality, s3_bucket_name, **kwargs):
+    return (
+        f"Could not list datasets in modality '{modality}' from bucket '{s3_bucket_name}'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+
+
+def handle_aws_client_errors(error_message_builder):
+    """Decorate a function to translate AWS client errors into more descriptive errors.
+
+    This decorator catches ``botocore.exceptions.ClientError`` raised by the wrapped
+    function and re-raises it as a ``DemoResourceNotFoundError`` with a custom error
+    message. The error message is generated dynamically using the provided
+    ``error_message_builder`` function.
+
+    Args:
+        error_message_builder (Callable):
+            A callable that receives the same ``*args`` and ``**kwargs`` as the wrapped
+            function and returns an error message.
+
+    Returns:
+        func:
+            A wrapped function.
+    """
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                function_result = func(*args, **kwargs)
+            except botocore.exceptions.ClientError as error:
+                message = error_message_builder(*args, **kwargs)
+                raise DemoResourceNotFoundError(message) from error
+
+            return function_result
+
+        return wrapper
+
+    return decorator
 
 
 def _download(modality, dataset_name, bucket, credentials=None):
@@ -186,7 +285,7 @@ def _download(modality, dataset_name, bucket, credentials=None):
         f'{bucket_url}/{dataset_prefix}'
     )
     contents = _list_objects(dataset_prefix, bucket=bucket, client=client)
-    zip_key = _find_data_zip_key(contents, dataset_prefix)
+    zip_key = _find_data_zip_key(contents, dataset_prefix, bucket)
     zip_bytes = _get_data_from_bucket(zip_key, bucket=bucket, client=client)
     metadata_bytes = _get_first_v1_metadata_bytes(
         contents, dataset_prefix, bucket=bucket, client=client
@@ -262,7 +361,7 @@ def _get_data_without_output_folder(in_memory_directory):
     return data, skipped_files
 
 
-def _get_data(modality, output_folder_name, in_memory_directory):
+def _get_data(modality, output_folder_name, in_memory_directory, bucket, dataset_name):
     if output_folder_name:
         data, skipped_files = _get_data_with_output_folder(output_folder_name)
     else:
@@ -273,7 +372,8 @@ def _get_data(modality, output_folder_name, in_memory_directory):
 
     if not data:
         raise DemoResourceNotFoundError(
-            'Demo data could not be downloaded because no csv files were found in data.zip'
+            f"Could not download dataset '{dataset_name}' from bucket '{bucket}'. "
+            'The dataset is missing `csv` file/s.'
         )
 
     if modality != 'multi_table':
@@ -301,7 +401,10 @@ def _get_metadata(metadata_bytes, dataset_name, output_folder_name=None):
         metadict = json.loads(metadata_bytes)
         metadata = Metadata().load_from_dict(metadict, dataset_name)
     except Exception as e:
-        raise DemoResourceNotFoundError('Failed to parse metadata JSON for the dataset.') from e
+        raise DemoResourceNotFoundError(
+            f"Could not parse the metadata for dataset '{dataset_name}'. "
+            'The dataset is missing a valid metadata file.'
+        ) from e
 
     if output_folder_name:
         try:
@@ -321,6 +424,7 @@ def _get_metadata(metadata_bytes, dataset_name, output_folder_name=None):
     return metadata
 
 
+@handle_aws_client_errors(_download_error_message)
 def download_demo(
     modality, dataset_name, output_folder_name=None, s3_bucket_name=PUBLIC_BUCKET, credentials=None
 ):
@@ -362,7 +466,13 @@ def download_demo(
 
     data_io, metadata_bytes = _download(modality, dataset_name, s3_bucket_name, credentials)
     in_memory_directory = _extract_data(data_io, output_folder_name)
-    data = _get_data(modality, output_folder_name, in_memory_directory)
+    data = _get_data(
+        modality,
+        output_folder_name,
+        in_memory_directory,
+        s3_bucket_name,
+        dataset_name,
+    )
     metadata = _get_metadata(metadata_bytes, dataset_name, output_folder_name)
 
     return data, metadata
@@ -428,6 +538,7 @@ def _parse_num_tables(num_tables_val, dataset_name):
         return np.nan
 
 
+@handle_aws_client_errors(_list_modality_error_message)
 def get_available_demos(modality, s3_bucket_name=PUBLIC_BUCKET, credentials=None):
     """Get demo datasets available for a ``modality``.
 
@@ -545,6 +656,7 @@ def _save_document(text, output_filepath, filename, dataset_name):
         LOGGER.info(f'Error saving {filename} for dataset {dataset_name}.')
 
 
+@handle_aws_client_errors(_download_text_file_error_message)
 def _get_text_file_content(
     modality, dataset_name, filename, output_filepath=None, bucket=PUBLIC_BUCKET, credentials=None
 ):
@@ -595,6 +707,7 @@ def _get_text_file_content(
     return text
 
 
+@handle_aws_client_errors(_download_text_file_error_message)
 def get_source(
     modality, dataset_name, output_filepath=None, s3_bucket_name=PUBLIC_BUCKET, credentials=None
 ):
