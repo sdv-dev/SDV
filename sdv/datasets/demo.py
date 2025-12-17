@@ -197,6 +197,22 @@ def _get_first_v1_metadata_bytes(contents, dataset_prefix, bucket, client):
     )
 
 
+def _download_text_file_error_message(
+    modality,
+    dataset_name,
+    output_filepath=None,
+    bucket=PUBLIC_BUCKET,
+    filename=None,
+    **kwargs,
+):
+    return (
+        f"Could not retrieve '{filename}' for dataset '{dataset_name}' "
+        f"from bucket '{bucket}'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+
+
 def _download_error_message(
     modality,
     dataset_name,
@@ -640,6 +656,7 @@ def _save_document(text, output_filepath, filename, dataset_name):
         LOGGER.info(f'Error saving {filename} for dataset {dataset_name}.')
 
 
+@handle_aws_client_errors(_download_text_file_error_message)
 def _get_text_file_content(
     modality, dataset_name, filename, output_filepath=None, bucket=PUBLIC_BUCKET, credentials=None
 ):
@@ -690,7 +707,7 @@ def _get_text_file_content(
     return text
 
 
-@handle_aws_client_errors(_download_error_message)
+@handle_aws_client_errors(_download_text_file_error_message)
 def get_source(
     modality, dataset_name, output_filepath=None, s3_bucket_name=PUBLIC_BUCKET, credentials=None
 ):
@@ -727,7 +744,6 @@ def get_source(
     )
 
 
-@handle_aws_client_errors(_download_error_message)
 def get_readme(
     modality, dataset_name, output_filepath=None, s3_bucket_name=PUBLIC_BUCKET, credentials=None
 ):

@@ -1465,7 +1465,8 @@ def test_get_source_with_client_error(mock__create_s3_client):
     mock__create_s3_client.return_value = client
 
     error_msg = (
-        "Could not download dataset 'fake_hotels' from bucket 'private_bucket'. "
+        "Could not retrieve 'SOURCE.txt' for dataset 'fake_hotels' "
+        "from bucket 'private_bucket'. "
         'Make sure the bucket name is correct. If the bucket is private '
         'make sure to provide your credentials.'
     )
@@ -1499,7 +1500,8 @@ def test_get_readme_with_client_error(mock__create_s3_client):
     mock__create_s3_client.return_value = client
 
     error_msg = (
-        "Could not download dataset 'fake_hotels' from bucket 'private_bucket'. "
+        "Could not retrieve 'README.txt' for dataset 'fake_hotels' "
+        "from bucket 'private_bucket'. "
         'Make sure the bucket name is correct. If the bucket is private '
         'make sure to provide your credentials.'
     )
