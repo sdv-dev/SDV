@@ -493,7 +493,8 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             if kind in ('i', 'f'):
                 data_type = 'continuous'
                 sdtype = (
-                    self.metadata.tables[self._table_name]
+                    self.metadata
+                    .tables[self._table_name]
                     .columns.get(field, {})
                     .get('sdtype', None)
                 )

@@ -6,6 +6,7 @@ from collections import defaultdict
 import graphviz
 
 DEFAULT_SDTYPES = ['id', 'numerical', 'categorical', 'datetime', 'boolean']
+BACKGROUND_COLOR = '#B7E9FF'
 
 
 def create_columns_node(columns):
@@ -95,7 +96,7 @@ def visualize_graph(nodes, edges, filepath=None):
     digraph = graphviz.Digraph(
         'Metadata',
         format=graphviz_extension,
-        node_attr={'shape': 'Mrecord', 'fillcolor': 'lightgoldenrod1', 'style': 'filled'},
+        node_attr={'shape': 'Mrecord', 'fillcolor': BACKGROUND_COLOR, 'style': 'filled'},
     )
 
     for name, label in nodes.items():

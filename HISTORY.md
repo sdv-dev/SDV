@@ -1,5 +1,16 @@
 # Release Notes
 
+## v1.32.0 - 2025-12-19
+
+### New Features
+
+* Update the metadata visualization color - Issue [#2758](https://github.com/sdv-dev/SDV/issues/2758) by @sarahmish
+* Improve error messaging when downloading demos or related files - Issue [#2757](https://github.com/sdv-dev/SDV/issues/2757) by @pvk-developer
+
+### Bugs Fixed
+
+* Fix failing style checks - Issue [#2763](https://github.com/sdv-dev/SDV/issues/2763) by @rwedge
+
 ## v1.31.0 - 2025-12-15
 
 ### New Features
