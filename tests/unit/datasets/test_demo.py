@@ -636,9 +636,9 @@ def test_download_demo_no_v1_metadata_raises(mock_list, mock_get):
         {'Key': 'single_table/word/data.zip'},
         {'Key': 'single_table/word/metadata.json'},
     ]
-    mock_get.side_effect = lambda key, bucket, client: (
-        json.dumps({'METADATA_SPEC_VERSION': 'V2'}).encode()
-    )
+    mock_get.side_effect = lambda key, bucket, client: json.dumps({
+        'METADATA_SPEC_VERSION': 'V2'
+    }).encode()
 
     # Run and Assert
     error_msg = (

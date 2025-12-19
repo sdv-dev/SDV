@@ -67,7 +67,8 @@ def get_latest_file(folder_id):
 
     query = f"'{folder_id}' in parents and trashed = false"
     results = (
-        service.files()
+        service
+        .files()
         .list(q=query, orderBy='modifiedTime desc', pageSize=1, fields='files(id, name)')
         .execute()
     )
