@@ -29,8 +29,8 @@ from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.ctgan import CTGANSynthesizer
+from sdv._utils import _check_multi_table_metadata_updated
 from tests.utils import catch_sdv_logs, get_multi_table_data, get_multi_table_metadata
-
 
 class TestBaseMultiTableSynthesizer:
     def test__initialize_models(self):
@@ -113,7 +113,7 @@ class TestBaseMultiTableSynthesizer:
 
     @patch('sdv.multi_table.base.datetime')
     @patch('sdv.multi_table.base.generate_synthesizer_id')
-    @patch('sdv.multi_table.base.BaseMultiTableSynthesizer._check_metadata_updated')
+    @patch('sdv._utils._check_multi_table_metadata_updated')
     def test___init__(
         self, mock_check_metadata_updated, mock_generate_synthesizer_id, mock_datetime, caplog
     ):
@@ -212,8 +212,8 @@ class TestBaseMultiTableSynthesizer:
         with pytest.warns(FutureWarning, match=warn_message):
             BaseMultiTableSynthesizer(metadata, synthesizer_kwargs={})
 
-    def test__check_metadata_updated(self):
-        """Test the ``_check_metadata_updated`` method."""
+    def test__check_multi_table_metadata_updated(self):
+        """Test the ``_check_multi_table_metadata_updated`` method."""
         # Setup
         instance = Mock()
         instance.metadata = Mock()
@@ -226,7 +226,7 @@ class TestBaseMultiTableSynthesizer:
             ' in future SDV versions.'
         )
         with pytest.warns(UserWarning, match=expected_message):
-            BaseMultiTableSynthesizer._check_metadata_updated(instance)
+            _check_multi_table_metadata_updated(instance)
 
         # Assert
         instance.metadata._check_updated_flag.assert_called_once()
@@ -1171,7 +1171,7 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         instance.preprocess.assert_not_called()
         instance.fit_processed_data.assert_not_called()
-        instance._check_metadata_updated.assert_not_called()
+        _check_multi_table_metadata_updated.assert_not_called_with(instance)
 
     @patch('sdv.multi_table.base.datetime')
     def test_fit(self, mock_datetime, caplog):
@@ -1196,7 +1196,7 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         instance.preprocess.assert_called_once_with(data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
-        instance._check_metadata_updated.assert_called_once()
+        _check_multi_table_metadata_updated.assert_called_once_with(instance)
         assert caplog.messages[0] == str({
             'EVENT': 'Fit',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',
@@ -1229,7 +1229,7 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         instance.preprocess.assert_not_called()
         instance.fit_processed_data.assert_not_called()
-        instance._check_metadata_updated.assert_not_called()
+        _check_multi_table_metadata_updated.assert_not_called_with(instance)
 
     def test_fit_raises_error_empty_dataframe(self):
         """Test that fit raises a ValueError when a table contains an empty dataframe."""

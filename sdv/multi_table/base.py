@@ -19,6 +19,7 @@ from sdv._utils import (
     check_synthesizer_version,
     generate_synthesizer_id,
     warn_load_deprecated,
+    _check_multi_table_metadata_updated,
 )
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
@@ -106,14 +107,6 @@ class BaseMultiTableSynthesizer:
         if self.verbose:
             print(text, **kwargs)  # noqa: T201
 
-    def _check_metadata_updated(self):
-        if self.metadata._check_updated_flag():
-            self.metadata._reset_updated_flag()
-            warnings.warn(
-                "We strongly recommend saving the metadata using 'save_to_json' for replicability"
-                ' in future SDV versions.'
-            )
-
     def __init__(self, metadata, locales=['en_US'], synthesizer_kwargs=None):
         self.metadata = metadata
         if type(metadata) is MultiTableMetadata:
@@ -122,7 +115,7 @@ class BaseMultiTableSynthesizer:
             warnings.filterwarnings('ignore', message=r'.*column relationship.*')
             self.metadata.validate()
 
-        self._check_metadata_updated()
+        _check_multi_table_metadata_updated(self)
         self.locales = locales
         self.verbose = False
         self.extended_columns = defaultdict(dict)
@@ -662,7 +655,7 @@ class BaseMultiTableSynthesizer:
         })
 
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
-        self._check_metadata_updated()
+        _check_multi_table_metadata_updated(self)
         self._fitted = False
         processed_data = self.preprocess(data)
         self._print(text='\n', end='')

@@ -29,6 +29,7 @@ from sdv._utils import (
     check_synthesizer_version,
     generate_synthesizer_id,
     warn_load_deprecated,
+    _check_single_table_metadata_updated,
 )
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
@@ -128,19 +129,6 @@ class BaseSynthesizer:
                 'existing synthesizer. Please create a new synthesizer with the modified metadata.'
             )
 
-    def _check_metadata_updated(self):
-        if self.metadata._check_updated_flag():
-            self.metadata._reset_updated_flag()
-            warnings.warn(
-                "We strongly recommend saving the metadata using 'save_to_json' for replicability"
-                ' in future SDV versions.'
-            )
-            if hasattr(self, '_input_metadata'):
-                if hasattr(self._input_metadata, '_reset_updated_flag'):
-                    self._input_metadata._reset_updated_flag()
-                else:
-                    self._input_metadata._updated = False
-
     def _validate_regex_format(self):
         if self.metadata.tables:
             id_columns = self.metadata.get_column_names(table_name=self._table_name, sdtype='id')
@@ -171,7 +159,7 @@ class BaseSynthesizer:
             self.metadata.tables[self._table_name]._updated = metadata._updated
 
         self.metadata.validate()
-        self._check_metadata_updated()
+        _check_single_table_metadata_updated(self)
 
         # Points to a metadata object that conserves the initialized status of the synthesizer
         self._original_metadata = deepcopy(self.metadata)

@@ -513,3 +513,26 @@ def _validate_correct_synthesizer_loading(synthesizer, cls):
             f"but got '{synthesizer_name}'. Please ensure you are loading the correct "
             f'synthesizer type.'
         )
+
+def _check_single_table_metadata_updated(synthesizer):
+    """Raise warning if single table metadata has been updated before the synthesizer definition or before fitting it"""
+    if synthesizer.metadata._check_updated_flag():
+        synthesizer.metadata._reset_updated_flag()
+        warnings.warn(
+            "We strongly recommend saving the metadata using 'save_to_json' for replicability"
+            ' in future SDV versions.'
+        )
+        if hasattr(synthesizer, '_input_metadata'):
+            if hasattr(synthesizer._input_metadata, '_reset_updated_flag'):
+                synthesizer._input_metadata._reset_updated_flag()
+            else:
+                synthesizer._input_metadata._updated = False
+
+def _check_multi_table_metadata_updated(synthesizer):
+    """Raise warning if multitable metadata has been updated before the synthesizer definition or before fitting it"""
+    if synthesizer.metadata._check_updated_flag():
+        synthesizer.metadata._reset_updated_flag()
+        warnings.warn(
+            "We strongly recommend saving the metadata using 'save_to_json' for replicability"
+            ' in future SDV versions.'
+        )

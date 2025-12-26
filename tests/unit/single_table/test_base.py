@@ -39,6 +39,7 @@ from sdv.single_table import (
     TVAESynthesizer,
 )
 from sdv.single_table.base import COND_IDX, BaseSingleTableSynthesizer, BaseSynthesizer
+from sdv._utils import _check_single_table_metadata_updated
 from tests.utils import catch_sdv_logs
 
 
@@ -60,8 +61,8 @@ class TestBaseSynthesizer:
         call_list = instance._data_processor._update_transformers_by_sdtypes.call_args_list
         assert call_list == [call('categorical', None), call('numerical', 'FloatTransformer')]
 
-    def test__check_metadata_updated(self):
-        """Test the ``_check_metadata_updated`` method."""
+    def test__check_single_table_metadata_updated(self):
+        """Test the ``_check_single_table_metadata_updated`` method."""
         # Setup
         instance = Mock()
         instance.metadata = Mock()
@@ -74,15 +75,15 @@ class TestBaseSynthesizer:
             ' in future SDV versions.'
         )
         with pytest.warns(UserWarning, match=expected_message):
-            BaseSynthesizer._check_metadata_updated(instance)
+            _check_single_table_metadata_updated(instance)
 
         # Assert
         instance.metadata._reset_updated_flag.assert_called_once_with()
         instance.metadata._check_updated_flag.assert_called_once_with()
         instance._input_metadata._reset_updated_flag.assert_called_once_with()
 
-    def test__check_metadata_updated__input_metadata_is_single_table(self):
-        """Test the ``_check_metadata_updated`` method when input metadata is SingleTable."""
+    def test__check_single_table_metadata_updated__input_metadata_is_single_table(self):
+        """Test the ``_check_single_table_metadata_updated`` method when input metadata is SingleTable."""
         # Setup
         instance = Mock()
         instance.metadata = Mock()
@@ -95,7 +96,7 @@ class TestBaseSynthesizer:
             ' in future SDV versions.'
         )
         with pytest.warns(UserWarning, match=expected_message):
-            BaseSynthesizer._check_metadata_updated(instance)
+            _check_single_table_metadata_updated(instance)
 
         # Assert
         instance.metadata._reset_updated_flag.assert_called_once_with()
@@ -191,7 +192,7 @@ class TestBaseSynthesizer:
     @patch('sdv.single_table.base.datetime')
     @patch('sdv.single_table.base.generate_synthesizer_id')
     @patch('sdv.single_table.base.DataProcessor')
-    @patch('sdv.single_table.base.BaseSynthesizer._check_metadata_updated')
+    @patch('sdv._utils._check_single_table_metadata_updated')
     @patch('sdv.single_table.base.BaseSynthesizer._validate_regex_format')
     def test___init___l(
         self,
