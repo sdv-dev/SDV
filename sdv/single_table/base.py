@@ -474,6 +474,7 @@ class BaseSynthesizer:
                 except ConstraintNotMetError:
                     raise e
 
+        self.metadata.validate()
         self._data_processor = DataProcessor(
             metadata=self.metadata._convert_to_single_table(),
             enforce_rounding=self.enforce_rounding,
