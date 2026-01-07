@@ -37,6 +37,56 @@ def demo_metadata():
     return DEMO_METADATA
 
 
+def test_column_relationships_with_constraints():
+    """Test constraints with column relationships. GH#2768"""
+    # Setup
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'street': {'sdtype': 'street_address'},
+                    'city': {'sdtype': 'city'},
+                    'state': {'sdtype': 'administrative_unit'},
+                    'zip': {'sdtype': 'postcode'},
+                    'code': {'sdtype': 'categorical'},
+                    'description': {'sdtype': 'categorical'},
+                }
+            },
+        },
+    })
+    metadata.add_column_relationship(
+        table_name='table',
+        relationship_type='address',
+        column_names=['street', 'city', 'state', 'zip'],
+    )
+    data = pd.DataFrame({
+        'id': [f'id_{i}' for i in range(6)],
+        'street': ['123 Street'] * 6,
+        'city': ['Boston', 'LA', 'Cambridge', 'San Francisco', 'Boston', 'LA'],
+        'state': ['MA', 'CA'] * 3,
+        'zip': ['72801'] * 6,
+        'code': ['000', '001', '002'] * 2,
+        'description': ['code 0', 'code 1', 'code 2'] * 2,
+    })
+    constraint = FixedCombinations(table_name='table', column_names=['code', 'description'])
+    synth = GaussianCopulaSynthesizer(metadata)
+
+    # Run
+    synth.add_constraints([constraint])
+    synth.fit(data)
+    samples = synth.sample(100)
+
+    # Assert
+    assert samples.columns.tolist() == data.columns.to_list()
+    expected_combinations = {('000', 'code 0'), ('001', 'code 1'), ('002', 'code 2')}
+    sampled_combinations = {
+        (code, description)
+        for code, description in samples[['code', 'description']].drop_duplicates().to_numpy()
+    }
+    assert expected_combinations == sampled_combinations
+
+
 def test_conditional_sampling_with_constraints(demo_data, demo_metadata):
     """Test constraints with conditional sampling. GH#1737"""
     # Setup
