@@ -5,7 +5,6 @@ authors = [{ name = 'DataCebo, Inc.', email = 'info@sdv.dev' }]
 classifiers = [
     'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Developers',
-    'License :: Free for non-commercial use',
     'Natural Language :: English',
     'Programming Language :: Python :: 3',
     'Programming Language :: Python :: 3.9',
@@ -17,7 +16,8 @@ classifiers = [
 ]
 keywords = ['sdv', 'synthetic-data', 'synhtetic-data-generation', 'timeseries', 'single-table', 'multi-table']
 dynamic = ['version']
-license = { text = 'BSL-1.1' }
+license = 'BUSL-1.1'
+license-files = ['LICENSE']
 requires-python = '>=3.9,<3.14'
 readme = 'README.md'
 dependencies = [
@@ -109,7 +109,6 @@ readme = ['rundoc>=0.4.3,<0.5',]
 
 [tool.setuptools]
 include-package-data = true
-license-files = ['LICENSE']
 
 [tool.setuptools.packages.find]
 include = ['sdv', 'sdv.*']
