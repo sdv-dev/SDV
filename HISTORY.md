@@ -1,5 +1,11 @@
 # Release Notes
 
+## v1.32.1 - 2026-01-09
+
+### Bugs Fixed
+
+* Combining column relationship with constraints not working - Issue [#2768](https://github.com/sdv-dev/SDV/issues/2768) by @frances-h
+
 ## v1.32.0 - 2025-12-19
 
 ### New Features
