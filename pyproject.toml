@@ -17,8 +17,9 @@ classifiers = [
 ]
 keywords = ['sdv', 'synthetic-data', 'synhtetic-data-generation', 'timeseries', 'single-table', 'multi-table']
 dynamic = ['version']
-license = { text = 'BSL-1.1' }
-requires-python = '>=3.9,<3.15'
+license = 'BUSL-1.1'
+license-files = ['LICENSE']
+requires-python = '>=3.9,<3.14'
 readme = 'README.md'
 dependencies = [
     'boto3>=1.28,<2.0.0',
