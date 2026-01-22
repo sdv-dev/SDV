@@ -702,7 +702,7 @@ class TestMultiTableMetadata:
         assert instance._multi_table_updated is True
 
     def test_add_relationship_child_key_is_primary_key(self):
-        """Test that passing a primary key as ``child_foreign_key`` crashes."""
+        """Test that passing a primary key as ``child_foreign_key`` does not crash."""
         # Setup
         table = pd.DataFrame({'pk': [1, 2, 3], 'col1': [0.1, 0.1, 0.2], 'col2': ['a', 'b', 'c']})
         metadata = MultiTableMetadata()
@@ -713,14 +713,39 @@ class TestMultiTableMetadata:
         metadata.update_column('table2', 'pk', sdtype='id')
         metadata.set_primary_key('table2', 'pk')
 
-        # Run and Assert
-        err_msg = re.escape(
-            "Invalid relationship between table 'table' and table "
-            "'table2'. A relationship must connect a primary key "
-            'with a non-primary key.'
-        )
-        with pytest.raises(InvalidMetadataError, match=err_msg):
-            metadata.add_relationship('table', 'table2', 'pk', 'pk')
+        # Run
+        metadata.add_relationship('table', 'table2', 'pk', 'pk')
+
+        # Assert
+        metadata.to_dict() == {
+            'tables': {
+                'table': {
+                    'primary_key': 'pk',
+                    'columns': {
+                        'pk': {'sdtype': 'id'},
+                        'col1': {'sdtype': 'numerical'},
+                        'col2': {'sdtype': 'categorical'},
+                    },
+                },
+                'table2': {
+                    'primary_key': 'pk',
+                    'columns': {
+                        'pk': {'sdtype': 'id'},
+                        'col1': {'sdtype': 'numerical'},
+                        'col2': {'sdtype': 'categorical'},
+                    },
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'table',
+                    'child_table_name': 'table2',
+                    'parent_primary_key': 'pk',
+                    'child_foreign_key': 'pk',
+                }
+            ],
+            'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
+        }
 
     def test_remove_relationship(self):
         """Test all relationships are removed using ``remove_relationship``."""
@@ -1251,7 +1276,7 @@ class TestMultiTableMetadata:
             )
 
     def test_validate_child_key_is_primary_key(self):
-        """Test it crashes if the child key is a primary key."""
+        """Test passes if the child key is a primary key."""
         # Setup
         table = pd.DataFrame({'pk': [1, 2, 3], 'col1': [0.1, 0.1, 0.2], 'col2': ['a', 'b', 'c']})
         metadata = MultiTableMetadata()
@@ -1261,7 +1286,6 @@ class TestMultiTableMetadata:
         metadata.detect_table_from_dataframe('table2', table)
         metadata.update_column('table2', 'pk', sdtype='id')
         metadata.set_primary_key('table2', 'pk')
-
         metadata.relationships = [
             {
                 'parent_table_name': 'table',
@@ -1271,16 +1295,39 @@ class TestMultiTableMetadata:
             }
         ]
 
-        # Run and Assert
-        err_msg = re.escape(
-            'The metadata is not valid\n'
-            'Relationships:\n'
-            "Invalid relationship between table 'table' and table "
-            "'table2'. A relationship must connect a primary key "
-            'with a non-primary key.'
-        )
-        with pytest.raises(InvalidMetadataError, match=err_msg):
-            metadata.validate()
+        # Run
+        metadata.validate()
+
+        # Assert
+        metadata == {
+            'tables': {
+                'table': {
+                    'columns': {
+                        'pk': {'sdtype': 'id'},
+                        'col1': {'sdtype': 'numerical'},
+                        'col2': {'sdtype': 'categorical'},
+                    },
+                    'primary_key': 'pk',
+                },
+                'table2': {
+                    'columns': {
+                        'pk': {'sdtype': 'id'},
+                        'col1': {'sdtype': 'numerical'},
+                        'col2': {'sdtype': 'categorical'},
+                    },
+                    'primary_key': 'pk',
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'table',
+                    'parent_primary_key': 'pk',
+                    'child_table_name': 'table2',
+                    'child_foreign_key': 'pk',
+                }
+            ],
+            'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
+        }
 
     def test__validate_foreign_keys(self):
         """Test that when the data matches as expected there are no errors."""

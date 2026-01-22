@@ -19,10 +19,10 @@ DEFAULT_TABLE_NAME = 'table'
 
 def test_metadata():
     """Test ``MultiTableMetadata``."""
-    # Create an instance
+    # Setup
     instance = Metadata()
 
-    # To dict
+    # Run
     result = instance.to_dict()
 
     # Assert
@@ -278,7 +278,6 @@ def test_detect_from_dataframes_single_table():
     """Test the ``detect_from_dataframes`` method works with a single table."""
     # Setup
     data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
-
     metadata = Metadata.detect_from_dataframes({'table_1': data['hotels']})
 
     # Run
@@ -883,25 +882,19 @@ def test_detect_from_dataframes_invalid_format():
 
 def test_no_duplicated_foreign_key_relationships_are_generated():
     # Setup
-    parent_a = pd.DataFrame(
-        data={
-            'id': ['id-' + str(i) for i in range(100)],
-            'col1': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=100)],
-        }
-    )
-    parent_b = pd.DataFrame(
-        data={
-            'id': ['id-' + str(i) for i in range(100)],
-            'col2': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=100)],
-        }
-    )
+    parent_a = pd.DataFrame({
+        'id': ['id-' + str(i) for i in range(100)],
+        'col1': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=100)],
+    })
+    parent_b = pd.DataFrame({
+        'id': ['id-' + str(i) for i in range(100)],
+        'col2': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=100)],
+    })
 
-    child_c = pd.DataFrame(
-        data={
-            'id': ['id-' + str(i) for i in np.random.randint(0, 100, size=1000)],
-            'col3': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=1000)],
-        }
-    )
+    child_c = pd.DataFrame({
+        'id': ['id-' + str(i) for i in np.random.randint(0, 100, size=1000)],
+        'col3': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=1000)],
+    })
 
     data = {'parent_a': parent_a, 'parent_b': parent_b, 'child_c': child_c}
 
@@ -911,11 +904,17 @@ def test_no_duplicated_foreign_key_relationships_are_generated():
     # Assert
     assert metadata.relationships == [
         {
+            'child_foreign_key': 'id',
+            'child_table_name': 'parent_b',
+            'parent_primary_key': 'id',
+            'parent_table_name': 'parent_a',
+        },
+        {
             'parent_table_name': 'parent_a',
             'child_table_name': 'child_c',
             'parent_primary_key': 'id',
             'child_foreign_key': 'id',
-        }
+        },
     ]
 
 
