@@ -2903,7 +2903,7 @@ def data_metadata_1_to_1():
     metadata = Metadata.load_from_dict(metadata_dict)
     metadata.validate()
     metadata.validate_data(data)
-    metadata.remove_primary_key('rooms')
+    # metadata.remove_primary_key('rooms')
     return data, metadata
 
 

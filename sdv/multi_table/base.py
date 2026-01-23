@@ -471,6 +471,8 @@ class BaseMultiTableSynthesizer:
 
         # foreign_key_columns = self.metadata._get_all_foreign_keys(table_name)
         # column_name_to_transformers = {column_name: None for column_name in foreign_key_columns}
+        # keep it in it's raw form, HMA can use it group later on,
+        # prevent pre-process FK columns to numerical
 
         column_name_to_transformers = {}
         primary_key = self.metadata.tables[table_name].primary_key
