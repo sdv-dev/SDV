@@ -349,9 +349,6 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
         extension_rows = []
         foreign_key_columns = self.metadata._get_all_foreign_keys(child_name)
-
-        # foreign_key_values = child_table.index.unique()
-        # only do if FK not the primary key
         foreign_key_values = child_table[foreign_key].unique()
         child_table = child_table.set_index(foreign_key)
 
@@ -451,10 +448,6 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
             foreign_keys = self.metadata._get_foreign_keys(table_name, child_name)
 
-            primary_key = self.metadata.tables[child_name].primary_key
-            if primary_key in foreign_keys:
-                child_table = child_table.reset_index(drop=False)
-            # check here
             for foreign_key in foreign_keys:
                 progress_bar_desc = (
                     f'({self._learned_relationships + 1}/{len(self.metadata.relationships)}) '
@@ -500,15 +493,20 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             processed_data (dict):
                 Dictionary mapping each table name to a preprocessed ``pandas.DataFrame``.
         """
-        # data processor sets index
         augmented_data = deepcopy(processed_data)
         self._augmented_tables = []
         self._learned_relationships = 0
         parent_map = self.metadata._get_parent_map()
         self._print(text='Learning relationships:')
+
+        for table_name in processed_data:
+            foreign_keys = self.metadata._get_all_foreign_keys(table_name)
+            primary_key = self.metadata.tables[table_name].primary_key
+            if primary_key in foreign_keys:
+                augmented_data[table_name] = augmented_data[table_name].reset_index(drop=False)
+
         for table_name in processed_data:
             if not parent_map.get(table_name):
-                # only changing the child tables
                 self._augment_table(augmented_data[table_name], augmented_data, table_name)
 
         LOGGER.info('Augmentation Complete')
@@ -528,10 +526,6 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 A dictionary mapping with the foreign key and it's values within the table.
         """
         foreign_keys = self.metadata._get_all_foreign_keys(table_name)
-        primary_key = self.metadata.tables[table_name].primary_key
-        if primary_key in foreign_keys:
-            table_data = table_data.reset_index(drop=False)
-
         keys = {}
         for fk in foreign_keys:
             keys[fk] = table_data.pop(fk).to_numpy()
