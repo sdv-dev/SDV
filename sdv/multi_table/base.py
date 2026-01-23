@@ -470,6 +470,7 @@ class BaseMultiTableSynthesizer:
         synthesizer.auto_assign_transformers(table_data)
         foreign_key_columns = self.metadata._get_all_foreign_keys(table_name)
         column_name_to_transformers = {column_name: None for column_name in foreign_key_columns}
+        print(column_name_to_transformers)
         synthesizer.update_transformers(column_name_to_transformers)
 
     def auto_assign_transformers(self, data):

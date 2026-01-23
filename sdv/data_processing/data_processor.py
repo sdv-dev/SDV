@@ -780,6 +780,8 @@ class DataProcessor:
             )
 
         for column, transformer in column_name_to_transformer.items():
+            if transformer is None:
+                continue
             if column in self._keys and not transformer.is_generator():
                 raise SynthesizerInputError(
                     f"Invalid transformer '{transformer.__class__.__name__}' for a primary "

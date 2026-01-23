@@ -164,7 +164,6 @@ class MultiTableMetadata:
         pass
         # child_primary_key = _cast_to_iterable(self.tables[child_table_name].primary_key)
         # child_foreign_key = _cast_to_iterable(child_foreign_key)
-        # # breakpoint()
         # if set(child_foreign_key).intersection(set(child_primary_key)):
         #     raise InvalidMetadataError(
         #         f"Invalid relationship between table '{parent_table_name}' and table "

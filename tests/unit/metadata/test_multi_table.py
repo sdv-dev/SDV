@@ -1299,7 +1299,7 @@ class TestMultiTableMetadata:
         metadata.validate()
 
         # Assert
-        metadata == {
+        assert metadata.to_dict() == {
             'tables': {
                 'table': {
                     'columns': {
