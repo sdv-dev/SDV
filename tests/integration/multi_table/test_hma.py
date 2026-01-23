@@ -2856,3 +2856,64 @@ def test_datetime_warning_doesnt_repeat():
     )
     matching_warnings = [warning for warning in w if str(warning.message) == msg]
     assert len(matching_warnings) == 1
+
+
+@pytest.fixture()
+def data_metadata_1_to_1():
+    data, metadata = download_demo('multi_table', 'fake_hotels')
+    guests_table = data['guests']
+    guests_columns = [
+        'guest_email',
+        'has_rewards',
+        'hotel_id',
+        'billing_address',
+        'credit_card_number',
+    ]
+    room_cols = [
+        'guest_email',
+        'room_type',
+        'amenities_fee',
+        'checkin_date',
+        'checkout_date',
+        'room_rate',
+    ]
+    new_guest_tables = {'guests': guests_columns, 'rooms': room_cols}
+    metadata_dict = metadata.to_dict()
+    for table, columns in new_guest_tables.items():
+        data[table] = guests_table[columns]
+        metadata_dict['tables'][table] = {
+            'primary_key': 'guest_email',
+            'columns': {col: metadata.tables['guests'].columns[col] for col in columns},
+        }
+
+    metadata_dict['relationships'] = [
+        {
+            'parent_table_name': 'hotels',
+            'parent_primary_key': 'hotel_id',
+            'child_table_name': 'guests',
+            'child_foreign_key': 'hotel_id',
+        },
+        {
+            'parent_table_name': 'guests',
+            'parent_primary_key': 'guest_email',
+            'child_table_name': 'rooms',
+            'child_foreign_key': 'guest_email',
+        },
+    ]
+    metadata = Metadata.load_from_dict(metadata_dict)
+    metadata.validate()
+    metadata.validate_data(data)
+    return data, metadata
+
+
+def test_hma_1_to_1(data_metadata_1_to_1):
+    # Setup
+    data, metadata = data_metadata_1_to_1
+
+    # Run
+    synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(scale=1)
+
+    # Assert
+    assert synthetic_data['guests']['guest_email'].equals(synthetic_data['guests']['guest_email'])
