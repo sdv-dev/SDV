@@ -276,6 +276,7 @@ class MultiTableMetadata:
         return foreign_keys
 
     def _get_all_foreign_keys(self, table_name):
+
         foreign_keys = []
         for relation in self.relationships:
             if table_name == relation['child_table_name']:

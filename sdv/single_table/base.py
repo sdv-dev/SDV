@@ -247,7 +247,6 @@ class BaseSynthesizer:
         for column, transformer in column_name_to_transformer.items():
             if transformer is None:
                 continue
-
             if column in keys and not transformer.is_generator():
                 raise SynthesizerInputError(
                     f"Column '{column}' is a key. It cannot be preprocessed using "

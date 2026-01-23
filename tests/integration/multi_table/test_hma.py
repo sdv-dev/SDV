@@ -2903,6 +2903,7 @@ def data_metadata_1_to_1():
     metadata = Metadata.load_from_dict(metadata_dict)
     metadata.validate()
     metadata.validate_data(data)
+    metadata.remove_primary_key('rooms')
     return data, metadata
 
 
@@ -2917,3 +2918,7 @@ def test_hma_1_to_1(data_metadata_1_to_1):
 
     # Assert
     assert synthetic_data['guests']['guest_email'].equals(synthetic_data['guests']['guest_email'])
+
+
+def test_hma_1_to_1_or_0(data_metadata_1_to_1):
+    pass
