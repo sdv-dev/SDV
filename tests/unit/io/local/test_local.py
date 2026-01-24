@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 from unittest.mock import Mock, call, patch
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -93,7 +94,7 @@ class TestCSVHandler:
         handler = CSVHandler()
 
         # Run
-        data = handler.read('/path/to/data')
+        data = handler.read('/path/to/data', keep_leading_zeros=False)
 
         # Assert
         assert len(data) == 2
@@ -106,6 +107,74 @@ class TestCSVHandler:
         pd.testing.assert_frame_equal(
             data['child'], pd.DataFrame({'col3': [4, 5, 6], 'col4': ['d', 'e', 'f']})
         )
+
+    def test_read_keep_leading_zeros_default(self, tmpdir):
+        """Test that leading zeros are preserved by default."""
+        # Setup
+        file_path = Path(tmpdir)
+        data = pd.DataFrame({
+            'zip_code': ['02116', '10110'],
+            'age': [30, 25],
+        })
+        data.to_csv(file_path / 'users.csv', index=False)
+
+        handler = CSVHandler()
+
+        # Run
+        out = handler.read(tmpdir, file_names=['users.csv'])
+
+        # Assert
+        pd.testing.assert_frame_equal(out['users'], data)
+
+    def test_read_keep_leading_zeros_multiple_files_mixed_types(self, tmpdir):
+        """Test leading zeros with multiple files and mixed dtypes."""
+        # Setup
+        file_path = Path(tmpdir)
+        users = pd.DataFrame({
+            'user_id': [1, 2, None],
+            'zip_code': ['00123', '98765', np.nan],
+            'age': [30, 25, None],
+            'is_active': [True, False, None],
+            'joined_at': ['2024-01-01', '2024-01-02', None],
+        })
+        orders = pd.DataFrame({
+            'order_id': [10, 20, np.nan],
+            'tracking_code': ['000045', '123450', None],
+            'amount': [10.5, 20.0, None],
+            'discount_rate': [0.0001, 0.0015, np.nan],
+            'notes': ['first', 'second', np.nan],
+        })
+        users.to_csv(file_path / 'users.csv', index=False)
+        orders.to_csv(file_path / 'orders.csv', index=False)
+
+        handler = CSVHandler()
+
+        # Run
+        out = handler.read(tmpdir, file_names=['users.csv', 'orders.csv'])
+
+        # Assert
+        users_expected = users.where(users.notna(), np.nan)
+        orders_expected = orders.where(orders.notna(), np.nan)
+        pd.testing.assert_frame_equal(out['users'], users_expected)
+        pd.testing.assert_frame_equal(out['orders'], orders_expected)
+
+    def test_read_keep_leading_zeros_false(self, tmpdir):
+        """Test that leading zeros can be ignored when requested."""
+        # Setup
+        file_path = Path(tmpdir)
+        pd.DataFrame({
+            'zip_code': ['02116', '10110'],
+            'age': [30, 25],
+        }).to_csv(file_path / 'users.csv', index=False)
+
+        handler = CSVHandler()
+
+        # Run
+        data = handler.read(tmpdir, file_names=['users.csv'], keep_leading_zeros=False)
+
+        # Assert
+        expected = pd.DataFrame({'zip_code': [2116, 10110], 'age': [30, 25]})
+        pd.testing.assert_frame_equal(data['users'], expected)
 
     def test_read_files(self, tmpdir):
         """Test the read method of CSVHandler class with given ``file_names``."""
