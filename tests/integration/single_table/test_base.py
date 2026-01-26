@@ -809,8 +809,8 @@ def test_fit_int_primary_key_regex_includes_zero(synthesizer_class, regex):
     # Run and Assert
     instance = synthesizer_class(metadata)
     message = (
-        'Primary key "a" is stored as an int but the Regex allows it to start with "0". Please '
-        'remove the Regex or update it to correspond to valid ints.'
+        'Primary key column "a" is stored as an int but the Regex allows it to start with "0". '
+        'Please remove the Regex or update it to correspond to valid ints.'
     )
     with pytest.raises(InvalidDataError, match=message):
         instance.fit(data)
