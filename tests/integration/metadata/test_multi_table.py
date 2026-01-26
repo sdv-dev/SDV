@@ -395,47 +395,6 @@ def test_anonymize():
     assert anonymized.tables['table2'].to_dict() == table2_metadata.anonymize().to_dict()
 
 
-@pytest.fixture()
-def primary_key_to_primary_key():
-    metadata = MultiTableMetadata.load_from_dict({
-        'tables': {
-            'tableA': {
-                'columns': {
-                    'table_A_primary_key': {'sdtype': 'id'},
-                    'column_1': {'sdtype': 'categorical'},
-                },
-                'primary_key': 'table_A_primary_key',
-            },
-            'tableB': {
-                'columns': {
-                    'table_B_primary_key': {'sdtype': 'id'},
-                    'column_2': {'sdtype': 'categorical'},
-                },
-                'primary_key': 'table_B_primary_key',
-            },
-        },
-        'relationships': [
-            {
-                'parent_table_name': 'tableA',
-                'parent_primary_key': 'table_A_primary_key',
-                'child_table_name': 'tableB',
-                'child_foreign_key': 'table_B_primary_key',
-            }
-        ],
-    })
-    data = {
-        'tableA': pd.DataFrame({
-            'table_A_primary_key': range(5),
-            'column_1': ['A', 'B', 'B', 'C', 'C'],
-        }),
-        'tableB': pd.DataFrame({
-            'table_B_primary_key': range(5),
-            'column_2': ['A', 'B', 'B', 'C', 'C'],
-        }),
-    }
-    return data, metadata
-
-
 def test_validate_pk_to_pk(primary_key_to_primary_key):
     """Test validation to indicate a PK to PK relationship."""
     # Setup
