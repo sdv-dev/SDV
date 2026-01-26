@@ -2903,7 +2903,6 @@ def data_metadata_1_to_1():
     metadata = Metadata.load_from_dict(metadata_dict)
     metadata.validate()
     metadata.validate_data(data)
-    # metadata.remove_primary_key('rooms')
     return data, metadata
 
 
@@ -2920,5 +2919,60 @@ def test_hma_1_to_1(data_metadata_1_to_1):
     assert synthetic_data['guests']['guest_email'].equals(synthetic_data['guests']['guest_email'])
 
 
-def test_hma_1_to_1_or_0(data_metadata_1_to_1):
-    pass
+def test_hma_1_to_1_or_0():
+    # Setup
+    data = {
+        'users': pd.DataFrame({
+            'user_id': range(10),
+            'date_joined': [
+                '2024-01-01',
+                '2024-02-01',
+                '2024-03-01',
+                '2024-04-01',
+                '2024-05-01',
+            ]
+            * 2,
+        }),
+        'survey_response': pd.DataFrame({
+            'user_id': range(9),
+            'age': [11, 22, 33, 44, 55, 66, 77, 88, 99],
+        }),
+    }
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'users': {
+                'columns': {
+                    'user_id': {'sdtype': 'id'},
+                    'date_joined': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                },
+                'primary_key': 'user_id',
+            },
+            'survey_response': {
+                'columns': {
+                    'user_id': {'sdtype': 'id'},
+                    'age': {'sdtype': 'numerical'},
+                },
+                'primary_key': 'user_id',
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'users',
+                'parent_primary_key': 'user_id',
+                'child_table_name': 'survey_response',
+                'child_foreign_key': 'user_id',
+            }
+        ],
+    })
+    metadata.validate()
+    metadata.validate_data(data)
+
+    # Run
+    synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(scale=1)
+
+    # Assert
+    assert set(synthetic_data['users']['user_id']).issuperset(
+        set(synthetic_data['survey_response']['user_id'])
+    )
