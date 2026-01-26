@@ -6,6 +6,6 @@ graphviz==0.21
 numpy==2.4.1
 pandas==2.3.3
 platformdirs==4.5.1
-rdt==1.19.0
+rdt==1.20.0
 sdmetrics==0.25.0
 tqdm==4.67.1
