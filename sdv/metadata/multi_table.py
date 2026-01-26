@@ -271,6 +271,7 @@ class MultiTableMetadata:
         return foreign_keys
 
     def _is_primary_key_a_foreign_key(self, table_name):
+        """For a given table, check if the primary key is also a foreign key."""
         primary_key = self.tables[table_name].primary_key
         foreign_keys = self._get_all_foreign_keys(table_name)
         if primary_key and primary_key in foreign_keys:
