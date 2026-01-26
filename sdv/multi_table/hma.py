@@ -501,9 +501,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
         # Reset index for tables where foreign key is also a primary key
         for table_name in processed_data:
-            foreign_keys = self.metadata._get_all_foreign_keys(table_name)
-            primary_key = self.metadata.tables[table_name].primary_key
-            if primary_key in foreign_keys:
+            if self.metadata._is_primary_key_a_foreign_key(table_name):
                 augmented_data[table_name] = augmented_data[table_name].reset_index(drop=False)
 
         for table_name in processed_data:

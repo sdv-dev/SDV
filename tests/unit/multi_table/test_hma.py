@@ -346,6 +346,62 @@ class TestHMASynthesizer:
         assert list(call_augmented_data) == list(data)
         assert call_table_name == 'upravna_enota'
 
+    def test__augment_tables_reset_index_fk_also_pk(self):
+        # Setup
+        metadata = get_multi_table_metadata()
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'users': {
+                    'columns': {
+                        'user_id': {'sdtype': 'id'},
+                        'is_member': {'sdtype': 'boolean'},
+                    },
+                    'primary_key': 'user_id',
+                },
+                'survey_response': {
+                    'columns': {
+                        'user_id': {'sdtype': 'id'},
+                        'age': {'sdtype': 'numerical'},
+                    },
+                    'primary_key': 'user_id',
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'users',
+                    'parent_primary_key': 'user_id',
+                    'child_table_name': 'survey_response',
+                    'child_foreign_key': 'user_id',
+                }
+            ],
+        })
+        instance = HMASynthesizer(metadata)
+        instance._augment_table = Mock()
+        processed_data = {
+            'users': pd.DataFrame({
+                'user_id': range(10),
+                'is_member': [False, True, False, True, True] * 2,
+            }),
+            'survey_response': pd.DataFrame({
+                'user_id': range(9),
+                'age': [11, 22, 33, 44, 55, 66, 77, 88, 99],
+            }),
+        }
+        metadata.validate()
+        metadata.validate_data(processed_data)
+        processed_data['users'] = processed_data['users'].set_index(
+            metadata.tables['users'].primary_key
+        )
+        processed_data['survey_response'] = processed_data['survey_response'].set_index(
+            metadata.tables['survey_response'].primary_key
+        )
+
+        # Run
+        augmented_data = instance._augment_tables(processed_data)
+
+        # Assert
+        assert augmented_data['survey_response'].columns.tolist() == ['user_id', 'age']
+
     def test__finalize(self):
         """Test that the finalize method applies the final touches to the generated data.
 

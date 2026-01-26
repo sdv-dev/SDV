@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, Mock, call, patch
 import numpy as np
 import pandas as pd
 import pytest
-
+import warnings
 from sdv.sampling.hierarchical_sampler import BaseHierarchicalSampler
 from tests.utils import DataFrameMatcher, SeriesMatcher, get_multi_table_metadata
 

@@ -2907,20 +2907,25 @@ def data_metadata_1_to_1():
 
 
 def test_hma_1_to_1(data_metadata_1_to_1):
+    """Test HMA handles PK to PK relationship (1 to 1) and synthetic data matching cardinality."""
     # Setup
     data, metadata = data_metadata_1_to_1
 
     # Run
     synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
-    synthesizer.fit(data)
-    synthetic_data = synthesizer.sample(scale=1)
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        synthesizer.fit(data)
+        synthetic_data = synthesizer.sample(scale=1)
 
     # Assert
     assert synthetic_data['guests']['guest_email'].equals(synthetic_data['guests']['guest_email'])
+    synthesizer.validate(synthetic_data)
+    for msg in caught_warnings:
+        assert 'ChainedAssignmentError' not in str(msg.message)
 
 
-def test_hma_1_to_1_or_0():
-    # Setup
+@pytest.fixture()
+def data_metadata_1_to_1_or_0():
     data = {
         'users': pd.DataFrame({
             'user_id': range(10),
@@ -2966,6 +2971,13 @@ def test_hma_1_to_1_or_0():
     })
     metadata.validate()
     metadata.validate_data(data)
+    return data, metadata
+
+
+def test_hma_1_to_1_or_0(data_metadata_1_to_1_or_0):
+    """Test HMA handles PK to PK relationship (1 to 1/0) and synthetic data matching cardinality."""
+    # Setup
+    data, metadata = data_metadata_1_to_1_or_0
 
     # Run
     synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
@@ -2976,3 +2988,23 @@ def test_hma_1_to_1_or_0():
     assert set(synthetic_data['users']['user_id']).issuperset(
         set(synthetic_data['survey_response']['user_id'])
     )
+    synthesizer.validate(synthetic_data)
+
+
+def test_hma_1_to_1_or_0_not_superset(data_metadata_1_to_1_or_0):
+    """Test error is raised if primary to primary key but parent is not a superset"""
+    # Setup
+    data, metadata = data_metadata_1_to_1_or_0
+    metadata.remove_relationship(parent_table_name='users', child_table_name='survey_response')
+    metadata.add_relationship(
+        parent_table_name='survey_response',
+        parent_primary_key='user_id',
+        child_table_name='users',
+        child_foreign_key='user_id',
+    )
+    synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
+    match_ = re.escape("Error: foreign key column 'user_id' contains unknown references: (9).")
+
+    # Run and Assert
+    with pytest.raises(InvalidDataError, match=match_):
+        synthesizer.fit(data)

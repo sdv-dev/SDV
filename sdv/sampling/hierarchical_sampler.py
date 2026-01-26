@@ -102,7 +102,6 @@ class BaseHierarchicalSampler:
         if len(sampled_rows):
             parent_key = self.metadata.tables[parent_name].primary_key
             if foreign_key in sampled_rows:
-                # If foreign key is in sampled rows raises `SettingWithCopyWarning`
                 row_indices = sampled_rows.index
                 sampled_rows.loc[row_indices, foreign_key] = parent_row[parent_key]
             else:

@@ -263,13 +263,19 @@ class MultiTableMetadata:
         return foreign_keys
 
     def _get_all_foreign_keys(self, table_name):
-
         foreign_keys = []
         for relation in self.relationships:
             if table_name == relation['child_table_name']:
                 foreign_keys.append(deepcopy(relation['child_foreign_key']))
 
         return foreign_keys
+
+    def _is_primary_key_a_foreign_key(self, table_name):
+        primary_key = self.tables[table_name].primary_key
+        foreign_keys = self._get_all_foreign_keys(table_name)
+        if primary_key and primary_key in foreign_keys:
+            return True
+        return False
 
     def _get_all_keys(self, table_name):
         foreign_keys = self._get_all_foreign_keys(table_name)
