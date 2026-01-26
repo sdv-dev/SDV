@@ -474,14 +474,12 @@ class BaseMultiTableSynthesizer:
         """
         synthesizer.auto_assign_transformers(table_data)
         column_name_to_transformers = {}
+
         primary_key = self.metadata.tables[table_name].primary_key
-        for relation in self.metadata.relationships:
-            column_name = relation['child_foreign_key']
-            if (
-                relation['child_table_name'] == table_name
-                and relation['child_foreign_key'] != primary_key
-            ):
-                column_name_to_transformers[column_name] = None
+        foreign_keys = self.metadata._get_all_foreign_keys(table_name)
+        for foreign_key in foreign_keys:
+            if foreign_key != primary_key:
+                column_name_to_transformers[foreign_key] = None
         synthesizer.update_transformers(column_name_to_transformers)
 
     def auto_assign_transformers(self, data):
