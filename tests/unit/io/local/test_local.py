@@ -116,6 +116,7 @@ class TestCSVHandler:
             'zip_code': ['02116', '10110'],
             'age': [30, 25],
         })
+        data = data.astype({'zip_code': 'object', 'age': 'int64'})
         data.to_csv(file_path / 'users.csv', index=False)
 
         handler = CSVHandler()
@@ -137,12 +138,26 @@ class TestCSVHandler:
             'is_active': [True, False, None],
             'joined_at': ['2024-01-01', '2024-01-02', None],
         })
+        users = users.astype({
+            'user_id': 'float64',
+            'zip_code': 'object',
+            'age': 'float64',
+            'is_active': 'object',
+            'joined_at': 'object',
+        })
         orders = pd.DataFrame({
             'order_id': [10, 20, np.nan],
             'tracking_code': ['000045', '123450', None],
             'amount': [10.5, 20.0, None],
             'discount_rate': [0.0001, 0.0015, np.nan],
             'notes': ['first', 'second', np.nan],
+        })
+        orders = orders.astype({
+            'order_id': 'float64',
+            'tracking_code': 'object',
+            'amount': 'float64',
+            'discount_rate': 'float64',
+            'notes': 'object',
         })
         users.to_csv(file_path / 'users.csv', index=False)
         orders.to_csv(file_path / 'orders.csv', index=False)
@@ -165,7 +180,9 @@ class TestCSVHandler:
         pd.DataFrame({
             'zip_code': ['02116', '10110'],
             'age': [30, 25],
-        }).to_csv(file_path / 'users.csv', index=False)
+        }).astype({'zip_code': 'object', 'age': 'int64'}).to_csv(
+            file_path / 'users.csv', index=False
+        )
 
         handler = CSVHandler()
 
