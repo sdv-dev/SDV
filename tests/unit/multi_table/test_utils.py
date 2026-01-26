@@ -605,6 +605,7 @@ def test__get_disconnected_roots_from_table(table_name, expected_result):
 def test__simplify_relationships_and_tables():
     """Test the ``_simplify_relationships`` method."""
     # Setup
+    relationship_extras = {'parent_primary_key': 'pk', 'child_foreign_key': 'fk'}
     metadata = Metadata().load_from_dict({
         'tables': {
             'grandparent': {'columns': {'col_1': {'sdtype': 'numerical'}}},
@@ -615,11 +616,31 @@ def test__simplify_relationships_and_tables():
             'other_root': {'columns': {'col_6': {'sdtype': 'numerical'}}},
         },
         'relationships': [
-            {'parent_table_name': 'grandparent', 'child_table_name': 'parent'},
-            {'parent_table_name': 'parent', 'child_table_name': 'child'},
-            {'parent_table_name': 'child', 'child_table_name': 'grandchild'},
-            {'parent_table_name': 'grandparent', 'child_table_name': 'other_table'},
-            {'parent_table_name': 'other_root', 'child_table_name': 'child'},
+            {
+                'parent_table_name': 'grandparent',
+                'child_table_name': 'parent',
+                **relationship_extras
+            },
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'child',
+                **relationship_extras
+            },
+            {
+                'parent_table_name': 'child',
+                'child_table_name': 'grandchild',
+                **relationship_extras
+            },
+            {
+                'parent_table_name': 'grandparent',
+                'child_table_name': 'other_table',
+                **relationship_extras
+            },
+            {
+                'parent_table_name': 'other_root',
+                'child_table_name': 'child',
+                **relationship_extras
+            },
         ],
     })
     tables_to_drop = {'grandchild', 'other_root'}
@@ -629,9 +650,9 @@ def test__simplify_relationships_and_tables():
 
     # Assert
     expected_relationships = [
-        {'parent_table_name': 'grandparent', 'child_table_name': 'parent'},
-        {'parent_table_name': 'parent', 'child_table_name': 'child'},
-        {'parent_table_name': 'grandparent', 'child_table_name': 'other_table'},
+        {'parent_table_name': 'grandparent', 'child_table_name': 'parent', **relationship_extras},
+        {'parent_table_name': 'parent', 'child_table_name': 'child', **relationship_extras},
+        {'parent_table_name': 'grandparent', 'child_table_name': 'other_table', **relationship_extras},
     ]
     expected_tables = {
         'grandparent': {'columns': {'col_1': {'sdtype': 'numerical'}}},
@@ -932,13 +953,25 @@ def test__simplify_metadata_no_child_simplification(mock_hma):
             'parent_table_name': 'grandparent',
             'child_table_name': 'parent',
             'child_foreign_key': 'fk',
+            'parent_primary_key': 'pk',
         },
-        {'parent_table_name': 'parent', 'child_table_name': 'child', 'child_foreign_key': 'fk'},
-        {'parent_table_name': 'child', 'child_table_name': 'grandchild', 'child_foreign_key': 'fk'},
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'child',
+            'child_foreign_key': 'fk',
+            'parent_primary_key': 'pk',
+        },
+        {
+            'parent_table_name': 'child',
+            'child_table_name': 'grandchild',
+            'child_foreign_key': 'fk',
+            'parent_primary_key': 'pk',
+        },
         {
             'parent_table_name': 'grandparent',
             'child_table_name': 'other_table',
             'child_foreign_key': 'fk',
+            'parent_primary_key': 'pk'
         },
         {'parent_table_name': 'other_root', 'child_table_name': 'child', 'child_foreign_key': 'fk'},
     ]
@@ -982,12 +1015,19 @@ def test__simplify_metadata_no_child_simplification(mock_hma):
             'parent_table_name': 'grandparent',
             'child_table_name': 'parent',
             'child_foreign_key': 'fk',
+            'parent_primary_key': 'pk',
         },
-        {'parent_table_name': 'parent', 'child_table_name': 'child', 'child_foreign_key': 'fk'},
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'child',
+            'child_foreign_key': 'fk',
+            'parent_primary_key': 'pk',
+        },
         {
             'parent_table_name': 'grandparent',
             'child_table_name': 'other_table',
             'child_foreign_key': 'fk',
+            'parent_primary_key': 'pk',
         },
     ]
     metadata_dict = metadata_result.to_dict()

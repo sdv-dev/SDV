@@ -813,6 +813,7 @@ class SingleTableMetadata:
                 bad_keys.append(key)
 
         if bad_keys:
+            bad_keys = sorted(bad_keys, key=lambda key: key if isinstance(key, str) else key[0])
             raise InvalidMetadataError(
                 f'The {key_type}_keys {bad_keys} must have a column of '
                 "type 'id' or another PII type."
