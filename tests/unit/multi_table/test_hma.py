@@ -347,6 +347,7 @@ class TestHMASynthesizer:
         assert call_table_name == 'upravna_enota'
 
     def test__augment_tables_reset_index_fk_also_pk(self):
+        """Test _augment_tables resets the index for table where PK is also a FK."""
         # Setup
         metadata = get_multi_table_metadata()
         metadata = Metadata.load_from_dict({
@@ -387,8 +388,6 @@ class TestHMASynthesizer:
                 'age': [11, 22, 33, 44, 55, 66, 77, 88, 99],
             }),
         }
-        metadata.validate()
-        metadata.validate_data(processed_data)
         processed_data['users'] = processed_data['users'].set_index(
             metadata.tables['users'].primary_key
         )

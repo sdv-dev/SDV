@@ -2988,7 +2988,7 @@ def test_hma_1_to_1_or_0(data_metadata_1_to_1_or_0):
 
 
 def test_hma_1_to_1_or_0_not_superset(data_metadata_1_to_1_or_0):
-    """Test error is raised if PK to PK but parent is not a superset."""
+    """Test error is raised if PK to PK relationship but parent is not a superset."""
     # Setup
     data, metadata = data_metadata_1_to_1_or_0
     metadata.remove_relationship(parent_table_name='users', child_table_name='survey_response')

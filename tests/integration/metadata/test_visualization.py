@@ -59,7 +59,7 @@ def test_visualize_graph_for_multi_table():
 
 
 def test_visualize_pk_to_pk(primary_key_to_primary_key):
-    """Test visualization runs with primary to primary key relationship."""
+    """Test visualization runs with PK to PK relationship."""
     # Setup
     _, metadata = primary_key_to_primary_key
 
