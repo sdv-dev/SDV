@@ -46,7 +46,7 @@ dependencies = [
     "rdt>=1.18.2;python_version<'3.14'",
     "rdt>=1.20.0;python_version>='3.14'",
     "sdmetrics>=0.21.0;python_version<'3.14'",
-    "sdmetrics>=0.25.0;python_versionn>='3.14'",
+    "sdmetrics>=0.26.0;python_version>='3.14'",
     'platformdirs>=4.0',
     'pyyaml>=6.0.1',
 ]
