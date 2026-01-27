@@ -130,7 +130,7 @@ class TestSingleTableMetadata:
 
     @pytest.mark.parametrize(
         'primary_key,expected_value',
-        [(None, False), ('primary_key', False), (['pk1'], False), (['pk1', 'pk2'], True)],
+        [(None, False), ('primary_key', False), (['pk1'], True)],
     )
     def test__primary_key_is_composite(self, primary_key, expected_value):
         """Test the ``_primary_key_is_composite`` property."""
@@ -1848,6 +1848,18 @@ class TestSingleTableMetadata:
         # Assert
         assert instance.primary_key == 'column'
 
+    def test_set_primary_key_singleton_composite_key(self):
+        """Test a composite key with one element is set as a single primary key."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {'column': {'sdtype': 'id'}}
+
+        # Run
+        instance.set_primary_key(['column'])
+
+        # Assert
+        assert instance.primary_key == 'column'
+
     def test_remove_primary_key(self):
         """Test that ``remove_primary_key`` removes the ``primary_key`` value."""
         # Setup
@@ -3057,6 +3069,23 @@ class TestSingleTableMetadata:
         assert instance.sequence_key is None
         assert instance.alternate_keys == []
         assert instance.sequence_index is None
+        assert instance._version == 'SINGLE_TABLE_V1'
+
+    def test_load_from_dict_composite_key_single_element(self):
+        """Test that a primary key list with a single element is set as a single primary key."""
+        # Setup
+        my_metadata = {
+            'columns': {'pk': 'value'},
+            'primary_key': ['pk'],
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        }
+
+        # Run
+        instance = SingleTableMetadata.load_from_dict(my_metadata)
+
+        # Assert
+        assert instance.columns == {'pk': 'value'}
+        assert instance.primary_key == 'pk'
         assert instance._version == 'SINGLE_TABLE_V1'
 
     @patch('sdv.metadata.utils.Path')

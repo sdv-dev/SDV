@@ -211,7 +211,7 @@ class SingleTableMetadata:
 
     def __init__(self):
         self.columns = {}
-        self._primary_key = None
+        self.primary_key = None
         self.alternate_keys = []
         self.sequence_key = None
         self.sequence_index = None
@@ -221,22 +221,10 @@ class SingleTableMetadata:
 
     @property
     def _primary_key_is_composite(self):
-        if self.primary_key and isinstance(self.primary_key, list) and len(self.primary_key) > 1:
+        if self.primary_key and isinstance(self.primary_key, list):
             return True
 
         return False
-
-    @property
-    def primary_key(self):
-        """Property to handle singleton composite key case."""
-        if isinstance(self._primary_key, list) and len(self._primary_key) == 1:
-            return self._primary_key[0]
-
-        return self._primary_key
-
-    @primary_key.setter
-    def primary_key(self, primary_key):
-        self._primary_key = primary_key
 
     def _get_unexpected_kwargs(self, sdtype, **kwargs):
         expected_kwargs = self._SDTYPE_KWARGS.get(sdtype, ['pii'])
@@ -854,6 +842,9 @@ class SingleTableMetadata:
             column_name (str):
                 Name of the primary key column(s).
         """
+        if isinstance(column_name, list) and len(column_name) == 1:
+            column_name = column_name[0]
+
         self._validate_key(column_name, 'primary')
         if column_name in self.alternate_keys:
             warnings.warn(
@@ -1526,6 +1517,10 @@ class SingleTableMetadata:
                         str(key) if not isinstance(key, str) else key: col
                         for key, col in value.items()
                     }
+                elif key == 'primary_key':
+                    if isinstance(value, list) and len(value) == 1:
+                        value = value[0]
+
                 setattr(instance, f'{key}', value)
 
         instance._primary_key_candidates = None
