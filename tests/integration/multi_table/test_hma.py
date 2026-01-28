@@ -17,6 +17,8 @@ from sdmetrics.reports.multi_table import DiagnosticReport
 from sdv import version
 from sdv.cag import FixedCombinations, Inequality
 from sdv.cag._errors import ConstraintNotMetError
+from copy import deepcopy
+
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
 from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError, VersionError
@@ -26,6 +28,7 @@ from sdv.metadata.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint
 from tests.utils import catch_sdv_logs
+
 
 
 class TestHMASynthesizer:
@@ -2858,50 +2861,6 @@ def test_datetime_warning_doesnt_repeat():
     assert len(matching_warnings) == 1
 
 
-@pytest.fixture()
-def data_metadata_1_to_1():
-    data, metadata = download_demo('multi_table', 'fake_hotels')
-    guests_table = data['guests']
-    guests_columns = [
-        'guest_email',
-        'has_rewards',
-        'hotel_id',
-        'billing_address',
-        'credit_card_number',
-    ]
-    room_cols = [
-        'guest_email',
-        'room_type',
-        'amenities_fee',
-        'checkin_date',
-        'checkout_date',
-        'room_rate',
-    ]
-    new_guest_tables = {'guests': guests_columns, 'rooms': room_cols}
-    metadata_dict = metadata.to_dict()
-    for table, columns in new_guest_tables.items():
-        data[table] = guests_table[columns]
-        metadata_dict['tables'][table] = {
-            'primary_key': 'guest_email',
-            'columns': {col: metadata.tables['guests'].columns[col] for col in columns},
-        }
-
-    metadata_dict['relationships'] = [
-        {
-            'parent_table_name': 'hotels',
-            'parent_primary_key': 'hotel_id',
-            'child_table_name': 'guests',
-            'child_foreign_key': 'hotel_id',
-        },
-        {
-            'parent_table_name': 'guests',
-            'parent_primary_key': 'guest_email',
-            'child_table_name': 'rooms',
-            'child_foreign_key': 'guest_email',
-        },
-    ]
-    metadata = Metadata.load_from_dict(metadata_dict)
-    return data, metadata
 
 
 def test_hma_1_to_1(data_metadata_1_to_1):
@@ -2920,54 +2879,6 @@ def test_hma_1_to_1(data_metadata_1_to_1):
     synthesizer.validate(synthetic_data)
     for msg in caught_warnings:
         assert 'ChainedAssignmentError' not in str(msg.message)
-
-
-@pytest.fixture()
-def data_metadata_1_to_1_or_0():
-    data = {
-        'users': pd.DataFrame({
-            'user_id': range(10),
-            'date_joined': [
-                '2024-01-01',
-                '2024-02-01',
-                '2024-03-01',
-                '2024-04-01',
-                '2024-05-01',
-            ]
-            * 2,
-        }),
-        'survey_response': pd.DataFrame({
-            'user_id': range(9),
-            'age': [11, 22, 33, 44, 55, 66, 77, 88, 99],
-        }),
-    }
-    metadata = Metadata.load_from_dict({
-        'tables': {
-            'users': {
-                'columns': {
-                    'user_id': {'sdtype': 'id'},
-                    'date_joined': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
-                },
-                'primary_key': 'user_id',
-            },
-            'survey_response': {
-                'columns': {
-                    'user_id': {'sdtype': 'id'},
-                    'age': {'sdtype': 'numerical'},
-                },
-                'primary_key': 'user_id',
-            },
-        },
-        'relationships': [
-            {
-                'parent_table_name': 'users',
-                'parent_primary_key': 'user_id',
-                'child_table_name': 'survey_response',
-                'child_foreign_key': 'user_id',
-            }
-        ],
-    })
-    return data, metadata
 
 
 def test_hma_1_to_1_or_0(data_metadata_1_to_1_or_0):
@@ -3004,3 +2915,36 @@ def test_hma_1_to_1_or_0_not_superset(data_metadata_1_to_1_or_0):
     # Run and Assert
     with pytest.raises(InvalidDataError, match=match_):
         synthesizer.fit(data)
+
+def test_1_to_1_to_1(data_metadata_1_to_1_to_1_subset_to_subset):
+    """Test primary key to primary key to primary key, with the 2nd and 3rd table having a subset."""
+    # Setup
+    data, metadata = data_metadata_1_to_1_to_1_subset_to_subset
+
+    # Run
+    synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(scale=1.0)
+
+    # Assert
+    assert set(synthetic_data['guests']['guest_email']).issuperset(
+        set(synthetic_data['guests_pii']['guest_email'])
+    )
+    assert set(synthetic_data['guests_pii']['guest_email']).issuperset(
+        set(synthetic_data['rooms']['guest_email'])
+    )
+    synthesizer.validate(synthetic_data)
+
+def test_1_to_1_to_1(data_metadata_1_to_1_subset_diamond):
+    """Test primary key to primary key to primary key in a diamond relationship."""
+    # Setup
+    data, metadata = data_metadata_1_to_1_subset_diamond
+
+    # Run
+    synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(scale=1.0)
+
+    # Assert
+
+    synthesizer.validate(synthetic_data)
