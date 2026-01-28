@@ -20,6 +20,7 @@ from sdv._utils import (
     _is_datetime_type,
     _is_numerical_type,
     _load_data_from_csv,
+    _sort_keys,
     _validate_datetime_format,
     get_possible_chars,
 )
@@ -801,7 +802,7 @@ class SingleTableMetadata:
                 bad_keys.append(key)
 
         if bad_keys:
-            bad_keys = sorted(bad_keys, key=lambda key: key if isinstance(key, str) else key[0])
+            bad_keys = _sort_keys(bad_keys)
             raise InvalidMetadataError(
                 f'The {key_type}_keys {bad_keys} must have a column of '
                 "type 'id' or another PII type."
@@ -1207,8 +1208,8 @@ class SingleTableMetadata:
         errors = []
         keys = self._get_primary_and_alternate_keys()
         keys.update(self._get_set_of_sequence_keys())
-        for key in sorted(keys, key=lambda key: key if isinstance(key, str) else key[0]):
-            key_list = [key] if isinstance(key, str) else list(key)
+        for key in _sort_keys(keys):
+            key_list = _cast_to_iterable(key, list)
             if pd.isna(data[key_list]).all(axis=1).any():
                 key = f"'{key}'" if isinstance(key, str) else f'{key}'
                 errors.append(f'Key column {key} contains missing values.')
@@ -1218,8 +1219,8 @@ class SingleTableMetadata:
     def _validate_key_values_are_unique(self, data):
         errors = []
         keys = self._get_primary_and_alternate_keys()
-        for key in sorted(keys, key=lambda key: key if isinstance(key, str) else key[0]):
-            key_list = [key] if isinstance(key, str) else list(key)
+        for key in _sort_keys(keys):
+            key_list = _cast_to_iterable(key, list)
             repeated_values = data[key_list][data[key_list].duplicated()]
             if not repeated_values.empty:
                 if len(repeated_values.columns) == 1:
