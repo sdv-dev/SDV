@@ -1,15 +1,17 @@
+from copy import deepcopy
+
+import pandas as pd
 import pytest
 
 from sdv.datasets.demo import download_demo
-from copy import deepcopy
 from sdv.metadata.metadata import Metadata
 
-import pandas as pd
 
 @pytest.fixture()
 def fake_hotels():
     data, metadata = download_demo('multi_table', 'fake_hotels')
     return deepcopy(data), deepcopy(metadata)
+
 
 @pytest.fixture()
 def data_metadata_1_to_1(fake_hotels):
@@ -55,6 +57,7 @@ def data_metadata_1_to_1(fake_hotels):
     ]
     metadata = Metadata.load_from_dict(metadata_dict)
     return data, metadata
+
 
 @pytest.fixture()
 def data_metadata_1_to_1_or_0():
@@ -104,7 +107,6 @@ def data_metadata_1_to_1_or_0():
     return data, metadata
 
 
-
 @pytest.fixture
 def data_metadata_1_to_1_subset_diamond(fake_hotels):
     data, metadata = fake_hotels
@@ -149,6 +151,7 @@ def data_metadata_1_to_1_subset_diamond(fake_hotels):
     data['rooms'] = data['rooms'].head(50)
     metadata = Metadata.load_from_dict(metadata_dict)
     return deepcopy(data), deepcopy(metadata)
+
 
 @pytest.fixture
 def data_metadata_1_to_1_to_1_subset_to_subset(data_metadata_1_to_1_subset_diamond):

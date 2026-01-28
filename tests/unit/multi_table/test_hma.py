@@ -165,9 +165,7 @@ class TestHMASynthesizer:
         instance._get_pbar_args.return_value = {'desc': "(1/2) Tables 'A' and 'B' ('user_id')"}
         mock_metadata = Mock()
         mock_metadata.primary_key = 'a'
-        instance.metadata.tables = {
-            'nesreca': mock_metadata
-        }
+        instance.metadata.tables = {'nesreca': mock_metadata}
         instance.metadata._get_all_foreign_keys.return_value = ['id_upravna_enota']
         instance._table_synthesizers = {'nesreca': Mock()}
         child_table = pd.DataFrame({'id_upravna_enota': [0, 1, 2, 3]})
@@ -193,14 +191,12 @@ class TestHMASynthesizer:
         instance._get_pbar_args.return_value = {'desc': "(1/2) Tables 'A' and 'B' ('user_id')"}
         mock_metadata = Mock()
         mock_metadata.primary_key = 'a'
-        instance.metadata.tables = {
-            'nesreca': mock_metadata
-        }
+        instance.metadata.tables = {'nesreca': mock_metadata}
         instance.metadata._get_all_foreign_keys.return_value = ['a', 'id_upravna_enota']
         instance._table_synthesizers = {'nesreca': Mock()}
         child_table = pd.DataFrame({
             'id_upravna_enota': [0, 1, 2, 3],
-            'a': ['id_1', 'id_2', 'id_3', 'id_4']
+            'a': ['id_1', 'id_2', 'id_3', 'id_4'],
         })
         child_table = child_table.set_index(['a'])
 
@@ -216,8 +212,8 @@ class TestHMASynthesizer:
         # Assert
         expected = pd.DataFrame(
             index=['id_1', 'id_2', 'id_3', 'id_4'],
-            data={'__nesreca__id_upravna_enota__num_rows': [1, 1, 1, 1]
-        })
+            data={'__nesreca__id_upravna_enota__num_rows': [1, 1, 1, 1]},
+        )
         instance._get_pbar_args.assert_called_once_with(desc="(1/2) Tables 'A' and 'B' ('user_id')")
         pd.testing.assert_frame_equal(result, expected)
 
@@ -270,9 +266,7 @@ class TestHMASynthesizer:
         mock_metadata = Mock()
         mock_metadata.primary_key = 'id'
         instance = Mock()
-        instance.metadata.tables = {
-            'table_name': mock_metadata
-        }
+        instance.metadata.tables = {'table_name': mock_metadata}
         instance.metadata._get_all_foreign_keys.return_value = ['a', 'b']
         table_data = pd.DataFrame({'a': [1, 2, 3], 'b': [2, 3, 4], 'c': ['John', 'Doe', 'Johanna']})
 
@@ -290,9 +284,7 @@ class TestHMASynthesizer:
         mock_metadata = Mock()
         mock_metadata.primary_key = 'a'
         instance = Mock()
-        instance.metadata.tables = {
-            'table_name': mock_metadata
-        }
+        instance.metadata.tables = {'table_name': mock_metadata}
         instance.metadata._get_all_foreign_keys.return_value = ['a', 'b']
         table_data = pd.DataFrame({'a': [1, 2, 3], 'b': [2, 3, 4], 'c': ['John', 'Doe', 'Johanna']})
 
@@ -300,7 +292,9 @@ class TestHMASynthesizer:
         result = HMASynthesizer._pop_foreign_keys(instance, table_data, 'table_name')
 
         # Assert
-        pd.testing.assert_frame_equal(pd.DataFrame({'a': [1, 2, 3], 'c': ['John', 'Doe', 'Johanna']}), table_data)
+        pd.testing.assert_frame_equal(
+            pd.DataFrame({'a': [1, 2, 3], 'c': ['John', 'Doe', 'Johanna']}), table_data
+        )
         np.testing.assert_array_equal(result['b'], [2, 3, 4])
 
     def test__clear_nans(self):

@@ -17,8 +17,6 @@ from sdmetrics.reports.multi_table import DiagnosticReport
 from sdv import version
 from sdv.cag import FixedCombinations, Inequality
 from sdv.cag._errors import ConstraintNotMetError
-from copy import deepcopy
-
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
 from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError, VersionError
@@ -28,7 +26,6 @@ from sdv.metadata.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint
 from tests.utils import catch_sdv_logs
-
 
 
 class TestHMASynthesizer:
@@ -2914,8 +2911,9 @@ def test_hma_1_to_1_or_0_not_superset(data_metadata_1_to_1_or_0):
     with pytest.raises(InvalidDataError, match=match_):
         synthesizer.fit(data)
 
+
 def test_1_to_1_to_1_subset_to_subset(data_metadata_1_to_1_to_1_subset_to_subset):
-    """Test primary key to primary key to primary key, with the 2nd and 3rd table having a subset."""
+    """Test PK to PK to PK, with the 2nd and 3rd table having a subset."""
     # Setup
     data, metadata = data_metadata_1_to_1_to_1_subset_to_subset
 
@@ -2933,8 +2931,9 @@ def test_1_to_1_to_1_subset_to_subset(data_metadata_1_to_1_to_1_subset_to_subset
     )
     synthesizer.validate(synthetic_data)
 
+
 def test_1_to_1_to_1_diamond(data_metadata_1_to_1_subset_diamond):
-    """Test primary key to primary key to primary key in a diamond relationship."""
+    """Test PK to PK to PK in a diamond relationship."""
     # Setup
     data, metadata = data_metadata_1_to_1_subset_diamond
 
