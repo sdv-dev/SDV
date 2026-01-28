@@ -265,7 +265,7 @@ class TestHMASynthesizer:
         )
 
     def test__pop_foreign_keys(self):
-        """Test `_pop_foreign_keys` removes the foreign keys from the ``table_data``."""
+        """Test ``_pop_foreign_keys`` removes the foreign keys from the ``table_data``."""
         # Setup
         mock_metadata = Mock()
         mock_metadata.primary_key = 'id'
@@ -285,7 +285,7 @@ class TestHMASynthesizer:
         np.testing.assert_array_equal(result['b'], [2, 3, 4])
 
     def test__pop_foreign_keys_pk(self):
-        """Test `_pop_foreign_keys` does not remove PK that is FK ``table_data``."""
+        """Test ``_pop_foreign_keys`` does not remove PK that is FK from the ``table_data``."""
         # Setup
         mock_metadata = Mock()
         mock_metadata.primary_key = 'a'

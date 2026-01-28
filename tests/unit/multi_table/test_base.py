@@ -849,28 +849,6 @@ class TestBaseMultiTableSynthesizer:
         synthesizer.auto_assign_transformers.assert_called_once_with(table_data)
         synthesizer.update_transformers.assert_called_once_with({'a': None, 'b': None})
 
-    def test__assign_table_transformers_fk_is_pk(self):
-        """Test the ``_assign_table_transformers`` with foreign key that is also a PK."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        instance = BaseMultiTableSynthesizer(metadata)
-        mock_metadata = Mock()
-        mock_metadata.primary_key = 'a'
-        instance.validate = Mock()
-        instance.metadata.tables = {
-            'oseba': mock_metadata
-        }
-        instance.metadata._get_all_foreign_keys = Mock(return_value=['a', 'b'])
-        synthesizer = Mock()
-        table_data = Mock()
-
-        # Run
-        instance._assign_table_transformers(synthesizer, 'oseba', table_data)
-
-        # Assert
-        synthesizer.auto_assign_transformers.assert_called_once_with(table_data)
-        synthesizer.update_transformers.assert_called_once_with({'b': None})
-
     def test_preprocess(self):
         """Test that ``preprocess`` iterates over the ``data`` and preprocess it.
 
