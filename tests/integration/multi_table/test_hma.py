@@ -2861,8 +2861,6 @@ def test_datetime_warning_doesnt_repeat():
     assert len(matching_warnings) == 1
 
 
-
-
 def test_hma_1_to_1(data_metadata_1_to_1):
     """Test HMA handles PK to PK relationship (1 to 1) and synthetic data matching cardinality."""
     # Setup
@@ -2946,5 +2944,10 @@ def test_1_to_1_to_1(data_metadata_1_to_1_subset_diamond):
     synthetic_data = synthesizer.sample(scale=1.0)
 
     # Assert
-
+    assert set(synthetic_data['guests']['guest_email']).issuperset(
+        set(synthetic_data['guests_pii']['guest_email'])
+    )
+    assert set(synthetic_data['guests']['guest_email']).issuperset(
+        set(synthetic_data['rooms']['guest_email'])
+    )
     synthesizer.validate(synthetic_data)
