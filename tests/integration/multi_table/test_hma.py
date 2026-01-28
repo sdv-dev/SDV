@@ -2914,7 +2914,7 @@ def test_hma_1_to_1_or_0_not_superset(data_metadata_1_to_1_or_0):
     with pytest.raises(InvalidDataError, match=match_):
         synthesizer.fit(data)
 
-def test_1_to_1_to_1(data_metadata_1_to_1_to_1_subset_to_subset):
+def test_1_to_1_to_1_subset_to_subset(data_metadata_1_to_1_to_1_subset_to_subset):
     """Test primary key to primary key to primary key, with the 2nd and 3rd table having a subset."""
     # Setup
     data, metadata = data_metadata_1_to_1_to_1_subset_to_subset
@@ -2933,7 +2933,7 @@ def test_1_to_1_to_1(data_metadata_1_to_1_to_1_subset_to_subset):
     )
     synthesizer.validate(synthetic_data)
 
-def test_1_to_1_to_1(data_metadata_1_to_1_subset_diamond):
+def test_1_to_1_to_1_diamond(data_metadata_1_to_1_subset_diamond):
     """Test primary key to primary key to primary key in a diamond relationship."""
     # Setup
     data, metadata = data_metadata_1_to_1_subset_diamond

@@ -351,6 +351,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         primary_key = self.metadata.tables[child_name].primary_key
         foreign_key_columns = self.metadata._get_all_foreign_keys(child_name)
         if primary_key and primary_key in foreign_key_columns:
+            # data processor will set index of each table to the PK for table
             foreign_key_values = child_table.index.unique()
         else:
             foreign_key_values = child_table[foreign_key].unique()

@@ -491,7 +491,7 @@ def test_validate_pk_to_pk_email():
     metadata_instance.validate_data(data)
 
     # Assert
-    metadata_instance.to_dict() == {
+    assert metadata_instance.to_dict() == {
         'tables': {
             'tableA': {
                 'columns': {

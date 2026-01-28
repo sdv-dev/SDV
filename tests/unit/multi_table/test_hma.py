@@ -184,7 +184,41 @@ class TestHMASynthesizer:
         # Assert
         expected = pd.DataFrame({'__nesreca__id_upravna_enota__num_rows': [1, 1, 1, 1]})
         instance._get_pbar_args.assert_called_once_with(desc="(1/2) Tables 'A' and 'B' ('user_id')")
+        pd.testing.assert_frame_equal(result, expected)
 
+    def test__get_extension_pk_is_fk(self):
+        """Test the ``_get_extension`` method when PK is FK."""
+        # Setup
+        instance = Mock()
+        instance._get_pbar_args.return_value = {'desc': "(1/2) Tables 'A' and 'B' ('user_id')"}
+        mock_metadata = Mock()
+        mock_metadata.primary_key = 'a'
+        instance.metadata.tables = {
+            'nesreca': mock_metadata
+        }
+        instance.metadata._get_all_foreign_keys.return_value = ['a', 'id_upravna_enota']
+        instance._table_synthesizers = {'nesreca': Mock()}
+        child_table = pd.DataFrame({
+            'id_upravna_enota': [0, 1, 2, 3],
+            'a': ['id_1', 'id_2', 'id_3', 'id_4']
+        })
+        child_table = child_table.set_index(['a'])
+
+        # Run
+        result = HMASynthesizer._get_extension(
+            instance,
+            'nesreca',
+            child_table,
+            'id_upravna_enota',
+            "(1/2) Tables 'A' and 'B' ('user_id')",
+        )
+
+        # Assert
+        expected = pd.DataFrame(
+            index=['id_1', 'id_2', 'id_3', 'id_4'],
+            data={'__nesreca__id_upravna_enota__num_rows': [1, 1, 1, 1]
+        })
+        instance._get_pbar_args.assert_called_once_with(desc="(1/2) Tables 'A' and 'B' ('user_id')")
         pd.testing.assert_frame_equal(result, expected)
 
     def test__augment_table(self):
@@ -231,7 +265,7 @@ class TestHMASynthesizer:
         )
 
     def test__pop_foreign_keys(self):
-        """Test that this method removes the foreign keys from the ``table_data``."""
+        """Test `_pop_foreign_keys` removes the foreign keys from the ``table_data``."""
         # Setup
         mock_metadata = Mock()
         mock_metadata.primary_key = 'id'
@@ -248,6 +282,25 @@ class TestHMASynthesizer:
         # Assert
         pd.testing.assert_frame_equal(pd.DataFrame({'c': ['John', 'Doe', 'Johanna']}), table_data)
         np.testing.assert_array_equal(result['a'], [1, 2, 3])
+        np.testing.assert_array_equal(result['b'], [2, 3, 4])
+
+    def test__pop_foreign_keys_pk(self):
+        """Test `_pop_foreign_keys` does not remove PK that is FK ``table_data``."""
+        # Setup
+        mock_metadata = Mock()
+        mock_metadata.primary_key = 'a'
+        instance = Mock()
+        instance.metadata.tables = {
+            'table_name': mock_metadata
+        }
+        instance.metadata._get_all_foreign_keys.return_value = ['a', 'b']
+        table_data = pd.DataFrame({'a': [1, 2, 3], 'b': [2, 3, 4], 'c': ['John', 'Doe', 'Johanna']})
+
+        # Run
+        result = HMASynthesizer._pop_foreign_keys(instance, table_data, 'table_name')
+
+        # Assert
+        pd.testing.assert_frame_equal(pd.DataFrame({'a': [1, 2, 3], 'c': ['John', 'Doe', 'Johanna']}), table_data)
         np.testing.assert_array_equal(result['b'], [2, 3, 4])
 
     def test__clear_nans(self):

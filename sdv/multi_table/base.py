@@ -469,7 +469,8 @@ class BaseMultiTableSynthesizer:
         """Update the ``synthesizer`` to ignore the foreign keys while preprocessing the data.
 
         This function iterates through all foreign keys in the table. For each foreign key,
-        if it is not the primary key in the table, then no transformer is assigned.
+        if it is not the primary key in the table, then the transformer is set to None (
+        meaning no transformer is assigned).
 
         """
         synthesizer.auto_assign_transformers(table_data)
