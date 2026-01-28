@@ -22,6 +22,47 @@ def test_multi_table_metadata():
     assert instance.relationships == []
 
 
+def test_multi_table_metadata_composite_keys():
+    """Test ``MultiTableMetadata`` with composite keys."""
+    # Setup
+    metadata_dict = {
+        'tables': {
+            'table1': {
+                'columns': {
+                    'table1_id': {'sdtype': 'id'},
+                    'cat_col': {'sdtype': 'categorical'},
+                },
+                'primary_key': ['table1_id', 'cat_col'],
+            },
+            'table2': {
+                'columns': {
+                    'pk': {'sdtype': 'id'},
+                    'fk1': {'sdtype': 'id'},
+                    'fk2': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'pk',
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'table1',
+                'parent_primary_key': ['table1_id', 'cat_col'],
+                'child_table_name': 'table2',
+                'child_foreign_key': ['fk1', 'fk2'],
+            },
+        ],
+    }
+
+    # Run
+    instance = MultiTableMetadata.load_from_dict(metadata_dict)
+    result = instance.to_dict()
+
+    # Assert
+    instance.validate()
+    assert result == {**metadata_dict, 'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'}
+    assert instance.relationships == metadata_dict['relationships']
+
+
 @patch('rdt.transformers')
 def test_add_column_relationship(mock_rdt_transformers):
     """Test ``add_column_relationship`` method."""

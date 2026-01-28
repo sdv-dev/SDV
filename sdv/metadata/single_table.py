@@ -20,6 +20,7 @@ from sdv._utils import (
     _is_datetime_type,
     _is_numerical_type,
     _load_data_from_csv,
+    _sort_keys,
     _validate_datetime_format,
     get_possible_chars,
 )
@@ -218,6 +219,13 @@ class SingleTableMetadata:
         self.column_relationships = []
         self._version = self.METADATA_SPEC_VERSION
         self._updated = False
+
+    @property
+    def _primary_key_is_composite(self):
+        if self.primary_key and isinstance(self.primary_key, list):
+            return True
+
+        return False
 
     def _get_unexpected_kwargs(self, sdtype, **kwargs):
         expected_kwargs = self._SDTYPE_KWARGS.get(sdtype, ['pii'])
@@ -774,29 +782,41 @@ class SingleTableMetadata:
         self.detect_from_dataframe(data)
 
     @staticmethod
-    def _validate_key_datatype(column_name):
+    def _validate_key_datatype(column_name, key_type):
         """Check whether column_name is a string."""
-        return isinstance(column_name, str)
+        is_string = isinstance(column_name, str)
+        is_list_of_strings = isinstance(column_name, list) and all(
+            isinstance(i, str) for i in column_name
+        )
+        return is_string or (key_type == 'primary' and is_list_of_strings)
 
     def _validate_keys_sdtype(self, keys, key_type):
         """Validate that each key is of type 'id' or a valid Faker function."""
-        bad_keys = set()
+        bad_keys = []
         for key in keys:
-            if not (
-                self.columns[key]['sdtype'] == 'id'
-                or is_faker_function(self.columns[key]['sdtype'])
+            if not any(
+                self.columns[key_col]['sdtype'] == 'id'
+                or is_faker_function(self.columns[key_col]['sdtype'])
+                for key_col in _cast_to_iterable(key)
             ):
-                bad_keys.add(key)
+                bad_keys.append(key)
+
         if bad_keys:
+            bad_keys = _sort_keys(bad_keys)
             raise InvalidMetadataError(
-                f"The {key_type}_keys {sorted(bad_keys)} must be type 'id' or another PII type."
+                f'The {key_type}_keys {bad_keys} must have a column of '
+                "type 'id' or another PII type."
             )
 
     def _validate_key(self, column_name, key_type):
         """Validate the primary and sequence keys."""
         if column_name is not None:
-            if not self._validate_key_datatype(column_name):
-                raise InvalidMetadataError(f"'{key_type}_key' must be a string.")
+            if not self._validate_key_datatype(column_name, key_type):
+                err_msg = f"'{key_type}_key' must be a string"
+                if key_type == 'primary':
+                    err_msg += ' or a list of strings'
+
+                raise InvalidMetadataError(err_msg + '.')
 
             keys = {column_name} if isinstance(column_name, str) else set(column_name)
             setting_sequence_as_primary = key_type == 'primary' and column_name == self.sequence_key
@@ -814,7 +834,7 @@ class SingleTableMetadata:
                     ' Keys should be columns that exist in the table.'
                 )
 
-            self._validate_keys_sdtype(keys, key_type)
+            self._validate_keys_sdtype([column_name], key_type)
 
     def set_primary_key(self, column_name):
         """Set the metadata primary key.
@@ -823,6 +843,9 @@ class SingleTableMetadata:
             column_name (str):
                 Name of the primary key column(s).
         """
+        if isinstance(column_name, list) and len(column_name) == 1:
+            column_name = column_name[0]
+
         self._validate_key(column_name, 'primary')
         if column_name in self.alternate_keys:
             warnings.warn(
@@ -866,7 +889,7 @@ class SingleTableMetadata:
 
     def _validate_alternate_keys(self, column_names):
         if not isinstance(column_names, list) or not all(
-            self._validate_key_datatype(column_name) for column_name in column_names
+            self._validate_key_datatype(column_name, 'alternate') for column_name in column_names
         ):
             raise InvalidMetadataError("'alternate_keys' must be a list of strings.")
 
@@ -1158,7 +1181,10 @@ class SingleTableMetadata:
         """
         keys = set(self.alternate_keys)
         if self.primary_key:
-            keys.update({self.primary_key})
+            primary_key = (
+                tuple(self.primary_key) if isinstance(self.primary_key, list) else self.primary_key
+            )
+            keys.add(primary_key)
 
         return keys
 
@@ -1181,31 +1207,45 @@ class SingleTableMetadata:
         errors = []
         keys = self._get_primary_and_alternate_keys()
         keys.update(self._get_set_of_sequence_keys())
-        for key in sorted(keys):
-            if pd.isna(data[key]).any():
-                errors.append(f"Key column '{key}' contains missing values.")
+        for key in _sort_keys(keys):
+            key_list = _cast_to_iterable(key, list)
+            if pd.isna(data[key_list]).all(axis=1).any():
+                key = f"'{key}'" if isinstance(key, str) else f'{key}'
+                errors.append(f'Key column {key} contains missing values.')
 
         return errors
 
     def _validate_key_values_are_unique(self, data):
         errors = []
         keys = self._get_primary_and_alternate_keys()
-        for key in sorted(keys):
-            repeated_values = set(data[key][data[key].duplicated()])
-            if repeated_values:
-                repeated_values = _format_invalid_values_string(repeated_values, 3)
-                errors.append(f"Key column '{key}' contains repeating values: " + repeated_values)
+        for key in _sort_keys(keys):
+            key_list = _cast_to_iterable(key, list)
+            repeated_values = data[key_list][data[key_list].duplicated()]
+            if not repeated_values.empty:
+                if len(repeated_values.columns) == 1:
+                    repeated_values = ' ' + _format_invalid_values_string(
+                        set(repeated_values[key]), 3
+                    )
+                else:
+                    repeated_values = '\n' + _format_invalid_values_string(
+                        repeated_values.drop_duplicates(), 3
+                    )
+
+                key = f"'{key}'" if isinstance(key, str) else f'{key}'
+                errors.append(f'Key column {key} contains repeating values:' + repeated_values)
 
         return errors
 
     def _validate_primary_key(self, data):
         error = []
-        is_int = self.primary_key and pd.api.types.is_integer_dtype(data[self.primary_key])
-        regex = self.columns.get(self.primary_key, {}).get('regex_format')
-        if is_int and regex:
-            possible_characters = get_possible_chars(regex, 1)
-            if '0' in possible_characters:
-                error.append(f'Primary key "{self.primary_key}" {INT_REGEX_ZERO_ERROR_MESSAGE}')
+        primary_key_list = _cast_to_iterable(self.primary_key) if self.primary_key else []
+        for key in primary_key_list:
+            is_int = pd.api.types.is_integer_dtype(data[key])
+            regex = self.columns.get(key, {}).get('regex_format')
+            if is_int and regex:
+                possible_characters = get_possible_chars(regex, 1)
+                if '0' in possible_characters:
+                    error.append(f'Primary key column "{key}" {INT_REGEX_ZERO_ERROR_MESSAGE}')
 
         return error
 
@@ -1477,6 +1517,10 @@ class SingleTableMetadata:
                         str(key) if not isinstance(key, str) else key: col
                         for key, col in value.items()
                     }
+                elif key == 'primary_key':
+                    if isinstance(value, list) and len(value) == 1:
+                        value = value[0]
+
                 setattr(instance, f'{key}', value)
 
         instance._primary_key_candidates = None
