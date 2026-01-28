@@ -889,7 +889,7 @@ class SingleTableMetadata:
 
     def _validate_alternate_keys(self, column_names):
         if not isinstance(column_names, list) or not all(
-            self._validate_key_datatype(column_name, 'alternate_keys')
+            self._validate_key_datatype(column_name, 'alternate')
             for column_name in column_names
         ):
             raise InvalidMetadataError("'alternate_keys' must be a list of strings.")
