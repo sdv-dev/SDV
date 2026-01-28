@@ -61,7 +61,51 @@ class CSVHandler(BaseLocalHandler):
     def __init__(self):
         pass
 
-    def read(self, folder_name, file_names=None, read_csv_parameters=None):
+    def _keep_leading_zeros(self, file_path, table_data, read_csv_parameters):
+        """Reload numeric columns as strings when they contain leading zeros.
+
+        Args:
+            file_path (Path):
+                Path to the CSV file being read.
+            table_data (pandas.DataFrame):
+                DataFrame produced by ``read_csv`` call.
+            read_csv_parameters (dict):
+                Parameters used for the initial read that will be reused for the
+                follow-up read.
+
+        Returns:
+            pandas.DataFrame:
+                The updated DataFrame with any leading-zero numeric columns
+                preserved as strings.
+        """
+        candidate_columns = [
+            column
+            for column in table_data.columns
+            if pd.api.types.is_numeric_dtype(table_data[column])
+            and not pd.api.types.is_bool_dtype(table_data[column])
+        ]
+        if not candidate_columns:
+            return table_data
+
+        leading_zero_parameters = read_csv_parameters.copy()
+        # These params can reference columns not in usecols and cause read failures
+        for key in ('index_col', 'parse_dates', 'date_parser'):
+            leading_zero_parameters.pop(key, None)
+
+        leading_zero_parameters['dtype'] = str
+        leading_zero_parameters['usecols'] = candidate_columns
+        string_data = pd.read_csv(file_path, **leading_zero_parameters)
+        string_data.index = table_data.index
+
+        for column in candidate_columns:
+            series = string_data[column].dropna().astype(str)
+            has_leading_zeros = series.str.match(r'^0\d+').any()
+            if has_leading_zeros:
+                table_data[column] = string_data[column]
+
+        return table_data
+
+    def read(self, folder_name, file_names=None, read_csv_parameters=None, keep_leading_zeros=True):
         """Read data from CSV files and return it along with metadata.
 
         Args:
@@ -75,6 +119,10 @@ class CSVHandler(BaseLocalHandler):
                 The keys are any of the parameter names of the pandas.read_csv function
                 and the values are your inputs. Defaults to
                 `{'parse_dates': False, 'low_memory': False, 'on_bad_lines': 'warn'}`
+            keep_leading_zeros (bool):
+                Whether to keep leading zeros by detecting numeric columns that have
+                string values with leading zeros and loading those columns as strings.
+                Defaults to ``True``.
 
         Returns:
             dict:
@@ -123,7 +171,12 @@ class CSVHandler(BaseLocalHandler):
 
         for file_path in file_paths:
             table_name = file_path.stem  # Remove file extension to get table name
-            data[table_name] = pd.read_csv(file_path, **read_csv_parameters)
+            table_data = pd.read_csv(file_path, **read_csv_parameters)
+
+            if keep_leading_zeros:
+                table_data = self._keep_leading_zeros(file_path, table_data, read_csv_parameters)
+
+            data[table_name] = table_data
 
         return data
 
