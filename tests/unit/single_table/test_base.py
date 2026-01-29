@@ -354,6 +354,31 @@ class TestBaseSynthesizer:
         with pytest.raises(SynthesizerInputError, match=err_msg):
             BaseSynthesizer(Metadata(), enforce_rounding='invalid')
 
+    def test___init___errors_with_composite_keys(self):
+        """Test the synthesizer errors if composite primary key exist in the metadata."""
+        # Setup
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'pk1': {'sdtype': 'id'},
+                        'pk2': {'sdtype': 'categorical'},
+                        'pk3': {'sdtype': 'categorical'},
+                    },
+                    'primary_key': ['pk1', 'pk2', 'pk3'],
+                },
+            },
+        })
+        expected_error = re.escape(
+            'Your metadata contains composite keys (primary key of table '
+            "'table' has multiple columns). Composite keys are "
+            'not supported in SDV Community.'
+        )
+
+        # Run and Assert
+        with pytest.raises(SynthesizerInputError, match=expected_error):
+            BaseSingleTableSynthesizer(metadata)
+
     def test_set_address_columns_warning(self):
         """Test ``set_address_columns`` method when the synthesizer has been fitted."""
         # Setup
@@ -573,7 +598,7 @@ class TestBaseSynthesizer:
 
         # Run and Assert
         message = (
-            'Primary key "key" is stored as an int but the Regex allows it to start with '
+            'Primary key column "key" is stored as an int but the Regex allows it to start with '
             '"0". Please remove the Regex or update it to correspond to valid ints.'
         )
         with pytest.raises(InvalidDataError, match=message):
