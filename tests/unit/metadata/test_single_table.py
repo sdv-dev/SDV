@@ -128,6 +128,39 @@ class TestSingleTableMetadata:
         assert instance._version == 'SINGLE_TABLE_V1'
         assert instance._updated is False
 
+    @pytest.mark.parametrize(
+        'primary_key,expected_value',
+        [(None, False), ('primary_key', False), (['pk1'], True)],
+    )
+    def test__primary_key_is_composite(self, primary_key, expected_value):
+        """Test the ``_primary_key_is_composite`` property."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.primary_key = primary_key
+
+        # Run and Assert
+        assert expected_value is instance._primary_key_is_composite
+
+    @pytest.mark.parametrize(
+        'primary_key,expected_value',
+        [
+            (None, None),
+            ('primary_key', 'primary_key'),
+            (['primary_key'], 'primary_key'),
+            (['pk1', 'pk2'], ['pk1', 'pk2']),
+        ],
+    )
+    def test_primary_key(self, primary_key, expected_value):
+        """Test property correctly handles the primary key."""
+        # Setup
+        metadata = SingleTableMetadata()
+
+        # Run
+        metadata.primary_key = primary_key
+
+        # Assert
+        metadata.primary_key == expected_value
+
     def test__validate_numerical_default_and_invalid(self):
         """Test the ``_validate_numerical`` method.
 
@@ -1656,7 +1689,7 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         # Run
-        out = instance._validate_key_datatype('10')
+        out = instance._validate_key_datatype('10', 'primary')
 
         # Assert
         assert out is True
@@ -1674,7 +1707,7 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         # Run
-        out = instance._validate_key_datatype(10)
+        out = instance._validate_key_datatype(10, 'primary')
 
         # Assert
         assert out is False
@@ -1692,10 +1725,28 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         # Run
-        out = instance._validate_key_datatype(('10', '20', '30'))
+        out = instance._validate_key_datatype(('10', '20', '30'), 'primary')
 
         # Assert
         assert out is False
+
+    def test__validate_key_dataype_valid_list_primary_key(self):
+        """Test ``_validate_key_dataype`` for tuples.
+
+        Input:
+            - A tuple with some strings
+
+        Output:
+            - False
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run
+        out = instance._validate_key_datatype(['10', '20', '30'], 'primary')
+
+        # Assert
+        assert out is True
 
     def test__validate_key_sequence_and_primary_key_same(self):
         """Test ``_validate_key`` for a column used as both sequence and primary keys."""
@@ -1776,7 +1827,9 @@ class TestSingleTableMetadata:
         instance.add_column('column2', sdtype='categorical')
         instance.add_column('column3', sdtype='id')
 
-        err_msg = re.escape("The primary_keys ['column1'] must be type 'id' or another PII type.")
+        err_msg = re.escape(
+            "The primary_keys ['column1'] must have a column of type 'id' or another PII type."
+        )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.set_primary_key('column1')
@@ -1791,6 +1844,18 @@ class TestSingleTableMetadata:
 
         # Run
         instance.set_primary_key('column')
+
+        # Assert
+        assert instance.primary_key == 'column'
+
+    def test_set_primary_key_singleton_composite_key(self):
+        """Test a composite key with one element is set as a single primary key."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {'column': {'sdtype': 'id'}}
+
+        # Run
+        instance.set_primary_key(['column'])
 
         # Assert
         assert instance.primary_key == 'column'
@@ -1936,7 +2001,9 @@ class TestSingleTableMetadata:
         instance.add_column('column2', sdtype='categorical')
         instance.add_column('column3', sdtype='id')
 
-        err_msg = re.escape("The sequence_keys ['column1'] must be type 'id' or another PII type.")
+        err_msg = re.escape(
+            "The sequence_keys ['column1'] must have a column of type 'id' or another PII type."
+        )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.set_sequence_key('column1')
@@ -2051,7 +2118,8 @@ class TestSingleTableMetadata:
         instance.add_column('column3', sdtype='id')
 
         err_msg = re.escape(
-            "The alternate_keys ['column1', 'column2'] must be type 'id' or another PII type."
+            "The alternate_keys ['column1', 'column2'] must have a column of "
+            "type 'id' or another PII type."
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
@@ -2473,7 +2541,7 @@ class TestSingleTableMetadata:
             'primary_key': 'key',
         })
         message = (
-            'Primary key "key" is stored as an int but the Regex allows it to start with '
+            'Primary key column "key" is stored as an int but the Regex allows it to start with '
             '"0". Please remove the Regex or update it to correspond to valid ints.'
         )
 
@@ -2547,7 +2615,8 @@ class TestSingleTableMetadata:
             in the error message.
         """
         data = pd.DataFrame({
-            'pk_col': [0, 1, np.nan],
+            'pk_col1': [0, 1, np.nan],
+            'pk_col2': [0, np.nan, np.nan],
             'sk_col1': [0, 1, None],
             'sk_col2': [0, 1, np.nan],
             'sk_col3': [0, 1, 2],
@@ -2556,14 +2625,15 @@ class TestSingleTableMetadata:
             'ak_col3': [0, 1, 2],
         })
         metadata = SingleTableMetadata()
-        metadata.add_column('pk_col', sdtype='id')
+        metadata.add_column('pk_col1', sdtype='id')
+        metadata.add_column('pk_col2', sdtype='categorical')
         metadata.add_column('sk_col1', sdtype='id')
         metadata.add_column('sk_col2', sdtype='id')
         metadata.add_column('sk_col3', sdtype='id')
         metadata.add_column('ak_col1', sdtype='id')
         metadata.add_column('ak_col2', sdtype='id')
         metadata.add_column('ak_col3', sdtype='id')
-        metadata.set_primary_key('pk_col')
+        metadata.set_primary_key(['pk_col1', 'pk_col2'])
         metadata.set_sequence_key('sk_col1')
         metadata.add_alternate_keys(['ak_col1', 'ak_col2', 'ak_col3'])
         metadata._validate_primary_key = Mock(return_value=[])
@@ -2573,8 +2643,9 @@ class TestSingleTableMetadata:
             '\n'
             "\nKey column 'ak_col2' contains missing values."
             '\n'
-            "\nKey column 'pk_col' contains missing values."
+            "\nKey column ('pk_col1', 'pk_col2') contains missing values."
             '\n'
+            "\nKey column 'sk_col1' contains missing values."
         )
 
         # Run
@@ -2628,6 +2699,26 @@ class TestSingleTableMetadata:
             "\nKey column 'ak_col2' contains repeating values: [2]"
             '\n'
             "\nKey column 'pk_col' contains repeating values: [0, 1]"
+        )
+        with pytest.raises(InvalidDataError, match=err_msg):
+            metadata.validate_data(data)
+
+    def test_validate_data_composite_primary_key_not_unique(self):
+        """Test error is raised if composite primary keys are not unique."""
+        data = pd.DataFrame({
+            'pk_col1': [0, 1, 1, 0, 1],
+            'pk_col2': [0, 1, 0, 0, 0],
+        })
+        metadata = SingleTableMetadata()
+        metadata.add_column('pk_col1', sdtype='id')
+        metadata.add_column('pk_col2', sdtype='id')
+        metadata.set_primary_key(['pk_col1', 'pk_col2'])
+
+        # Run and Assert
+        err_msg = re.escape(
+            'The provided data does not match the metadata:'
+            "\nKey column ('pk_col1', 'pk_col2') contains repeating values:"
+            '\n   pk_col1  pk_col2\n3        0        0\n4        1        0'
         )
         with pytest.raises(InvalidDataError, match=err_msg):
             metadata.validate_data(data)
@@ -2978,6 +3069,23 @@ class TestSingleTableMetadata:
         assert instance.sequence_key is None
         assert instance.alternate_keys == []
         assert instance.sequence_index is None
+        assert instance._version == 'SINGLE_TABLE_V1'
+
+    def test_load_from_dict_composite_key_single_element(self):
+        """Test that a primary key list with a single element is set as a single primary key."""
+        # Setup
+        my_metadata = {
+            'columns': {'pk': 'value'},
+            'primary_key': ['pk'],
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        }
+
+        # Run
+        instance = SingleTableMetadata.load_from_dict(my_metadata)
+
+        # Assert
+        assert instance.columns == {'pk': 'value'}
+        assert instance.primary_key == 'pk'
         assert instance._version == 'SINGLE_TABLE_V1'
 
     @patch('sdv.metadata.utils.Path')

@@ -435,7 +435,7 @@ class TestMetadataClass:
                     'parent_table_name': 'accounts',
                     'parent_primary_key': 'id',
                     'child_table_name': 'branches',
-                    'chil_foreign_key': 'branch_id',
+                    'child_foreign_key': 'branch_id',
                 }
             ],
         }
@@ -463,7 +463,7 @@ class TestMetadataClass:
                 'parent_table_name': 'accounts',
                 'parent_primary_key': 'id',
                 'child_table_name': 'branches',
-                'chil_foreign_key': 'branch_id',
+                'child_foreign_key': 'branch_id',
             }
         ]
 
@@ -527,7 +527,7 @@ class TestMetadataClass:
         # Run and Assert
         error_msg = re.escape(
             'Relationships:\n'
-            'Relationship between tables (transactions, payments) uses a foreign key column '
+            'Relationship between tables (transactions, payments) uses a foreign key '
             "('user_id') that is already used in another relationship."
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):

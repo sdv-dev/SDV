@@ -114,6 +114,20 @@ class BaseMultiTableSynthesizer:
                 ' in future SDV versions.'
             )
 
+    def _handle_composite_keys(self):
+        """Validates that composite keys are not used in Public SDV."""
+        composite_key_tables = []
+        for table, table_metadata in self.metadata.tables.items():
+            if table_metadata._primary_key_is_composite:
+                composite_key_tables.append(table)
+
+        if composite_key_tables:
+            raise SynthesizerInputError(
+                'Your metadata contains composite keys (primary key of tables '
+                f'{composite_key_tables} have multiple columns). Composite keys are '
+                'not supported in SDV Community.'
+            )
+
     def __init__(self, metadata, locales=['en_US'], synthesizer_kwargs=None):
         self.metadata = metadata
         if type(metadata) is MultiTableMetadata:
@@ -123,6 +137,7 @@ class BaseMultiTableSynthesizer:
             self.metadata.validate()
 
         self._check_metadata_updated()
+        self._handle_composite_keys()
         self.locales = locales
         self.verbose = False
         self.extended_columns = defaultdict(dict)
