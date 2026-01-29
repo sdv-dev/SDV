@@ -26,9 +26,12 @@ except ImportError:
 MODELABLE_SDTYPES = ['categorical', 'numerical', 'datetime', 'boolean']
 
 
-def _cast_to_iterable(value):
+def _cast_to_iterable(value, iterable_type=None):
     """Return a ``list`` if the input object is not a ``list`` or ``tuple``."""
     if isinstance(value, (list, tuple)):
+        if iterable_type:
+            return iterable_type(value)
+
         return value
 
     return [value]
@@ -513,3 +516,7 @@ def _validate_correct_synthesizer_loading(synthesizer, cls):
             f"but got '{synthesizer_name}'. Please ensure you are loading the correct "
             f'synthesizer type.'
         )
+
+
+def _sort_keys(keys):
+    return sorted(keys, key=lambda key: key if isinstance(key, str) else key[0])

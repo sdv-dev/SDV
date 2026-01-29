@@ -150,6 +150,15 @@ class BaseSynthesizer:
                 )
                 _check_regex_format(self._table_name, column_name, regex)
 
+    def _handle_composite_keys(self, single_table_metadata):
+        """Validates that composite keys are not used in Public SDV."""
+        if single_table_metadata._primary_key_is_composite:
+            raise SynthesizerInputError(
+                'Your metadata contains composite keys (primary key of table '
+                f"'{self._table_name}' has multiple columns). Composite keys are "
+                'not supported in SDV Community.'
+            )
+
     def __init__(
         self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=['en_US']
     ):
@@ -172,6 +181,8 @@ class BaseSynthesizer:
 
         self.metadata.validate()
         self._check_metadata_updated()
+        single_table_metadata = self.metadata._convert_to_single_table()
+        self._handle_composite_keys(single_table_metadata)
 
         # Points to a metadata object that conserves the initialized status of the synthesizer
         self._original_metadata = deepcopy(self.metadata)
@@ -180,7 +191,7 @@ class BaseSynthesizer:
         self.enforce_rounding = enforce_rounding
         self.locales = locales
         self._data_processor = DataProcessor(
-            metadata=self.metadata._convert_to_single_table(),
+            metadata=single_table_metadata,
             enforce_rounding=self.enforce_rounding,
             enforce_min_max_values=self.enforce_min_max_values,
             locales=self.locales,

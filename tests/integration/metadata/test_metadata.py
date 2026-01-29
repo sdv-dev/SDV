@@ -993,7 +993,7 @@ def test_validate_metadata_with_reused_foreign_keys():
     # Run and Assert
     error_msg = re.escape(
         'Relationships:\n'
-        'Relationship between tables (A2, A3) uses a foreign key column '
+        'Relationship between tables (A2, A3) uses a foreign key '
         "('fk3_A1_A2') that is already used in another relationship."
     )
     with pytest.raises(InvalidMetadataError, match=error_msg):

@@ -405,7 +405,7 @@ class TestMultiTableMetadata:
 
         # Run and Assert
         error_msg = re.escape(
-            'Relationship between tables (users, transactions) uses a foreign key column '
+            'Relationship between tables (users, transactions) uses a foreign key '
             "('session_id') that is already used in another relationship."
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
@@ -431,7 +431,7 @@ class TestMultiTableMetadata:
 
         # Run and Assert
         error_msg = re.escape(
-            'Relationship between tables (users, transactions) uses a foreign key column '
+            'Relationship between tables (users, transactions) uses a foreign key '
             "('session_id') that is already used in another relationship."
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
@@ -1806,7 +1806,7 @@ class TestMultiTableMetadata:
                     'parent_table_name': 'accounts',
                     'parent_primary_key': 'id',
                     'child_table_name': 'branches',
-                    'chil_foreign_key': 'branch_id',
+                    'child_foreign_key': 'branch_id',
                 }
             ],
         }
@@ -1834,7 +1834,7 @@ class TestMultiTableMetadata:
                 'parent_table_name': 'accounts',
                 'parent_primary_key': 'id',
                 'child_table_name': 'branches',
-                'chil_foreign_key': 'branch_id',
+                'child_foreign_key': 'branch_id',
             }
         ]
 
