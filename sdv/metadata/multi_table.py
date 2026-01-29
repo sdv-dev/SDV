@@ -173,9 +173,14 @@ class MultiTableMetadata:
                 and relationship['parent_primary_key'] == parent_primary_key
             )
             if foreign_key_already_used and not parent_matches:
+                child_foreign_key = (
+                    f"('{child_foreign_key}')"
+                    if isinstance(child_foreign_key, str)
+                    else f'({child_foreign_key})'
+                )
                 raise InvalidMetadataError(
                     f'Relationship between tables ({parent_table_name}, {child_table_name}) uses '
-                    f"a foreign key column ('{child_foreign_key}') that is already used in another "
+                    f'a foreign key {child_foreign_key} that is already used in another '
                     'relationship.'
                 )
 
@@ -187,15 +192,23 @@ class MultiTableMetadata:
         child_foreign_key,
         seen_foreign_keys,
     ):
-        key = (child_table_name, child_foreign_key)
+        key = (
+            tuple(_cast_to_iterable(child_table_name)),
+            tuple(_cast_to_iterable(child_foreign_key)),
+        )
         current_relationship = (parent_table_name, parent_primary_key)
 
         if key in seen_foreign_keys:
             existing_relationship = seen_foreign_keys[key]
             if existing_relationship != current_relationship:
+                child_foreign_key = (
+                    f"('{child_foreign_key}')"
+                    if isinstance(child_foreign_key, str)
+                    else f'({child_foreign_key})'
+                )
                 raise InvalidMetadataError(
                     f'Relationship between tables ({parent_table_name}, {child_table_name}) uses '
-                    f"a foreign key column ('{child_foreign_key}') that is already used in another "
+                    f'a foreign key {child_foreign_key} that is already used in another '
                     'relationship.'
                 )
         else:
@@ -284,10 +297,10 @@ class MultiTableMetadata:
                 A string representing the name of the parent table.
             child_table_name (str):
                 A string representing the name of the child table.
-            parent_primary_key (str or tuple):
-                A string or tuple of strings representing the primary key of the parent.
-            child_foreign_key (str or tuple):
-                A string or tuple of strings representing the foreign key of the child.
+            parent_primary_key (str or list[str]):
+                A string or list of strings representing the primary key of the parent.
+            child_foreign_key (str or list[str]):
+                A string or list of strings representing the foreign key of the child.
 
         Raises:
             - ``InvalidMetadataError`` if a table is missing.
@@ -1219,9 +1232,19 @@ class MultiTableMetadata:
                 ) from error
 
         for relationship in metadata.get('relationships', []):
+            parent_pk = relationship.get('parent_primary_key')
+            child_fk = relationship.get('child_foreign_key')
+            type_safe_pk = (
+                [str(col) for col in parent_pk] if isinstance(parent_pk, list) else str(parent_pk)
+            )
+            type_safe_fk = (
+                [str(col) for col in child_fk] if isinstance(parent_pk, list) else str(child_fk)
+            )
             type_safe_relationships = {
-                key: str(value) if not isinstance(value, str) else value
-                for key, value in relationship.items()
+                'parent_table_name': str(relationship.get('parent_table_name')),
+                'child_table_name': str(relationship.get('child_table_name')),
+                'parent_primary_key': type_safe_pk,
+                'child_foreign_key': type_safe_fk,
             }
             self.relationships.append(type_safe_relationships)
 

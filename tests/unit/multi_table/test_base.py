@@ -212,6 +212,41 @@ class TestBaseMultiTableSynthesizer:
         with pytest.warns(FutureWarning, match=warn_message):
             BaseMultiTableSynthesizer(metadata, synthesizer_kwargs={})
 
+    def test__handle_composite_keys(self):
+        """Test the synthesizer errors if composite primary keys exist in the metadata."""
+        # Setup
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table1': {
+                    'columns': {
+                        'pk1': {'sdtype': 'id'},
+                        'pk2': {'sdtype': 'categorical'},
+                        'pk3': {'sdtype': 'categorical'},
+                    },
+                    'primary_key': ['pk1', 'pk2', 'pk3'],
+                },
+                'table2': {
+                    'columns': {
+                        'id1': {'sdtype': 'id'},
+                        'id2': {'sdtype': 'id'},
+                    },
+                    'primary_key': ['id1', 'id2'],
+                },
+                'table3': {'columns': {'id': {'sdtype': 'id'}}, 'primary_key': 'id'},
+            },
+        })
+        instance = Mock()
+        instance.metadata = metadata
+        expected_error = re.escape(
+            'Your metadata contains composite keys (primary key of tables '
+            "['table1', 'table2'] have multiple columns). Composite keys are "
+            'not supported in SDV Community.'
+        )
+
+        # Run and Assert
+        with pytest.raises(SynthesizerInputError, match=expected_error):
+            BaseMultiTableSynthesizer._handle_composite_keys(instance)
+
     def test__check_metadata_updated(self):
         """Test the ``_check_metadata_updated`` method."""
         # Setup
