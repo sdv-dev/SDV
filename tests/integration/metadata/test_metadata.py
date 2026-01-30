@@ -1518,7 +1518,7 @@ def test_circular_relationship_not_detected():
         },
         {
             'parent_table_name': 'tableA',
-            'child_tabtableCle_name': '',
+            'child_table_name': 'tableC',
             'parent_primary_key': 'table_id',
             'child_foreign_key': 'table_id',
         },
