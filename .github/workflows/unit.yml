@@ -15,13 +15,13 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
         os: [ubuntu-latest, windows-latest]
         include:
           - os: macos-latest
             python-version: '3.9'
           - os: macos-latest
-            python-version: '3.13'
+            python-version: '3.14'
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
@@ -34,7 +34,7 @@ jobs:
           python -m pip install invoke .[test]
     - name: Run unit tests
       run: invoke unit
-    - if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.13
+    - if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.14
       name: Upload unit codecov report
       uses: codecov/codecov-action@v4
       with:
