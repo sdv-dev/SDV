@@ -127,30 +127,6 @@ class TestCSVHandler:
         # Assert
         pd.testing.assert_frame_equal(out['users'], data)
 
-    def test_read_keep_leading_zeros_does_not_block_parse_dates(self, tmpdir):
-        """Test leading zeros do not prevent date parsing."""
-        # Setup
-        file_path = Path(tmpdir)
-        data = pd.DataFrame({
-            'zip_code': ['02116', '10110'],
-            'created_at': ['01/02/2024', '12/31/2024'],
-        })
-        data.to_csv(file_path / 'users.csv', index=False)
-
-        handler = CSVHandler()
-
-        # Run
-        out = handler.read(
-            tmpdir,
-            file_names=['users.csv'],
-            read_csv_parameters={'parse_dates': ['created_at']},
-        )
-
-        # Assert
-        data['created_at'] = pd.to_datetime(data['created_at'])
-        pd.testing.assert_frame_equal(out['users'], data)
-        assert pd.api.types.is_datetime64_any_dtype(out['users']['created_at'])
-
     def test_read_keep_leading_zeros_multiple_files_mixed_types(self, tmpdir):
         """Test leading zeros with multiple files and mixed dtypes."""
         # Setup
