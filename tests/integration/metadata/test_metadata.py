@@ -1483,3 +1483,43 @@ def test_detect_from_dataframes_primary_key_to_primary_key(primary_key_to_primar
         ],
         'METADATA_SPEC_VERSION': 'V1',
     }
+
+
+def test_circular_relationship_not_detected():
+    """Test metadata does not auto-detect circular relationships."""
+    # Setup
+    data = {
+        'tableA': pd.DataFrame({
+            'table_id': range(5),
+            'col1': ['A', 'B', 'B', 'C', 'C'],
+        }),
+        'tableB': pd.DataFrame({
+            'table_id': range(5),
+            'col3': ['A', 'B', 'B', 'C', 'C'],
+        }),
+        'tableC': pd.DataFrame({
+            'table_id': range(5),
+            'col4': ['A', 'B', 'B', 'C', 'C'],
+        }),
+    }
+    # Run
+    metadata = Metadata.detect_from_dataframes(data)
+
+    # Assert
+    metadata.validate()
+    metadata.validate_data(data)
+    assert len(metadata.relationships) == 2
+    assert metadata.to_dict()['relationships'] == [
+        {
+            'parent_table_name': 'tableA',
+            'child_table_name': 'tableB',
+            'parent_primary_key': 'table_id',
+            'child_foreign_key': 'table_id',
+        },
+        {
+            'parent_table_name': 'tableA',
+            'child_tabtableCle_name': '',
+            'parent_primary_key': 'table_id',
+            'child_foreign_key': 'table_id',
+        },
+    ]
