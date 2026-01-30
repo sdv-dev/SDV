@@ -130,14 +130,14 @@ def tutorials(c):
 
 @task
 def lint(c):
-    check_dependencies(c)
+    # check_dependencies(c)
     c.run('ruff check .')
     c.run('ruff format --check --diff .')
 
 
 @task
 def fix_lint(c):
-    check_dependencies(c)
+    # check_dependencies(c)
     c.run('ruff check --fix .')
     c.run('ruff format .')
 

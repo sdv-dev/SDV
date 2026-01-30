@@ -2,6 +2,7 @@ import os
 import re
 from copy import deepcopy
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -879,54 +880,42 @@ def test_detect_from_dataframes_invalid_format():
         Metadata.detect_from_dataframes(data)
 
 
-# def test_no_duplicated_foreign_key_relationships_are_generated():
-#     # Setup
-#     import contextlib
+def test_no_duplicated_foreign_key_relationships_are_generated():
+    # Setup
+    parent_a = pd.DataFrame({
+        'id': ['id-' + str(i) for i in range(100)],
+        'col1': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=100)],
+    })
+    parent_b = pd.DataFrame({
+        'id': ['id-' + str(i) for i in range(100)],
+        'col2': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=100)],
+    })
 
-#     @contextlib.contextmanager
-#     def set_seed(seed):
-#         state = np.random.get_state()
-#         np.random.seed(seed)
-#         try:
-#             yield
-#         finally:
-#             np.random.set_state(state)
+    child_c = pd.DataFrame({
+        'id': ['id-' + str(i) for i in np.random.randint(0, 100, size=1000)],
+        'col3': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=1000)],
+    })
 
-#     with set_seed(5):
-#         parent_a = pd.DataFrame({
-#             'id': ['id-' + str(i) for i in range(100)],
-#             'col1': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=100)],
-#         })
-#         parent_b = pd.DataFrame({
-#             'id': ['id-' + str(i) for i in range(100)],
-#             'col2': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=100)],
-#         })
+    data = {'parent_a': parent_a, 'parent_b': parent_b, 'child_c': child_c}
 
-#         child_c = pd.DataFrame({
-#             'id': ['id-' + str(i) for i in np.random.randint(0, 100, size=1000)],
-#             'col3': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=1000)],
-#         })
+    # Run
+    metadata = Metadata.detect_from_dataframes(data)
 
-#     data = {'parent_a': parent_a, 'parent_b': parent_b, 'child_c': child_c}
-
-#     # Run
-#     metadata = Metadata.detect_from_dataframes(data)
-
-#     # Assert
-#     assert metadata.relationships == [
-#         {
-#             'child_foreign_key': 'id',
-#             'child_table_name': 'parent_b',
-#             'parent_primary_key': 'id',
-#             'parent_table_name': 'parent_a',
-#         },
-#         {
-#             'parent_table_name': 'parent_a',
-#             'child_table_name': 'child_c',
-#             'parent_primary_key': 'id',
-#             'child_foreign_key': 'id',
-#         },
-#     ]
+    # Assert
+    assert metadata.relationships == [
+        {
+            'child_foreign_key': 'id',
+            'child_table_name': 'parent_b',
+            'parent_primary_key': 'id',
+            'parent_table_name': 'parent_a',
+        },
+        {
+            'parent_table_name': 'parent_a',
+            'child_table_name': 'child_c',
+            'parent_primary_key': 'id',
+            'child_foreign_key': 'id',
+        },
+    ]
 
 
 def test_validate_metadata_with_reused_foreign_keys():
@@ -1421,3 +1410,37 @@ def test_validate_empty_metadata():
     err_msg = 'The metadata is empty. Please add at least one table to the metadata.'
     with pytest.raises(InvalidMetadataError, match=err_msg):
         synthesizer.fit(pd.DataFrame())
+
+
+def test_primary_key_to_primary_key(primary_key_to_primary_key):
+    """Test metadata can auto-detect a primary key which is also a foreign key."""
+    # Setup
+    data, _ = primary_key_to_primary_key
+
+    # Run
+    metadata = Metadata.detect_from_dataframes(data)
+
+    # Assert
+    metadata.validate()
+    metadata.validate_data(data)
+    assert metadata.to_dict() == {
+        'tables': {
+            'tableA': {
+                'columns': {'table_id': {'sdtype': 'id'}, 'col1': {'sdtype': 'categorical'}},
+                'primary_key': 'table_id',
+            },
+            'tableB': {
+                'columns': {'table_id': {'sdtype': 'id'}, 'col2': {'sdtype': 'categorical'}},
+                'primary_key': 'table_id',
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'tableA',
+                'child_table_name': 'tableB',
+                'parent_primary_key': 'table_id',
+                'child_foreign_key': 'table_id',
+            }
+        ],
+        'METADATA_SPEC_VERSION': 'V1',
+    }
