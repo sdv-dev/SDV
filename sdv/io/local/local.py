@@ -12,6 +12,7 @@ CSV_DEFAULT_READ_ARGS = {'parse_dates': False, 'low_memory': False, 'on_bad_line
 CSV_DEFAULT_WRITE_ARGS = {'index': False}
 
 UNSUPPORTED_ARGS = frozenset(['filepath_or_buffer', 'path_or_buf'])
+MAX_SAMPLE_ROWS = 100_000
 
 
 class BaseLocalHandler:
@@ -64,6 +65,10 @@ class CSVHandler(BaseLocalHandler):
     def _keep_leading_zeros(self, file_path, table_data, read_csv_parameters):
         """Reload numeric columns as strings when they contain leading zeros.
 
+        Note:
+            Detection is based on sampling the first 100,000 rows. Leading zeros
+            that only appear after row 100,000 will not be detected.
+
         Args:
             file_path (Path):
                 Path to the CSV file being read.
@@ -87,21 +92,45 @@ class CSVHandler(BaseLocalHandler):
         if not candidate_columns:
             return table_data
 
-        leading_zero_parameters = read_csv_parameters.copy()
+        params = read_csv_parameters.copy()
+        params['dtype'] = str
+        params['usecols'] = candidate_columns
         # These params can reference columns not in usecols and cause read failures
-        for key in ('index_col', 'parse_dates', 'date_parser'):
-            leading_zero_parameters.pop(key, None)
+        # chunksize/iterator reads are incompatible with sampling
+        # converters can interfere with dtype=str
+        for key in (
+            'index_col',
+            'parse_dates',
+            'date_parser',
+            'chunksize',
+            'iterator',
+            'converters',
+        ):
+            params.pop(key, None)
 
-        leading_zero_parameters['dtype'] = str
-        leading_zero_parameters['usecols'] = candidate_columns
-        string_data = pd.read_csv(file_path, **leading_zero_parameters)
+        sample_parameters = params.copy()
+        sample_rows = sample_parameters.get('nrows')
+        if sample_rows is None or sample_rows > MAX_SAMPLE_ROWS:
+            sample_parameters['nrows'] = MAX_SAMPLE_ROWS
+
+        sample_data = pd.read_csv(file_path, **sample_parameters)
+        leading_zero_columns = [
+            column
+            for column in sample_data.columns
+            if sample_data[column].str.match(r'^-?0\d+', na=False).any()
+        ]
+
+        if not leading_zero_columns:
+            return table_data
+
+        if len(sample_data) == len(table_data):
+            string_data = sample_data[leading_zero_columns]
+        else:
+            params['usecols'] = leading_zero_columns
+            string_data = pd.read_csv(file_path, **params)
+
         string_data.index = table_data.index
-
-        for column in candidate_columns:
-            series = string_data[column].dropna().astype(str)
-            has_leading_zeros = series.str.match(r'^0\d+').any()
-            if has_leading_zeros:
-                table_data[column] = string_data[column]
+        table_data[leading_zero_columns] = string_data[leading_zero_columns]
 
         return table_data
 
