@@ -775,6 +775,75 @@ class TestMetadataClass:
         with pytest.raises(ValueError, match=expected_message):
             Metadata.detect_from_dataframe(data, infer_keys=infer_keys)
 
+    def test_detect_from_dataframe_primary_key_to_primary_key(self):
+        """Test primary to primary key relationship is detected if column name match."""
+        # Setup
+        data = {
+            'table1': pd.DataFrame({
+                'id': [1, 2, 3],
+            }),
+            'table2': pd.DataFrame({
+                'id': [1, 2, 3],
+            }),
+        }
+        instance = Metadata()
+        instance.detect_table_from_dataframe('table1', data['table1'])
+        instance.detect_table_from_dataframe('table2', data['table2'])
+
+        # Run
+        instance._detect_foreign_keys_by_column_name(data)
+
+        # Assert
+        assert instance.to_dict()['relationships'] == [
+            {
+                'parent_table_name': 'table1',
+                'child_table_name': 'table2',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'id',
+            }
+        ]
+
+    def test_detect_foreign_keys_sorting(self):
+        # Setup
+        mock_metadata_1 = Mock()
+        mock_metadata_1.primary_key = 'id'
+        mock_metadata_1.columns = {
+            'id': {'sdtype': 'id'},
+            'col1': {'sdtype': 'categorical'},
+        }
+        mock_metadata_2 = Mock()
+        mock_metadata_2.primary_key = 'id'
+        mock_metadata_2.columns = {
+            'id': {'sdtype': 'id'},
+            'col2': {'sdtype': 'numerical'},
+        }
+        data = {
+            'table1': pd.DataFrame({
+                'id': [1, 2, 3],
+                'col1': ['a', 'b', 'c'],
+            }),
+            'table2': pd.DataFrame({
+                'id': [1, 2, 3],
+                'col2': [1.1, 2.2, 3.3],
+            }),
+        }
+        instance = Metadata()
+        instance.tables = {
+            'table1': mock_metadata_1,
+            'table2': mock_metadata_2,
+        }
+        instance.add_relationship = Mock()
+
+        # Run
+        instance._detect_foreign_keys_by_column_name(data=data)
+
+        # Assert
+        expected_calls = [
+            call('table1', 'table2', 'id', 'id'),
+            call('table2', 'table1', 'id', 'id'),
+        ]
+        instance.add_relationship.assert_has_calls(expected_calls, any_order=False)
+
     def test__handle_table_name(self):
         """Test the ``_handle_table_name`` method."""
         # Setup
