@@ -1,12 +1,12 @@
 import pandas as pd
 import pytest
 
-from sdv.metadata import MultiTableMetadata
+from sdv.metadata import Metadata
 
 
 @pytest.fixture()
 def primary_key_to_primary_key():
-    metadata = MultiTableMetadata.load_from_dict({
+    metadata = Metadata.load_from_dict({
         'tables': {
             'tableA': {
                 'columns': {

@@ -16,8 +16,8 @@ from sdv.single_table.copulas import GaussianCopulaSynthesizer
 DEFAULT_TABLE_NAME = 'table'
 
 
-def test_metadata():
-    """Test ``MultiTableMetadata``."""
+def test_metadata_to_dict():
+    """Test ``to_dict`` method on ``Metadata``."""
     # Setup
     instance = Metadata()
 
@@ -877,56 +877,6 @@ def test_detect_from_dataframes_invalid_format():
     # Run and Assert
     with pytest.raises(InvalidMetadataError, match=expected_error):
         Metadata.detect_from_dataframes(data)
-
-
-# def test_no_duplicated_foreign_key_relationships_are_generated():
-#     # Setup
-#     import contextlib
-
-#     @contextlib.contextmanager
-#     def set_seed(seed):
-#         state = np.random.get_state()
-#         np.random.seed(seed)
-#         try:
-#             yield
-#         finally:
-#             np.random.set_state(state)
-
-#     with set_seed(5):
-#         parent_a = pd.DataFrame({
-#             'id': ['id-' + str(i) for i in range(100)],
-#             'col1': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=100)],
-#         })
-#         parent_b = pd.DataFrame({
-#             'id': ['id-' + str(i) for i in range(100)],
-#             'col2': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=100)],
-#         })
-
-#         child_c = pd.DataFrame({
-#             'id': ['id-' + str(i) for i in np.random.randint(0, 100, size=1000)],
-#             'col3': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=1000)],
-#         })
-
-#     data = {'parent_a': parent_a, 'parent_b': parent_b, 'child_c': child_c}
-
-#     # Run
-#     metadata = Metadata.detect_from_dataframes(data)
-
-#     # Assert
-#     assert metadata.relationships == [
-#         {
-#             'child_foreign_key': 'id',
-#             'child_table_name': 'parent_b',
-#             'parent_primary_key': 'id',
-#             'parent_table_name': 'parent_a',
-#         },
-#         {
-#             'parent_table_name': 'parent_a',
-#             'child_table_name': 'child_c',
-#             'parent_primary_key': 'id',
-#             'child_foreign_key': 'id',
-#         },
-#     ]
 
 
 def test_validate_metadata_with_reused_foreign_keys():
