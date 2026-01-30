@@ -58,10 +58,10 @@ def test_visualize_graph_for_multi_table():
     model.sample(10)
 
 
-def test_visualize_pk_to_pk(primary_key_to_primary_key):
-    """Test visualization runs with PK to PK relationship."""
+def test_visualize_primary_key_to_primary_key(primary_key_to_primary_key):
+    """Test visualization runs with primary key to primary key relationship."""
     # Setup
     _, metadata = primary_key_to_primary_key
 
-    # Run and Assert
+    # Run
     metadata.visualize()

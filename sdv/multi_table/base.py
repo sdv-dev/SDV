@@ -471,7 +471,6 @@ class BaseMultiTableSynthesizer:
         This function iterates through all foreign keys in the table. For each foreign key,
         if it is not the primary key in the table, then the transformer is set to None (
         meaning no transformer is assigned).
-
         """
         synthesizer.auto_assign_transformers(table_data)
         column_name_to_transformers = {}
@@ -481,6 +480,7 @@ class BaseMultiTableSynthesizer:
         for foreign_key in foreign_keys:
             if foreign_key != primary_key:
                 column_name_to_transformers[foreign_key] = None
+
         synthesizer.update_transformers(column_name_to_transformers)
 
     def auto_assign_transformers(self, data):

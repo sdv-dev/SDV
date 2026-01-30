@@ -17,8 +17,8 @@ from sdv.single_table.copulas import GaussianCopulaSynthesizer
 DEFAULT_TABLE_NAME = 'table'
 
 
-def test_metadata():
-    """Test ``MultiTableMetadata``."""
+def test_metadata_to_dict():
+    """Test ``to_dict`` method on ``Metadata``."""
     # Setup
     instance = Metadata()
 
@@ -895,7 +895,6 @@ def test_no_duplicated_foreign_key_relationships_are_generated():
         'id': ['id-' + str(i) for i in np.random.randint(0, 100, size=1000)],
         'col3': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=1000)],
     })
-
     data = {'parent_a': parent_a, 'parent_b': parent_b, 'child_c': child_c}
 
     # Run
@@ -904,14 +903,14 @@ def test_no_duplicated_foreign_key_relationships_are_generated():
     # Assert
     assert metadata.relationships == [
         {
-            'child_foreign_key': 'id',
-            'child_table_name': 'parent_b',
-            'parent_primary_key': 'id',
             'parent_table_name': 'parent_a',
+            'child_table_name': 'child_c',
+            'parent_primary_key': 'id',
+            'child_foreign_key': 'id',
         },
         {
             'parent_table_name': 'parent_a',
-            'child_table_name': 'child_c',
+            'child_table_name': 'parent_b',
             'parent_primary_key': 'id',
             'child_foreign_key': 'id',
         },
@@ -1412,7 +1411,47 @@ def test_validate_empty_metadata():
         synthesizer.fit(pd.DataFrame())
 
 
-def test_primary_key_to_primary_key(primary_key_to_primary_key):
+def test_validate_primary_key_to_primary_key(primary_key_to_primary_key):
+    """Test validation to indicate a PK to PK relationship."""
+    # Setup
+    data, metadata = primary_key_to_primary_key
+
+    # Run
+    metadata.validate()
+    metadata.validate_data(data)
+
+    # Assert
+    expected_metadata = {
+        'tables': {
+            'tableA': {
+                'columns': {
+                    'table_id': {'sdtype': 'id'},
+                    'col1': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'table_id',
+            },
+            'tableB': {
+                'columns': {
+                    'table_id': {'sdtype': 'id'},
+                    'col2': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'table_id',
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'tableA',
+                'parent_primary_key': 'table_id',
+                'child_table_name': 'tableB',
+                'child_foreign_key': 'table_id',
+            }
+        ],
+        'METADATA_SPEC_VERSION': 'V1',
+    }
+    assert metadata.to_dict() == expected_metadata
+
+
+def test_detect_from_dataframes_primary_key_to_primary_key(primary_key_to_primary_key):
     """Test metadata can auto-detect a primary key which is also a foreign key."""
     # Setup
     data, _ = primary_key_to_primary_key
