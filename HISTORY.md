@@ -1,5 +1,17 @@
 # Release Notes
 
+## v1.33.0 - 2026-01-30
+
+### New Features
+
+* When reading in CSV data, do not cut off any leading 0s - Issue [#2780](https://github.com/sdv-dev/SDV/issues/2780) by @fealho
+
+### Maintenance
+
+* Pin Pandas dependency below 3.0 - Issue [#2784](https://github.com/sdv-dev/SDV/issues/2784) by @rwedge
+* Support Python 3.14 - Issue [#2776](https://github.com/sdv-dev/SDV/issues/2776) by @gsheni
+* Update license information in pyproject.toml to use new format - Issue [#2773](https://github.com/sdv-dev/SDV/issues/2773) by @rwedge
+
 ## v1.32.1 - 2026-01-09
 
 ### Bugs Fixed
