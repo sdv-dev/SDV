@@ -1,10 +1,10 @@
-Run started:2026-01-09 18:05:08.415737
+Run started:2026-01-30 22:25:46.984921+00:00
 
 Test results:
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
-   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b110_try_except_pass.html
+   More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b110_try_except_pass.html
    Location: ./sdv/_utils.py:349:8
 348	
 349	        except Exception:
@@ -15,7 +15,7 @@ Test results:
 >> Issue: [B105:hardcoded_password_string] Possible hardcoded password: '#'
    Severity: Low   Confidence: Medium
    CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
-   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b105_hardcoded_password_string.html
+   More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b105_hardcoded_password_string.html
    Location: ./sdv/constraints/tabular.py:1160:16
 1159	    def _get_diff_column_name(self, table_data):
 1160	        token = '#'
@@ -25,7 +25,7 @@ Test results:
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
-   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b101_assert_used.html
+   More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b101_assert_used.html
    Location: ./sdv/data_processing/utils.py:17:4
 16	    """
 17	    assert path.exists(), 'The expected file was not found.'
@@ -35,7 +35,7 @@ Test results:
 >> Issue: [B112:try_except_continue] Try, Except, Continue detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
-   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b112_try_except_continue.html
+   More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b112_try_except_continue.html
    Location: ./sdv/datasets/demo.py:125:8
 124	                matches.append(key)
 125	        except Exception:
@@ -46,7 +46,7 @@ Test results:
 >> Issue: [B112:try_except_continue] Try, Except, Continue detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
-   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b112_try_except_continue.html
+   More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b112_try_except_continue.html
    Location: ./sdv/datasets/demo.py:190:8
 189	
 190	        except Exception:
@@ -57,7 +57,7 @@ Test results:
 >> Issue: [B112:try_except_continue] Try, Except, Continue detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
-   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b112_try_except_continue.html
+   More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b112_try_except_continue.html
    Location: ./sdv/datasets/demo.py:580:8
 579	
 580	        except Exception:
@@ -68,7 +68,7 @@ Test results:
 >> Issue: [B306:blacklist] Use of insecure and deprecated function (mktemp).
    Severity: Medium   Confidence: High
    CWE: CWE-377 (https://cwe.mitre.org/data/definitions/377.html)
-   More Info: https://bandit.readthedocs.io/en/1.7.7/blacklists/blacklist_calls.html#b306-mktemp-q
+   More Info: https://bandit.readthedocs.io/en/1.9.2/blacklists/blacklist_calls.html#b306-mktemp-q
    Location: ./sdv/logging/utils.py:41:19
 40	    elif os.access(store_path, os.W_OK):
 41	        tmp_path = tempfile.mktemp(dir=store_path, suffix='.yml')
@@ -78,7 +78,7 @@ Test results:
 >> Issue: [B105:hardcoded_password_string] Possible hardcoded password: 'id'
    Severity: Low   Confidence: Medium
    CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
-   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b105_hardcoded_password_string.html
+   More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b105_hardcoded_password_string.html
    Location: ./sdv/metadata/single_table.py:499:24
 498	        for token in tokens:
 499	            if token == 'id':
@@ -88,7 +88,7 @@ Test results:
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
-   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b110_try_except_pass.html
+   More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b110_try_except_pass.html
    Location: ./sdv/metadata/single_table.py:555:12
 554	
 555	            except Exception:
@@ -99,7 +99,7 @@ Test results:
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
-   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b110_try_except_pass.html
+   More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b110_try_except_pass.html
    Location: ./sdv/multi_table/hma.py:401:12
 400	                    index.append(foreign_key_value)
 401	            except Exception:
@@ -111,7 +111,7 @@ Test results:
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
-   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b110_try_except_pass.html
+   More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b110_try_except_pass.html
    Location: ./sdv/single_table/dayz.py:62:4
 61	            params['num_decimal_digits'] = num_decimal_digits
 62	    except Exception:
@@ -121,7 +121,7 @@ Test results:
 --------------------------------------------------
 
 Code scanned:
-	Total lines of code: 17347
+	Total lines of code: 17415
 	Total lines skipped (#nosec): 0
 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
 
