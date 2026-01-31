@@ -717,7 +717,7 @@ class TestMultiTableMetadata:
         metadata.add_relationship('table', 'table2', 'pk', 'pk')
 
         # Assert
-        metadata.to_dict() == {
+        assert metadata.to_dict() == {
             'tables': {
                 'table': {
                     'primary_key': 'pk',
