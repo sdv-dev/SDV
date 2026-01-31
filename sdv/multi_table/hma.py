@@ -348,9 +348,14 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         table_meta = self._table_synthesizers[child_name].get_metadata()
 
         extension_rows = []
+        primary_key = self.metadata.tables[child_name].primary_key
         foreign_key_columns = self.metadata._get_all_foreign_keys(child_name)
-        foreign_key_values = child_table[foreign_key].unique()
-        child_table = child_table.set_index(foreign_key)
+        if primary_key and primary_key in foreign_key_columns:
+            # data processor will set index of each table to the PK for table
+            foreign_key_values = child_table.index.unique()
+        else:
+            foreign_key_values = child_table[foreign_key].unique()
+            child_table = child_table.set_index(foreign_key)
 
         index = []
         scale_columns = None
@@ -447,6 +452,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 child_table = tables[child_name]
 
             foreign_keys = self.metadata._get_foreign_keys(table_name, child_name)
+
             for foreign_key in foreign_keys:
                 progress_bar_desc = (
                     f'({self._learned_relationships + 1}/{len(self.metadata.relationships)}) '
@@ -497,6 +503,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         self._learned_relationships = 0
         parent_map = self.metadata._get_parent_map()
         self._print(text='Learning relationships:')
+
         for table_name in processed_data:
             if not parent_map.get(table_name):
                 self._augment_table(augmented_data[table_name], augmented_data, table_name)
@@ -517,7 +524,11 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             keys (dict):
                 A dictionary mapping with the foreign key and it's values within the table.
         """
+        primary_key = self.metadata.tables[table_name].primary_key
         foreign_keys = self.metadata._get_all_foreign_keys(table_name)
+        if primary_key and primary_key in foreign_keys:
+            foreign_keys.remove(primary_key)
+
         keys = {}
         for fk in foreign_keys:
             keys[fk] = table_data.pop(fk).to_numpy()
