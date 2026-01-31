@@ -2870,7 +2870,7 @@ def test_hma_1_to_1(data_metadata_1_to_1):
         synthetic_data = synthesizer.sample(scale=1)
 
     # Assert
-    assert synthetic_data['guests']['guest_email'].equals(synthetic_data['guests']['guest_email'])
+    assert synthetic_data['guests']['guest_email'].equals(synthetic_data['rooms']['guest_email'])
     synthesizer.validate(synthetic_data)
     for msg in caught_warnings:
         assert 'ChainedAssignmentError' not in str(msg.message)
