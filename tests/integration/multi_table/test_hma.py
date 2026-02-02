@@ -2860,7 +2860,7 @@ def test_datetime_warning_doesnt_repeat():
 
 class TestPrimaryKeyToPrimaryKey:
     def test_1_to_1(self, data_metadata_1_to_1):
-        """Test HMA handles PK to PK relationship (1 to 1) and synthetic data matching cardinality."""
+        """Test HMA handles PK to PK (1 to 1) and synthetic data matches cardinality."""
         # Setup
         data, metadata = data_metadata_1_to_1
 
@@ -2879,7 +2879,7 @@ class TestPrimaryKeyToPrimaryKey:
             assert 'ChainedAssignmentError' not in str(msg.message)
 
     def test_1_to_1_or_0(self, data_metadata_1_to_1_or_0):
-        """Test HMA handles PK to PK relationship (1 to 1/0) and synthetic data matching cardinality."""
+        """Test HMA handles PK to PK (1 to 1/0) and synthetic data matches cardinality."""
         # Setup
         data, metadata = data_metadata_1_to_1_or_0
 
