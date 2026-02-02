@@ -1,3 +1,4 @@
+import random
 from copy import deepcopy
 
 import pandas as pd
@@ -172,4 +173,92 @@ def data_metadata_1_to_1_to_1_subset_to_subset(data_metadata_1_to_1_subset_diamo
         },
     ]
     metadata = Metadata.load_from_dict(metadata_dict)
+    return data, metadata
+
+
+@pytest.fixture
+def data_metadata_multiple_foreign_keys():
+    parent_1_ids = range(0, 10)
+    parent_2_ids = range(10, 20)
+    parent = pd.DataFrame({
+        'parent_id': parent_1_ids,
+        'col_categorical': random.choices(['A', 'B', 'C', 'D', 'E'], k=10),
+    })
+    child = pd.DataFrame({
+        'parent_1_id': parent_1_ids,
+        'parent_2_id': parent_2_ids,
+        'col_numerical': [10.2, 20.3] * 5,
+    })
+    second_parent = pd.DataFrame({'parent_id': parent_2_ids, 'col_boolean': [True, False] * 5})
+    data = {
+        'parent': parent,
+        'child': child,
+        'second_parent': second_parent,
+    }
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'parent': {
+                'columns': {
+                    'parent_id': {'sdtype': 'id'},
+                    'col_categorical': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'parent_id',
+            },
+            'child': {
+                'columns': {
+                    'parent_1_id': {'sdtype': 'id'},
+                    'parent_2_id': {'sdtype': 'id'},
+                    'col_numerical': {'sdtype': 'numerical'},
+                },
+                'primary_key': 'parent_1_id',
+            },
+            'second_parent': {
+                'columns': {'parent_id': {'sdtype': 'id'}, 'col_boolean': {'sdtype': 'boolean'}},
+                'primary_key': 'parent_id',
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'child',
+                'parent_primary_key': 'parent_id',
+                'child_foreign_key': 'parent_1_id',
+            },
+            {
+                'parent_table_name': 'second_parent',
+                'child_table_name': 'child',
+                'parent_primary_key': 'parent_id',
+                'child_foreign_key': 'parent_2_id',
+            },
+        ],
+    })
+    assert data['child']['parent_1_id'].equals(data['parent']['parent_id'])
+    assert data['child']['parent_2_id'].equals(data['second_parent']['parent_id'])
+    metadata.validate()
+    metadata.validate_data(data)
+    return data, metadata
+
+
+@pytest.fixture
+def data_metadata_multiple_foreign_keys_subset(data_metadata_multiple_foreign_keys):
+    _, metadata = data_metadata_multiple_foreign_keys
+    parent = pd.DataFrame({'parent_id': [1, 2, 3], 'col_categorical': ['A', 'B', 'C']})
+    child = pd.DataFrame({
+        'parent_1_id': [1, 2],
+        'parent_2_id': [1, 1],
+        'col_numerical': [100.5, 101.6],
+    })
+    second_parent = pd.DataFrame({
+        'parent_id': [1, 2],
+        'col_boolean': [True, False],
+    })
+    data = {
+        'parent': parent,
+        'child': child,
+        'second_parent': second_parent,
+    }
+    assert set(data['child']['parent_1_id']).issubset(set(data['parent']['parent_id']))
+    assert set(data['child']['parent_2_id']).issubset(set(data['second_parent']['parent_id']))
+    metadata.validate()
+    metadata.validate_data(data)
     return data, metadata

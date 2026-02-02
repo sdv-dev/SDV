@@ -2858,95 +2858,128 @@ def test_datetime_warning_doesnt_repeat():
     assert len(matching_warnings) == 1
 
 
-def test_hma_1_to_1(data_metadata_1_to_1):
-    """Test HMA handles PK to PK relationship (1 to 1) and synthetic data matching cardinality."""
-    # Setup
-    data, metadata = data_metadata_1_to_1
+class TestPrimaryKeyToPrimaryKey:
+    def test_1_to_1(self, data_metadata_1_to_1):
+        """Test HMA handles PK to PK relationship (1 to 1) and synthetic data matching cardinality."""
+        # Setup
+        data, metadata = data_metadata_1_to_1
 
-    # Run
-    synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
-    with warnings.catch_warnings(record=True) as caught_warnings:
+        # Run
+        synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            synthesizer.fit(data)
+            synthetic_data = synthesizer.sample(scale=1)
+
+        # Assert
+        assert synthetic_data['guests']['guest_email'].equals(
+            synthetic_data['rooms']['guest_email']
+        )
+        synthesizer.validate(synthetic_data)
+        for msg in caught_warnings:
+            assert 'ChainedAssignmentError' not in str(msg.message)
+
+    def test_1_to_1_or_0(self, data_metadata_1_to_1_or_0):
+        """Test HMA handles PK to PK relationship (1 to 1/0) and synthetic data matching cardinality."""
+        # Setup
+        data, metadata = data_metadata_1_to_1_or_0
+
+        # Run
+        synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
         synthesizer.fit(data)
         synthetic_data = synthesizer.sample(scale=1)
 
-    # Assert
-    assert synthetic_data['guests']['guest_email'].equals(synthetic_data['rooms']['guest_email'])
-    synthesizer.validate(synthetic_data)
-    for msg in caught_warnings:
-        assert 'ChainedAssignmentError' not in str(msg.message)
+        # Assert
+        assert set(synthetic_data['users']['user_id']).issuperset(
+            set(synthetic_data['survey_response']['user_id'])
+        )
+        synthesizer.validate(synthetic_data)
 
+    def test_1_to_1_or_0_not_superset(self, data_metadata_1_to_1_or_0):
+        """Test error is raised if PK to PK relationship but parent is not a superset."""
+        # Setup
+        data, metadata = data_metadata_1_to_1_or_0
+        metadata.remove_relationship(parent_table_name='users', child_table_name='survey_response')
+        metadata.add_relationship(
+            parent_table_name='survey_response',
+            parent_primary_key='user_id',
+            child_table_name='users',
+            child_foreign_key='user_id',
+        )
+        synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
+        match_ = re.escape("Error: foreign key column 'user_id' contains unknown references: (9).")
 
-def test_hma_1_to_1_or_0(data_metadata_1_to_1_or_0):
-    """Test HMA handles PK to PK relationship (1 to 1/0) and synthetic data matching cardinality."""
-    # Setup
-    data, metadata = data_metadata_1_to_1_or_0
+        # Run and Assert
+        with pytest.raises(InvalidDataError, match=match_):
+            synthesizer.fit(data)
 
-    # Run
-    synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
-    synthesizer.fit(data)
-    synthetic_data = synthesizer.sample(scale=1)
+    def test_1_to_1_to_1_subset_to_subset(self, data_metadata_1_to_1_to_1_subset_to_subset):
+        """Test PK to PK to PK, with the 2nd and 3rd table having a subset."""
+        # Setup
+        data, metadata = data_metadata_1_to_1_to_1_subset_to_subset
 
-    # Assert
-    assert set(synthetic_data['users']['user_id']).issuperset(
-        set(synthetic_data['survey_response']['user_id'])
-    )
-    synthesizer.validate(synthetic_data)
-
-
-def test_hma_1_to_1_or_0_not_superset(data_metadata_1_to_1_or_0):
-    """Test error is raised if PK to PK relationship but parent is not a superset."""
-    # Setup
-    data, metadata = data_metadata_1_to_1_or_0
-    metadata.remove_relationship(parent_table_name='users', child_table_name='survey_response')
-    metadata.add_relationship(
-        parent_table_name='survey_response',
-        parent_primary_key='user_id',
-        child_table_name='users',
-        child_foreign_key='user_id',
-    )
-    synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
-    match_ = re.escape("Error: foreign key column 'user_id' contains unknown references: (9).")
-
-    # Run and Assert
-    with pytest.raises(InvalidDataError, match=match_):
+        # Run
+        synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
         synthesizer.fit(data)
+        synthetic_data = synthesizer.sample(scale=1.0)
 
+        # Assert
+        assert set(synthetic_data['guests']['guest_email']).issuperset(
+            set(synthetic_data['guests_pii']['guest_email'])
+        )
+        assert set(synthetic_data['guests_pii']['guest_email']).issuperset(
+            set(synthetic_data['rooms']['guest_email'])
+        )
+        synthesizer.validate(synthetic_data)
 
-def test_1_to_1_to_1_subset_to_subset(data_metadata_1_to_1_to_1_subset_to_subset):
-    """Test PK to PK to PK, with the 2nd and 3rd table having a subset."""
-    # Setup
-    data, metadata = data_metadata_1_to_1_to_1_subset_to_subset
+    def test_1_to_1_to_1_diamond(self, data_metadata_1_to_1_subset_diamond):
+        """Test PK to PK to PK in a diamond relationship."""
+        # Setup
+        data, metadata = data_metadata_1_to_1_subset_diamond
 
-    # Run
-    synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
-    synthesizer.fit(data)
-    synthetic_data = synthesizer.sample(scale=1.0)
+        # Run
+        synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
+        synthesizer.fit(data)
+        synthetic_data = synthesizer.sample(scale=1.0)
 
-    # Assert
-    assert set(synthetic_data['guests']['guest_email']).issuperset(
-        set(synthetic_data['guests_pii']['guest_email'])
-    )
-    assert set(synthetic_data['guests_pii']['guest_email']).issuperset(
-        set(synthetic_data['rooms']['guest_email'])
-    )
-    synthesizer.validate(synthetic_data)
+        # Assert
+        assert set(synthetic_data['guests']['guest_email']).issuperset(
+            set(synthetic_data['guests_pii']['guest_email'])
+        )
+        assert set(synthetic_data['guests']['guest_email']).issuperset(
+            set(synthetic_data['rooms']['guest_email'])
+        )
+        synthesizer.validate(synthetic_data)
 
+    def test_multiple_fks(self, data_metadata_multiple_foreign_keys):
+        """Test support for parent and child with multiple foreign keys."""
+        # Setup
+        data, metadata = data_metadata_multiple_foreign_keys
 
-def test_1_to_1_to_1_diamond(data_metadata_1_to_1_subset_diamond):
-    """Test PK to PK to PK in a diamond relationship."""
-    # Setup
-    data, metadata = data_metadata_1_to_1_subset_diamond
+        # Run
+        synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
+        synthesizer.fit(data)
+        synthetic_data = synthesizer.sample(scale=1.0)
 
-    # Run
-    synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
-    synthesizer.fit(data)
-    synthetic_data = synthesizer.sample(scale=1.0)
+        # Assert
+        for each_parent_id in synthetic_data['child']['parent_1_id'].tolist():
+            assert each_parent_id in set(synthetic_data['parent']['parent_id'])
+        for each_parent_id in synthetic_data['child']['parent_2_id'].tolist():
+            assert each_parent_id in set(synthetic_data['second_parent']['parent_id'])
+        synthesizer.validate(synthetic_data)
 
-    # Assert
-    assert set(synthetic_data['guests']['guest_email']).issuperset(
-        set(synthetic_data['guests_pii']['guest_email'])
-    )
-    assert set(synthetic_data['guests']['guest_email']).issuperset(
-        set(synthetic_data['rooms']['guest_email'])
-    )
-    synthesizer.validate(synthetic_data)
+    def test_multiple_fks_mismatched(self, data_metadata_multiple_foreign_keys_mismatched):
+        """Test support for parent and child with multiple foreign keys."""
+        # Setup
+        data, metadata = data_metadata_multiple_foreign_keys_mismatched
+
+        # Run
+        synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
+        synthesizer.fit(data)
+        synthetic_data = synthesizer.sample(scale=1.0)
+
+        # Assert
+        for each_parent_id in synthetic_data['child']['parent_1_id'].tolist():
+            assert each_parent_id in set(synthetic_data['parent']['parent_id'])
+        for each_parent_id in synthetic_data['child']['parent_2_id'].tolist():
+            assert each_parent_id in set(synthetic_data['second_parent']['parent_id'])
+        synthesizer.validate(synthetic_data)
