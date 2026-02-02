@@ -626,3 +626,67 @@ class TestBaseConstraint:
             DataFrameDictMatcher({'table1': data}), instance.metadata
         )
         pd.testing.assert_frame_equal(is_valid_result, data)
+
+    def test___repr___no_parameters(self):
+        """Test that the ``__str__`` method returns the class name.
+
+        The ``__repr__`` method should return the class name followed by paranthesis.
+        """
+        # Setup
+        instance = BaseConstraint()
+
+        # Run
+        text = repr(instance)
+
+        # Assert
+        assert text == 'BaseConstraint()'
+
+    def test___repr___with_parameters(self):
+        """Test that the ``__repr__`` method returns the class name and parameters.
+
+        The ``_repr__`` method should return the class name followed by all non-default
+        parameters wrapped in parentheses.
+
+        Setup:
+            - Create a dummy class which inherits from the ``BaseConstraint`` where:
+                - The class has one required parameter in it's ``__init__`` method.
+                - The class has three optional parameters in it's ``__init__`` method.
+                - The class instance only sets 2 optional parameters.
+        """
+
+        # Setup
+        class Dummy(BaseConstraint):
+            def __init__(self, param0, param1=None, param2=None, param3=None):
+                self.param0 = param0
+                self.param1 = param1
+                self.param2 = param2
+                self.param3 = param3
+
+        instance = Dummy(param0='required', param2='value', param3=True)
+
+        # Run
+        text = repr(instance)
+
+        # Assert
+        assert text == "Dummy(param0='required', param2='value', param3=True)"
+
+    def test__repr__with_bool_parameters(self):
+        """Test that the ``__repr__`` method returns the class name and parameters.
+
+        The ``_repr__`` method should return the class name followed by all non-default
+        parameters wrapped in parentheses and not include default boolean parameters.
+        """
+
+        # Setup
+        class Dummy(BaseConstraint):
+            def __init__(self, param0, param1=False):
+                self.param0 = param0
+                self.param1 = param1
+
+        instance = Dummy(param0='required')
+
+        # Run
+        text = repr(instance)
+
+        # Assert
+        assert text == "Dummy(param0='required')"

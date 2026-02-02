@@ -1,5 +1,6 @@
 """Base constraint."""
 
+import inspect
 import logging
 
 import numpy as np
@@ -17,6 +18,42 @@ class BaseConstraint:
     """Base Constraint Class."""
 
     _is_single_table = True
+
+    def __repr__(self):
+        """Represent initialization of CAG as text.
+
+        Returns:
+            str:
+                The name of the CAG followed by any non-default parameters.
+        """
+        class_name = self.__class__.__name__
+        custom_args = []
+        args = inspect.getfullargspec(self.__init__)
+        keys = args.args[1:]
+        instanced = {
+            key: getattr(self, key, getattr(self, f'_{key}', None))
+            for key in keys
+            if key != 'metadata'
+        }
+
+        default_values_list = args.defaults or []
+        default_arg_to_default_value = {}
+        if default_values_list:
+            default_keys = keys[-len(default_values_list) :]
+            default_arg_to_default_value = dict(zip(default_keys, default_values_list))
+
+        if default_arg_to_default_value == instanced:
+            return f'{class_name}()'
+
+        for arg, value in instanced.items():
+            if (
+                arg not in default_arg_to_default_value
+                or default_arg_to_default_value[arg] != value
+            ):
+                custom_args.append(f'{arg}={repr(value)}')
+
+        args_string = ', '.join(custom_args)
+        return f'{class_name}({args_string})'
 
     def __init__(self):
         self.metadata = None

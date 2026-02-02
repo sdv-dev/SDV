@@ -63,6 +63,7 @@ class Inequality(BaseConstraint):
         self._fillna_low_column_name = f'{low_column_name}.fillna'
         self._diff_column_name = f'{self._low_column_name}#{self._high_column_name}'
         self._nan_column_name = f'{self._diff_column_name}.nan_component'
+        self.strict_boundaries = strict_boundaries
         self._operator = np.greater if strict_boundaries else np.greater_equal
         self.table_name = table_name
 

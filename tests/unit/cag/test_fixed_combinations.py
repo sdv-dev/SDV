@@ -612,3 +612,16 @@ class TestFixedCombinations:
         # Assert
         expected_valid_out = pd.Series([True, True, True])
         pd.testing.assert_series_equal(expected_valid_out, valid_out)
+
+    def test___repr__(self):
+        """Test the representation of the instance that was created for this class."""
+        # Setup
+        fixed_combinations = FixedCombinations(
+            column_names=['city', 'country'], table_name='parent'
+        )
+
+        # Run
+        result = repr(fixed_combinations)
+
+        # Assert
+        assert result == "FixedCombinations(column_names=['city', 'country'], table_name='parent')"

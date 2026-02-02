@@ -1186,3 +1186,19 @@ class TestInequality:
             'high_datetime_format': '%Y-%m-%d',
         }
         assert expected_formats == mock_match_datetime_precision.call_args_list[0][1]
+
+    def test___repr__(self):
+        """Test the representation of the instance that was created for this class."""
+        # Setup
+        inequality = Inequality(
+            low_column_name='checkin_date', high_column_name='checkout_date', strict_boundaries=True
+        )
+
+        # Run
+        result = repr(inequality)
+
+        # Assert
+        assert result == (
+            "Inequality(low_column_name='checkin_date', high_column_name='checkout_date', "
+            'strict_boundaries=True)'
+        )

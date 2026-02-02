@@ -95,6 +95,7 @@ class Range(BaseConstraint):
             self._middle_column_name,
             self._high_column_name,
         ])
+        self.strict_boundaries = strict_boundaries
         self._nan_column_name = f'{joined_columns}.nan_component'
         self._operator = operator.lt if strict_boundaries else operator.le
         self.table_name = table_name
