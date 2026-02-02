@@ -2961,14 +2961,16 @@ class TestPrimaryKeyToPrimaryKey:
         synthetic_data = synthesizer.sample(scale=1.0)
 
         # Assert
-        for each_parent_id in synthetic_data['child']['parent_1_id'].tolist():
-            assert each_parent_id in set(synthetic_data['parent']['parent_id'])
-        for each_parent_id in synthetic_data['child']['parent_2_id'].tolist():
-            assert each_parent_id in set(synthetic_data['second_parent']['parent_id'])
+        assert set(synthetic_data['child']['parent_1_id']).issubset(
+            synthetic_data['parent']['parent_id']
+        )
+        assert set(synthetic_data['child']['parent_2_id']).issubset(
+            synthetic_data['second_parent']['parent_id']
+        )
         synthesizer.validate(synthetic_data)
 
-    def test_multiple_fks_mismatched(self, data_metadata_multiple_foreign_keys_subset):
-        """Test support for parent and child with multiple foreign keys."""
+    def test_multiple_fks_subset(self, data_metadata_multiple_foreign_keys_subset):
+        """Test support for parent and child with multiple foreign keys (subset in child)."""
         # Setup
         data, metadata = data_metadata_multiple_foreign_keys_subset
 
@@ -2978,8 +2980,10 @@ class TestPrimaryKeyToPrimaryKey:
         synthetic_data = synthesizer.sample(scale=1.0)
 
         # Assert
-        for each_parent_id in synthetic_data['child']['parent_1_id'].tolist():
-            assert each_parent_id in set(synthetic_data['parent']['parent_id'])
-        for each_parent_id in synthetic_data['child']['parent_2_id'].tolist():
-            assert each_parent_id in set(synthetic_data['second_parent']['parent_id'])
+        assert set(synthetic_data['child']['parent_1_id']).issubset(
+            synthetic_data['parent']['parent_id']
+        )
+        assert set(synthetic_data['child']['parent_2_id']).issubset(
+            synthetic_data['second_parent']['parent_id']
+        )
         synthesizer.validate(synthetic_data)

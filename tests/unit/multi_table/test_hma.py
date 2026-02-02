@@ -869,9 +869,17 @@ class TestHMASynthesizer:
         """Test that the ``_add_foreign_key_columns`` method adds foreign keys."""
         # Setup
         instance = Mock()
-        metadata = Mock()
-        metadata._get_foreign_keys.return_value = ['primary_user_id', 'secondary_user_id']
-        instance.metadata = metadata
+        mock_users_metadata = Mock()
+        mock_users_metadata.primary_key = 'user_id'
+        mock_transactions_metadata = Mock()
+        mock_transactions_metadata.primary_key = 'transaction_id'
+        mock_metadata = Mock()
+        mock_metadata.tables = {
+            'users': mock_users_metadata,
+            'transactions': mock_transactions_metadata,
+        }
+        mock_metadata._get_foreign_keys.return_value = ['primary_user_id', 'secondary_user_id']
+        instance.metadata = mock_metadata
 
         instance._find_parent_ids.return_value = pd.Series([2, 1, 2], name='secondary_user_id')
 

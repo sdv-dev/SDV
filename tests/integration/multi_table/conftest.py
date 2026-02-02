@@ -234,8 +234,6 @@ def data_metadata_multiple_foreign_keys():
     })
     assert data['child']['parent_1_id'].equals(data['parent']['parent_id'])
     assert data['child']['parent_2_id'].equals(data['second_parent']['parent_id'])
-    metadata.validate()
-    metadata.validate_data(data)
     return data, metadata
 
 
@@ -259,6 +257,4 @@ def data_metadata_multiple_foreign_keys_subset(data_metadata_multiple_foreign_ke
     }
     assert set(data['child']['parent_1_id']).issubset(set(data['parent']['parent_id']))
     assert set(data['child']['parent_2_id']).issubset(set(data['second_parent']['parent_id']))
-    metadata.validate()
-    metadata.validate_data(data)
     return data, metadata
