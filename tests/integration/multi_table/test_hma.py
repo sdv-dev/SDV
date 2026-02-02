@@ -2931,10 +2931,10 @@ class TestPrimaryKeyToPrimaryKey:
         )
         synthesizer.validate(synthetic_data)
 
-    def test_1_to_1_to_1_diamond(self, data_metadata_1_to_1_subset_diamond):
+    def test_1_to_1_to_1_diamond(self, data_metadata_1_to_1_subset_arrow):
         """Test PK to PK to PK in a diamond relationship."""
         # Setup
-        data, metadata = data_metadata_1_to_1_subset_diamond
+        data, metadata = data_metadata_1_to_1_subset_arrow
 
         # Run
         synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
@@ -2967,10 +2967,10 @@ class TestPrimaryKeyToPrimaryKey:
             assert each_parent_id in set(synthetic_data['second_parent']['parent_id'])
         synthesizer.validate(synthetic_data)
 
-    def test_multiple_fks_mismatched(self, data_metadata_multiple_foreign_keys_mismatched):
+    def test_multiple_fks_mismatched(self, data_metadata_multiple_foreign_keys_subset):
         """Test support for parent and child with multiple foreign keys."""
         # Setup
-        data, metadata = data_metadata_multiple_foreign_keys_mismatched
+        data, metadata = data_metadata_multiple_foreign_keys_subset
 
         # Run
         synthesizer = HMASynthesizer(metadata=metadata, verbose=False)

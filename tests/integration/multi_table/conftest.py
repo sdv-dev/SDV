@@ -109,7 +109,7 @@ def data_metadata_1_to_1_or_0():
 
 
 @pytest.fixture
-def data_metadata_1_to_1_subset_diamond(fake_hotels):
+def data_metadata_1_to_1_subset_arrow(fake_hotels):
     data, metadata = fake_hotels
     data.pop('hotels')
     metadata.remove_table('hotels')
@@ -155,8 +155,8 @@ def data_metadata_1_to_1_subset_diamond(fake_hotels):
 
 
 @pytest.fixture
-def data_metadata_1_to_1_to_1_subset_to_subset(data_metadata_1_to_1_subset_diamond):
-    data, metadata = data_metadata_1_to_1_subset_diamond
+def data_metadata_1_to_1_to_1_subset_to_subset(data_metadata_1_to_1_subset_arrow):
+    data, metadata = data_metadata_1_to_1_subset_arrow
     metadata_dict = metadata.to_dict()
     metadata_dict['relationships'] = [
         {
