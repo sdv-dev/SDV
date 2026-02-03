@@ -780,13 +780,14 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
     def _add_foreign_key_columns(self, child_table, parent_table, child_name, parent_name):
         parent_primary_key = self.metadata.tables[parent_name].primary_key
-        parent_id_values = parent_table[parent_primary_key].dropna().unique()
+        parent_id_values = None
         for foreign_key in self.metadata._get_foreign_keys(parent_name, child_name):
             needs_assignment = True
             if foreign_key in child_table:
                 child_column = child_table[foreign_key]
                 if not child_column.dropna().empty:
-                    # check if child column (FK) contains IDs in parent table
+                    if parent_id_values is None:
+                        parent_id_values = parent_table[parent_primary_key].dropna().unique()
                     is_valid = child_column.dropna().isin(parent_id_values).all()
                     if is_valid:
                         needs_assignment = False

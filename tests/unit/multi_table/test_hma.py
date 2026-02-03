@@ -205,14 +205,14 @@ class TestHMASynthesizer:
             instance,
             'nesreca',
             child_table,
-            'id_upravna_enota',
+            'a',
             "(1/2) Tables 'A' and 'B' ('user_id')",
         )
 
         # Assert
         expected = pd.DataFrame(
             index=['id_1', 'id_2', 'id_3', 'id_4'],
-            data={'__nesreca__id_upravna_enota__num_rows': [1, 1, 1, 1]},
+            data={'__nesreca__a__num_rows': [1, 1, 1, 1]},
         )
         instance._get_pbar_args.assert_called_once_with(desc="(1/2) Tables 'A' and 'B' ('user_id')")
         pd.testing.assert_frame_equal(result, expected)

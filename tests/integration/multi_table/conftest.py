@@ -178,6 +178,7 @@ def data_metadata_1_to_1_to_1_subset_to_subset(data_metadata_1_to_1_subset_arrow
 
 @pytest.fixture
 def data_metadata_multiple_foreign_keys():
+    """Dataset with 2 parents and 1 child."""
     parent_1_ids = range(0, 10)
     parent_2_ids = range(10, 20)
     parent = pd.DataFrame({
@@ -239,6 +240,7 @@ def data_metadata_multiple_foreign_keys():
 
 @pytest.fixture
 def data_metadata_multiple_foreign_keys_subset(data_metadata_multiple_foreign_keys):
+    """Dataset with 2 parents and 1 child. The child table only has a subset of keys."""
     _, metadata = data_metadata_multiple_foreign_keys
     parent = pd.DataFrame({'parent_id': [1, 2, 3], 'col_categorical': ['A', 'B', 'C']})
     child = pd.DataFrame({
