@@ -419,3 +419,20 @@ class TestFixedIncremenets:
         # Assert
         expected_out = [False, True, True, True, True, True]
         np.testing.assert_array_equal(expected_out, out[table_name])
+
+    def test___repr__(self):
+        """Test the representation of the instance that was created for this class."""
+        # Setup
+        fixed_increments = FixedIncrements(
+            column_name='salary',
+            increment_value=1000,
+            table_name='parent',
+        )
+
+        # Run
+        result = repr(fixed_increments)
+
+        # Assert
+        assert result == (
+            "FixedIncrements(column_name='salary', increment_value=1000, table_name='parent')"
+        )

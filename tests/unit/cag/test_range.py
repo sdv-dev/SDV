@@ -1208,3 +1208,23 @@ class TestRange:
         out = out['table']
         expected_out = [True, False, True]
         np.testing.assert_array_equal(expected_out, out)
+
+    def test___repr__(self):
+        """Test the representation of the instance that was created for this class."""
+        # Setup
+        range_const = Range(
+            low_column_name='child_age',
+            middle_column_name='parent_age',
+            high_column_name='grandparent_age',
+            strict_boundaries=False,
+        )
+
+        # Run
+        result = repr(range_const)
+
+        # Assert
+        assert result == (
+            "Range(low_column_name='child_age', "
+            "middle_column_name='parent_age', "
+            "high_column_name='grandparent_age', strict_boundaries=False)"
+        )
