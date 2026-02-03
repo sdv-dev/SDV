@@ -2931,8 +2931,8 @@ class TestPrimaryKeyToPrimaryKey:
         )
         synthesizer.validate(synthetic_data)
 
-    def test_1_to_1_to_1_diamond(self, data_metadata_1_to_1_subset_arrow):
-        """Test PK to PK to PK in a diamond relationship."""
+    def test_1_to_1_to_1_arrow(self, data_metadata_1_to_1_subset_arrow):
+        """Test PK to PK to PK in an arrow relationship."""
         # Setup
         data, metadata = data_metadata_1_to_1_subset_arrow
 
