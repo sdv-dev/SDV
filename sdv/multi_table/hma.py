@@ -779,18 +779,38 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         return likelihoods.apply(self._find_parent_id, axis=1, num_rows=num_rows)
 
     def _add_foreign_key_columns(self, child_table, parent_table, child_name, parent_name):
+        """Add foreign key columns in the child table.
+
+        This function adds foreign key columns to a child table.
+        If the foreign key column does not exist in the child table, it adds the column.
+        If the foreign key column already exists in the child table (e.g., when it is also a PK)
+        and it contains invalid references (FKs not found in parent table), it overwrites the
+        foreign key values (from the parent table's PK).
+
+        Args:
+            child_table (pd.DataFrame): The child table which may or may not contain the FK columns.
+            parent_table (pd.DataFrame): The parent table.
+            child_name (str): The name of the child table in the metadata.
+            parent_name (str): The name of the parent table in the metadata.
+
+        Returns:
+            None: The child_table is modified in-place.
+        """
         parent_primary_key = self.metadata.tables[parent_name].primary_key
         parent_id_values = None
         for foreign_key in self.metadata._get_foreign_keys(parent_name, child_name):
-            needs_assignment = True
-            if foreign_key in child_table:
-                child_column = child_table[foreign_key]
-                if not child_column.dropna().empty:
+            needs_assignment = foreign_key not in child_table
+
+            if not needs_assignment:
+                child_column = child_table[foreign_key].dropna()
+                if child_column.empty:
+                    needs_assignment = True
+                else:
                     if parent_id_values is None:
                         parent_id_values = parent_table[parent_primary_key].dropna().unique()
-                    is_valid = child_column.dropna().isin(parent_id_values).all()
-                    if is_valid:
-                        needs_assignment = False
+
+                    if not child_column.isin(parent_id_values).all():
+                        needs_assignment = True
 
             if needs_assignment:
                 parent_ids = self._find_parent_ids(

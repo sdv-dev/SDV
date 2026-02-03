@@ -912,6 +912,41 @@ class TestHMASynthesizer:
         pd.testing.assert_frame_equal(expected_parent_table, parent_table)
         pd.testing.assert_frame_equal(expected_child_table, child_table)
 
+    def test__add_foreign_key_columns_fk_already_in_child(self):
+        """Test that ``_add_foreign_key_columns`` does not add a FK already in child table."""
+        # Setup
+        instance = Mock()
+        mock_child_metadata = Mock()
+        mock_child_metadata.primary_key = 'parent_id'
+        mock_parent_metadata = Mock()
+        mock_parent_metadata.primary_key = 'parent_id_pk'
+        mock_metadata = Mock()
+        mock_metadata.tables = {
+            'child': mock_child_metadata,
+            'parent': mock_parent_metadata,
+        }
+        mock_metadata._get_foreign_keys.return_value = ['parent_id']
+        instance.metadata = mock_metadata
+        child_table = pd.DataFrame({'parent_id': [1, 2, 3], 'col_num': [10.1, 11.2, 12.3]})
+        parent_table = pd.DataFrame({'parent_id_pk': [1, 2, 3, 4], 'col_cat': ['A', 'B', 'B', 'C']})
+
+        # Run
+        HMASynthesizer._add_foreign_key_columns(
+            instance, child_table, parent_table, child_name='child', parent_name='parent'
+        )
+
+        # Assert
+        expected_parent_table = pd.DataFrame({
+            'parent_id_pk': pd.Series([1, 2, 3, 4], dtype=np.int64),
+            'col_cat': pd.Series(['A', 'B', 'B', 'C'], dtype=object),
+        })
+        expected_child_table = pd.DataFrame({
+            'parent_id': pd.Series([1, 2, 3], dtype=np.int64),
+            'col_num': pd.Series([10.1, 11.2, 12.3], dtype='float64'),
+        })
+        pd.testing.assert_frame_equal(expected_parent_table, parent_table)
+        pd.testing.assert_frame_equal(expected_child_table, child_table)
+
     def test__estimate_num_columns_to_be_modeled_multiple_foreign_keys(self):
         """Test it when there are two relationships between a parent and a child tables.
 
