@@ -1412,6 +1412,16 @@ def test_validate_empty_metadata():
         synthesizer.fit(pd.DataFrame())
 
 
+def test_validate_primary_key_to_primary_key(primary_key_to_primary_key):
+    """Test validate methods with primary key to primary key dataset."""
+    # Setup
+    data, metadata = primary_key_to_primary_key
+
+    # Run and Assert
+    metadata.validate()
+    metadata.validate_data(data)
+
+
 def test_primary_key_to_primary_key(primary_key_to_primary_key):
     """Test metadata can auto-detect a primary key which is also a foreign key."""
     # Setup
