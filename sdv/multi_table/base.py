@@ -466,10 +466,18 @@ class BaseMultiTableSynthesizer:
             )
 
     def _assign_table_transformers(self, synthesizer, table_name, table_data):
-        """Update the ``synthesizer`` to ignore the foreign keys while preprocessing the data."""
+        """Update the ``synthesizer`` to ignore the foreign keys while preprocessing the data.
+
+        This function iterates through all foreign keys in the table. For each foreign key,
+        if it is not the primary key in the table, then the transformer is set to None (
+        meaning no transformer is assigned).
+        """
         synthesizer.auto_assign_transformers(table_data)
+        primary_key = self.metadata.tables[table_name].primary_key
         foreign_key_columns = self.metadata._get_all_foreign_keys(table_name)
-        column_name_to_transformers = {column_name: None for column_name in foreign_key_columns}
+        column_name_to_transformers = {
+            column_name: None for column_name in foreign_key_columns if column_name != primary_key
+        }
         synthesizer.update_transformers(column_name_to_transformers)
 
     def auto_assign_transformers(self, data):
