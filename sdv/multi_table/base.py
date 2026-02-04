@@ -473,8 +473,6 @@ class BaseMultiTableSynthesizer:
         meaning no transformer is assigned).
         """
         synthesizer.auto_assign_transformers(table_data)
-        column_name_to_transformers = {}
-
         primary_key = self.metadata.tables[table_name].primary_key
         foreign_key_columns = self.metadata._get_all_foreign_keys(table_name)
         column_name_to_transformers = {

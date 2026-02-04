@@ -791,7 +791,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             child_table (pd.DataFrame):
                 The child table which may or may not contain the FK columns.
             parent_table (pd.DataFrame):
-                The parent table which. contains the primary key ID values.
+                The parent table which contains the primary key column.
             child_name (str):
                 The name of the child table in the metadata.
             parent_name (str):
