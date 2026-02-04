@@ -420,3 +420,19 @@ class TestOneHotEncoding:
         # Assert
         pd.testing.assert_frame_equal(data['table1'], reversed_data['table1'])
         pd.testing.assert_frame_equal(data['table2'], reversed_data['table2'])
+
+    def test___repr__(self):
+        """Test the representation of the instance that was created for this class."""
+        # Setup
+        ohe = OneHotEncoding(
+            column_names=['status_active', 'status_inactive', 'status_on_hold'],
+            learning_strategy='categorical',
+        )
+        # Run
+        result = repr(ohe)
+
+        # Assert
+        assert result == (
+            "OneHotEncoding(column_names=['status_active', 'status_inactive', 'status_on_hold'], "
+            "learning_strategy='categorical')"
+        )

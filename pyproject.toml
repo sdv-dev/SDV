@@ -12,33 +12,42 @@ classifiers = [
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: 3.13',
+    'Programming Language :: Python :: 3.14',
     'Topic :: Scientific/Engineering :: Artificial Intelligence',
 ]
 keywords = ['sdv', 'synthetic-data', 'synthetic-data-generation', 'timeseries', 'single-table', 'multi-table']
 dynamic = ['version']
 license = 'BUSL-1.1'
 license-files = ['LICENSE']
-requires-python = '>=3.9,<3.14'
+requires-python = '>=3.9,<3.15'
 readme = 'README.md'
 dependencies = [
     'boto3>=1.28,<2.0.0',
     'botocore>=1.31,<2.0.0',
-    'cloudpickle>=2.1.0',
+    "cloudpickle>=2.1.0;python_version<'3.14'",
+    "cloudpickle>=3.1.1;python_version>='3.14'",
     'graphviz>=0.13.2',
     "numpy>=1.22.2;python_version<'3.10'",
     "numpy>=1.24.0;python_version>='3.10' and python_version<'3.12'",
     "numpy>=1.26.0;python_version>='3.12' and python_version<'3.13'",
-    "numpy>=2.1.0;python_version>='3.13'",
+    "numpy>=2.1.0;python_version>='3.13' and python_version<'3.14'",
+    "numpy>=2.3.2;python_version>='3.14'",
     "pandas>=1.4.0,<3;python_version<'3.11'",
     "pandas>=1.5.0,<3;python_version>='3.11' and python_version<'3.12'",
     "pandas>=2.1.1,<3;python_version>='3.12' and python_version<'3.13'",
-    "pandas>=2.2.3,<3;python_version>='3.13'",
+    "pandas>=2.2.3,<3;python_version>='3.13' and python_version<'3.14'",
+    "pandas>=2.3.3,<3;python_version>='3.14'",
     'tqdm>=4.29',
-    'copulas>=0.12.1',
-    'ctgan>=0.11.1',
-    'deepecho>=0.7.0',
-    'rdt>=1.18.2',
-    'sdmetrics>=0.21.0',
+    "copulas>=0.12.1;python_version<'3.14'",
+    "copulas>=0.14.0;python_version>='3.14'",
+    "ctgan>=0.11.1;python_version<'3.14'",
+    "ctgan>=0.12.0;python_version>='3.14'",
+    "deepecho>=0.7.0;python_version<'3.14'",
+    "deepecho>=0.8.0;python_version>='3.14'",
+    "rdt>=1.18.2;python_version<'3.14'",
+    "rdt>=1.20.0;python_version>='3.14'",
+    "sdmetrics>=0.21.0;python_version<'3.14'",
+    "sdmetrics>=0.26.0;python_version>='3.14'",
     'platformdirs>=4.0',
     'pyyaml>=6.0.1',
 ]
@@ -59,9 +68,9 @@ test = [
     'sdv[excel]',
     'pytest>=3.4.2',
     'pytest-cov>=2.6.0',
-    'pytest-rerunfailures>=10.3,<15',
+    'pytest-rerunfailures>=10.3,<17',
     'jupyter>=1.0.0,<2',
-    'pytest-runner >= 2.11.1',
+    'pytest-runner>=2.11.1',
     'tomli>=2.0.0,<3',
     'google-api-python-client',
     'google-auth',
@@ -141,7 +150,7 @@ namespaces = false
 version = {attr = 'sdv.__version__'}
 
 [tool.bumpversion]
-current_version = "1.32.2.dev0"
+current_version = "1.33.1.dev0"
 parse = '(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(\.(?P<release>[a-z]+)(?P<candidate>\d+))?'
 serialize = [
     '{major}.{minor}.{patch}.{release}{candidate}',
