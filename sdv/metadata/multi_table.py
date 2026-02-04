@@ -541,18 +541,27 @@ class MultiTableMetadata:
                 Dictionary of table names to dataframes.
                 NOTE: this is only used in SDV-Enterprise.
         """
-        for parent_candidate in self.tables.keys():
-            primary_key = self.tables[parent_candidate].primary_key
-            for child_candidate in self.tables.keys() - {parent_candidate}:
+        sorted_tables = sorted(self.tables.keys())
+        for parent_candidate in sorted_tables:
+            parent_meta = self.tables[parent_candidate]
+            primary_key = parent_meta.primary_key
+            if primary_key is None:
+                continue
+            for child_candidate in sorted_tables:
+                if child_candidate == parent_candidate:
+                    continue
                 child_meta = self.tables[child_candidate]
-                if primary_key in child_meta.columns.keys():
+                if primary_key in child_meta.columns:
                     try:
-                        original_foreign_key_sdtype = child_meta.columns[primary_key]['sdtype']
+                        original_sdinfo = child_meta.columns[primary_key]
+                        original_foreign_key_sdtype = original_sdinfo['sdtype']
+
                         if original_foreign_key_sdtype != 'id':
                             self.update_column(
-                                table_name=child_candidate, column_name=primary_key, sdtype='id'
+                                table_name=child_candidate,
+                                column_name=primary_key,
+                                sdtype='id',
                             )
-
                         self.add_relationship(
                             parent_candidate, child_candidate, primary_key, primary_key
                         )
