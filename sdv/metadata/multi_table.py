@@ -545,7 +545,6 @@ class MultiTableMetadata:
         for parent_candidate in sorted_tables:
             parent_meta = self.tables[parent_candidate]
             primary_key = parent_meta.primary_key
-            parent_primary_key_sdtype = parent_meta.columns[primary_key]['sdtype']
             for child_candidate in sorted_tables:
                 if child_candidate == parent_candidate:
                     continue
@@ -554,12 +553,12 @@ class MultiTableMetadata:
                     try:
                         original_sdinfo = child_meta.columns[primary_key]
                         original_foreign_key_sdtype = original_sdinfo['sdtype']
-                        if original_foreign_key_sdtype != parent_primary_key_sdtype:
+                        if original_foreign_key_sdtype != 'id':
                             self.update_column(
                                 table_name=child_candidate,
                                 column_name=primary_key,
                                 sdtype='id',
-                                **original_sdinfo.pop('sdtype'),
+                                **original_foreign_key_sdtype.pop('sdtype'),
                             )
 
                         self.add_relationship(
@@ -567,7 +566,10 @@ class MultiTableMetadata:
                         )
                     except InvalidMetadataError:
                         self.update_column(
-                            table_name=child_candidate, column_name=primary_key, **original_sdinfo
+                            table_name=child_candidate,
+                            column_name=primary_key,
+                            sdtype=original_foreign_key_sdtype,
+                            **original_foreign_key_sdtype.pop('sdtype'),
                         )
                         continue
 
