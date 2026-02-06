@@ -57,7 +57,7 @@ dependencies = [
 "Issue Tracker" = "https://github.com/sdv-dev/SDV/issues"
 "Changes" = "https://github.com/sdv-dev/SDV/blob/main/HISTORY.md"
 "Twitter" = "https://twitter.com/sdv_dev"
-"Chat" = "https://bit.ly/sdv-slack-invite"
+"Chat" = "https://forum.datacebo.com"
 
 [project.entry-points]
 sdv = { main = 'sdv.cli.__main__:main' }
