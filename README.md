@@ -47,7 +47,7 @@ and define business rules in the form of logical constraints.
 | [![][Colab Logo] **Tutorials**][Tutorials]    | Get some hands-on experience with the SDV. Launch the tutorial notebooks and run the code yourself. |
 | :book: **[Docs]**                             | Learn how to use the SDV library with user guides and API references.                               |
 | :orange_book: **[Blog]**                      | Get more insights about using the SDV, deploying models and our synthetic data community.           |
-| :busts_in_silhouette: **[Community]**         | Discuss SDV features, ask questions, and receive help     .                                         |
+| :busts_in_silhouette: **[DataCebo Forum]**    | Discuss SDV features, ask questions, and receive help     .                                         |
 | :computer: **[Website]**                      | Check out the SDV website for more information about the project.                                   |
 
 [Website]: https://sdv.dev
@@ -56,7 +56,7 @@ and define business rules in the form of logical constraints.
 [Repository]: https://github.com/sdv-dev/SDV
 [License]: https://github.com/sdv-dev/SDV/blob/main/LICENSE
 [Development Status]: https://pypi.org/search/?c=Development+Status+%3A%3A+5+-+Production%2FStable
-[Community]: https://forum.datacebo.com
+[DataCebo Forum]: https://forum.datacebo.com
 [Colab Logo]: https://github.com/sdv-dev/SDV/blob/stable/docs/images/google_colab.png
 [Tutorials]: https://docs.sdv.dev/sdv/demos
 
