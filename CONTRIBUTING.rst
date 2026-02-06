@@ -21,4 +21,4 @@ We appreciate your understanding.
 
 
 .. _Business Source License: https://github.com/sdv-dev/SDV/blob/main/LICENSE
-.. _file an issue: https://github.com/sdv-dev/SDV/issues
+.. _file an issue: https://forum.datacebo.com/

@@ -11,7 +11,7 @@
 [![Coverage Status](https://codecov.io/gh/sdv-dev/SDV/branch/main/graph/badge.svg)](https://codecov.io/gh/sdv-dev/SDV)
 [![Downloads](https://static.pepy.tech/personalized-badge/sdv?period=total&units=international_system&left_color=grey&right_color=blue&left_text=Downloads)](https://pepy.tech/project/sdv)
 [![Colab](https://img.shields.io/badge/Tutorials-Try%20now!-orange?logo=googlecolab)](https://docs.sdv.dev/sdv/demos)
-[![Slack](https://img.shields.io/badge/Slack-Join%20now!-36C5F0?logo=slack)](https://bit.ly/sdv-slack-invite)
+[![Forum](https://img.shields.io/badge/Forum-Join%20now!-36C5F0)](https://forum.datacebo.com)
 
 <div align="left">
 <br/>
@@ -46,8 +46,8 @@ and define business rules in the form of logical constraints.
 | --------------------------------------------- | ----------------------------------------------------------------------------------------------------|
 | [![][Colab Logo] **Tutorials**][Tutorials]    | Get some hands-on experience with the SDV. Launch the tutorial notebooks and run the code yourself. |
 | :book: **[Docs]**                             | Learn how to use the SDV library with user guides and API references.                               |
-| :orange_book: **[Blog]**                      | Get more insights about using the SDV, deploying models and our synthetic data community.          |
-| [![][Slack Logo] **Community**][Community]    | Join our Slack workspace for announcements and discussions.                                         |
+| :orange_book: **[Blog]**                      | Get more insights about using the SDV, deploying models and our synthetic data community.           |
+| :busts_in_silhouette: **[Community]**         | Discuss SDV features, ask questions, and receive help     .                                         |
 | :computer: **[Website]**                      | Check out the SDV website for more information about the project.                                   |
 
 [Website]: https://sdv.dev
@@ -56,8 +56,7 @@ and define business rules in the form of logical constraints.
 [Repository]: https://github.com/sdv-dev/SDV
 [License]: https://github.com/sdv-dev/SDV/blob/main/LICENSE
 [Development Status]: https://pypi.org/search/?c=Development+Status+%3A%3A+5+-+Production%2FStable
-[Slack Logo]: https://github.com/sdv-dev/SDV/blob/stable/docs/images/slack.png
-[Community]: https://bit.ly/sdv-slack-invite
+[Community]: https://forum.datacebo.com
 [Colab Logo]: https://github.com/sdv-dev/SDV/blob/stable/docs/images/google_colab.png
 [Tutorials]: https://docs.sdv.dev/sdv/demos
 
