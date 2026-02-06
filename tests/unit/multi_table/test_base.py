@@ -689,6 +689,26 @@ class TestBaseMultiTableSynthesizer:
         nesreca_synthesizer.update_transformers.assert_called_once_with({'a': None, 'b': None})
         oseba_synthesizer.update_transformers.assert_called_once_with({'a': None, 'b': None})
 
+    def test_auto_assign_transformers_primary_key_not_assigned(self):
+        """Test that if table has a PK (which also an FK), it is not assigned a Transformer."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        data = {'nesreca': Mock(), 'oseba': Mock()}
+        instance.metadata.tables['nesreca'].primary_key = 'a'
+        instance.metadata._get_all_foreign_keys = Mock(return_value=['a', 'b'])
+        nesreca_synthesizer = Mock()
+        oseba_synthesizer = Mock()
+        instance._table_synthesizers['nesreca'] = nesreca_synthesizer
+        instance._table_synthesizers['oseba'] = oseba_synthesizer
+
+        # Run
+        instance.auto_assign_transformers(data)
+
+        # Assert
+        nesreca_synthesizer.update_transformers.assert_called_once_with({'b': None})
+        oseba_synthesizer.update_transformers.assert_called_once_with({'a': None, 'b': None})
+
     def test_auto_assign_transformers_missing_table(self):
         """Test it errors out when the passed table was not seen in the metadata."""
         # Setup

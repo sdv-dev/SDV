@@ -163,6 +163,9 @@ class TestHMASynthesizer:
         # Setup
         instance = Mock()
         instance._get_pbar_args.return_value = {'desc': "(1/2) Tables 'A' and 'B' ('user_id')"}
+        mock_metadata = Mock()
+        mock_metadata.primary_key = 'a'
+        instance.metadata.tables = {'nesreca': mock_metadata}
         instance.metadata._get_all_foreign_keys.return_value = ['id_upravna_enota']
         instance._table_synthesizers = {'nesreca': Mock()}
         child_table = pd.DataFrame({'id_upravna_enota': [0, 1, 2, 3]})
@@ -179,7 +182,39 @@ class TestHMASynthesizer:
         # Assert
         expected = pd.DataFrame({'__nesreca__id_upravna_enota__num_rows': [1, 1, 1, 1]})
         instance._get_pbar_args.assert_called_once_with(desc="(1/2) Tables 'A' and 'B' ('user_id')")
+        pd.testing.assert_frame_equal(result, expected)
 
+    def test__get_extension_pk_is_fk(self):
+        """Test the ``_get_extension`` method when PK is FK."""
+        # Setup
+        instance = Mock()
+        instance._get_pbar_args.return_value = {'desc': "(1/2) Tables 'A' and 'B' ('user_id')"}
+        mock_metadata = Mock()
+        mock_metadata.primary_key = 'a'
+        instance.metadata.tables = {'nesreca': mock_metadata}
+        instance.metadata._get_all_foreign_keys.return_value = ['a', 'id_upravna_enota']
+        instance._table_synthesizers = {'nesreca': Mock()}
+        child_table = pd.DataFrame({
+            'id_upravna_enota': [0, 1, 2, 3],
+            'a': ['id_1', 'id_2', 'id_3', 'id_4'],
+        })
+        child_table = child_table.set_index(['a'])
+
+        # Run
+        result = HMASynthesizer._get_extension(
+            instance,
+            'nesreca',
+            child_table,
+            'a',
+            "(1/2) Tables 'A' and 'B' ('user_id')",
+        )
+
+        # Assert
+        expected = pd.DataFrame(
+            index=['id_1', 'id_2', 'id_3', 'id_4'],
+            data={'__nesreca__a__num_rows': [1, 1, 1, 1]},
+        )
+        instance._get_pbar_args.assert_called_once_with(desc="(1/2) Tables 'A' and 'B' ('user_id')")
         pd.testing.assert_frame_equal(result, expected)
 
     def test__augment_table(self):
@@ -226,9 +261,12 @@ class TestHMASynthesizer:
         )
 
     def test__pop_foreign_keys(self):
-        """Test that this method removes the foreign keys from the ``table_data``."""
+        """Test ``_pop_foreign_keys`` removes the foreign keys from the ``table_data``."""
         # Setup
+        mock_metadata = Mock()
+        mock_metadata.primary_key = 'id'
         instance = Mock()
+        instance.metadata.tables = {'table_name': mock_metadata}
         instance.metadata._get_all_foreign_keys.return_value = ['a', 'b']
         table_data = pd.DataFrame({'a': [1, 2, 3], 'b': [2, 3, 4], 'c': ['John', 'Doe', 'Johanna']})
 
@@ -238,6 +276,25 @@ class TestHMASynthesizer:
         # Assert
         pd.testing.assert_frame_equal(pd.DataFrame({'c': ['John', 'Doe', 'Johanna']}), table_data)
         np.testing.assert_array_equal(result['a'], [1, 2, 3])
+        np.testing.assert_array_equal(result['b'], [2, 3, 4])
+
+    def test__pop_foreign_keys_pk(self):
+        """Test ``_pop_foreign_keys`` does not remove PK that is FK from the ``table_data``."""
+        # Setup
+        mock_metadata = Mock()
+        mock_metadata.primary_key = 'a'
+        instance = Mock()
+        instance.metadata.tables = {'table_name': mock_metadata}
+        instance.metadata._get_all_foreign_keys.return_value = ['a', 'b']
+        table_data = pd.DataFrame({'a': [1, 2, 3], 'b': [2, 3, 4], 'c': ['John', 'Doe', 'Johanna']})
+
+        # Run
+        result = HMASynthesizer._pop_foreign_keys(instance, table_data, 'table_name')
+
+        # Assert
+        pd.testing.assert_frame_equal(
+            pd.DataFrame({'a': [1, 2, 3], 'c': ['John', 'Doe', 'Johanna']}), table_data
+        )
         np.testing.assert_array_equal(result['b'], [2, 3, 4])
 
     def test__clear_nans(self):
@@ -812,9 +869,17 @@ class TestHMASynthesizer:
         """Test that the ``_add_foreign_key_columns`` method adds foreign keys."""
         # Setup
         instance = Mock()
-        metadata = Mock()
-        metadata._get_foreign_keys.return_value = ['primary_user_id', 'secondary_user_id']
-        instance.metadata = metadata
+        mock_users_metadata = Mock()
+        mock_users_metadata.primary_key = 'user_id'
+        mock_transactions_metadata = Mock()
+        mock_transactions_metadata.primary_key = 'transaction_id'
+        mock_metadata = Mock()
+        mock_metadata.tables = {
+            'users': mock_users_metadata,
+            'transactions': mock_transactions_metadata,
+        }
+        mock_metadata._get_foreign_keys.return_value = ['primary_user_id', 'secondary_user_id']
+        instance.metadata = mock_metadata
 
         instance._find_parent_ids.return_value = pd.Series([2, 1, 2], name='secondary_user_id')
 
@@ -843,6 +908,41 @@ class TestHMASynthesizer:
             'transaction_id': pd.Series([1, 2, 3], dtype=np.int64),
             'primary_user_id': pd.Series([0, 0, 1], dtype=np.int64),
             'secondary_user_id': pd.Series([2, 1, 2], dtype=np.int64),
+        })
+        pd.testing.assert_frame_equal(expected_parent_table, parent_table)
+        pd.testing.assert_frame_equal(expected_child_table, child_table)
+
+    def test__add_foreign_key_columns_fk_already_in_child(self):
+        """Test that ``_add_foreign_key_columns`` does not add a FK already in child table."""
+        # Setup
+        instance = Mock()
+        mock_child_metadata = Mock()
+        mock_child_metadata.primary_key = 'parent_id'
+        mock_parent_metadata = Mock()
+        mock_parent_metadata.primary_key = 'parent_id_pk'
+        mock_metadata = Mock()
+        mock_metadata.tables = {
+            'child': mock_child_metadata,
+            'parent': mock_parent_metadata,
+        }
+        mock_metadata._get_foreign_keys.return_value = ['parent_id']
+        instance.metadata = mock_metadata
+        child_table = pd.DataFrame({'parent_id': [1, 2, 3], 'col_num': [10.1, 11.2, 12.3]})
+        parent_table = pd.DataFrame({'parent_id_pk': [1, 2, 3, 4], 'col_cat': ['A', 'B', 'B', 'C']})
+
+        # Run
+        HMASynthesizer._add_foreign_key_columns(
+            instance, child_table, parent_table, child_name='child', parent_name='parent'
+        )
+
+        # Assert
+        expected_parent_table = pd.DataFrame({
+            'parent_id_pk': pd.Series([1, 2, 3, 4], dtype=np.int64),
+            'col_cat': pd.Series(['A', 'B', 'B', 'C'], dtype=object),
+        })
+        expected_child_table = pd.DataFrame({
+            'parent_id': pd.Series([1, 2, 3], dtype=np.int64),
+            'col_num': pd.Series([10.1, 11.2, 12.3], dtype='float64'),
         })
         pd.testing.assert_frame_equal(expected_parent_table, parent_table)
         pd.testing.assert_frame_equal(expected_child_table, child_table)

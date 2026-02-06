@@ -160,16 +160,6 @@ class MultiTableMetadata:
                 f'tables {errors}.'
             )
 
-    def _validate_foreign_child_key(self, child_table_name, parent_table_name, child_foreign_key):
-        child_primary_key = _cast_to_iterable(self.tables[child_table_name].primary_key)
-        child_foreign_key = _cast_to_iterable(child_foreign_key)
-        if set(child_foreign_key).intersection(set(child_primary_key)):
-            raise InvalidMetadataError(
-                f"Invalid relationship between table '{parent_table_name}' and table "
-                f"'{child_table_name}'. A relationship must connect a primary key "
-                'with a non-primary key.'
-            )
-
     def _validate_new_foreign_key_is_not_reused(
         self, parent_table_name, parent_primary_key, child_table_name, child_foreign_key
     ):
@@ -237,8 +227,6 @@ class MultiTableMetadata:
         self._validate_relationship_key_length(
             parent_table_name, parent_primary_key, child_table_name, child_foreign_key
         )
-
-        self._validate_foreign_child_key(child_table_name, parent_table_name, child_foreign_key)
 
         self._validate_relationship_sdtypes(
             parent_table_name, parent_primary_key, child_table_name, child_foreign_key
@@ -312,7 +300,6 @@ class MultiTableMetadata:
               different
               ``sdtype``.
             - ``InvalidMetadataError`` if the relationship causes a circular dependency.
-            - ``InvalidMetadataError`` if ``child_foreign_key`` is a primary key.
         """
         self._validate_relationship(
             parent_table_name, child_table_name, parent_primary_key, child_foreign_key
@@ -554,18 +541,27 @@ class MultiTableMetadata:
                 Dictionary of table names to dataframes.
                 NOTE: this is only used in SDV-Enterprise.
         """
-        for parent_candidate in self.tables.keys():
-            primary_key = self.tables[parent_candidate].primary_key
-            for child_candidate in self.tables.keys() - {parent_candidate}:
+        sorted_tables = sorted(self.tables.keys())
+        for parent_candidate in sorted_tables:
+            parent_meta = self.tables[parent_candidate]
+            primary_key = parent_meta.primary_key
+            if primary_key is None:
+                continue
+            for child_candidate in sorted_tables:
+                if child_candidate == parent_candidate:
+                    continue
                 child_meta = self.tables[child_candidate]
-                if primary_key in child_meta.columns.keys():
+                if primary_key in child_meta.columns:
                     try:
-                        original_foreign_key_sdtype = child_meta.columns[primary_key]['sdtype']
+                        original_sdinfo = child_meta.columns[primary_key]
+                        original_foreign_key_sdtype = original_sdinfo['sdtype']
+
                         if original_foreign_key_sdtype != 'id':
                             self.update_column(
-                                table_name=child_candidate, column_name=primary_key, sdtype='id'
+                                table_name=child_candidate,
+                                column_name=primary_key,
+                                sdtype='id',
                             )
-
                         self.add_relationship(
                             parent_candidate, child_candidate, primary_key, primary_key
                         )

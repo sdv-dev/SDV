@@ -15,7 +15,7 @@ classifiers = [
     'Programming Language :: Python :: 3.14',
     'Topic :: Scientific/Engineering :: Artificial Intelligence',
 ]
-keywords = ['sdv', 'synthetic-data', 'synhtetic-data-generation', 'timeseries', 'single-table', 'multi-table']
+keywords = ['sdv', 'synthetic-data', 'synthetic-data-generation', 'timeseries', 'single-table', 'multi-table']
 dynamic = ['version']
 license = 'BUSL-1.1'
 license-files = ['LICENSE']

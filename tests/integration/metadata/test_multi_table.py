@@ -9,7 +9,7 @@ from tests.utils import get_multi_table_metadata
 
 
 def test_multi_table_metadata():
-    """Test ``MultiTableMetadata``."""
+    """Test ``to_dict`` method on ``MultiTableMetadata``."""
     # Create an instance
     instance = MultiTableMetadata()
 

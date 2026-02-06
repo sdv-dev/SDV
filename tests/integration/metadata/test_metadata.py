@@ -17,12 +17,12 @@ from sdv.single_table.copulas import GaussianCopulaSynthesizer
 DEFAULT_TABLE_NAME = 'table'
 
 
-def test_metadata():
-    """Test ``MultiTableMetadata``."""
-    # Create an instance
+def test_metadata_to_dict():
+    """Test ``to_dict`` method on ``Metadata``."""
+    # Setup
     instance = Metadata()
 
-    # To dict
+    # Run
     result = instance.to_dict()
 
     # Assert
@@ -278,7 +278,6 @@ def test_detect_from_dataframes_single_table():
     """Test the ``detect_from_dataframes`` method works with a single table."""
     # Setup
     data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
-
     metadata = Metadata.detect_from_dataframes({'table_1': data['hotels']})
 
     # Run
@@ -883,25 +882,19 @@ def test_detect_from_dataframes_invalid_format():
 
 def test_no_duplicated_foreign_key_relationships_are_generated():
     # Setup
-    parent_a = pd.DataFrame(
-        data={
-            'id': ['id-' + str(i) for i in range(100)],
-            'col1': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=100)],
-        }
-    )
-    parent_b = pd.DataFrame(
-        data={
-            'id': ['id-' + str(i) for i in range(100)],
-            'col2': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=100)],
-        }
-    )
+    parent_a = pd.DataFrame({
+        'id': ['id-' + str(i) for i in range(100)],
+        'col1': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=100)],
+    })
+    parent_b = pd.DataFrame({
+        'id': ['id-' + str(i) for i in range(100)],
+        'col2': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=100)],
+    })
 
-    child_c = pd.DataFrame(
-        data={
-            'id': ['id-' + str(i) for i in np.random.randint(0, 100, size=1000)],
-            'col3': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=1000)],
-        }
-    )
+    child_c = pd.DataFrame({
+        'id': ['id-' + str(i) for i in np.random.randint(0, 100, size=1000)],
+        'col3': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=1000)],
+    })
 
     data = {'parent_a': parent_a, 'parent_b': parent_b, 'child_c': child_c}
 
@@ -915,7 +908,13 @@ def test_no_duplicated_foreign_key_relationships_are_generated():
             'child_table_name': 'child_c',
             'parent_primary_key': 'id',
             'child_foreign_key': 'id',
-        }
+        },
+        {
+            'parent_table_name': 'parent_a',
+            'child_table_name': 'parent_b',
+            'parent_primary_key': 'id',
+            'child_foreign_key': 'id',
+        },
     ]
 
 
@@ -1411,3 +1410,269 @@ def test_validate_empty_metadata():
     err_msg = 'The metadata is empty. Please add at least one table to the metadata.'
     with pytest.raises(InvalidMetadataError, match=err_msg):
         synthesizer.fit(pd.DataFrame())
+
+
+def test_validate_primary_key_to_primary_key(primary_key_to_primary_key):
+    """Test validate methods with primary key to primary key dataset."""
+    # Setup
+    data, metadata = primary_key_to_primary_key
+
+    # Run and Assert
+    metadata.validate()
+    metadata.validate_data(data)
+
+
+def test_primary_key_to_primary_key(primary_key_to_primary_key):
+    """Test metadata can auto-detect a primary key which is also a foreign key."""
+    # Setup
+    data, _ = primary_key_to_primary_key
+
+    # Run
+    metadata = Metadata.detect_from_dataframes(data)
+
+    # Assert
+    metadata.validate()
+    metadata.validate_data(data)
+    assert metadata.to_dict() == {
+        'tables': {
+            'tableA': {
+                'columns': {'table_id': {'sdtype': 'id'}, 'col1': {'sdtype': 'categorical'}},
+                'primary_key': 'table_id',
+            },
+            'tableB': {
+                'columns': {'table_id': {'sdtype': 'id'}, 'col2': {'sdtype': 'categorical'}},
+                'primary_key': 'table_id',
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'tableA',
+                'child_table_name': 'tableB',
+                'parent_primary_key': 'table_id',
+                'child_foreign_key': 'table_id',
+            }
+        ],
+        'METADATA_SPEC_VERSION': 'V1',
+    }
+
+
+def test_validate_pk_to_pk_email():
+    """Test validation with PK to PK and email sdtype."""
+    # Setup
+    metadata_instance = Metadata.load_from_dict({
+        'tables': {
+            'tableA': {
+                'columns': {
+                    'table_A_primary_key': {'sdtype': 'email'},
+                    'column_1': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'table_A_primary_key',
+            },
+            'tableB': {
+                'columns': {
+                    'table_B_primary_key': {'sdtype': 'email'},
+                    'column_2': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'table_B_primary_key',
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'tableA',
+                'parent_primary_key': 'table_A_primary_key',
+                'child_table_name': 'tableB',
+                'child_foreign_key': 'table_B_primary_key',
+            }
+        ],
+    })
+    data = {
+        'tableA': pd.DataFrame({
+            'table_A_primary_key': [
+                'user1@domain.com',
+                'user2@domain.com',
+                'user3@domain.com',
+                'user4@domain.com',
+                'user5@domain.com',
+            ],
+            'column_1': ['A', 'B', 'B', 'C', 'C'],
+        }),
+        'tableB': pd.DataFrame({
+            'table_B_primary_key': [
+                'user1@domain.com',
+                'user2@domain.com',
+                'user3@domain.com',
+                'user4@domain.com',
+                'user5@domain.com',
+            ],
+            'column_2': ['A', 'B', 'B', 'C', 'C'],
+        }),
+    }
+    # Run
+    metadata_instance.validate()
+    metadata_instance.validate_data(data)
+
+    # Assert
+    assert metadata_instance.to_dict() == {
+        'tables': {
+            'tableA': {
+                'columns': {
+                    'table_A_primary_key': {'sdtype': 'email'},
+                    'column_1': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'table_A_primary_key',
+            },
+            'tableB': {
+                'columns': {
+                    'table_B_primary_key': {'sdtype': 'email'},
+                    'column_2': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'table_B_primary_key',
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'tableA',
+                'parent_primary_key': 'table_A_primary_key',
+                'child_table_name': 'tableB',
+                'child_foreign_key': 'table_B_primary_key',
+            }
+        ],
+        'METADATA_SPEC_VERSION': 'V1',
+    }
+
+
+def test_set_primary_key_pk_to_pk():
+    """Test set_primary_key to indicate a PK to PK relationship."""
+    # Setup
+    metadata_instance = Metadata.load_from_dict({
+        'tables': {
+            'tableA': {
+                'columns': {
+                    'table_A_primary_key': {'sdtype': 'id'},
+                    'column_1': {'sdtype': 'categorical'},
+                }
+            },
+            'tableB': {
+                'columns': {
+                    'table_B_primary_key': {'sdtype': 'id'},
+                    'column_2': {'sdtype': 'categorical'},
+                }
+            },
+        },
+        'relationships': [],
+    })
+
+    # Run
+    metadata_instance.set_primary_key(
+        table_name='tableA',
+        column_name='table_A_primary_key',
+    )
+    metadata_instance.set_primary_key(
+        table_name='tableB',
+        column_name='table_B_primary_key',
+    )
+    metadata_instance.relationships = [
+        {
+            'parent_table_name': 'tableB',
+            'parent_primary_key': 'table_B_primary_key',
+            'child_table_name': 'tableA',
+            'child_foreign_key': 'table_A_primary_key',
+        }
+    ]
+
+    # Assert
+    expected_metadata = {
+        'tables': {
+            'tableA': {
+                'columns': {
+                    'table_A_primary_key': {'sdtype': 'id'},
+                    'column_1': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'table_A_primary_key',
+            },
+            'tableB': {
+                'columns': {
+                    'table_B_primary_key': {'sdtype': 'id'},
+                    'column_2': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'table_B_primary_key',
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'tableB',
+                'parent_primary_key': 'table_B_primary_key',
+                'child_table_name': 'tableA',
+                'child_foreign_key': 'table_A_primary_key',
+            }
+        ],
+        'METADATA_SPEC_VERSION': 'V1',
+    }
+    assert metadata_instance.to_dict() == expected_metadata
+
+
+@pytest.mark.parametrize(
+    'parent_table_name, child_table_name, parent_primary_key, child_foreign_key',
+    [
+        ('tableA', 'tableB', 'table_A_primary_key', 'table_B_primary_key'),
+        ('tableB', 'tableA', 'table_B_primary_key', 'table_A_primary_key'),
+    ],
+)
+def test_add_relationship_pk_to_pk(
+    parent_table_name, child_table_name, parent_primary_key, child_foreign_key
+):
+    """Test add a relationship to indicate a PK to PK relationship."""
+    # Setup
+    metadata_instance = Metadata.load_from_dict({
+        'tables': {
+            'tableA': {
+                'primary_key': 'table_A_primary_key',
+                'columns': {
+                    'table_A_primary_key': {'sdtype': 'id'},
+                    'column_1': {'sdtype': 'categorical'},
+                },
+            },
+            'tableB': {
+                'primary_key': 'table_B_primary_key',
+                'columns': {
+                    'table_B_primary_key': {'sdtype': 'id'},
+                    'column_2': {'sdtype': 'categorical'},
+                },
+            },
+        },
+        'relationships': [],
+    })
+
+    # Run
+    metadata_instance.add_relationship(
+        parent_table_name=parent_table_name,
+        child_table_name=child_table_name,
+        parent_primary_key=parent_primary_key,
+        child_foreign_key=child_foreign_key,
+    )
+
+    # Assert
+    assert metadata_instance.to_dict()['tables'] == {
+        'tableA': {
+            'columns': {
+                'table_A_primary_key': {'sdtype': 'id'},
+                'column_1': {'sdtype': 'categorical'},
+            },
+            'primary_key': 'table_A_primary_key',
+        },
+        'tableB': {
+            'columns': {
+                'table_B_primary_key': {'sdtype': 'id'},
+                'column_2': {'sdtype': 'categorical'},
+            },
+            'primary_key': 'table_B_primary_key',
+        },
+    }
+    assert metadata_instance.to_dict()['relationships'] == [
+        {
+            'parent_table_name': parent_table_name,
+            'child_table_name': child_table_name,
+            'parent_primary_key': parent_primary_key,
+            'child_foreign_key': child_foreign_key,
+        }
+    ]
