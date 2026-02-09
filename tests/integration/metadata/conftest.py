@@ -10,36 +10,36 @@ def primary_key_to_primary_key():
         'tables': {
             'tableA': {
                 'columns': {
-                    'table_id': {'sdtype': 'id'},
-                    'col1': {'sdtype': 'categorical'},
+                    'table_A_primary_key': {'sdtype': 'id'},
+                    'column_1': {'sdtype': 'categorical'},
                 },
-                'primary_key': 'table_id',
+                'primary_key': 'table_A_primary_key',
             },
             'tableB': {
                 'columns': {
-                    'table_id': {'sdtype': 'id'},
-                    'col2': {'sdtype': 'categorical'},
+                    'table_B_primary_key': {'sdtype': 'id'},
+                    'column_2': {'sdtype': 'categorical'},
                 },
-                'primary_key': 'table_id',
+                'primary_key': 'table_B_primary_key',
             },
         },
         'relationships': [
             {
                 'parent_table_name': 'tableA',
-                'parent_primary_key': 'table_id',
+                'parent_primary_key': 'table_A_primary_key',
                 'child_table_name': 'tableB',
-                'child_foreign_key': 'table_id',
+                'child_foreign_key': 'table_B_primary_key',
             }
         ],
     })
     data = {
         'tableA': pd.DataFrame({
-            'table_id': range(5),
-            'col1': ['A', 'B', 'B', 'C', 'C'],
+            'table_A_primary_key': range(5),
+            'column_1': ['A', 'B', 'B', 'C', 'C'],
         }),
         'tableB': pd.DataFrame({
-            'table_id': range(5),
-            'col2': ['A', 'B', 'B', 'C', 'C'],
+            'table_B_primary_key': range(5),
+            'column_2': ['A', 'B', 'B', 'C', 'C'],
         }),
     }
     return data, metadata
