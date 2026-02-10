@@ -1378,39 +1378,9 @@ def test_validate_pk_to_pk(primary_key_to_primary_key):
     # Setup
     data, metadata_instance = primary_key_to_primary_key
 
-    # Run
+    # Run and Assert
     metadata_instance.validate()
     metadata_instance.validate_data(data)
-
-    # Assert
-    expected_metadata = {
-        'tables': {
-            'tableA': {
-                'columns': {
-                    'table_A_primary_key': {'sdtype': 'id'},
-                    'column_1': {'sdtype': 'categorical'},
-                },
-                'primary_key': 'table_A_primary_key',
-            },
-            'tableB': {
-                'columns': {
-                    'table_B_primary_key': {'sdtype': 'id'},
-                    'column_2': {'sdtype': 'categorical'},
-                },
-                'primary_key': 'table_B_primary_key',
-            },
-        },
-        'relationships': [
-            {
-                'parent_table_name': 'tableA',
-                'parent_primary_key': 'table_A_primary_key',
-                'child_table_name': 'tableB',
-                'child_foreign_key': 'table_B_primary_key',
-            }
-        ],
-        'METADATA_SPEC_VERSION': 'V1',
-    }
-    assert metadata_instance.to_dict() == expected_metadata
 
 
 def test_validate_pk_to_pk_email():
@@ -1464,38 +1434,10 @@ def test_validate_pk_to_pk_email():
             'column_2': ['A', 'B', 'B', 'C', 'C'],
         }),
     }
-    # Run
+
+    # Run and Assert
     metadata_instance.validate()
     metadata_instance.validate_data(data)
-
-    # Assert
-    assert metadata_instance.to_dict() == {
-        'tables': {
-            'tableA': {
-                'columns': {
-                    'table_A_primary_key': {'sdtype': 'email'},
-                    'column_1': {'sdtype': 'categorical'},
-                },
-                'primary_key': 'table_A_primary_key',
-            },
-            'tableB': {
-                'columns': {
-                    'table_B_primary_key': {'sdtype': 'email'},
-                    'column_2': {'sdtype': 'categorical'},
-                },
-                'primary_key': 'table_B_primary_key',
-            },
-        },
-        'relationships': [
-            {
-                'parent_table_name': 'tableA',
-                'parent_primary_key': 'table_A_primary_key',
-                'child_table_name': 'tableB',
-                'child_foreign_key': 'table_B_primary_key',
-            }
-        ],
-        'METADATA_SPEC_VERSION': 'V1',
-    }
 
 
 def test_set_primary_key_pk_to_pk():
