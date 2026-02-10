@@ -1990,7 +1990,7 @@ def test__subsample_data(
     assert result == data
 
 
-def test__subsample_data_with_null_foreing_keys():
+def test__subsample_data_with_null_foreign_keys():
     """Test the ``_subsample_data`` method when there are null foreign keys."""
     # Setup
     metadata = Metadata.load_from_dict({

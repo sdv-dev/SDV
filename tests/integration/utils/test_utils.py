@@ -60,8 +60,10 @@ def test_drop_unknown_references(metadata, data, capsys):
     expected_message = re.escape(
         'The provided data does not match the metadata:\n'
         'Relationships:\n'
-        "Error: foreign key column 'parent_id' contains unknown references: (5)"
-        ". Please use the method 'drop_unknown_references' from sdv.utils to clean the data."
+        "Error: foreign key column 'parent_id' contains unknown references:\n"
+        '   parent_id\n'
+        '4          5\n'
+        "Please use the method 'drop_unknown_references' from sdv.utils to clean the data."
     )
     with pytest.raises(InvalidDataError, match=expected_message):
         metadata.validate_data(data)

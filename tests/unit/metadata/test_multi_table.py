@@ -1499,7 +1499,13 @@ class TestMultiTableMetadata:
         error_msg = re.escape(
             'The provided data does not match the metadata:\n'
             'Relationships:\n'
-            "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9). "
+            "Error: foreign key column 'id_nesreca' contains unknown references:\n"
+            '   id_nesreca\n'
+            '1           1\n'
+            '3           3\n'
+            '5           5\n'
+            '7           7\n'
+            '9           9\n'
             "Please use the method 'drop_unknown_references' from sdv.utils to clean the data."
         )
         with pytest.raises(InvalidDataError, match=error_msg):

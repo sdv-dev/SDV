@@ -229,7 +229,11 @@ class BaseMultiTableSynthesizer:
                 A list of constraints to apply to the synthesizer.
         """
         constraints = _validate_constraints(constraints, self._fitted)
-        metadata = getattr(self, '_composite_keys_metadata', None) or self.metadata
+        metadata = self.metadata
+        if hasattr(self, '_composite_keys_metadata'):
+            metadata = self._composite_keys_metadata
+            self._modified_multi_table_metadata = self._composite_keys_metadata
+
         multi_table_constraints = []
         single_table_constraints = []
         idx_single_table_constraint = self._detect_single_table_constraints(constraints)
@@ -243,9 +247,9 @@ class BaseMultiTableSynthesizer:
 
             multi_table_constraints.append(constraint)
             metadata = constraint.get_updated_metadata(metadata)
+            self._modified_multi_table_metadata = metadata
 
         self.metadata = metadata
-        self._modified_multi_table_metadata = self.metadata
         self._handle_composite_keys()
 
         self._validate_single_table_constraints(single_table_constraints)

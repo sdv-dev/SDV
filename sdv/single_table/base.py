@@ -152,7 +152,8 @@ class BaseSynthesizer:
 
     def _handle_composite_keys(self):
         """Validates that composite keys are not used in Public SDV."""
-        if self.metadata.tables[self._table_name]._primary_key_is_composite:
+        table_metadata = self.metadata._convert_to_single_table()
+        if table_metadata._primary_key_is_composite:
             raise SynthesizerInputError(
                 'Your metadata contains composite keys (primary key of table '
                 f"'{self._table_name}' has multiple columns). Composite keys are "
