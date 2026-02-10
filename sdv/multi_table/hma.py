@@ -199,7 +199,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             self, self.metadata, self._table_synthesizers, self._table_sizes
         )
         child_tables = set()
-        for relationship in metadata.relationships:
+        for relationship in self.metadata.relationships:
             child_tables.add(relationship['child_table_name'])
         for child_table_name in child_tables:
             self.set_table_parameters(child_table_name, {'default_distribution': 'norm'})

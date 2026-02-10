@@ -10,7 +10,12 @@ from pathlib import Path
 
 import pandas as pd
 
-from sdv._utils import _cast_to_iterable, _load_data_from_csv
+from sdv._utils import (
+    _cast_to_iterable,
+    _create_unique_name,
+    _format_invalid_values_string,
+    _load_data_from_csv,
+)
 from sdv.errors import InvalidDataError
 from sdv.logging import get_sdv_logger
 from sdv.metadata.errors import InvalidMetadataError
@@ -903,22 +908,31 @@ class MultiTableMetadata:
             parent_table = data.get(relation['parent_table_name'])
 
             if isinstance(child_table, pd.DataFrame) and isinstance(parent_table, pd.DataFrame):
-                child_column = child_table[relation['child_foreign_key']]
-                parent_column = parent_table[relation['parent_primary_key']]
-                missing_values = child_column[~child_column.isin(parent_column)].unique()
-                missing_values = missing_values[~pd.isna(missing_values)]
+                child_columns = child_table[_cast_to_iterable(relation['child_foreign_key'])]
+                parent_columns = parent_table[_cast_to_iterable(relation['parent_primary_key'])]
+                indicator = _create_unique_name(
+                    '_merge', list(child_columns.columns) + list(parent_columns.columns)
+                )
+                merged_columns = parent_columns.merge(
+                    child_columns.drop_duplicates(),
+                    left_on=list(parent_columns.columns),
+                    right_on=list(child_columns.columns),
+                    how='right',
+                    indicator=indicator,
+                )
+                missing_values = merged_columns[merged_columns[indicator] == 'right_only']
+                missing_values = missing_values[list(child_columns.columns)]
+                if not missing_values.empty:
+                    foreign_key = relation['child_foreign_key']
+                    if not isinstance(foreign_key, list):
+                        foreign_key = f"'{foreign_key}'"
 
-                if any(missing_values):
-                    message = ', '.join(missing_values[:5].astype(str))
-                    if len(missing_values) > 5:
-                        message = f'({message}, + more)'
-                    else:
-                        message = f'({message})'
-
+                    message = f'\n{_format_invalid_values_string(missing_values, 5)}'
                     errors.append(
-                        f"Error: foreign key column '{relation['child_foreign_key']}' contains "
-                        f'unknown references: {message}. Please use the method'
-                        " 'drop_unknown_references' from sdv.utils to clean the data."
+                        f"Error: foreign key column {foreign_key} contains "
+                        f'unknown references:{message}\n'
+                        "Please use the method 'drop_unknown_references' from sdv.utils "
+                        'to clean the data.'
                     )
 
             if errors:

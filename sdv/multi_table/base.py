@@ -137,6 +137,8 @@ class BaseMultiTableSynthesizer:
             self.metadata.validate()
 
         self._check_metadata_updated()
+        self._original_metadata = deepcopy(self.metadata)
+        self._modified_multi_table_metadata = deepcopy(self.metadata)
         self._handle_composite_keys()
         self.locales = locales
         self.verbose = False
@@ -144,8 +146,6 @@ class BaseMultiTableSynthesizer:
         self._table_synthesizers = {}
         self._table_parameters = defaultdict(dict)
         self._original_table_columns = {}
-        self._original_metadata = deepcopy(self.metadata)
-        self._modified_multi_table_metadata = deepcopy(self.metadata)
         self.constraints = []
         self._single_table_constraints = []
         if synthesizer_kwargs is not None:
@@ -229,7 +229,7 @@ class BaseMultiTableSynthesizer:
                 A list of constraints to apply to the synthesizer.
         """
         constraints = _validate_constraints(constraints, self._fitted)
-        metadata = self.metadata
+        metadata = getattr(self, '_composite_keys_metadata', None) or self.metadata
         multi_table_constraints = []
         single_table_constraints = []
         idx_single_table_constraint = self._detect_single_table_constraints(constraints)
@@ -243,9 +243,11 @@ class BaseMultiTableSynthesizer:
 
             multi_table_constraints.append(constraint)
             metadata = constraint.get_updated_metadata(metadata)
-            self._modified_multi_table_metadata = metadata
 
         self.metadata = metadata
+        self._modified_multi_table_metadata = self.metadata
+        self._handle_composite_keys()
+
         self._validate_single_table_constraints(single_table_constraints)
         self.constraints += multi_table_constraints
         self._constraints_fitted = False
@@ -355,6 +357,9 @@ class BaseMultiTableSynthesizer:
 
     def _reverse_transform_constraints(self, sampled_data):
         """Reverse transform constraints after sampling."""
+        if getattr(self, '_composite_keys', None):
+            sampled_data = self._composite_keys.reverse_transform(sampled_data)
+
         if not hasattr(self, 'constraints'):
             return sampled_data
 
@@ -454,7 +459,7 @@ class BaseMultiTableSynthesizer:
     def validate(self, data):
         """Validate the data.
 
-        Validate that the metadata matches the data and thta every table's constraints are valid.
+        Validate that the metadata matches the data and that every table's constraints are valid.
 
         Args:
             data (dict[str, pd.DataFrame]):
@@ -463,6 +468,7 @@ class BaseMultiTableSynthesizer:
         errors = []
         metadata = self._original_metadata
         metadata.validate_data(data)
+        data = self._validate_transform_constraints(data, enforce_constraint_fitting=True)
         for table_name in data:
             if table_name in self._table_synthesizers:
                 # Validate rules specific to each synthesizer
@@ -470,8 +476,6 @@ class BaseMultiTableSynthesizer:
 
         if errors:
             raise InvalidDataError(errors)
-
-        self._validate_transform_constraints(data, enforce_constraint_fitting=True)
 
     def _validate_table_name(self, table_name):
         if table_name not in self._table_synthesizers:
@@ -574,6 +578,10 @@ class BaseMultiTableSynthesizer:
         list_of_changed_tables = self._store_and_convert_original_cols(data)
         self.validate(data)
         data = self._validate_transform_constraints(data)
+        if getattr(self, '_composite_keys', None):
+            self._composite_keys.fit(data, self._composite_keys_metadata)
+            data = self._composite_keys.transform(data)
+
         if self._fitted:
             msg = (
                 'This model has already been fitted. To use the new preprocessed data, '
