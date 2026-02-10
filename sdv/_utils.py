@@ -520,3 +520,17 @@ def _validate_correct_synthesizer_loading(synthesizer, cls):
 
 def _sort_keys(keys):
     return sorted(keys, key=lambda key: key if isinstance(key, str) else key[0])
+
+
+def _get_unreferenced_keys(parent_columns, child_columns):
+    indicator = _create_unique_name(
+        '_merge', list(child_columns.columns) + list(parent_columns.columns)
+    )
+    merged_columns = child_columns.merge(
+        parent_columns,
+        left_on=list(child_columns.columns),
+        right_on=list(parent_columns.columns),
+        how='left',
+        indicator=indicator,
+    )
+    return merged_columns[merged_columns[indicator] == 'left_only'][list(child_columns.columns)]

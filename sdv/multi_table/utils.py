@@ -7,7 +7,12 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 
-from sdv._utils import MODELABLE_SDTYPES, _get_root_tables
+from sdv._utils import (
+    MODELABLE_SDTYPES,
+    _cast_to_iterable,
+    _get_root_tables,
+    _get_unreferenced_keys,
+)
 from sdv.errors import InvalidDataError, SamplingError
 from sdv.multi_table import HMASynthesizer
 from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS
@@ -393,25 +398,19 @@ def _get_rows_to_drop(data, metadata):
         for root in current_roots:
             parent_table = root
             relationships_parent = _get_relationships_for_parent(relationships, parent_table)
-            parent_column = metadata.tables[parent_table].primary_key
+            parent_columns = _cast_to_iterable(metadata.tables[parent_table].primary_key)
             valid_parent_idx = [
                 idx
                 for idx in data[parent_table].index
                 if idx not in table_to_idx_to_drop[parent_table]
             ]
-            valid_parent_values = set(data[parent_table].loc[valid_parent_idx, parent_column])
+            valid_parent_values = data[parent_table].loc[valid_parent_idx, parent_columns]
             for relationship in relationships_parent:
                 child_table = relationship['child_table_name']
-                child_column = relationship['child_foreign_key']
-
-                is_nan = data[child_table][child_column].isna()
-                invalid_values = (
-                    set(data[child_table].loc[~is_nan, child_column]) - valid_parent_values
-                )
-                invalid_rows = data[child_table][
-                    data[child_table][child_column].isin(invalid_values)
-                ]
-                idx_to_drop = set(invalid_rows.index)
+                child_foreign_key = _cast_to_iterable(relationship['child_foreign_key'])
+                child_columns = data[child_table][child_foreign_key]
+                unreferenced_rows = _get_unreferenced_keys(valid_parent_values, child_columns)
+                idx_to_drop = set(unreferenced_rows.index)
 
                 if idx_to_drop:
                     table_to_idx_to_drop[child_table] = table_to_idx_to_drop[child_table].union(

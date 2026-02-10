@@ -12,8 +12,8 @@ import pandas as pd
 
 from sdv._utils import (
     _cast_to_iterable,
-    _create_unique_name,
     _format_invalid_values_string,
+    _get_unreferenced_keys,
     _load_data_from_csv,
 )
 from sdv.errors import InvalidDataError
@@ -910,18 +910,8 @@ class MultiTableMetadata:
             if isinstance(child_table, pd.DataFrame) and isinstance(parent_table, pd.DataFrame):
                 child_columns = child_table[_cast_to_iterable(relation['child_foreign_key'])]
                 parent_columns = parent_table[_cast_to_iterable(relation['parent_primary_key'])]
-                indicator = _create_unique_name(
-                    '_merge', list(child_columns.columns) + list(parent_columns.columns)
-                )
-                merged_columns = parent_columns.merge(
-                    child_columns.drop_duplicates(),
-                    left_on=list(parent_columns.columns),
-                    right_on=list(child_columns.columns),
-                    how='right',
-                    indicator=indicator,
-                )
-                missing_values = merged_columns[merged_columns[indicator] == 'right_only']
-                missing_values = missing_values[list(child_columns.columns)]
+                missing_values = _get_unreferenced_keys(parent_columns, child_columns)
+                missing_values = missing_values.drop_duplicates()
                 if not missing_values.empty:
                     foreign_key = relation['child_foreign_key']
                     if not isinstance(foreign_key, list):
@@ -929,7 +919,7 @@ class MultiTableMetadata:
 
                     message = f'\n{_format_invalid_values_string(missing_values, 5)}'
                     errors.append(
-                        f"Error: foreign key column {foreign_key} contains "
+                        f'Error: foreign key column {foreign_key} contains '
                         f'unknown references:{message}\n'
                         "Please use the method 'drop_unknown_references' from sdv.utils "
                         'to clean the data.'
