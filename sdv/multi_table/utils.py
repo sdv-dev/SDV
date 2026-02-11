@@ -427,8 +427,10 @@ def _get_nan_fk_indices_table(data, relationships, table):
     idx_with_nan_foreign_key = set()
     relationships_for_table = _get_relationships_for_child(relationships, table)
     for relationship in relationships_for_table:
-        child_column = relationship['child_foreign_key']
-        idx_with_nan_foreign_key.update(data[table][data[table][child_column].isna()].index)
+        child_columns = _cast_to_iterable(relationship['child_foreign_key'])
+        idx_with_nan_foreign_key.update(
+            data[table][data[table][child_columns].isna().all(axis=1)].index
+        )
 
     return idx_with_nan_foreign_key
 
