@@ -102,9 +102,8 @@ class BaseHierarchicalSampler:
         if len(sampled_rows):
             parent_key = self.metadata.tables[parent_name].primary_key
             if foreign_key in sampled_rows:
-                # If foreign key is in sampeld rows raises `SettingWithCopyWarning`
                 row_indices = sampled_rows.index
-                sampled_rows[foreign_key].iloc[row_indices] = parent_row[parent_key]
+                sampled_rows.loc[row_indices, foreign_key] = parent_row[parent_key]
             else:
                 sampled_rows[foreign_key] = (
                     parent_row[parent_key] if parent_row is not None else np.nan
