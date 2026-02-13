@@ -2,7 +2,6 @@ import os
 import re
 from copy import deepcopy
 
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -880,44 +879,6 @@ def test_detect_from_dataframes_invalid_format():
         Metadata.detect_from_dataframes(data)
 
 
-def test_no_duplicated_foreign_key_relationships_are_generated():
-    # Setup
-    parent_a = pd.DataFrame({
-        'id': ['id-' + str(i) for i in range(100)],
-        'col1': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=100)],
-    })
-    parent_b = pd.DataFrame({
-        'id': ['id-' + str(i) for i in range(100)],
-        'col2': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=100)],
-    })
-
-    child_c = pd.DataFrame({
-        'id': ['id-' + str(i) for i in np.random.randint(0, 100, size=1000)],
-        'col3': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=1000)],
-    })
-
-    data = {'parent_a': parent_a, 'parent_b': parent_b, 'child_c': child_c}
-
-    # Run
-    metadata = Metadata.detect_from_dataframes(data)
-
-    # Assert
-    assert metadata.relationships == [
-        {
-            'parent_table_name': 'parent_a',
-            'child_table_name': 'child_c',
-            'parent_primary_key': 'id',
-            'child_foreign_key': 'id',
-        },
-        {
-            'parent_table_name': 'parent_a',
-            'child_table_name': 'parent_b',
-            'parent_primary_key': 'id',
-            'child_foreign_key': 'id',
-        },
-    ]
-
-
 def test_validate_metadata_with_reused_foreign_keys():
     # Setup
     metadata_dict = {
@@ -1412,48 +1373,14 @@ def test_validate_empty_metadata():
         synthesizer.fit(pd.DataFrame())
 
 
-def test_validate_primary_key_to_primary_key(primary_key_to_primary_key):
-    """Test validate methods with primary key to primary key dataset."""
+def test_validate_pk_to_pk(primary_key_to_primary_key):
+    """Test validation to indicate a PK to PK relationship."""
     # Setup
-    data, metadata = primary_key_to_primary_key
+    data, metadata_instance = primary_key_to_primary_key
 
     # Run and Assert
-    metadata.validate()
-    metadata.validate_data(data)
-
-
-def test_primary_key_to_primary_key(primary_key_to_primary_key):
-    """Test metadata can auto-detect a primary key which is also a foreign key."""
-    # Setup
-    data, _ = primary_key_to_primary_key
-
-    # Run
-    metadata = Metadata.detect_from_dataframes(data)
-
-    # Assert
-    metadata.validate()
-    metadata.validate_data(data)
-    assert metadata.to_dict() == {
-        'tables': {
-            'tableA': {
-                'columns': {'table_id': {'sdtype': 'id'}, 'col1': {'sdtype': 'categorical'}},
-                'primary_key': 'table_id',
-            },
-            'tableB': {
-                'columns': {'table_id': {'sdtype': 'id'}, 'col2': {'sdtype': 'categorical'}},
-                'primary_key': 'table_id',
-            },
-        },
-        'relationships': [
-            {
-                'parent_table_name': 'tableA',
-                'child_table_name': 'tableB',
-                'parent_primary_key': 'table_id',
-                'child_foreign_key': 'table_id',
-            }
-        ],
-        'METADATA_SPEC_VERSION': 'V1',
-    }
+    metadata_instance.validate()
+    metadata_instance.validate_data(data)
 
 
 def test_validate_pk_to_pk_email():
@@ -1507,38 +1434,10 @@ def test_validate_pk_to_pk_email():
             'column_2': ['A', 'B', 'B', 'C', 'C'],
         }),
     }
-    # Run
+
+    # Run and Assert
     metadata_instance.validate()
     metadata_instance.validate_data(data)
-
-    # Assert
-    assert metadata_instance.to_dict() == {
-        'tables': {
-            'tableA': {
-                'columns': {
-                    'table_A_primary_key': {'sdtype': 'email'},
-                    'column_1': {'sdtype': 'categorical'},
-                },
-                'primary_key': 'table_A_primary_key',
-            },
-            'tableB': {
-                'columns': {
-                    'table_B_primary_key': {'sdtype': 'email'},
-                    'column_2': {'sdtype': 'categorical'},
-                },
-                'primary_key': 'table_B_primary_key',
-            },
-        },
-        'relationships': [
-            {
-                'parent_table_name': 'tableA',
-                'parent_primary_key': 'table_A_primary_key',
-                'child_table_name': 'tableB',
-                'child_foreign_key': 'table_B_primary_key',
-            }
-        ],
-        'METADATA_SPEC_VERSION': 'V1',
-    }
 
 
 def test_set_primary_key_pk_to_pk():

@@ -57,7 +57,7 @@ dependencies = [
 "Issue Tracker" = "https://github.com/sdv-dev/SDV/issues"
 "Changes" = "https://github.com/sdv-dev/SDV/blob/main/HISTORY.md"
 "Twitter" = "https://twitter.com/sdv_dev"
-"Chat" = "https://bit.ly/sdv-slack-invite"
+"Chat" = "https://forum.datacebo.com"
 
 [project.entry-points]
 sdv = { main = 'sdv.cli.__main__:main' }
@@ -150,7 +150,7 @@ namespaces = false
 version = {attr = 'sdv.__version__'}
 
 [tool.bumpversion]
-current_version = "1.33.1.dev0"
+current_version = "1.33.2.dev0"
 parse = '(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(\.(?P<release>[a-z]+)(?P<candidate>\d+))?'
 serialize = [
     '{major}.{minor}.{patch}.{release}{candidate}',

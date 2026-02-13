@@ -1,5 +1,15 @@
 # Release Notes
 
+## v1.33.1 - 2026-02-06
+
+### New Features
+
+* Add `__repr__` method to constraints - Issue [#2791](https://github.com/sdv-dev/SDV/issues/2791) by @pvk-developer
+
+### Maintenance
+
+* Update README and other meta information to point to the DataCebo forum - Issue [#2797](https://github.com/sdv-dev/SDV/issues/2797) by @pvk-developer
+
 ## v1.33.0 - 2026-01-30
 
 ### New Features
