@@ -1,5 +1,11 @@
 # Release Notes
 
+## v1.34.0 - 2026-02-13
+
+### New Features
+
+* Allow a primary key to also be a foreign key (in the metadata and also for modeling) - Issue [#2779](https://github.com/sdv-dev/SDV/issues/2779) by @gsheni
+
 ## v1.33.1 - 2026-02-06
 
 ### New Features
