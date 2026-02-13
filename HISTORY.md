@@ -5,7 +5,6 @@
 ### New Features
 
 * Allow a primary key to also be a foreign key (in the metadata and also for modeling) - Issue [#2779](https://github.com/sdv-dev/SDV/issues/2779) by @gsheni
-* Allow a column to be both a primary key and foreign key at the same time - Issue [#2455](https://github.com/sdv-dev/SDV/issues/2455) by @gsheni
 
 ## v1.33.1 - 2026-02-06
 
