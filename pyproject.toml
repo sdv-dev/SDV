@@ -15,7 +15,7 @@ classifiers = [
     'Programming Language :: Python :: 3.14',
     'Topic :: Scientific/Engineering :: Artificial Intelligence',
 ]
-keywords = ['sdv', 'synthetic-data', 'synhtetic-data-generation', 'timeseries', 'single-table', 'multi-table']
+keywords = ['sdv', 'synthetic-data', 'synthetic-data-generation', 'timeseries', 'single-table', 'multi-table']
 dynamic = ['version']
 license = 'BUSL-1.1'
 license-files = ['LICENSE']
@@ -150,7 +150,7 @@ namespaces = false
 version = {attr = 'sdv.__version__'}
 
 [tool.bumpversion]
-current_version = "1.33.1"
+current_version = "1.34.0.dev0"
 parse = '(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(\.(?P<release>[a-z]+)(?P<candidate>\d+))?'
 serialize = [
     '{major}.{minor}.{patch}.{release}{candidate}',
