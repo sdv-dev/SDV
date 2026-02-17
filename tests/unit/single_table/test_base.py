@@ -727,6 +727,7 @@ class TestBaseSynthesizer:
         instance = Mock()
         instance._fitted = True
         data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
+        instance._composite_keys.transform.return_value = data
         instance._validate_transform_constraints.side_effect = lambda x: x
         expected_warning = (
             'This model has already been fitted. To use the new preprocessed data, please '
