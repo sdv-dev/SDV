@@ -139,6 +139,7 @@ class BaseMultiTableSynthesizer:
         self._check_metadata_updated()
         self._original_metadata = deepcopy(self.metadata)
         self._modified_multi_table_metadata = deepcopy(self.metadata)
+        self._composite_keys_metadata = None
         self._handle_composite_keys()
         self.locales = locales
         self.verbose = False
@@ -230,7 +231,7 @@ class BaseMultiTableSynthesizer:
         """
         constraints = _validate_constraints(constraints, self._fitted)
         metadata = self.metadata
-        if hasattr(self, '_composite_keys_metadata'):
+        if self._composite_keys_metadata is not None:
             metadata = self._composite_keys_metadata
             self._modified_multi_table_metadata = self._composite_keys_metadata
 
@@ -250,6 +251,7 @@ class BaseMultiTableSynthesizer:
             self._modified_multi_table_metadata = metadata
 
         self.metadata = metadata
+        self._composite_key = None
         self._handle_composite_keys()
 
         self._validate_single_table_constraints(single_table_constraints)
