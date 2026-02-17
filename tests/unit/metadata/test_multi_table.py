@@ -2662,6 +2662,8 @@ class TestMultiTableMetadata:
         ]
         assert instance.relationships == expected_relationships
         assert instance.tables['child'].columns['email'] == {'sdtype': 'email', 'pii': True}
+        assert instance.tables['parent'].columns['email'] == {'sdtype': 'email'}
+        assert instance.tables['parent'].primary_key == 'email'
 
     def test__detect_relationships_semantic_foreign_key_does_not_overwrite_mismatch(self):
         """Test semantic foreign key mismatches do not coerce the child sdtype."""
@@ -2691,7 +2693,9 @@ class TestMultiTableMetadata:
 
         # Assert
         assert instance.relationships == []
-        assert instance.tables['child'].columns['email']['sdtype'] == 'categorical'
+        assert instance.tables['child'].columns['email'] == {'sdtype': 'categorical'}
+        assert instance.tables['parent'].columns['email'] == {'sdtype': 'email'}
+        assert instance.tables['parent'].primary_key == 'email'
 
     def test__detect_relationships_restores_foreign_key_metadata_after_failure(self):
         """Test failed detection restores all original metadata values in the child foreign key."""
