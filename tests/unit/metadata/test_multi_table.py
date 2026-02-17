@@ -12,6 +12,7 @@ import pytest
 
 from sdv.errors import InvalidDataError
 from sdv.metadata.errors import InvalidMetadataError
+from sdv.metadata.metadata import Metadata
 from sdv.metadata.multi_table import MultiTableMetadata, SingleTableMetadata
 from tests.utils import catch_sdv_logs, get_multi_table_data, get_multi_table_metadata
 
@@ -2623,6 +2624,106 @@ class TestMultiTableMetadata:
         ]
         assert instance.relationships == expected_relationships
         assert instance.tables['sessions'].columns['user_id']['sdtype'] == 'id'
+
+    def test__detect_relationships_semantic_foreign_key(self):
+        """Test semantic foreign keys are automatically detected without changing the sdtype."""
+        # Setup
+        instance = Metadata.load_from_dict({
+            'tables': {
+                'parent': {
+                    'primary_key': 'email',
+                    'columns': {
+                        'email': {'sdtype': 'email'},
+                        'user_name': {'sdtype': 'categorical'},
+                    },
+                },
+                'child': {
+                    'primary_key': 'child_id',
+                    'columns': {
+                        'child_id': {'sdtype': 'id'},
+                        'email': {'sdtype': 'email', 'pii': True},
+                    },
+                },
+            },
+            'relationships': [],
+        })
+
+        # Run
+        instance._detect_relationships()
+
+        # Assert
+        expected_relationships = [
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'child',
+                'parent_primary_key': 'email',
+                'child_foreign_key': 'email',
+            }
+        ]
+        assert instance.relationships == expected_relationships
+        assert instance.tables['child'].columns['email'] == {'sdtype': 'email', 'pii': True}
+
+    def test__detect_relationships_semantic_foreign_key_does_not_overwrite_mismatch(self):
+        """Test semantic foreign key mismatches do not coerce the child sdtype."""
+        # Setup
+        instance = Metadata.load_from_dict({
+            'tables': {
+                'parent': {
+                    'primary_key': 'email',
+                    'columns': {
+                        'email': {'sdtype': 'email'},
+                        'user_name': {'sdtype': 'categorical'},
+                    },
+                },
+                'child': {
+                    'primary_key': 'child_id',
+                    'columns': {
+                        'child_id': {'sdtype': 'id'},
+                        'email': {'sdtype': 'categorical'},
+                    },
+                },
+            },
+            'relationships': [],
+        })
+
+        # Run
+        instance._detect_relationships()
+
+        # Assert
+        assert instance.relationships == []
+        assert instance.tables['child'].columns['email']['sdtype'] == 'categorical'
+
+    def test__detect_relationships_restores_foreign_key_metadata_after_failure(self):
+        """Test failed detection restores all original metadata values in the child foreign key."""
+        # Setup
+        original_foreign_key_metadata = {'sdtype': 'email', 'pii': True}
+        instance = Metadata.load_from_dict({
+            'tables': {
+                'users': {
+                    'primary_key': 'user_id',
+                    'columns': {
+                        'user_id': {'sdtype': 'id'},
+                        'user_name': {'sdtype': 'categorical'},
+                    },
+                },
+                'sessions': {
+                    'primary_key': 'session_id',
+                    'columns': {
+                        'user_id': original_foreign_key_metadata.copy(),
+                        'session_id': {'sdtype': 'id'},
+                    },
+                },
+            },
+            'relationships': [],
+        })
+        instance.add_relationship = Mock(side_effect=InvalidMetadataError('bad relationship'))
+
+        # Run
+        instance._detect_relationships()
+
+        # Assert
+        instance.add_relationship.assert_called_once_with('users', 'sessions', 'user_id', 'user_id')
+        assert instance.tables['sessions'].columns['user_id'] == original_foreign_key_metadata
 
     def test__detect_relationships_circular(self):
         """Test that relationships that invalidate the metadata are not added."""
