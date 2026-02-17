@@ -542,7 +542,7 @@ class TestBaseMultiTableSynthesizer:
         metadata = get_multi_table_metadata()
         data = get_multi_table_data()
         instance = BaseMultiTableSynthesizer(metadata)
-        instance._validate_transform_constraints = Mock()
+        instance._validate_transform_constraints = Mock(return_value=data)
 
         # Run
         instance.validate(data)
@@ -659,7 +659,13 @@ class TestBaseMultiTableSynthesizer:
         error_msg = re.escape(
             'The provided data does not match the metadata:\n'
             'Relationships:\n'
-            "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9). "
+            "Error: foreign key column 'id_nesreca' contains unknown references:\n"
+            '   id_nesreca\n'
+            '1           1\n'
+            '3           3\n'
+            '5           5\n'
+            '7           7\n'
+            '9           9\n'
             "Please use the method 'drop_unknown_references' from sdv.utils to clean the data."
         )
         with pytest.raises(InvalidDataError, match=error_msg):
@@ -1587,6 +1593,7 @@ class TestBaseMultiTableSynthesizer:
         """Test adding data constraints to the synthesizer."""
         # Setup
         instance = Mock()
+        del instance._composite_keys_metadata
         original_metadata = get_multi_table_metadata()
         instance.metadata = original_metadata
         instance._original_metadata = original_metadata
@@ -1638,6 +1645,7 @@ class TestBaseMultiTableSynthesizer:
         """Test adding overlapping single-table constraints to the synthesizer."""
         # Setup
         instance = Mock()
+        del instance._composite_keys_metadata
         original_metadata = get_multi_table_metadata()
         instance.metadata = original_metadata
         instance._original_metadata = original_metadata
@@ -1685,6 +1693,7 @@ class TestBaseMultiTableSynthesizer:
         """Test adding data constraints to the synthesizer."""
         # Setup
         instance = Mock()
+        del instance._composite_keys_metadata
         delattr(instance, 'constraints')
         metadata = get_multi_table_metadata()
         original_metadata = Mock()
@@ -1841,6 +1850,7 @@ class TestBaseMultiTableSynthesizer:
         """Test validating and transforming the data constraints."""
         # Setup
         instance = Mock()
+        del instance._composite_keys
         data = {'table1': Mock(), 'table2': Mock()}
         constraint1 = Mock()
         constraint2 = Mock()
@@ -1861,6 +1871,7 @@ class TestBaseMultiTableSynthesizer:
         """Test reverse transforming when no data constraints have been set."""
         # Setup
         instance = Mock()
+        del instance._composite_keys
         data = get_multi_table_data()
         delattr(instance, 'constraints')
 
@@ -1879,6 +1890,7 @@ class TestBaseMultiTableSynthesizer:
         """Test reverse transforming the data constraints."""
         # Setup
         instance = Mock()
+        del instance._composite_keys
         data = {'table1': Mock(), 'table2': Mock()}
         constraint1 = Mock()
         constraint2 = Mock()
