@@ -335,6 +335,22 @@ class Metadata(MultiTableMetadata):
 
         self.relationships = updated_relationships
 
+    def _remove_column_relationships(self, table_name, column_name):
+        """Remove relationships where the column is a key for the given table."""
+        updated_relationships = []
+        for relationship in self.relationships:
+            should_remove = (
+                relationship['child_foreign_key'] == column_name
+                and relationship['child_table_name'] == table_name
+            ) or (
+                relationship['parent_primary_key'] == column_name
+                and relationship['parent_table_name'] == table_name
+            )
+            if not should_remove:
+                updated_relationships.append(relationship)
+
+        self.relationships = updated_relationships
+
     def remove_table(self, table_name):
         """Remove a table from the metadata.
 
@@ -380,9 +396,7 @@ class Metadata(MultiTableMetadata):
         table_metadata._validate_column_exists(column_name)
 
         # Remove relationships
-        self._remove_matching_relationships(
-            column_name, ['parent_primary_key', 'child_foreign_key']
-        )
+        self._remove_column_relationships(table_name, column_name)
         updated_column_relationships = []
         for column_relationship in table_metadata.column_relationships:
             if column_name not in column_relationship.get('column_names', []):
