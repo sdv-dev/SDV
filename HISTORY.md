@@ -1,5 +1,12 @@
 # Release Notes
 
+## v1.34.1 - 2026-02-20
+
+### Bugs Fixed
+
+* Metadata `remove_column` removes unexpected relationships - Issue [#2813](https://github.com/sdv-dev/SDV/issues/2813) by @fealho
+* Metadata auto-detection does not detect semantic sdtype as foreign key (`column_name_match` algorithm) - Issue [#2799](https://github.com/sdv-dev/SDV/issues/2799) by @fealho
+
 ## v1.34.0 - 2026-02-13
 
 ### New Features
