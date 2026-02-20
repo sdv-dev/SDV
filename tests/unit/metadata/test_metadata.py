@@ -1045,7 +1045,7 @@ class TestMetadataClass:
         assert list(manufacturer_mock.columns.keys()) == ['country', 'id']
         assert metadata._multi_table_updated
 
-    def test__remove_column_relationships_only_removes_matching_table(self):
+    def test__remove_relationships_by_column_only_removes_matching_table(self):
         """Test that only relationships for the given table and column are removed."""
         # Setup
         metadata = Metadata()
@@ -1065,7 +1065,7 @@ class TestMetadataClass:
         ]
 
         # Run
-        metadata._remove_column_relationships('child_a', 'fk')
+        metadata._remove_relationships_by_column('child_a', 'fk')
 
         # Assert
         assert metadata.relationships == [

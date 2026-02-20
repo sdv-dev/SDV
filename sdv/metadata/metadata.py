@@ -325,7 +325,7 @@ class Metadata(MultiTableMetadata):
         table_name = self._handle_table_name(table_name)
         super().add_column(table_name, column_name, **kwargs)
 
-    def _remove_matching_relationships(self, element, keys):
+    def _remove_relationships_by_table(self, element, keys):
         """Remove relationships where the element matches the keys to check."""
         updated_relationships = []
         for relationship in self.relationships:
@@ -335,7 +335,7 @@ class Metadata(MultiTableMetadata):
 
         self.relationships = updated_relationships
 
-    def _remove_column_relationships(self, table_name, column_name):
+    def _remove_relationships_by_column(self, table_name, column_name):
         """Remove relationships where the column is a key for the given table."""
         updated_relationships = []
         for relationship in self.relationships:
@@ -364,7 +364,7 @@ class Metadata(MultiTableMetadata):
         self._validate_table_exists(table_name)
 
         # Remove relationships
-        self._remove_matching_relationships(table_name, ['parent_table_name', 'child_table_name'])
+        self._remove_relationships_by_table(table_name, ['parent_table_name', 'child_table_name'])
         del self.tables[table_name]
         self._multi_table_updated = True
 
@@ -396,7 +396,7 @@ class Metadata(MultiTableMetadata):
         table_metadata._validate_column_exists(column_name)
 
         # Remove relationships
-        self._remove_column_relationships(table_name, column_name)
+        self._remove_relationships_by_column(table_name, column_name)
         updated_column_relationships = []
         for column_relationship in table_metadata.column_relationships:
             if column_name not in column_relationship.get('column_names', []):
