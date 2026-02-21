@@ -1045,6 +1045,101 @@ class TestMetadataClass:
         assert list(manufacturer_mock.columns.keys()) == ['country', 'id']
         assert metadata._multi_table_updated
 
+    def test__remove_relationships_by_column_only_removes_matching_table(self):
+        """Test that only relationships for the given table and column are removed."""
+        # Setup
+        metadata = Metadata()
+        metadata.relationships = [
+            {
+                'parent_table_name': 'parent',
+                'parent_primary_key': 'id',
+                'child_table_name': 'child_a',
+                'child_foreign_key': 'fk',
+            },
+            {
+                'parent_table_name': 'parent',
+                'parent_primary_key': 'id',
+                'child_table_name': 'child_b',
+                'child_foreign_key': 'fk',
+            },
+        ]
+
+        # Run
+        metadata._remove_relationships_by_column('child_a', 'fk')
+
+        # Assert
+        assert metadata.relationships == [
+            {
+                'parent_table_name': 'parent',
+                'parent_primary_key': 'id',
+                'child_table_name': 'child_b',
+                'child_foreign_key': 'fk',
+            },
+        ]
+
+    def test_remove_column_only_removes_relationship_for_that_table(self):
+        """Test removing a foreign key column only removes the relationship for that table."""
+        # Setup
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table1': {
+                    'primary_key': 'id',
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                        'A': {'sdtype': 'numerical'},
+                        'B': {'sdtype': 'categorical'},
+                    },
+                },
+                'table2': {
+                    'primary_key': 'id',
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                        'fk_1': {'sdtype': 'id'},
+                        'A': {'sdtype': 'numerical'},
+                        'B': {'sdtype': 'categorical'},
+                    },
+                },
+                'table3': {
+                    'primary_key': 'id',
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                        'fk_1': {'sdtype': 'id'},
+                        'A': {'sdtype': 'numerical'},
+                        'B': {'sdtype': 'categorical'},
+                    },
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'table1',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'table2',
+                    'child_foreign_key': 'fk_1',
+                },
+                {
+                    'parent_table_name': 'table1',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'table3',
+                    'child_foreign_key': 'fk_1',
+                },
+            ],
+        })
+
+        # Run
+        metadata.remove_column('fk_1', 'table2')
+
+        # Assert
+        assert metadata.relationships == [
+            {
+                'parent_table_name': 'table1',
+                'parent_primary_key': 'id',
+                'child_table_name': 'table3',
+                'child_foreign_key': 'fk_1',
+            },
+        ]
+        assert 'fk_1' not in metadata.tables['table2'].columns
+        assert 'fk_1' in metadata.tables['table3'].columns
+
     def test_remove_column_sequence_key(self):
         """Test the method also remove the sequence key if the column is one."""
         # Setup
