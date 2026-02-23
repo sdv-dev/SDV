@@ -543,25 +543,36 @@ class MultiTableMetadata:
         """
         for parent_candidate in self.tables.keys():
             primary_key = self.tables[parent_candidate].primary_key
+            if primary_key is None:
+                continue
+
+            pk_sdtype = self.tables[parent_candidate].columns[primary_key]['sdtype']
             for child_candidate in self.tables.keys() - {parent_candidate}:
                 child_meta = self.tables[child_candidate]
                 if primary_key in child_meta.columns.keys():
-                    try:
-                        original_foreign_key_sdtype = child_meta.columns[primary_key]['sdtype']
-                        if original_foreign_key_sdtype != 'id':
-                            self.update_column(
-                                table_name=child_candidate, column_name=primary_key, sdtype='id'
-                            )
+                    original_fk_meta = deepcopy(child_meta.columns[primary_key])
+                    original_fk_sdtype = original_fk_meta['sdtype']
+                    if pk_sdtype != 'id' and original_fk_sdtype != pk_sdtype:
+                        continue
 
+                    try:
+                        if pk_sdtype == 'id' and original_fk_sdtype != 'id':
+                            self.update_column(
+                                table_name=child_candidate,
+                                column_name=primary_key,
+                                sdtype='id',
+                            )
                         self.add_relationship(
                             parent_candidate, child_candidate, primary_key, primary_key
                         )
+
                     except InvalidMetadataError:
-                        self.update_column(
-                            table_name=child_candidate,
-                            column_name=primary_key,
-                            sdtype=original_foreign_key_sdtype,
-                        )
+                        if pk_sdtype == 'id' and original_fk_sdtype != 'id':
+                            self.update_column(
+                                table_name=child_candidate,
+                                column_name=primary_key,
+                                **original_fk_meta,
+                            )
                         continue
 
     def _detect_relationships(self, data=None, foreign_key_inference_algorithm='column_name_match'):
