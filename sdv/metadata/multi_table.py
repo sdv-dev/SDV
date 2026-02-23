@@ -1143,7 +1143,11 @@ class MultiTableMetadata:
             foreign_key = relationship.get('child_foreign_key')
             primary_key = self.tables.get(parent).primary_key
             edge_label = f'  {foreign_key} → {primary_key}' if show_relationship_labels else ''
-            edges.append((parent, child, edge_label))
+            child_primary_key = self.tables.get(child).primary_key
+            if foreign_key == child_primary_key:
+                edges.append((parent, child, edge_label, 'one-to-one'))
+            else:
+                edges.append((parent, child, edge_label))
 
             if show_table_details is not None:
                 child_node = nodes.get(child)
