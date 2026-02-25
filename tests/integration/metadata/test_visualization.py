@@ -63,5 +63,10 @@ def test_visualize_pk_to_pk(primary_key_to_primary_key):
     # Setup
     _, metadata = primary_key_to_primary_key
 
-    # Run and Assert
-    metadata.visualize()
+    # Run
+    graph = metadata.visualize()
+
+    # Assert
+    assert 'arrowhead=noneteeodot' in graph.source
+    assert 'arrowtail=nonetee' in graph.source
+    assert 'dir=both' in graph.source
