@@ -102,8 +102,20 @@ def visualize_graph(nodes, edges, filepath=None):
     for name, label in nodes.items():
         digraph.node(name, label=_replace_special_characters(label))
 
-    for parent, child, label in edges:
-        digraph.edge(parent, child, label=_replace_special_characters(label), arrowhead='oinv')
+    for edge in edges:
+        parent, child, label = edge[0], edge[1], edge[2]
+        relation_type = edge[3] if len(edge) > 3 else 'one-to-many'
+        if relation_type == 'one-to-one':
+            digraph.edge(
+                parent,
+                child,
+                label=_replace_special_characters(label),
+                arrowhead='noneteeodot',
+                arrowtail='nonetee',
+                dir='both',
+            )
+        else:
+            digraph.edge(parent, child, label=_replace_special_characters(label), arrowhead='oinv')
 
     if filename:
         digraph.render(filename=filename, cleanup=True, format=graphviz_extension)
