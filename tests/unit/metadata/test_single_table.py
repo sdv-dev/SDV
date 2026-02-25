@@ -2546,6 +2546,7 @@ class TestSingleTableMetadata:
             squence key and one alternate key, so we can ensure those don't show up
             in the error message.
         """
+        # Setup
         data = pd.DataFrame({
             'pk_col': [0, 1, np.nan],
             'sk_col1': [0, 1, None],
@@ -2589,6 +2590,7 @@ class TestSingleTableMetadata:
 
         Test the case with a single sequence key.
         """
+        # Setup
         data = pd.DataFrame({'pk_col': [1], 'sk_col': [None]})
         metadata = SingleTableMetadata()
         metadata.add_column('pk_col', sdtype='id')
@@ -2606,6 +2608,7 @@ class TestSingleTableMetadata:
 
     def test_validate_data_keys_not_unique(self):
         """Test error is raised if primary or alternate keys are not unique."""
+        # Setup
         data = pd.DataFrame({
             'pk_col': [0, 1, 1, 0, 2],
             'ak_col1': [0, 1, 0, 3, 3],
@@ -2638,6 +2641,7 @@ class TestSingleTableMetadata:
         Setup:
             ``SingleTableMetadata`` with one column for each sdtype and for each key.
         """
+        # Setup
         data = pd.DataFrame({
             'pk_col': [],
             'sk_col': [],
@@ -2662,6 +2666,7 @@ class TestSingleTableMetadata:
 
     def test_validate_data_no_keys(self):
         """Test method passes even if no keys are passed."""
+        # Setup
         data = pd.DataFrame({
             'bool_col': [1, 2, 3],
             'num_col': [1, 2, 3],
@@ -2677,6 +2682,7 @@ class TestSingleTableMetadata:
 
     def test_validate_data_empty_dataframe(self):
         """Test method doesn't raise when data is an empty dataframe."""
+        # Setup
         data = pd.DataFrame()
         metadata = SingleTableMetadata()
 
@@ -2820,7 +2826,7 @@ class TestSingleTableMetadata:
         with pytest.warns(UserWarning, match=warning_msg):
             metadata.validate_data(data)
 
-    def test_validate_data(self):
+    def test_validate_data(self, recwarn):
         """Test the method doesn't crash when the passed data is valid.
 
         Setup:
@@ -2844,7 +2850,7 @@ class TestSingleTableMetadata:
         metadata.add_column('ak_col1', sdtype='id')
         metadata.add_column('ak_col2', sdtype='id')
         metadata.add_column('numerical_col', sdtype='numerical')
-        metadata.add_column('date_col', sdtype='datetime')
+        metadata.add_column('date_col', sdtype='datetime', datetime_format='%Y-%m-%d')
         metadata.add_column('bool_col', sdtype='boolean')
         metadata.set_primary_key('pk_col')
         metadata.set_sequence_key('sk_col1')
@@ -2852,6 +2858,46 @@ class TestSingleTableMetadata:
 
         # Run
         metadata.validate_data(data)
+
+        # Assert
+        assert len(recwarn) == 0
+
+    def test_validate_data_produces_warning_for_columns_order(self):
+        """Test the method doesn't crash when the passed data is valid.
+
+        Setup:
+            ``SingleTableMetadata`` describing at least one valid column of each key and sdtype.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'sk_col1': [0, 1, 2],
+            'sk_col2': [0, 1, 2],
+            'ak_col1': [0, 1, 2],
+            'ak_col2': [0, 1, 2],
+            'pk_col': [0, 1, 2],
+            'numerical_col': [np.nan, -1, 1.54],
+            'bool_col': [np.nan, True, False],
+        })
+        metadata = SingleTableMetadata()
+        metadata.add_column('pk_col', sdtype='id')
+        metadata.add_column('sk_col1', sdtype='id')
+        metadata.add_column('sk_col2', sdtype='id')
+        metadata.add_column('ak_col1', sdtype='id')
+        metadata.add_column('ak_col2', sdtype='id')
+        metadata.add_column('numerical_col', sdtype='numerical')
+        metadata.add_column('bool_col', sdtype='boolean')
+        metadata.set_primary_key('pk_col')
+        metadata.set_sequence_key('sk_col1')
+        metadata.add_alternate_keys(['ak_col1', 'ak_col2'])
+
+        expected_message = (
+            'The metadata lists columns in a different order than the data. '
+            'This may result in the synthetic data having a different order.'
+        )
+
+        # Run and Assert
+        with pytest.warns(UserWarning, match=expected_message):
+            metadata.validate_data(data)
 
     def test_to_dict(self):
         """Test the ``to_dict`` method from ``SingleTableMetadata``.
@@ -3508,3 +3554,46 @@ class TestSingleTableMetadata:
         assert anonymized.columns[anon_sequence_key] == instance.columns['real_column4']
 
         assert anon_alternate_keys[0] == anon_sequence_key
+
+    def test__warn_data_column_order_mismatch(self):
+        """Test that `_warn_data_column_order_mismatch` produces a warning."""
+        # Setup
+        metadata = SingleTableMetadata()
+        metadata._check_data_columns_order = Mock(return_value=False)
+        data = pd.DataFrame({'a': [1, 2], 'b': [2, 3]})
+        metadata.detect_from_dataframe(data)
+        expected_message = (
+            'The metadata lists columns in a different order than the data. '
+            'This may result in the synthetic data having a different order.'
+        )
+
+        # Run and Assert
+        with pytest.warns(UserWarning, match=expected_message):
+            metadata._warn_data_column_order_mismatch(data)
+
+    def test__check_data_columns_order_matches(self):
+        """Test that `_check_data_columns_order` returns the expected value."""
+        # Setup
+        metadata = SingleTableMetadata()
+        data = pd.DataFrame({'a': [1, 2], 'b': [2, 3]})
+        metadata.detect_from_dataframe(data)
+
+        # Run
+        result = metadata._check_data_columns_order(data.columns)
+
+        # Assert
+        assert result is True
+
+    def test__check_data_columns_order_mismatches(self):
+        """Test that `_check_data_columns_order` returns `False` when columns miss match."""
+        # Setup
+        metadata = SingleTableMetadata()
+        data = pd.DataFrame({'a': [1, 2], 'b': [2, 3]})
+        metadata.detect_from_dataframe(data)
+        test_data = data[['b', 'a']]
+
+        # Run
+        result = metadata._check_data_columns_order(test_data.columns)
+
+        # Assert
+        assert result is False

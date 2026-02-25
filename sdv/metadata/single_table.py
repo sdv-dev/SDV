@@ -1272,6 +1272,16 @@ class SingleTableMetadata:
 
         return []
 
+    def _check_data_columns_order(self, data_columns):
+        return list(data_columns) == list(self.columns)
+
+    def _warn_data_column_order_mismatch(self, data_columns):
+        if not self._check_data_columns_order(data_columns):
+            warnings.warn(
+                'The metadata lists columns in a different order than the data. '
+                'This may result in the synthetic data having a different order.'
+            )
+
     def validate_data(self, data, sdtype_warnings=None):
         """Validate the data matches the metadata.
 
@@ -1303,6 +1313,9 @@ class SingleTableMetadata:
 
         # Both metadata and data must have the same set of columns
         self._validate_metadata_matches_data(data.columns)
+
+        # Warn if metadata columns order mismatches data column order
+        self._warn_data_column_order_mismatch(data.columns)
 
         errors = []
         # Primary, sequence and alternate keys can't have missing values
