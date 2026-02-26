@@ -2447,6 +2447,53 @@ class TestMultiTableMetadata:
         ]
         visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, 'output.jpg')
 
+    @patch('sdv.metadata.multi_table.visualize_graph')
+    def test_visualize_pk_to_pk_relationship(self, visualize_graph_mock):
+        """Test that PK-to-PK relationships produce a 'one-to-one' edge type."""
+        # Setup
+        metadata = MultiTableMetadata.load_from_dict({
+            'tables': {
+                'parent_table': {
+                    'columns': {
+                        'pk': {'sdtype': 'id'},
+                        'col': {'sdtype': 'categorical'},
+                    },
+                    'primary_key': 'pk',
+                },
+                'child_table': {
+                    'columns': {
+                        'pk': {'sdtype': 'id'},
+                        'col': {'sdtype': 'numerical'},
+                    },
+                    'primary_key': 'pk',
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'parent_table',
+                    'parent_primary_key': 'pk',
+                    'child_table_name': 'child_table',
+                    'child_foreign_key': 'pk',
+                }
+            ],
+        })
+
+        # Run
+        metadata.visualize('full', True)
+
+        # Assert
+        expected_nodes = {
+            'parent_table': ('{parent_table|pk : id\\lcol : categorical\\l|Primary key: pk\\l}'),
+            'child_table': (
+                '{child_table|pk : id\\lcol : numerical\\l|'
+                'Primary key: pk\\lForeign key (parent_table): pk\\l}'
+            ),
+        }
+        expected_edges = [
+            ('parent_table', 'child_table', '  pk → pk', 'one-to-one'),
+        ]
+        visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, None)
+
     def test_add_column(self):
         """Test the ``add_column`` method.
 
