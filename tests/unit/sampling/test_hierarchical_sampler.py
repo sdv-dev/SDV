@@ -662,6 +662,7 @@ class TestBaseHierarchicalSampler:
         instance = Mock()
 
         metadata = Mock()
+        metadata.tables = {'table': []}
         metadata.get_column_names.return_value = ['a', 'b', 'c']
         instance.get_metadata.return_value = metadata
 
