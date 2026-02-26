@@ -1504,12 +1504,12 @@ class SingleTableMetadata:
             filepath (str):
                 String that represents the ``path`` to the ``json`` file.
 
+        Returns:
+            A ``SingleTableMetadata`` instance.
+
         Raises:
             - An ``Error`` if the path does not exist.
             - An ``Error`` if the ``json`` file does not contain the ``METADATA_SPEC_VERSION``.
-
-        Returns:
-            A ``SingleTableMetadata`` instance.
         """
         metadata = read_json(filepath)
         if 'METADATA_SPEC_VERSION' not in metadata:
@@ -1533,11 +1533,11 @@ class SingleTableMetadata:
             filepath (str):
                 String that represents the ``path`` to the old metadata ``json`` file.
 
-        Raises:
-            Raises a ``ValueError`` if the filepath does not exist.
-
         Returns:
             A ``SingleTableMetadata`` instance.
+
+        Raises:
+            Raises a ``ValueError`` if the filepath does not exist.
         """
         old_metadata = read_json(filepath)
         if 'tables' in old_metadata:

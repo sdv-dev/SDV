@@ -1300,12 +1300,12 @@ class MultiTableMetadata:
             filepath (str):
                 String that represents the ``path`` to the ``json`` file.
 
+        Returns:
+            A ``MultiTableMetadata`` instance.
+
         Raises:
             - An ``Error`` if the path does not exist.
             - An ``Error`` if the ``json`` file does not contain the ``METADATA_SPEC_VERSION``.
-
-        Returns:
-            A ``MultiTableMetadata`` instance.
         """
         metadata = read_json(filepath)
         return cls.load_from_dict(metadata)
@@ -1358,11 +1358,11 @@ class MultiTableMetadata:
             filepath (str):
                 String that represents the ``path`` to the old metadata ``json`` file.
 
-        Raises:
-            Raises a ``ValueError`` if the filepath does not exist.
-
         Returns:
             A ``MultiTableMetadata`` instance.
+
+        Raises:
+            Raises a ``ValueError`` if the filepath does not exist.
         """
         old_metadata = read_json(filepath)
         tables_metadata = {}

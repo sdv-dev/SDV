@@ -24,12 +24,12 @@ class Metadata(MultiTableMetadata):
             filepath (str):
                 String that represents the ``path`` to the ``json`` file.
 
+        Returns:
+            A ``Metadata`` instance.
+
         Raises:
             - An ``Error`` if the path does not exist.
             - An ``Error`` if the ``json`` file does not contain the ``METADATA_SPEC_VERSION``.
-
-        Returns:
-            A ``Metadata`` instance.
         """
         metadata = read_json(filepath)
         if metadata.get('METADATA_SPEC_VERSION') == 'SINGLE_TABLE_V1':

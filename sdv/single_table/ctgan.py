@@ -51,12 +51,12 @@ class LossValuesMixin:
     def get_loss_values(self):
         """Get the loss values from the model.
 
-        Raises:
-            - ``NotFittedError`` if synthesizer has not been fitted.
-
         Returns:
             pd.DataFrame:
                 Dataframe containing the loss values per epoch.
+
+        Raises:
+            - ``NotFittedError`` if synthesizer has not been fitted.
         """
         if not self._fitted:
             err_msg = 'Loss values are not available yet. Please fit your synthesizer first.'
@@ -71,12 +71,12 @@ class LossValuesMixin:
             title (pd.DataFrame):
                 Title string for the graph created.
 
-        Raises:
-            - ``NotFittedError`` if synthesizer has not been fitted.
-
         Returns:
             plotly.graph_objects._figure.Figure:
                 1D marginal distribution plot (i.e. a histogram) of the columns.
+
+        Raises:
+            - ``NotFittedError`` if synthesizer has not been fitted.
         """
         if not self._fitted:
             err_msg = 'Loss values are not available yet. Please fit your synthesizer first.'
