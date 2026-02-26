@@ -537,6 +537,7 @@ class TestBaseHierarchicalSampler:
         instance._sample_rows.return_value = users
         instance._sample_children.side_effect = _sample_children_dummy
         instance._reverse_transform_constraints = Mock(side_effect=lambda x: x)
+        instance._align_columns_with_metadata_order = Mock(side_effect=lambda x: x)
 
         # Run
         result = BaseHierarchicalSampler._sample(instance)
@@ -654,3 +655,20 @@ class TestBaseHierarchicalSampler:
 
         # Assert
         assert data['parent']['__child__fk__num_rows'].to_list() == [0, 0, 0]
+
+    def test___align_columns_with_metadata_order_reorders_and_appends_extra_columns(self):
+        """Test that reorders columns to match metadata and appends extra columns at the end."""
+        # Setup
+        instance = Mock()
+
+        metadata = Mock()
+        metadata.get_column_names.return_value = ['a', 'b', 'c']
+        instance.get_metadata.return_value = metadata
+
+        data = {'table': pd.DataFrame(columns=['c', 'extra1', 'a', 'b', 'extra2'])}
+
+        # Run
+        result = BaseHierarchicalSampler._align_columns_with_metadata_order(instance, data)
+
+        # Assert
+        assert result['table'].columns.to_list() == ['a', 'b', 'c', 'extra1', 'extra2']
