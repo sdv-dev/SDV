@@ -3585,7 +3585,7 @@ class TestSingleTableMetadata:
         assert result is True
 
     def test__check_data_columns_order_mismatches(self):
-        """Test that `_check_data_columns_order` returns `False` when columns miss match."""
+        """Test that `_check_data_columns_order` returns `False` when columns mismatch."""
         # Setup
         metadata = SingleTableMetadata()
         data = pd.DataFrame({'a': [1, 2], 'b': [2, 3]})
