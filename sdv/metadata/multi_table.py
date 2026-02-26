@@ -835,14 +835,14 @@ class MultiTableMetadata:
         """Validate every table of the data has a valid table/metadata pair."""
         errors = []
         warning_dataframes = []
-        tables_with_missmatching_columns_order = []
+        tables_with_mismatching_columns_order = []
         for table_name, table_data in data.items():
             table_sdtype_warnings = defaultdict(list)
             try:
                 with warnings.catch_warnings(record=True):
                     self.tables[table_name].validate_data(table_data, table_sdtype_warnings)
                     if not self.tables[table_name]._check_data_columns_order(table_data.columns):
-                        tables_with_missmatching_columns_order.append(table_name)
+                        tables_with_mismatching_columns_order.append(table_name)
 
             except InvalidDataError as error:
                 if INT_REGEX_ZERO_ERROR_MESSAGE in str(error) and len(self.tables) > 1:
@@ -880,8 +880,8 @@ class MultiTableMetadata:
             )
             warnings.warn(warning_msg)
 
-        if len(tables_with_missmatching_columns_order):
-            affected_tables = ', '.join(map(repr, tables_with_missmatching_columns_order))
+        if len(tables_with_mismatching_columns_order):
+            affected_tables = ', '.join(map(repr, tables_with_mismatching_columns_order))
             warnings.warn(
                 'The metadata lists columns in a different order than the data. '
                 'This may result in the synthetic data having a different order.\n'
