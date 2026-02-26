@@ -9,6 +9,24 @@ from sdv.errors import RefitWarning, SynthesizerInputError, TableNameError
 from sdv.metadata import Metadata
 
 
+def _validate_columns_not_primary_key(table_name, columns, metadata):
+    """Validate that none of the columns are in the primary key for the table."""
+    primary_key = metadata.tables[table_name].primary_key
+    if metadata.tables[table_name]._primary_key_is_composite:
+        key_columns = set(primary_key).intersection(set(columns))
+        if key_columns:
+            pk_columns = "', '".join(key_columns)
+            raise ConstraintNotMetError(
+                f"Cannot apply constraint because ['{pk_columns}'] are "
+                f"part of the primary key for table '{table_name}'."
+            )
+    elif primary_key in columns:
+        raise ConstraintNotMetError(
+            f"Cannot apply constraint because '{primary_key}' is the "
+            f"primary key of table '{table_name}'"
+        )
+
+
 def _validate_columns_in_metadata(table_name, columns, metadata):
     """Validates that the columns are in the metadata.
 
