@@ -307,7 +307,9 @@ class BaseHierarchicalSampler:
                 table_columns = list(table.columns)
                 column_names = metadata.get_column_names(table_name)
                 column_names = [column for column in column_names if column in table_columns]
-                additional_columns = [column for column in table_columns if column not in column_names]
+                additional_columns = [
+                    column for column in table_columns if column not in column_names
+                ]
                 sampled_data[table_name] = table[column_names + additional_columns]
 
         return sampled_data
