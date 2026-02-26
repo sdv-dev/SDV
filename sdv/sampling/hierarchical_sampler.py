@@ -285,6 +285,29 @@ class BaseHierarchicalSampler:
 
         return final_data
 
+    def _align_columns_with_metadata_order(self, sampled_data):
+        """Reorder table columns to match the metadata-defined order.
+
+        For each table in ``sampled_data``, this method reorders the columns so
+        that they follow the order specified in the metadata. Any columns that
+        are not defined in the metadata (e.g., newly created or auxiliary columns)
+        are appended to the end, preserving their relative order.
+
+        Args:
+            sampled_data (dict[str, pandas.DataFrame]):
+                Mapping of table names to sampled dataframes.
+
+        Returns:
+            dict[str, pandas.DataFrame]:
+                The same mapping with columns reordered to match the metadata.
+        """
+        for table_name, table in sampled_data.items():
+            column_names = self.get_metadata().get_column_names(table_name)
+            additional_columns = [column for column in table.columns if column not in column_names]
+            sampled_data[table_name] = table[column_names + additional_columns]
+
+        return sampled_data
+
     def _sample(self, scale=1.0):
         """Sample the entire dataset.
 
@@ -341,5 +364,10 @@ class BaseHierarchicalSampler:
                 )
                 added_relationships.add((parent_name, child_name))
 
+        # Reorder the columns to match the metadata-defined order before calling
+        # `_reverse_transform_constraints`. During that step,
+        # `drop_unknown_references` triggers `metadata.validate(data)`, which now
+        # warns if the column order in the data does not match the metadata.
+        sampled_data = self._align_columns_with_metadata_order(sampled_data)
         sampled_data = self._reverse_transform_constraints(sampled_data)
         return self._finalize(sampled_data)

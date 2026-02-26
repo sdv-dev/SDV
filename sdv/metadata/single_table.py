@@ -1273,7 +1273,8 @@ class SingleTableMetadata:
         return []
 
     def _check_data_columns_order(self, data_columns):
-        return list(data_columns) == list(self.columns)
+        data_columns = [column for column in data_columns if column in self.columns]
+        return data_columns == list(self.columns)
 
     def _warn_data_column_order_mismatch(self, data_columns):
         if not self._check_data_columns_order(data_columns):
