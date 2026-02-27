@@ -2352,6 +2352,52 @@ class TestSingleTableMetadata:
                 relationship_invalid, column_relationships
             )
 
+    def test__validate_column_relationship_raises_import_error(self, recwarn):
+        """Test that ``_validate_column_relationship`` raises an `ImportError`."""
+        # Setup
+        instance = SingleTableMetadata()
+        relationship = {'type': 'address', 'column_names': ['a', 'b']}
+        instance.columns = {
+            'a': {'sdtype': 'street_address'},
+            'b': {'sdtype': 'city'},
+            'c': {'sdtype': 'datetime'},
+        }
+
+        # Run
+        with pytest.raises(ImportError):
+            instance._validate_column_relationship(relationship)
+
+        # Assert
+        assert len(recwarn) == 1
+        warning_msg = recwarn.pop(UserWarning)
+        expected_msg = (
+            "The metadata contains a column relationship of type 'address' "
+            'which requires the address add-on. '
+            'This relationship will be ignored. For higher quality data in this'
+            ' relationship, please inquire about the SDV Enterprise tier.'
+        )
+        assert str(warning_msg.message) == expected_msg
+
+    @pytest.mark.parametrize('primary_key', ['a', ['a', 'b']])
+    def test__validate_column_relationship_column_belongs_to_primary_key(self, primary_key):
+        """Test validation fails for columns that are in the primary keys."""
+        # Setup
+        instance = SingleTableMetadata()
+        mock_relationship_validation = Mock()
+        instance._COLUMN_RELATIONSHIP_TYPES = {'mock_relationship': mock_relationship_validation}
+        relationship = {'type': 'mock_relationship', 'column_names': ['a', 'b']}
+        instance.columns = {
+            'a': {'sdtype': 'street_address'},
+            'b': {'sdtype': 'street_address'},
+            'c': {'sdtype': 'datetime'},
+        }
+        instance.set_primary_key(primary_key)
+
+        expected_message = "Cannot use primary key 'a' in column relationship."
+        # Run and Assert
+        with pytest.raises(InvalidMetadataError, match=expected_message):
+            instance._validate_column_relationship(relationship)
+
     def test__validate_all_column_relationships(self):
         """Test ``_validate_all_column_relationships`` method."""
         # Setup
