@@ -62,27 +62,23 @@ class MultiTableMetadata:
                 "Please use 'set_primary_key' in order to set one."
             )
 
-        missing_keys = set()
         parent_primary_key = _cast_to_iterable(parent_primary_key)
         table_primary_keys = set(_cast_to_iterable(parent_table.primary_key))
-        for key in parent_primary_key:
-            if key not in table_primary_keys:
-                missing_keys.add(key)
-
-        if missing_keys:
-            raise InvalidMetadataError(
-                f'Relationship between tables ({parent_table_name}, {child_table_name}) contains '
-                f'an unknown primary key {missing_keys}.'
-            )
-
-        for key in set(_cast_to_iterable(child_foreign_key)):
-            if key not in child_table.columns:
-                missing_keys.add(key)
-
-        if missing_keys:
+        if set(parent_primary_key) != table_primary_keys:
             raise InvalidMetadataError(
                 f'Relationship between tables ({parent_table_name}, {child_table_name}) '
-                f'contains an unknown foreign key {missing_keys}.'
+                f'has a mismatched primary key {sorted(parent_primary_key)}.'
+            )
+
+        missing_fk = set()
+        for key in set(_cast_to_iterable(child_foreign_key)):
+            if key not in child_table.columns:
+                missing_fk.add(key)
+
+        if missing_fk:
+            raise InvalidMetadataError(
+                f'Relationship between tables ({parent_table_name}, {child_table_name}) '
+                f'contains an unknown foreign key {missing_fk}.'
             )
 
     @staticmethod
