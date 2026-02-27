@@ -1,9 +1,12 @@
 """Utils for testing."""
 
 import contextlib
+from copy import deepcopy
+from functools import lru_cache
 
 import pandas as pd
 
+from sdv.datasets.demo import download_demo
 from sdv.logging import get_sdv_logger
 from sdv.metadata.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
@@ -163,3 +166,21 @@ def run_hma(data, metadata, constraints=None):
     synthesizer.fit(data)
 
     return synthesizer
+
+
+@lru_cache
+def _download_demo(modality, dataset_name):
+    return download_demo(modality, dataset_name)
+
+
+def download_test_demo(modality, dataset_name):
+    """Download demo datasets with caching.
+
+    Args:
+        modality:
+            The modality of the dataset: 'single_table', 'multi_table', 'sequential'.
+        dataset_name:
+            Name of the dataset to download.
+    """
+    data, metadata = _download_demo(modality, dataset_name)
+    return deepcopy(data), deepcopy(metadata)
