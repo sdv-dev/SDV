@@ -1542,6 +1542,24 @@ class TestMultiTableMetadata:
         with pytest.warns(UserWarning, match=warning_msg):
             metadata.validate_data(data)
 
+    def test_validate_data_mismatching_column_order(self):
+        """Test that a warning is printed out if columns order is different than the data's."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        data = get_multi_table_data()
+        reverse_columns = list(data['oseba'].columns)
+        reverse_columns.reverse()
+        data['oseba'] = data['oseba'][reverse_columns]
+
+        expected_message = (
+            'The metadata lists columns in a different order than the data. '
+            'This may result in the synthetic data having a different order.\n'
+            "Affected tables: 'nesreca', 'oseba'."
+        )
+        # Run and Assert
+        with pytest.warns(UserWarning, match=expected_message):
+            metadata.validate_data(data)
+
     def test_add_relationship_circular_graph(self):
         """Test that an error is raised when a circular relationship is detected.
 

@@ -1272,6 +1272,17 @@ class SingleTableMetadata:
 
         return []
 
+    def _check_data_columns_order(self, data_columns):
+        data_columns = [column for column in data_columns if column in self.columns]
+        return data_columns == list(self.columns)
+
+    def _warn_data_column_order_mismatch(self, data_columns):
+        if not self._check_data_columns_order(data_columns):
+            warnings.warn(
+                'The metadata lists columns in a different order than the data. '
+                'This may result in the synthetic data having a different order.'
+            )
+
     def validate_data(self, data, sdtype_warnings=None):
         """Validate the data matches the metadata.
 
@@ -1303,6 +1314,9 @@ class SingleTableMetadata:
 
         # Both metadata and data must have the same set of columns
         self._validate_metadata_matches_data(data.columns)
+
+        # Warn if metadata columns order mismatches data column order
+        self._warn_data_column_order_mismatch(data.columns)
 
         errors = []
         # Primary, sequence and alternate keys can't have missing values
@@ -1490,12 +1504,12 @@ class SingleTableMetadata:
             filepath (str):
                 String that represents the ``path`` to the ``json`` file.
 
+        Returns:
+            A ``SingleTableMetadata`` instance.
+
         Raises:
             - An ``Error`` if the path does not exist.
             - An ``Error`` if the ``json`` file does not contain the ``METADATA_SPEC_VERSION``.
-
-        Returns:
-            A ``SingleTableMetadata`` instance.
         """
         metadata = read_json(filepath)
         if 'METADATA_SPEC_VERSION' not in metadata:
@@ -1519,11 +1533,11 @@ class SingleTableMetadata:
             filepath (str):
                 String that represents the ``path`` to the old metadata ``json`` file.
 
-        Raises:
-            Raises a ``ValueError`` if the filepath does not exist.
-
         Returns:
             A ``SingleTableMetadata`` instance.
+
+        Raises:
+            Raises a ``ValueError`` if the filepath does not exist.
         """
         old_metadata = read_json(filepath)
         if 'tables' in old_metadata:

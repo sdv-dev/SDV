@@ -317,6 +317,7 @@ class BaseHierarchicalSampler:
             if num_rows <= 0:
                 send_min_sample_warning = True
                 num_rows = 1
+
             synthesizer = self._table_synthesizers[table]
             LOGGER.info(f'Sampling {num_rows} rows from table {table}')
             sampled_data[table] = self._sample_rows(synthesizer, num_rows)
@@ -341,5 +342,12 @@ class BaseHierarchicalSampler:
                 )
                 added_relationships.add((parent_name, child_name))
 
-        sampled_data = self._reverse_transform_constraints(sampled_data)
+        # During this step,  `drop_unknown_references` triggers `metadata.validate(data)`
+        # which now warns if the column order in the data does not match the metadata.
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', message='The metadata lists columns in a different order than the data.'
+            )
+            sampled_data = self._reverse_transform_constraints(sampled_data)
+
         return self._finalize(sampled_data)
