@@ -1,5 +1,21 @@
 # Release Notes
 
+## v1.34.2 - 2026-02-27
+
+### New Features
+
+* Metadata validation should produce a warning if the metadata and data have columns in different orders - Issue [#2822](https://github.com/sdv-dev/SDV/issues/2822) by @pvk-developer
+* Update the metadata visualization to account for primary to primary key relationships - Issue [#2806](https://github.com/sdv-dev/SDV/issues/2806) by @fealho
+
+### Bugs Fixed
+
+* In the `financial` demo dataset, the metadata does not list columns in the correct order - Issue [#2803](https://github.com/sdv-dev/SDV/issues/2803) by @pvk-developer
+
+### Maintenance
+
+* Update RELEASE guide to include conda-forge step - Issue [#2832](https://github.com/sdv-dev/SDV/issues/2832) by @sarahmish
+* Make `single_table` `get_available_demos` Integration Test More Flexible - Issue [#2818](https://github.com/sdv-dev/SDV/issues/2818) by @pvk-developer
+
 ## v1.34.1 - 2026-02-20
 
 ### Bugs Fixed
