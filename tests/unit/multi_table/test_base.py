@@ -1593,7 +1593,7 @@ class TestBaseMultiTableSynthesizer:
         """Test adding data constraints to the synthesizer."""
         # Setup
         instance = Mock()
-        del instance._composite_keys_metadata
+        instance._composite_keys_metadata = None
         original_metadata = get_multi_table_metadata()
         instance.metadata = original_metadata
         instance._original_metadata = original_metadata
@@ -1645,7 +1645,7 @@ class TestBaseMultiTableSynthesizer:
         """Test adding overlapping single-table constraints to the synthesizer."""
         # Setup
         instance = Mock()
-        del instance._composite_keys_metadata
+        instance._composite_keys_metadata = None
         original_metadata = get_multi_table_metadata()
         instance.metadata = original_metadata
         instance._original_metadata = original_metadata
@@ -1693,7 +1693,7 @@ class TestBaseMultiTableSynthesizer:
         """Test adding data constraints to the synthesizer."""
         # Setup
         instance = Mock()
-        del instance._composite_keys_metadata
+        instance._composite_keys_metadata = None
         delattr(instance, 'constraints')
         metadata = get_multi_table_metadata()
         original_metadata = Mock()

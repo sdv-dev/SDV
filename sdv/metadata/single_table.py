@@ -219,6 +219,7 @@ class SingleTableMetadata:
         self.column_relationships = []
         self._version = self.METADATA_SPEC_VERSION
         self._updated = False
+        self._valid_column_relationships = []
 
     @property
     def _primary_key_is_composite(self):
@@ -1004,11 +1005,17 @@ class SingleTableMetadata:
                 f'Must be one of {list(self._COLUMN_RELATIONSHIP_TYPES.keys())}.'
             )
 
+        primary_keys = set()
+        if isinstance(self.primary_key, list):
+            primary_keys = set(self.primary_key)
+        elif self.primary_key:
+            primary_keys = {self.primary_key}
+
         errors = []
         for column in column_names:
             if column not in self.columns:
                 errors.append(f"Column '{column}' not in metadata.")
-            elif self.primary_key == column:
+            if column in primary_keys:
                 errors.append(f"Cannot use primary key '{column}' in column relationship.")
 
         columns_to_sdtypes = {
