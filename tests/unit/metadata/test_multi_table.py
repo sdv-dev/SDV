@@ -1542,6 +1542,24 @@ class TestMultiTableMetadata:
         with pytest.warns(UserWarning, match=warning_msg):
             metadata.validate_data(data)
 
+    def test_validate_data_mismatching_column_order(self):
+        """Test that a warning is printed out if columns order is different than the data's."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        data = get_multi_table_data()
+        reverse_columns = list(data['oseba'].columns)
+        reverse_columns.reverse()
+        data['oseba'] = data['oseba'][reverse_columns]
+
+        expected_message = (
+            'The metadata lists columns in a different order than the data. '
+            'This may result in the synthetic data having a different order.\n'
+            "Affected tables: 'nesreca', 'oseba'."
+        )
+        # Run and Assert
+        with pytest.warns(UserWarning, match=expected_message):
+            metadata.validate_data(data)
+
     def test_add_relationship_circular_graph(self):
         """Test that an error is raised when a circular relationship is detected.
 
@@ -2428,6 +2446,53 @@ class TestMultiTableMetadata:
             ('users', 'payments', ''),
         ]
         visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, 'output.jpg')
+
+    @patch('sdv.metadata.multi_table.visualize_graph')
+    def test_visualize_pk_to_pk_relationship(self, visualize_graph_mock):
+        """Test that PK-to-PK relationships produce a 'one-to-one' edge type."""
+        # Setup
+        metadata = MultiTableMetadata.load_from_dict({
+            'tables': {
+                'parent_table': {
+                    'columns': {
+                        'pk': {'sdtype': 'id'},
+                        'col': {'sdtype': 'categorical'},
+                    },
+                    'primary_key': 'pk',
+                },
+                'child_table': {
+                    'columns': {
+                        'pk': {'sdtype': 'id'},
+                        'col': {'sdtype': 'numerical'},
+                    },
+                    'primary_key': 'pk',
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'parent_table',
+                    'parent_primary_key': 'pk',
+                    'child_table_name': 'child_table',
+                    'child_foreign_key': 'pk',
+                }
+            ],
+        })
+
+        # Run
+        metadata.visualize('full', True)
+
+        # Assert
+        expected_nodes = {
+            'parent_table': ('{parent_table|pk : id\\lcol : categorical\\l|Primary key: pk\\l}'),
+            'child_table': (
+                '{child_table|pk : id\\lcol : numerical\\l|'
+                'Primary key: pk\\lForeign key (parent_table): pk\\l}'
+            ),
+        }
+        expected_edges = [
+            ('parent_table', 'child_table', '  pk → pk', 'one-to-one'),
+        ]
+        visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, None)
 
     def test_add_column(self):
         """Test the ``add_column`` method.

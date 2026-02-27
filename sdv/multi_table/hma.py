@@ -471,6 +471,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                         enforce_min_max_values=True
                     )
                     self.extended_columns[child_name][column].fit(extension, column)
+
                 table = table.merge(extension, how='left', right_index=True, left_index=True)
                 num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
                 table[num_rows_key] = table[num_rows_key].fillna(0)
@@ -485,11 +486,10 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
                 tables[table_name] = table
                 self._learned_relationships += 1
-        self._augmented_tables.append(table_name)
 
+        self._augmented_tables.append(table_name)
         foreign_keys = self.metadata._get_all_foreign_keys(table_name)
         self._clear_nans(table, ignore_cols=foreign_keys)
-
         return table
 
     def _augment_tables(self, processed_data):
@@ -533,6 +533,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         keys = {}
         for fk in foreign_keys:
             keys[fk] = table_data.pop(fk).to_numpy()
+
         return keys
 
     def _model_tables(self, augmented_data):
@@ -730,6 +731,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             extended_columns = getattr(self, '_parent_extended_columns', {}).get(table_name, [])
             if extended_columns:
                 self._set_extended_columns_distributions(synthesizer, table_name, extended_columns)
+
             synthesizer._set_parameters(parameters)
             try:
                 likelihoods[parent_id] = synthesizer._get_likelihood(table_rows)

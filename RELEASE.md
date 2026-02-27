@@ -19,6 +19,8 @@ The process of releasing a new version involves several steps:
 8. [Create the Release on GitHub](#create-the-release-on-github)
 
 9. [Close milestone and create new milestone](#close-milestone-and-create-new-milestone)
+    
+10. [Release on Conda-Forge](#release-on-conda-forge)
 
 ## Install SDV from source
 
@@ -142,3 +144,7 @@ Click `Publish release`, which will kickoff the release workflow and automatical
 ## Close milestone and create new milestone
 
 Finaly, **close the milestone** and, if it does not exist, **create the next milestone**.
+
+## Release on conda-forge
+
+After the release is published on [public PyPI](https://pypi.org/project/sdv/), Anacanoda will automatically open a [PR on conda-forge](https://github.com/conda-forge/sdv-feedstock/pulls). Make sure the dependencies match and then merge the PR for the anaconda release to be published.

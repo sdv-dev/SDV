@@ -1590,8 +1590,8 @@ class TestHMASynthesizer:
         # Setup
         table_1 = pd.DataFrame({
             'col_1': [1, 2, 3],
-            'col_3': [7, 8, 9],
             'col_2': [4, 5, 6],
+            'col_3': [7, 8, 9],
         })
         table_2 = pd.DataFrame({
             'col_A': [1, 1, 2],
@@ -1697,8 +1697,8 @@ class TestHMASynthesizer:
                 'table_1': {
                     'columns': {
                         'col_1': {'sdtype': 'id', 'regex_format': '[1-9]{20}'},
-                        'col_2': {'sdtype': 'numerical'},
                         'col_3': {'sdtype': 'numerical'},
+                        'col_2': {'sdtype': 'numerical'},
                         'col_0': {'sdtype': 'id', 'regex_format': '[1-9]{20}'},
                     },
                     'primary_key': 'col_1',
@@ -1791,8 +1791,8 @@ class TestHMASynthesizer:
                 'table_1': {
                     'columns': {
                         'col_1': {'sdtype': 'id', 'regex_format': '[1-9]{20}'},
-                        'col_2': {'sdtype': 'numerical'},
                         'col_3': {'sdtype': 'numerical'},
+                        'col_2': {'sdtype': 'numerical'},
                     },
                     'primary_key': 'col_1',
                 },
@@ -1853,8 +1853,8 @@ class TestHMASynthesizer:
         # Setup
         table_1 = pd.DataFrame({
             'col_1': [99999999999999999990, 99999999999999999991, 99999999999999999992],  # len 20
-            'col_3': [7, 8, 9],
             'col_2': [4, 5, 6],
+            'col_3': [7, 8, 9],
         })
         table_2 = pd.DataFrame({
             'col_A': [99999999999999999990, 99999999999999999990, 99999999999999999991],  # len 20
