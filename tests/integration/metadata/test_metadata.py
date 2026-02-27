@@ -1585,7 +1585,6 @@ def test_add_column_relationship_fails_with_primary_key_column():
     metadata.tables['fake_hotel_guests']._COLUMN_RELATIONSHIP_TYPES['address'] = Mock()
     metadata.update_column(column_name='billing_address', sdtype='street_address')
     metadata.set_primary_key(['guest_email', 'billing_address'])
-
     expected_msg = "Cannot use primary key 'billing_address' in column relationship."
 
     # Run and Assert
@@ -1595,16 +1594,15 @@ def test_add_column_relationship_fails_with_primary_key_column():
         )
 
 
-def test_validate_fails_for_relationship_with_primary_key_column():
-    """Test metadata validation fails if a column relationship includes a primary key column."""
+def test_metadata_fails_for_relationship_with_set_primary_key_column_in_relationship():
+    """Test metadata set_primary_key fails if a column relationship includes primary key column."""
     # Setup
     data, metadata = download_test_demo(modality='single_table', dataset_name='fake_hotel_guests')
     metadata.tables['fake_hotel_guests']._COLUMN_RELATIONSHIP_TYPES['address'] = Mock()
     metadata.update_column(column_name='billing_address', sdtype='street_address')
     metadata.add_column_relationship(column_names=['billing_address'], relationship_type='address')
-    metadata.set_primary_key(['guest_email', 'billing_address'])
-    expected_msg = "Cannot use primary key 'billing_address' in column relationship."
+    error_msg_pattern = r"Cannot set primary key '.*' because it is part of a column relationship\."
 
     # Run and Assert
-    with pytest.raises(InvalidMetadataError, match=expected_msg):
-        metadata.validate()
+    with pytest.raises(InvalidMetadataError, match=error_msg_pattern):
+        metadata.set_primary_key(['guest_email', 'billing_address'])
