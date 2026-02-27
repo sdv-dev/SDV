@@ -1848,6 +1848,30 @@ class TestSingleTableMetadata:
         # Assert
         assert instance.primary_key == 'column'
 
+    @pytest.mark.parametrize('primary_key', ['column_b', ['column_b', 'column_c']])
+    def test_set_primary_key_column_in_relationship(self, primary_key):
+        """Test that ``set_primary_key`` raises an error if the column is in relationship."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {
+            'column': {'sdtype': 'id'},
+            'column_b': {'sdtype': 'address'},
+            'column_c': {'sdtype': 'address'},
+        }
+        instance.column_relationships = [
+            {
+                'column_names': ['column_b', 'column_c'],
+                'type': 'address',
+            }
+        ]
+
+        error_msg_pattern = (
+            r"Cannot set primary key '.*' because it is part of a column relationship\."
+        )
+        # Run and Assert
+        with pytest.raises(InvalidMetadataError, match=error_msg_pattern):
+            instance.set_primary_key(primary_key)
+
     def test_set_primary_key_singleton_composite_key(self):
         """Test a composite key with one element is set as a single primary key."""
         # Setup
