@@ -36,7 +36,7 @@ def test__validate_columns_not_primary_key():
     })
     columns = ['col1', 'col2', 'col3']
     expected_single_key_error = re.escape(
-        "Cannot apply constraint because 'col1' is the primary key of table 'table'"
+        "Cannot apply constraint because 'col1' is the primary key of table 'table'."
     )
     expected_composite_key_error = re.escape(
         "Cannot apply constraint because ['col1', 'col2'] are "
@@ -222,6 +222,9 @@ def test__remove_columns_from_metadata_raises_pk():
                 'primary_key': 'id',
                 'columns': {'id': {'sdtype': 'id'}},
             },
+            'child': {
+                'primary_key': ['pk1', 'pk2'],
+            },
         },
         'relationships': [
             {
@@ -240,6 +243,12 @@ def test__remove_columns_from_metadata_raises_pk():
             metadata=original_metadata,
             table_name='parent',
             columns_to_drop=['id'],
+        )
+    with pytest.raises(ValueError, match=cannot_remove_pk):
+        _remove_columns_from_metadata(
+            metadata=original_metadata,
+            table_name='child',
+            columns_to_drop=['pk1'],
         )
 
 
