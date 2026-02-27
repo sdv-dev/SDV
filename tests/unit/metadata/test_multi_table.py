@@ -230,8 +230,8 @@ class TestMultiTableMetadata:
 
         # Run / Assert
         error_msg = re.escape(
-            'Relationship between tables (users, sessions) contains '
-            "an unknown primary key {'primary_key'}."
+            'Relationship between tables (users, sessions) '
+            "has a mismatched primary key ['primary_key']."
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
             MultiTableMetadata._validate_missing_relationship_keys(
@@ -240,6 +240,28 @@ class TestMultiTableMetadata:
                 parent_primary_key,
                 child_table_name,
                 child_foreign_key,
+            )
+
+    def test__validate_missing_relationship_keys_subset_of_primary_key(self):
+        """Test that a subset of the actual primary key is rejected."""
+        # Setup
+        parent_table = Mock()
+        parent_table.primary_key = ['user_id', 'account_type']
+
+        child_table = Mock()
+        child_table.columns = {'user_id': {'sdtype': 'id'}}
+
+        instance = Mock()
+        instance.tables = {'accounts': parent_table, 'transactions': child_table}
+
+        # Run and Assert
+        error_msg = re.escape(
+            'Relationship between tables (accounts, transactions) '
+            "has a mismatched primary key ['user_id']."
+        )
+        with pytest.raises(InvalidMetadataError, match=error_msg):
+            MultiTableMetadata._validate_missing_relationship_keys(
+                instance, 'accounts', ['user_id'], 'transactions', ['user_id']
             )
 
     def test__validate_no_missing_tables_in_relationship(self):

@@ -1,10 +1,14 @@
 """Integration tests for Multi Table Metadata."""
 
 import json
+import re
 from unittest.mock import patch
+
+import pytest
 
 from sdv.datasets.demo import download_demo
 from sdv.metadata import Metadata, MultiTableMetadata
+from sdv.metadata.errors import InvalidMetadataError
 from tests.utils import get_multi_table_metadata
 
 
@@ -390,3 +394,93 @@ def test_anonymize():
 
     assert anonymized.tables['table1'].to_dict() == table1_metadata.anonymize().to_dict()
     assert anonymized.tables['table2'].to_dict() == table2_metadata.anonymize().to_dict()
+
+
+def test_add_relationship_matching_composite_primary_key():
+    """Test that add_relationship succeeds when parent_primary_key matches the actual PK."""
+    # Setup
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'accounts': {
+                'columns': {
+                    'user_id': {'sdtype': 'id'},
+                    'account_type': {'sdtype': 'id'},
+                    'col1': {'sdtype': 'numerical'},
+                },
+                'primary_key': ['user_id', 'account_type'],
+            },
+            'transactions': {
+                'columns': {
+                    'transaction_id': {'sdtype': 'id'},
+                    'user_id': {'sdtype': 'id'},
+                    'account_type': {'sdtype': 'id'},
+                },
+                'primary_key': 'transaction_id',
+            },
+        },
+    })
+
+    # Run
+    metadata.add_relationship(
+        parent_table_name='accounts',
+        child_table_name='transactions',
+        parent_primary_key=['account_type', 'user_id'],
+        child_foreign_key=['account_type', 'user_id'],
+    )
+
+    # Assert
+    assert len(metadata.relationships) == 1
+
+
+@pytest.mark.parametrize(
+    'parent_primary_key, child_foreign_key',
+    [
+        (['user_id', 'account_type'], ['user_id', 'account_type']),
+        (
+            ['user_id', 'account_type', 'region', 'bogus'],
+            ['user_id', 'account_type', 'region', 'bogus'],
+        ),
+        (['user_id', 'bogus'], ['user_id', 'bogus']),
+    ],
+    ids=['subset of actual pk', 'superset of actual pk', 'partial overlap'],
+)
+def test_add_relationship_mismatched_primary_key(parent_primary_key, child_foreign_key):
+    """Test that add_relationship raises when parent_primary_key doesn't match the actual PK."""
+    # Setup
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'accounts': {
+                'columns': {
+                    'user_id': {'sdtype': 'id'},
+                    'account_type': {'sdtype': 'id'},
+                    'region': {'sdtype': 'id'},
+                    'bogus': {'sdtype': 'id'},
+                    'col1': {'sdtype': 'numerical'},
+                },
+                'primary_key': ['user_id', 'account_type', 'region'],
+            },
+            'transactions': {
+                'columns': {
+                    'transaction_id': {'sdtype': 'id'},
+                    'user_id': {'sdtype': 'id'},
+                    'account_type': {'sdtype': 'id'},
+                    'region': {'sdtype': 'id'},
+                    'bogus': {'sdtype': 'id'},
+                },
+                'primary_key': 'transaction_id',
+            },
+        },
+    })
+
+    # Run and Assert
+    error_msg = re.escape(
+        f'Relationship between tables (accounts, transactions) '
+        f'has a mismatched primary key {sorted(parent_primary_key)}.'
+    )
+    with pytest.raises(InvalidMetadataError, match=error_msg):
+        metadata.add_relationship(
+            parent_table_name='accounts',
+            child_table_name='transactions',
+            parent_primary_key=parent_primary_key,
+            child_foreign_key=child_foreign_key,
+        )
