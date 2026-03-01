@@ -12,6 +12,7 @@ from sdv.cag._utils import (
     _filter_old_style_constraints,
     _is_list_of_type,
     _remove_columns_from_metadata,
+    _validate_columns_not_primary_key,
     _validate_constraints,
     _validate_constraints_single_table,
     _validate_table_and_column_names,
@@ -20,6 +21,34 @@ from sdv.cag._utils import (
 from sdv.cag.base import BaseConstraint
 from sdv.errors import SynthesizerInputError
 from sdv.metadata.metadata import Metadata
+
+
+def test__validate_columns_not_primary_key():
+    """Test validating columns do not appear in primary key."""
+    # Setup
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {'primary_key': 'col1'},
+            'composite_table': {
+                'primary_key': ['col1', 'col2'],
+            },
+        }
+    })
+    columns = ['col1', 'col2', 'col3']
+    expected_single_key_error = re.escape(
+        "Cannot apply constraint because 'col1' is the primary key of table 'table'."
+    )
+    expected_composite_key_error = re.escape(
+        "Cannot apply constraint because ['col1', 'col2'] are "
+        "part of the primary key for table 'composite_table'."
+    )
+
+    # Run and Assert
+    with pytest.raises(ConstraintNotMetError, match=expected_single_key_error):
+        _validate_columns_not_primary_key('table', columns, metadata)
+
+    with pytest.raises(ConstraintNotMetError, match=expected_composite_key_error):
+        _validate_columns_not_primary_key('composite_table', columns, metadata)
 
 
 def test__validate_table_and_column_names():
@@ -193,6 +222,9 @@ def test__remove_columns_from_metadata_raises_pk():
                 'primary_key': 'id',
                 'columns': {'id': {'sdtype': 'id'}},
             },
+            'child': {
+                'primary_key': ['pk1', 'pk2'],
+            },
         },
         'relationships': [
             {
@@ -211,6 +243,12 @@ def test__remove_columns_from_metadata_raises_pk():
             metadata=original_metadata,
             table_name='parent',
             columns_to_drop=['id'],
+        )
+    with pytest.raises(ValueError, match=cannot_remove_pk):
+        _remove_columns_from_metadata(
+            metadata=original_metadata,
+            table_name='child',
+            columns_to_drop=['pk1'],
         )
 
 

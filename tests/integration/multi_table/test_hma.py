@@ -2906,7 +2906,11 @@ class TestPrimaryKeyToPrimaryKey:
             child_foreign_key='user_id',
         )
         synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
-        match_ = re.escape("Error: foreign key column 'user_id' contains unknown references: (9).")
+        match_ = re.escape(
+            "Error: foreign key column 'user_id' contains unknown references:\n"
+            '   user_id\n'
+            '9        9\n'
+        )
 
         # Run and Assert
         with pytest.raises(InvalidDataError, match=match_):
