@@ -16,7 +16,7 @@ def _validate_columns_not_primary_key(table_name, columns, metadata):
     if metadata.tables[table_name]._primary_key_is_composite:
         key_columns = set(primary_key).intersection(set(columns))
         if key_columns:
-            pk_columns = "', '".join(key_columns)
+            pk_columns = "', '".join(sorted(key_columns))
             raise ConstraintNotMetError(
                 f"Cannot apply constraint because ['{pk_columns}'] are "
                 f"part of the primary key for table '{table_name}'."
