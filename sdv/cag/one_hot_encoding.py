@@ -10,6 +10,7 @@ from sdv.cag._utils import (
     _get_is_valid_dict,
     _is_list_of_type,
     _remove_columns_from_metadata,
+    _validate_columns_not_primary_key,
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
 )
@@ -73,6 +74,8 @@ class OneHotEncoding(BaseConstraint):
                 If any of the validations fail.
         """
         _validate_table_and_column_names(self.table_name, self._column_names, metadata)
+        table_name = self._get_single_table_name(metadata)
+        _validate_columns_not_primary_key(table_name, self._column_names, metadata)
 
     def _get_valid_table_data(self, table_data):
         one_hot_data = table_data[self._column_names]
