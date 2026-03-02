@@ -439,7 +439,7 @@ class BaseMultiTableSynthesizer:
     def validate(self, data):
         """Validate the data.
 
-        Validate that the metadata matches the data and thta every table's constraints are valid.
+        Validate that the metadata matches the data and that every table's constraints are valid.
 
         Args:
             data (dict[str, pd.DataFrame]):
