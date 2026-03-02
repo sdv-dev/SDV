@@ -1579,30 +1579,38 @@ def test_add_relationship_pk_to_pk(
 
 
 def test_add_column_relationship_fails_with_primary_key_column():
-    """Test that adding a column relationship fails if the column is part of the primary key."""
+    """Test that adding a column relationship fails if the column is part of the primary key.
+
+    This test also adds a `billing` mutation to the column relationship types
+    for `SingleTableMetadata`. The error that is being raised otherwise
+    is `ImportError` instead of `InvalidMetadataError`.
+    """
     # Setup
     data, metadata = download_test_demo(modality='single_table', dataset_name='fake_hotel_guests')
-    metadata.tables['fake_hotel_guests']._COLUMN_RELATIONSHIP_TYPES['address'] = Mock()
     metadata.update_column(column_name='billing_address', sdtype='street_address')
     metadata.set_primary_key(['guest_email', 'billing_address'])
     expected_msg = "Cannot use primary key 'billing_address' in column relationship."
+    SingleTableMetadata._COLUMN_RELATIONSHIP_TYPES['billing'] = Mock()
 
     # Run and Assert
     with pytest.raises(InvalidMetadataError, match=expected_msg):
         metadata.add_column_relationship(
-            column_names=['billing_address'], relationship_type='address'
+            column_names=['billing_address'], relationship_type='billing'
         )
+
+    # Test cleanup: remove 'billing' from the class-level relationship types.
+    # Without this, the mutation would leak into later SingleTableMetadata instances.
+    SingleTableMetadata._COLUMN_RELATIONSHIP_TYPES.pop('billing')
 
 
 def test_metadata_fails_for_relationship_with_set_primary_key_column_in_relationship():
     """Test metadata set_primary_key fails if a column relationship includes primary key column."""
     # Setup
     data, metadata = download_test_demo(modality='single_table', dataset_name='fake_hotel_guests')
-    metadata.tables['fake_hotel_guests']._COLUMN_RELATIONSHIP_TYPES['address'] = Mock()
     metadata.update_column(column_name='billing_address', sdtype='street_address')
     metadata.add_column_relationship(column_names=['billing_address'], relationship_type='address')
-    error_msg_pattern = r"Cannot set primary key '.*' because it is part of a column relationship\."
+    expected_msg = r"Cannot set primary key '.*' because it is part of a column relationship\."
 
     # Run and Assert
-    with pytest.raises(InvalidMetadataError, match=error_msg_pattern):
+    with pytest.raises(InvalidMetadataError, match=expected_msg):
         metadata.set_primary_key(['guest_email', 'billing_address'])
