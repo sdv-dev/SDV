@@ -7,6 +7,7 @@ from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _get_is_valid_dict,
     _remove_columns_from_metadata,
+    _validate_columns_not_primary_key,
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
 )
@@ -67,6 +68,7 @@ class FixedIncrements(BaseConstraint):
             self.table_name, columns=[self.column_name], metadata=metadata
         )
         table_name = self._get_single_table_name(metadata)
+        _validate_columns_not_primary_key(table_name, [self.column_name], metadata)
         col_sdtype = metadata.tables[table_name].columns[self.column_name]['sdtype']
         if col_sdtype != 'numerical':
             raise ConstraintNotMetError(
