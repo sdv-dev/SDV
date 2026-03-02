@@ -1597,6 +1597,7 @@ class TestBaseMultiTableSynthesizer:
         original_metadata = get_multi_table_metadata()
         instance.metadata = original_metadata
         instance._original_metadata = original_metadata
+        instance._composite_keys_metadata = None
         instance.constraints = []
         instance._single_table_constraints = []
         constraint1 = Mock()
@@ -1649,6 +1650,7 @@ class TestBaseMultiTableSynthesizer:
         original_metadata = get_multi_table_metadata()
         instance.metadata = original_metadata
         instance._original_metadata = original_metadata
+        instance._composite_keys_metadata = None
         instance.constraints = []
         instance._single_table_constraints = []
         constraint1 = Mock()
@@ -1698,6 +1700,7 @@ class TestBaseMultiTableSynthesizer:
         metadata = get_multi_table_metadata()
         original_metadata = Mock()
         instance._original_metadata = original_metadata
+        instance._composite_keys_metadata = None
         instance.metadata = metadata
         constraint1 = Mock()
         constraint2 = Mock()

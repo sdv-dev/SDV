@@ -4,9 +4,28 @@ import warnings
 import numpy as np
 import pandas as pd
 
+from sdv._utils import _cast_to_iterable
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.errors import RefitWarning, SynthesizerInputError, TableNameError
 from sdv.metadata import Metadata
+
+
+def _validate_columns_not_primary_key(table_name, columns, metadata):
+    """Validate that none of the columns are in the primary key for the table."""
+    primary_key = metadata.tables[table_name].primary_key
+    if metadata.tables[table_name]._primary_key_is_composite:
+        key_columns = set(primary_key).intersection(set(columns))
+        if key_columns:
+            pk_columns = "', '".join(sorted(key_columns))
+            raise ConstraintNotMetError(
+                f"Cannot apply constraint because ['{pk_columns}'] are "
+                f"part of the primary key for table '{table_name}'."
+            )
+    elif primary_key in columns:
+        raise ConstraintNotMetError(
+            f"Cannot apply constraint because '{primary_key}' is the "
+            f"primary key of table '{table_name}'."
+        )
 
 
 def _validate_columns_in_metadata(table_name, columns, metadata):
@@ -137,9 +156,9 @@ def _remove_columns_from_metadata(metadata, table_name, columns_to_drop):
     if isinstance(metadata, Metadata):
         metadata = metadata.to_dict()
     column_set = set(columns_to_drop)
-    primary_key = metadata['tables'][table_name].get('primary_key')
+    primary_key = _cast_to_iterable(metadata['tables'][table_name].get('primary_key'))
     for column in column_set:
-        if primary_key and primary_key == column:
+        if primary_key and column in primary_key:
             raise ValueError('Cannot remove primary key from Metadata')
         del metadata['tables'][table_name]['columns'][column]
 
