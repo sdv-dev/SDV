@@ -536,6 +536,9 @@ class MultiTableMetadata:
     def _detect_foreign_keys_by_column_name(self, data):
         """Detect the foreign keys based on if a column name matches a primary key.
 
+        If a column name (a child table) is a primary key, it will also be considered
+        to be a valid candidate for a foreign key.
+
         Args:
             data (dict):
                 Dictionary of table names to dataframes.
@@ -567,6 +570,7 @@ class MultiTableMetadata:
                         )
 
                     except InvalidMetadataError:
+                        # circular relationship
                         if pk_sdtype == 'id' and original_fk_sdtype != 'id':
                             self.update_column(
                                 table_name=child_candidate,
