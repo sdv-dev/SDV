@@ -219,6 +219,7 @@ class SingleTableMetadata:
         self.column_relationships = []
         self._version = self.METADATA_SPEC_VERSION
         self._updated = False
+        self._valid_column_relationships = []
 
     @property
     def _primary_key_is_composite(self):
@@ -836,6 +837,20 @@ class SingleTableMetadata:
 
             self._validate_keys_sdtype([column_name], key_type)
 
+    def _validate_primary_key_not_in_column_relationship(self, primary_key_candidate):
+        if isinstance(primary_key_candidate, list):
+            primary_key_candidate = set(primary_key_candidate)
+        else:
+            primary_key_candidate = {primary_key_candidate}
+
+        for column_relationship in self.column_relationships:
+            column_names = set(column_relationship['column_names'])
+            if column_names.intersection(primary_key_candidate):
+                raise InvalidMetadataError(
+                    f"Cannot set primary key '{primary_key_candidate}' because it is part "
+                    'of a column relationship.'
+                )
+
     def set_primary_key(self, column_name):
         """Set the metadata primary key.
 
@@ -847,6 +862,7 @@ class SingleTableMetadata:
             column_name = column_name[0]
 
         self._validate_key(column_name, 'primary')
+        self._validate_primary_key_not_in_column_relationship(column_name)
         if column_name in self.alternate_keys:
             warnings.warn(
                 f"'{column_name}' is currently set as an alternate key and will be removed from "
@@ -1004,11 +1020,17 @@ class SingleTableMetadata:
                 f'Must be one of {list(self._COLUMN_RELATIONSHIP_TYPES.keys())}.'
             )
 
+        primary_keys = set()
+        if isinstance(self.primary_key, list):
+            primary_keys = set(self.primary_key)
+        elif self.primary_key:
+            primary_keys = {self.primary_key}
+
         errors = []
         for column in column_names:
             if column not in self.columns:
                 errors.append(f"Column '{column}' not in metadata.")
-            elif self.primary_key == column:
+            if column in primary_keys:
                 errors.append(f"Cannot use primary key '{column}' in column relationship.")
 
         columns_to_sdtypes = {
