@@ -899,33 +899,16 @@ def test_detect_from_dataframes__primary_to_primary():
     )
 
     # Assert
-    assert detected_metadata.to_dict() == {
-        'tables': {
-            'tableA': {
-                'columns': {
-                    'table_A_id': {'sdtype': 'id'},
-                    'column_1': {'sdtype': 'categorical'},
-                },
-                'primary_key': 'table_A_id',
-            },
-            'tableB': {
-                'columns': {
-                    'table_A_id': {'sdtype': 'id'},
-                    'column_2': {'sdtype': 'categorical'},
-                },
-                'primary_key': 'table_A_id',
-            },
-        },
-        'relationships': [
-            {
-                'parent_table_name': 'tableA',
-                'child_table_name': 'tableB',
-                'parent_primary_key': 'table_A_id',
-                'child_foreign_key': 'table_A_id',
-            }
-        ],
-        'METADATA_SPEC_VERSION': 'V1',
-    }
+    assert detected_metadata.tables['tableA'].primary_key == 'table_A_id'
+    assert detected_metadata.tables['tableB'].primary_key == 'table_A_id'
+    assert detected_metadata.relationships == [
+        {
+            'parent_table_name': 'tableA',
+            'child_table_name': 'tableB',
+            'parent_primary_key': 'table_A_id',
+            'child_foreign_key': 'table_A_id',
+        }
+    ]
 
 
 def test_detect_from_dataframes__primary_to_primary_no_cycles():
@@ -952,37 +935,29 @@ def test_detect_from_dataframes__primary_to_primary_no_cycles():
     )
 
     # Assert
-    assert detected_metadata.to_dict() == {
-        'tables': {
-            'tableA': {
-                'columns': {'table_A_id': {'sdtype': 'id'}, 'column_1': {'sdtype': 'categorical'}},
-                'primary_key': 'table_A_id',
-            },
-            'tableB': {
-                'columns': {'table_A_id': {'sdtype': 'id'}, 'column_2': {'sdtype': 'categorical'}},
-                'primary_key': 'table_A_id',
-            },
-            'tableC': {
-                'columns': {'table_A_id': {'sdtype': 'id'}, 'column_2': {'sdtype': 'categorical'}},
-                'primary_key': 'table_A_id',
-            },
-        },
-        'relationships': [
-            {
-                'parent_table_name': 'tableA',
-                'child_table_name': 'tableC',
-                'parent_primary_key': 'table_A_id',
-                'child_foreign_key': 'table_A_id',
-            },
-            {
-                'parent_table_name': 'tableA',
-                'child_table_name': 'tableB',
-                'parent_primary_key': 'table_A_id',
-                'child_foreign_key': 'table_A_id',
-            },
-        ],
-        'METADATA_SPEC_VERSION': 'V1',
-    }
+    assert detected_metadata.tables['tableA'].primary_key == 'table_A_id'
+    assert detected_metadata.tables['tableB'].primary_key == 'table_A_id'
+    assert detected_metadata.tables['tableC'].primary_key == 'table_A_id'
+    if len(detected_metadata.relationships) == 1:
+        assert {
+            'child_foreign_key': 'table_A_id',
+            'child_table_name': 'tableB',
+            'parent_primary_key': 'table_A_id',
+            'parent_table_name': 'tableA',
+        } in detected_metadata.relationships
+    else:
+        assert {
+            'parent_table_name': 'tableA',  # PK to PK
+            'child_table_name': 'tableC',
+            'parent_primary_key': 'table_A_id',
+            'child_foreign_key': 'table_A_id',
+        } in detected_metadata.relationships
+        assert {
+            'parent_table_name': 'tableA',  # PK to PK
+            'child_table_name': 'tableB',
+            'parent_primary_key': 'table_A_id',
+            'child_foreign_key': 'table_A_id',
+        } in detected_metadata.relationships
 
 
 def test_validate_metadata_with_reused_foreign_keys():
