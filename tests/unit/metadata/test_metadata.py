@@ -778,20 +778,23 @@ class TestMetadataClass:
         instance._detect_foreign_keys_by_column_name(data)
 
         # Assert
-        assert instance.to_dict()['relationships'] == [
-            {
-                'parent_table_name': 'table1',
-                'child_table_name': 'table3',
-                'parent_primary_key': 'id',
-                'child_foreign_key': 'id',
-            },
+        expected = [
             {
                 'parent_table_name': 'table1',
                 'child_table_name': 'table2',
                 'parent_primary_key': 'id',
                 'child_foreign_key': 'id',
             },
+            {
+                'parent_table_name': 'table1',
+                'child_table_name': 'table3',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'id',
+            },
         ]
+        for rel in expected:
+            assert rel in instance.to_dict()['relationships']
+        assert len(instance.relationships) == 2
 
     @patch('sdv.metadata.metadata.Metadata')
     def test_detect_from_dataframe(self, mock_metadata):
