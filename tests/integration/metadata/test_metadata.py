@@ -940,10 +940,10 @@ def test_detect_from_dataframes__primary_to_primary_no_cycles():
     assert detected_metadata.tables['tableC'].primary_key == 'table_A_id'
     if len(detected_metadata.relationships) == 1:
         assert {
-            'child_foreign_key': 'table_A_id',
-            'child_table_name': 'tableB',
-            'parent_primary_key': 'table_A_id',
             'parent_table_name': 'tableA',
+            'child_table_name': 'tableB',
+            'child_foreign_key': 'table_A_id',
+            'parent_primary_key': 'table_A_id',
         } in detected_metadata.relationships
     else:
         assert {
