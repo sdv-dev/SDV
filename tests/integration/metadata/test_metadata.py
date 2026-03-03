@@ -938,26 +938,19 @@ def test_detect_from_dataframes__primary_to_primary_no_cycles():
     assert detected_metadata.tables['tableA'].primary_key == 'table_A_id'
     assert detected_metadata.tables['tableB'].primary_key == 'table_A_id'
     assert detected_metadata.tables['tableC'].primary_key == 'table_A_id'
-    if len(detected_metadata.relationships) == 1:
-        assert {
-            'parent_table_name': 'tableA',
-            'child_table_name': 'tableB',
-            'child_foreign_key': 'table_A_id',
-            'parent_primary_key': 'table_A_id',
-        } in detected_metadata.relationships
-    else:
-        assert {
-            'parent_table_name': 'tableA',  # PK to PK
-            'child_table_name': 'tableC',
-            'parent_primary_key': 'table_A_id',
-            'child_foreign_key': 'table_A_id',
-        } in detected_metadata.relationships
-        assert {
-            'parent_table_name': 'tableA',  # PK to PK
-            'child_table_name': 'tableB',
-            'parent_primary_key': 'table_A_id',
-            'child_foreign_key': 'table_A_id',
-        } in detected_metadata.relationships
+    assert len(detected_metadata.relationships) == 2
+    assert {
+        'parent_table_name': 'tableA',  # PK to PK
+        'child_table_name': 'tableC',
+        'parent_primary_key': 'table_A_id',
+        'child_foreign_key': 'table_A_id',
+    } in detected_metadata.relationships
+    assert {
+        'parent_table_name': 'tableA',  # PK to PK
+        'child_table_name': 'tableB',
+        'parent_primary_key': 'table_A_id',
+        'child_foreign_key': 'table_A_id',
+    } in detected_metadata.relationships
 
 
 def test_validate_metadata_with_reused_foreign_keys():
