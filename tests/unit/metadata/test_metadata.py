@@ -781,13 +781,13 @@ class TestMetadataClass:
         assert instance.to_dict()['relationships'] == [
             {
                 'parent_table_name': 'table1',
-                'child_table_name': 'table2',
+                'child_table_name': 'table3',
                 'parent_primary_key': 'id',
                 'child_foreign_key': 'id',
             },
             {
                 'parent_table_name': 'table1',
-                'child_table_name': 'table3',
+                'child_table_name': 'table2',
                 'parent_primary_key': 'id',
                 'child_foreign_key': 'id',
             },
