@@ -879,6 +879,80 @@ def test_detect_from_dataframes_invalid_format():
         Metadata.detect_from_dataframes(data)
 
 
+def test_detect_from_dataframes__primary_to_primary():
+    """Test metadata auto-detection works for primary to primary relationships."""
+    # Setup
+    data = {
+        'tableA': pd.DataFrame({
+            'table_A_id': range(5),
+            'column_1': ['A', 'B', 'B', 'C', 'C'],
+        }),
+        'tableB': pd.DataFrame({
+            'table_A_id': range(5),
+            'column_2': ['A', 'B', 'B', 'C', 'C'],
+        }),
+    }
+
+    # Run
+    detected_metadata = Metadata().detect_from_dataframes(
+        data, foreign_key_inference_algorithm='column_name_match'
+    )
+
+    # Assert
+    assert detected_metadata.tables['tableA'].primary_key == 'table_A_id'
+    assert detected_metadata.tables['tableB'].primary_key == 'table_A_id'
+    assert detected_metadata.relationships == [
+        {
+            'parent_table_name': 'tableA',
+            'child_table_name': 'tableB',
+            'parent_primary_key': 'table_A_id',
+            'child_foreign_key': 'table_A_id',
+        }
+    ]
+
+
+def test_detect_from_dataframes__primary_to_primary_no_cycles():
+    """Test metadata auto-detection does not create cycles with PK to PK."""
+    # Setup
+    data = {
+        'tableA': pd.DataFrame({
+            'table_A_id': range(5),
+            'column_1': ['A', 'B', 'B', 'C', 'C'],
+        }),
+        'tableB': pd.DataFrame({
+            'table_A_id': range(5),
+            'column_2': ['A', 'B', 'B', 'C', 'C'],
+        }),
+        'tableC': pd.DataFrame({
+            'table_A_id': range(5),
+            'column_2': ['A', 'B', 'B', 'C', 'C'],
+        }),
+    }
+
+    # Run
+    detected_metadata = Metadata().detect_from_dataframes(
+        data, foreign_key_inference_algorithm='column_name_match'
+    )
+
+    # Assert
+    assert detected_metadata.tables['tableA'].primary_key == 'table_A_id'
+    assert detected_metadata.tables['tableB'].primary_key == 'table_A_id'
+    assert detected_metadata.tables['tableC'].primary_key == 'table_A_id'
+    assert len(detected_metadata.relationships) == 2
+    assert {
+        'parent_table_name': 'tableA',  # PK to PK
+        'child_table_name': 'tableC',
+        'parent_primary_key': 'table_A_id',
+        'child_foreign_key': 'table_A_id',
+    } in detected_metadata.relationships
+    assert {
+        'parent_table_name': 'tableA',  # PK to PK
+        'child_table_name': 'tableB',
+        'parent_primary_key': 'table_A_id',
+        'child_foreign_key': 'table_A_id',
+    } in detected_metadata.relationships
+
+
 def test_validate_metadata_with_reused_foreign_keys():
     # Setup
     metadata_dict = {
