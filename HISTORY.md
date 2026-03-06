@@ -1,5 +1,11 @@
 # Release Notes
 
+## v1.34.3 - 2026-03-06
+
+### New Features
+
+* Metadata should be able to auto-detect cases where a primary key is also a foreign key (`column_name_match` algorithm) - Issue [#2788](https://github.com/sdv-dev/SDV/issues/2788) by @gsheni
+
 ## v1.34.2 - 2026-02-27
 
 ### New Features
