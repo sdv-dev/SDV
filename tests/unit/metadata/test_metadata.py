@@ -727,6 +727,75 @@ class TestMetadataClass:
         with pytest.raises(ValueError, match=expected_message):
             Metadata.detect_from_dataframes(data, infer_keys=infer_keys)
 
+    def test_detect_from_dataframe_primary_key_to_primary_key(self):
+        """Test primary to primary key relationship is detected if column name match."""
+        # Setup
+        data = {
+            'table1': pd.DataFrame({
+                'id': [1, 2, 3],
+            }),
+            'table2': pd.DataFrame({
+                'id': [1, 2, 3],
+            }),
+        }
+        instance = Metadata()
+        instance.detect_table_from_dataframe('table1', data['table1'])
+        instance.detect_table_from_dataframe('table2', data['table2'])
+
+        # Run
+        instance._detect_foreign_keys_by_column_name(data)
+
+        # Assert
+        assert instance.to_dict()['relationships'] == [
+            {
+                'parent_table_name': 'table1',
+                'child_table_name': 'table2',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'id',
+            }
+        ]
+
+    def test_detect_from_dataframe_primary_key_to_primary_key_no_cycles(self):
+        """Test no cycles are created with primary to primary key relationship."""
+        # Setup
+        data = {
+            'table1': pd.DataFrame({
+                'id': [1, 2, 3],
+            }),
+            'table2': pd.DataFrame({
+                'id': [1, 2, 3],
+            }),
+            'table3': pd.DataFrame({
+                'id': [1, 2, 3],
+            }),
+        }
+        instance = Metadata()
+        instance.detect_table_from_dataframe('table1', data['table1'])
+        instance.detect_table_from_dataframe('table2', data['table2'])
+        instance.detect_table_from_dataframe('table3', data['table3'])
+
+        # Run
+        instance._detect_foreign_keys_by_column_name(data)
+
+        # Assert
+        expected = [
+            {
+                'parent_table_name': 'table1',
+                'child_table_name': 'table2',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'id',
+            },
+            {
+                'parent_table_name': 'table1',
+                'child_table_name': 'table3',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'id',
+            },
+        ]
+        for rel in expected:
+            assert rel in instance.to_dict()['relationships']
+        assert len(instance.relationships) == 2
+
     @patch('sdv.metadata.metadata.Metadata')
     def test_detect_from_dataframe(self, mock_metadata):
         """Test that the method calls the detection method and returns the metadata.
