@@ -1319,3 +1319,27 @@ class TestMetadataClass:
         assert list(trades_mock.columns.keys()) == ['id', 'cost', 'quantity', 'time']
         assert trades_mock.alternate_keys == []
         assert metadata._multi_table_updated
+
+    def test_validate_with_composite_key_that_has_duplicates(self):
+        """Test that `validate` will error out if the comoposite key has duplicated columns."""
+        # Setup
+        account_metadata = Metadata.load_from_dict({
+            'tables': {
+                'accounts': {
+                    'columns': {
+                        'user_id': {'sdtype': 'id', 'regex_format': 'ID_[0-9]{1,2}'},
+                        'account_type': {'sdtype': 'categorical'},
+                        'col1': {'sdtype': 'categorical'},
+                        'col2': {'sdtype': 'categorical'},
+                    }
+                }
+            }
+        })
+        account_metadata.tables['accounts'].primary_key = ['user_id', 'user_id', 'fk_id', 'fk_id']
+
+        # Run and Assert
+        expected_message = (
+            "'primary_key' must be a list of unique columns. Duplicates: user_id, fk_id"
+        )
+        with pytest.raises(InvalidMetadataError, match=expected_message):
+            account_metadata.validate()
