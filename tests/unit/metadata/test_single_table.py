@@ -1899,14 +1899,18 @@ class TestSingleTableMetadata:
         """Test setting a composite key that has repeated columns multiple times."""
         # Setup
         instance = SingleTableMetadata()
-        instance.columns = {'column': {'sdtype': 'id'}, 'column_b': {'sdtype': 'id'}}
+        instance.columns = {
+            'column': {'sdtype': 'id'},
+            'column_b': {'sdtype': 'id'},
+            'column_c': {'sdtype': 'id'},
+        }
 
         # Run and Assert
         expected_msg = (
             "'primary_key' must be a list of unique columns. Duplicates: column, column_b"
         )
         with pytest.raises(InvalidMetadataError, match=expected_msg):
-            instance.set_primary_key(['column', 'column', 'column_b', 'column_b'])
+            instance.set_primary_key(['column', 'column', 'column_b', 'column_b', 'column_c'])
 
     def test_remove_primary_key(self):
         """Test that ``remove_primary_key`` removes the ``primary_key`` value."""
