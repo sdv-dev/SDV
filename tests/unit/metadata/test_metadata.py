@@ -1319,3 +1319,22 @@ class TestMetadataClass:
         assert list(trades_mock.columns.keys()) == ['id', 'cost', 'quantity', 'time']
         assert trades_mock.alternate_keys == []
         assert metadata._multi_table_updated
+
+    def test_set_primary_key_docstring(self):
+        """Test that the `set_primary_key` docstring contains expected info."""
+        # Setup
+        expected_msg = (
+            'Set the primary key of a table.\n\n'
+            'Args:\n'
+            '    table_name (str):\n'
+            '        Name of the table to set the primary key.\n'
+            '    column_name (str, tulple[str]):\n'
+            '        Name (or tuple of names) of the primary key column(s).\n'
+        )
+        metadata = Metadata()
+
+        # Run
+        result = metadata.set_primary_key.__doc__
+
+        # Assert
+        assert result == expected_msg
