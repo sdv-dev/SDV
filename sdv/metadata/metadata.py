@@ -435,10 +435,10 @@ class Metadata(MultiTableMetadata):
         """Set the primary key of a table.
 
         Args:
+            column_name (str, list[str]):
+                Name (or list of names) of the primary key column(s).
             table_name (str):
                 Name of the table to set the primary key.
-            column_name (str, tulple[str]):
-                Name (or tuple of names) of the primary key column(s).
         """
         table_name = self._handle_table_name(table_name)
         super().set_primary_key(table_name, column_name)

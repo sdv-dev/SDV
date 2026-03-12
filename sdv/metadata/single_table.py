@@ -855,8 +855,8 @@ class SingleTableMetadata:
         """Set the metadata primary key.
 
         Args:
-            column_name (str):
-                Name of the primary key column(s).
+            column_name (str, list[str]):
+                Name (or list of names) of the primary key column(s).
         """
         if isinstance(column_name, list) and len(column_name) == 1:
             column_name = column_name[0]

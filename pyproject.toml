@@ -202,7 +202,6 @@ exclude = [
     "*.ipynb",
     ".ipynb_checkpoints",
     "tasks.py",
-    "*.md",
 ]
 
 [tool.ruff.lint]

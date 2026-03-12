@@ -1326,10 +1326,10 @@ class TestMetadataClass:
         expected_msg = (
             'Set the primary key of a table.\n\n'
             'Args:\n'
+            '    column_name (str, list[str]):\n'
+            '        Name (or list of names) of the primary key column(s).\n'
             '    table_name (str):\n'
             '        Name of the table to set the primary key.\n'
-            '    column_name (str, tulple[str]):\n'
-            '        Name (or tuple of names) of the primary key column(s).\n'
         )
         metadata = Metadata()
 
