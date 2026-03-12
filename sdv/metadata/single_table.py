@@ -4,7 +4,7 @@ import json
 import logging
 import re
 import warnings
-from collections import defaultdict
+from collections import Counter, defaultdict
 from copy import deepcopy
 from datetime import datetime
 
@@ -811,6 +811,16 @@ class SingleTableMetadata:
 
     def _validate_key(self, column_name, key_type):
         """Validate the primary and sequence keys."""
+        if isinstance(column_name, list):
+            counts = Counter(column_name)
+            repeated = [column for column, count in counts.items() if count > 1]
+            if repeated:
+                err_msg = (
+                    f"'{key_type}_key' must be a list of unique columns. "
+                    f'Duplicates: {", ".join(repeated)}'
+                )
+                raise InvalidMetadataError(err_msg)
+
         if column_name is not None:
             if not self._validate_key_datatype(column_name, key_type):
                 err_msg = f"'{key_type}_key' must be a string"
