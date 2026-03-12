@@ -1321,7 +1321,7 @@ class TestMetadataClass:
         assert metadata._multi_table_updated
 
     def test_validate_with_composite_key_that_has_duplicates(self):
-        """Test that `validate` will error out if the comoposite key has duplicated columns."""
+        """Test that `validate` will error out if the composite key has duplicated columns."""
         # Setup
         account_metadata = Metadata.load_from_dict({
             'tables': {
