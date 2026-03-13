@@ -31,6 +31,38 @@ def test_single_table_metadata():
     assert instance.sequence_index is None
 
 
+def test_single_table_metadata_composite_primary_key():
+    """Test ``SingleTableMetadata`` with composite primary key."""
+    # Create an instance
+    expected_metadata_dict = {
+        'columns': {
+            'pk_col1': {'sdtype': 'id'},
+            'pk_col2': {'sdtype': 'ssn', 'pii': True},
+            'pk_col3': {'sdtype': 'categorical'},
+        },
+        'primary_key': ['pk_col1', 'pk_col2', 'pk_col3'],
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+    }
+
+    instance = SingleTableMetadata()
+    instance.add_column('pk_col1', sdtype='id')
+    instance.add_column('pk_col2', sdtype='ssn')
+    instance.add_column('pk_col3', sdtype='categorical')
+    instance.set_primary_key(['pk_col1', 'pk_col2', 'pk_col3'])
+
+    # To dict
+    result = instance.to_dict()
+
+    # Assert
+    assert result == expected_metadata_dict
+    assert instance.columns == expected_metadata_dict['columns']
+    assert instance._version == 'SINGLE_TABLE_V1'
+    assert instance.primary_key == expected_metadata_dict['primary_key']
+    assert instance.sequence_key is None
+    assert instance.alternate_keys == []
+    assert instance.sequence_index is None
+
+
 @patch('rdt.transformers')
 def test_add_column_relationship(mock_rdt_transformers):
     """Test ``add_column_relationship`` method."""
@@ -164,7 +196,7 @@ def test_validate_errors(mock_rdt_transformers):
 
     err_msg = re.escape(
         'The following errors were found in the metadata:'
-        "\n\n'primary_key' must be a string."
+        "\n\n'primary_key' must be a string or a list of strings."
         "\n'sequence_key' must be a string."
         "\nUnknown sequence index value {'col3'}. Keys should be columns that exist in the table."
         "\n'sequence_index' and 'sequence_key' have the same value {'col3'}."

@@ -26,9 +26,12 @@ except ImportError:
 MODELABLE_SDTYPES = ['categorical', 'numerical', 'datetime', 'boolean']
 
 
-def _cast_to_iterable(value):
+def _cast_to_iterable(value, iterable_type=None):
     """Return a ``list`` if the input object is not a ``list`` or ``tuple``."""
     if isinstance(value, (list, tuple)):
+        if iterable_type:
+            return iterable_type(value)
+
         return value
 
     return [value]
@@ -513,3 +516,23 @@ def _validate_correct_synthesizer_loading(synthesizer, cls):
             f"but got '{synthesizer_name}'. Please ensure you are loading the correct "
             f'synthesizer type.'
         )
+
+
+def _sort_keys(keys):
+    return sorted(keys, key=lambda key: key if isinstance(key, str) else key[0])
+
+
+def _get_unreferenced_keys(parent_columns, child_columns):
+    indicator = _create_unique_name(
+        '_merge', list(child_columns.columns) + list(parent_columns.columns)
+    )
+    merged = child_columns.merge(
+        parent_columns,
+        left_on=list(child_columns.columns),
+        right_on=list(parent_columns.columns),
+        how='left',
+        indicator=indicator,
+    )
+    merged = merged[merged[indicator] == 'left_only'][list(child_columns.columns)]
+    merged = merged.dropna(how='all')
+    return merged.dropna(how='all')

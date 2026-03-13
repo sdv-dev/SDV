@@ -114,6 +114,20 @@ class BaseMultiTableSynthesizer:
                 ' in future SDV versions.'
             )
 
+    def _handle_composite_keys(self):
+        """Validates that composite keys are not used in Public SDV."""
+        composite_key_tables = []
+        for table, table_metadata in self.metadata.tables.items():
+            if table_metadata._primary_key_is_composite:
+                composite_key_tables.append(table)
+
+        if composite_key_tables:
+            raise SynthesizerInputError(
+                'Your metadata contains composite keys (primary key of tables '
+                f'{composite_key_tables} have multiple columns). Composite keys are '
+                'not supported in SDV Community.'
+            )
+
     def __init__(self, metadata, locales=['en_US'], synthesizer_kwargs=None):
         self.metadata = metadata
         if type(metadata) is MultiTableMetadata:
@@ -123,14 +137,16 @@ class BaseMultiTableSynthesizer:
             self.metadata.validate()
 
         self._check_metadata_updated()
+        self._original_metadata = deepcopy(self.metadata)
+        self._modified_multi_table_metadata = deepcopy(self.metadata)
+        self._composite_keys_metadata = None
+        self._handle_composite_keys()
         self.locales = locales
         self.verbose = False
         self.extended_columns = defaultdict(dict)
         self._table_synthesizers = {}
         self._table_parameters = defaultdict(dict)
         self._original_table_columns = {}
-        self._original_metadata = deepcopy(self.metadata)
-        self._modified_multi_table_metadata = deepcopy(self.metadata)
         self.constraints = []
         self._single_table_constraints = []
         if synthesizer_kwargs is not None:
@@ -215,6 +231,10 @@ class BaseMultiTableSynthesizer:
         """
         constraints = _validate_constraints(constraints, self._fitted)
         metadata = self.metadata
+        if self._composite_keys_metadata is not None:
+            metadata = self._composite_keys_metadata
+            self._modified_multi_table_metadata = self._composite_keys_metadata
+
         multi_table_constraints = []
         single_table_constraints = []
         idx_single_table_constraint = self._detect_single_table_constraints(constraints)
@@ -231,6 +251,9 @@ class BaseMultiTableSynthesizer:
             self._modified_multi_table_metadata = metadata
 
         self.metadata = metadata
+        self._composite_key = None
+        self._handle_composite_keys()
+
         self._validate_single_table_constraints(single_table_constraints)
         self.constraints += multi_table_constraints
         self._constraints_fitted = False
@@ -340,6 +363,9 @@ class BaseMultiTableSynthesizer:
 
     def _reverse_transform_constraints(self, sampled_data):
         """Reverse transform constraints after sampling."""
+        if getattr(self, '_composite_keys', None):
+            sampled_data = self._composite_keys.reverse_transform(sampled_data)
+
         if not hasattr(self, 'constraints'):
             return sampled_data
 
@@ -448,6 +474,7 @@ class BaseMultiTableSynthesizer:
         errors = []
         metadata = self._original_metadata
         metadata.validate_data(data)
+        data = self._validate_transform_constraints(data, enforce_constraint_fitting=True)
         for table_name in data:
             if table_name in self._table_synthesizers:
                 # Validate rules specific to each synthesizer
@@ -455,8 +482,6 @@ class BaseMultiTableSynthesizer:
 
         if errors:
             raise InvalidDataError(errors)
-
-        self._validate_transform_constraints(data, enforce_constraint_fitting=True)
 
     def _validate_table_name(self, table_name):
         if table_name not in self._table_synthesizers:
@@ -567,6 +592,10 @@ class BaseMultiTableSynthesizer:
         list_of_changed_tables = self._store_and_convert_original_cols(data)
         self.validate(data)
         data = self._validate_transform_constraints(data)
+        if getattr(self, '_composite_keys', None):
+            self._composite_keys.fit(data, self._composite_keys_metadata)
+            data = self._composite_keys.transform(data)
+
         if self._fitted:
             msg = (
                 'This model has already been fitted. To use the new preprocessed data, '
