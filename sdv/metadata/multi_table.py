@@ -689,8 +689,8 @@ class MultiTableMetadata:
         Args:
             table_name (str):
                 Name of the table to set the primary key.
-            column_name (str, tulple[str]):
-                Name (or tuple of names) of the primary key column(s).
+            column_name (str, list[str]):
+                Name (or list of names) of the primary key column(s).
         """
         self._validate_table_exists(table_name)
         self.tables[table_name].set_primary_key(column_name)
