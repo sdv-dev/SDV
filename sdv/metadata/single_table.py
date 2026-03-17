@@ -803,7 +803,7 @@ class SingleTableMetadata:
                 bad_keys.append(key)
 
         if bad_keys:
-            if isinstance(bad_keys[0], list):
+            if isinstance(bad_keys[0], (list, tuple)):
                 bad_keys = bad_keys.pop(0)
 
             bad_keys = _sort_keys(bad_keys)
