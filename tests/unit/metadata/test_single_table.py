@@ -3803,3 +3803,44 @@ class TestSingleTableMetadata:
 
         # Assert
         assert result is False
+
+    @pytest.mark.parametrize(
+        'column_meta',
+        [
+            {
+                'sdtype': 'id',
+                'regex_format': r'\d{30}',
+            },
+            {
+                'sdtype': 'email',
+                'pii': True,
+            },
+            {'sdtype': 'id'},
+        ],
+    )
+    def test__validate_keys_sdtype_valid_sdtypes(self, column_meta):
+        """Test that the `_validate_keys_sdtype` will not raise an error if one column is ID."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {'test_col': column_meta}
+
+        # Run and Assert
+        instance._validate_keys_sdtype(['test_col'], 'primary')
+
+    def test__validate_keys_sdtype_invalid_sdtypes(self):
+        """Test that the `_validate_keys_sdtype` will not raise an error if one column is ID."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {
+            'user_id': {'sdtype': 'id', 'regex_format': 'ID_[0-9]{1,2}'},
+            'account_type': {'sdtype': 'categorical'},
+            'col1': {'sdtype': 'numerical'},
+            'col2': {'sdtype': 'numerical'},
+        }
+
+        # Run and Assert
+        expected_msg = re.escape(
+            "The primary_keys ['col1', 'col2'] must have a column of type 'id' or another PII type."
+        )
+        with pytest.raises(InvalidMetadataError, match=expected_msg):
+            instance._validate_keys_sdtype(['col1', 'col2'], 'primary')
