@@ -3,6 +3,7 @@
 import contextlib
 import datetime
 import inspect
+import logging
 import operator
 import warnings
 from collections import defaultdict
@@ -39,6 +40,14 @@ from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 SYNTHESIZER_LOGGER = get_sdv_logger('MultiTableSynthesizer')
+LOGGER = logging.getLogger(__name__)
+
+
+def _reject_sampling_constraint_count(synthesizer):
+    constraints = getattr(synthesizer, '_reject_sampling_constraints', None)
+    return len(constraints) if isinstance(constraints, list) else 0
+
+
 DEPRECATION_MSG = (
     "The 'MultiTableMetadata' is deprecated. Please use the new 'Metadata' class for synthesizers."
 )
@@ -132,7 +141,9 @@ class BaseMultiTableSynthesizer:
         self._original_metadata = deepcopy(self.metadata)
         self._modified_multi_table_metadata = deepcopy(self.metadata)
         self.constraints = []
-        self._single_table_constraints = []
+        self._table_only_constraints = []
+        self._constraints_add_order = []
+        self._reject_sampling_single_table_seen = False
         if synthesizer_kwargs is not None:
             warn_message = (
                 'The `synthesizer_kwargs` parameter is deprecated as of SDV 1.2.0 and does not '
@@ -173,31 +184,6 @@ class BaseMultiTableSynthesizer:
         self._validate_table_name(table_name)
         self._table_synthesizers[table_name].set_address_columns(column_names, anonymization_level)
 
-    def _detect_single_table_constraints(self, constraints):
-        """Filter out single table constraints from the list of constraints.
-
-        Args:
-            constraints (list):
-                A list of constraints to filter.
-        """
-        has_seen_single_table_constraint = len(self._single_table_constraints) > 0
-        idx_single_table_constraint = 0 if has_seen_single_table_constraint else None
-        for idx, constraint in enumerate(constraints):
-            if has_seen_single_table_constraint and constraint._is_single_table is False:
-                raise SynthesizerInputError(
-                    'Cannot apply multi-table constraint after single-table constraint has '
-                    'been applied.'
-                )
-
-            if not constraint._is_single_table:
-                continue
-
-            if not has_seen_single_table_constraint:
-                has_seen_single_table_constraint = True
-                idx_single_table_constraint = idx
-
-        return idx_single_table_constraint
-
     def _validate_single_table_constraints(self, constraints):
         for constraint in constraints:
             if getattr(constraint, 'table_name') is None:
@@ -205,6 +191,21 @@ class BaseMultiTableSynthesizer:
                     f"The '{constraint.__class__.__name__}' is missing the required parameter "
                     "'table_name'. Please add this parameter to your constraint definition."
                 )
+
+    def _metadata_after_pipeline_list(self, pipeline_constraints):
+        metadata = deepcopy(self._original_metadata)
+        for c in pipeline_constraints:
+            metadata = c.get_updated_metadata(metadata)
+        return metadata
+
+    def _demote_single_table_pipeline_for_table(self, table_name, demoted):
+        demoted_set = set(demoted)
+        self._constraints_add_order = [
+            ('table_only', table_name, e[1])
+            if e[0] == 'pipeline' and e[1] in demoted_set
+            else e
+            for e in self._constraints_add_order
+        ]
 
     def add_constraints(self, constraints):
         """Add the list of constraint-augmented generation constraints to the synthesizer.
@@ -214,53 +215,110 @@ class BaseMultiTableSynthesizer:
                 A list of constraints to apply to the synthesizer.
         """
         constraints = _validate_constraints(constraints, self._fitted)
+
         metadata = self.metadata
-        multi_table_constraints = []
-        single_table_constraints = []
-        idx_single_table_constraint = self._detect_single_table_constraints(constraints)
-        for idx, constraint in enumerate(constraints):
+        new_pipeline = []
+        new_table_only = []
+        batch_order = []
+
+        for constraint in constraints:
             if isinstance(constraint, ProgrammableConstraint):
                 constraint = ProgrammableConstraintHarness(constraint)
 
-            if idx_single_table_constraint is not None and idx >= idx_single_table_constraint:
-                single_table_constraints.append(constraint)
-                continue
-
-            multi_table_constraints.append(constraint)
-            metadata = constraint.get_updated_metadata(metadata)
-            self._modified_multi_table_metadata = metadata
+            if not constraint._is_single_table:
+                if self._reject_sampling_single_table_seen:
+                    raise SynthesizerInputError(
+                        'Cannot add multi-table constraints after a single-table constraint '
+                        'that uses reject sampling has been applied. Reject sampling is only '
+                        'supported on single-table synthesizers.'
+                    )
+                metadata = constraint.get_updated_metadata(metadata)
+                self._modified_multi_table_metadata = metadata
+                new_pipeline.append(constraint)
+                batch_order.append(('pipeline', constraint))
+            else:
+                self._validate_single_table_constraints([constraint])
+                try:
+                    metadata = constraint.get_updated_metadata(metadata)
+                    self._modified_multi_table_metadata = metadata
+                    new_pipeline.append(constraint)
+                    batch_order.append(('pipeline', constraint))
+                except ConstraintNotMetError:
+                    LOGGER.info(
+                        'Enforcing constraint %s on table %s via the single-table synthesizer.',
+                        constraint.__class__.__name__,
+                        constraint.table_name,
+                    )
+                    table_name = constraint.table_name
+                    demoted_existing = [
+                        c
+                        for c in self.constraints
+                        if c._is_single_table and c.table_name == table_name
+                    ]
+                    demoted_batch = [
+                        c
+                        for c in new_pipeline
+                        if c._is_single_table and c.table_name == table_name
+                    ]
+                    demoted = demoted_existing + demoted_batch
+                    for c in demoted_existing:
+                        self.constraints.remove(c)
+                    for c in demoted_batch:
+                        new_pipeline.remove(c)
+                    batch_order = [
+                        e for e in batch_order if not (e[0] == 'pipeline' and e[1] in demoted_batch)
+                    ]
+                    for c in demoted_batch:
+                        batch_order.append(('table_only', table_name, c))
+                    if demoted_existing:
+                        self._demote_single_table_pipeline_for_table(table_name, demoted_existing)
+                    for c in demoted:
+                        new_table_only.append(c)
+                    new_table_only.append(constraint)
+                    batch_order.append(('table_only', table_name, constraint))
+                    metadata = self._metadata_after_pipeline_list(self.constraints + new_pipeline)
 
         self.metadata = metadata
-        self._validate_single_table_constraints(single_table_constraints)
-        self.constraints += multi_table_constraints
+        self._modified_multi_table_metadata = deepcopy(metadata)
+        self.constraints += new_pipeline
+        self._table_only_constraints += new_table_only
+        self._constraints_add_order += batch_order
         self._constraints_fitted = False
         self._initialize_models()
-        if self._single_table_constraints or single_table_constraints:
-            for constraint in [*self._single_table_constraints, *single_table_constraints]:
-                table_name = constraint.table_name
-                self._table_synthesizers[table_name].add_constraints([constraint])
-                try:
-                    self.metadata = constraint.get_updated_metadata(self.metadata)
-                except ConstraintNotMetError:
-                    constraint.get_updated_metadata(self._modified_multi_table_metadata)
 
-        self._single_table_constraints += single_table_constraints
+        for constraint in self._table_only_constraints:
+            table_name = constraint.table_name
+            synthesizer = self._table_synthesizers[table_name]
+            n_reject_before = _reject_sampling_constraint_count(synthesizer)
+            synthesizer.add_constraints([constraint])
+            if _reject_sampling_constraint_count(synthesizer) > n_reject_before:
+                self._reject_sampling_single_table_seen = True
+            try:
+                self.metadata = constraint.get_updated_metadata(self.metadata)
+            except ConstraintNotMetError:
+                constraint.get_updated_metadata(self._modified_multi_table_metadata)
 
     def get_constraints(self):
         """Get a copy of the list of constraints applied to the synthesizer."""
         if not hasattr(self, 'constraints'):
             return []
-        constraints = []
-        for constraint in self.constraints:
-            if isinstance(constraint, ProgrammableConstraintHarness):
-                constraints.append(deepcopy(constraint.programmable_constraint))
+
+        result = []
+        for entry in self._constraints_add_order:
+            if entry[0] == 'pipeline':
+                constraint = entry[1]
+                if isinstance(constraint, ProgrammableConstraintHarness):
+                    result.append(deepcopy(constraint.programmable_constraint))
+                else:
+                    result.append(deepcopy(constraint))
             else:
-                constraints.append(deepcopy(constraint))
+                constraint = entry[2]
+                if isinstance(constraint, ProgrammableConstraintHarness):
+                    result.append(deepcopy(constraint.programmable_constraint))
+                else:
+                    result.append(deepcopy(constraint))
 
-        for table_name, synthesizer in self._table_synthesizers.items():
-            constraints += synthesizer.get_constraints()
-
-        return constraints
+        return result
 
     def validate_constraints(self, synthetic_data):
         """Validate synthetic_data against the constraints.
