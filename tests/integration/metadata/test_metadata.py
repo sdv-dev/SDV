@@ -1688,3 +1688,27 @@ def test_metadata_fails_for_relationship_with_set_primary_key_column_in_relation
     # Run and Assert
     with pytest.raises(InvalidMetadataError, match=expected_msg):
         metadata.set_primary_key(['guest_email', 'billing_address'])
+
+
+def test_metadata_fails_with_proper_message_when_setting_primary_key():
+    """Test that when setting a primary key with no id columns it will fail."""
+    # Setup
+    account_metadata = Metadata.load_from_dict({
+        'tables': {
+            'accounts': {
+                'columns': {
+                    'user_id': {'sdtype': 'id', 'regex_format': 'ID_[0-9]{1,2}'},
+                    'account_type': {'sdtype': 'categorical'},
+                    'col1': {'sdtype': 'numerical'},
+                    'col2': {'sdtype': 'numerical'},
+                }
+            }
+        }
+    })
+
+    # Run and Assert
+    expected_msg = re.escape(
+        "The primary_keys ['col1', 'col2'] must have a column of type 'id' or another PII type."
+    )
+    with pytest.raises(InvalidMetadataError, match=expected_msg):
+        account_metadata.set_primary_key(['col1', 'col2'])
