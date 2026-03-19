@@ -1169,7 +1169,7 @@ class MultiTableMetadata:
             parent = relationship.get('parent_table_name')
             child = relationship.get('child_table_name')
             foreign_key = relationship.get('child_foreign_key')
-            primary_key = self.tables.get(parent).primary_key
+            primary_key = relationship.get('parent_primary_key')
             edge_label = f'  {foreign_key} → {primary_key}' if show_relationship_labels else ''
             child_primary_key = self.tables.get(child).primary_key
             if foreign_key == child_primary_key:
