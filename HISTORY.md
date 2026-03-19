@@ -1,5 +1,19 @@
 # Release Notes
 
+## v1.35.0 - 2026-03-19
+
+### New Features
+
+* Allow composite keys to be specified in the metadata - Issue [#2778](https://github.com/sdv-dev/SDV/issues/2778) by @frances-h
+
+### Bugs Fixed
+
+* Metadata visualization shows table key not relationship key for relationships - Issue [#2839](https://github.com/sdv-dev/SDV/issues/2839) by @frances-h
+* [Metadata composite keys] Disallow primary key columns in column relationships - Issue [#2826](https://github.com/sdv-dev/SDV/issues/2826) by @pvk-developer
+* [Metadata composite keys] Validate that primary key columns are unique - Issue [#2825](https://github.com/sdv-dev/SDV/issues/2825) by @pvk-developer
+* [Metadata composite keys] Update `set_primary_key` docstring to indicate a list of columns is now valid - Issue [#2824](https://github.com/sdv-dev/SDV/issues/2824) by @pvk-developer
+* [Metadata composite keys] Typo in error message for invalid primary keys - Issue [#2823](https://github.com/sdv-dev/SDV/issues/2823) by @pvk-developer
+
 ## v1.34.3 - 2026-03-06
 
 ### New Features

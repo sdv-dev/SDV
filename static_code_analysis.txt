@@ -1,15 +1,15 @@
-Run started:2026-03-06 17:21:03.891292+00:00
+Run started:2026-03-19 18:50:36.922146+00:00
 
 Test results:
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b110_try_except_pass.html
-   Location: ./sdv/_utils.py:349:8
-348	
-349	        except Exception:
-350	            pass
+   Location: ./sdv/_utils.py:352:8
 351	
+352	        except Exception:
+353	            pass
+354	
 
 --------------------------------------------------
 >> Issue: [B105:hardcoded_password_string] Possible hardcoded password: '#'
@@ -79,21 +79,21 @@ Test results:
    Severity: Low   Confidence: Medium
    CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b105_hardcoded_password_string.html
-   Location: ./sdv/metadata/single_table.py:499:24
-498	        for token in tokens:
-499	            if token == 'id':
-500	                return 'id'
+   Location: ./sdv/metadata/single_table.py:508:24
+507	        for token in tokens:
+508	            if token == 'id':
+509	                return 'id'
 
 --------------------------------------------------
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b110_try_except_pass.html
-   Location: ./sdv/metadata/single_table.py:555:12
-554	
-555	            except Exception:
-556	                pass
-557	
+   Location: ./sdv/metadata/single_table.py:564:12
+563	
+564	            except Exception:
+565	                pass
+566	
 
 --------------------------------------------------
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
@@ -121,7 +121,7 @@ Test results:
 --------------------------------------------------
 
 Code scanned:
-	Total lines of code: 17545
+	Total lines of code: 17734
 	Total lines skipped (#nosec): 0
 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
 
