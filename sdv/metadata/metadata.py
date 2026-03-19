@@ -432,7 +432,14 @@ class Metadata(MultiTableMetadata):
         super().add_column_relationship(table_name, relationship_type, column_names)
 
     def set_primary_key(self, column_name, table_name=None):
-        """Set the primary key of a table."""
+        """Set the primary key of a table.
+
+        Args:
+            column_name (str, list[str]):
+                Name (or list of names) of the primary key column(s).
+            table_name (str):
+                Name of the table to set the primary key.
+        """
         table_name = self._handle_table_name(table_name)
         super().set_primary_key(table_name, column_name)
 
