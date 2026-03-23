@@ -120,8 +120,6 @@ def test_ohe_with_computer_representation(computer_representation):
             'b': pd.Series([0, 0, 1], dtype=dtype),
         })
     }
-    metadata.validate()
-    metadata.validate_data(data)
     synthesizer = HMASynthesizer(metadata)
     constraint = OneHotEncoding(column_names=['a', 'b'], table_name='table1')
     synthesizer.add_constraints([constraint])

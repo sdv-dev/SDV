@@ -265,7 +265,7 @@ class TestOneHotEncoding:
         assert updated.tables['table2'].columns['x']['sdtype'] == 'categorical'
 
     def test__get_updated_metadata_computer_representation(self):
-        """Test computer representation is removed."""
+        """Test computer_representation not included in output columns' metadata."""
         # Setup
         metadata = Metadata.load_from_dict({
             'tables': {
