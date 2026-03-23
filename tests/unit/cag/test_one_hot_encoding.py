@@ -264,6 +264,28 @@ class TestOneHotEncoding:
         assert updated.tables['table1'].columns['c']['sdtype'] == 'numerical'
         assert updated.tables['table2'].columns['x']['sdtype'] == 'categorical'
 
+    def test__get_updated_metadata_computer_representation(self):
+        """Test computer representation is removed."""
+        # Setup
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table1': {
+                    'columns': {
+                        'a': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                        'b': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    }
+                },
+            }
+        })
+        instance = OneHotEncoding(column_names=['a', 'b'], table_name='table1')
+
+        # Run
+        updated = instance._get_updated_metadata(metadata)
+
+        # Assert
+        assert updated.tables['table1'].columns['a'] == {'sdtype': 'numerical'}
+        assert updated.tables['table1'].columns['b'] == {'sdtype': 'numerical'}
+
     def test_is_valid(self):
         """Test it checks if the data is valid."""
         # Setup

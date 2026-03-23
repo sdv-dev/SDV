@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
+import pytest
 
-from sdv.cag import Inequality
+from sdv.cag import Inequality, OneHotEncoding
 from sdv.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
 
@@ -91,3 +92,45 @@ def test_add_constraint_iteratively():
     # Assert
     assert all(sampled['parent_table']['colA'] < sampled['parent_table']['colB'])
     assert all(sampled['parent_table']['colB'] < sampled['parent_table']['colC'])
+
+
+@pytest.mark.parametrize('computer_representation', ['Int64', 'Int8'])
+def test_ohe_with_computer_representation(computer_representation):
+    # Setup
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table1': {
+                'columns': {
+                    'a': {
+                        'sdtype': 'numerical',
+                        'computer_representation': computer_representation,
+                    },
+                    'b': {
+                        'sdtype': 'numerical',
+                        'computer_representation': computer_representation,
+                    },
+                },
+            },
+        }
+    })
+    dtype = computer_representation.lower()
+    data = {
+        'table1': pd.DataFrame({
+            'a': pd.Series([1, 1, 0], dtype=dtype),
+            'b': pd.Series([0, 0, 1], dtype=dtype),
+        })
+    }
+    metadata.validate()
+    metadata.validate_data(data)
+    synthesizer = HMASynthesizer(metadata)
+    constraint = OneHotEncoding(column_names=['a', 'b'], table_name='table1')
+    synthesizer.add_constraints([constraint])
+
+    # Run
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(scale=2.0)
+
+    # Assert
+    synthesizer.validate(synthetic_data)
+    assert sorted(synthetic_data['table1']['a'].unique().tolist()) == [0.0, 1.0]
+    assert sorted(synthetic_data['table1']['b'].unique().tolist()) == [0.0, 1.0]
