@@ -94,8 +94,9 @@ def test_add_constraint_iteratively():
     assert all(sampled['parent_table']['colB'] < sampled['parent_table']['colC'])
 
 
-@pytest.mark.parametrize('computer_representation', ['Int64', 'Int8'])
-def test_ohe_with_computer_representation(computer_representation):
+@pytest.mark.parametrize('computer_representation, dtype', [('Int64', 'int64'), ('Int8', 'int8')])
+def test_ohe_with_computer_representation(computer_representation, dtype):
+    """Test OneHotEncoding constraint with integer columns and computer representation"""
     # Setup
     metadata = Metadata.load_from_dict({
         'tables': {
@@ -113,7 +114,6 @@ def test_ohe_with_computer_representation(computer_representation):
             },
         }
     })
-    dtype = computer_representation.lower()
     data = {
         'table1': pd.DataFrame({
             'a': pd.Series([1, 1, 0], dtype=dtype),
@@ -130,5 +130,6 @@ def test_ohe_with_computer_representation(computer_representation):
 
     # Assert
     synthesizer.validate(synthetic_data)
-    assert sorted(synthetic_data['table1']['a'].unique().tolist()) == [0.0, 1.0]
-    assert sorted(synthetic_data['table1']['b'].unique().tolist()) == [0.0, 1.0]
+    assert (synthetic_data['table1'].sum(axis=1) == 1).all()
+    assert set(synthetic_data['table1']['a'].unique()).issubset({0, 1})
+    assert set(synthetic_data['table1']['b'].unique()).issubset({0, 1})
