@@ -120,13 +120,14 @@ class OneHotEncoding(BaseConstraint):
             return _remove_columns_from_metadata(md, table_name, columns_to_drop=self._column_names)
 
         else:
+            # one-hot learning strategy
             metadata = deepcopy(metadata)
             for column in self._column_names:
-                if metadata.tables[table_name].columns[column]['sdtype'] in [
-                    'categorical',
-                    'boolean',
-                ]:
-                    metadata.tables[table_name].columns[column]['sdtype'] = 'numerical'
+                col_meta = metadata.tables[table_name].columns[column]
+                col_meta.pop('computer_representation', None)
+                if col_meta['sdtype'] in ['categorical', 'boolean']:
+                    col_meta['sdtype'] = 'numerical'
+
             return metadata
 
     def _transform(self, data):
