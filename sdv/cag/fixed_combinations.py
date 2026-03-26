@@ -194,5 +194,7 @@ class FixedCombinations(BaseConstraint):
         merged = data[table_name].merge(
             self._combinations, how='left', on=self.column_names, indicator=self._joint_column
         )
-        is_valid[table_name] = merged[self._joint_column] == 'both'
+        valid_mask = merged[self._joint_column] == 'both'
+        valid_mask.index = data[table_name].index
+        is_valid[table_name] = valid_mask
         return is_valid
