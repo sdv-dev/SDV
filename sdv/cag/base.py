@@ -5,6 +5,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_datetime64_any_dtype
 
 from sdv._utils import _format_invalid_values_string
 from sdv.constraints.utils import (
@@ -187,7 +188,11 @@ class BaseConstraint:
                     self._formatters[table_name][column_name].learn_format(
                         data[table_name][column_name]
                     )
-                    values = cast_to_datetime64(data[table_name][column_name], datetime_format)
+
+                    values = data[table_name][column_name]
+                    if not is_datetime64_any_dtype(values.dtype):
+                        values = cast_to_datetime64(data[table_name][column_name], datetime_format)
+
                     self._datetime_min_max_value[table_name][column_name] = (
                         values.min(),
                         values.max(),
@@ -210,14 +215,18 @@ class BaseConstraint:
 
             for column_name, formatter in table_formatters.items():
                 column_data = table_data[column_name]
+                table_data[column_name] = formatter.format_data(column_data)
 
                 min_max_datetime = datetime_min_max_value.get(column_name)
                 if min_max_datetime and isinstance(formatter, DatetimeFormatter):
                     min_value, max_value = min_max_datetime
-                    dt_values = cast_to_datetime64(column_data, formatter.datetime_format)
-                    column_data = dt_values.clip(lower=min_value, upper=max_value)
 
-                table_data[column_name] = formatter.format_data(column_data)
+                    dt_values = table_data[column_name]
+                    if not is_datetime64_any_dtype(dt_values.dtype):
+                        dt_values = cast_to_datetime64(dt_values, formatter.datetime_format)
+
+                    column_data = dt_values.clip(lower=min_value, upper=max_value)
+                    table_data[column_name] = formatter.format_data(column_data)
 
             data[table_name] = table_data[column_order]
 

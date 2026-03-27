@@ -1024,6 +1024,9 @@ def test_datetime_values_are_clipped_to_min_max_in_constraint():
     # Setup
     data, metadata = download_demo('single_table', 'fake_hotel_guests')
     constraint = Inequality(low_column_name='checkin_date', high_column_name='checkout_date')
+    datetime_format = metadata.tables['fake_hotel_guests'].columns['checkin_date'][
+        'datetime_format'
+    ]
 
     # Run
     synthesizer = run_copula(data, metadata, constraints=[constraint])
@@ -1036,8 +1039,11 @@ def test_datetime_values_are_clipped_to_min_max_in_constraint():
     assert diagnostic_report.get_score() == 1.0
 
     for col in ['checkin_date', 'checkout_date']:
-        data[col] = cast_to_datetime64(data[col], datetime_format='%d %b %Y')
-        synthetic_data[col] = cast_to_datetime64(synthetic_data[col], datetime_format='%d %b %Y')
+        assert data[col].dtype == synthetic_data[col].dtype
+        data[col] = cast_to_datetime64(data[col], datetime_format=datetime_format)
+        synthetic_data[col] = cast_to_datetime64(
+            synthetic_data[col], datetime_format=datetime_format
+        )
 
     for col in ['checkin_date', 'checkout_date']:
         assert data[col].min() <= synthetic_data[col].min()
