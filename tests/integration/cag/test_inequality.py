@@ -8,6 +8,7 @@ from pandas.api.types import is_object_dtype
 from sdv.cag import Inequality
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.datasets.demo import download_demo
+from sdv.evaluation.single_table import run_diagnostic
 from sdv.metadata import Metadata
 from sdv.single_table import GaussianCopulaSynthesizer
 from tests.utils import run_constraint, run_copula, run_hma
@@ -1015,3 +1016,25 @@ def test_low_column_formatting_maintained():
 
     # Assert
     assert all(sampled_data['room_rate'].round(2) == sampled_data['room_rate'])
+
+
+def test_datetime_values_are_clipped_to_min_max_in_constraint():
+    """Test that OHE constraint respects the min/max datetime values in real data."""
+    # Setup
+    data, metadata = download_demo('single_table', 'fake_hotel_guests')
+    constraint = Inequality(low_column_name='checkin_date', high_column_name='checkout_date')
+
+    # Run
+    synthesizer = run_copula(data, metadata, constraints=[constraint])
+    synthetic_data = synthesizer.sample(len(data))
+    diagnostic_report = run_diagnostic(
+        real_data=data,
+        synthetic_data=synthetic_data,
+        metadata=metadata,
+        verbose=False,
+    )
+
+    # Assert
+    metadata.validate_data({'fake_hotel_guests': synthetic_data})
+    synthesizer.validate(synthetic_data)
+    assert diagnostic_report.get_score() == 1.0

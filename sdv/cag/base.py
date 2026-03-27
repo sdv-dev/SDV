@@ -7,6 +7,9 @@ import numpy as np
 import pandas as pd
 
 from sdv._utils import _format_invalid_values_string
+from sdv.constraints.utils import (
+    cast_to_datetime64,
+)
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.errors import NotFittedError
@@ -61,11 +64,12 @@ class BaseConstraint:
         self._single_table = False
         self._dtypes = None
         self._formatters = {}
+        self._datetime_min_max_values = {}
 
     def _convert_data_to_dictionary(self, data, metadata, copy=False):
         """Helper to handle converting single dataframes into dictionaries.
 
-        This method takes in data, metadata, and, optionally, a flag indiciating if the
+        This method takes in data, metadata, and, optionally, a flag indicating if the
         returned data should be a copy of the original input data. If the data is a single
         dataframe, it converts it into a dictionary of dataframes.
         """
@@ -146,6 +150,7 @@ class BaseConstraint:
         updated_metadata = self._get_updated_metadata(self.metadata)
         for table_name in self.metadata.tables:
             self._formatters[table_name] = {}
+            self._datetime_min_max_values[table_name] = {}
             primary_key = self.metadata.tables[table_name].primary_key
             input_columns = self._original_data_columns[table_name]
             table_metdadata = updated_metadata.tables.get(table_name)
@@ -157,6 +162,7 @@ class BaseConstraint:
             for column_name in columns_to_format:
                 column_metadata = self.metadata.tables[table_name].columns.get(column_name)
                 sdtype = column_metadata.get('sdtype')
+
                 if sdtype == 'numerical' and column_name != primary_key:
                     representation = column_metadata.get('computer_representation', 'Float')
                     self._formatters[table_name][column_name] = NumericalFormatter(
@@ -176,6 +182,11 @@ class BaseConstraint:
                     self._formatters[table_name][column_name].learn_format(
                         data[table_name][column_name]
                     )
+                    values = cast_to_datetime64(data[table_name][column_name], datetime_format)
+                    self._datetime_min_max_values[table_name][column_name] = (
+                        values.min(),
+                        values.max(),
+                    )
 
     def _format_constraint_columns(self, data):
         """Format columns skipped by the data processor due to being dropped by constraints."""
@@ -188,8 +199,17 @@ class BaseConstraint:
                 column for column in self._original_data_columns[table_name] if column in table_data
             ]
             table_formatters = self._formatters.get(table_name, {})
+            datetime_min_max = self._datetime_min_max_values.get(table_name, {})
             for column_name, formatter in table_formatters.items():
                 column_data = table_data[column_name]
+
+                min_max_datetime = datetime_min_max.get(column_name)
+                if min_max_datetime and isinstance(formatter, DatetimeFormatter):
+                    # clip before format_data (since that may turn it into a string)
+                    min_value, max_value = min_max_datetime
+                    dt_values = cast_to_datetime64(column_data, formatter.datetime_format)
+                    column_data = dt_values.clip(lower=min_value, upper=max_value)
+
                 table_data[column_name] = formatter.format_data(column_data)
 
             data[table_name] = table_data[column_order]
