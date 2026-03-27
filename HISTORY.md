@@ -1,5 +1,14 @@
 # Release Notes
 
+## v1.35.1 - 2026-03-27
+
+### Bugs Fixed
+
+* `OneHotEncoding` constraint diagnostic score not 1.0 - Issue [#2856](https://github.com/sdv-dev/SDV/issues/2856) by @pvk-developer
+* `Inequality` constraint diagnostic score not 1.0 due to out of range datetimes - Issue [#2855](https://github.com/sdv-dev/SDV/issues/2855) by @gsheni
+* `IndexingError` with `FixedCombinations` constraint during sample - Issue [#2852](https://github.com/sdv-dev/SDV/issues/2852) by @gsheni
+* `OneHotEncoding` constraint can error if numerical columns have integer `computer_representation` - Issue [#2849](https://github.com/sdv-dev/SDV/issues/2849) by @gsheni
+
 ## v1.35.0 - 2026-03-19
 
 ### New Features
