@@ -296,7 +296,6 @@ class Inequality(BaseConstraint):
             table_data[self._low_column_name] = low = cast_to_datetime64(low)
 
         table_data[self._high_column_name] = pd.Series(diff_column + low).astype(self._dtype)
-
         table_data = revert_nans_columns(table_data, self._nan_column_name)
 
         data[table_name] = table_data.drop(self._diff_column_name, axis=1)
