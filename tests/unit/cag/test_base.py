@@ -220,6 +220,7 @@ class TestBaseConstraint:
         # Setup
         instance = Mock()
         instance._formatters = {}
+        instance._datetime_min_max_value = {}
         instance.metadata = Metadata.load_from_dict({
             'tables': {
                 'table': {

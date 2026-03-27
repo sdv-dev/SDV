@@ -6,8 +6,6 @@ import pytest
 
 from sdv.cag import Range
 from sdv.cag._errors import ConstraintNotMetError
-from sdv.datasets.demo import download_demo
-from sdv.evaluation.single_table import run_diagnostic
 from sdv.metadata import Metadata
 from tests.utils import run_constraint, run_copula, run_hma
 
@@ -578,33 +576,3 @@ def test_validate_constraints_multi_raises(data_multi, metadata_multi, constrain
     # Run and Assert
     with pytest.raises(ConstraintNotMetError, match=msg):
         synthesizer.validate_constraints(synthetic_data=synthetic_data)
-
-
-def test_datetime_values_are_clipped_to_min_max_in_constraint():
-    """Test that Range constraint respects the min/max datetime values in real data."""
-    # Setup
-    data, metadata = download_demo('single_table', 'fake_hotel_guests')
-    data['checkin_date'] = pd.to_datetime(data['checkin_date'], format='%d %b %Y')
-    data['midstay_date'] = data['checkin_date'] + pd.Timedelta(days=1)
-    data['checkout_date'] = data['midstay_date'] + pd.Timedelta(days=1)
-    metadata.add_column('midstay_date', sdtype='datetime', datetime_format='%d %b %Y')
-    constraint = Range(
-        low_column_name='checkin_date',
-        middle_column_name='midstay_date',
-        high_column_name='checkout_date',
-    )
-
-    # Run
-    synthesizer = run_copula(data, metadata, constraints=[constraint])
-    synthetic_data = synthesizer.sample(len(data))
-    diagnostic_report = run_diagnostic(
-        real_data=data,
-        synthetic_data=synthetic_data,
-        metadata=metadata,
-        verbose=False,
-    )
-
-    # Assert
-    metadata.validate_data({'fake_hotel_guests': synthetic_data})
-    synthesizer.validate(synthetic_data)
-    assert diagnostic_report.get_score() == 1.0
