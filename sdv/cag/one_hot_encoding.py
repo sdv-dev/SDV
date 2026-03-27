@@ -118,7 +118,6 @@ class OneHotEncoding(BaseConstraint):
             md['tables'][table_name]['columns'][self._categorical_column] = {
                 'sdtype': 'categorical'
             }
-            return _remove_columns_from_metadata(md, table_name, columns_to_drop=self._column_names)
 
         else:
             # one-hot learning strategy
@@ -133,7 +132,8 @@ class OneHotEncoding(BaseConstraint):
                 metadata.tables[table_name].columns[new_col_name] = col_meta
 
             md = metadata.to_dict()
-            return _remove_columns_from_metadata(md, table_name, columns_to_drop=self._column_names)
+
+        return _remove_columns_from_metadata(md, table_name, columns_to_drop=self._column_names)
 
     def _transform(self, data):
         """Transform the data.

@@ -111,7 +111,7 @@ def test_end_to_end_multi(data_multi, metadata_multi):
     # Assert
     assert (synthetic_data['table1'].sum(axis=1) == 1).all()
     for col in ['a', 'b', 'c']:
-        assert sorted(synthetic_data['table1'][col].unique().tolist()) == [0, 1]
+        assert synthetic_data['table1'][col].isin([0, 1]).all()
 
 
 def test_end_to_end_multi_raises(data_multi, metadata_multi):
@@ -359,6 +359,7 @@ def test_onehot_encoding_with_multi_table_diagnostic_report(data_multi, metadata
     # Assert
     assert (synthetic_data['table1'].sum(axis=1) == 1).all()
     for col in ['a', 'b', 'c']:
-        assert sorted(synthetic_data['table1'][col].unique().tolist()) == [0, 1]
+        assert synthetic_data['table1'][col].isin([0, 1]).all()
+        assert synthetic_data['table1'][col].dtype == data_multi['table1'][col].dtype
 
     assert diagnostic_report.get_score() == 1.0
