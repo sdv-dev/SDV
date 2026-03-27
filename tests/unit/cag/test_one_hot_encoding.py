@@ -154,7 +154,7 @@ class TestOneHotEncoding:
 
         eps = np.finfo(np.float32).eps
         original = data[['a', 'b', 'c']].to_numpy()
-        result = transformed[['a', 'b', 'c']].to_numpy()
+        result = transformed[['OHE#a', 'OHE#b', 'OHE#c']].to_numpy()
 
         zeros_mask = original == 0
         ones_mask = original == 1
@@ -167,6 +167,7 @@ class TestOneHotEncoding:
         # Setup
         instance = OneHotEncoding(column_names=['a', 'b'], table_name='table')
         instance._original_data_columns = {'table': ['a', 'b', 'c']}
+        instance._transformed_col_names = ['a', 'b']
         instance._dtypes = {
             'table': {
                 'a': np.dtype('float'),
@@ -229,8 +230,8 @@ class TestOneHotEncoding:
         updated = instance._get_updated_metadata(metadata)
 
         # Assert
-        assert updated.tables['table'].columns['a']['sdtype'] == 'numerical'
-        assert updated.tables['table'].columns['b']['sdtype'] == 'numerical'
+        assert updated.tables['table'].columns['OHE#a']['sdtype'] == 'numerical'
+        assert updated.tables['table'].columns['OHE#b']['sdtype'] == 'numerical'
         assert updated.tables['table'].columns['c']['sdtype'] == 'numerical'
         assert updated.tables['table'].columns['d']['sdtype'] == 'id'
 
@@ -259,8 +260,8 @@ class TestOneHotEncoding:
         updated = instance._get_updated_metadata(metadata)
 
         # Assert
-        assert updated.tables['table1'].columns['a']['sdtype'] == 'numerical'
-        assert updated.tables['table1'].columns['b']['sdtype'] == 'numerical'
+        assert updated.tables['table1'].columns['OHE#a']['sdtype'] == 'numerical'
+        assert updated.tables['table1'].columns['OHE#b']['sdtype'] == 'numerical'
         assert updated.tables['table1'].columns['c']['sdtype'] == 'numerical'
         assert updated.tables['table2'].columns['x']['sdtype'] == 'categorical'
 
@@ -283,8 +284,8 @@ class TestOneHotEncoding:
         updated = instance._get_updated_metadata(metadata)
 
         # Assert
-        assert updated.tables['table1'].columns['a'] == {'sdtype': 'numerical'}
-        assert updated.tables['table1'].columns['b'] == {'sdtype': 'numerical'}
+        assert updated.tables['table1'].columns['OHE#a'] == {'sdtype': 'numerical'}
+        assert updated.tables['table1'].columns['OHE#b'] == {'sdtype': 'numerical'}
 
     def test_is_valid(self):
         """Test it checks if the data is valid."""
