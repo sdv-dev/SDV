@@ -1018,7 +1018,7 @@ def test_low_column_formatting_maintained():
 
 
 def test_datetime_values_are_clipped_to_min_max_in_constraint():
-    """Test that OHE constraint respects the min/max datetime values in real data."""
+    """Test that Inequality constraint respects the min/max datetime values in real data."""
     # Setup
     data, metadata = download_demo('single_table', 'fake_hotel_guests')
     constraint = Inequality(low_column_name='checkin_date', high_column_name='checkout_date')
