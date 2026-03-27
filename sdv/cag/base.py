@@ -206,11 +206,14 @@ class BaseConstraint:
                 column for column in self._original_data_columns[table_name] if column in table_data
             ]
             table_formatters = self._formatters.get(table_name, {})
-            datetime_min_max = self._datetime_min_max_value.get(table_name, {})
+
+            datetime_min_max_value = getattr(self, '_datetime_min_max_value', {})
+            datetime_min_max_value = datetime_min_max_value.get(table_name, {})
+
             for column_name, formatter in table_formatters.items():
                 column_data = table_data[column_name]
 
-                min_max_datetime = datetime_min_max.get(column_name)
+                min_max_datetime = datetime_min_max_value.get(column_name)
                 if min_max_datetime and isinstance(formatter, DatetimeFormatter):
                     min_value, max_value = min_max_datetime
                     dt_values = cast_to_datetime64(column_data, formatter.datetime_format)
