@@ -64,7 +64,7 @@ class BaseConstraint:
         self._single_table = False
         self._dtypes = None
         self._formatters = {}
-        self._datetime_min_max_values = {}
+        self._datetime_min_max_value = {}
 
     def _convert_data_to_dictionary(self, data, metadata, copy=False):
         """Helper to handle converting single dataframes into dictionaries.
@@ -150,7 +150,7 @@ class BaseConstraint:
         updated_metadata = self._get_updated_metadata(self.metadata)
         for table_name in self.metadata.tables:
             self._formatters[table_name] = {}
-            self._datetime_min_max_values[table_name] = {}
+            self._datetime_min_max_value[table_name] = {}
             primary_key = self.metadata.tables[table_name].primary_key
             input_columns = self._original_data_columns[table_name]
             table_metdadata = updated_metadata.tables.get(table_name)
@@ -183,7 +183,7 @@ class BaseConstraint:
                         data[table_name][column_name]
                     )
                     values = cast_to_datetime64(data[table_name][column_name], datetime_format)
-                    self._datetime_min_max_values[table_name][column_name] = (
+                    self._datetime_min_max_value[table_name][column_name] = (
                         values.min(),
                         values.max(),
                     )
@@ -199,7 +199,7 @@ class BaseConstraint:
                 column for column in self._original_data_columns[table_name] if column in table_data
             ]
             table_formatters = self._formatters.get(table_name, {})
-            datetime_min_max = self._datetime_min_max_values.get(table_name, {})
+            datetime_min_max = self._datetime_min_max_value.get(table_name, {})
             for column_name, formatter in table_formatters.items():
                 column_data = table_data[column_name]
 

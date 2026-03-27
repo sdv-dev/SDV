@@ -301,7 +301,7 @@ class TestBaseConstraint:
         # Setup
         instance = Mock()
         instance._formatters = {}
-        instance._datetime_min_max_values = {}
+        instance._datetime_min_max_value = {}
         instance.metadata = Metadata.load_from_dict({
             'tables': {
                 'table': {
@@ -332,7 +332,7 @@ class TestBaseConstraint:
         BaseConstraint._fit_constraint_column_formatters(instance, data)
 
         # Assert
-        datetime_min_max_values = instance._datetime_min_max_values['table']
+        datetime_min_max_values = instance._datetime_min_max_value['table']
         assert 'date_col' in datetime_min_max_values
         assert datetime_min_max_values['date_col'] == (
             pd.Timestamp('2026-01-15'),
@@ -413,7 +413,7 @@ class TestBaseConstraint:
         formatter = DatetimeFormatter(datetime_format='%Y-%m-%d')
         formatter.learn_format(pd.Series(['2023-01-15', '2023-06-20']))
         instance._formatters = {'table': {'date_col': formatter}}
-        instance._datetime_min_max_values = {
+        instance._datetime_min_max_value = {
             'table': {
                 'date_col': (pd.Timestamp('2023-01-15'), pd.Timestamp('2023-06-20')),
             },
