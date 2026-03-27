@@ -200,7 +200,7 @@ class OneHotEncoding(BaseConstraint):
         else:
             if not hasattr(self, '_transformed_col_names'):
                 # Backwards compatibility
-                setattr(self, '_transformed_col_names', self.column_names)
+                setattr(self, '_transformed_col_names', self._column_names)
 
             one_hot_data = table_data[self._transformed_col_names]
             transformed_data = np.zeros_like(one_hot_data.to_numpy())
