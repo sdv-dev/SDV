@@ -588,7 +588,6 @@ def test_datetime_values_are_clipped_to_min_max_in_constraint():
     data['midstay_date'] = data['checkin_date'] + pd.Timedelta(days=1)
     data['checkout_date'] = data['midstay_date'] + pd.Timedelta(days=1)
     metadata.add_column('midstay_date', sdtype='datetime', datetime_format='%d %b %Y')
-
     constraint = Range(
         low_column_name='checkin_date',
         middle_column_name='midstay_date',

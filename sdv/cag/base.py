@@ -205,7 +205,6 @@ class BaseConstraint:
 
                 min_max_datetime = datetime_min_max.get(column_name)
                 if min_max_datetime and isinstance(formatter, DatetimeFormatter):
-                    # clip before format_data (since that may turn it into a string)
                     min_value, max_value = min_max_datetime
                     dt_values = cast_to_datetime64(column_data, formatter.datetime_format)
                     column_data = dt_values.clip(lower=min_value, upper=max_value)
