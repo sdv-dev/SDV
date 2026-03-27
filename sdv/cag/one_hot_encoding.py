@@ -3,6 +3,7 @@
 from copy import deepcopy
 
 import numpy as np
+import pandas as pd
 
 from sdv._utils import _create_unique_name
 from sdv.cag._errors import ConstraintNotMetError
@@ -123,12 +124,16 @@ class OneHotEncoding(BaseConstraint):
             # one-hot learning strategy
             metadata = deepcopy(metadata)
             for column in self._column_names:
+                new_col_name = _create_unique_name(column, metadata.tables[table_name].columns)
                 col_meta = metadata.tables[table_name].columns[column]
                 col_meta.pop('computer_representation', None)
                 if col_meta['sdtype'] in ['categorical', 'boolean']:
                     col_meta['sdtype'] = 'numerical'
 
-            return metadata
+                metadata.tables[table_name].columns[new_col_name] = col_meta
+
+            md = metadata.to_dict()
+            return _remove_columns_from_metadata(md, table_name, columns_to_drop=self._column_names)
 
     def _transform(self, data):
         """Transform the data.
@@ -148,9 +153,18 @@ class OneHotEncoding(BaseConstraint):
             table_data[self._categorical_column] = categories
             data[table_name] = table_data.drop(self._column_names, axis=1)
         else:
-            one_hot_data = data[table_name][self._column_names]
+            self._transformed_col_names = [
+                _create_unique_name(col_name, data[table_name].columns)
+                for col_name in self._column_names
+            ]
+            table_data = data[table_name]
+            one_hot_data = table_data[self._column_names]
+            table_data = table_data.drop(columns=self._column_names)
             one_hot_data = np.where(one_hot_data == 0, EPSILON, 1 - EPSILON)
-            data[table_name][self._column_names] = one_hot_data
+            one_hot_data = pd.DataFrame(
+                one_hot_data, columns=self._transformed_col_names, index=table_data.index
+            )
+            data[table_name] = pd.concat([table_data, one_hot_data], axis=1)
 
         return data
 
@@ -184,7 +198,11 @@ class OneHotEncoding(BaseConstraint):
                 table_data[col] = transformed[:, idx]
 
         else:
-            one_hot_data = table_data[self._column_names]
+            if not hasattr(self, '_transformed_col_names'):
+                # Backwards compatibility
+                setattr(self, '_transformed_col_names', self.column_names)
+
+            one_hot_data = table_data[self._transformed_col_names]
             transformed_data = np.zeros_like(one_hot_data.to_numpy())
             max_category_indices = np.argmax(one_hot_data.to_numpy(), axis=1)
             transformed_data[np.arange(len(one_hot_data)), max_category_indices] = 1
