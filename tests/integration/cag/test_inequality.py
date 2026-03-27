@@ -7,7 +7,11 @@ from pandas.api.types import is_object_dtype
 
 from sdv.cag import Inequality
 from sdv.cag._errors import ConstraintNotMetError
+from sdv.constraints.utils import (
+    cast_to_datetime64,
+)
 from sdv.datasets.demo import download_demo
+from sdv.evaluation.single_table import run_diagnostic
 from sdv.metadata import Metadata
 from sdv.single_table import GaussianCopulaSynthesizer
 from tests.utils import run_constraint, run_copula, run_hma
@@ -1006,12 +1010,41 @@ def test_low_column_formatting_maintained():
         low_column_name='amenities_fee',
         high_column_name='room_rate',
     )
-    synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_constraints([inequality_cag])
+    synthesizer = run_copula(data, metadata, constraints=[inequality_cag])
 
     # Run
-    synthesizer.fit(data)
     sampled_data = synthesizer.sample(100)
 
     # Assert
     assert all(sampled_data['room_rate'].round(2) == sampled_data['room_rate'])
+
+
+def test_datetime_values_are_clipped_to_min_max_in_constraint():
+    """Test that Inequality constraint respects the min/max datetime values in real data."""
+    # Setup
+    data, metadata = download_demo('single_table', 'fake_hotel_guests')
+    constraint = Inequality(low_column_name='checkin_date', high_column_name='checkout_date')
+    datetime_format = metadata.tables['fake_hotel_guests'].columns['checkin_date'][
+        'datetime_format'
+    ]
+
+    # Run
+    synthesizer = run_copula(data, metadata, constraints=[constraint])
+    synthetic_data = synthesizer.sample(len(data))
+    diagnostic_report = run_diagnostic(data, synthetic_data, metadata)
+
+    # Assert
+    metadata.validate_data({'fake_hotel_guests': synthetic_data})
+    synthesizer.validate(synthetic_data)
+    assert diagnostic_report.get_score() == 1.0
+
+    for col in ['checkin_date', 'checkout_date']:
+        assert data[col].dtype == synthetic_data[col].dtype
+        data[col] = cast_to_datetime64(data[col], datetime_format=datetime_format)
+        synthetic_data[col] = cast_to_datetime64(
+            synthetic_data[col], datetime_format=datetime_format
+        )
+
+    for col in ['checkin_date', 'checkout_date']:
+        assert data[col].min() <= synthetic_data[col].min()
+        assert synthetic_data[col].max() <= data[col].max()

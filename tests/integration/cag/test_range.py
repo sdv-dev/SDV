@@ -558,7 +558,7 @@ def test_validate_constraints_multi_datetime(
 
 
 def test_validate_constraints_multi_raises(data_multi, metadata_multi, constraint_multi):
-    """Test validate_constraints raises an error with bad multitable synthetic data with Range."""
+    """Test validate_constraints raises an error with bad multi-table synthetic data with Range."""
     # Setup
     synthetic_data = {
         'table1': pd.DataFrame({

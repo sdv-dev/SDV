@@ -220,6 +220,7 @@ class TestBaseConstraint:
         # Setup
         instance = Mock()
         instance._formatters = {}
+        instance._datetime_min_max_value = {}
         instance.metadata = Metadata.load_from_dict({
             'tables': {
                 'table': {
@@ -296,6 +297,49 @@ class TestBaseConstraint:
         assert formatters['table2']['col5'].enforce_rounding is True
         assert formatters['table2']['col5'].enforce_min_max_values is True
 
+    def test__fit_constraint_column_formatters_stores_datetime_min_max(self):
+        """Test that datetime min/max values are stored during fitting."""
+        # Setup
+        instance = Mock()
+        instance._formatters = {}
+        instance._datetime_min_max_value = {}
+        instance.metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                        'date_col': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                        'num_col': {'sdtype': 'numerical'},
+                    },
+                    'primary_key': 'id',
+                },
+            }
+        })
+        instance._original_data_columns = {'table': ['id', 'date_col', 'num_col']}
+        instance._get_updated_metadata = Mock(
+            return_value=Metadata.load_from_dict({
+                'tables': {'table': {'columns': {'id': {'sdtype': 'id'}}, 'primary_key': 'id'}}
+            })
+        )
+        data = {
+            'table': pd.DataFrame({
+                'id': [1, 2, 3, 4],
+                'date_col': ['2026-01-15', '2026-03-10', '2026-06-20', '2026-09-05'],
+                'num_col': [10, 20, 30, 40],
+            })
+        }
+
+        # Run
+        BaseConstraint._fit_constraint_column_formatters(instance, data)
+
+        # Assert
+        datetime_min_max_values = instance._datetime_min_max_value['table']
+        assert 'date_col' in datetime_min_max_values
+        assert datetime_min_max_values['date_col'] == (
+            pd.Timestamp('2026-01-15'),
+            pd.Timestamp('2026-09-05'),
+        )
+
     def test__format_constraint_columns(self):
         """Test formatting all columns that were dropped by constraints."""
         # Setup
@@ -359,6 +403,38 @@ class TestBaseConstraint:
 
         # Assert
         pd.testing.assert_frame_equal(formatted_data['table'], data['table'])
+
+    def test__format_constraint_columns_clips_datetime_values(self):
+        """Test that datetime columns are clipped to the min/max values seen during fit."""
+        # Setup
+        instance = Mock()
+        instance._original_data_columns = {
+            'table': ['date_col', 'other_col'],
+        }
+        formatter = DatetimeFormatter(datetime_format='%Y-%m-%d')
+        formatter.learn_format(pd.Series(['2023-01-15', '2023-06-20']))
+        instance._formatters = {'table': {'date_col': formatter}}
+        instance._datetime_min_max_value = {
+            'table': {
+                'date_col': (pd.Timestamp('2023-01-15'), pd.Timestamp('2023-06-20')),
+            },
+        }
+        data = {
+            'table': pd.DataFrame({
+                'date_col': ['2022-11-01', '2023-03-10', '2023-09-30'],
+                'other_col': ['A', 'B', 'C'],
+            })
+        }
+
+        # Run
+        formatted_data = BaseConstraint._format_constraint_columns(instance, data)
+
+        # Assert
+        expected = pd.DataFrame({
+            'date_col': ['2023-01-15', '2023-03-10', '2023-06-20'],
+            'other_col': ['A', 'B', 'C'],
+        })
+        pd.testing.assert_frame_equal(formatted_data['table'], expected)
 
     def test_fit(self, data):
         """Test ``fit`` method."""
