@@ -8,7 +8,6 @@ from pandas.api.types import is_object_dtype
 from sdv.cag import Inequality
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.datasets.demo import download_demo
-from sdv.evaluation.single_table import run_diagnostic
 from sdv.metadata import Metadata
 from sdv.single_table import GaussianCopulaSynthesizer
 from tests.utils import run_constraint, run_copula, run_hma
