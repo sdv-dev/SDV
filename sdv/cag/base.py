@@ -150,7 +150,14 @@ class BaseConstraint:
         updated_metadata = self._get_updated_metadata(self.metadata)
         for table_name in self.metadata.tables:
             self._formatters[table_name] = {}
-            self._datetime_min_max_value[table_name] = {}
+
+            if not hasattr(self, '_datetime_min_max_value'):
+                setattr(self, '_datetime_min_max_value', {})
+
+            _datetime_min_max_value = getattr(self, '_datetime_min_max_value')
+            if table_name not in _datetime_min_max_value:
+                _datetime_min_max_value[table_name] = {}
+
             primary_key = self.metadata.tables[table_name].primary_key
             input_columns = self._original_data_columns[table_name]
             table_metdadata = updated_metadata.tables.get(table_name)

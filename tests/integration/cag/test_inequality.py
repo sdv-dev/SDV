@@ -3,6 +3,7 @@ import re
 import numpy as np
 import pandas as pd
 import pytest
+from packaging.version import Version
 from pandas.api.types import is_object_dtype
 
 from sdv.cag import Inequality
@@ -1006,11 +1007,9 @@ def test_low_column_formatting_maintained():
         low_column_name='amenities_fee',
         high_column_name='room_rate',
     )
-    synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_constraints([inequality_cag])
+    synthesizer = run_copula(data, metadata, constraints=[inequality_cag])
 
     # Run
-    synthesizer.fit(data)
     sampled_data = synthesizer.sample(100)
 
     # Assert
@@ -1034,5 +1033,9 @@ def test_datetime_values_are_clipped_to_min_max_in_constraint():
         data[col] = pd.to_datetime(data[col], format='%d %b %Y')
         synthetic_data[col] = pd.to_datetime(synthetic_data[col], format='%d %b %Y')
 
+    if Version(pd.__version__) < Version('2.0.0'):
+        pytest.skip('Datetimes are only parsed with a consistent format with pandas >= 2.0.0')
+
+    for col in ['checkin_date', 'checkout_date']:
         assert data[col].min() <= synthetic_data[col].min()
         assert synthetic_data[col].max() <= data[col].max()
