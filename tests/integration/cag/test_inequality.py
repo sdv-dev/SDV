@@ -3,12 +3,12 @@ import re
 import numpy as np
 import pandas as pd
 import pytest
-from packaging.version import Version
 from pandas.api.types import is_object_dtype
 
 from sdv.cag import Inequality
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.datasets.demo import download_demo
+from sdv.evaluation.single_table import run_diagnostic
 from sdv.metadata import Metadata
 from sdv.single_table import GaussianCopulaSynthesizer
 from tests.utils import run_constraint, run_copula, run_hma
@@ -1025,16 +1025,16 @@ def test_datetime_values_are_clipped_to_min_max_in_constraint():
     # Run
     synthesizer = run_copula(data, metadata, constraints=[constraint])
     synthetic_data = synthesizer.sample(len(data))
+    diagnostic_report = run_diagnostic(data, synthetic_data, metadata)
 
     # Assert
     metadata.validate_data({'fake_hotel_guests': synthetic_data})
     synthesizer.validate(synthetic_data)
+    assert diagnostic_report.get_score() == 1.0
+
     for col in ['checkin_date', 'checkout_date']:
         data[col] = pd.to_datetime(data[col], format='%d %b %Y')
         synthetic_data[col] = pd.to_datetime(synthetic_data[col], format='%d %b %Y')
-
-    if Version(pd.__version__) < Version('2.0.0'):
-        pytest.skip('Datetimes are only parsed with a consistent format with pandas >= 2.0.0')
 
     for col in ['checkin_date', 'checkout_date']:
         assert data[col].min() <= synthetic_data[col].min()
