@@ -7,6 +7,9 @@ from pandas.api.types import is_object_dtype
 
 from sdv.cag import Inequality
 from sdv.cag._errors import ConstraintNotMetError
+from sdv.constraints.utils import (
+    cast_to_datetime64,
+)
 from sdv.datasets.demo import download_demo
 from sdv.evaluation.single_table import run_diagnostic
 from sdv.metadata import Metadata
@@ -1033,8 +1036,8 @@ def test_datetime_values_are_clipped_to_min_max_in_constraint():
     assert diagnostic_report.get_score() == 1.0
 
     for col in ['checkin_date', 'checkout_date']:
-        data[col] = pd.to_datetime(data[col], format='%d %b %Y')
-        synthetic_data[col] = pd.to_datetime(synthetic_data[col], format='%d %b %Y')
+        data[col] = cast_to_datetime64(data[col], datetime_format='%d %b %Y')
+        synthetic_data[col] = cast_to_datetime64(synthetic_data[col], datetime_format='%d %b %Y')
 
     for col in ['checkin_date', 'checkout_date']:
         assert data[col].min() <= synthetic_data[col].min()
