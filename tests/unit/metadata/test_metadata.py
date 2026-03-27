@@ -435,7 +435,7 @@ class TestMetadataClass:
                     'parent_table_name': 'accounts',
                     'parent_primary_key': 'id',
                     'child_table_name': 'branches',
-                    'chil_foreign_key': 'branch_id',
+                    'child_foreign_key': 'branch_id',
                 }
             ],
         }
@@ -463,7 +463,7 @@ class TestMetadataClass:
                 'parent_table_name': 'accounts',
                 'parent_primary_key': 'id',
                 'child_table_name': 'branches',
-                'chil_foreign_key': 'branch_id',
+                'child_foreign_key': 'branch_id',
             }
         ]
 
@@ -527,7 +527,7 @@ class TestMetadataClass:
         # Run and Assert
         error_msg = re.escape(
             'Relationships:\n'
-            'Relationship between tables (transactions, payments) uses a foreign key column '
+            'Relationship between tables (transactions, payments) uses a foreign key '
             "('user_id') that is already used in another relationship."
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
@@ -726,6 +726,75 @@ class TestMetadataClass:
         )
         with pytest.raises(ValueError, match=expected_message):
             Metadata.detect_from_dataframes(data, infer_keys=infer_keys)
+
+    def test_detect_from_dataframe_primary_key_to_primary_key(self):
+        """Test primary to primary key relationship is detected if column name match."""
+        # Setup
+        data = {
+            'table1': pd.DataFrame({
+                'id': [1, 2, 3],
+            }),
+            'table2': pd.DataFrame({
+                'id': [1, 2, 3],
+            }),
+        }
+        instance = Metadata()
+        instance.detect_table_from_dataframe('table1', data['table1'])
+        instance.detect_table_from_dataframe('table2', data['table2'])
+
+        # Run
+        instance._detect_foreign_keys_by_column_name(data)
+
+        # Assert
+        assert instance.to_dict()['relationships'] == [
+            {
+                'parent_table_name': 'table1',
+                'child_table_name': 'table2',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'id',
+            }
+        ]
+
+    def test_detect_from_dataframe_primary_key_to_primary_key_no_cycles(self):
+        """Test no cycles are created with primary to primary key relationship."""
+        # Setup
+        data = {
+            'table1': pd.DataFrame({
+                'id': [1, 2, 3],
+            }),
+            'table2': pd.DataFrame({
+                'id': [1, 2, 3],
+            }),
+            'table3': pd.DataFrame({
+                'id': [1, 2, 3],
+            }),
+        }
+        instance = Metadata()
+        instance.detect_table_from_dataframe('table1', data['table1'])
+        instance.detect_table_from_dataframe('table2', data['table2'])
+        instance.detect_table_from_dataframe('table3', data['table3'])
+
+        # Run
+        instance._detect_foreign_keys_by_column_name(data)
+
+        # Assert
+        expected = [
+            {
+                'parent_table_name': 'table1',
+                'child_table_name': 'table2',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'id',
+            },
+            {
+                'parent_table_name': 'table1',
+                'child_table_name': 'table3',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'id',
+            },
+        ]
+        for rel in expected:
+            assert rel in instance.to_dict()['relationships']
+        assert len(instance.relationships) == 2
 
     @patch('sdv.metadata.metadata.Metadata')
     def test_detect_from_dataframe(self, mock_metadata):
@@ -1250,3 +1319,27 @@ class TestMetadataClass:
         assert list(trades_mock.columns.keys()) == ['id', 'cost', 'quantity', 'time']
         assert trades_mock.alternate_keys == []
         assert metadata._multi_table_updated
+
+    def test_validate_with_composite_key_that_has_duplicates(self):
+        """Test that `validate` will error out if the composite key has duplicated columns."""
+        # Setup
+        account_metadata = Metadata.load_from_dict({
+            'tables': {
+                'accounts': {
+                    'columns': {
+                        'user_id': {'sdtype': 'id', 'regex_format': 'ID_[0-9]{1,2}'},
+                        'account_type': {'sdtype': 'categorical'},
+                        'col1': {'sdtype': 'categorical'},
+                        'col2': {'sdtype': 'categorical'},
+                    }
+                }
+            }
+        })
+        account_metadata.tables['accounts'].primary_key = ['user_id', 'user_id', 'fk_id', 'fk_id']
+
+        # Run and Assert
+        expected_message = (
+            "'primary_key' must be a list of unique columns. Duplicates: user_id, fk_id"
+        )
+        with pytest.raises(InvalidMetadataError, match=expected_message):
+            account_metadata.validate()

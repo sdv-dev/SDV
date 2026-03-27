@@ -70,3 +70,32 @@ def test_visualize_pk_to_pk(primary_key_to_primary_key):
     assert 'arrowhead=noneteeodot' in graph.source
     assert 'arrowtail=nonetee' in graph.source
     assert 'dir=both' in graph.source
+
+
+def test_visualize_bad_pk_relationship(primary_key_to_primary_key):
+    """Test visualization runs with PK to PK relationship."""
+    # Setup
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'parent': {
+                'columns': {'pk': {'sdtype': 'id'}, 'other': {'sdtype': 'id'}},
+                'primary_key': 'pk',
+            },
+            'child': {'columns': {'fk': {'sdtype': 'id'}}},
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'parent',
+                'parent_primary_key': 'other',
+                'child_table_name': 'child',
+                'child_foreign_key': 'fk',
+            }
+        ],
+    })
+
+    # Run
+    graph = metadata.visualize()
+
+    # Assert
+    assert 'Primary key: pk' in graph.source
+    assert 'parent -> child [label="  fk → other"' in graph.source

@@ -230,8 +230,8 @@ class TestMultiTableMetadata:
 
         # Run / Assert
         error_msg = re.escape(
-            'Relationship between tables (users, sessions) contains '
-            "an unknown primary key {'primary_key'}."
+            'Relationship between tables (users, sessions) '
+            "has a mismatched primary key ['primary_key']."
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
             MultiTableMetadata._validate_missing_relationship_keys(
@@ -240,6 +240,28 @@ class TestMultiTableMetadata:
                 parent_primary_key,
                 child_table_name,
                 child_foreign_key,
+            )
+
+    def test__validate_missing_relationship_keys_subset_of_primary_key(self):
+        """Test that a subset of the actual primary key is rejected."""
+        # Setup
+        parent_table = Mock()
+        parent_table.primary_key = ['user_id', 'account_type']
+
+        child_table = Mock()
+        child_table.columns = {'user_id': {'sdtype': 'id'}}
+
+        instance = Mock()
+        instance.tables = {'accounts': parent_table, 'transactions': child_table}
+
+        # Run and Assert
+        error_msg = re.escape(
+            'Relationship between tables (accounts, transactions) '
+            "has a mismatched primary key ['user_id']."
+        )
+        with pytest.raises(InvalidMetadataError, match=error_msg):
+            MultiTableMetadata._validate_missing_relationship_keys(
+                instance, 'accounts', ['user_id'], 'transactions', ['user_id']
             )
 
     def test__validate_no_missing_tables_in_relationship(self):
@@ -406,7 +428,7 @@ class TestMultiTableMetadata:
 
         # Run and Assert
         error_msg = re.escape(
-            'Relationship between tables (users, transactions) uses a foreign key column '
+            'Relationship between tables (users, transactions) uses a foreign key '
             "('session_id') that is already used in another relationship."
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
@@ -432,7 +454,7 @@ class TestMultiTableMetadata:
 
         # Run and Assert
         error_msg = re.escape(
-            'Relationship between tables (users, transactions) uses a foreign key column '
+            'Relationship between tables (users, transactions) uses a foreign key '
             "('session_id') that is already used in another relationship."
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
@@ -1370,13 +1392,74 @@ class TestMultiTableMetadata:
         # Assert
         missing_upravna_enota = [
             'Relationships:\n'
-            "Error: foreign key column 'upravna_enota' contains unknown references: "
-            '(10, 11, 12, 13, 14, + more). '
+            "Error: foreign key column 'upravna_enota' contains unknown references:\n"
+            '   upravna_enota\n'
+            '0             10\n'
+            '1             11\n'
+            '2             12\n'
+            '3             13\n'
+            '4             14\n'
+            '+5 more\n'
             "Please use the method 'drop_unknown_references' from sdv.utils to clean the data.\n"
-            "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9)."
-            " Please use the method 'drop_unknown_references' from sdv.utils to clean the data."
+            "Error: foreign key column 'id_nesreca' contains unknown references:\n"
+            '   id_nesreca\n'
+            '1           1\n'
+            '3           3\n'
+            '5           5\n'
+            '7           7\n'
+            '9           9\n'
+            "Please use the method 'drop_unknown_references' from sdv.utils to clean the data."
         ]
         assert result == missing_upravna_enota
+
+    def test__validate_foreign_keys_missing_composite_keys(self):
+        """Test that errors are being returned.
+
+        When the values of the foreign keys are not within the values of the parent
+        primary key, a list of errors must be returned indicating the values that are missing.
+        """
+        # Setup
+        metadata = get_multi_table_metadata()
+        metadata.remove_relationship('nesreca', 'oseba')
+        metadata.add_column('id_nesreca2', 'nesreca', sdtype='id')
+        metadata.add_column('nesreca_fk2', 'oseba', sdtype='id')
+        metadata.set_primary_key(['id_nesreca', 'id_nesreca2'], 'nesreca')
+        metadata.add_relationship(
+            parent_table_name='nesreca',
+            child_table_name='oseba',
+            parent_primary_key=['id_nesreca', 'id_nesreca2'],
+            child_foreign_key=['id_nesreca', 'nesreca_fk2'],
+        )
+        data = {
+            'nesreca': pd.DataFrame({
+                'id_nesreca': ['id0', 'id1', 'id2', 'id3', 'id4'] * 2,
+                'id_nesreca2': ['A'] * 5 + ['B'] * 5,
+                'upravna_enota': np.arange(10),
+            }),
+            'oseba': pd.DataFrame({
+                'upravna_enota': np.arange(9),
+                'id_nesreca': ['id0', 'id9', 'id9'] + ['id0', 'id1', 'id2'] * 2,
+                'nesreca_fk2': ['X', 'A', 'X'] + ['A', 'B'] * 3,
+            }),
+            'upravna_enota': pd.DataFrame({
+                'id_upravna_enota': np.arange(10),
+            }),
+        }
+
+        # Run
+        result = metadata._validate_foreign_keys(data)
+
+        # Assert
+        missing_oseba = [
+            'Relationships:\n'
+            "Error: foreign key column ['id_nesreca', 'nesreca_fk2'] contains unknown references:\n"
+            '  id_nesreca nesreca_fk2\n'
+            '0        id0           X\n'
+            '1        id9           A\n'
+            '2        id9           X\n'
+            "Please use the method 'drop_unknown_references' from sdv.utils to clean the data."
+        ]
+        assert result == missing_oseba
 
     def test_validate_data(self):
         """Test that no error is being raised when the data is valid."""
@@ -1486,7 +1569,13 @@ class TestMultiTableMetadata:
         error_msg = re.escape(
             'The provided data does not match the metadata:\n'
             'Relationships:\n'
-            "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9). "
+            "Error: foreign key column 'id_nesreca' contains unknown references:\n"
+            '   id_nesreca\n'
+            '1           1\n'
+            '3           3\n'
+            '5           5\n'
+            '7           7\n'
+            '9           9\n'
             "Please use the method 'drop_unknown_references' from sdv.utils to clean the data."
         )
         with pytest.raises(InvalidDataError, match=error_msg):
@@ -1872,7 +1961,7 @@ class TestMultiTableMetadata:
                     'parent_table_name': 'accounts',
                     'parent_primary_key': 'id',
                     'child_table_name': 'branches',
-                    'chil_foreign_key': 'branch_id',
+                    'child_foreign_key': 'branch_id',
                 }
             ],
         }
@@ -1900,7 +1989,7 @@ class TestMultiTableMetadata:
                 'parent_table_name': 'accounts',
                 'parent_primary_key': 'id',
                 'child_table_name': 'branches',
-                'chil_foreign_key': 'branch_id',
+                'child_foreign_key': 'branch_id',
             }
         ]
 

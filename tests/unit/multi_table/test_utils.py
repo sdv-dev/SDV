@@ -104,8 +104,8 @@ def test__get_rows_to_drop():
         {
             'parent_table_name': 'child',
             'child_table_name': 'grandchild',
-            'parent_primary_key': 'id_child',
-            'child_foreign_key': 'child_foreign_key',
+            'parent_primary_key': ['id_child1', 'id_child2'],
+            'child_foreign_key': ['child_fk1', 'child_fk2'],
         },
         {
             'parent_table_name': 'parent',
@@ -119,7 +119,7 @@ def test__get_rows_to_drop():
     metadata.relationships = relationships
     metadata.tables = {
         'parent': Mock(primary_key='id_parent'),
-        'child': Mock(primary_key='id_child'),
+        'child': Mock(primary_key=['id_child1', 'id_child2']),
         'grandchild': Mock(primary_key='id_grandchild'),
     }
 
@@ -130,12 +130,14 @@ def test__get_rows_to_drop():
         }),
         'child': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 5],
-            'id_child': [5, 6, 7, 8, 9],
+            'id_child1': [5, 6, 7, 8, 9],
+            'id_child2': ['A', 'B', 'A', 'B', 'A'],
             'B': ['Yes', 'No', 'No', 'No', 'No'],
         }),
         'grandchild': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 6],
-            'child_foreign_key': [9, 5, 11, 6, 4],
+            'child_fk1': [9, 5, 11, 6, 6],
+            'child_fk2': ['A', 'A', 'A', 'B', 'X'],
             'C': ['Yes', 'No', 'No', 'No', 'No'],
         }),
     }
@@ -605,6 +607,7 @@ def test__get_disconnected_roots_from_table(table_name, expected_result):
 def test__simplify_relationships_and_tables():
     """Test the ``_simplify_relationships`` method."""
     # Setup
+    relationship_extras = {'parent_primary_key': 'pk', 'child_foreign_key': 'fk'}
     metadata = Metadata().load_from_dict({
         'tables': {
             'grandparent': {'columns': {'col_1': {'sdtype': 'numerical'}}},
@@ -615,11 +618,19 @@ def test__simplify_relationships_and_tables():
             'other_root': {'columns': {'col_6': {'sdtype': 'numerical'}}},
         },
         'relationships': [
-            {'parent_table_name': 'grandparent', 'child_table_name': 'parent'},
-            {'parent_table_name': 'parent', 'child_table_name': 'child'},
-            {'parent_table_name': 'child', 'child_table_name': 'grandchild'},
-            {'parent_table_name': 'grandparent', 'child_table_name': 'other_table'},
-            {'parent_table_name': 'other_root', 'child_table_name': 'child'},
+            {
+                'parent_table_name': 'grandparent',
+                'child_table_name': 'parent',
+                **relationship_extras,
+            },
+            {'parent_table_name': 'parent', 'child_table_name': 'child', **relationship_extras},
+            {'parent_table_name': 'child', 'child_table_name': 'grandchild', **relationship_extras},
+            {
+                'parent_table_name': 'grandparent',
+                'child_table_name': 'other_table',
+                **relationship_extras,
+            },
+            {'parent_table_name': 'other_root', 'child_table_name': 'child', **relationship_extras},
         ],
     })
     tables_to_drop = {'grandchild', 'other_root'}
@@ -629,9 +640,13 @@ def test__simplify_relationships_and_tables():
 
     # Assert
     expected_relationships = [
-        {'parent_table_name': 'grandparent', 'child_table_name': 'parent'},
-        {'parent_table_name': 'parent', 'child_table_name': 'child'},
-        {'parent_table_name': 'grandparent', 'child_table_name': 'other_table'},
+        {'parent_table_name': 'grandparent', 'child_table_name': 'parent', **relationship_extras},
+        {'parent_table_name': 'parent', 'child_table_name': 'child', **relationship_extras},
+        {
+            'parent_table_name': 'grandparent',
+            'child_table_name': 'other_table',
+            **relationship_extras,
+        },
     ]
     expected_tables = {
         'grandparent': {'columns': {'col_1': {'sdtype': 'numerical'}}},
@@ -932,13 +947,25 @@ def test__simplify_metadata_no_child_simplification(mock_hma):
             'parent_table_name': 'grandparent',
             'child_table_name': 'parent',
             'child_foreign_key': 'fk',
+            'parent_primary_key': 'pk',
         },
-        {'parent_table_name': 'parent', 'child_table_name': 'child', 'child_foreign_key': 'fk'},
-        {'parent_table_name': 'child', 'child_table_name': 'grandchild', 'child_foreign_key': 'fk'},
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'child',
+            'child_foreign_key': 'fk',
+            'parent_primary_key': 'pk',
+        },
+        {
+            'parent_table_name': 'child',
+            'child_table_name': 'grandchild',
+            'child_foreign_key': 'fk',
+            'parent_primary_key': 'pk',
+        },
         {
             'parent_table_name': 'grandparent',
             'child_table_name': 'other_table',
             'child_foreign_key': 'fk',
+            'parent_primary_key': 'pk',
         },
         {'parent_table_name': 'other_root', 'child_table_name': 'child', 'child_foreign_key': 'fk'},
     ]
@@ -982,12 +1009,19 @@ def test__simplify_metadata_no_child_simplification(mock_hma):
             'parent_table_name': 'grandparent',
             'child_table_name': 'parent',
             'child_foreign_key': 'fk',
+            'parent_primary_key': 'pk',
         },
-        {'parent_table_name': 'parent', 'child_table_name': 'child', 'child_foreign_key': 'fk'},
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'child',
+            'child_foreign_key': 'fk',
+            'parent_primary_key': 'pk',
+        },
         {
             'parent_table_name': 'grandparent',
             'child_table_name': 'other_table',
             'child_foreign_key': 'fk',
+            'parent_primary_key': 'pk',
         },
     ]
     metadata_dict = metadata_result.to_dict()
@@ -1956,7 +1990,7 @@ def test__subsample_data(
     assert result == data
 
 
-def test__subsample_data_with_null_foreing_keys():
+def test__subsample_data_with_null_foreign_keys():
     """Test the ``_subsample_data`` method when there are null foreign keys."""
     # Setup
     metadata = Metadata.load_from_dict({

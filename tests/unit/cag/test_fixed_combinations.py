@@ -625,3 +625,31 @@ class TestFixedCombinations:
 
         # Assert
         assert result == "FixedCombinations(column_names=['city', 'country'], table_name='parent')"
+
+    def test__is_valid_misaligned_index(self):
+        """Test that _is_valid works when the data has a non-contiguous index."""
+        # Setup
+        data = pd.DataFrame({
+            'A': [1, 2, 3, 1, 2, 1],
+            'B': [10, 20, 30, 10, 20, 10],
+        })
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'A': {'sdtype': 'categorical'},
+                        'B': {'sdtype': 'categorical'},
+                    }
+                },
+            },
+        })
+        constraint = FixedCombinations(['A', 'B'])
+        constraint.fit(data, metadata)
+        gapped_data = data.iloc[[0, 2, 5]].copy()
+
+        # Run
+        valid_out = constraint.is_valid(gapped_data)
+
+        # Assert
+        expected_valid_out = pd.Series([True] * 3, name='A#B', index=[0, 2, 5])
+        pd.testing.assert_series_equal(expected_valid_out, valid_out, check_index=True)

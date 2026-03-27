@@ -12,6 +12,7 @@ from sdv.cag._utils import (
     _get_is_valid_dict,
     _is_list_of_type,
     _remove_columns_from_metadata,
+    _validate_columns_not_primary_key,
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
 )
@@ -126,6 +127,7 @@ class Range(BaseConstraint):
         columns = [self._low_column_name, self._middle_column_name, self._high_column_name]
         _validate_table_and_column_names(self.table_name, columns, metadata)
         table_name = self._get_single_table_name(metadata)
+        _validate_columns_not_primary_key(table_name, columns, metadata)
         for column in columns:
             col_sdtype = metadata.tables[table_name].columns[column]['sdtype']
             if col_sdtype not in ['numerical', 'datetime']:

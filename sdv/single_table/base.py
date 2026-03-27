@@ -150,6 +150,16 @@ class BaseSynthesizer:
                 )
                 _check_regex_format(self._table_name, column_name, regex)
 
+    def _handle_composite_keys(self):
+        """Validates that composite keys are not used in Public SDV."""
+        table_metadata = self.metadata._convert_to_single_table()
+        if table_metadata._primary_key_is_composite:
+            raise SynthesizerInputError(
+                'Your metadata contains composite keys (primary key of table '
+                f"'{self._table_name}' has multiple columns). Composite keys are "
+                'not supported in SDV Community.'
+            )
+
     def __init__(
         self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=['en_US']
     ):
@@ -175,12 +185,14 @@ class BaseSynthesizer:
 
         # Points to a metadata object that conserves the initialized status of the synthesizer
         self._original_metadata = deepcopy(self.metadata)
+        self._handle_composite_keys()
+        single_table_metadata = self.metadata._convert_to_single_table()
 
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
         self.locales = locales
         self._data_processor = DataProcessor(
-            metadata=self.metadata._convert_to_single_table(),
+            metadata=single_table_metadata,
             enforce_rounding=self.enforce_rounding,
             enforce_min_max_values=self.enforce_min_max_values,
             locales=self.locales,
@@ -454,13 +466,15 @@ class BaseSynthesizer:
             constraints (list):
                 A list of constraints to apply to the synthesizer.
         """
+        metadata = getattr(self, '_composite_keys_metadata', None) or self.metadata
         constraints = _validate_constraints_single_table(constraints, self._fitted)
         for constraint in constraints:
             if isinstance(constraint, ProgrammableConstraint):
                 constraint = ProgrammableConstraintHarness(constraint)
 
             try:
-                self.metadata = constraint.get_updated_metadata(self.metadata)
+                metadata = constraint.get_updated_metadata(metadata)
+                self.metadata = metadata
                 self._chained_constraints.append(constraint)
                 self._constraints_fitted = False
             except ConstraintNotMetError as e:
@@ -475,6 +489,7 @@ class BaseSynthesizer:
                     raise e
 
         self.metadata.validate()
+        self._handle_composite_keys()
         self._data_processor = DataProcessor(
             metadata=self.metadata._convert_to_single_table(),
             enforce_rounding=self.enforce_rounding,
@@ -615,6 +630,9 @@ class BaseSynthesizer:
             warnings.warn(msg, RefitWarning)
 
         data = self._validate_transform_constraints(data)
+        if getattr(self, '_composite_keys', None):
+            self._composite_keys.fit(data, self._composite_keys_metadata)
+            data = self._composite_keys.transform(data)
 
         return data
 
@@ -776,6 +794,9 @@ class BaseSynthesizer:
 
     def reverse_transform_constraints(self, sampled):
         """Reverse transform the constraints."""
+        if getattr(self, '_composite_keys', None):
+            sampled = self._composite_keys.reverse_transform(sampled)
+
         if hasattr(self, '_chained_constraints') and hasattr(self, '_reject_sampling_constraints'):
             for constraint in reversed(self._chained_constraints):
                 sampled = constraint.reverse_transform(sampled)

@@ -11,6 +11,7 @@ from sdv.cag._utils import (
     _get_is_valid_dict,
     _is_list_of_type,
     _remove_columns_from_metadata,
+    _validate_columns_not_primary_key,
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
 )
@@ -67,6 +68,7 @@ class FixedCombinations(BaseConstraint):
         """
         _validate_table_and_column_names(self.table_name, self.column_names, metadata)
         table_name = self._get_single_table_name(metadata)
+        _validate_columns_not_primary_key(table_name, self.column_names, metadata)
         for column in self.column_names:
             col_sdtype = metadata.tables[table_name].columns[column]['sdtype']
             if col_sdtype not in ['boolean', 'categorical']:
@@ -192,5 +194,7 @@ class FixedCombinations(BaseConstraint):
         merged = data[table_name].merge(
             self._combinations, how='left', on=self.column_names, indicator=self._joint_column
         )
-        is_valid[table_name] = merged[self._joint_column] == 'both'
+        valid_data = merged[self._joint_column] == 'both'
+        valid_data.index = data[table_name].index
+        is_valid[table_name] = valid_data
         return is_valid

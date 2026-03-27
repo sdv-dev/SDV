@@ -1,5 +1,34 @@
 # Release Notes
 
+## v1.35.1 - 2026-03-27
+
+### Bugs Fixed
+
+* `OneHotEncoding` constraint diagnostic score not 1.0 - Issue [#2856](https://github.com/sdv-dev/SDV/issues/2856) by @pvk-developer
+* `Inequality` constraint diagnostic score not 1.0 due to out of range datetimes - Issue [#2855](https://github.com/sdv-dev/SDV/issues/2855) by @gsheni
+* `IndexingError` with `FixedCombinations` constraint during sample - Issue [#2852](https://github.com/sdv-dev/SDV/issues/2852) by @gsheni
+* `OneHotEncoding` constraint can error if numerical columns have integer `computer_representation` - Issue [#2849](https://github.com/sdv-dev/SDV/issues/2849) by @gsheni
+
+## v1.35.0 - 2026-03-19
+
+### New Features
+
+* Allow composite keys to be specified in the metadata - Issue [#2778](https://github.com/sdv-dev/SDV/issues/2778) by @frances-h
+
+### Bugs Fixed
+
+* Metadata visualization shows table key not relationship key for relationships - Issue [#2839](https://github.com/sdv-dev/SDV/issues/2839) by @frances-h
+* [Metadata composite keys] Disallow primary key columns in column relationships - Issue [#2826](https://github.com/sdv-dev/SDV/issues/2826) by @pvk-developer
+* [Metadata composite keys] Validate that primary key columns are unique - Issue [#2825](https://github.com/sdv-dev/SDV/issues/2825) by @pvk-developer
+* [Metadata composite keys] Update `set_primary_key` docstring to indicate a list of columns is now valid - Issue [#2824](https://github.com/sdv-dev/SDV/issues/2824) by @pvk-developer
+* [Metadata composite keys] Typo in error message for invalid primary keys - Issue [#2823](https://github.com/sdv-dev/SDV/issues/2823) by @pvk-developer
+
+## v1.34.3 - 2026-03-06
+
+### New Features
+
+* Metadata should be able to auto-detect cases where a primary key is also a foreign key (`column_name_match` algorithm) - Issue [#2788](https://github.com/sdv-dev/SDV/issues/2788) by @gsheni
+
 ## v1.34.2 - 2026-02-27
 
 ### New Features

@@ -1,17 +1,18 @@
 import os
 import re
 from copy import deepcopy
+from unittest.mock import Mock
 
 import pandas as pd
 import pytest
 
-from sdv.datasets.demo import download_demo
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
+from tests.utils import download_test_demo
 
 DEFAULT_TABLE_NAME = 'table'
 
@@ -68,7 +69,7 @@ def test_load_from_json_single_table_metadata(tmp_path):
 def test_detect_from_dataframes_multi_table():
     """Test the ``detect_from_dataframes`` method works with multi-table."""
     # Setup
-    real_data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    real_data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
 
     # Run
     metadata = Metadata.detect_from_dataframes(real_data)
@@ -124,7 +125,7 @@ def test_detect_from_dataframes_multi_table():
 def test_detect_from_dataframes_multi_table_without_infer_sdtypes():
     """Test it when infer_sdtypes is False."""
     # Setup
-    real_data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    real_data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
 
     # Run
     metadata = Metadata.detect_from_dataframes(real_data, infer_sdtypes=False)
@@ -180,7 +181,7 @@ def test_detect_from_dataframes_multi_table_without_infer_sdtypes():
 def test_detect_from_dataframes_multi_table_with_infer_keys_primary_only():
     """Test it when infer_keys is 'primary_only'."""
     # Setup
-    real_data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    real_data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
 
     # Run
     metadata = Metadata.detect_from_dataframes(real_data, infer_keys='primary_only')
@@ -229,7 +230,7 @@ def test_detect_from_dataframes_multi_table_with_infer_keys_primary_only():
 def test_detect_from_dataframes_multi_table_with_infer_keys_none():
     """Test it when infer_keys is None."""
     # Setup
-    real_data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    real_data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
 
     # Run
     metadata = Metadata.detect_from_dataframes(real_data, infer_keys=None)
@@ -276,7 +277,7 @@ def test_detect_from_dataframes_multi_table_with_infer_keys_none():
 def test_detect_from_dataframes_single_table():
     """Test the ``detect_from_dataframes`` method works with a single table."""
     # Setup
-    data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
     metadata = Metadata.detect_from_dataframes({'table_1': data['hotels']})
 
     # Run
@@ -305,7 +306,7 @@ def test_detect_from_dataframes_single_table():
 def test_detect_from_dataframes_single_table_infer_sdtypes_false():
     """Test it for a single table when infer_sdtypes is False."""
     # Setup
-    data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
     metadata = Metadata.detect_from_dataframes({'table_1': data['hotels']}, infer_sdtypes=False)
 
     # Run
@@ -334,7 +335,7 @@ def test_detect_from_dataframes_single_table_infer_sdtypes_false():
 def test_detect_from_dataframes_single_table_infer_keys_primary_only():
     """Test it for a single table when infer_keys is 'primary_only'."""
     # Setup
-    data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
     metadata = Metadata.detect_from_dataframes(
         {'table_1': data['hotels']}, infer_keys='primary_only'
     )
@@ -365,7 +366,7 @@ def test_detect_from_dataframes_single_table_infer_keys_primary_only():
 def test_detect_from_dataframes_single_table_infer_keys_none():
     """Test it for a single table when infer_keys is None."""
     # Setup
-    data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
     metadata = Metadata.detect_from_dataframes({'table_1': data['hotels']}, infer_keys=None)
 
     # Run
@@ -393,7 +394,7 @@ def test_detect_from_dataframes_single_table_infer_keys_none():
 def test_detect_from_dataframe():
     """Test that a single table can be detected as a DataFrame."""
     # Setup
-    data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
 
     metadata = Metadata.detect_from_dataframe(data['hotels'])
 
@@ -423,7 +424,7 @@ def test_detect_from_dataframe():
 def test_detect_from_dataframe_infer_sdtypes_false():
     """Test it when infer_sdtypes is False."""
     # Setup
-    data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
     metadata = Metadata.detect_from_dataframe(data['hotels'], infer_sdtypes=False)
 
     # Run
@@ -452,7 +453,7 @@ def test_detect_from_dataframe_infer_sdtypes_false():
 def test_detect_from_dataframe_infer_keys_none():
     """Test it when infer_keys is None."""
     # Setup
-    data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
     metadata = Metadata.detect_from_dataframe(data['hotels'], infer_keys=None)
 
     # Run
@@ -480,7 +481,7 @@ def test_detect_from_dataframe_infer_keys_none():
 def test_detect_from_dataframe_infer_keys_none_infer_sdtypes_false():
     """Test it when infer_keys is None and infer_sdtypes is False."""
     # Setup
-    data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
     metadata = Metadata.detect_from_dataframe(data['hotels'], infer_keys=None, infer_sdtypes=False)
 
     # Run
@@ -508,7 +509,7 @@ def test_detect_from_dataframe_infer_keys_none_infer_sdtypes_false():
 def test_detect_from_csvs(tmp_path):
     """Test the ``detect_from_csvs`` method."""
     # Setup
-    real_data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    real_data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
 
     metadata = Metadata()
 
@@ -571,7 +572,7 @@ def test_detect_from_csvs(tmp_path):
 def test_single_table_compatibility(tmp_path):
     """Test if SingleTableMetadata still has compatibility with single table synthesizers."""
     # Setup
-    data, _ = download_demo('single_table', 'fake_hotel_guests')
+    data, _ = download_test_demo('single_table', 'fake_hotel_guests')
     warn_msg = (
         "The 'SingleTableMetadata' is deprecated. Please use the new "
         "'Metadata' class for synthesizers."
@@ -623,7 +624,7 @@ def test_single_table_compatibility(tmp_path):
 def test_multi_table_compatibility(tmp_path):
     """Test if MultiTableMetadata still has compatibility with multi table synthesizers."""
     # Setup
-    data, _ = download_demo('multi_table', 'fake_hotels')
+    data, _ = download_test_demo('multi_table', 'fake_hotels')
     warn_msg = re.escape(
         "The 'MultiTableMetadata' is deprecated. Please use the new "
         "'Metadata' class for synthesizers."
@@ -741,7 +742,7 @@ params = [
 def test_any_metadata_update_single_table(method, args, kwargs):
     """Test that any method that updates metadata works for single-table case."""
     # Setup
-    _, metadata = download_demo('single_table', 'fake_hotel_guests')
+    _, metadata = download_test_demo('single_table', 'fake_hotel_guests')
     metadata.update_column(
         table_name='fake_hotel_guests', column_name='billing_address', sdtype='street_address'
     )
@@ -764,7 +765,7 @@ def test_any_metadata_update_single_table(method, args, kwargs):
 def test_any_metadata_update_multi_table(method, args, kwargs):
     """Test that any method that updates metadata works for multi-table case."""
     # Setup
-    _, metadata = download_demo('multi_table', 'fake_hotels')
+    _, metadata = download_test_demo('multi_table', 'fake_hotels')
     metadata.update_column(
         table_name='guests', column_name='billing_address', sdtype='street_address'
     )
@@ -879,6 +880,80 @@ def test_detect_from_dataframes_invalid_format():
         Metadata.detect_from_dataframes(data)
 
 
+def test_detect_from_dataframes__primary_to_primary():
+    """Test metadata auto-detection works for primary to primary relationships."""
+    # Setup
+    data = {
+        'tableA': pd.DataFrame({
+            'table_A_id': range(5),
+            'column_1': ['A', 'B', 'B', 'C', 'C'],
+        }),
+        'tableB': pd.DataFrame({
+            'table_A_id': range(5),
+            'column_2': ['A', 'B', 'B', 'C', 'C'],
+        }),
+    }
+
+    # Run
+    detected_metadata = Metadata().detect_from_dataframes(
+        data, foreign_key_inference_algorithm='column_name_match'
+    )
+
+    # Assert
+    assert detected_metadata.tables['tableA'].primary_key == 'table_A_id'
+    assert detected_metadata.tables['tableB'].primary_key == 'table_A_id'
+    assert detected_metadata.relationships == [
+        {
+            'parent_table_name': 'tableA',
+            'child_table_name': 'tableB',
+            'parent_primary_key': 'table_A_id',
+            'child_foreign_key': 'table_A_id',
+        }
+    ]
+
+
+def test_detect_from_dataframes__primary_to_primary_no_cycles():
+    """Test metadata auto-detection does not create cycles with PK to PK."""
+    # Setup
+    data = {
+        'tableA': pd.DataFrame({
+            'table_A_id': range(5),
+            'column_1': ['A', 'B', 'B', 'C', 'C'],
+        }),
+        'tableB': pd.DataFrame({
+            'table_A_id': range(5),
+            'column_2': ['A', 'B', 'B', 'C', 'C'],
+        }),
+        'tableC': pd.DataFrame({
+            'table_A_id': range(5),
+            'column_2': ['A', 'B', 'B', 'C', 'C'],
+        }),
+    }
+
+    # Run
+    detected_metadata = Metadata().detect_from_dataframes(
+        data, foreign_key_inference_algorithm='column_name_match'
+    )
+
+    # Assert
+    assert detected_metadata.tables['tableA'].primary_key == 'table_A_id'
+    assert detected_metadata.tables['tableB'].primary_key == 'table_A_id'
+    assert detected_metadata.tables['tableC'].primary_key == 'table_A_id'
+    assert len(detected_metadata.relationships) == 2
+    assert {
+        'parent_table_name': 'tableA',  # PK to PK
+        'child_table_name': 'tableC',
+        'parent_primary_key': 'table_A_id',
+        'child_foreign_key': 'table_A_id',
+    } in detected_metadata.relationships
+    assert {
+        'parent_table_name': 'tableA',  # PK to PK
+        'child_table_name': 'tableB',
+        'parent_primary_key': 'table_A_id',
+        'child_foreign_key': 'table_A_id',
+    } in detected_metadata.relationships
+
+
 def test_validate_metadata_with_reused_foreign_keys():
     # Setup
     metadata_dict = {
@@ -953,7 +1028,7 @@ def test_validate_metadata_with_reused_foreign_keys():
     # Run and Assert
     error_msg = re.escape(
         'Relationships:\n'
-        'Relationship between tables (A2, A3) uses a foreign key column '
+        'Relationship between tables (A2, A3) uses a foreign key '
         "('fk3_A1_A2') that is already used in another relationship."
     )
     with pytest.raises(InvalidMetadataError, match=error_msg):
@@ -1345,7 +1420,7 @@ def test_remove_column_alternate_key():
 def test_loading_invalid_single_table_metadata():
     """Test loading invalid single table metadata dict."""
     # Setup
-    _, metadata = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    _, metadata = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
     metadata_dict = metadata.to_dict()
     metadata_dict['tables']['guests']['invalid_key'] = {'value1': True, 'value2': False}
     expected_error = re.escape(
@@ -1575,3 +1650,65 @@ def test_add_relationship_pk_to_pk(
             'child_foreign_key': child_foreign_key,
         }
     ]
+
+
+def test_add_column_relationship_fails_with_primary_key_column():
+    """Test that adding a column relationship fails if the column is part of the primary key.
+
+    This test also adds a `billing` mutation to the column relationship types
+    for `SingleTableMetadata`. The error that is being raised otherwise
+    is `ImportError` instead of `InvalidMetadataError`.
+    """
+    # Setup
+    data, metadata = download_test_demo(modality='single_table', dataset_name='fake_hotel_guests')
+    metadata.update_column(column_name='billing_address', sdtype='street_address')
+    metadata.set_primary_key(['guest_email', 'billing_address'])
+    expected_msg = "Cannot use primary key 'billing_address' in column relationship."
+    SingleTableMetadata._COLUMN_RELATIONSHIP_TYPES['billing'] = Mock()
+
+    # Run and Assert
+    with pytest.raises(InvalidMetadataError, match=expected_msg):
+        metadata.add_column_relationship(
+            column_names=['billing_address'], relationship_type='billing'
+        )
+
+    # Test cleanup: remove 'billing' from the class-level relationship types.
+    # Without this, the mutation would leak into later SingleTableMetadata instances.
+    SingleTableMetadata._COLUMN_RELATIONSHIP_TYPES.pop('billing')
+
+
+def test_metadata_fails_for_relationship_with_set_primary_key_column_in_relationship():
+    """Test metadata set_primary_key fails if a column relationship includes primary key column."""
+    # Setup
+    data, metadata = download_test_demo(modality='single_table', dataset_name='fake_hotel_guests')
+    metadata.update_column(column_name='billing_address', sdtype='street_address')
+    metadata.add_column_relationship(column_names=['billing_address'], relationship_type='address')
+    expected_msg = r"Cannot set primary key '.*' because it is part of a column relationship\."
+
+    # Run and Assert
+    with pytest.raises(InvalidMetadataError, match=expected_msg):
+        metadata.set_primary_key(['guest_email', 'billing_address'])
+
+
+def test_metadata_fails_with_proper_message_when_setting_primary_key():
+    """Test that when setting a primary key with no id columns it will fail."""
+    # Setup
+    account_metadata = Metadata.load_from_dict({
+        'tables': {
+            'accounts': {
+                'columns': {
+                    'user_id': {'sdtype': 'id', 'regex_format': 'ID_[0-9]{1,2}'},
+                    'account_type': {'sdtype': 'categorical'},
+                    'col1': {'sdtype': 'numerical'},
+                    'col2': {'sdtype': 'numerical'},
+                }
+            }
+        }
+    })
+
+    # Run and Assert
+    expected_msg = re.escape(
+        "The primary_keys ['col1', 'col2'] must have a column of type 'id' or another PII type."
+    )
+    with pytest.raises(InvalidMetadataError, match=expected_msg):
+        account_metadata.set_primary_key(['col1', 'col2'])

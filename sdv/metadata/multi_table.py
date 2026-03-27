@@ -10,7 +10,12 @@ from pathlib import Path
 
 import pandas as pd
 
-from sdv._utils import _cast_to_iterable, _load_data_from_csv
+from sdv._utils import (
+    _cast_to_iterable,
+    _format_invalid_values_string,
+    _get_unreferenced_keys,
+    _load_data_from_csv,
+)
 from sdv.errors import InvalidDataError
 from sdv.logging import get_sdv_logger
 from sdv.metadata.errors import InvalidMetadataError
@@ -62,27 +67,23 @@ class MultiTableMetadata:
                 "Please use 'set_primary_key' in order to set one."
             )
 
-        missing_keys = set()
         parent_primary_key = _cast_to_iterable(parent_primary_key)
         table_primary_keys = set(_cast_to_iterable(parent_table.primary_key))
-        for key in parent_primary_key:
-            if key not in table_primary_keys:
-                missing_keys.add(key)
-
-        if missing_keys:
-            raise InvalidMetadataError(
-                f'Relationship between tables ({parent_table_name}, {child_table_name}) contains '
-                f'an unknown primary key {missing_keys}.'
-            )
-
-        for key in set(_cast_to_iterable(child_foreign_key)):
-            if key not in child_table.columns:
-                missing_keys.add(key)
-
-        if missing_keys:
+        if set(parent_primary_key) != table_primary_keys:
             raise InvalidMetadataError(
                 f'Relationship between tables ({parent_table_name}, {child_table_name}) '
-                f'contains an unknown foreign key {missing_keys}.'
+                f'has a mismatched primary key {sorted(parent_primary_key)}.'
+            )
+
+        missing_fk = set()
+        for key in set(_cast_to_iterable(child_foreign_key)):
+            if key not in child_table.columns:
+                missing_fk.add(key)
+
+        if missing_fk:
+            raise InvalidMetadataError(
+                f'Relationship between tables ({parent_table_name}, {child_table_name}) '
+                f'contains an unknown foreign key {missing_fk}.'
             )
 
     @staticmethod
@@ -173,9 +174,14 @@ class MultiTableMetadata:
                 and relationship['parent_primary_key'] == parent_primary_key
             )
             if foreign_key_already_used and not parent_matches:
+                child_foreign_key = (
+                    f"('{child_foreign_key}')"
+                    if isinstance(child_foreign_key, str)
+                    else f'({child_foreign_key})'
+                )
                 raise InvalidMetadataError(
                     f'Relationship between tables ({parent_table_name}, {child_table_name}) uses '
-                    f"a foreign key column ('{child_foreign_key}') that is already used in another "
+                    f'a foreign key {child_foreign_key} that is already used in another '
                     'relationship.'
                 )
 
@@ -187,15 +193,23 @@ class MultiTableMetadata:
         child_foreign_key,
         seen_foreign_keys,
     ):
-        key = (child_table_name, child_foreign_key)
+        key = (
+            tuple(_cast_to_iterable(child_table_name)),
+            tuple(_cast_to_iterable(child_foreign_key)),
+        )
         current_relationship = (parent_table_name, parent_primary_key)
 
         if key in seen_foreign_keys:
             existing_relationship = seen_foreign_keys[key]
             if existing_relationship != current_relationship:
+                child_foreign_key = (
+                    f"('{child_foreign_key}')"
+                    if isinstance(child_foreign_key, str)
+                    else f'({child_foreign_key})'
+                )
                 raise InvalidMetadataError(
                     f'Relationship between tables ({parent_table_name}, {child_table_name}) uses '
-                    f"a foreign key column ('{child_foreign_key}') that is already used in another "
+                    f'a foreign key {child_foreign_key} that is already used in another '
                     'relationship.'
                 )
         else:
@@ -284,10 +298,10 @@ class MultiTableMetadata:
                 A string representing the name of the parent table.
             child_table_name (str):
                 A string representing the name of the child table.
-            parent_primary_key (str or tuple):
-                A string or tuple of strings representing the primary key of the parent.
-            child_foreign_key (str or tuple):
-                A string or tuple of strings representing the foreign key of the child.
+            parent_primary_key (str or list[str]):
+                A string or list of strings representing the primary key of the parent.
+            child_foreign_key (str or list[str]):
+                A string or list of strings representing the foreign key of the child.
 
         Raises:
             - ``InvalidMetadataError`` if a table is missing.
@@ -536,6 +550,9 @@ class MultiTableMetadata:
     def _detect_foreign_keys_by_column_name(self, data):
         """Detect the foreign keys based on if a column name matches a primary key.
 
+        If a column name (a child table) is a primary key, it will also be considered
+        to be a valid candidate for a foreign key.
+
         Args:
             data (dict):
                 Dictionary of table names to dataframes.
@@ -567,6 +584,7 @@ class MultiTableMetadata:
                         )
 
                     except InvalidMetadataError:
+                        # circular relationship
                         if pk_sdtype == 'id' and original_fk_sdtype != 'id':
                             self.update_column(
                                 table_name=child_candidate,
@@ -671,8 +689,8 @@ class MultiTableMetadata:
         Args:
             table_name (str):
                 Name of the table to set the primary key.
-            column_name (str, tulple[str]):
-                Name (or tuple of names) of the primary key column(s).
+            column_name (str, list[str]):
+                Name (or list of names) of the primary key column(s).
         """
         self._validate_table_exists(table_name)
         self.tables[table_name].set_primary_key(column_name)
@@ -899,22 +917,21 @@ class MultiTableMetadata:
             parent_table = data.get(relation['parent_table_name'])
 
             if isinstance(child_table, pd.DataFrame) and isinstance(parent_table, pd.DataFrame):
-                child_column = child_table[relation['child_foreign_key']]
-                parent_column = parent_table[relation['parent_primary_key']]
-                missing_values = child_column[~child_column.isin(parent_column)].unique()
-                missing_values = missing_values[~pd.isna(missing_values)]
+                child_columns = child_table[_cast_to_iterable(relation['child_foreign_key'])]
+                parent_columns = parent_table[_cast_to_iterable(relation['parent_primary_key'])]
+                missing_values = _get_unreferenced_keys(parent_columns, child_columns)
+                missing_values = missing_values.drop_duplicates()
+                if not missing_values.empty:
+                    foreign_key = relation['child_foreign_key']
+                    if not isinstance(foreign_key, list):
+                        foreign_key = f"'{foreign_key}'"
 
-                if any(missing_values):
-                    message = ', '.join(missing_values[:5].astype(str))
-                    if len(missing_values) > 5:
-                        message = f'({message}, + more)'
-                    else:
-                        message = f'({message})'
-
+                    message = f'\n{_format_invalid_values_string(missing_values, 5)}'
                     errors.append(
-                        f"Error: foreign key column '{relation['child_foreign_key']}' contains "
-                        f'unknown references: {message}. Please use the method'
-                        " 'drop_unknown_references' from sdv.utils to clean the data."
+                        f'Error: foreign key column {foreign_key} contains '
+                        f'unknown references:{message}\n'
+                        "Please use the method 'drop_unknown_references' from sdv.utils "
+                        'to clean the data.'
                     )
 
             if errors:
@@ -1152,7 +1169,7 @@ class MultiTableMetadata:
             parent = relationship.get('parent_table_name')
             child = relationship.get('child_table_name')
             foreign_key = relationship.get('child_foreign_key')
-            primary_key = self.tables.get(parent).primary_key
+            primary_key = relationship.get('parent_primary_key')
             edge_label = f'  {foreign_key} → {primary_key}' if show_relationship_labels else ''
             child_primary_key = self.tables.get(child).primary_key
             if foreign_key == child_primary_key:
@@ -1219,9 +1236,19 @@ class MultiTableMetadata:
                 ) from error
 
         for relationship in metadata.get('relationships', []):
+            parent_pk = relationship.get('parent_primary_key')
+            child_fk = relationship.get('child_foreign_key')
+            type_safe_pk = (
+                [str(col) for col in parent_pk] if isinstance(parent_pk, list) else str(parent_pk)
+            )
+            type_safe_fk = (
+                [str(col) for col in child_fk] if isinstance(parent_pk, list) else str(child_fk)
+            )
             type_safe_relationships = {
-                key: str(value) if not isinstance(value, str) else value
-                for key, value in relationship.items()
+                'parent_table_name': str(relationship.get('parent_table_name')),
+                'child_table_name': str(relationship.get('child_table_name')),
+                'parent_primary_key': type_safe_pk,
+                'child_foreign_key': type_safe_fk,
             }
             self.relationships.append(type_safe_relationships)
 
