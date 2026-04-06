@@ -116,14 +116,14 @@ class FixedCombinations(BaseConstraint):
             self._joint_column, metadata.tables[table_name].columns.keys()
         )
         self._combinations = table_data[self.column_names].drop_duplicates().copy()
-        self._combinations_to_uuids = {}
-        self._uuids_to_combinations = {}
+        self._combinations_to_ids = {}
+        self._ids_to_combinations = {}
         for idx, combination in enumerate(self._combinations.itertuples(index=False, name=None)):
             label = f'fixed_combination#{idx}'
 
             mappable_combination = get_mappable_combination(combination)
-            self._combinations_to_uuids[mappable_combination] = label
-            self._uuids_to_combinations[label] = mappable_combination
+            self._combinations_to_ids[mappable_combination] = label
+            self._ids_to_combinations[label] = mappable_combination
 
     def _transform(self, data):
         """Transform the data.
@@ -153,8 +153,12 @@ class FixedCombinations(BaseConstraint):
 
         table_data[self.column_names] = table_data[self.column_names].replace({np.nan: None})
         combinations = table_data[self.column_names].itertuples(index=False, name=None)
-        uuids = map(self._combinations_to_uuids.get, combinations)
-        table_data[self._joint_column] = list(uuids)
+        if hasattr(self, '_combinations_to_uuids'):
+            uuids = map(self._combinations_to_uuids.get, combinations)
+            table_data[self._joint_column] = list(uuids)
+        else:
+            ids = map(self._combinations_to_ids.get, combinations)
+            table_data[self._joint_column] = list(ids)
         data[table_name] = table_data.drop(self.column_names, axis=1)
         return data
 
@@ -176,7 +180,10 @@ class FixedCombinations(BaseConstraint):
         """
         table_name = self._get_single_table_name(self.metadata)
         table_data = data[table_name]
-        columns = table_data.pop(self._joint_column).map(self._uuids_to_combinations)
+        if hasattr(self, '_uuids_to_combinations'):
+            columns = table_data.pop(self._joint_column).map(self._uuids_to_combinations)
+        else:
+            columns = table_data.pop(self._joint_column).map(self._ids_to_combinations)
 
         for index, column in enumerate(self.column_names):
             table_data[column] = columns.str[index]
