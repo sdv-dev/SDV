@@ -122,7 +122,7 @@ def test_fixed_combinations_with_nans(metadata, constraint):
 
 
 def test_fixed_combinations_with_nans_copula(metadata, constraint):
-    """Test that FixedCombinations constraint works with nans using Copula."""
+    """Test that FixedCombinations constraint works with NaNs using Copula."""
     # Setup
     data = pd.DataFrame({
         'A': [1, 2, np.nan, 1, 2, 1],
@@ -134,13 +134,14 @@ def test_fixed_combinations_with_nans_copula(metadata, constraint):
     synthetic_data = synthesizer.sample(1000)
 
     # Assert
+    expected_out = pd.DataFrame({
+        'A': [1.0, 2.0, np.nan],
+        'B': [10, 20, 30],
+    })
     assert len(synthetic_data) == 1000
     pd.testing.assert_frame_equal(
         synthetic_data.drop_duplicates(ignore_index=True),
-        pd.DataFrame({
-            'A': [1, np.nan, 2],
-            'B': [10, 30, 20],
-        }).drop_duplicates(ignore_index=True),
+        expected_out,
         check_like=True,
     )
 
@@ -201,7 +202,7 @@ def test_fixed_combinations_multiple_constraints():
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.add_constraints(constraints=[constraint1, constraint2])
     synthesizer.fit(data)
-    samples = synthesizer.sample(100)
+    samples = synthesizer.sample(101)
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
 

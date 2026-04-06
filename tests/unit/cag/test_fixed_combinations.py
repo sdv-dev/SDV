@@ -269,22 +269,20 @@ class TestFixedCombinations:
         expected_combinations = pd.DataFrame({'b': ['d', 'e', np.nan], 'c': ['g', np.nan, np.nan]})
         pd.testing.assert_frame_equal(instance._combinations, expected_combinations)
         assert instance._joint_column == 'b#c_'
-        assert instance._combinations_to_uuids == {
-            ('d', 'g'): '63cd836e-e022-5b0b-90f5-0f0ccec03124',
-            ('e', None): '0f084fcb-a846-5a20-9a32-d85b1864f6b7',
-            (None, None): 'd80554e0-8f46-5de3-ad4b-b5968f6dbed1',
+        assert instance._combinations_to_ids == {
+            ('d', 'g'): 'fixed_combination#0',
+            ('e', None): 'fixed_combination#1',
+            (None, None): 'fixed_combination#2',
         }
-        assert instance._uuids_to_combinations == {
-            '63cd836e-e022-5b0b-90f5-0f0ccec03124': ('d', 'g'),
-            '0f084fcb-a846-5a20-9a32-d85b1864f6b7': ('e', None),
-            'd80554e0-8f46-5de3-ad4b-b5968f6dbed1': (None, None),
+        assert instance._ids_to_combinations == {
+            'fixed_combination#0': ('d', 'g'),
+            'fixed_combination#1': ('e', None),
+            'fixed_combination#2': (None, None),
         }
 
-    @patch('sdv.cag.fixed_combinations.uuid')
-    def test__transform(self, mock_uuid):
+    def test__transform(self):
         """Test the ``FixedCombinations.transform`` method."""
         # Setup
-        mock_uuid.uuid5.side_effect = ['combination1', 'combination2', 'combination3']
         metadata = Metadata.load_from_dict({
             'tables': {
                 'table': {
@@ -311,11 +309,11 @@ class TestFixedCombinations:
         out = instance.transform(data)
 
         # Assert
-        assert instance._combinations_to_uuids is not None
-        assert instance._uuids_to_combinations is not None
+        assert instance._combinations_to_ids is not None
+        assert instance._ids_to_combinations is not None
         expected_out = pd.DataFrame({
             'a': ['a', 'b', 'c'],
-            'b#c#d': ['combination1', 'combination2', 'combination3'],
+            'b#c#d': ['fixed_combination#0', 'fixed_combination#1', 'fixed_combination#2'],
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
@@ -351,12 +349,12 @@ class TestFixedCombinations:
         expected_out = pd.DataFrame({
             'a': ['a', 'b', 'c', 'g', 'k', 'l'],
             'b#c#d': [
-                '9f17f8ab-3606-5a25-881c-7b6ce8201107',
-                '39d9f098-343a-539e-a1b3-d2a2415c1dd4',
-                '8841407a-3df8-5981-bcc1-1996ee417649',
-                '8428ffc5-d6d3-52b8-ab6c-133c185b419e',
-                '1c05da75-72b8-5e5c-a59b-914e4d72fcc0',
-                '8841407a-3df8-5981-bcc1-1996ee417649',  # This must be the same as row 3
+                'fixed_combination#0',
+                'fixed_combination#1',
+                'fixed_combination#2',
+                'fixed_combination#3',
+                'fixed_combination#4',
+                'fixed_combination#2',  # This must be the same as row 3
             ],
         })
         pd.testing.assert_frame_equal(expected_out, out)
@@ -389,8 +387,8 @@ class TestFixedCombinations:
 
         # Assert
         assert out['b#c'].isna().sum() == 0
-        assert instance._combinations_to_uuids is not None
-        assert instance._uuids_to_combinations is not None
+        assert instance._combinations_to_ids is not None
+        assert instance._ids_to_combinations is not None
         expected_out_a = pd.Series(['a', 'b', 'c'], name='a')
         pd.testing.assert_series_equal(expected_out_a, out['a'])
 
@@ -424,8 +422,8 @@ class TestFixedCombinations:
         out = instance.reverse_transform(transformed_data)
 
         # Assert
-        assert instance._combinations_to_uuids is not None
-        assert instance._uuids_to_combinations is not None
+        assert instance._combinations_to_ids is not None
+        assert instance._ids_to_combinations is not None
         pd.testing.assert_frame_equal(data, out)
 
     def test__reverse_transform_with_nans(self):
@@ -653,3 +651,50 @@ class TestFixedCombinations:
         # Assert
         expected_valid_out = pd.Series([True] * 3, name='A#B', index=[0, 2, 5])
         pd.testing.assert_series_equal(expected_valid_out, valid_out, check_index=True)
+
+    def test_naming_of_columns_with_fixed_combinations(self):
+        """Test naming with data/metadata with FixedNullCombination."""
+        # Setup
+        perks = []
+        NUM_ROWS = 50
+        ids = ['id_' + str(i) for i in range(NUM_ROWS)]
+        countries = np.random.choice(['US', 'CA'], size=NUM_ROWS)
+        col_A = np.random.randint(low=0, high=100, size=NUM_ROWS)
+        for i in range(len(countries)):
+            country = countries[i]
+            has_perk = 'NO'
+            if country == 'US':
+                has_perk = 'YES'
+            perks.append(has_perk)
+        data = {
+            'parent': pd.DataFrame({
+                'id': ids,
+                'country': countries,
+                'has_perk': perks,
+                'col_A': col_A,
+            }),
+        }
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'parent': {
+                    'primary_key': 'id',
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                        'country': {'sdtype': 'categorical'},
+                        'has_perk': {'sdtype': 'categorical'},
+                        'col_A': {'sdtype': 'numerical'},
+                    },
+                },
+            },
+            'relationships': [],
+        })
+        instance = FixedCombinations(column_names=['country', 'has_perk'], table_name='parent')
+
+        # Run
+        instance.fit(data, metadata)
+        transformed_data = instance.transform(data)
+        updated_metadata = instance.get_updated_metadata(metadata)
+
+        # Assert
+        assert 'country#has_perk' in updated_metadata.tables['parent'].columns
+        assert 'country#has_perk' in transformed_data['parent'].columns
