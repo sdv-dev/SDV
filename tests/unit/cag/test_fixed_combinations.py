@@ -270,21 +270,19 @@ class TestFixedCombinations:
         pd.testing.assert_frame_equal(instance._combinations, expected_combinations)
         assert instance._joint_column == 'b#c_'
         assert instance._combinations_to_uuids == {
-            ('d', 'g'): '63cd836e-e022-5b0b-90f5-0f0ccec03124',
-            ('e', None): '0f084fcb-a846-5a20-9a32-d85b1864f6b7',
-            (None, None): 'd80554e0-8f46-5de3-ad4b-b5968f6dbed1',
+            ('d', 'g'): 'fixed_combination#0',
+            ('e', None): 'fixed_combination#1',
+            (None, None): 'fixed_combination#2',
         }
         assert instance._uuids_to_combinations == {
-            '63cd836e-e022-5b0b-90f5-0f0ccec03124': ('d', 'g'),
-            '0f084fcb-a846-5a20-9a32-d85b1864f6b7': ('e', None),
-            'd80554e0-8f46-5de3-ad4b-b5968f6dbed1': (None, None),
+            'fixed_combination#0': ('d', 'g'),
+            'fixed_combination#1': ('e', None),
+            'fixed_combination#2': (None, None),
         }
 
-    @patch('sdv.cag.fixed_combinations.uuid')
-    def test__transform(self, mock_uuid):
+    def test__transform(self):
         """Test the ``FixedCombinations.transform`` method."""
         # Setup
-        mock_uuid.uuid5.side_effect = ['combination1', 'combination2', 'combination3']
         metadata = Metadata.load_from_dict({
             'tables': {
                 'table': {
@@ -315,7 +313,7 @@ class TestFixedCombinations:
         assert instance._uuids_to_combinations is not None
         expected_out = pd.DataFrame({
             'a': ['a', 'b', 'c'],
-            'b#c#d': ['combination1', 'combination2', 'combination3'],
+            'b#c#d': ['fixed_combination#0', 'fixed_combination#1', 'fixed_combination#2'],
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
@@ -351,12 +349,12 @@ class TestFixedCombinations:
         expected_out = pd.DataFrame({
             'a': ['a', 'b', 'c', 'g', 'k', 'l'],
             'b#c#d': [
-                '9f17f8ab-3606-5a25-881c-7b6ce8201107',
-                '39d9f098-343a-539e-a1b3-d2a2415c1dd4',
-                '8841407a-3df8-5981-bcc1-1996ee417649',
-                '8428ffc5-d6d3-52b8-ab6c-133c185b419e',
-                '1c05da75-72b8-5e5c-a59b-914e4d72fcc0',
-                '8841407a-3df8-5981-bcc1-1996ee417649',  # This must be the same as row 3
+                'fixed_combination#0',
+                'fixed_combination#1',
+                'fixed_combination#2',
+                'fixed_combination#3',
+                'fixed_combination#4',
+                'fixed_combination#2',  # This must be the same as row 3
             ],
         })
         pd.testing.assert_frame_equal(expected_out, out)

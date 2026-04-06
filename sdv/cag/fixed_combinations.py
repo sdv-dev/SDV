@@ -1,7 +1,5 @@
 """FixedCombinations constraint."""
 
-import uuid
-
 import numpy as np
 import pandas as pd
 
@@ -120,11 +118,12 @@ class FixedCombinations(BaseConstraint):
         self._combinations = table_data[self.column_names].drop_duplicates().copy()
         self._combinations_to_uuids = {}
         self._uuids_to_combinations = {}
-        for combination in self._combinations.itertuples(index=False, name=None):
+        for idx, combination in enumerate(self._combinations.itertuples(index=False, name=None)):
+            label = f'fixed_combination#{idx}'
+
             mappable_combination = get_mappable_combination(combination)
-            uuid_str = str(uuid.uuid5(uuid.NAMESPACE_DNS, str(mappable_combination)))
-            self._combinations_to_uuids[mappable_combination] = uuid_str
-            self._uuids_to_combinations[uuid_str] = mappable_combination
+            self._combinations_to_uuids[mappable_combination] = label
+            self._uuids_to_combinations[label] = mappable_combination
 
     def _transform(self, data):
         """Transform the data.
