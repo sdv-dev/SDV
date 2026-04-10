@@ -732,10 +732,10 @@ def test_get_possible_chars_excludes_at(mock_get_chars):
 def test_get_possible_chars_unsupported_regex():
     """Test that an error is raised if the regex contains unsupported options."""
     # Setup
-    regex = '(ab)*'
+    regex = '[0-9](?=[a-z])'
 
     # Run and assert
-    message = 'REGEX operation: SUBPATTERN is not supported by SDV.'
+    message = 'REGEX operation: ASSERT is not supported by SDV.'
     with pytest.raises(ValueError, match=message):
         get_possible_chars(regex)
 
