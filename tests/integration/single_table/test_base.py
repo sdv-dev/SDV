@@ -228,7 +228,7 @@ def test_multiple_fits():
     model.fit(data_2)
 
     # Assert
-    assert ('SF', 'CA') not in model._chained_constraints[0]._combinations_to_uuids
+    assert ('SF', 'CA') not in model._chained_constraints[0]._combinations_to_ids
     assert model._data_processor.formatters['measurement']._rounding_digits == 1
 
 
