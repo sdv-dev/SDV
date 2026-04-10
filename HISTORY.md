@@ -1,5 +1,12 @@
 # Release Notes
 
+## v1.36.0 - 2026-04-10
+
+### Bugs Fixed
+
+* Update tests to be compatible with new RDT release - Issue [#2868](https://github.com/sdv-dev/SDV/issues/2868) by @fealho
+* `FixedCombinations` should create columns with easy-to-understand names & values - Issue [#2865](https://github.com/sdv-dev/SDV/issues/2865) by @gsheni
+
 ## v1.35.1 - 2026-03-27
 
 ### Bugs Fixed
