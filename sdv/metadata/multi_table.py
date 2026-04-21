@@ -690,9 +690,9 @@ class MultiTableMetadata:
             raise ValueError('The provided dictionary must contain only pandas DataFrame objects.')
 
         for table_name, dataframe in data.items():
-            self.detect_table_from_dataframe(table_name, dataframe)
+            self.detect_table_from_dataframe(table_name, dataframe, verbose=verbose)
 
-        self._detect_relationships(data, verbose)
+        self._detect_relationships(data, verbose=verbose)
 
     def detect_from_csvs(self, folder_name, read_csv_parameters=None):
         """Detect the metadata for all tables in a folder of csv files.

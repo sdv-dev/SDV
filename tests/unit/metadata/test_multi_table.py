@@ -3074,9 +3074,9 @@ class TestMultiTableMetadata:
         metadata.detect_from_dataframes(data)
 
         # Assert
-        metadata.detect_table_from_dataframe.assert_any_call('guests', guests_table)
-        metadata.detect_table_from_dataframe.assert_any_call('hotels', hotels_table)
-        metadata._detect_relationships.assert_called_once_with(data, False)
+        metadata.detect_table_from_dataframe.assert_any_call('guests', guests_table, verbose=False)
+        metadata.detect_table_from_dataframe.assert_any_call('hotels', hotels_table, verbose=False)
+        metadata._detect_relationships.assert_called_once_with(data, verbose=False)
 
     def test_detect_from_dataframes_no_dataframes(self):
         """Test ``detect_from_dataframes`` with no dataframes in the input.
