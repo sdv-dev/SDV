@@ -1737,8 +1737,8 @@ def test_detect_from_dataframe_verbose_single(capsys):
     metadata = Metadata.detect_from_dataframe(data, verbose=True)
 
     # Assert
-    captured = capsys.readouterr()
-    assert captured.out == expected_print
+    captured = capsys.readouterr().out
+    assert captured == expected_print
     assert list(metadata.tables.keys()) == ['table']
     assert list(metadata.tables['table'].columns.keys()) == [
         'guest_email',
@@ -1787,6 +1787,6 @@ def test_detect_from_dataframes_verbose(capsys):
     metadata = Metadata.detect_from_dataframes(data, verbose=True)
 
     # Assert
-    captured = capsys.readouterr()
-    assert captured.out == expected_print
+    captured = capsys.readouterr().out
+    assert captured == expected_print
     assert list(metadata.tables.keys()) == ['guests', 'hotels']

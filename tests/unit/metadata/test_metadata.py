@@ -1062,7 +1062,7 @@ class TestMetadataClass:
             metadata_instance.remove_column('column', 'users')
 
     def test_remove_column_removes_relationships(self):
-        """Test that the column relaationships and relationships for column are also removed."""
+        """Test that the column relationships and relationships for column are also removed."""
         # Setup
         metadata = Metadata()
         metadata.relationships = [
