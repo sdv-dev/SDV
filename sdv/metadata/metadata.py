@@ -4,6 +4,7 @@ import warnings
 
 import pandas as pd
 
+from sdv._utils import _validate_boolean_parameter
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
@@ -62,11 +63,6 @@ class Metadata(MultiTableMetadata):
         return instance
 
     @staticmethod
-    def _validate_infer_sdtypes(infer_sdtypes):
-        if not isinstance(infer_sdtypes, bool):
-            raise ValueError("'infer_sdtypes' must be a boolean value.")
-
-    @staticmethod
     def _validate_foreign_key_inference_algorithm(foreign_key_inference_algorithm):
         if foreign_key_inference_algorithm != 'column_name_match':
             raise ValueError("'foreign_key_inference_algorithm' must be 'column_name_match'")
@@ -86,7 +82,7 @@ class Metadata(MultiTableMetadata):
                 "'infer_keys' must be one of: 'primary_and_foreign', 'primary_only', None."
             )
         cls._validate_foreign_key_inference_algorithm(foreign_key_inference_algorithm)
-        cls._validate_infer_sdtypes(infer_sdtypes)
+        _validate_boolean_parameter(infer_sdtypes, 'infer_sdtypes')
 
         metadata = Metadata()
         for table_name, dataframe in data.items():
@@ -152,8 +148,8 @@ class Metadata(MultiTableMetadata):
             raise ValueError('The provided data must be a pandas DataFrame object.')
         if infer_keys not in ['primary_only', None]:
             raise ValueError("'infer_keys' must be one of: 'primary_only', None.")
-        cls._validate_infer_sdtypes(infer_sdtypes)
 
+        _validate_boolean_parameter(infer_sdtypes, 'infer_sdtypes')
         metadata = Metadata()
         metadata.detect_table_from_dataframe(table_name, data, infer_sdtypes, infer_keys)
         return metadata
