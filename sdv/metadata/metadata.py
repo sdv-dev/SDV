@@ -143,10 +143,26 @@ class Metadata(MultiTableMetadata):
         )
 
     @classmethod
+    def _detect_from_dataframe(
+        cls, data, table_name=None, infer_sdtypes=True, infer_keys='primary_only'
+    ):
+        """Detect the metadata for a DataFrame."""
+        table_name = table_name or cls.DEFAULT_SINGLE_TABLE_NAME
+        if not isinstance(data, pd.DataFrame):
+            raise ValueError('The provided data must be a pandas DataFrame object.')
+        if infer_keys not in ['primary_only', None]:
+            raise ValueError("'infer_keys' must be one of: 'primary_only', None.")
+        cls._validate_infer_sdtypes(infer_sdtypes)
+
+        metadata = Metadata()
+        metadata.detect_table_from_dataframe(table_name, data, infer_sdtypes, infer_keys)
+        return metadata
+
+    @classmethod
     def detect_from_dataframe(
         cls,
         data,
-        table_name=DEFAULT_SINGLE_TABLE_NAME,
+        table_name=None,
         infer_sdtypes=True,
         infer_keys='primary_only',
     ):
@@ -157,7 +173,10 @@ class Metadata(MultiTableMetadata):
 
         Args:
             data (pandas.DataFrame):
-                Dictionary of table names to dataframes.
+                The data to detect metadata from.
+            table_name (str):
+                The name of the table to detect. If None, a default name will be used.
+                Defaults to None.
             infer_sdtypes (bool):
                 A boolean describing whether to infer the sdtypes of each column.
                 If True it infers the sdtypes based on the data.
@@ -173,15 +192,12 @@ class Metadata(MultiTableMetadata):
             Metadata:
                 A new metadata object with the sdtypes detected from the data.
         """
-        if not isinstance(data, pd.DataFrame):
-            raise ValueError('The provided data must be a pandas DataFrame object.')
-        if infer_keys not in ['primary_only', None]:
-            raise ValueError("'infer_keys' must be one of: 'primary_only', None.")
-        cls._validate_infer_sdtypes(infer_sdtypes)
-
-        metadata = Metadata()
-        metadata.detect_table_from_dataframe(table_name, data, infer_sdtypes, infer_keys)
-        return metadata
+        return cls._detect_from_dataframe(
+            data=data,
+            table_name=table_name,
+            infer_sdtypes=infer_sdtypes,
+            infer_keys=infer_keys,
+        )
 
     def _set_metadata_dict(self, metadata, single_table_name=None):
         """Set a ``metadata`` dictionary to the current instance.
