@@ -3909,3 +3909,87 @@ class TestSingleTableMetadata:
         # Assert
         captured = capsys.readouterr().out
         assert captured == expected_output
+
+    @pytest.mark.parametrize(
+        'table_name,table_str',
+        [(None, 'Table None:'), ('users', "Table 'users':")],
+    )
+    def test__select_primary_key_verbose(self, capsys, table_name, table_str):
+        """Test the ``_select_primary_key`` method with verbose ."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {
+            'email': {'sdtype': 'unknown', 'pii': True},
+        }
+        expected_output = (
+            '\nDetecting primary key:\n'
+            f"- {table_str} primary_key='email' (updating sdtype to 'id', removing 'pii' field)\n"
+        )
+
+        # Run
+        instance._select_primary_key(
+            infer_sdtypes=False,
+            pk_candidates=[],
+            pii_pk_candidates=['email'],
+            table_name=table_name,
+            verbose=True,
+        )
+
+        # Assert
+        captured = capsys.readouterr().out
+        assert captured == expected_output
+        assert instance.primary_key == 'email'
+        assert instance.columns['email']['sdtype'] == 'id'
+        assert 'pii' not in instance.columns['email']
+
+    def test__select_primary_key_verbose_removes_pii_only(self, capsys):
+        """Test ``_select_primary_key`` verbose output when only the ``pii`` field is removed."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {'email': {'sdtype': 'id', 'pii': False}}
+        expected_output = (
+            '\nDetecting primary key:\n'
+            "- Table 'users': primary_key='email' (removing 'pii' field)\n"
+        )
+
+        # Run
+        instance._select_primary_key(
+            infer_sdtypes=True,
+            pk_candidates=['email'],
+            pii_pk_candidates=[],
+            table_name='users',
+            verbose=True,
+        )
+
+        # Assert
+        captured = capsys.readouterr().out
+        assert captured == expected_output
+        assert instance.primary_key == 'email'
+        assert instance.columns['email']['sdtype'] == 'id'
+        assert 'pii' not in instance.columns['email']
+
+    def test__select_primary_key_verbose_updates_sdtype_only(self, capsys):
+        """Test ``_select_primary_key`` verbose output when only the sdtype is updated to 'id'."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {'email': {'sdtype': 'unknown'}}
+        expected_output = (
+            '\nDetecting primary key:\n'
+            "- Table 'users': primary_key='email' (updating sdtype to 'id')\n"
+        )
+
+        # Run
+        instance._select_primary_key(
+            infer_sdtypes=False,
+            pk_candidates=[],
+            pii_pk_candidates=['email'],
+            table_name='users',
+            verbose=True,
+        )
+
+        # Assert
+        captured = capsys.readouterr().out
+        assert captured == expected_output
+        assert instance.primary_key == 'email'
+        assert instance.columns['email']['sdtype'] == 'id'
+        assert 'pii' not in instance.columns['email']

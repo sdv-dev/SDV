@@ -742,7 +742,7 @@ class SingleTableMetadata:
                 Defaults to False.
         """
         if verbose and infer_sdtypes:
-            table_str = f" table '{table_name}' " if table_name else ''
+            table_str = f" table '{table_name}'" if table_name else ''
             sys.stdout.write(f'\nDetecting{table_str}:\n')
 
         old_columns = data.columns

@@ -1790,3 +1790,42 @@ def test_detect_from_dataframes_verbose(capsys):
     captured = capsys.readouterr().out
     assert captured == expected_print
     assert list(metadata.tables.keys()) == ['guests', 'hotels']
+
+
+def test_detect_from_dataframes_verbose_updates_fk_sdtype(capsys):
+    """Test 'detect_from_dataframes' verbose output when a FK sdtype is updated to 'id'."""
+    # Setup
+    data = {
+        'users': pd.DataFrame({
+            'account': [f'acct_{i}' for i in range(10)],
+        }),
+        'transactions': pd.DataFrame({
+            'transaction_id': range(10),
+            'account': [f'acct_{i}' for i in range(10)],
+        }),
+    }
+    expected_output = (
+        "\nDetecting table 'users':\n"
+        "- Column 'account': sdtype='categorical'\n\n"
+        'Detecting primary key:\n'
+        "- Table 'users': primary_key='account'\n\n"
+        "Detecting table 'transactions':\n"
+        "- Column 'transaction_id': sdtype='id'\n"
+        "- Column 'account': sdtype='categorical'\n\n"
+        'Detecting primary key:\n'
+        "- Table 'transactions': primary_key='transaction_id'\n\n"
+        'Detecting foreign keys:\n'
+        "- Column 'transactions.account' refers to column "
+        "'users.account' (updating sdtype to 'id')\n"
+    )
+
+    # Run
+    metadata = Metadata.detect_from_dataframes(
+        data, foreign_key_inference_algorithm='column_name_match', verbose=True
+    )
+
+    # Assert
+    captured = capsys.readouterr().out
+    assert expected_output == captured
+    assert metadata.tables['users'].columns['account']['sdtype'] == 'id'
+    assert metadata.tables['transactions'].columns['account']['sdtype'] == 'id'
