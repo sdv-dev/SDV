@@ -3850,7 +3850,7 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
         expected_output = (
-            '\nDetecting:\n'
+            '\nDetecting table None:\n'
             "- Column 'id': sdtype='id'\n"
             "- Column 'numerical': sdtype='numerical'\n"
             "- Column 'datetime': sdtype='datetime', datetime_format='%Y-%m-%d'\n"
@@ -3891,7 +3891,7 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
         expected_output = (
-            '\nDetecting:\n'
+            '\nDetecting table None:\n'
             "- Column 'id': sdtype='id'\n"
             "- Column 'numerical': sdtype='numerical'\n"
             "- Column 'datetime': sdtype='datetime', datetime_format='%Y-%m-%d'\n"
