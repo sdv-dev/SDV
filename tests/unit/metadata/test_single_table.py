@@ -3846,11 +3846,11 @@ class TestSingleTableMetadata:
             instance._validate_keys_sdtype(['col1', 'col2'], 'primary')
 
     def test__detect_columns_verbose(self, data, capsys):
-        """Test the ``_detect_columns`` method with verbose print output."""
+        """Test the ``_detect_columns`` method with verbose (print sdtypes and PK)."""
         # Setup
         instance = SingleTableMetadata()
         expected_output = (
-            '\nDetecting table:\n'
+            '\nDetecting:\n'
             "- Column 'id': sdtype='id'\n"
             "- Column 'numerical': sdtype='numerical'\n"
             "- Column 'datetime': sdtype='datetime', datetime_format='%Y-%m-%d'\n"
@@ -3861,7 +3861,7 @@ class TestSingleTableMetadata:
             "- Column 'unknown': sdtype='categorical'\n"
             "- Column 'first_name': sdtype='first_name', pii='True'\n"
             '\nDetecting primary key:\n'
-            "- Table 'None': primary_key='id'\n"
+            "- Table None: primary_key='id'\n"
         )
 
         # Run
@@ -3871,12 +3871,27 @@ class TestSingleTableMetadata:
         captured = capsys.readouterr().out
         assert captured == expected_output
 
-    def test__detect_columns_verbose_infer_sdtypes(self, data, capsys):
-        """Test the ``_detect_columns`` method with verbose print output."""
+    def test__detect_columns_verbose_infer_sdtypes_false(self, data, capsys):
+        """Test the ``_detect_columns`` method with verbose (only print PK)."""
         # Setup
         instance = SingleTableMetadata()
         expected_output = (
-            '\nDetecting table:\n'
+            "\nDetecting primary key:\n- Table None: primary_key='id' (removing 'pii' field)\n"
+        )
+
+        # Run
+        instance._detect_columns(data, infer_sdtypes=False, verbose=True)
+
+        # Assert
+        captured = capsys.readouterr().out
+        assert captured == expected_output
+
+    def test__detect_columns_verbose_infer_keys_none(self, data, capsys):
+        """Test the ``_detect_columns`` method with verbose (only print sdtypes)."""
+        # Setup
+        instance = SingleTableMetadata()
+        expected_output = (
+            '\nDetecting:\n'
             "- Column 'id': sdtype='id'\n"
             "- Column 'numerical': sdtype='numerical'\n"
             "- Column 'datetime': sdtype='datetime', datetime_format='%Y-%m-%d'\n"
@@ -3886,11 +3901,11 @@ class TestSingleTableMetadata:
             "- Column 'bool': sdtype='categorical'\n"
             "- Column 'unknown': sdtype='categorical'\n"
             "- Column 'first_name': sdtype='first_name', pii='True'\n"
-            '\nDetecting primary key:\n'
-            "- Table 'None': primary_key='id'\n"
         )
 
         # Run
-        instance._detect_columns(data, infer_sdtypes=False, verbose=True)
+        instance._detect_columns(data, infer_keys=False, verbose=True)
 
         # Assert
+        captured = capsys.readouterr().out
+        assert captured == expected_output

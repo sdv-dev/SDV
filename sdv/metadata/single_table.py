@@ -712,8 +712,8 @@ class SingleTableMetadata:
             if pii_removed:
                 notes.append("removing 'pii' field")
             suffix = f' ({", ".join(notes)})' if notes else ''
-            table_str = f"Table '{table_name}' " if table_name else ''
-            sys.stdout.write(f'- {table_str}: primary_key={pk_str}{suffix}\n')
+            table_str = f"Table '{table_name}':" if table_name else 'Table None:'
+            sys.stdout.write(f'- {table_str} primary_key={pk_str}{suffix}\n')
 
     def _detect_columns(
         self, data, table_name=None, infer_sdtypes=True, infer_keys='primary_only', verbose=False
@@ -741,7 +741,7 @@ class SingleTableMetadata:
                 If False, it does not print out any information about what is detected.
                 Defaults to False.
         """
-        if verbose:
+        if verbose and infer_sdtypes:
             table_str = f" table '{table_name}' " if table_name else ''
             sys.stdout.write(f'\nDetecting{table_str}:\n')
 
@@ -773,7 +773,7 @@ class SingleTableMetadata:
                 column_dict['pii'] = True
 
             column_dict['sdtype'] = sdtype
-            if verbose:
+            if verbose and infer_sdtypes:
                 parts = [f"{k}='{v}'" for k, v in column_dict.items()]
                 parts.sort(key=lambda p: not p.startswith('sdtype='))
                 sys.stdout.write(f"- Column '{field}': {', '.join(parts)}\n")
