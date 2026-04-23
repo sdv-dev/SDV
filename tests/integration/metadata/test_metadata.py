@@ -1729,8 +1729,8 @@ def test_detect_from_dataframe_verbose_single(capsys):
         "- Column 'room_rate': sdtype='numerical'\n"
         "- Column 'billing_address': sdtype='categorical'\n"
         "- Column 'credit_card_number': sdtype='credit_card_number', pii=True\n"
-        '\nDetecting primary key:\n'
-        "- Table 'table': primary_key='guest_email'\n"
+        "\nDetecting primary key for table 'table':\n"
+        "- primary_key='guest_email'\n"
     )
 
     # Run
@@ -1769,16 +1769,16 @@ def test_detect_from_dataframes_verbose(capsys):
         "- Column 'room_rate': sdtype='numerical'\n"
         "- Column 'billing_address': sdtype='categorical'\n"
         "- Column 'credit_card_number': sdtype='credit_card_number', pii=True\n"
-        '\nDetecting primary key:\n'
-        "- Table 'guests': primary_key='guest_email'\n"
+        "\nDetecting primary key for table 'guests':\n"
+        "- primary_key='guest_email'\n"
         "\nDetecting table 'hotels':\n"
         "- Column 'hotel_id': sdtype='id'\n"
         "- Column 'city': sdtype='city', pii=True\n"
         "- Column 'state': sdtype='administrative_unit', pii=True\n"
         "- Column 'rating': sdtype='numerical'\n"
         "- Column 'classification': sdtype='categorical'\n"
-        '\nDetecting primary key:\n'
-        "- Table 'hotels': primary_key='hotel_id'\n"
+        "\nDetecting primary key for table 'hotels':\n"
+        "- primary_key='hotel_id'\n"
         '\nDetecting foreign keys:\n'
         "- Column 'guests.hotel_id' refers to column 'hotels.hotel_id'\n"
     )
@@ -1807,13 +1807,13 @@ def test_detect_from_dataframes_verbose_updates_fk_sdtype(capsys):
     expected_output = (
         "\nDetecting table 'users':\n"
         "- Column 'account': sdtype='categorical'\n\n"
-        'Detecting primary key:\n'
-        "- Table 'users': primary_key='account' (updating sdtype to 'id')\n\n"
+        "Detecting primary key for table 'users':\n"
+        "- primary_key='account' (updating sdtype to 'id')\n\n"
         "Detecting table 'transactions':\n"
         "- Column 'transaction_id': sdtype='id'\n"
         "- Column 'account': sdtype='categorical'\n\n"
-        'Detecting primary key:\n'
-        "- Table 'transactions': primary_key='transaction_id'\n\n"
+        "Detecting primary key for table 'transactions':\n"
+        "- primary_key='transaction_id'\n\n"
         'Detecting foreign keys:\n'
         "- Column 'transactions.account' refers to column "
         "'users.account' (updating sdtype to 'id')\n"
@@ -1829,3 +1829,29 @@ def test_detect_from_dataframes_verbose_updates_fk_sdtype(capsys):
     assert expected_output == captured
     assert metadata.tables['users'].columns['account']['sdtype'] == 'id'
     assert metadata.tables['transactions'].columns['account']['sdtype'] == 'id'
+
+
+def test_detect_from_dataframes_verbose_no_pk_found(capsys):
+    """Test 'detect_from_dataframes' verbose output when no PK found."""
+    # Setup
+    data = {
+        'users': pd.DataFrame({'date': pd.date_range(start='2023-01-01', end='2023-01-10')}),
+    }
+    expected_output = (
+        "\nDetecting table 'users':\n"
+        "- Column 'date': sdtype='datetime'\n"
+        "\nDetecting primary key for table 'users':\n"
+        '- No primary key found\n'
+        '\nDetecting foreign keys:\n'
+        '- No foreign keys found\n'
+    )
+
+    # Run
+    metadata = Metadata.detect_from_dataframes(
+        data, foreign_key_inference_algorithm='column_name_match', verbose=True
+    )
+
+    # Assert
+    captured = capsys.readouterr().out
+    assert expected_output == captured
+    assert metadata.tables['users'].primary_key is None

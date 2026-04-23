@@ -3913,7 +3913,7 @@ class TestSingleTableMetadata:
 
     @pytest.mark.parametrize(
         'table_name,table_str',
-        [(None, ''), ('users', "Table 'users': ")],
+        [(None, ''), ('users', " for table 'users'")],
     )
     def test__select_primary_key_verbose(self, capsys, table_name, table_str):
         """Test the ``_select_primary_key`` method with verbose ."""
@@ -3923,8 +3923,8 @@ class TestSingleTableMetadata:
             'email': {'sdtype': 'unknown', 'pii': True},
         }
         expected_output = (
-            '\nDetecting primary key:\n'
-            f"- {table_str}primary_key='email' (updating sdtype to 'id', removing 'pii' field)\n"
+            f'\nDetecting primary key{table_str}:\n'
+            f"- primary_key='email' (updating sdtype to 'id', removing 'pii' field)\n"
         )
 
         # Run
@@ -3949,8 +3949,8 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
         instance.columns = {'email': {'sdtype': 'id', 'pii': False}}
         expected_output = (
-            '\nDetecting primary key:\n'
-            "- Table 'users': primary_key='email' (removing 'pii' field)\n"
+            "\nDetecting primary key for table 'users':\n"
+            "- primary_key='email' (removing 'pii' field)\n"
         )
 
         # Run
@@ -3975,8 +3975,8 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
         instance.columns = {'email': {'sdtype': 'unknown'}}
         expected_output = (
-            '\nDetecting primary key:\n'
-            "- Table 'users': primary_key='email' (updating sdtype to 'id')\n"
+            "\nDetecting primary key for table 'users':\n"
+            "- primary_key='email' (updating sdtype to 'id')\n"
         )
 
         # Run
@@ -4002,7 +4002,7 @@ class TestSingleTableMetadata:
         instance.columns = {
             'email': {'sdtype': 'unknown', 'pii': True},
         }
-        expected_output = "\nDetecting primary key:\n- Table 'table': primary_key=None\n"
+        expected_output = "\nDetecting primary key for table 'table':\n- No primary key found\n"
 
         # Run
         instance._select_primary_key(

@@ -1,6 +1,7 @@
 """Tools to generate strings from regular expressions."""
 
 import json
+import sys
 from pathlib import Path
 
 
@@ -64,3 +65,18 @@ def _format_column_metadata(sdtype_info):
     parts = [f'{k}={_format_metadata_value(v)}' for k, v in sdtype_info.items()]
     parts.sort(key=lambda p: not p.startswith('sdtype='))
     return ', '.join(parts)
+
+
+def _print_primary_key_detection(chosen_pk, sdtype_updated, pii_removed):
+    if not chosen_pk:
+        sys.stdout.write('- No primary key found\n')
+        return
+
+    notes = []
+    if sdtype_updated:
+        notes.append("updating sdtype to 'id'")
+    if pii_removed:
+        notes.append("removing 'pii' field")
+
+    suffix = f' ({", ".join(notes)})' if notes else ''
+    sys.stdout.write(f"- primary_key='{chosen_pk}'{suffix}\n")

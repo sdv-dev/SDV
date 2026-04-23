@@ -31,6 +31,7 @@ from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.utils import (
     _format_column_metadata,
+    _print_primary_key_detection,
     _validate_file_mode,
     read_json,
     validate_file_does_not_exist,
@@ -683,7 +684,8 @@ class SingleTableMetadata:
                 Defaults to False.
         """
         if verbose:
-            sys.stdout.write('\nDetecting primary key:\n')
+            table_str = f" for table '{table_name}'" if table_name else ''
+            sys.stdout.write(f'\nDetecting primary key{table_str}:\n')
         chosen_pk = None
         sdtype_updated = False
         pii_removed = False
@@ -710,18 +712,7 @@ class SingleTableMetadata:
                 pii_removed = True
 
         if verbose:
-            pk_str = None
-            if chosen_pk:
-                pk_str = f"'{chosen_pk}'"
-
-            notes = []
-            if sdtype_updated:
-                notes.append("updating sdtype to 'id'")
-            if pii_removed:
-                notes.append("removing 'pii' field")
-            suffix = f' ({", ".join(notes)})' if notes else ''
-            table_str = f"Table '{table_name}': " if table_name else ''
-            sys.stdout.write(f'- {table_str}primary_key={pk_str}{suffix}\n')
+            _print_primary_key_detection(chosen_pk, sdtype_updated, pii_removed)
 
     def _detect_columns(
         self, data, table_name=None, infer_sdtypes=True, infer_keys='primary_only', verbose=False
