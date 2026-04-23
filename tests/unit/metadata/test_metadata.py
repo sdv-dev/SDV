@@ -856,7 +856,7 @@ class TestMetadataClass:
         # Assert
         mock_detect.assert_called_once_with(
             data=data,
-            table_name=None,
+            table_name='table',
             infer_sdtypes=True,
             infer_keys='primary_only',
         )

@@ -158,7 +158,7 @@ class Metadata(MultiTableMetadata):
     def detect_from_dataframe(
         cls,
         data,
-        table_name=None,
+        table_name=DEFAULT_SINGLE_TABLE_NAME,
         infer_sdtypes=True,
         infer_keys='primary_only',
     ):
