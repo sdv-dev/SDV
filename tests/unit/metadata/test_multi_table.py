@@ -3969,3 +3969,28 @@ class TestMultiTableMetadata:
             data, 'table', False, None, True
         )
         assert metadata.tables == {'table': single_table_mock.return_value}
+
+    def test__detect_foreign_keys_by_column_name_verbose_no_fks(
+        self,
+        capsys,
+    ):
+        """Test `_detect_foreign_keys_by_column_name` with verbose output and no fk to detect."""
+        # Setup
+        parent_table = Mock()
+        parent_table.primary_key = 'user_id'
+        parent_table.columns = {
+            'user_id': {'sdtype': 'id'},
+        }
+        instance = MultiTableMetadata()
+        instance.tables = {
+            'users': parent_table,
+        }
+        expected_output = '\nDetecting foreign keys:\n- No foreign keys found\n'
+
+        # Run
+        instance._detect_foreign_keys_by_column_name(data=None, verbose=True)
+
+        # Assert
+        captured = capsys.readouterr().out
+        assert captured == expected_output
+        assert instance.relationships == []

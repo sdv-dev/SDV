@@ -3850,7 +3850,7 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
         expected_output = (
-            '\nDetecting table None:\n'
+            '\nDetecting table:\n'
             "- Column 'id': sdtype='id'\n"
             "- Column 'numerical': sdtype='numerical'\n"
             "- Column 'datetime': sdtype='datetime', datetime_format='%Y-%m-%d'\n"
@@ -3859,9 +3859,9 @@ class TestSingleTableMetadata:
             "- Column 'categorical': sdtype='categorical'\n"
             "- Column 'bool': sdtype='categorical'\n"
             "- Column 'unknown': sdtype='categorical'\n"
-            "- Column 'first_name': sdtype='first_name', pii='True'\n"
+            "- Column 'first_name': sdtype='first_name', pii=True\n"
             '\nDetecting primary key:\n'
-            "- Table None: primary_key='id'\n"
+            "- primary_key='id'\n"
         )
 
         # Run
@@ -3876,7 +3876,8 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
         expected_output = (
-            "\nDetecting primary key:\n- Table None: primary_key='id' (removing 'pii' field)\n"
+            "\nDetecting primary key:\n- primary_key='id' "
+            "(updating sdtype to 'id', removing 'pii' field)\n"
         )
 
         # Run
@@ -3891,7 +3892,7 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
         expected_output = (
-            '\nDetecting table None:\n'
+            '\nDetecting table:\n'
             "- Column 'id': sdtype='id'\n"
             "- Column 'numerical': sdtype='numerical'\n"
             "- Column 'datetime': sdtype='datetime', datetime_format='%Y-%m-%d'\n"
@@ -3900,7 +3901,7 @@ class TestSingleTableMetadata:
             "- Column 'categorical': sdtype='categorical'\n"
             "- Column 'bool': sdtype='categorical'\n"
             "- Column 'unknown': sdtype='categorical'\n"
-            "- Column 'first_name': sdtype='first_name', pii='True'\n"
+            "- Column 'first_name': sdtype='first_name', pii=True\n"
         )
 
         # Run
@@ -3912,7 +3913,7 @@ class TestSingleTableMetadata:
 
     @pytest.mark.parametrize(
         'table_name,table_str',
-        [(None, 'Table None:'), ('users', "Table 'users':")],
+        [(None, ''), ('users', "Table 'users': ")],
     )
     def test__select_primary_key_verbose(self, capsys, table_name, table_str):
         """Test the ``_select_primary_key`` method with verbose ."""
@@ -3923,7 +3924,7 @@ class TestSingleTableMetadata:
         }
         expected_output = (
             '\nDetecting primary key:\n'
-            f"- {table_str} primary_key='email' (updating sdtype to 'id', removing 'pii' field)\n"
+            f"- {table_str}primary_key='email' (updating sdtype to 'id', removing 'pii' field)\n"
         )
 
         # Run
@@ -3993,3 +3994,27 @@ class TestSingleTableMetadata:
         assert instance.primary_key == 'email'
         assert instance.columns['email']['sdtype'] == 'id'
         assert 'pii' not in instance.columns['email']
+
+    def test__select_primary_key_verbose_no_candidates(self, capsys):
+        """Test the ``_select_primary_key`` method with verbose and no PK candidates."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {
+            'email': {'sdtype': 'unknown', 'pii': True},
+        }
+        expected_output = "\nDetecting primary key:\n- Table 'table': primary_key=None\n"
+
+        # Run
+        instance._select_primary_key(
+            infer_sdtypes=True,
+            pk_candidates=[],
+            pii_pk_candidates=[],
+            table_name='table',
+            verbose=True,
+        )
+
+        # Assert
+        captured = capsys.readouterr().out
+        assert captured == expected_output
+        assert instance.primary_key is None
+        assert instance.columns['email'] == {'sdtype': 'unknown', 'pii': True}

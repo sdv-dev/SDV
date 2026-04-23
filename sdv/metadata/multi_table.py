@@ -564,6 +564,7 @@ class MultiTableMetadata:
                 If False, it does not print out any information about what is detected.
                 Defaults to False.
         """
+        is_foreign_keys_found = False
         if verbose:
             sys.stdout.write('\nDetecting foreign keys:\n')
         for parent_candidate in self.tables.keys():
@@ -592,6 +593,7 @@ class MultiTableMetadata:
                         self.add_relationship(
                             parent_candidate, child_candidate, primary_key, primary_key
                         )
+                        is_foreign_keys_found = True
                         if verbose:
                             child_col = f"'{child_candidate}.{primary_key}'"
                             parent_col = f"'{parent_candidate}.{primary_key}'"
@@ -609,6 +611,8 @@ class MultiTableMetadata:
                                 **original_fk_meta,
                             )
                         continue
+        if verbose and not is_foreign_keys_found:
+            sys.stdout.write('- No foreign keys found\n')
 
     def _detect_relationships(
         self, data=None, foreign_key_inference_algorithm='column_name_match', verbose=False

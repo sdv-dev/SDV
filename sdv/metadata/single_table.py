@@ -29,7 +29,12 @@ from sdv.errors import InvalidDataError
 from sdv.logging import get_sdv_logger
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
-from sdv.metadata.utils import _validate_file_mode, read_json, validate_file_does_not_exist
+from sdv.metadata.utils import (
+    _format_column_metadata,
+    _validate_file_mode,
+    read_json,
+    validate_file_does_not_exist,
+)
 from sdv.metadata.visualization import (
     create_columns_node,
     create_summarized_columns_node,
@@ -686,15 +691,18 @@ class SingleTableMetadata:
         if pk_candidates:
             selected_pk = pk_candidates[0]
             self.primary_key = selected_pk
+            original_sdtype = self.columns.get(self.primary_key, {}).get('sdtype')
             self.columns[self.primary_key]['sdtype'] = 'id'
             chosen_pk = self.primary_key
+            sdtype_updated = original_sdtype != 'id'
 
         elif pii_pk_candidates:
             self.primary_key = pii_pk_candidates[0]
             chosen_pk = self.primary_key
             if not infer_sdtypes:
+                original_sdtype = self.columns.get(self.primary_key, {}).get('sdtype')
                 self.columns[self.primary_key]['sdtype'] = 'id'
-                sdtype_updated = True
+                sdtype_updated = original_sdtype != 'id'
 
         if self.primary_key and self.columns[self.primary_key].get('sdtype') == 'id':
             if self.columns[self.primary_key].get('pii') is not None:
@@ -712,8 +720,8 @@ class SingleTableMetadata:
             if pii_removed:
                 notes.append("removing 'pii' field")
             suffix = f' ({", ".join(notes)})' if notes else ''
-            table_str = f"Table '{table_name}':" if table_name else 'Table None:'
-            sys.stdout.write(f'- {table_str} primary_key={pk_str}{suffix}\n')
+            table_str = f"Table '{table_name}': " if table_name else ''
+            sys.stdout.write(f'- {table_str}primary_key={pk_str}{suffix}\n')
 
     def _detect_columns(
         self, data, table_name=None, infer_sdtypes=True, infer_keys='primary_only', verbose=False
@@ -742,8 +750,8 @@ class SingleTableMetadata:
                 Defaults to False.
         """
         if verbose and infer_sdtypes:
-            table_str = f" table '{table_name}'" if table_name else ' table None'
-            sys.stdout.write(f'\nDetecting{table_str}:\n')
+            table_str = f"table '{table_name}'" if table_name else 'table'
+            sys.stdout.write(f'\nDetecting {table_str}:\n')
 
         old_columns = data.columns
         data.columns = data.columns.astype(str)
@@ -773,10 +781,11 @@ class SingleTableMetadata:
                 column_dict['pii'] = True
 
             column_dict['sdtype'] = sdtype
+
             if verbose and infer_sdtypes:
-                parts = [f"{k}='{v}'" for k, v in column_dict.items()]
-                parts.sort(key=lambda p: not p.startswith('sdtype='))
-                sys.stdout.write(f"- Column '{field}': {', '.join(parts)}\n")
+                column_metadata = _format_column_metadata(column_dict)
+                sys.stdout.write(f"- Column '{field}': {column_metadata}\n")
+
             self.columns[field] = deepcopy(column_dict)
         if infer_keys == 'primary_only':
             self._select_primary_key(

@@ -1720,7 +1720,7 @@ def test_detect_from_dataframe_verbose_single(capsys):
     data, _ = download_test_demo(modality='single_table', dataset_name='fake_hotel_guests')
     expected_print = (
         "\nDetecting table 'table':\n"
-        "- Column 'guest_email': sdtype='email', pii='True'\n"
+        "- Column 'guest_email': sdtype='email', pii=True\n"
         "- Column 'has_rewards': sdtype='categorical'\n"
         "- Column 'room_type': sdtype='categorical'\n"
         "- Column 'amenities_fee': sdtype='numerical'\n"
@@ -1728,7 +1728,7 @@ def test_detect_from_dataframe_verbose_single(capsys):
         "- Column 'checkout_date': sdtype='datetime', datetime_format='%d %b %Y'\n"
         "- Column 'room_rate': sdtype='numerical'\n"
         "- Column 'billing_address': sdtype='categorical'\n"
-        "- Column 'credit_card_number': sdtype='credit_card_number', pii='True'\n"
+        "- Column 'credit_card_number': sdtype='credit_card_number', pii=True\n"
         '\nDetecting primary key:\n'
         "- Table 'table': primary_key='guest_email'\n"
     )
@@ -1759,7 +1759,7 @@ def test_detect_from_dataframes_verbose(capsys):
     data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
     expected_print = (
         "\nDetecting table 'guests':\n"
-        "- Column 'guest_email': sdtype='email', pii='True'\n"
+        "- Column 'guest_email': sdtype='email', pii=True\n"
         "- Column 'hotel_id': sdtype='id'\n"
         "- Column 'has_rewards': sdtype='categorical'\n"
         "- Column 'room_type': sdtype='categorical'\n"
@@ -1768,13 +1768,13 @@ def test_detect_from_dataframes_verbose(capsys):
         "- Column 'checkout_date': sdtype='datetime', datetime_format='%d %b %Y'\n"
         "- Column 'room_rate': sdtype='numerical'\n"
         "- Column 'billing_address': sdtype='categorical'\n"
-        "- Column 'credit_card_number': sdtype='credit_card_number', pii='True'\n"
+        "- Column 'credit_card_number': sdtype='credit_card_number', pii=True\n"
         '\nDetecting primary key:\n'
         "- Table 'guests': primary_key='guest_email'\n"
         "\nDetecting table 'hotels':\n"
         "- Column 'hotel_id': sdtype='id'\n"
-        "- Column 'city': sdtype='city', pii='True'\n"
-        "- Column 'state': sdtype='administrative_unit', pii='True'\n"
+        "- Column 'city': sdtype='city', pii=True\n"
+        "- Column 'state': sdtype='administrative_unit', pii=True\n"
         "- Column 'rating': sdtype='numerical'\n"
         "- Column 'classification': sdtype='categorical'\n"
         '\nDetecting primary key:\n'
@@ -1808,7 +1808,7 @@ def test_detect_from_dataframes_verbose_updates_fk_sdtype(capsys):
         "\nDetecting table 'users':\n"
         "- Column 'account': sdtype='categorical'\n\n"
         'Detecting primary key:\n'
-        "- Table 'users': primary_key='account'\n\n"
+        "- Table 'users': primary_key='account' (updating sdtype to 'id')\n\n"
         "Detecting table 'transactions':\n"
         "- Column 'transaction_id': sdtype='id'\n"
         "- Column 'account': sdtype='categorical'\n\n"
