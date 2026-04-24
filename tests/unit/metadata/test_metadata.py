@@ -859,6 +859,7 @@ class TestMetadataClass:
             table_name='table',
             infer_sdtypes=True,
             infer_keys='primary_only',
+            verbose=False,
         )
         assert metadata == mock_detect.return_value
 
