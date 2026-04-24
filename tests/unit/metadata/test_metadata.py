@@ -797,7 +797,7 @@ class TestMetadataClass:
         assert len(instance.relationships) == 2
 
     @patch('sdv.metadata.metadata.Metadata')
-    def test_detect_from_dataframe(self, mock_metadata):
+    def test__detect_from_dataframe(self, mock_metadata):
         """Test that the method calls the detection method and returns the metadata.
 
         Expected to call ``detect_table_from_dataframe`` for the dataframe.
@@ -807,7 +807,7 @@ class TestMetadataClass:
         data = pd.DataFrame()
 
         # Run
-        metadata = Metadata.detect_from_dataframe(data)
+        metadata = Metadata._detect_from_dataframe(data)
 
         # Assert
         mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
@@ -815,14 +815,14 @@ class TestMetadataClass:
         )
         assert metadata == mock_metadata.return_value
 
-    def test_detect_from_dataframe_raises_error_if_not_dataframe(self):
+    def test__detect_from_dataframe_raises_error_if_not_dataframe(self):
         """Test that the method raises an error if data isn't a DataFrame."""
         # Run and assert
         expected_message = 'The provided data must be a pandas DataFrame object.'
         with pytest.raises(ValueError, match=expected_message):
-            Metadata.detect_from_dataframe(Mock())
+            Metadata._detect_from_dataframe(Mock())
 
-    def test_detect_from_dataframe_bad_input_infer_sdtypes(self):
+    def test__detect_from_dataframe_bad_input_infer_sdtypes(self):
         """Test that an error is raised if the infer_sdtypes is not a boolean."""
         # Setup
         data = pd.DataFrame()
@@ -831,9 +831,9 @@ class TestMetadataClass:
         # Run and Assert
         expected_message = "'infer_sdtypes' must be a boolean value."
         with pytest.raises(ValueError, match=expected_message):
-            Metadata.detect_from_dataframe(data, infer_sdtypes=infer_sdtypes)
+            Metadata._detect_from_dataframe(data, infer_sdtypes=infer_sdtypes)
 
-    def test_detect_from_dataframe_bad_input_infer_keys(self):
+    def test__detect_from_dataframe_bad_input_infer_keys(self):
         """Test that an error is raised if the infer_keys is not a correct string."""
         # Setup
         data = pd.DataFrame()
@@ -842,7 +842,25 @@ class TestMetadataClass:
         # Run and Assert
         expected_message = re.escape("'infer_keys' must be one of: 'primary_only', None.")
         with pytest.raises(ValueError, match=expected_message):
-            Metadata.detect_from_dataframe(data, infer_keys=infer_keys)
+            Metadata._detect_from_dataframe(data, infer_keys=infer_keys)
+
+    @patch.object(Metadata, '_detect_from_dataframe')
+    def test_detect_from_dataframe(self, mock_detect):
+        """Test the `detect_from_dataframe` method."""
+        # Setup
+        data = pd.DataFrame()
+
+        # Run
+        metadata = Metadata.detect_from_dataframe(data)
+
+        # Assert
+        mock_detect.assert_called_once_with(
+            data=data,
+            table_name='table',
+            infer_sdtypes=True,
+            infer_keys='primary_only',
+        )
+        assert metadata == mock_detect.return_value
 
     def test__handle_table_name(self):
         """Test the ``_handle_table_name`` method."""

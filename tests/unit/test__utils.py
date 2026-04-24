@@ -24,6 +24,7 @@ from sdv._utils import (
     _get_transformer_init_kwargs,
     _is_datetime_type,
     _is_numerical,
+    _validate_boolean_parameter,
     _validate_correct_synthesizer_loading,
     _validate_datetime_format,
     _validate_foreign_keys_not_null,
@@ -1226,3 +1227,14 @@ def test__validate_correct_synthesizer_loading():
 
     with pytest.raises(SynthesizerInputError, match=expected_message):
         _validate_correct_synthesizer_loading(synthesizer_2, GaussianCopulaSynthesizer)
+
+
+def test__validate_boolean_parameter():
+    """Test the `_validate_boolean_parameter` method."""
+    # Setup
+    expected_message = re.escape("'param_name' must be a boolean value.")
+
+    # Run and Assert
+    _validate_boolean_parameter(True, 'param_name')
+    with pytest.raises(ValueError, match=expected_message):
+        _validate_boolean_parameter('True', 'param_name')
