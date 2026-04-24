@@ -1712,3 +1712,81 @@ def test_metadata_fails_with_proper_message_when_setting_primary_key():
     )
     with pytest.raises(InvalidMetadataError, match=expected_msg):
         account_metadata.set_primary_key(['col1', 'col2'])
+
+
+def test_detect_from_dataframe_verbose_single(capsys):
+    """Test 'detect_from_dataframe' with verbose True with single table."""
+    # Setup
+    data, _ = download_test_demo(modality='single_table', dataset_name='fake_hotel_guests')
+    expected_print = (
+        "\nDetecting table 'table':\n"
+        "- Column 'guest_email': sdtype='email', pii='True'\n"
+        "- Column 'has_rewards': sdtype='categorical'\n"
+        "- Column 'room_type': sdtype='categorical'\n"
+        "- Column 'amenities_fee': sdtype='numerical'\n"
+        "- Column 'checkin_date': sdtype='datetime', datetime_format='%d %b %Y'\n"
+        "- Column 'checkout_date': sdtype='datetime', datetime_format='%d %b %Y'\n"
+        "- Column 'room_rate': sdtype='numerical'\n"
+        "- Column 'billing_address': sdtype='categorical'\n"
+        "- Column 'credit_card_number': sdtype='credit_card_number', pii='True'\n"
+        '\nDetecting primary key:\n'
+        "- Table 'table': primary_key='guest_email'\n"
+    )
+
+    # Run
+    metadata = Metadata.detect_from_dataframe(data, verbose=True)
+
+    # Assert
+    captured = capsys.readouterr()
+    assert captured.out == expected_print
+    assert list(metadata.tables.keys()) == ['table']
+    assert list(metadata.tables['table'].columns.keys()) == [
+        'guest_email',
+        'has_rewards',
+        'room_type',
+        'amenities_fee',
+        'checkin_date',
+        'checkout_date',
+        'room_rate',
+        'billing_address',
+        'credit_card_number',
+    ]
+
+
+def test_detect_from_dataframes_verbose(capsys):
+    """Test 'detect_from_dataframe' with verbose True with multi table."""
+    # Setup
+    data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
+    expected_print = (
+        "\nDetecting table 'guests':\n"
+        "- Column 'guest_email': sdtype='email', pii='True'\n"
+        "- Column 'hotel_id': sdtype='id'\n"
+        "- Column 'has_rewards': sdtype='categorical'\n"
+        "- Column 'room_type': sdtype='categorical'\n"
+        "- Column 'amenities_fee': sdtype='numerical'\n"
+        "- Column 'checkin_date': sdtype='datetime', datetime_format='%d %b %Y'\n"
+        "- Column 'checkout_date': sdtype='datetime', datetime_format='%d %b %Y'\n"
+        "- Column 'room_rate': sdtype='numerical'\n"
+        "- Column 'billing_address': sdtype='categorical'\n"
+        "- Column 'credit_card_number': sdtype='credit_card_number', pii='True'\n"
+        '\nDetecting primary key:\n'
+        "- Table 'guests': primary_key='guest_email'\n"
+        "\nDetecting table 'hotels':\n"
+        "- Column 'hotel_id': sdtype='id'\n"
+        "- Column 'city': sdtype='city', pii='True'\n"
+        "- Column 'state': sdtype='administrative_unit', pii='True'\n"
+        "- Column 'rating': sdtype='numerical'\n"
+        "- Column 'classification': sdtype='categorical'\n"
+        '\nDetecting primary key:\n'
+        "- Table 'hotels': primary_key='hotel_id'\n"
+        '\nDetecting foreign keys:\n'
+        "- Column 'guests.hotel_id' refers to column 'hotels.hotel_id'\n"
+    )
+
+    # Run
+    metadata = Metadata.detect_from_dataframes(data, verbose=True)
+
+    # Assert
+    captured = capsys.readouterr()
+    assert captured.out == expected_print
+    assert list(metadata.tables.keys()) == ['guests', 'hotels']

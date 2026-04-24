@@ -3,6 +3,7 @@
 import json
 import logging
 import re
+import sys
 import warnings
 from collections import Counter, defaultdict
 from copy import deepcopy
@@ -651,7 +652,9 @@ class SingleTableMetadata:
         except Exception as e:
             self._handle_detection_error(e, column_name, table_name)
 
-    def _select_primary_key(self, infer_sdtypes, pk_candidates, pii_pk_candidates):
+    def _select_primary_key(
+        self, infer_sdtypes, pk_candidates, pii_pk_candidates, table_name=None, verbose=False
+    ):
         """Select the primary key from a list of candidates.
 
         If there are any non-pii candidates, we select the first one. Otherwise, we select the
@@ -666,22 +669,55 @@ class SingleTableMetadata:
                 A list of primary key candidates that aren't pii.
             pii_pk_candidates (list):
                 A list of primary key candidates that are pii.
+            table_name (str):
+                The name of the table to be analyzed. Defaults to ``None``.
+            verbose (bool):
+                A boolean that determines if information should be printed regarding detection.
+                If True, it prints out information about what is detected.
+                If False, it does not print out any information about what is detected.
+                Defaults to False.
         """
+        if verbose:
+            sys.stdout.write('\nDetecting primary key:\n')
+        chosen_pk = None
+        sdtype_updated = False
+        pii_removed = False
+
         if pk_candidates:
             selected_pk = pk_candidates[0]
             self.primary_key = selected_pk
             self.columns[self.primary_key]['sdtype'] = 'id'
+            chosen_pk = self.primary_key
 
         elif pii_pk_candidates:
             self.primary_key = pii_pk_candidates[0]
+            chosen_pk = self.primary_key
             if not infer_sdtypes:
                 self.columns[self.primary_key]['sdtype'] = 'id'
+                sdtype_updated = True
 
         if self.primary_key and self.columns[self.primary_key].get('sdtype') == 'id':
             if self.columns[self.primary_key].get('pii') is not None:
                 del self.columns[self.primary_key]['pii']
+                pii_removed = True
 
-    def _detect_columns(self, data, table_name=None, infer_sdtypes=True, infer_keys='primary_only'):
+        if verbose:
+            pk_str = None
+            if chosen_pk:
+                pk_str = f"'{chosen_pk}'"
+
+            notes = []
+            if sdtype_updated:
+                notes.append("updating sdtype to 'id'")
+            if pii_removed:
+                notes.append("removing 'pii' field")
+            suffix = f' ({", ".join(notes)})' if notes else ''
+
+            sys.stdout.write(f"- Table '{table_name}': primary_key={pk_str}{suffix}\n")
+
+    def _detect_columns(
+        self, data, table_name=None, infer_sdtypes=True, infer_keys='primary_only', verbose=False
+    ):
         """Detect metadata information for each column in the data.
 
         Args:
@@ -699,7 +735,15 @@ class SingleTableMetadata:
                     - 'primary_only': Infer the primary keys.
                     - None: Do not infer any keys.
                 Defaults to 'primary_only'.
+            verbose (bool):
+                A boolean that determines if information should be printed regarding detection.
+                If True, it prints out information about what is detected.
+                If False, it does not print out any information about what is detected.
+                Defaults to False.
         """
+        if verbose:
+            sys.stdout.write(f"\nDetecting table '{table_name}':\n")
+
         old_columns = data.columns
         data.columns = data.columns.astype(str)
         pk_candidates = []
@@ -728,13 +772,18 @@ class SingleTableMetadata:
                 column_dict['pii'] = True
 
             column_dict['sdtype'] = sdtype
+            if verbose:
+                parts = [f"{k}='{v}'" for k, v in column_dict.items()]
+                parts.sort(key=lambda p: not p.startswith('sdtype='))
+                sys.stdout.write(f"- Column '{field}': {', '.join(parts)}\n")
             self.columns[field] = deepcopy(column_dict)
-
         if infer_keys == 'primary_only':
             self._select_primary_key(
                 infer_sdtypes=infer_sdtypes,
                 pk_candidates=pk_candidates,
                 pii_pk_candidates=pii_pk_candidates,
+                table_name=table_name,
+                verbose=verbose,
             )
 
         self._updated = True

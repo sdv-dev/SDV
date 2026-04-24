@@ -615,13 +615,13 @@ class TestMetadataClass:
 
         # Assert
         mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
-            'guests', guests_table, True, 'primary_only'
+            'guests', guests_table, True, 'primary_only', False
         )
         mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
-            'hotels', hotels_table, True, 'primary_only'
+            'hotels', hotels_table, True, 'primary_only', False
         )
         mock_metadata.return_value._detect_relationships.assert_called_once_with(
-            data, 'column_name_match'
+            data, 'column_name_match', False
         )
         assert metadata == mock_metadata.return_value
 
@@ -640,10 +640,10 @@ class TestMetadataClass:
 
         # Assert
         mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
-            'guests', guests_table, False, None
+            'guests', guests_table, False, None, False
         )
         mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
-            'hotels', hotels_table, False, None
+            'hotels', hotels_table, False, None, False
         )
         mock_metadata.return_value._detect_relationships.assert_not_called()
         assert metadata == mock_metadata.return_value
@@ -682,10 +682,10 @@ class TestMetadataClass:
 
         # Assert
         mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
-            'guests', guests_table, False, 'primary_only'
+            'guests', guests_table, False, 'primary_only', False
         )
         mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
-            'hotels', hotels_table, False, 'primary_only'
+            'hotels', hotels_table, False, 'primary_only', False
         )
         mock_metadata.return_value._detect_relationships.assert_not_called()
         assert metadata == mock_metadata.return_value
@@ -811,7 +811,7 @@ class TestMetadataClass:
 
         # Assert
         mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
-            Metadata.DEFAULT_SINGLE_TABLE_NAME, DataFrameMatcher(data), True, 'primary_only'
+            Metadata.DEFAULT_SINGLE_TABLE_NAME, DataFrameMatcher(data), True, 'primary_only', False
         )
         assert metadata == mock_metadata.return_value
 

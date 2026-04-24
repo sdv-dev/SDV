@@ -3012,7 +3012,7 @@ class TestMultiTableMetadata:
 
         # Assert
         single_table_mock.return_value._detect_columns.assert_called_once_with(
-            data, 'table', True, 'primary_only'
+            data, 'table', True, 'primary_only', False
         )
         assert metadata.tables == {'table': single_table_mock.return_value}
 
@@ -3076,7 +3076,7 @@ class TestMultiTableMetadata:
         # Assert
         metadata.detect_table_from_dataframe.assert_any_call('guests', guests_table)
         metadata.detect_table_from_dataframe.assert_any_call('hotels', hotels_table)
-        metadata._detect_relationships.assert_called_once_with(data)
+        metadata._detect_relationships.assert_called_once_with(data, False)
 
     def test_detect_from_dataframes_no_dataframes(self):
         """Test ``detect_from_dataframes`` with no dataframes in the input.

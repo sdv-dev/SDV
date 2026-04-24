@@ -349,7 +349,7 @@ def test_detect_from_dataframe_with_pii_names():
 def test_detect_from_dataframe_with_pii_non_unique():
     """Test ``detect_from_dataframe`` with pii column names that are not unique.
 
-    The metadata should not detect any primray key.
+    The metadata should not detect any primary key.
     """
     # Setup
     data = pd.DataFrame(

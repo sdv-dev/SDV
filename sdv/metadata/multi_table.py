@@ -3,6 +3,7 @@
 import datetime
 import json
 import logging
+import sys
 import warnings
 from collections import defaultdict
 from copy import deepcopy
@@ -547,7 +548,7 @@ class MultiTableMetadata:
                 f'The relationships in the dataset are disjointed. {table_msg}'
             )
 
-    def _detect_foreign_keys_by_column_name(self, data):
+    def _detect_foreign_keys_by_column_name(self, data, verbose=False):
         """Detect the foreign keys based on if a column name matches a primary key.
 
         If a column name (a child table) is a primary key, it will also be considered
@@ -557,7 +558,14 @@ class MultiTableMetadata:
             data (dict):
                 Dictionary of table names to dataframes.
                 NOTE: this is only used in SDV-Enterprise.
+            verbose (bool):
+                A boolean that determines if information should be printed regarding detection.
+                If True, it prints out information about what is detected.
+                If False, it does not print out any information about what is detected.
+                Defaults to False.
         """
+        if verbose:
+            sys.stdout.write('\nDetecting foreign keys:\n')
         for parent_candidate in self.tables.keys():
             primary_key = self.tables[parent_candidate].primary_key
             if primary_key is None:
@@ -573,15 +581,24 @@ class MultiTableMetadata:
                         continue
 
                     try:
+                        sdtype_updated = False
                         if pk_sdtype == 'id' and original_fk_sdtype != 'id':
                             self.update_column(
                                 table_name=child_candidate,
                                 column_name=primary_key,
                                 sdtype='id',
                             )
+                            sdtype_updated = True
                         self.add_relationship(
                             parent_candidate, child_candidate, primary_key, primary_key
                         )
+                        if verbose:
+                            child_col = f"'{child_candidate}.{primary_key}'"
+                            parent_col = f"'{parent_candidate}.{primary_key}'"
+                            suffix = " (updating sdtype to 'id')" if sdtype_updated else ''
+                            sys.stdout.write(
+                                f'- Column {child_col} refers to column {parent_col}{suffix}\n'
+                            )
 
                     except InvalidMetadataError:
                         # circular relationship
@@ -593,7 +610,9 @@ class MultiTableMetadata:
                             )
                         continue
 
-    def _detect_relationships(self, data=None, foreign_key_inference_algorithm='column_name_match'):
+    def _detect_relationships(
+        self, data=None, foreign_key_inference_algorithm='column_name_match', verbose=False
+    ):
         """Automatically detect relationships between tables.
 
         Args:
@@ -603,12 +622,22 @@ class MultiTableMetadata:
             foreign_key_inference_algorithm (str):
                 Which algorithm to use for detecting foreign keys. Currently only one option,
                 'column_name_match'.
+            verbose (bool):
+                A boolean that determines if information should be printed regarding detection.
+                If True, it prints out information about what is detected.
+                If False, it does not print out any information about what is detected.
+                Defaults to False.
         """
         if foreign_key_inference_algorithm == 'column_name_match':
-            self._detect_foreign_keys_by_column_name(data)
+            self._detect_foreign_keys_by_column_name(data, verbose)
 
     def detect_table_from_dataframe(
-        self, table_name, data, infer_sdtypes=True, infer_keys='primary_only'
+        self,
+        table_name,
+        data,
+        infer_sdtypes=True,
+        infer_keys='primary_only',
+        verbose=False,
     ):
         """Detect the metadata for a table from a dataframe.
 
@@ -630,14 +659,19 @@ class MultiTableMetadata:
                     - 'primary_only': Infer only the primary keys of each table
                     - None: Do not infer any keys
                 Defaults to 'primary_only'.
+            verbose (bool):
+                A boolean that determines if information should be printed regarding detection.
+                If True, it prints out information about what is detected.
+                If False, it does not print out any information about what is detected.
+                Defaults to False.
         """
         self._validate_table_not_detected(table_name)
         table = SingleTableMetadata()
-        table._detect_columns(data, table_name, infer_sdtypes, infer_keys)
+        table._detect_columns(data, table_name, infer_sdtypes, infer_keys, verbose)
         self.tables[table_name] = table
         self._log_detected_table(table)
 
-    def detect_from_dataframes(self, data):
+    def detect_from_dataframes(self, data, verbose=False):
         """Detect the metadata for all tables in a dictionary of dataframes.
 
         This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrame``.
@@ -646,6 +680,11 @@ class MultiTableMetadata:
         Args:
             data (dict):
                 Dictionary of table names to dataframes.
+            verbose (bool):
+                A boolean that determines if information should be printed regarding detection.
+                If True, it prints out information about what is detected.
+                If False, it does not print out any information about what is detected.
+                Defaults to False.
         """
         if not data or not all(isinstance(df, pd.DataFrame) for df in data.values()):
             raise ValueError('The provided dictionary must contain only pandas DataFrame objects.')
@@ -653,7 +692,7 @@ class MultiTableMetadata:
         for table_name, dataframe in data.items():
             self.detect_table_from_dataframe(table_name, dataframe)
 
-        self._detect_relationships(data)
+        self._detect_relationships(data, verbose)
 
     def detect_from_csvs(self, folder_name, read_csv_parameters=None):
         """Detect the metadata for all tables in a folder of csv files.
