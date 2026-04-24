@@ -3012,7 +3012,7 @@ class TestMultiTableMetadata:
 
         # Assert
         single_table_mock.return_value._detect_columns.assert_called_once_with(
-            data, 'table', True, 'primary_only'
+            data, 'table', True, 'primary_only', False
         )
         assert metadata.tables == {'table': single_table_mock.return_value}
 
@@ -3074,9 +3074,9 @@ class TestMultiTableMetadata:
         metadata.detect_from_dataframes(data)
 
         # Assert
-        metadata.detect_table_from_dataframe.assert_any_call('guests', guests_table)
-        metadata.detect_table_from_dataframe.assert_any_call('hotels', hotels_table)
-        metadata._detect_relationships.assert_called_once_with(data)
+        metadata.detect_table_from_dataframe.assert_any_call('guests', guests_table, verbose=False)
+        metadata.detect_table_from_dataframe.assert_any_call('hotels', hotels_table, verbose=False)
+        metadata._detect_relationships.assert_called_once_with(data, verbose=False)
 
     def test_detect_from_dataframes_no_dataframes(self):
         """Test ``detect_from_dataframes`` with no dataframes in the input.
@@ -3881,3 +3881,116 @@ class TestMultiTableMetadata:
         assert result_all['sequence_key'] == 'Sequence key: sequence_key'
         assert result_all['sequence_index'] == 'Sequence index: sequence_index'
         assert result_no_info is None
+
+    @pytest.mark.parametrize(
+        'initial_fk_sdtype,expected_suffix',
+        [
+            ('categorical', " (updating sdtype to 'id')"),
+            ('id', ''),
+        ],
+    )
+    def test__detect_foreign_keys_by_column_name_verbose(
+        self, capsys, initial_fk_sdtype, expected_suffix
+    ):
+        """Test `_detect_foreign_keys_by_column_name` with verbose output."""
+        # Setup
+        parent_table = Mock()
+        parent_table.primary_key = 'user_id'
+        parent_table.columns = {
+            'user_id': {'sdtype': 'id'},
+            'user_name': {'sdtype': 'categorical'},
+            'transactions': {'sdtype': 'numerical'},
+        }
+
+        child_table = SingleTableMetadata()
+        child_table.primary_key = 'session_id'
+        child_table.columns = {
+            'user_id': {'sdtype': initial_fk_sdtype},
+            'session_id': {'sdtype': 'numerical'},
+            'timestamp': {'sdtype': 'datetime'},
+        }
+
+        instance = MultiTableMetadata()
+        instance.tables = {
+            'users': parent_table,
+            'sessions': child_table,
+        }
+        expected_output = (
+            '\nDetecting foreign keys:\n'
+            f"- Column 'sessions.user_id' refers to column 'users.user_id'{expected_suffix}\n"
+        )
+
+        # Run
+        instance._detect_foreign_keys_by_column_name(data=None, verbose=True)
+
+        # Assert
+        captured = capsys.readouterr().out
+        assert captured == expected_output
+        assert instance.tables['sessions'].columns['user_id']['sdtype'] == 'id'
+        assert instance.relationships == [
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'sessions',
+                'parent_primary_key': 'user_id',
+                'child_foreign_key': 'user_id',
+            }
+        ]
+
+    def test__detect_relationships_verbose(self):
+        """Test `_detect_relationships` sets verbose on  `_detect_foreign_keys_by_column_name`."""
+        # Setup
+        instance = MultiTableMetadata()
+        instance._detect_foreign_keys_by_column_name = Mock()
+        data = {'users': pd.DataFrame(), 'sessions': pd.DataFrame()}
+
+        # Run
+        instance._detect_relationships(data=data, verbose=True)
+
+        # Assert
+        instance._detect_foreign_keys_by_column_name.assert_called_once_with(data, True)
+
+    @patch('sdv.metadata.multi_table.SingleTableMetadata')
+    def test_detect_table_from_dataframe_with_kwargs(self, single_table_mock):
+        """Test `detect_table_from_dataframe` fsets verbose on `_detect_columns`."""
+        # Setup
+        metadata = MultiTableMetadata()
+        data = pd.DataFrame()
+        single_table_mock.return_value.to_dict.return_value = {
+            'columns': {'a': {'sdtype': 'numerical'}}
+        }
+
+        # Run
+        metadata.detect_table_from_dataframe(
+            'table', data, infer_sdtypes=False, infer_keys=None, verbose=True
+        )
+
+        # Assert
+        single_table_mock.return_value._detect_columns.assert_called_once_with(
+            data, 'table', False, None, True
+        )
+        assert metadata.tables == {'table': single_table_mock.return_value}
+
+    def test__detect_foreign_keys_by_column_name_verbose_no_fks(
+        self,
+        capsys,
+    ):
+        """Test `_detect_foreign_keys_by_column_name` with verbose output and no fk to detect."""
+        # Setup
+        parent_table = Mock()
+        parent_table.primary_key = 'user_id'
+        parent_table.columns = {
+            'user_id': {'sdtype': 'id'},
+        }
+        instance = MultiTableMetadata()
+        instance.tables = {
+            'users': parent_table,
+        }
+        expected_output = '\nDetecting foreign keys:\n- No foreign keys found\n'
+
+        # Run
+        instance._detect_foreign_keys_by_column_name(data=None, verbose=True)
+
+        # Assert
+        captured = capsys.readouterr().out
+        assert captured == expected_output
+        assert instance.relationships == []

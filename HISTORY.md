@@ -1,5 +1,15 @@
 # Release Notes
 
+## v1.36.1 - 2026-04-24
+
+### New Features
+
+* Add verbosity to metadata auto-detection - Issue [#2871](https://github.com/sdv-dev/SDV/issues/2871) by @gsheni
+
+### Internal
+
+* Modularize `Metadata.detect_from_dataframe` method - Issue [#2875](https://github.com/sdv-dev/SDV/issues/2875) by @R-Palazzo
+
 ## v1.36.0 - 2026-04-10
 
 ### Bugs Fixed

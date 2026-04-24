@@ -536,3 +536,8 @@ def _get_unreferenced_keys(parent_columns, child_columns):
     merged = merged[merged[indicator] == 'left_only'][list(child_columns.columns)]
     merged = merged.dropna(how='all')
     return merged.dropna(how='all')
+
+
+def _validate_boolean_parameter(parameter, parameter_name):
+    if not isinstance(parameter, bool):
+        raise ValueError(f"'{parameter_name}' must be a boolean value.")
