@@ -115,8 +115,10 @@ class TestProgrammableConstraintHarness:
 
         # Run and Assert
         expected_msg = re.escape(
-            'SingleTableProgrammableConstraint cannot be used with multi-table metadata. '
-            'Please use the ProgrammableConstraint base class instead.'
+            'SingleTableProgrammableConstraint cannot be used with multi-table metadata '
+            'if the `table_name` attribute has not been set. Please set the table name '
+            'attribute to the target table, or use the ProgrammableContraint '
+            'base class instead.'
         )
         with pytest.raises(ConstraintNotMetError, match=expected_msg):
             instance._validate_constraint_with_metadata(metadata)
