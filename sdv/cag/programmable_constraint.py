@@ -137,15 +137,18 @@ class ProgrammableConstraintHarness(BaseConstraint):
     def __init__(self, programmable_constraint):
         super().__init__()
         self.programmable_constraint = programmable_constraint
-        self.table_name = None
+        self.table_name = getattr(self.programmable_constraint, 'table_name', None)
         self._is_single_table = self.programmable_constraint._is_single_table
 
     def _validate_constraint_with_metadata(self, metadata):
         if self.programmable_constraint._is_single_table and len(metadata.tables) != 1:
-            raise ConstraintNotMetError(
-                'SingleTableProgrammableConstraint cannot be used with multi-table metadata. '
-                'Please use the ProgrammableConstraint base class instead.'
-            )
+            if getattr(self.programmable_constraint, 'table_name', None) is None:
+                raise ConstraintNotMetError(
+                    'SingleTableProgrammableConstraint cannot be used with multi-table metadata '
+                    'if the `table_name` attribute has not been set. Please set the table name '
+                    'attribute to the target table, or use the ProgrammableContraint '
+                    'base class instead.'
+                )
 
         self.programmable_constraint.validate(metadata)
 
