@@ -1,5 +1,11 @@
 # Release Notes
 
+## v1.36.2 - 2026-05-14
+
+### Bugs Fixed
+
+* Allow single table `ProgrammableConstraint` with multi-table synthesizers if `table_name` is set - Issue [#2880](https://github.com/sdv-dev/SDV/issues/2880) by @frances-h
+
 ## v1.36.1 - 2026-04-24
 
 ### New Features
