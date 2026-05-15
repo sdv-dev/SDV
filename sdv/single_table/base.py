@@ -1439,6 +1439,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         """
         self._validate_fit_before_sample()
         output_file_path = validate_file_path(output_file_path)
+        sample_timestamp = datetime.datetime.now()
 
         num_rows = functools.reduce(
             lambda num_rows, condition: condition.get_num_rows() + num_rows, conditions, 0
@@ -1473,6 +1474,16 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         except (Exception, KeyboardInterrupt) as error:
             handle_sampling_error(output_file_path, error)
+
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Sample',
+            'TIMESTAMP': sample_timestamp,
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': self._synthesizer_id,
+            'TOTAL NUMBER OF TABLES': 1,
+            'TOTAL NUMBER OF ROWS': len(sampled),
+            'TOTAL NUMBER OF COLUMNS': len(sampled.columns),
+        })
 
         return sampled
 
@@ -1513,6 +1524,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         known_columns = known_columns.copy()
         self._validate_known_columns(known_columns)
+        sample_timestamp = datetime.datetime.now()
         sampled = pd.DataFrame()
         try:
             with tqdm.tqdm(total=len(known_columns)) as progress_bar:
@@ -1534,5 +1546,15 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         except (Exception, KeyboardInterrupt) as error:
             handle_sampling_error(output_file_path, error)
+
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Sample',
+            'TIMESTAMP': sample_timestamp,
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': self._synthesizer_id,
+            'TOTAL NUMBER OF TABLES': 1,
+            'TOTAL NUMBER OF ROWS': len(sampled),
+            'TOTAL NUMBER OF COLUMNS': len(sampled.columns),
+        })
 
         return sampled
