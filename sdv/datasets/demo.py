@@ -307,7 +307,7 @@ def _download(modality, dataset_name, bucket, credentials=None, output_folder_na
     Returns:
         tuple:
             (data, metadata_bytes)
-            The ``data`` is a ``dict`` mapping table name to ``pandas.DataFrame`` and
+            The data is a ``dict`` mapping table name to ``pandas.DataFrame`` and
             ``metadata_bytes`` is the raw bytes of the metadata JSON.
 
     Raises:
@@ -325,40 +325,20 @@ def _download(modality, dataset_name, bucket, credentials=None, output_folder_na
     )
     contents = _list_objects(dataset_prefix, bucket=bucket, client=client)
     zip_key = _find_data_zip_key(contents, dataset_prefix, bucket)
-    zip_bytes = _get_data_from_bucket(zip_key, bucket=bucket, client=client)
-    zip_bytes = io.BytesIO(zip_bytes)
+    data_zip_bytes = _get_data_from_bucket(zip_key, bucket=bucket, client=client)
+    data_zip_bytes = io.BytesIO(data_zip_bytes)
     metadata_bytes = _get_first_v1_metadata_bytes(
         contents, dataset_prefix, bucket=bucket, client=client
     )
-    if output_folder_name:
-        _extract_zip_bytes_to_folder(zip_bytes, output_folder_name)
-    data = _extract_zip_bytes_to_data(zip_bytes, bucket, dataset_name)
+    data = _extract_zip_bytes_to_data(data_zip_bytes, bucket, dataset_name, output_folder_name)
 
     return data, metadata_bytes
 
 
-def _extract_zip_bytes_to_folder(zip_bytes, output_folder_name):
-    """Extract the zip bytes to a folder.
-
-    This function extract zip bytes (from data.zip) to a given folder.
-    The folder (output_folder_name) will contain table_name1.csv,
-    table_name2.csv, etc.
-
-    Args:
-        zip_bytes (BytesIO):
-            The zip bytes to extract.
-        output_folder_name (str):
-            The name of the folder to extract the data to.
-    """
-    with ZipFile(zip_bytes) as zf:
-        os.makedirs(output_folder_name, exist_ok=True)
-        zf.extractall(output_folder_name)
-
-
-def _extract_zip_bytes_to_data(zip_bytes, bucket, dataset_name):
+def _extract_zip_bytes_to_data(zip_bytes, bucket, dataset_name, output_folder_name=None):
     """Extract CSV tables from an in-memory zip bytes into a dict of DataFrames.
 
-    Iterates over the zip bytes and parses each ``.csv`` entry with
+    This function iterates over the zip bytes and parses each CSV entry with
     ``pandas.read_csv``. Non-CSV entries are recorded as skipped. CSVs that
     fail UTF-8 decoding are retried with ``FALLBACK_ENCODING``.
 
@@ -370,6 +350,10 @@ def _extract_zip_bytes_to_data(zip_bytes, bucket, dataset_name):
             error messages.
         dataset_name (str):
             The name of the dataset. Used only for error messages.
+        output_folder_name (str or None):
+            Optional folder path where the zip will also be extracted to disk so
+            the user keeps a local copy. The returned data dict is always built
+            in-memory. If ``None``, no folder is created.
 
     Returns:
         dict[str, pandas.DataFrame]:
@@ -382,6 +366,10 @@ def _extract_zip_bytes_to_data(zip_bytes, bucket, dataset_name):
     data = {}
     skipped_files = []
     with ZipFile(zip_bytes, 'r') as z:
+        if output_folder_name:
+            os.makedirs(output_folder_name, exist_ok=True)
+            z.extractall(output_folder_name)
+
         for filename in z.namelist():
             if not filename.lower().endswith('.csv'):
                 skipped_files.append(filename)

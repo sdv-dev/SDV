@@ -2,6 +2,7 @@ import io
 import json
 import logging
 import re
+import warnings
 import zipfile
 from unittest.mock import Mock, patch
 
@@ -12,6 +13,7 @@ from botocore.exceptions import ClientError
 
 from sdv.datasets.demo import (
     _download,
+    _extract_zip_bytes_to_data,
     _find_data_zip_key,
     _find_text_key,
     _get_data_from_bucket,
@@ -1513,3 +1515,116 @@ def test_get_readme_with_client_error(mock__create_s3_client):
             dataset_name='fake_hotels',
             s3_bucket_name='private_bucket',
         )
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_with_output_folder_name_single_table(mock_list, mock_get, tmp_path):
+    """Test `download_demo` with output_folder_name and single-table dataset."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/ring/data.zip'},
+        {'Key': 'single_table/ring/metadata.json'},
+    ]
+    df = pd.DataFrame({'0': [0, 0], '1': [0, 0]})
+    zip_bytes = _make_zip_with_csv('ring.csv', df)
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'ring': {
+                'columns': {
+                    '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                }
+            }
+        },
+        'relationships': [],
+    }).encode()
+    mock_get.side_effect = lambda key, bucket, client: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
+    output_folder_name = tmp_path / 'out'
+    csv_path = output_folder_name / 'ring.csv'
+
+    # Run
+    data, _ = download_demo('single_table', 'ring', output_folder_name)
+
+    # Assert
+    assert csv_path.is_file()
+    pd.testing.assert_frame_equal(pd.read_csv(csv_path), data)
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_writes_csvs_to_disk_multi_table(mock_list, mock_get, tmp_path):
+    """Test `download_demo` with output_folder_name and multi-table dataset."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'multi_table/got_families/data.zip'},
+        {'Key': 'multi_table/got_families/metadata.json'},
+    ]
+    families = pd.DataFrame({'family_id': [1, 2], 'name': ['Stark', 'Tully']})
+    characters = pd.DataFrame({
+        'age': [20, 16],
+        'character_id': [1, 2],
+        'name': ['Jon', 'Arya'],
+    })
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('families.csv', families.to_csv(index=False))
+        zf.writestr('characters.csv', characters.to_csv(index=False))
+    zip_bytes = buf.getvalue()
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'families': {
+                'columns': {
+                    'family_id': {'sdtype': 'id'},
+                    'name': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'family_id',
+            },
+            'characters': {
+                'columns': {
+                    'character_id': {'sdtype': 'id'},
+                    'age': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'name': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'character_id',
+            },
+        },
+        'relationships': [],
+    }).encode()
+    mock_get.side_effect = lambda key, bucket, client: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
+    output_folder_name = tmp_path / 'out'
+
+    # Run
+    data, _ = download_demo('multi_table', 'got_families', output_folder_name)
+
+    # Assert
+    for table_name in ['families', 'characters']:
+        csv_path = output_folder_name / f'{table_name}.csv'
+        assert csv_path.is_file(), f'{csv_path} should exist'
+        pd.testing.assert_frame_equal(pd.read_csv(csv_path), data[table_name])
+
+
+@pytest.mark.parametrize('encoding', ['utf-8', 'latin-1'])
+def test__extract_zip_bytes_with_encoding(encoding):
+    """Test `_extract_zip_bytes_to_data` reads UTF-8 and reopens the zip entry for Latin-1."""
+    # Setup
+    df = pd.DataFrame({'id': [1], 'name': ['café']})
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('users.csv', df.to_csv(index=False).encode(encoding))
+    zip_bytes = io.BytesIO(buf.getvalue())
+
+    # Run
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', UserWarning)
+        data = _extract_zip_bytes_to_data(zip_bytes, 'bucket', 'dataset')
+
+    # Assert
+    assert list(data) == ['users']
+    pd.testing.assert_frame_equal(data['users'], df)

@@ -1,3 +1,4 @@
+import pandas as pd
 import pytest
 
 from sdv.datasets.demo import download_demo, get_available_demos
@@ -28,9 +29,11 @@ def test_get_available_demos_multi_table():
 
 @pytest.mark.parametrize('output_path', [None, 'tmp_path'])
 def test_download_demo_single_table(output_path, tmp_path):
-    """Test that the `download_demo` function works as intended for single-table."""
-    # Run
+    """Test that the `download_demo` function works for single-table."""
+    # Setup
     output_folder_name = tmp_path / 'sdv' if output_path else None
+
+    # Run
     data, metadata = download_demo(
         modality='single_table',
         dataset_name='fake_hotel_guests',
@@ -38,16 +41,25 @@ def test_download_demo_single_table(output_path, tmp_path):
     )
 
     # Assert
+    assert isinstance(metadata, Metadata)
+    metadata.validate()
+    assert isinstance(data, pd.DataFrame)
     metadata.validate_data({'fake_hotel_guests': data})
     assert len(data) > 1
-    assert isinstance(metadata, Metadata)
+    if output_folder_name:
+        assert (output_folder_name / 'metadata.json').is_file()
+        csv_files = list((output_folder_name / 'data').glob('*.csv'))
+        assert len(csv_files) == 1
+        assert csv_files[0].name == 'fake_hotel_guests.csv'
 
 
 @pytest.mark.parametrize('output_path', [None, 'tmp_path'])
 def test_download_demo_multi_table(output_path, tmp_path):
-    """Test that the `download_demo` function works as intended for multi-table."""
-    # Run
+    """Test that the `download_demo` function works for multi-table."""
+    # Setup
     output_folder_name = tmp_path / 'sdv' if output_path else None
+
+    # Run
     data, metadata = download_demo(
         modality='multi_table',
         dataset_name='fake_hotels',
@@ -55,9 +67,16 @@ def test_download_demo_multi_table(output_path, tmp_path):
     )
 
     # Assert
+    assert isinstance(metadata, Metadata)
+    metadata.validate()
+    assert isinstance(data, dict)
     metadata.validate_data(data)
     expected_tables = ['hotels', 'guests']
     assert set(expected_tables) == set(data)
-    assert isinstance(metadata, Metadata)
     assert len(data['hotels']) > 1
     assert len(data['guests']) > 1
+    if output_folder_name is not None:
+        assert (output_folder_name / 'metadata.json').is_file()
+        for table_name in expected_tables:
+            csv_path = output_folder_name / 'data' / f'{table_name}.csv'
+            assert csv_path.is_file()
