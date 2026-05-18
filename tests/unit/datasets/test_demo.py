@@ -13,7 +13,6 @@ from botocore.exceptions import ClientError
 
 from sdv.datasets.demo import (
     _download,
-    _extract_zip_bytes_to_data,
     _find_data_zip_key,
     _find_text_key,
     _get_data_from_bucket,
@@ -22,6 +21,8 @@ from sdv.datasets.demo import (
     _get_text_file_content,
     _iter_metainfo_yaml_entries,
     _list_objects,
+    _load_data_from_zip,
+    _read_csv_with_encoding_fallback,
     download_demo,
     get_available_demos,
     get_readme,
@@ -1611,8 +1612,26 @@ def test_download_demo_writes_csvs_to_disk_multi_table(mock_list, mock_get, tmp_
 
 
 @pytest.mark.parametrize('encoding', ['utf-8', 'latin-1'])
-def test__extract_zip_bytes_with_encoding(encoding):
-    """Test `_extract_zip_bytes_to_data` reads UTF-8 and reopens the zip entry for Latin-1."""
+def test__read_csv_with_encoding_fallback(encoding):
+    """Test `_read_csv_with_encoding_fallback` returns the parsed CSV."""
+    # Setup
+    df = pd.DataFrame({'id': [1], 'name': ['café']})
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('users.csv', df.to_csv(index=False).encode(encoding))
+    zip_bytes = io.BytesIO(buf.getvalue())
+
+    # Run
+    with zipfile.ZipFile(zip_bytes, 'r') as z:
+        result = _read_csv_with_encoding_fallback(z, 'users.csv')
+
+    # Assert
+    pd.testing.assert_frame_equal(result, df)
+
+
+@pytest.mark.parametrize('encoding', ['utf-8', 'latin-1'])
+def test__load_data_from_zip_with_encoding(encoding):
+    """Test `_load_data_from_zip` reads UTF-8 and reopens the zip entry for Latin-1."""
     # Setup
     df = pd.DataFrame({'id': [1], 'name': ['café']})
     buf = io.BytesIO()
@@ -1623,7 +1642,7 @@ def test__extract_zip_bytes_with_encoding(encoding):
     # Run
     with warnings.catch_warnings():
         warnings.simplefilter('error', UserWarning)
-        data = _extract_zip_bytes_to_data(zip_bytes, 'bucket', 'dataset')
+        data = _load_data_from_zip(zip_bytes, 'bucket', 'dataset')
 
     # Assert
     assert list(data) == ['users']

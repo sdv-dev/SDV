@@ -325,22 +325,42 @@ def _download(modality, dataset_name, bucket, credentials=None, output_folder_na
     )
     contents = _list_objects(dataset_prefix, bucket=bucket, client=client)
     zip_key = _find_data_zip_key(contents, dataset_prefix, bucket)
-    data_zip_bytes = _get_data_from_bucket(zip_key, bucket=bucket, client=client)
-    data_zip_bytes = io.BytesIO(data_zip_bytes)
+    data_zip_bytes = io.BytesIO(_get_data_from_bucket(zip_key, bucket=bucket, client=client))
     metadata_bytes = _get_first_v1_metadata_bytes(
         contents, dataset_prefix, bucket=bucket, client=client
     )
-    data = _extract_zip_bytes_to_data(data_zip_bytes, bucket, dataset_name, output_folder_name)
+    data = _load_data_from_zip(data_zip_bytes, bucket, dataset_name, output_folder_name)
 
     return data, metadata_bytes
 
 
-def _extract_zip_bytes_to_data(zip_bytes, bucket, dataset_name, output_folder_name=None):
-    """Extract CSV tables from an in-memory zip bytes into a dict of DataFrames.
+def _read_csv_with_encoding_fallback(z, filename):
+    """Read a zip CSV entry as UTF-8, retrying with ``FALLBACK_ENCODING`` if needed.
+
+    Args:
+        z (zipfile.ZipFile):
+            An open zip file (CSV)
+        filename (str):
+            Name of the CSV entry inside the archive.
+
+    Returns:
+        pd.DataFrame
+    """
+    try:
+        with z.open(filename) as f:
+            return pd.read_csv(f, low_memory=False)
+    except UnicodeDecodeError:
+        with z.open(filename) as f:
+            return pd.read_csv(f, low_memory=False, encoding=FALLBACK_ENCODING)
+
+
+def _load_data_from_zip(zip_bytes, bucket, dataset_name, output_folder_name=None):
+    """Load CSV tables from in-memory zip bytes into a dict of DataFrames.
 
     This function iterates over the zip bytes and parses each CSV entry with
-    ``pandas.read_csv``. Non-CSV entries are recorded as skipped. CSVs that
-    fail UTF-8 decoding are retried with ``FALLBACK_ENCODING``.
+    ``pandas.read_csv``. Non-CSV entries are recorded as skipped. When
+    ``output_folder_name`` is provided, the archive is also extracted to disk
+    as a side effect so the caller keeps a local copy.
 
     Args:
         zip_bytes (io.BytesIO):
@@ -377,11 +397,7 @@ def _extract_zip_bytes_to_data(zip_bytes, bucket, dataset_name, output_folder_na
 
             table_name = Path(filename).stem
             try:
-                with z.open(filename) as f:
-                    data[table_name] = pd.read_csv(f, low_memory=False)
-            except UnicodeDecodeError:
-                with z.open(filename) as f:
-                    data[table_name] = pd.read_csv(f, low_memory=False, encoding=FALLBACK_ENCODING)
+                data[table_name] = _read_csv_with_encoding_fallback(z, filename)
             except Exception as e:
                 skipped_files.append(f'{filename}: {e}')
 
