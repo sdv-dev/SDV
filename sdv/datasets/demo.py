@@ -55,6 +55,20 @@ def _create_s3_client(bucket, credentials=None):
 
 
 def _get_data_from_bucket(object_key, bucket, client):
+    """Get a file from an S3 bucket as a bytes object.
+
+    Args:
+        object_key (str):
+            The key of the object to get.
+        bucket (str):
+            The name of the bucket to get the object from.
+        client (botocore.client.S3):
+            S3 client.
+
+    Returns:
+        bytes:
+            The file data from the S3 object as a bytes object.
+    """
     response = client.get_object(Bucket=bucket, Key=object_key)
     return response['Body'].read()
 
@@ -273,6 +287,18 @@ def handle_aws_client_errors(error_message_builder):
 def _download(modality, dataset_name, bucket, credentials=None):
     """Download dataset resources from a bucket.
 
+    Args:
+        modality (str):
+            The modality of the dataset: ``'single_table'``, ``'multi_table'``, ``'sequential'``.
+        dataset_name (str):
+            The name of the dataset.
+        bucket (str):
+            The name of the bucket to download from.
+        credentials (dict or None):
+            Dictionary containing DataCebo license key and username. It takes the form:
+            { 'username': 'example@datacebo.com', 'license_key': '<MY_LICENSE_KEY>' }
+            If None, the function will use the default credentials.
+
     Returns:
         tuple:
             (BytesIO(zip_bytes), metadata_bytes)
@@ -294,18 +320,22 @@ def _download(modality, dataset_name, bucket, credentials=None):
     return io.BytesIO(zip_bytes), metadata_bytes
 
 
-def _extract_data(bytes_io, output_folder_name):
-    with ZipFile(bytes_io) as zf:
-        if output_folder_name:
-            os.makedirs(output_folder_name, exist_ok=True)
-            zf.extractall(output_folder_name)
+def _extract_zip_bytes_to_folder(zip_bytes, output_folder_name):
+    """Extract the zip bytes to a folder.
 
-        else:
-            in_memory_directory = {}
-            for name in zf.namelist():
-                in_memory_directory[name] = zf.read(name)
+    This function extract zip bytes (from data.zip) to a given folder.
+    The folder (output_folder_name) will contain table_name1.csv,
+    table_name2.csv, etc.
 
-            return in_memory_directory
+    Args:
+        zip_bytes (BytesIO):
+            The zip bytes to extract.
+        output_folder_name (str):
+            The name of the folder to extract the data to.
+    """
+    with ZipFile(zip_bytes) as zf:
+        os.makedirs(output_folder_name, exist_ok=True)
+        zf.extractall(output_folder_name)
 
 
 def _get_data_with_output_folder(output_folder_name):
@@ -335,37 +365,35 @@ def _get_data_with_output_folder(output_folder_name):
     return data, skipped_files
 
 
-def _get_data_without_output_folder(in_memory_directory):
-    """Load CSV tables directly from in-memory zip contents.
+def _extract_zip_bytes_to_data(zip_bytes, bucket, dataset_name):
+    """Extract zip bytes to a dictionary mapping table name to DataFrame.
 
-    Returns a tuple of (data_dict, skipped_files).
-    Non-CSV entries are ignored.
+    Args:
+        zip_bytes (BytesIO):
+            The zip bytes to extract the data from.
+
+    Returns:
+        dict:
+            A dictionary mapping table name to DataFrame.
+            { 'table_name1': pd.DataFrame, 'table_name2': pd.DataFrame, etc. }
     """
     data = {}
     skipped_files = []
-    for filename, file_ in in_memory_directory.items():
-        if not filename.lower().endswith('.csv'):
-            skipped_files.append(filename)
-            continue
+    with ZipFile(zip_bytes, 'r') as z:
+        for filename in z.namelist():
+            if not filename.lower().endswith('.csv'):
+                skipped_files.append(filename)
+                continue
 
-        table_name = Path(filename).stem
-        try:
-            data[table_name] = pd.read_csv(io.BytesIO(file_), low_memory=False)
-        except UnicodeDecodeError:
-            data[table_name] = pd.read_csv(
-                io.BytesIO(file_), low_memory=False, encoding=FALLBACK_ENCODING
-            )
-        except Exception as e:
-            skipped_files.append(f'{filename}: {e}')
+            table_name = Path(filename).stem
 
-    return data, skipped_files
-
-
-def _get_data(modality, output_folder_name, in_memory_directory, bucket, dataset_name):
-    if output_folder_name:
-        data, skipped_files = _get_data_with_output_folder(output_folder_name)
-    else:
-        data, skipped_files = _get_data_without_output_folder(in_memory_directory)
+            with z.open(filename) as f:
+                try:
+                    data[table_name] = pd.read_csv(f, low_memory=False)
+                except UnicodeDecodeError:
+                    data[table_name] = pd.read_csv(f, low_memory=False, encoding=FALLBACK_ENCODING)
+                except Exception as e:
+                    skipped_files.append(f'{filename}: {e}')
 
     if skipped_files:
         warnings.warn('Skipped files: ' + ', '.join(sorted(skipped_files)))
@@ -375,9 +403,6 @@ def _get_data(modality, output_folder_name, in_memory_directory, bucket, dataset
             f"Could not download dataset '{dataset_name}' from bucket '{bucket}'. "
             'The dataset is missing `csv` file/s.'
         )
-
-    if modality != 'multi_table':
-        data = data.popitem()[1]
 
     return data
 
@@ -464,17 +489,15 @@ def download_demo(
     _validate_modalities(modality)
     _validate_output_folder(output_folder_name)
 
-    data_io, metadata_bytes = _download(modality, dataset_name, s3_bucket_name, credentials)
-    in_memory_directory = _extract_data(data_io, output_folder_name)
-    data = _get_data(
-        modality,
-        output_folder_name,
-        in_memory_directory,
-        s3_bucket_name,
-        dataset_name,
-    )
-    metadata = _get_metadata(metadata_bytes, dataset_name, output_folder_name)
+    data, metadata_bytes = _download(modality, dataset_name, s3_bucket_name, credentials)
+    if output_folder_name:
+        _extract_zip_bytes_to_folder(data, output_folder_name)
 
+    data = _extract_zip_bytes_to_data(data, s3_bucket_name, dataset_name)
+    if modality != 'multi_table':
+        data = data.popitem()[1]
+
+    metadata = _get_metadata(metadata_bytes, dataset_name, output_folder_name)
     return data, metadata
 
 
