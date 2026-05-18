@@ -284,12 +284,13 @@ def handle_aws_client_errors(error_message_builder):
     return decorator
 
 
-def _download(modality, dataset_name, bucket, credentials=None):
-    """Download dataset resources from a bucket.
+def _download(modality, dataset_name, bucket, credentials=None, output_folder_name=None):
+    """Download dataset resources from S3 bucket and load them in-memory.
 
     Args:
         modality (str):
-            The modality of the dataset: ``'single_table'``, ``'multi_table'``, ``'sequential'``.
+            The modality of the dataset: ``'single_table'``, ``'multi_table'``,
+            ``'sequential'``.
         dataset_name (str):
             The name of the dataset.
         bucket (str):
@@ -298,10 +299,22 @@ def _download(modality, dataset_name, bucket, credentials=None):
             Dictionary containing DataCebo license key and username. It takes the form:
             { 'username': 'example@datacebo.com', 'license_key': '<MY_LICENSE_KEY>' }
             If None, the function will use the default credentials.
+        output_folder_name (str or None):
+            Optional folder path where the zip will also be extracted to disk so
+            the user keeps a local copy. The returned data dict is always built
+            in-memory. If ``None``, no folder is created.
 
     Returns:
         tuple:
-            (BytesIO(zip_bytes), metadata_bytes)
+            ``(data, metadata_bytes)`` where ``data`` is a ``dict`` mapping
+            table name to ``pandas.DataFrame`` and ``metadata_bytes`` is the
+            raw bytes of the V1 metadata JSON.
+
+    Raises:
+        DemoResourceNotFoundError:
+            If the dataset prefix is missing in the bucket, if ``data.zip`` is
+            missing, if no V1 metadata file is present, or if the zip contains
+            no valid CSVs.
     """
     client = _create_s3_client(bucket=bucket, credentials=credentials)
     dataset_prefix = f'{modality}/{dataset_name}/'
@@ -313,11 +326,15 @@ def _download(modality, dataset_name, bucket, credentials=None):
     contents = _list_objects(dataset_prefix, bucket=bucket, client=client)
     zip_key = _find_data_zip_key(contents, dataset_prefix, bucket)
     zip_bytes = _get_data_from_bucket(zip_key, bucket=bucket, client=client)
+    zip_bytes = io.BytesIO(zip_bytes)
     metadata_bytes = _get_first_v1_metadata_bytes(
         contents, dataset_prefix, bucket=bucket, client=client
     )
+    if output_folder_name:
+        _extract_zip_bytes_to_folder(zip_bytes, output_folder_name)
+    data = _extract_zip_bytes_to_data(zip_bytes, bucket, dataset_name)
 
-    return io.BytesIO(zip_bytes), metadata_bytes
+    return data, metadata_bytes
 
 
 def _extract_zip_bytes_to_folder(zip_bytes, output_folder_name):
@@ -338,44 +355,34 @@ def _extract_zip_bytes_to_folder(zip_bytes, output_folder_name):
         zf.extractall(output_folder_name)
 
 
-def _get_data_with_output_folder(output_folder_name):
-    """Load CSV tables from an extracted folder on disk.
-
-    Returns a tuple of (data_dict, skipped_files).
-    Non-CSV files are ignored.
-    """
-    data = {}
-    skipped_files = []
-    for root, _dirs, files in os.walk(output_folder_name):
-        for filename in files:
-            if not filename.lower().endswith('.csv'):
-                skipped_files.append(filename)
-                continue
-
-            table_name = Path(filename).stem
-            data_path = os.path.join(root, filename)
-            try:
-                data[table_name] = pd.read_csv(data_path)
-            except UnicodeDecodeError:
-                data[table_name] = pd.read_csv(data_path, encoding=FALLBACK_ENCODING)
-            except Exception as e:
-                rel = os.path.relpath(data_path, output_folder_name)
-                skipped_files.append(f'{rel}: {e}')
-
-    return data, skipped_files
-
-
 def _extract_zip_bytes_to_data(zip_bytes, bucket, dataset_name):
-    """Extract zip bytes to a dictionary mapping table name to DataFrame.
+    """Extract CSV tables from an in-memory zip bytes into a dict of DataFrames.
+
+    Iterates over the zip bytes and parses each ``.csv`` entry with
+    ``pandas.read_csv``. Non-CSV entries are recorded as skipped. CSVs that
+    fail UTF-8 decoding are retried with ``FALLBACK_ENCODING``.
 
     Args:
-        zip_bytes (BytesIO):
-            The zip bytes to extract the data from.
+        zip_bytes (io.BytesIO):
+            File-like object containing the bytes of ``data.zip``.
+        bucket (str):
+            The name of the bucket the zip was downloaded from. Used only for
+            error messages.
+        dataset_name (str):
+            The name of the dataset. Used only for error messages.
 
     Returns:
-        dict:
-            A dictionary mapping table name to DataFrame.
-            { 'table_name1': pd.DataFrame, 'table_name2': pd.DataFrame, etc. }
+        dict[str, pandas.DataFrame]:
+            Mapping of table name to DataFrame.
+
+    Raises:
+        DemoResourceNotFoundError:
+            If the zip contains no valid CSV entries.
+
+    Warns:
+        UserWarning:
+            ``'Skipped files: ...'`` if any entries were skipped (non-CSV or
+            failed parse).
     """
     data = {}
     skipped_files = []
@@ -386,14 +393,14 @@ def _extract_zip_bytes_to_data(zip_bytes, bucket, dataset_name):
                 continue
 
             table_name = Path(filename).stem
-
-            with z.open(filename) as f:
-                try:
+            try:
+                with z.open(filename) as f:
                     data[table_name] = pd.read_csv(f, low_memory=False)
-                except UnicodeDecodeError:
+            except UnicodeDecodeError:
+                with z.open(filename) as f:
                     data[table_name] = pd.read_csv(f, low_memory=False, encoding=FALLBACK_ENCODING)
-                except Exception as e:
-                    skipped_files.append(f'{filename}: {e}')
+            except Exception as e:
+                skipped_files.append(f'{filename}: {e}')
 
     if skipped_files:
         warnings.warn('Skipped files: ' + ', '.join(sorted(skipped_files)))
@@ -489,11 +496,13 @@ def download_demo(
     _validate_modalities(modality)
     _validate_output_folder(output_folder_name)
 
-    data, metadata_bytes = _download(modality, dataset_name, s3_bucket_name, credentials)
-    if output_folder_name:
-        _extract_zip_bytes_to_folder(data, output_folder_name)
-
-    data = _extract_zip_bytes_to_data(data, s3_bucket_name, dataset_name)
+    data, metadata_bytes = _download(
+        modality,
+        dataset_name,
+        s3_bucket_name,
+        credentials,
+        output_folder_name=output_folder_name,
+    )
     if modality != 'multi_table':
         data = data.popitem()[1]
 

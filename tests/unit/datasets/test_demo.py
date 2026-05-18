@@ -133,15 +133,25 @@ def test__download(mock_list, mock_get_data_from_bucket):
         {'Key': 'single_table/ring/data.zip'},
         {'Key': 'single_table/ring/metadata.json'},
     ]
-    mock_get_data_from_bucket.return_value = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
+    df = pd.DataFrame({'a': [1, 2]})
+    zip_bytes = _make_zip_with_csv('ring.csv', df)
+    meta_bytes = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
+    mock_get_data_from_bucket.side_effect = lambda key, bucket, client: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
 
     # Run
-    data_io, metadata_bytes = _download(
-        'single_table', 'ring', bucket='sdv-datasets-public', credentials=None
+    data, metadata_bytes = _download(
+        'single_table',
+        'ring',
+        bucket='sdv-datasets-public',
+        credentials=None,
+        output_folder_name=None,
     )
 
     # Assert
-    assert isinstance(data_io, io.BytesIO)
+    assert isinstance(data, dict)
+    assert 'ring' in data
     assert isinstance(metadata_bytes, (bytes, bytearray))
 
 
@@ -1168,8 +1178,8 @@ def test_download_demo_skips_non_csv_in_memory_no_warning(mock_list, mock_get):
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
 @patch('sdv.datasets.demo._list_objects')
-def test_download_demo_on_disk_warns_failed_csv_only(mock_list, mock_get, tmp_path, monkeypatch):
-    """On-disk path: warn only for failed CSVs; non-CSV are skipped silently."""
+def test_download_demo_on_disk_warns_failed_csv_only(mock_list, mock_get, tmp_path):
+    """On-disk path: warn for failed CSVs; non-CSV are skipped in the same warning."""
     # Setup
     mock_list.return_value = [
         {'Key': 'single_table/mix/data.zip'},
@@ -1180,7 +1190,7 @@ def test_download_demo_on_disk_warns_failed_csv_only(mock_list, mock_get, tmp_pa
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr('good.csv', good.to_csv(index=False))
-        zf.writestr('bad.csv', 'will_fail')
+        zf.writestr('bad.csv', '')
         zf.writestr('info.txt', 'ignore me')
     zip_bytes = buf.getvalue()
 
@@ -1196,25 +1206,15 @@ def test_download_demo_on_disk_warns_failed_csv_only(mock_list, mock_get, tmp_pa
         'relationships': [],
     }).encode()
 
-    mock_get.side_effect = lambda key, client, bucket: (
+    mock_get.side_effect = lambda key, bucket, client: (
         zip_bytes if key.endswith('data.zip') else meta_bytes
     )
-
-    # Force read_csv to fail on bad.csv only
-    orig_read_csv = pd.read_csv
-
-    def fake_read_csv(path_or_buf, *args, **kwargs):
-        if isinstance(path_or_buf, str) and path_or_buf.endswith('bad.csv'):
-            raise ValueError('bad-parse')
-        return orig_read_csv(path_or_buf, *args, **kwargs)
-
-    monkeypatch.setattr('pandas.read_csv', fake_read_csv)
 
     out_dir = tmp_path / 'mix_out'
 
     # Run and Assert
-    warn_msg = 'Skipped files: bad.csv: bad-parse, info.txt'
-    with pytest.warns(UserWarning, match=warn_msg) as rec:
+    warn_msg = 'Skipped files: bad.csv: No columns to parse from file, info.txt'
+    with pytest.warns(UserWarning, match=re.escape(warn_msg)) as rec:
         data, _ = download_demo('single_table', 'mix', out_dir)
 
     assert any(warn_msg in str(warn_record) for warn_record in rec)
