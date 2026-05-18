@@ -306,9 +306,9 @@ def _download(modality, dataset_name, bucket, credentials=None, output_folder_na
 
     Returns:
         tuple:
-            ``(data, metadata_bytes)`` where ``data`` is a ``dict`` mapping
-            table name to ``pandas.DataFrame`` and ``metadata_bytes`` is the
-            raw bytes of the V1 metadata JSON.
+            (data, metadata_bytes)
+            The ``data`` is a ``dict`` mapping table name to ``pandas.DataFrame`` and
+            ``metadata_bytes`` is the raw bytes of the metadata JSON.
 
     Raises:
         DemoResourceNotFoundError:
@@ -378,11 +378,6 @@ def _extract_zip_bytes_to_data(zip_bytes, bucket, dataset_name):
     Raises:
         DemoResourceNotFoundError:
             If the zip contains no valid CSV entries.
-
-    Warns:
-        UserWarning:
-            ``'Skipped files: ...'`` if any entries were skipped (non-CSV or
-            failed parse).
     """
     data = {}
     skipped_files = []
@@ -503,6 +498,7 @@ def download_demo(
         credentials,
         output_folder_name=output_folder_name,
     )
+
     if modality != 'multi_table':
         data = data.popitem()[1]
 
