@@ -1228,7 +1228,8 @@ def test_download_demo_on_disk_warns_failed_csv_only(mock_list, mock_get, tmp_pa
 
     # Run and Assert
     warn_msg = 'Skipped files: bad.csv: bad-parse, info.txt'
-    with pytest.warns(UserWarning, match=re.escape(warn_msg)) as rec:
+    match_ = re.escape(warn_msg)
+    with pytest.warns(UserWarning, match=match_) as rec:
         data, _ = download_demo('single_table', 'mix', out_dir)
 
     assert any(warn_msg in str(warn_record) for warn_record in rec)
