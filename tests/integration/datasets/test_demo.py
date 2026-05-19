@@ -78,9 +78,10 @@ def test_download_demo_multi_table(output_path, tmp_path):
     if output_folder_name is not None:
         assert (output_folder_name / 'metadata.json').is_file()
         csv_files = list((output_folder_name / 'data').glob('*.csv'))
+        csv_files = [f.name for f in csv_files]
         assert len(csv_files) == 2
-        assert csv_files[0].name == 'hotels.csv'
-        assert csv_files[1].name == 'guests.csv'
+        assert 'hotels.csv' in csv_files
+        assert 'guests.csv' in csv_files
 
 
 @pytest.mark.parametrize('output_path', [None, 'tmp_path'])
