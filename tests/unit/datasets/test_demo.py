@@ -143,7 +143,7 @@ def test__download(mock_list, mock_get_data_from_bucket):
     )
 
     # Run
-    data, metadata_bytes = _download(
+    data_io, metadata_bytes = _download(
         'single_table',
         'ring',
         bucket='sdv-datasets-public',
@@ -151,7 +151,7 @@ def test__download(mock_list, mock_get_data_from_bucket):
     )
 
     # Assert
-    assert isinstance(data, io.BytesIO)
+    assert isinstance(data_io, io.BytesIO)
     assert isinstance(metadata_bytes, (bytes, bytearray))
 
 
