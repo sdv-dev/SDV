@@ -148,7 +148,6 @@ def test__download(mock_list, mock_get_data_from_bucket):
         'ring',
         bucket='sdv-datasets-public',
         credentials=None,
-        output_folder_name=None,
     )
 
     # Assert
@@ -1131,8 +1130,8 @@ def test_download_demo_raises_when_no_csv_in_zip_single_table(mock_list, mock_ge
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
 @patch('sdv.datasets.demo._list_objects')
-def test_download_demo_skips_non_csv_in_memory_no_warning(mock_list, mock_get):
-    """In-memory path: ignore non-CSV files silently; load valid CSVs."""
+def test_download_demo_warns_for_non_csv_in_memory(mock_list, mock_get):
+    """In-memory path: warn for non-CSV files and load valid CSVs."""
     # Setup
     mock_list.return_value = [
         {'Key': 'single_table/mix/data.zip'},

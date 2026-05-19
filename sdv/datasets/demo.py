@@ -284,7 +284,7 @@ def handle_aws_client_errors(error_message_builder):
     return decorator
 
 
-def _download(modality, dataset_name, bucket, credentials=None, output_folder_name=None):
+def _download(modality, dataset_name, bucket, credentials=None):
     """Download dataset resources from S3 bucket and return the bytes.
 
     Args:
@@ -299,11 +299,6 @@ def _download(modality, dataset_name, bucket, credentials=None, output_folder_na
             Dictionary containing DataCebo license key and username. It takes the form:
             { 'username': 'example@datacebo.com', 'license_key': '<MY_LICENSE_KEY>' }
             If None, the function will use the default credentials.
-        output_folder_name (str or None):
-            Optional folder path where the zip will also be extracted to disk so
-            the user keeps a local copy. The returned data dict is always built
-            in-memory. If ``None``, no folder is created.
-
     Returns:
         tuple[BytesIO, bytes]:
             (data_bytes, metadata_bytes)
@@ -313,8 +308,7 @@ def _download(modality, dataset_name, bucket, credentials=None, output_folder_na
     Raises:
         DemoResourceNotFoundError:
             If the dataset prefix is missing in the bucket, if ``data.zip`` is
-            missing, if no V1 metadata file is present, or if the zip contains
-            no valid CSVs.
+            missing, or if no V1 metadata file is present.
     """
     client = _create_s3_client(bucket=bucket, credentials=credentials)
     dataset_prefix = f'{modality}/{dataset_name}/'
@@ -483,7 +477,6 @@ def download_demo(
         dataset_name,
         s3_bucket_name,
         credentials,
-        output_folder_name=output_folder_name,
     )
     data = _load_data_from_zip(data, s3_bucket_name, dataset_name, output_folder_name)
 
