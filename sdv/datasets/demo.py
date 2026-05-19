@@ -299,6 +299,7 @@ def _download(modality, dataset_name, bucket, credentials=None):
             Dictionary containing DataCebo license key and username. It takes the form:
             { 'username': 'example@datacebo.com', 'license_key': '<MY_LICENSE_KEY>' }
             If None, the function will use the default credentials.
+
     Returns:
         tuple[BytesIO, bytes]:
             (data_bytes, metadata_bytes)
