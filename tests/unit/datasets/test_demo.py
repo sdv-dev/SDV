@@ -152,8 +152,7 @@ def test__download(mock_list, mock_get_data_from_bucket):
     )
 
     # Assert
-    assert isinstance(data, dict)
-    assert 'ring' in data
+    assert isinstance(data, io.BytesIO)
     assert isinstance(metadata_bytes, (bytes, bytearray))
 
 

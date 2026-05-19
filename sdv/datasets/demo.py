@@ -285,7 +285,7 @@ def handle_aws_client_errors(error_message_builder):
 
 
 def _download(modality, dataset_name, bucket, credentials=None, output_folder_name=None):
-    """Download dataset resources from S3 bucket and load them in-memory.
+    """Download dataset resources from S3 bucket and return the bytes.
 
     Args:
         modality (str):
@@ -305,9 +305,9 @@ def _download(modality, dataset_name, bucket, credentials=None, output_folder_na
             in-memory. If ``None``, no folder is created.
 
     Returns:
-        tuple:
-            (data, metadata_bytes)
-            The data is a ``dict`` mapping table name to ``pandas.DataFrame`` and
+        tuple[BytesIO, bytes]:
+            (data_bytes, metadata_bytes)
+            The data is bytes of the ``data.zip`` and
             ``metadata_bytes`` is the raw bytes of the metadata JSON.
 
     Raises:
@@ -325,13 +325,12 @@ def _download(modality, dataset_name, bucket, credentials=None, output_folder_na
     )
     contents = _list_objects(dataset_prefix, bucket=bucket, client=client)
     zip_key = _find_data_zip_key(contents, dataset_prefix, bucket)
-    data = io.BytesIO(_get_data_from_bucket(zip_key, bucket=bucket, client=client))
+    data_bytes = io.BytesIO(_get_data_from_bucket(zip_key, bucket=bucket, client=client))
     metadata_bytes = _get_first_v1_metadata_bytes(
         contents, dataset_prefix, bucket=bucket, client=client
     )
-    data = _load_data_from_zip(data, bucket, dataset_name, output_folder_name)
 
-    return data, metadata_bytes
+    return data_bytes, metadata_bytes
 
 
 def _load_data_from_zip(zip_bytes, bucket, dataset_name, output_folder_name=None):
@@ -486,6 +485,7 @@ def download_demo(
         credentials,
         output_folder_name=output_folder_name,
     )
+    data = _load_data_from_zip(data, s3_bucket_name, dataset_name, output_folder_name)
 
     if modality != 'multi_table':
         data = data.popitem()[1]
