@@ -325,33 +325,13 @@ def _download(modality, dataset_name, bucket, credentials=None, output_folder_na
     )
     contents = _list_objects(dataset_prefix, bucket=bucket, client=client)
     zip_key = _find_data_zip_key(contents, dataset_prefix, bucket)
-    data_zip_bytes = io.BytesIO(_get_data_from_bucket(zip_key, bucket=bucket, client=client))
+    data = io.BytesIO(_get_data_from_bucket(zip_key, bucket=bucket, client=client))
     metadata_bytes = _get_first_v1_metadata_bytes(
         contents, dataset_prefix, bucket=bucket, client=client
     )
-    data = _load_data_from_zip(data_zip_bytes, bucket, dataset_name, output_folder_name)
+    data = _load_data_from_zip(data, bucket, dataset_name, output_folder_name)
 
     return data, metadata_bytes
-
-
-def _read_csv_with_encoding_fallback(z, filename):
-    """Read a zip CSV entry as UTF-8, retrying with ``FALLBACK_ENCODING`` if needed.
-
-    Args:
-        z (zipfile.ZipFile):
-            An open zip file (CSV)
-        filename (str):
-            Name of the CSV entry inside the archive.
-
-    Returns:
-        pd.DataFrame
-    """
-    try:
-        with z.open(filename) as f:
-            return pd.read_csv(f, low_memory=False)
-    except UnicodeDecodeError:
-        with z.open(filename) as f:
-            return pd.read_csv(f, low_memory=False, encoding=FALLBACK_ENCODING)
 
 
 def _load_data_from_zip(zip_bytes, bucket, dataset_name, output_folder_name=None):
@@ -397,7 +377,11 @@ def _load_data_from_zip(zip_bytes, bucket, dataset_name, output_folder_name=None
 
             table_name = Path(filename).stem
             try:
-                data[table_name] = _read_csv_with_encoding_fallback(z, filename)
+                with z.open(filename) as f:
+                    data[table_name] = pd.read_csv(f, low_memory=False)
+            except UnicodeDecodeError:
+                with z.open(filename) as f:
+                    data[table_name] = pd.read_csv(f, low_memory=False, encoding=FALLBACK_ENCODING)
             except Exception as e:
                 skipped_files.append(f'{filename}: {e}')
 

@@ -77,6 +77,33 @@ def test_download_demo_multi_table(output_path, tmp_path):
     assert len(data['guests']) > 1
     if output_folder_name is not None:
         assert (output_folder_name / 'metadata.json').is_file()
-        for table_name in expected_tables:
-            csv_path = output_folder_name / 'data' / f'{table_name}.csv'
-            assert csv_path.is_file()
+        csv_files = list((output_folder_name / 'data').glob('*.csv'))
+        assert len(csv_files) == 2
+        assert csv_files[0].name == 'hotels.csv'
+        assert csv_files[1].name == 'guests.csv'
+
+
+@pytest.mark.parametrize('output_path', [None, 'tmp_path'])
+def test_download_demo_sequential(output_path, tmp_path):
+    """Test that the `download_demo` function works for sequential."""
+    # Setup
+    output_folder_name = tmp_path / 'sdv' if output_path else None
+
+    # Run
+    data, metadata = download_demo(
+        modality='sequential',
+        dataset_name='ArticularyWordRecognition',
+        output_folder_name=output_folder_name,
+    )
+
+    # Assert
+    assert isinstance(metadata, Metadata)
+    metadata.validate()
+    metadata = metadata._convert_to_single_table()
+    metadata.validate_data(data)
+    assert len(data) > 1
+    if output_folder_name:
+        assert (output_folder_name / 'metadata.json').is_file()
+        csv_files = list((output_folder_name / 'data').glob('*.csv'))
+        assert len(csv_files) == 1
+        assert csv_files[0].name == 'ArticularyWordRecognition.csv'

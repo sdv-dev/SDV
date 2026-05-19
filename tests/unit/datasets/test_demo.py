@@ -22,7 +22,6 @@ from sdv.datasets.demo import (
     _iter_metainfo_yaml_entries,
     _list_objects,
     _load_data_from_zip,
-    _read_csv_with_encoding_fallback,
     download_demo,
     get_available_demos,
     get_readme,
@@ -1609,24 +1608,6 @@ def test_download_demo_writes_csvs_to_disk_multi_table(mock_list, mock_get, tmp_
         csv_path = output_folder_name / f'{table_name}.csv'
         assert csv_path.is_file(), f'{csv_path} should exist'
         pd.testing.assert_frame_equal(pd.read_csv(csv_path), data[table_name])
-
-
-@pytest.mark.parametrize('encoding', ['utf-8', 'latin-1'])
-def test__read_csv_with_encoding_fallback(encoding):
-    """Test `_read_csv_with_encoding_fallback` returns the parsed CSV."""
-    # Setup
-    df = pd.DataFrame({'id': [1], 'name': ['café']})
-    buf = io.BytesIO()
-    with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr('users.csv', df.to_csv(index=False).encode(encoding))
-    zip_bytes = io.BytesIO(buf.getvalue())
-
-    # Run
-    with zipfile.ZipFile(zip_bytes, 'r') as z:
-        result = _read_csv_with_encoding_fallback(z, 'users.csv')
-
-    # Assert
-    pd.testing.assert_frame_equal(result, df)
 
 
 @pytest.mark.parametrize('encoding', ['utf-8', 'latin-1'])
