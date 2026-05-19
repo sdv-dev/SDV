@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from rdt.transformers import FloatFormatter, UnixTimestampEncoder
 
-from sdv.cag import ProgrammableConstraint, SingleTableProgrammableConstraint
+from sdv.cag import ProgrammableConstraint
 from sdv.cag.base import BaseConstraint
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import InvalidDataError, NotFittedError, SamplingError, SynthesizerInputError
@@ -163,7 +163,7 @@ class TestPARSynthesizer:
             'with the single table synthesizers.'
         )
 
-        single_table_programmable_constraint = SingleTableProgrammableConstraint()
+        programmable_constraint = ProgrammableConstraint()
         constraint_1 = MockConstraint(column_names=['time'])
         constraint_2 = MockConstraint(column_names=['time', 'gender'])
         overlapping_error_msg = re.escape(
@@ -179,7 +179,7 @@ class TestPARSynthesizer:
         with pytest.raises(SynthesizerInputError, match=multi_table_error_msg):
             synthesizer.add_constraints([multi_table_programmable_constraint])
 
-        synthesizer.add_constraints([single_table_programmable_constraint])
+        synthesizer.add_constraints([programmable_constraint])
 
         with pytest.raises(SynthesizerInputError, match=overlapping_error_msg):
             synthesizer.add_constraints([constraint_1, constraint_2])

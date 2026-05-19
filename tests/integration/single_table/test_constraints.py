@@ -14,7 +14,7 @@ from sdv.metadata.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
 from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
-from tests.integration.single_table.custom_constraints import MyConstraint, MySingleTableConstraint
+from tests.integration.single_table.custom_constraints import MyConstraint
 
 
 def _isinstance_side_effect(*args, **kwargs):
@@ -254,7 +254,7 @@ def test_single_table_custom_constraints_from_object(tmpdir):
     synthesizer = GaussianCopulaSynthesizer(
         metadata, enforce_min_max_values=False, enforce_rounding=False
     )
-    constraint = MySingleTableConstraint(column_names=['numerical_col'])
+    constraint = MyConstraint(column_names=['numerical_col'], table_name='table')
 
     # Run
     synthesizer.add_constraints([constraint])

@@ -209,13 +209,13 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
     def add_constraints(self, constraints):
         """Add constraints to the synthesizer.
 
-        For PARSynthesizers allow SingleTableProgrammableConstraints and built-in constraints
+        For PARSynthesizers allow ProgrammableConstraints and built-in constraints
         that follow these rules:
 
         1) All constraints must be either for all contextual columns or non-contextual column.
            No mixing constraints that cover both contextual and non-contextual columns
         2) No overlapping constraints (there are no constraints that act on the same column)
-        3) Any custom constraint is allowed, as long as it is a SingleTableProgrammableConstraint
+        3) Any custom constraint is allowed, as long as it is a single table constraint
 
         Args:
             constraints (list):

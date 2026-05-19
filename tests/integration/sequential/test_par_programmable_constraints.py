@@ -3,16 +3,17 @@
 import pandas as pd
 import pytest
 
-from sdv.cag import ProgrammableConstraint, SingleTableProgrammableConstraint
+from sdv.cag import ProgrammableConstraint
 from sdv.metadata import Metadata
 from sdv.sequential import PARSynthesizer
 
 
-class SimpleCustomConstraint(SingleTableProgrammableConstraint):
+class SimpleCustomConstraint(ProgrammableConstraint):
     """Simple custom constraint for testing."""
 
     def __init__(self, column_name):
         self.column_name = column_name
+        self.table_name = None
 
     def validate(self, metadata):
         """Validate that the column exists in metadata."""
@@ -22,17 +23,21 @@ class SimpleCustomConstraint(SingleTableProgrammableConstraint):
 
     def validate_input_data(self, data):
         """Validate the input data."""
+        data = list(data.values())[0]
         if self.column_name not in data.columns:
             raise ValueError(f'Column {self.column_name} not found in data')
 
     def fit(self, data, metadata):
         """Fit the constraint."""
-        self._median = data[self.column_name].median()
+        self.table_name = metadata._get_single_table_name()
+        self._median = data[self.table_name][self.column_name].median()
 
     def transform(self, data):
         """Transform the data by capping values at the median."""
-        data = data.copy()
-        data[self.column_name] = data[self.column_name].clip(upper=self._median)
+        table_name = list(data.keys())[0]
+        data[table_name][self.column_name] = data[table_name][self.column_name].clip(
+            upper=self._median
+        )
         return data
 
     def reverse_transform(self, transformed_data):
@@ -45,10 +50,11 @@ class SimpleCustomConstraint(SingleTableProgrammableConstraint):
 
     def is_valid(self, synthetic_data):
         """Check if synthetic data is valid."""
-        return synthetic_data[self.column_name] <= self._median
+        table_name = list(synthetic_data.keys())[0]
+        return {table_name: synthetic_data[table_name][self.column_name] <= self._median}
 
 
-class ConditionalConstraint(SingleTableProgrammableConstraint):
+class ConditionalConstraint(ProgrammableConstraint):
     """Constraint that enforces conditional logic between columns."""
 
     def __init__(self, flag_column, target_column):
@@ -66,6 +72,7 @@ class ConditionalConstraint(SingleTableProgrammableConstraint):
 
     def validate_input_data(self, data):
         """Validate the input data."""
+        data = list(data.values())[0]
         if self.flag_column not in data.columns:
             raise ValueError(f'Column {self.flag_column} not found in data')
         if self.target_column not in data.columns:
@@ -73,20 +80,19 @@ class ConditionalConstraint(SingleTableProgrammableConstraint):
 
     def fit(self, data, metadata):
         """Fit the constraint."""
-        self._typical_value = data[self.target_column].median()
+        self.table_name = metadata._get_single_table_name()
+        self._typical_value = data[self.table_name][self.target_column].median()
 
     def transform(self, data):
         """Transform: when flag is True, set target to typical value."""
-        data = data.copy()
-        mask = data[self.flag_column] == True  # noqa: E712
-        data.loc[mask, self.target_column] = self._typical_value
+        mask = data[self.table_name][self.flag_column] == True  # noqa: E712
+        data[self.table_name].loc[mask, self.target_column] = self._typical_value
         return data
 
     def reverse_transform(self, transformed_data):
         """Reverse transform: when flag is True, set target to 0."""
-        transformed_data = transformed_data.copy()
-        mask = transformed_data[self.flag_column] == True  # noqa: E712
-        transformed_data.loc[mask, self.target_column] = 0.0
+        mask = transformed_data[self.table_name][self.flag_column] == True  # noqa: E712
+        transformed_data[self.table_name].loc[mask, self.target_column] = 0.0
         return transformed_data
 
     def get_updated_metadata(self, metadata):
@@ -95,17 +101,18 @@ class ConditionalConstraint(SingleTableProgrammableConstraint):
 
     def is_valid(self, synthetic_data):
         """Check if synthetic data is valid."""
-        flag_true = synthetic_data[self.flag_column] == True  # noqa: E712
-        target_zero = synthetic_data[self.target_column] == 0.0
-        flag_false = synthetic_data[self.flag_column] == False  # noqa: E712
+        flag_true = synthetic_data[self.table_name][self.flag_column] == True  # noqa: E712
+        target_zero = synthetic_data[self.table_name][self.target_column] == 0.0
+        flag_false = synthetic_data[self.table_name][self.flag_column] == False  # noqa: E712
 
-        return (flag_true & target_zero) | flag_false
+        return {self.table_name: (flag_true & target_zero) | flag_false}
 
 
 class MultiTableConstraint(ProgrammableConstraint):
     """Multi-table constraint that should be rejected."""
 
     def __init__(self, column_name):
+        self._is_single_table = False
         self.column_name = column_name
 
     def transform(self, data):
@@ -156,7 +163,7 @@ def sample_metadata():
 
 
 def test_add_single_table_programmable_constraint(sample_sequential_data, sample_metadata):
-    """Test that SingleTableProgrammableConstraint can be added to PARSynthesizer."""
+    """Test that single table ProgrammableConstraint can be added to PARSynthesizer."""
     # Setup
     synthesizer = PARSynthesizer(sample_metadata, context_columns=['has_condition'])
     constraint = SimpleCustomConstraint('measurement')
@@ -217,7 +224,7 @@ def test_constraint_with_context_columns(sample_sequential_data, sample_metadata
     # Setup
     synthesizer = PARSynthesizer(sample_metadata, context_columns=['has_condition'], epochs=1)
 
-    class BooleanConstraint(SingleTableProgrammableConstraint):
+    class BooleanConstraint(ProgrammableConstraint):
         def __init__(self, column_name):
             self.column_name = column_name
 
@@ -240,7 +247,10 @@ def test_constraint_with_context_columns(sample_sequential_data, sample_metadata
             return metadata
 
         def is_valid(self, synthetic_data):
-            return pd.Series([True] * len(synthetic_data))
+            return {
+                table: pd.Series(True, index=synthetic_data[table].index)
+                for table in synthetic_data
+            }
 
     constraint = BooleanConstraint('has_condition')
     synthesizer.add_constraints([constraint])
@@ -300,5 +310,6 @@ def test_validate_constraints(sample_sequential_data, sample_metadata):
     synthetic_data = synthesizer.sample(num_sequences=3)
 
     # Assert
-    is_valid = constraint.is_valid(synthetic_data)
-    assert all(is_valid)
+    is_valid = constraint.is_valid({'patients': synthetic_data})
+    assert list(is_valid.keys()) == ['patients']
+    assert all(is_valid['patients'])
