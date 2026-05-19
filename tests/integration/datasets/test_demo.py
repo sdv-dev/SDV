@@ -29,7 +29,7 @@ def test_get_available_demos_multi_table():
 
 @pytest.mark.parametrize('output_path', [None, 'tmp_path'])
 def test_download_demo_single_table(output_path, tmp_path):
-    """Test that the `download_demo` function works for single-table."""
+    """Test `download_demo` function works for single-table."""
     # Setup
     output_folder_name = tmp_path / 'sdv' if output_path else None
 
@@ -55,7 +55,7 @@ def test_download_demo_single_table(output_path, tmp_path):
 
 @pytest.mark.parametrize('output_path', [None, 'tmp_path'])
 def test_download_demo_multi_table(output_path, tmp_path):
-    """Test that the `download_demo` function works for multi-table."""
+    """Test `download_demo` function works for multi-table."""
     # Setup
     output_folder_name = tmp_path / 'sdv' if output_path else None
 
@@ -85,7 +85,7 @@ def test_download_demo_multi_table(output_path, tmp_path):
 
 @pytest.mark.parametrize('output_path', [None, 'tmp_path'])
 def test_download_demo_sequential(output_path, tmp_path):
-    """Test that the `download_demo` function works for sequential."""
+    """Test `download_demo` function works for sequential."""
     # Setup
     output_folder_name = tmp_path / 'sdv' if output_path else None
 
