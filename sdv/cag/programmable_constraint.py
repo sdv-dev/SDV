@@ -130,7 +130,7 @@ class ProgrammableConstraintHarness(BaseConstraint):
     def __init__(self, programmable_constraint):
         super().__init__()
         self.programmable_constraint = programmable_constraint
-        self.table_name = getattr(programmable_constraint, 'table_name', None)
+        self.table_name = getattr(self.programmable_constraint, 'table_name', None)
         self._is_single_table = self.programmable_constraint._is_single_table
 
     def _validate_constraint_with_metadata(self, metadata):
