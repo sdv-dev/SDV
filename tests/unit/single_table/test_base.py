@@ -19,7 +19,7 @@ from rdt.transformers import (
 
 from sdv import version
 from sdv.cag._errors import ConstraintNotMetError
-from sdv.cag.programmable_constraint import SingleTableProgrammableConstraint
+from sdv.cag.programmable_constraint import ProgrammableConstraint
 from sdv.errors import (
     ConstraintsNotMetError,
     InvalidDataError,
@@ -1183,7 +1183,7 @@ class TestBaseSynthesizer:
         constraint3 = Mock()
         instance._validate_constraints_single_table.side_effect = lambda constraint: constraint
         constraint3.get_updated_metadata.side_effect = [ConstraintNotMetError, None]
-        constraint4 = SingleTableProgrammableConstraint()
+        constraint4 = ProgrammableConstraint()
         mock_harness = Mock()
         mock_programmable_constraint_harness.return_value = mock_harness
 

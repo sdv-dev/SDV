@@ -2,14 +2,13 @@
 
 from copy import deepcopy
 
-from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag.base import BaseConstraint
 
 
 class ProgrammableConstraint:
     """Base class to create programmable constraints."""
 
-    _is_single_table = False
+    _is_single_table = True
 
     def validate(self, metadata):
         """Validates that the metadata is compatible with the constraint and its parameters.
@@ -125,12 +124,6 @@ class ProgrammableConstraint:
         return synthetic_data
 
 
-class SingleTableProgrammableConstraint(ProgrammableConstraint):
-    """Single table variant of the base programmable constraint class."""
-
-    _is_single_table = True
-
-
 class ProgrammableConstraintHarness(BaseConstraint):
     """Constraint interface class for programmable constraints."""
 
@@ -141,21 +134,9 @@ class ProgrammableConstraintHarness(BaseConstraint):
         self._is_single_table = self.programmable_constraint._is_single_table
 
     def _validate_constraint_with_metadata(self, metadata):
-        if self.programmable_constraint._is_single_table and len(metadata.tables) != 1:
-            if getattr(self.programmable_constraint, 'table_name', None) is None:
-                raise ConstraintNotMetError(
-                    'SingleTableProgrammableConstraint cannot be used with multi-table metadata '
-                    'if the `table_name` attribute has not been set. Please set the table name '
-                    'attribute to the target table, or use the ProgrammableContraint '
-                    'base class instead.'
-                )
-
         self.programmable_constraint.validate(metadata)
 
     def _validate_constraint_with_data(self, data, metadata):
-        if self._is_single_table:
-            data = data[self._get_single_table_name(metadata)]
-
         self.programmable_constraint.validate_input_data(data)
 
     def _get_updated_metadata(self, metadata):
@@ -163,41 +144,13 @@ class ProgrammableConstraintHarness(BaseConstraint):
         return self.programmable_constraint.get_updated_metadata(metadata)
 
     def _fit(self, data, metadata):
-        if self._is_single_table:
-            data = data[self._table_name]
-
         self.programmable_constraint.fit(data, metadata)
 
     def _transform(self, data):
-        if self._is_single_table:
-            data = data[self._table_name]
-
-        transformed = self.programmable_constraint.transform(data)
-
-        if self._is_single_table:
-            return {self._table_name: transformed}
-
-        return transformed
+        return self.programmable_constraint.transform(data)
 
     def _reverse_transform(self, data):
-        if self._is_single_table:
-            data = data[self._table_name]
-
-        reverse_transformed = self.programmable_constraint.reverse_transform(data)
-
-        if self._is_single_table:
-            return {self._table_name: reverse_transformed}
-
-        return reverse_transformed
+        return self.programmable_constraint.reverse_transform(data)
 
     def _is_valid(self, data, metadata):
-        if self._is_single_table:
-            table_name = self._get_single_table_name(metadata)
-            data = data[table_name]
-
-        is_valid = self.programmable_constraint.is_valid(data)
-
-        if self._is_single_table:
-            return {table_name: is_valid}
-
-        return is_valid
+        return self.programmable_constraint.is_valid(data)
