@@ -19,7 +19,7 @@ from rdt.transformers import (
 
 from sdv import version
 from sdv.cag._errors import ConstraintNotMetError
-from sdv.cag.programmable_constraint import SingleTableProgrammableConstraint
+from sdv.cag.programmable_constraint import ProgrammableConstraint
 from sdv.errors import (
     ConstraintsNotMetError,
     InvalidDataError,
@@ -1183,7 +1183,7 @@ class TestBaseSynthesizer:
         constraint3 = Mock()
         instance._validate_constraints_single_table.side_effect = lambda constraint: constraint
         constraint3.get_updated_metadata.side_effect = [ConstraintNotMetError, None]
-        constraint4 = SingleTableProgrammableConstraint()
+        constraint4 = ProgrammableConstraint()
         mock_harness = Mock()
         mock_programmable_constraint_harness.return_value = mock_harness
 
@@ -2516,13 +2516,21 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame())
 
+    @patch('sdv.single_table.base.datetime')
     @patch('sdv.single_table.base.os')
     @patch('sdv.single_table.base.check_num_rows')
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.tqdm')
     @patch('sdv.single_table.base.validate_file_path')
     def test_sample_from_conditions(
-        self, mock_validate_file_path, mock_tqdm, mock_data_processor, mock_check_num_rows, mock_os
+        self,
+        mock_validate_file_path,
+        mock_tqdm,
+        mock_data_processor,
+        mock_check_num_rows,
+        mock_os,
+        mock_datetime,
+        caplog,
     ):
         """Test sample conditions with sampled data and reject sampling.
 
@@ -2546,12 +2554,23 @@ class TestBaseSingleTableSynthesizer:
         instance._validate_fit_before_sample = Mock()
         progress_bar = MagicMock()
         mock_tqdm.tqdm.return_value = progress_bar
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
 
         # Run
-        result = instance.sample_from_conditions(conditions, 10, 10, '.sample.csv.temp')
+        with catch_sdv_logs(caplog, logging.INFO, logger='SingleTableSynthesizer'):
+            result = instance.sample_from_conditions(conditions, 10, 10, '.sample.csv.temp')
 
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame({'name': ['John Doe']}))
+        assert caplog.messages[0] == str({
+            'EVENT': 'Sample',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'BaseSingleTableSynthesizer',
+            'SYNTHESIZER ID': instance._synthesizer_id,
+            'TOTAL NUMBER OF TABLES': 1,
+            'TOTAL NUMBER OF ROWS': 1,
+            'TOTAL NUMBER OF COLUMNS': 1,
+        })
 
     @patch('sdv.single_table.base.handle_sampling_error')
     @patch('sdv.single_table.base.tqdm')
@@ -2584,13 +2603,21 @@ class TestBaseSingleTableSynthesizer:
         )
         mock_handle_sampling_error.assert_called_once_with('temp_file', keyboard_error)
 
+    @patch('sdv.single_table.base.datetime')
     @patch('sdv.single_table.base.os')
     @patch('sdv.single_table.base.check_num_rows')
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.tqdm')
     @patch('sdv.single_table.base.validate_file_path')
     def test_sample_remaining_columns(
-        self, mock_validate_file_path, mock_tqdm, mock_data_processor, mock_check_num_rows, mock_os
+        self,
+        mock_validate_file_path,
+        mock_tqdm,
+        mock_data_processor,
+        mock_check_num_rows,
+        mock_os,
+        mock_datetime,
+        caplog,
     ):
         """Test the this method calls ``_sample_with_conditions`` with the ``known_column."""
         # Setup
@@ -2606,15 +2633,26 @@ class TestBaseSingleTableSynthesizer:
         instance._model = GaussianMultivariate()
         instance._sample_with_conditions.return_value = pd.DataFrame({'name': ['John Doe']})
         mock_validate_file_path.return_value = '.sample.csv.temp'
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
 
         progress_bar = MagicMock()
         mock_tqdm.tqdm.return_value = progress_bar
 
         # Run
-        result = instance.sample_remaining_columns(known_columns, 10, 10, '.sample.csv.temp')
+        with catch_sdv_logs(caplog, logging.INFO, logger='SingleTableSynthesizer'):
+            result = instance.sample_remaining_columns(known_columns, 10, 10, '.sample.csv.temp')
 
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame({'name': ['John Doe']}))
+        assert caplog.messages[0] == str({
+            'EVENT': 'Sample',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'BaseSingleTableSynthesizer',
+            'SYNTHESIZER ID': instance._synthesizer_id,
+            'TOTAL NUMBER OF TABLES': 1,
+            'TOTAL NUMBER OF ROWS': 1,
+            'TOTAL NUMBER OF COLUMNS': 1,
+        })
 
     @patch('sdv.single_table.base.handle_sampling_error')
     @patch('sdv.single_table.base.check_num_rows')

@@ -1,5 +1,12 @@
 # Release Notes
 
+## v1.36.3 - 2026-05-22
+
+### New Features
+
+* Add log events to sample_remaining_columns and sample_from_conditions - Issue [#2884](https://github.com/sdv-dev/SDV/issues/2884) by @rwedge
+* Remove `SingleTableProgrammableConstraint` class - Issue [#2882](https://github.com/sdv-dev/SDV/issues/2882) by @frances-h
+
 ## v1.36.2 - 2026-05-14
 
 ### Bugs Fixed

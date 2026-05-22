@@ -1,6 +1,6 @@
 import pandas as pd
 
-from sdv.cag import ProgrammableConstraint, SingleTableProgrammableConstraint
+from sdv.cag import ProgrammableConstraint
 
 
 class MyConstraint(ProgrammableConstraint):
@@ -36,28 +36,6 @@ class MyConstraint(ProgrammableConstraint):
         is_valid[self.table_name] = is_valid_table
 
         return is_valid
-
-
-class MySingleTableConstraint(SingleTableProgrammableConstraint):
-    def __init__(self, column_names):
-        self.column_names = column_names
-
-    def fit(self, data, metadata):
-        return
-
-    def transform(self, data):
-        data[self.column_names] = data[self.column_names] ** 2
-        return data
-
-    def reverse_transform(self, transformed_data):
-        transformed_data[self.column_names] = transformed_data[self.column_names] // 2
-        return transformed_data
-
-    def get_updated_metadata(self, metadata):
-        return metadata
-
-    def is_valid(self, synthetic_data):
-        return pd.Series([value[0] > 1 for value in synthetic_data[self.column_names].to_numpy()])
 
 
 class IfTrueThenZero(ProgrammableConstraint):
@@ -109,30 +87,37 @@ class IfTrueThenZero(ProgrammableConstraint):
         return is_valid
 
 
-class SingleTableIfTrueThenZero(SingleTableProgrammableConstraint):
+class SingleTableIfTrueThenZero(ProgrammableConstraint):
     def __init__(self, column_names):
         self.column_names = column_names
 
     def fit(self, data, metadata):
+        self.table_name = metadata._get_single_table_name()
         return
 
     def transform(self, data):
         """Transform the data if amenities fee is to be applied."""
+        table_data = data[self.table_name]
         boolean_column = self.column_names[0]
         numerical_column = self.column_names[1]
-        typical_value = data[numerical_column].median()
-        data[numerical_column] = data[numerical_column].mask(data[boolean_column], typical_value)
+        typical_value = table_data[numerical_column].median()
+        table_data[numerical_column] = table_data[numerical_column].mask(
+            table_data[boolean_column], typical_value
+        )
 
+        data[self.table_name] = table_data
         return data
 
     def reverse_transform(self, transformed_data):
         """Reverse the data if amenities fee is to be applied."""
+        transformed_table = transformed_data[self.table_name]
         boolean_column = self.column_names[0]
         numerical_column = self.column_names[1]
-        transformed_data[numerical_column] = transformed_data[numerical_column].mask(
-            transformed_data[boolean_column], 0.0
+        transformed_table[numerical_column] = transformed_table[numerical_column].mask(
+            transformed_table[boolean_column], 0.0
         )
 
+        transformed_data[self.table_name] = transformed_table
         return transformed_data
 
     def get_updated_metadata(self, metadata):
@@ -140,9 +125,14 @@ class SingleTableIfTrueThenZero(SingleTableProgrammableConstraint):
 
     def is_valid(self, synthetic_data):
         """Validate that if ``has_rewards`` amenities fee is 0."""
+        is_valid = {
+            table: pd.Series(True, index=synthetic_data[table].index) for table in synthetic_data
+        }
+        synthetic_table = synthetic_data[self.table_name]
         boolean_column = self.column_names[0]
         numerical_column = self.column_names[1]
-        true_values = (synthetic_data[boolean_column]) & (synthetic_data[numerical_column] == 0.0)
-        false_values = ~synthetic_data[boolean_column]
+        true_values = (synthetic_table[boolean_column]) & (synthetic_table[numerical_column] == 0.0)
+        false_values = ~synthetic_table[boolean_column]
 
-        return (true_values) | (false_values)
+        is_valid[self.table_name] = (true_values) | (false_values)
+        return is_valid
