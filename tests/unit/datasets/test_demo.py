@@ -2,6 +2,7 @@ import io
 import json
 import logging
 import re
+import warnings
 import zipfile
 from unittest.mock import Mock, patch
 
@@ -20,6 +21,7 @@ from sdv.datasets.demo import (
     _get_text_file_content,
     _iter_metainfo_yaml_entries,
     _list_objects,
+    _load_data_from_zip,
     download_demo,
     get_available_demos,
     get_readme,
@@ -133,11 +135,19 @@ def test__download(mock_list, mock_get_data_from_bucket):
         {'Key': 'single_table/ring/data.zip'},
         {'Key': 'single_table/ring/metadata.json'},
     ]
-    mock_get_data_from_bucket.return_value = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
+    df = pd.DataFrame({'a': [1, 2]})
+    zip_bytes = _make_zip_with_csv('ring.csv', df)
+    meta_bytes = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
+    mock_get_data_from_bucket.side_effect = lambda key, bucket, client: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
 
     # Run
     data_io, metadata_bytes = _download(
-        'single_table', 'ring', bucket='sdv-datasets-public', credentials=None
+        'single_table',
+        'ring',
+        bucket='sdv-datasets-public',
+        credentials=None,
     )
 
     # Assert
@@ -1120,8 +1130,8 @@ def test_download_demo_raises_when_no_csv_in_zip_single_table(mock_list, mock_ge
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
 @patch('sdv.datasets.demo._list_objects')
-def test_download_demo_skips_non_csv_in_memory_no_warning(mock_list, mock_get):
-    """In-memory path: ignore non-CSV files silently; load valid CSVs."""
+def test_download_demo_warns_for_non_csv_in_memory(mock_list, mock_get):
+    """In-memory path: warn for non-CSV files and load valid CSVs."""
     # Setup
     mock_list.return_value = [
         {'Key': 'single_table/mix/data.zip'},
@@ -1169,7 +1179,7 @@ def test_download_demo_skips_non_csv_in_memory_no_warning(mock_list, mock_get):
 @patch('sdv.datasets.demo._get_data_from_bucket')
 @patch('sdv.datasets.demo._list_objects')
 def test_download_demo_on_disk_warns_failed_csv_only(mock_list, mock_get, tmp_path, monkeypatch):
-    """On-disk path: warn only for failed CSVs; non-CSV are skipped silently."""
+    """On-disk path: warn for failed CSVs; non-CSV are skipped in the same warning."""
     # Setup
     mock_list.return_value = [
         {'Key': 'single_table/mix/data.zip'},
@@ -1196,7 +1206,7 @@ def test_download_demo_on_disk_warns_failed_csv_only(mock_list, mock_get, tmp_pa
         'relationships': [],
     }).encode()
 
-    mock_get.side_effect = lambda key, client, bucket: (
+    mock_get.side_effect = lambda key, bucket, client: (
         zip_bytes if key.endswith('data.zip') else meta_bytes
     )
 
@@ -1204,8 +1214,10 @@ def test_download_demo_on_disk_warns_failed_csv_only(mock_list, mock_get, tmp_pa
     orig_read_csv = pd.read_csv
 
     def fake_read_csv(path_or_buf, *args, **kwargs):
-        if isinstance(path_or_buf, str) and path_or_buf.endswith('bad.csv'):
+        filename = path_or_buf if isinstance(path_or_buf, str) else getattr(path_or_buf, 'name', '')
+        if filename.endswith('bad.csv'):
             raise ValueError('bad-parse')
+
         return orig_read_csv(path_or_buf, *args, **kwargs)
 
     monkeypatch.setattr('pandas.read_csv', fake_read_csv)
@@ -1214,7 +1226,8 @@ def test_download_demo_on_disk_warns_failed_csv_only(mock_list, mock_get, tmp_pa
 
     # Run and Assert
     warn_msg = 'Skipped files: bad.csv: bad-parse, info.txt'
-    with pytest.warns(UserWarning, match=warn_msg) as rec:
+    match_ = re.escape(warn_msg)
+    with pytest.warns(UserWarning, match=match_) as rec:
         data, _ = download_demo('single_table', 'mix', out_dir)
 
     assert any(warn_msg in str(warn_record) for warn_record in rec)
@@ -1513,3 +1526,116 @@ def test_get_readme_with_client_error(mock__create_s3_client):
             dataset_name='fake_hotels',
             s3_bucket_name='private_bucket',
         )
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_with_output_folder_name_single_table(mock_list, mock_get, tmp_path):
+    """Test `download_demo` with output_folder_name and single-table dataset."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/ring/data.zip'},
+        {'Key': 'single_table/ring/metadata.json'},
+    ]
+    df = pd.DataFrame({'0': [0, 0], '1': [0, 0]})
+    zip_bytes = _make_zip_with_csv('ring.csv', df)
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'ring': {
+                'columns': {
+                    '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                }
+            }
+        },
+        'relationships': [],
+    }).encode()
+    mock_get.side_effect = lambda key, bucket, client: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
+    output_folder_name = tmp_path / 'out'
+    csv_path = output_folder_name / 'ring.csv'
+
+    # Run
+    data, _ = download_demo('single_table', 'ring', output_folder_name)
+
+    # Assert
+    assert csv_path.is_file()
+    pd.testing.assert_frame_equal(pd.read_csv(csv_path), data)
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_writes_csvs_to_disk_multi_table(mock_list, mock_get, tmp_path):
+    """Test `download_demo` with output_folder_name and multi-table dataset."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'multi_table/got_families/data.zip'},
+        {'Key': 'multi_table/got_families/metadata.json'},
+    ]
+    families = pd.DataFrame({'family_id': [1, 2], 'name': ['Stark', 'Tully']})
+    characters = pd.DataFrame({
+        'age': [20, 16],
+        'character_id': [1, 2],
+        'name': ['Jon', 'Arya'],
+    })
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('families.csv', families.to_csv(index=False))
+        zf.writestr('characters.csv', characters.to_csv(index=False))
+    zip_bytes = buf.getvalue()
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'families': {
+                'columns': {
+                    'family_id': {'sdtype': 'id'},
+                    'name': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'family_id',
+            },
+            'characters': {
+                'columns': {
+                    'character_id': {'sdtype': 'id'},
+                    'age': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'name': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'character_id',
+            },
+        },
+        'relationships': [],
+    }).encode()
+    mock_get.side_effect = lambda key, bucket, client: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
+    output_folder_name = tmp_path / 'out'
+
+    # Run
+    data, _ = download_demo('multi_table', 'got_families', output_folder_name)
+
+    # Assert
+    for table_name in ['families', 'characters']:
+        csv_path = output_folder_name / f'{table_name}.csv'
+        assert csv_path.is_file(), f'{csv_path} should exist'
+        pd.testing.assert_frame_equal(pd.read_csv(csv_path), data[table_name])
+
+
+@pytest.mark.parametrize('encoding', ['utf-8', 'latin-1'])
+def test__load_data_from_zip_with_encoding(encoding):
+    """Test `_load_data_from_zip` reads UTF-8 and reopens the zip entry for Latin-1."""
+    # Setup
+    df = pd.DataFrame({'id': [1], 'name': ['café']})
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('users.csv', df.to_csv(index=False).encode(encoding))
+    zip_bytes = io.BytesIO(buf.getvalue())
+
+    # Run
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', UserWarning)
+        data = _load_data_from_zip(zip_bytes, 'bucket', 'dataset')
+
+    # Assert
+    assert list(data) == ['users']
+    pd.testing.assert_frame_equal(data['users'], df)
