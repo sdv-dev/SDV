@@ -1,5 +1,6 @@
 import datetime
 import importlib.metadata
+import json
 import re
 import warnings
 from unittest.mock import patch
@@ -10,7 +11,7 @@ import pytest
 from rdt.transformers import AnonymizedFaker, FloatFormatter, RegexGenerator, UniformEncoder
 
 from sdv import version
-from sdv.cag import FixedCombinations
+from sdv.cag import FixedCombinations, Inequality
 from sdv.datasets.demo import download_demo
 from sdv.errors import InvalidDataError, SamplingError, VersionError
 from sdv.metadata import SingleTableMetadata
@@ -40,6 +41,13 @@ SYNTHESIZERS = [
     pytest.param(
         CopulaGANSynthesizer(METADATA, epochs=1, enable_gpu=False), id='CopulaGANSynthesizer'
     ),
+]
+
+SYNTHESIZERS_CLASSES = [
+    pytest.param(CTGANSynthesizer, id='CTGANSynthesizer'),
+    pytest.param(TVAESynthesizer, id='TVAESynthesizer'),
+    pytest.param(GaussianCopulaSynthesizer, id='GaussianCopulaSynthesizer'),
+    pytest.param(CopulaGANSynthesizer, id='CopulaGANSynthesizer'),
 ]
 
 
@@ -492,6 +500,53 @@ def test_get_info():
     }
 
 
+@pytest.mark.parametrize('synthesizer_class', SYNTHESIZERS_CLASSES)
+def test_get_constraints_and_load_constraints(tmp_path, synthesizer_class):
+    """Test saving constraints to JSON file."""
+    # Setup
+    filepath = tmp_path / 'constraints.json'
+    _, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
+    inequality_constraint = Inequality(
+        low_column_name='checkin_date',
+        high_column_name='checkout_date',
+    )
+    fixed_combinations_constraint = FixedCombinations(column_names=['has_rewards', 'room_type'])
+    synthesizer = synthesizer_class(metadata)
+    synthesizer.add_constraints([inequality_constraint, fixed_combinations_constraint])
+    new_synthesizer = synthesizer_class(metadata)
+
+    # Run
+    synthesizer.get_constraints(filepath=filepath)
+    new_synthesizer.set_constraints(filepath=filepath)
+
+    # Assert
+    assert [str(constraint) for constraint in synthesizer.get_constraints()] == [
+        str(constraint) for constraint in new_synthesizer.get_constraints()
+    ]
+    assert filepath.exists()
+    with open(filepath, 'r') as f:
+        saved_constraints = json.load(f)
+
+    assert saved_constraints == [
+        {
+            'class_name': 'Inequality',
+            'parameters': {
+                'low_column_name': 'checkin_date',
+                'high_column_name': 'checkout_date',
+                'table_name': None,
+                'strict_boundaries': False,
+            },
+        },
+        {
+            'class_name': 'FixedCombinations',
+            'parameters': {
+                'column_names': ['has_rewards', 'room_type'],
+                'table_name': None,
+            },
+        },
+    ]
+
+
 def test_save_and_load(tmp_path):
     """Test that synthesizers can be saved and loaded properly."""
     # Setup
@@ -714,14 +769,6 @@ def test_fit_raises_version_error():
     )
     with pytest.raises(VersionError, match=expected_message):
         instance.fit(data)
-
-
-SYNTHESIZERS_CLASSES = [
-    pytest.param(CTGANSynthesizer, id='CTGANSynthesizer'),
-    pytest.param(TVAESynthesizer, id='TVAESynthesizer'),
-    pytest.param(GaussianCopulaSynthesizer, id='GaussianCopulaSynthesizer'),
-    pytest.param(CopulaGANSynthesizer, id='CopulaGANSynthesizer'),
-]
 
 
 @pytest.mark.parametrize('synthesizer_class', SYNTHESIZERS_CLASSES)

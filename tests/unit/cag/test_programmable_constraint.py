@@ -199,3 +199,26 @@ class TestProgrammableConstraintHarness:
 
         # Assert
         programmable_constraint.is_valid.assert_called_once_with(data)
+
+    def test_get_constraint_dict(self):
+        """Test getting the constraint dict for a programmable constraint."""
+
+        # Setup
+        class MockConstraint(ProgrammableConstraint):
+            def __init__(self, param1, param2=None):
+                self.param1 = param1
+                self.param2 = param2
+
+        constraint = ProgrammableConstraintHarness(MockConstraint('value1'))
+
+        # Run
+        constraint_dict = constraint.get_constraint_dict()
+
+        # Assert
+        assert constraint_dict == {
+            'class_name': 'MockConstraint',
+            'parameters': {
+                'param1': 'value1',
+                'param2': None,
+            },
+        }

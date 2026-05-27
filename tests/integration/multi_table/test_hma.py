@@ -1,5 +1,6 @@
 import datetime
 import importlib.metadata
+import json
 import logging
 import math
 import re
@@ -2169,6 +2170,55 @@ def test_metadata_updated_warning(method, kwargs):
     assert metadata._multi_table_updated is False
     for table_name, table_metadata in metadata.tables.items():
         assert table_metadata._updated is False
+
+
+def test_get_constraints_and_load_constraints(tmp_path):
+    """Test saving constraints to JSON file."""
+    # Setup
+    filepath = tmp_path / 'constraints.json'
+    _, metadata = download_demo('multi_table', 'fake_hotels')
+    inequality_constraint = Inequality(
+        table_name='guests',
+        low_column_name='checkin_date',
+        high_column_name='checkout_date',
+    )
+    fixed_combinations_constraint = FixedCombinations(
+        table_name='hotels', column_names=['city', 'state']
+    )
+    synthesizer = HMASynthesizer(metadata)
+    synthesizer.add_constraints([inequality_constraint, fixed_combinations_constraint])
+    new_synthesizer = HMASynthesizer(metadata)
+
+    # Run
+    synthesizer.get_constraints(filepath=filepath)
+    new_synthesizer.set_constraints(filepath=filepath)
+
+    # Assert
+    assert [str(constraint) for constraint in synthesizer.get_constraints()] == [
+        str(constraint) for constraint in new_synthesizer.get_constraints()
+    ]
+    assert filepath.exists()
+    with open(filepath, 'r') as f:
+        saved_constraints = json.load(f)
+
+    assert saved_constraints == [
+        {
+            'class_name': 'Inequality',
+            'parameters': {
+                'low_column_name': 'checkin_date',
+                'high_column_name': 'checkout_date',
+                'table_name': 'guests',
+                'strict_boundaries': False,
+            },
+        },
+        {
+            'class_name': 'FixedCombinations',
+            'parameters': {
+                'column_names': ['city', 'state'],
+                'table_name': 'hotels',
+            },
+        },
+    ]
 
 
 def test_save_and_load_with_downgraded_version(tmp_path):

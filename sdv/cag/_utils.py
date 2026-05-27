@@ -1,3 +1,4 @@
+import importlib
 import re
 import warnings
 
@@ -227,3 +228,44 @@ def _validate_constraints_single_table(constraints, synthesizer_fitted):
             )
 
     return constraints
+
+
+def load_constraint_from_dict(constraint_dict):
+    """Load a constraint from a constraint dictionary.
+
+    Args:
+        constraint_dict (dict):
+            A constraint dictionary containing the following keys:
+            - `class_name` (str): The constraint class name.
+            - `parameters` (dict): Dictionary of the parameters used to instantiate the constraint.
+
+    Returns:
+        Instance of `class_name` constraint instantiated with the given `parameters`.
+    """
+    expected_keys = {'class_name', 'parameters'}
+    if not isinstance(constraint_dict, dict) or set(constraint_dict.keys()) != expected_keys:
+        raise ValueError(
+            'Invalid `constraint_dict`. Expected dictionary with keys `class_name` and '
+            f' `parameters`, got {constraint_dict}.'
+        )
+
+    class_name = constraint_dict['class_name']
+    parameters = constraint_dict['parameters']
+    if not isinstance(class_name, str):
+        raise ValueError('`class_name` must be a string.')
+
+    if not isinstance(parameters, dict):
+        raise ValueError('`parameters` must be a dict.')
+
+    cag_module = importlib.import_module('sdv.cag')
+    try:
+        sandbox_module = importlib.import_module('sdv.cag.sandbox')
+        sandbox_constraint = getattr(sandbox_module, class_name, None)
+    except ModuleNotFoundError:
+        sandbox_constraint = None
+
+    constraint_class = getattr(cag_module, class_name, sandbox_constraint)
+    if constraint_class is None:
+        raise ValueError(f"Unknown `constraint_class` '{class_name}'.")
+
+    return constraint_class.load_constraint_from_dict(parameters=parameters)

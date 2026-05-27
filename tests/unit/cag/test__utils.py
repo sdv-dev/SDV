@@ -17,6 +17,7 @@ from sdv.cag._utils import (
     _validate_constraints_single_table,
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
+    load_constraint_from_dict,
 )
 from sdv.cag.base import BaseConstraint
 from sdv.errors import SynthesizerInputError
@@ -362,3 +363,64 @@ def test__validate_constraints_single_table(mock_validate_constraints):
         call([constraint_1], True),
         call([constraint_1, constraint_2], False),
     ])
+
+
+@pytest.mark.parametrize(
+    ['constraint_dict', 'expected_msg'],
+    [
+        (
+            'Constraint',
+            (
+                'Invalid `constraint_dict`. Expected dictionary with keys `class_name` and '
+                ' `parameters`, got Constraint.'
+            ),
+        ),
+        ({'class_name': 0, 'parameters': {}}, '`class_name` must be a string.'),
+        ({'class_name': 'MockConstraint', 'parameters': 'param'}, '`parameters` must be a dict.'),
+        ({'class_name': 'Unknown', 'parameters': {}}, "Unknown `constraint_class` 'Unknown'."),
+    ],
+)
+@patch('sdv.cag._utils.importlib')
+def test_load_constraints_from_dict_validates_dict(importlib_mock, constraint_dict, expected_msg):
+    """Test constraint dictionary is validated when loading a constraint."""
+    # Setup
+    importlib_mock.import_module.return_value = Mock(spec=['MockConstraint'])
+
+    # Run and Assert
+    with pytest.raises(ValueError, match=re.escape(expected_msg)):
+        load_constraint_from_dict(constraint_dict)
+
+
+@patch('sdv.cag._utils.importlib')
+def test_load_constraints_from_dict(importlib_mock):
+    """Test utility method for loading constraints from file."""
+    # Setup
+    cag_mock = Mock(spec=['mock_constraint'])
+    sandbox_mock = Mock(spec=['mock_sandbox_constraint', 'mock_constraint'])
+    modules = {'sdv.cag': cag_mock, 'sdv.cag.sandbox': sandbox_mock}
+    importlib_mock.import_module.side_effect = lambda module: modules[module]
+
+    cag_dict = {
+        'class_name': 'mock_constraint',
+        'parameters': {'param1': 0, 'param2': 'a', 'param3': ['a', 'b', 'c']},
+    }
+    sandbox_dict = {
+        'class_name': 'mock_sandbox_constraint',
+        'parameters': {'param1': 'value', 'param2': 100, 'other': {'x': 'y', 'a': 'z'}},
+    }
+
+    # Run
+    cag_constraint = load_constraint_from_dict(cag_dict)
+    sandbox_constraint = load_constraint_from_dict(sandbox_dict)
+
+    # Assert
+    cag_mock.mock_constraint.load_constraint_from_dict.assert_called_once_with(
+        parameters={'param1': 0, 'param2': 'a', 'param3': ['a', 'b', 'c']}
+    )
+    assert cag_constraint == cag_mock.mock_constraint.load_constraint_from_dict.return_value
+    sandbox_mock.mock_sandbox_constraint.load_constraint_from_dict.assert_called_once_with(
+        parameters={'param1': 'value', 'param2': 100, 'other': {'x': 'y', 'a': 'z'}}
+    )
+    assert sandbox_constraint == (
+        sandbox_mock.mock_sandbox_constraint.load_constraint_from_dict.return_value
+    )
