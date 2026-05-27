@@ -23,9 +23,9 @@ jobs:
           - os: macos-latest
             python-version: '3.14'
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -36,9 +36,9 @@ jobs:
       run: invoke unit
     - if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.14
       name: Upload unit codecov report
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v6
       with:
         flags: unit
-        file: ${{ github.workspace }}/unit_cov.xml
+        files: ${{ github.workspace }}/unit_cov.xml
         fail_ci_if_error: true
         token: ${{ secrets.CODECOV_TOKEN }}

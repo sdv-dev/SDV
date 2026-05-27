@@ -23,12 +23,12 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.candidate && 'main' || 'stable' }}
 
       - name: Set up latest Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version-file: 'pyproject.toml'
 
@@ -56,7 +56,7 @@ jobs:
       - name: Create pull request
         if: ${{ inputs.candidate && !inputs.test_pypi }}
         id: cpr
-        uses: peter-evans/create-pull-request@v4
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GH_ACCESS_TOKEN }}
           commit-message: bumpversion-candidate
