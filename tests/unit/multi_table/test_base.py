@@ -1869,6 +1869,19 @@ class TestBaseMultiTableSynthesizer:
             call([mock_constraint2]),
         ])
 
+    def set_constraints_errors_with_existing_constraints(self):
+        """Test ``set_constraints`` errors if constraints already applied."""
+        # Setup
+        instance = Mock()
+        instance._get_all_constraints_list = [Mock()]
+
+        # Run and Assert
+        expected_msg = re.escape(
+            'Cannot `set_constraints` since constraints have already been applied.'
+        )
+        with pytest.raises(SynthesizerInputError, match=expected_msg):
+            BaseMultiTableSynthesizer.set_constraints(instance, 'path/to/constraints.json')
+
     def test_get_metadata_original(self):
         """Test getting the original metadata from the synthesizer."""
         # Setup

@@ -766,3 +766,50 @@ class TestBaseConstraint:
 
         # Assert
         assert text == "Dummy(param0='required')"
+
+    def test_get_constraint_dict_errors_missing_attribute(self):
+        """Test getting the constraint dict errors if attribute is missing."""
+
+        # Setup
+        class Dummy(BaseConstraint):
+            def __init__(self, param0, param1=None, param2=None, param3=None):
+                self.param0 = param0
+                self.param1 = param1
+                self.param2 = param2
+
+        instance = Dummy(param0='required', param2='value', param3=True)
+
+        # Run and Assert
+        expected_msg = re.escape(
+            'Cannot convert constraint to dictionary because required parameters '
+            "['param3'] are not saved as attributes on the constraint."
+        )
+        with pytest.raises(AttributeError, match=expected_msg):
+            instance.get_constraint_dict()
+
+    def test_get_constraint_dict(self):
+        """Test getting the serializable constraint dict for the constraint."""
+
+        # Setup
+        class Dummy(BaseConstraint):
+            def __init__(self, param0, param1=None, param2=None, param3=None):
+                self.param0 = param0
+                self.param1 = param1
+                self.param2 = param2
+                self.param3 = param3
+
+        instance = Dummy(param0='required', param2='value', param3=True)
+
+        # Run
+        constraint_dict = instance.get_constraint_dict()
+
+        # Assert
+        assert constraint_dict == {
+            'class_name': 'Dummy',
+            'parameters': {
+                'param0': 'required',
+                'param1': None,
+                'param2': 'value',
+                'param3': True,
+            },
+        }

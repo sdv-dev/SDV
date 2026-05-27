@@ -973,6 +973,19 @@ class TestBaseSynthesizer:
             call([mock_constraint2]),
         ])
 
+    def set_constraints_errors_with_existing_constraints(self):
+        """Test ``set_constraints`` errors if constraints already applied."""
+        # Setup
+        instance = Mock()
+        instance._get_all_constraints_list = [Mock()]
+
+        # Run and Assert
+        expected_msg = re.escape(
+            'Cannot `set_constraints` since constraints have already been applied.'
+        )
+        with pytest.raises(SynthesizerInputError, match=expected_msg):
+            BaseSynthesizer.set_constraints(instance, 'path/to/constraints.json')
+
     @patch('sdv.single_table.base.DataProcessor')
     def test__fit(self, mock_data_processor):
         """Test that ``NotImplementedError`` is being raised."""

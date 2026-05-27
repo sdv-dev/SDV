@@ -151,14 +151,11 @@ class ProgrammableConstraintHarness(BaseConstraint):
         """
         args = inspect.getfullargspec(self.programmable_constraint.__init__)
         keys = args.args[1:]
-        instanced = {
-            key: getattr(
-                self.programmable_constraint,
-                key,
-                getattr(self.programmable_constraint, f'_{key}', None),
-            )
-            for key in keys
-        }
+        instanced = {}
+        constraint = self.programmable_constraint
+        for key in keys:
+            if hasattr(constraint, key) or hasattr(constraint, f'_{key}'):
+                instanced[key] = getattr(constraint, key, getattr(constraint, f'_{key}', None))
         missing_attrs = list(set(keys) - set(instanced.keys()))
         if missing_attrs:
             missing_attrs = sorted(missing_attrs)
