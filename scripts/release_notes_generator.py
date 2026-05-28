@@ -36,7 +36,7 @@ REPO = 'sdv'
 
 
 def _get_milestone_number(client, milestone_title):
-    query_params = {'milestone': milestone_title, 'state': 'all', 'per_page': 100}
+    query_params = {'state': 'all', 'per_page': 100, 'direction': 'desc'}
     response = client.get(
         github_org=GITHUB_ORG, repo=REPO, endpoint='milestones', query_params=query_params
     )
