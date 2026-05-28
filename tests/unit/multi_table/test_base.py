@@ -1721,7 +1721,7 @@ class TestBaseMultiTableSynthesizer:
         assert instance.constraints == [constraint1, constraint2]
 
     @patch('sdv.multi_table.base.deepcopy')
-    def test_get_constraint(self, copy_mock):
+    def test__get_all_constraints_list(self, copy_mock):
         """Test getting data constraints from the synthesizer."""
         # Setup
         instance = Mock()
@@ -1740,9 +1740,9 @@ class TestBaseMultiTableSynthesizer:
         instance._table_synthesizers['table2'].get_constraints = Mock(return_value=[constraint5])
 
         # Run
-        no_constraints = BaseMultiTableSynthesizer.get_constraints(instance)
+        no_constraints = BaseMultiTableSynthesizer._get_all_constraints_list(instance)
         instance.constraints = [constraint1, constraint2, constraint3]
-        constraints = BaseMultiTableSynthesizer.get_constraints(instance)
+        constraints = BaseMultiTableSynthesizer._get_all_constraints_list(instance)
 
         # Assert
         assert no_constraints == []
@@ -1754,6 +1754,133 @@ class TestBaseMultiTableSynthesizer:
             constraint4,
             constraint5,
         ]
+
+    @patch('sdv.multi_table.base.open')
+    @patch('sdv.multi_table.base.json')
+    @patch('sdv.multi_table.base.Path')
+    def test_get_constraints_from_file(self, mock_Path, mock_json, mock_open):
+        """Test get constraints saves constraints to file."""
+        # Setup
+        instance = Mock()
+        constraint1_dict = {
+            'class_name': 'MockConstraint1',
+            'parameters': {'column_names': ['col1', 'col2']},
+        }
+        constraint2_dict = {'class_name': 'MockConstraint2', 'parameters': {}}
+        constraint1_mock = Mock(get_constraint_dict=Mock(return_value=constraint1_dict))
+        constraint2_mock = Mock(get_constraint_dict=Mock(return_value=constraint2_dict))
+        instance._get_all_constraints_list = Mock(return_value=[constraint1_mock, constraint2_mock])
+
+        filepath = 'mock/path/to/constraints.json'
+        mock_Path.return_value = Mock(exists=Mock(side_effect=[False, True]))
+        expected_existing_file_msg = re.escape(
+            "Cannot save constraints to file because 'mock/path/to/constraints.json' "
+            'already exists.'
+        )
+
+        # Run
+        BaseMultiTableSynthesizer.get_constraints(instance, filepath)
+        with pytest.raises(ValueError, match=expected_existing_file_msg):
+            BaseMultiTableSynthesizer.get_constraints(instance, filepath)
+
+        # Assert
+        mock_Path.assert_called_with(filepath)
+        assert instance._get_all_constraints_list.call_count == 2
+        constraint1_mock.get_constraint_dict.assert_called_once()
+        constraint2_mock.get_constraint_dict.assert_called_once()
+        mock_open.assert_called_once_with(mock_Path.return_value, 'w')
+        mock_json.dump.assert_called_once_with(
+            [constraint1_dict, constraint2_dict],
+            mock_open.return_value.__enter__.return_value,
+            indent=4,
+        )
+
+    @patch('sdv.multi_table.base.open')
+    @patch('sdv.multi_table.base.json')
+    @patch('sdv.multi_table.base.load_constraint_from_dict')
+    def test_set_constraints(self, mock_load_constraint_from_dict, mock_json, mock_open):
+        """Test setting constraints from file."""
+        # Setup
+        mock_json.load.return_value = [
+            {'class_name': 'ConstraintClass1', 'parameters': {}},
+            {
+                'class_name': 'InvalidConstraint',
+                'parameters': {},
+            },
+            {
+                'class_name': 'UnknownConstraint',
+                'parameters': {},
+            },
+            {
+                'class_name': 'ConstraintClass2',
+                'parameters': {},
+            },
+        ]
+        mock_constraint1 = Mock()
+        mock_constraint2 = Mock()
+        mock_invalid_constraint = Mock(__repr__=lambda _: 'InvalidConstraint()')
+        mock_constraints = {
+            'ConstraintClass1': mock_constraint1,
+            'ConstraintClass2': mock_constraint2,
+            'InvalidConstraint': mock_invalid_constraint,
+        }
+
+        def load_constraint_from_dict_mock(mock_constraint):
+            if mock_constraint['class_name'] == 'UnknownConstraint':
+                raise ValueError("Unknown `constraint_class` 'UnknownConstraint'.")
+
+            return mock_constraints[mock_constraint['class_name']]
+
+        def add_constraints_mock(mock_constraint):
+            if mock_constraint[0] == mock_invalid_constraint:
+                raise ValueError('Cannot add constraint.')
+
+        mock_load_constraint_from_dict.side_effect = load_constraint_from_dict_mock
+
+        instance = Mock()
+        instance.get_constraints.return_value = []
+        instance.add_constraints.side_effect = add_constraints_mock
+
+        filepath = 'path/to/constraints.json'
+
+        # Run
+        expected_constraint_load_warning = re.escape(
+            "Could not load constraint ({'class_name': 'UnknownConstraint', 'parameters': {}}):\n"
+            "    ValueError: Unknown `constraint_class` 'UnknownConstraint'."
+        )
+        expected_constraint_add_warning = re.escape(
+            'Could not add constraint (InvalidConstraint()):\n    ValueError: Cannot add constraint'
+        )
+        with pytest.warns(UserWarning, match=expected_constraint_load_warning):
+            with pytest.warns(UserWarning, match=expected_constraint_add_warning):
+                BaseMultiTableSynthesizer.set_constraints(instance, filepath)
+
+        # Assert
+        mock_open.assert_called_once_with(filepath, 'r')
+        mock_load_constraint_from_dict.assert_has_calls([
+            call({'class_name': 'ConstraintClass1', 'parameters': {}}),
+            call({'class_name': 'InvalidConstraint', 'parameters': {}}),
+            call({'class_name': 'UnknownConstraint', 'parameters': {}}),
+            call({'class_name': 'ConstraintClass2', 'parameters': {}}),
+        ])
+        instance.add_constraints.assert_has_calls([
+            call([mock_constraint1]),
+            call([mock_invalid_constraint]),
+            call([mock_constraint2]),
+        ])
+
+    def set_constraints_errors_with_existing_constraints(self):
+        """Test ``set_constraints`` errors if constraints already applied."""
+        # Setup
+        instance = Mock()
+        instance._get_all_constraints_list = [Mock()]
+
+        # Run and Assert
+        expected_msg = re.escape(
+            'Cannot `set_constraints` since constraints have already been applied.'
+        )
+        with pytest.raises(SynthesizerInputError, match=expected_msg):
+            BaseMultiTableSynthesizer.set_constraints(instance, 'path/to/constraints.json')
 
     def test_get_metadata_original(self):
         """Test getting the original metadata from the synthesizer."""

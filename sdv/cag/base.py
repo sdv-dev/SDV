@@ -59,6 +59,37 @@ class BaseConstraint:
         args_string = ', '.join(custom_args)
         return f'{class_name}({args_string})'
 
+    def get_constraint_dict(self):
+        """Return the constraint as a serialiazable dict.
+
+        Returns:
+            dict:
+                A dictionary with the following keys:
+                    - `class_name` [str]: The name of the constraint class.
+                    - `parameters` [dict]: A dictionary of the init parameters used to
+                       create this constraint instance.
+        """
+        args = inspect.getfullargspec(self.__init__)
+        keys = args.args[1:]
+        instanced = {}
+        for key in keys:
+            if hasattr(self, key) or hasattr(self, f'_{key}'):
+                instanced[key] = getattr(self, key, getattr(self, f'_{key}', None))
+        missing_attrs = list(set(keys) - set(instanced.keys()))
+        if missing_attrs:
+            missing_attrs = sorted(missing_attrs)
+            raise AttributeError(
+                'Cannot convert constraint to dictionary because required parameters '
+                f'{missing_attrs} are not saved as attributes on the constraint.'
+            )
+
+        return {'class_name': self.__class__.__name__, 'parameters': instanced}
+
+    @classmethod
+    def load_constraint_from_dict(cls, parameters):
+        """Uses the given parameters to recreate an instance of the constraint."""
+        return cls(**parameters)
+
     def __init__(self):
         self.metadata = None
         self._fitted = False

@@ -3,14 +3,17 @@
 import datetime
 import functools
 import inspect
+import json
 import logging
 import math
 import operator
 import os
+import traceback
 import uuid
 import warnings
 from collections import defaultdict
 from copy import deepcopy
+from pathlib import Path
 
 import cloudpickle
 import copulas
@@ -35,6 +38,7 @@ from sdv.cag._utils import (
     _convert_to_snake_case,
     _get_invalid_rows,
     _validate_constraints_single_table,
+    load_constraint_from_dict,
 )
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
 from sdv.data_processing.data_processor import DataProcessor
@@ -497,8 +501,7 @@ class BaseSynthesizer:
             locales=self.locales,
         )
 
-    def get_constraints(self):
-        """Get a list of constraint-augmented generation constraints applied to the synthesizer."""
+    def _get_all_constraints_list(self):
         constraints = []
         for constraint in self._chained_constraints + self._reject_sampling_constraints:
             if isinstance(constraint, ProgrammableConstraintHarness):
@@ -507,6 +510,69 @@ class BaseSynthesizer:
                 constraints.append(deepcopy(constraint))
 
         return constraints
+
+    def get_constraints(self, filepath=None):
+        """Get a list of constraint-augmented generation constraints applied to the synthesizer.
+
+        If `filepath` is provided, will save the constraints in JSON format to `filepath`.
+        Otherwise, will return a list of the constraints applied to the synthesizer.
+
+        Args:
+            filepath (str, optional):
+                Path where the constraints applied to the synthesizer will be serialized. If `None`,
+                will return a list of the applied constraints instead. Defaults to `None`.
+        """
+        constraints = self._get_all_constraints_list()
+        if filepath is None:
+            return constraints
+
+        path = Path(filepath)
+        if path.exists():
+            raise ValueError(
+                f"Cannot save constraints to file because '{filepath}' already exists."
+            )
+
+        constraints_dict_list = [constraint.get_constraint_dict() for constraint in constraints]
+
+        with open(path, 'w') as file:
+            json.dump(constraints_dict_list, file, indent=4)
+
+    def set_constraints(self, filepath):
+        """Add all the constraints in the file to the synthesizer.
+
+        If any constraints have been added to the synthesizer, they will be removed before
+        the constraints from the file are set.
+
+        Args:
+            filepath (str):
+                The string path to the file containing the constraints to set on the synthesizer.
+        """
+        if self.get_constraints():
+            raise SynthesizerInputError(
+                'Cannot `set_constraints` since constraints have already been applied.'
+            )
+
+        with open(filepath, 'r') as f:
+            constraints_json = json.load(f)
+
+        constraint_list = []
+        for constraint_dict in constraints_json:
+            try:
+                constraint_list.append(load_constraint_from_dict(constraint_dict))
+            except Exception as e:
+                warnings.warn(
+                    f'Could not load constraint ({constraint_dict}):\n'
+                    f'    {traceback.format_exception_only(type(e), e)[0]}'
+                )
+
+        for constraint in constraint_list:
+            try:
+                self.add_constraints([constraint])
+            except Exception as e:
+                warnings.warn(
+                    f'Could not add constraint ({constraint}):\n'
+                    f'    {traceback.format_exception_only(type(e), e)[0]}'
+                )
 
     def validate_constraints(self, synthetic_data):
         """Validate synthetic_data against the constraints.

@@ -1,5 +1,6 @@
 """Programmable constraints base classes."""
 
+import inspect
 from copy import deepcopy
 
 from sdv.cag.base import BaseConstraint
@@ -9,6 +10,11 @@ class ProgrammableConstraint:
     """Base class to create programmable constraints."""
 
     _is_single_table = True
+
+    @classmethod
+    def load_constraint_from_dict(cls, parameters):
+        """Uses the given parameters to recreate an instance of the constraint."""
+        return cls(**parameters)
 
     def validate(self, metadata):
         """Validates that the metadata is compatible with the constraint and its parameters.
@@ -132,6 +138,36 @@ class ProgrammableConstraintHarness(BaseConstraint):
         self.programmable_constraint = programmable_constraint
         self.table_name = getattr(self.programmable_constraint, 'table_name', None)
         self._is_single_table = self.programmable_constraint._is_single_table
+
+    def get_constraint_dict(self):
+        """Return the constraint as a serialiazable dict.
+
+        Returns:
+            dict:
+                A dictionary with the following keys:
+                    - `class_name` [str]: The name of the constraint class.
+                    - `parameters` [dict]: A dictionary of the init parameters used to
+                       create this constraint instance.
+        """
+        args = inspect.getfullargspec(self.programmable_constraint.__init__)
+        keys = args.args[1:]
+        instanced = {}
+        constraint = self.programmable_constraint
+        for key in keys:
+            if hasattr(constraint, key) or hasattr(constraint, f'_{key}'):
+                instanced[key] = getattr(constraint, key, getattr(constraint, f'_{key}', None))
+        missing_attrs = list(set(keys) - set(instanced.keys()))
+        if missing_attrs:
+            missing_attrs = sorted(missing_attrs)
+            raise AttributeError(
+                'Cannot convert constraint to dictionary because required parameters '
+                f'{missing_attrs} are not saved as attributes on the constraint.'
+            )
+
+        return {
+            'class_name': self.programmable_constraint.__class__.__name__,
+            'parameters': instanced,
+        }
 
     def _validate_constraint_with_metadata(self, metadata):
         self.programmable_constraint.validate(metadata)
