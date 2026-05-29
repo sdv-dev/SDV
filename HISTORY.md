@@ -1,5 +1,17 @@
 # Release Notes
 
+## v1.37.0 - 2026-05-29
+
+### New Features
+
+* Optimize demo data loading by reducing in-memory consumption - Issue [#2895](https://github.com/sdv-dev/SDV/issues/2895) by @gsheni
+* Add ability to store and load constraints from file - Issue [#2891](https://github.com/sdv-dev/SDV/issues/2891) by @frances-h
+
+### Maintenance
+
+* Release notes generator failing to fetch latest milestone - Issue [#2897](https://github.com/sdv-dev/SDV/issues/2897) by @frances-h
+* Use Node.js 24 compatible github actions - Issue [#2893](https://github.com/sdv-dev/SDV/issues/2893) by @gsheni
+
 ## v1.36.3 - 2026-05-22
 
 ### New Features
