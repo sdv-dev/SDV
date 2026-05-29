@@ -1,6 +1,6 @@
 # Release Notes
 
-## v1.37.0 - 2026-05-28
+## v1.37.0 - 2026-05-29
 
 ### New Features
 
