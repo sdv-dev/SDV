@@ -1,56 +1,9 @@
 import inspect
 
-import pytest
-
 import sdv.cag
 
-CONSTRAINTS = [
-    (
-        'FixedCombinations',
-        {
-            'column_names': ['A', 'B', 'C'],
-            'table_name': 'table',
-        },
-    ),
-    (
-        'FixedIncrements',
-        {
-            'column_name': 'column',
-            'increment_value': 5,
-            'table_name': 'table',
-        },
-    ),
-    (
-        'Inequality',
-        {
-            'low_column_name': 'low',
-            'high_column_name': 'high',
-            'strict_boundaries': True,
-            'table_name': None,
-        },
-    ),
-    (
-        'OneHotEncoding',
-        {
-            'column_names': ['col1', 'col2', 'col3', 'col4', 'col5'],
-            'table_name': 'table',
-            'learning_strategy': 'one_hot',
-        },
-    ),
-    (
-        'Range',
-        {
-            'low_column_name': 'low',
-            'middle_column_name': 'middle',
-            'high_column_name': 'high',
-            'strict_boundaries': False,
-            'table_name': None,
-        },
-    ),
-]
 
-
-def test_all_available_constraints_included_in_constraint_test_list():
+def test_all_available_constraints_included_in_constraint_test_list(constraints_as_dicts):
     """Test that all available constraints are included in the test list."""
     # Setup
     skipped_cag_module_classes = ['ProgrammableConstraint', 'ConstraintList']
@@ -61,17 +14,18 @@ def test_all_available_constraints_included_in_constraint_test_list():
         for constraint, cls in available_constraints
         if constraint not in skipped_cag_module_classes
     }
-    tested_constraints = {constraint[0] for constraint in CONSTRAINTS}
+    tested_constraints = {constraint[0] for constraint in constraints_as_dicts}
 
     # Run and Assert
     assert available_constraints == tested_constraints
 
 
-@pytest.mark.parametrize(['constraint', 'constraint_params'], CONSTRAINTS)
-def test_get_constraint_dict_and_load_constraint_from_dict(constraint, constraint_params):
+def test_get_constraint_dict_and_load_constraint_from_dict(constraint_tuple):
     """Test ``get_constraint_dict`` and ``load_constraint_from_dict for all constraints."""
     # Setup
-    constraint_class = getattr(sdv.cag, constraint)
+    constraint_class_name, constraint_params = constraint_tuple
+
+    constraint_class = getattr(sdv.cag, constraint_class_name)
     constraint_instance = constraint_class(**constraint_params)
 
     # Run
@@ -79,7 +33,7 @@ def test_get_constraint_dict_and_load_constraint_from_dict(constraint, constrain
     loaded_constraint = constraint_class.load_constraint_from_dict(constraint_dict['parameters'])
 
     # Assert
-    assert constraint_dict == {'class_name': constraint, 'parameters': constraint_params}
+    assert constraint_dict == {'class_name': constraint_class_name, 'parameters': constraint_params}
     for param, param_value in constraint_params.items():
         instanced_param = getattr(
             constraint_instance, param, getattr(constraint_instance, f'_{param}', None)

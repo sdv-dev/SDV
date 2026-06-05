@@ -11,6 +11,7 @@ from sdv.cag._utils import (
     _convert_to_snake_case,
     _filter_old_style_constraints,
     _is_list_of_type,
+    _load_constraints_from_file,
     _remove_columns_from_metadata,
     _validate_columns_not_primary_key,
     _validate_constraints,
@@ -424,3 +425,53 @@ def test_load_constraints_from_dict(importlib_mock):
     assert sandbox_constraint == (
         sandbox_mock.mock_sandbox_constraint.load_constraint_from_dict.return_value
     )
+
+
+@patch('sdv.cag._utils.open')
+@patch('sdv.cag._utils.json')
+@patch('sdv.cag._utils.load_constraint_from_dict')
+def test__load_constraints_from_file(
+    mock_load_constraint_from_dict,
+    mock_json,
+    mock_open,
+):
+    """Test loading a list of constraints from a JSON file."""
+    # Setup
+    constraint_dict1 = {'class_name': 'ConstraintClass1', 'parameters': {}}
+    invalid_constraint_dict = {'class_name': 'UnknownConstraint', 'parameters': {}}
+    constraint_dict2 = {'class_name': 'ConstraintClass2', 'parameters': {}}
+    mock_json.load.return_value = [constraint_dict1, invalid_constraint_dict, constraint_dict2]
+
+    mock_constraint1 = Mock()
+    mock_constraint2 = Mock()
+    mock_constraints = {
+        'ConstraintClass1': mock_constraint1,
+        'ConstraintClass2': mock_constraint2,
+    }
+
+    def load_constraint_from_dict_mock(constraint_dict):
+        if constraint_dict['class_name'] == 'UnknownConstraint':
+            raise ValueError("Unknown `constraint_class` 'UnknownConstraint'.")
+
+        return mock_constraints[constraint_dict['class_name']]
+
+    mock_load_constraint_from_dict.side_effect = load_constraint_from_dict_mock
+    filepath = 'path/to/constraints.json'
+    expected_warning = re.escape(
+        "Could not load constraint ({'class_name': 'UnknownConstraint', 'parameters': {}}):\n"
+        "    ValueError: Unknown `constraint_class` 'UnknownConstraint'."
+    )
+
+    # Run
+    with pytest.warns(UserWarning, match=expected_warning):
+        result = _load_constraints_from_file(filepath)
+
+    # Assert
+    assert result == [mock_constraint1, mock_constraint2]
+    mock_open.assert_called_once_with(filepath, 'r')
+    mock_json.load.assert_called_once()
+    mock_load_constraint_from_dict.assert_has_calls([
+        call(constraint_dict1),
+        call(invalid_constraint_dict),
+        call(constraint_dict2),
+    ])

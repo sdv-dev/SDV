@@ -22,13 +22,14 @@ from sdv._utils import (
     check_synthesizer_version,
     generate_synthesizer_id,
     warn_load_deprecated,
+    warn_set_constraints_deprecated,
 )
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _convert_to_snake_case,
     _get_invalid_rows,
+    _load_constraints_from_file,
     _validate_constraints,
-    load_constraint_from_dict,
 )
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
 from sdv.errors import (
@@ -328,18 +329,8 @@ class BaseMultiTableSynthesizer:
                 'Cannot `set_constraints` since constraints have already been applied.'
             )
 
-        with open(filepath, 'r') as f:
-            constraints_json = json.load(f)
-
-        constraint_list = []
-        for constraint_dict in constraints_json:
-            try:
-                constraint_list.append(load_constraint_from_dict(constraint_dict))
-            except Exception as e:
-                warnings.warn(
-                    f'Could not load constraint ({constraint_dict}):\n'
-                    f'    {traceback.format_exception_only(type(e), e)[0]}'
-                )
+        warn_set_constraints_deprecated()
+        constraint_list = _load_constraints_from_file(filepath)
 
         for constraint in constraint_list:
             try:

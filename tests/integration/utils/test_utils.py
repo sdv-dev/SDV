@@ -1,3 +1,4 @@
+import json
 import re
 from copy import deepcopy
 
@@ -9,7 +10,12 @@ from sdv.datasets.demo import download_demo
 from sdv.errors import InvalidDataError
 from sdv.metadata.metadata import Metadata
 from sdv.single_table import GaussianCopulaSynthesizer
-from sdv.utils import drop_unknown_references, get_random_sequence_subset, load_synthesizer
+from sdv.utils import (
+    drop_unknown_references,
+    get_random_sequence_subset,
+    load_constraints,
+    load_synthesizer,
+)
 
 
 @pytest.fixture
@@ -214,3 +220,19 @@ def test_load_synthesizer(tmp_path):
     # Assert
     assert isinstance(loaded_synthesizer, GaussianCopulaSynthesizer)
     assert set(synthetic_data.columns) == set(data.columns)
+
+
+def test_load_constraints(tmp_path, constraint_object):
+    """Test the `load_constraints` method."""
+    # Setup
+    constraints = [constraint_object.get_constraint_dict()]
+    filepath = tmp_path / 'constraints.json'
+    with open(filepath, 'w') as f:
+        json.dump(constraints, f)
+
+    # Run
+    loaded_constraints = load_constraints(filepath)
+
+    # Assert
+    assert len(loaded_constraints) == 1
+    assert loaded_constraints[0].get_constraint_dict() == constraints[0]
