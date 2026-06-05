@@ -1002,11 +1002,11 @@ class TestBaseSynthesizer:
         # Assert
         mock_load_constraints_from_file.assert_called_once_with(filepath)
 
-    def set_constraints_errors_with_existing_constraints(self):
+    def test__set_constraints_errors_with_existing_constraints(self):
         """Test ``set_constraints`` errors if constraints already applied."""
         # Setup
         instance = Mock()
-        instance._get_all_constraints_list = [Mock()]
+        instance.get_constraints.return_value = [Mock()]
 
         # Run and Assert
         expected_msg = re.escape(
