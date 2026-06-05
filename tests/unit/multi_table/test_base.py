@@ -1879,7 +1879,7 @@ class TestBaseMultiTableSynthesizer:
 
     @patch('sdv.multi_table.base._load_constraints_from_file')
     def test_set_constraints_warns_deprecated(self, mock_load_constraints_from_file):
-        """Test setting constraints emits a deprecation warning."""
+        """Test ``set_constraints`` emits a deprecation warning."""
         # Setup
         filepath = 'path/to/constraints.json'
         instance = Mock()
