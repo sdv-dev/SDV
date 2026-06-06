@@ -1795,10 +1795,17 @@ class TestBaseMultiTableSynthesizer:
             indent=4,
         )
 
-    @patch('sdv.multi_table.base.open')
-    @patch('sdv.multi_table.base.json')
-    @patch('sdv.multi_table.base.load_constraint_from_dict')
-    def test_set_constraints(self, mock_load_constraint_from_dict, mock_json, mock_open):
+    @patch('sdv.multi_table.base.warn_set_constraints_deprecated')
+    @patch('sdv.cag._utils.open')
+    @patch('sdv.cag._utils.json')
+    @patch('sdv.cag._utils.load_constraint_from_dict')
+    def test_set_constraints(
+        self,
+        mock_load_constraint_from_dict,
+        mock_json,
+        mock_open,
+        mock_warn_set_constraints_deprecated,
+    ):
         """Test setting constraints from file."""
         # Setup
         mock_json.load.return_value = [
@@ -1868,12 +1875,34 @@ class TestBaseMultiTableSynthesizer:
             call([mock_invalid_constraint]),
             call([mock_constraint2]),
         ])
+        mock_warn_set_constraints_deprecated.assert_called_once()
 
-    def set_constraints_errors_with_existing_constraints(self):
+    @patch('sdv.multi_table.base._load_constraints_from_file')
+    def test_set_constraints_warns_deprecated(self, mock_load_constraints_from_file):
+        """Test ``set_constraints`` emits a deprecation warning."""
+        # Setup
+        filepath = 'path/to/constraints.json'
+        instance = Mock()
+        instance.get_constraints.return_value = []
+        mock_load_constraints_from_file.return_value = []
+        expected_message = re.escape(
+            'Warning: The `set_constraints` method is deprecated. '
+            'Please use the `load_constraints` utility function to load constraints from a file '
+            'and add them to the synthesizer with the `add_constraints` method.'
+        )
+
+        # Run
+        with pytest.warns(FutureWarning, match=expected_message):
+            BaseMultiTableSynthesizer.set_constraints(instance, filepath)
+
+        # Assert
+        mock_load_constraints_from_file.assert_called_once_with(filepath)
+
+    def test__set_constraints_errors_with_existing_constraints(self):
         """Test ``set_constraints`` errors if constraints already applied."""
         # Setup
         instance = Mock()
-        instance._get_all_constraints_list = [Mock()]
+        instance.get_constraints.return_value = [Mock()]
 
         # Run and Assert
         expected_msg = re.escape(

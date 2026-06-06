@@ -25,6 +25,7 @@ from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, g
 from sdv.metadata import MultiTableMetadata
 from sdv.metadata.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
+from sdv.utils import load_constraints
 from tests.integration.single_table.custom_constraints import MyConstraint
 from tests.utils import catch_sdv_logs
 
@@ -2188,10 +2189,16 @@ def test_get_constraints_and_load_constraints(tmp_path):
     synthesizer = HMASynthesizer(metadata)
     synthesizer.add_constraints([inequality_constraint, fixed_combinations_constraint])
     new_synthesizer = HMASynthesizer(metadata)
+    expected_warning = re.escape(
+        'Warning: The `set_constraints` method is deprecated. '
+        'Please use the `load_constraints` utility function to load constraints from a file '
+        'and add them to the synthesizer with the `add_constraints` method.'
+    )
 
     # Run
     synthesizer.get_constraints(filepath=filepath)
-    new_synthesizer.set_constraints(filepath=filepath)
+    with pytest.warns(FutureWarning, match=expected_warning):
+        new_synthesizer.set_constraints(filepath=filepath)
 
     # Assert
     assert [str(constraint) for constraint in synthesizer.get_constraints()] == [
@@ -2219,6 +2226,51 @@ def test_get_constraints_and_load_constraints(tmp_path):
             },
         },
     ]
+
+
+def test_load_constraints_and_add_constraints(tmp_path):
+    """Test loading constraints from a JSON file and adding them to a synthesizer."""
+    # Setup
+    filepath = tmp_path / 'constraints.json'
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'guests': {
+                'columns': {
+                    'checkin_date': {'sdtype': 'numerical'},
+                    'checkout_date': {'sdtype': 'numerical'},
+                },
+            },
+            'hotels': {
+                'columns': {
+                    'city': {'sdtype': 'categorical'},
+                    'state': {'sdtype': 'categorical'},
+                },
+            },
+        },
+    })
+    inequality_constraint = Inequality(
+        table_name='guests',
+        low_column_name='checkin_date',
+        high_column_name='checkout_date',
+    )
+    fixed_combinations_constraint = FixedCombinations(
+        table_name='hotels', column_names=['city', 'state']
+    )
+    constraints = [inequality_constraint, fixed_combinations_constraint]
+    constraints = [c.get_constraint_dict() for c in constraints]
+    synthesizer = HMASynthesizer(metadata)
+    with open(filepath, 'w') as f:
+        json.dump(constraints, f)
+
+    # Run
+    loaded_constraints = load_constraints(filepath)
+    synthesizer.add_constraints(loaded_constraints)
+
+    # Assert
+    loaded_constraint_dicts = [c.get_constraint_dict() for c in loaded_constraints]
+    synthesizer_constraint_dicts = [c.get_constraint_dict() for c in synthesizer.get_constraints()]
+    assert loaded_constraint_dicts == constraints
+    assert synthesizer_constraint_dicts == constraints
 
 
 def test_save_and_load_with_downgraded_version(tmp_path):
