@@ -908,7 +908,9 @@ def test__save_file_content_errors_if_file_exists(tmp_path):
     # Setup
     output_path = tmp_path / 'output.txt'
     output_path.write_text('hello!')
-    error_msg = f"A file named '{output_path}' already exists. Please specify a different filepath."
+    error_msg = re.escape(
+        f"A file named '{output_path}' already exists. Please specify a different filepath."
+    )
 
     # Run and Assert
     with pytest.raises(ValueError, match=error_msg):
