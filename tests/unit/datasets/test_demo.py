@@ -22,10 +22,12 @@ from sdv.datasets.demo import (
     _iter_metainfo_yaml_entries,
     _list_objects,
     _load_data_from_zip,
+    _save_file_content,
     download_demo,
     get_available_demos,
     get_readme,
     get_source,
+    save_resource,
 )
 from sdv.errors import DemoResourceNotFoundError, DemoResourceNotFoundWarning
 
@@ -901,6 +903,97 @@ def test__get_text_file_content_logs_on_save_error(
     assert 'Error saving README.txt for dataset dataset1.' in caplog.text
 
 
+def test__save_file_content_errors_if_file_exists(tmp_path):
+    """Test ValueError raised if output_filepath already exists."""
+    # Setup
+    output_path = tmp_path / 'output.txt'
+    output_path.write_text('hello!')
+    error_msg = f"A file named '{output_path}' already exists. Please specify a different filepath."
+
+    # Run and Assert
+    with pytest.raises(ValueError, match=error_msg):
+        _save_file_content(
+            modality='single_table',
+            dataset_name='fake_hotel_guests',
+            filename='README.txt',
+            output_filepath=output_path,
+        )
+
+    # Assert
+    assert output_path.read_text() == 'hello!'
+
+
+@patch('sdv.datasets.demo._create_s3_client')
+def test__save_file_content_with_client_error(mock__create_s3_client):
+    """Raise `DemoResourceNotFoundError` when an AWS ClientError occurs while fetching README."""
+    # Setup
+    client = Mock()
+    client.get_paginator.side_effect = ClientError(
+        error_response={
+            'Error': {
+                'Code': 'AccessDenied',
+                'Message': 'Access Denied',
+            },
+            'ResponseMetadata': {
+                'HTTPStatusCode': 403,
+            },
+        },
+        operation_name='ListObjectsV2',
+    )
+    mock__create_s3_client.return_value = client
+
+    error_msg = (
+        "Could not retrieve 'test.txt' for dataset 'fake_hotels' "
+        "from bucket 'private_bucket'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+
+    # Run and Assert
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
+        _save_file_content(
+            modality='single_table',
+            dataset_name='fake_hotels',
+            filename='test.txt',
+            output_filepath='output/test.txt',
+            bucket='private_bucket',
+        )
+
+
+@patch('sdv.datasets.demo._list_objects')
+def test__save_file_content_missing_key_does_not_create_file(mock_list, tmp_path):
+    """Test it does not create the output file if the key is missing."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/metadata.json'},
+    ]
+    output_filename = tmp_path / 'output.txt'
+
+    # Run
+    _save_file_content('single_table', 'dataset1', 'README.txt', output_filename)
+
+    # Assert
+    assert not output_filename.exists()
+
+
+@patch('sdv.datasets.demo._save_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test__save_file_content_logs_on_download_error(mock_list, mock_save, caplog):
+    """It logs an info when downloading the key raises an error."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/test.zip'},
+    ]
+    mock_save.side_effect = Exception('Failed to download')
+
+    # Run
+    caplog.set_level(logging.INFO, logger='sdv.datasets.demo')
+    _save_file_content('single_table', 'dataset1', 'test.zip', 'output.zip')
+
+    # Assert
+    assert 'Error saving test.zip for dataset dataset1.' in caplog.text
+
+
 def test_get_readme_and_get_source_call_wrapper(monkeypatch):
     """Test it calls the wrapper function when the output filepath is given."""
     # Setup
@@ -1639,3 +1732,26 @@ def test__load_data_from_zip_with_encoding(encoding):
     # Assert
     assert list(data) == ['users']
     pd.testing.assert_frame_equal(data['users'], df)
+
+
+@patch('sdv.datasets.demo._save_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_save_resource(mock_list, mock_save, tmp_path):
+    """Test it saves the file when it exists."""
+
+    # Setup
+    def mock_save_effect(key, bucket, client, filename):
+        filename.write_text('saved to disk')
+
+    mock_save.side_effect = mock_save_effect
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/README.txt'},
+    ]
+    output_filepath = tmp_path / 'file.txt'
+
+    # Run
+    save_resource('single_table', 'dataset1', 'README.txt', output_filepath)
+
+    # Assert
+    assert output_filepath.exists()
+    assert output_filepath.read_text() == 'saved to disk'
