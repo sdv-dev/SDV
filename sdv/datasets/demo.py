@@ -73,7 +73,7 @@ def _get_data_from_bucket(object_key, bucket, client):
     return response['Body'].read()
 
 
-def _save_data_from_bucket(object_key, bucket, client, filename):
+def _save_data_from_bucket(object_key, bucket, client, output_filepath):
     """Save a file from an S3 bucket to the output_file.
 
     Args:
@@ -83,10 +83,14 @@ def _save_data_from_bucket(object_key, bucket, client, filename):
             The name of the bucket to get the object from.
         client (botocore.client.S3):
             S3 client.
-        filename (str):
+        output_filepath (str):
             The location to save the file to disk.
     """
-    response = client.download_file(Bucket=bucket, Key=object_key, Filename=filename)
+    parent = os.path.dirname(str(output_filepath))
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+
+    response = client.download_file(Bucket=bucket, Key=object_key, Filename=output_filepath)
     return response['Body'].read()
 
 
@@ -774,10 +778,9 @@ def _save_file_content(
         return None
 
     try:
-        parent = os.path.dirname(str(output_filepath))
-        if parent:
-            os.makedirs(parent, exist_ok=True)
-        _save_data_from_bucket(key, bucket=bucket, client=s3_client, filename=output_filepath)
+        _save_data_from_bucket(
+            key, bucket=bucket, client=s3_client, output_filepath=output_filepath
+        )
     except Exception:
         LOGGER.info(f'Error saving {filename} for dataset {dataset_name}.')
 

@@ -1742,8 +1742,8 @@ def test_save_resource(mock_list, mock_save, tmp_path):
     """Test it saves the file when it exists."""
 
     # Setup
-    def mock_save_effect(key, bucket, client, filename):
-        filename.write_text('saved to disk')
+    def mock_save_effect(key, bucket, client, output_filepath):
+        output_filepath.write_text('saved to disk')
 
     mock_save.side_effect = mock_save_effect
     mock_list.return_value = [
