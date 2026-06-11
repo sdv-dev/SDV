@@ -1,5 +1,12 @@
 # Release Notes
 
+## v1.37.1 - 2026-06-11
+
+### New Features
+
+* Add `load_constraints` utility function - Issue [#2902](https://github.com/sdv-dev/SDV/issues/2902) by @gsheni
+* Add `save_resource` function to save any file in demo bucket locally - Issue [#2901](https://github.com/sdv-dev/SDV/issues/2901) by @frances-h
+
 ## v1.37.0 - 2026-05-29
 
 ### New Features
