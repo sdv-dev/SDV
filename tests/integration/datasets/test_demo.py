@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from sdv.datasets.demo import download_demo, get_available_demos
+from sdv.datasets.demo import download_demo, get_available_demos, get_source, save_resource
 from sdv.metadata import Metadata
 
 
@@ -108,3 +108,19 @@ def test_download_demo_sequential(output_path, tmp_path):
         csv_files = list((output_folder_name / 'data').glob('*.csv'))
         assert len(csv_files) == 1
         assert csv_files[0].name == 'ArticularyWordRecognition.csv'
+
+
+def test_save_resource(tmp_path):
+    """Test saving an arbitary demo resource."""
+    # Setup
+    modality = 'single_table'
+    dataset_name = 'student_placements'
+    resource_filename = 'SOURCE.txt'
+    output_filepath = tmp_path / 'SOURCE.txt'
+    expected_source = get_source(modality, dataset_name)
+
+    # Run
+    save_resource(modality, dataset_name, resource_filename, output_filepath)
+
+    # Assert
+    assert output_filepath.read_text() == expected_source

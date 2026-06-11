@@ -507,6 +507,16 @@ def warn_load_deprecated():
     )
 
 
+def warn_set_constraints_deprecated():
+    """Warn that the `set_constraints` method on synthesizer is deprecated."""
+    deprecation_msg = (
+        'Warning: The `set_constraints` method is deprecated. '
+        'Please use the `load_constraints` utility function to load constraints from a file '
+        'and add them to the synthesizer with the `add_constraints` method.'
+    )
+    warnings.warn(deprecation_msg, FutureWarning)
+
+
 def _validate_correct_synthesizer_loading(synthesizer, cls):
     """Validate that the loaded synthesizer is of the correct type."""
     synthesizer_name = synthesizer.__class__.__name__

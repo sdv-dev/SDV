@@ -15,6 +15,7 @@ from sdv._utils import (
     check_synthesizer_version,
     generate_synthesizer_id,
 )
+from sdv.cag._utils import _load_constraints_from_file
 from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError
 from sdv.logging import get_sdv_logger
 from sdv.metadata.metadata import Metadata
@@ -198,3 +199,17 @@ def load_synthesizer(filepath):
     })
 
     return synthesizer
+
+
+def load_constraints(filepath):
+    """Load constraints from a file (JSON).
+
+    Args:
+        filepath (str):
+            The string path to the file containing the constraints to load.
+
+    Returns:
+        list[BaseConstraint]:
+            A list of constraint objects.
+    """
+    return _load_constraints_from_file(filepath)

@@ -73,6 +73,27 @@ def _get_data_from_bucket(object_key, bucket, client):
     return response['Body'].read()
 
 
+def _save_data_from_bucket(object_key, bucket, client, output_filepath):
+    """Save a file from an S3 bucket to the output_file.
+
+    Args:
+        object_key (str):
+            The key of the object to get.
+        bucket (str):
+            The name of the bucket to get the object from.
+        client (botocore.client.S3):
+            S3 client.
+        output_filepath (str):
+            The location to save the file to disk.
+    """
+    parent = os.path.dirname(str(output_filepath))
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+
+    response = client.download_file(Bucket=bucket, Key=object_key, Filename=output_filepath)
+    return response['Body'].read()
+
+
 def _get_dataset_name_from_prefix(prefix):
     return prefix.split('/')[1]
 
@@ -211,7 +232,7 @@ def _get_first_v1_metadata_bytes(contents, dataset_prefix, bucket, client):
     )
 
 
-def _download_text_file_error_message(
+def _download_file_error_message(
     modality,
     dataset_name,
     output_filepath=None,
@@ -666,7 +687,7 @@ def _save_document(text, output_filepath, filename, dataset_name):
         LOGGER.info(f'Error saving {filename} for dataset {dataset_name}.')
 
 
-@handle_aws_client_errors(_download_text_file_error_message)
+@handle_aws_client_errors(_download_file_error_message)
 def _get_text_file_content(
     modality, dataset_name, filename, output_filepath=None, bucket=PUBLIC_BUCKET, credentials=None
 ):
@@ -717,7 +738,53 @@ def _get_text_file_content(
     return text
 
 
-@handle_aws_client_errors(_download_text_file_error_message)
+@handle_aws_client_errors(_download_file_error_message)
+def _save_file_content(
+    modality, dataset_name, filename, output_filepath, bucket=PUBLIC_BUCKET, credentials=None
+):
+    """Fetch text file content under the dataset prefix.
+
+    Args:
+        modality (str):
+            The modality of the dataset: ``'single_table'``, ``'multi_table'``, ``'sequential'``.
+        dataset_name (str):
+            The name of the dataset.
+        filename (str):
+            The filename to fetch (``'README.txt'`` or ``'SOURCE.txt'``).
+        output_filepath (str):
+            Save the file contents at this path.
+        bucket (str):
+            The name of the bucket to download from. Only 'sdv-datasets-public' is supported in
+            SDV Community. SDV Enterprise is required for other buckets.
+        credentials (dict):
+            Dictionary containing DataCebo license key and username. It takes the form:
+            {
+                'username': 'example@datacebo.com',
+                'license_key': '<MY_LICENSE_KEY>'
+            }
+    """
+    _validate_modalities(modality)
+    if os.path.exists(str(output_filepath)):
+        raise ValueError(
+            f"A file named '{output_filepath}' already exists. Please specify a different filepath."
+        )
+
+    dataset_prefix = f'{modality}/{dataset_name}/'
+    s3_client = _create_s3_client(bucket=bucket, credentials=credentials)
+    contents = _list_objects(dataset_prefix, bucket=bucket, client=s3_client)
+    key = _find_text_key(contents, dataset_prefix, filename)
+    if not key:
+        _raise_warnings(filename, output_filepath)
+        return None
+
+    try:
+        _save_data_from_bucket(
+            key, bucket=bucket, client=s3_client, output_filepath=output_filepath
+        )
+    except Exception:
+        LOGGER.info(f'Error saving {filename} for dataset {dataset_name}.')
+
+
 def get_source(
     modality, dataset_name, output_filepath=None, s3_bucket_name=PUBLIC_BUCKET, credentials=None
 ):
@@ -784,6 +851,47 @@ def get_readme(
         modality=modality,
         dataset_name=dataset_name,
         filename='README.txt',
+        output_filepath=output_filepath,
+        bucket=s3_bucket_name,
+        credentials=credentials,
+    )
+
+
+def save_resource(
+    modality,
+    dataset_name,
+    resource_filename,
+    output_filepath,
+    s3_bucket_name='sdv-datasets-public',
+    credentials=None,
+):
+    """Save the resource to disk.
+
+    Args:
+        modality (str):
+            The modality of the dataset: ``'single_table'``, ``'multi_table'``, ``'sequential'``.
+        dataset_name (str):
+            The name of the dataset to get the README for.
+        resource_filename (str):
+            The name of the file to download from S3.
+        output_filepath (str or None):
+            Optional path where to save the file.
+        s3_bucket_name (str, optional):
+            The name of the bucket to download from. Only 'sdv-datasets-public' is supported in
+            SDV Community. SDV Enterprise is required for other buckets. Defaults to
+            'sdv-datasets-public'.
+        credentials (dict, optional):
+            Dictionary containing DataCebo license key and username. It takes the form:
+            {
+                'username': 'example@datacebo.com',
+                'license_key': '<MY_LICENSE_KEY>'
+            }
+            Defaults to None.
+    """
+    _save_file_content(
+        modality=modality,
+        dataset_name=dataset_name,
+        filename=resource_filename,
         output_filepath=output_filepath,
         bucket=s3_bucket_name,
         credentials=credentials,

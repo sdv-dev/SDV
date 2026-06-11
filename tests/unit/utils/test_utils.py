@@ -10,7 +10,12 @@ import pytest
 from sdv.errors import InvalidDataError
 from sdv.metadata import SingleTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
-from sdv.utils.utils import drop_unknown_references, get_random_sequence_subset, load_synthesizer
+from sdv.utils.utils import (
+    drop_unknown_references,
+    get_random_sequence_subset,
+    load_constraints,
+    load_synthesizer,
+)
 from tests.utils import catch_sdv_logs
 
 
@@ -553,3 +558,18 @@ def test_load_synthesizer(
         'SYNTHESIZER CLASS NAME': 'BaseMultiTableSynthesizer',
         'SYNTHESIZER ID': 'HMASynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
     })
+
+
+@patch('sdv.utils.utils._load_constraints_from_file')
+def test_load_constraints(mock_load_constraints_from_file):
+    """Test ``load_constraints`` function."""
+    # Setup
+    mock_constraint = Mock()
+    mock_load_constraints_from_file.return_value = [mock_constraint]
+
+    # Run
+    result = load_constraints('constraints.json')
+
+    # Assert
+    assert result == [mock_constraint]
+    mock_load_constraints_from_file.assert_called_once_with('constraints.json')

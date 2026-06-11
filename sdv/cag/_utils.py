@@ -1,5 +1,7 @@
 import importlib
+import json
 import re
+import traceback
 import warnings
 
 import numpy as np
@@ -269,3 +271,29 @@ def load_constraint_from_dict(constraint_dict):
         raise ValueError(f"Unknown `constraint_class` '{class_name}'.")
 
     return constraint_class.load_constraint_from_dict(parameters=parameters)
+
+
+def _load_constraints_from_file(filepath):
+    """Load constraints from a file (JSON).
+
+    Args:
+        filepath (str):
+            The string path to the file containing the constraints to load.
+
+    Returns:
+        list[BaseConstraint]:
+            A list of constraint objects.
+    """
+    with open(filepath, 'r') as f:
+        constraints_json = json.load(f)
+
+    constraint_list = []
+    for constraint_dict in constraints_json:
+        try:
+            constraint_list.append(load_constraint_from_dict(constraint_dict))
+        except Exception as e:
+            warnings.warn(
+                f'Could not load constraint ({constraint_dict}):\n'
+                f'    {traceback.format_exception_only(type(e), e)[0]}'
+            )
+    return constraint_list
