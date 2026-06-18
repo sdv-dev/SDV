@@ -1376,6 +1376,7 @@ class TestBaseSynthesizer:
         instance._validate_constraints_single_table.side_effect = lambda constraint: constraint
         constraint3.get_updated_metadata.side_effect = [ConstraintNotMetError, None]
         constraint4 = ProgrammableConstraint()
+        constraint4._is_single_table = True
         mock_harness = Mock()
         mock_programmable_constraint_harness.return_value = mock_harness
 

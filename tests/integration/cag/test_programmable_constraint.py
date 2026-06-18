@@ -13,6 +13,8 @@ from sdv.single_table import GaussianCopulaSynthesizer
 class IfTrueThenZero(ProgrammableConstraint):
     """Custom constraint that ensures that if a flag column is True."""
 
+    _is_single_table = True
+
     def __init__(self, target_column, flag_column, table_name=None):
         self.target_column = target_column
         self.flag_column = flag_column
@@ -64,6 +66,8 @@ class IfTrueThenZero(ProgrammableConstraint):
 @pytest.fixture
 def programmable_constraint():
     class MyConstraint(ProgrammableConstraint):
+        _is_single_table = True
+
         def __init__(self, column_names, table_name=None):
             self.column_names = column_names
             self.table_name = table_name
@@ -214,7 +218,7 @@ def test_end_to_end_deprecated_programmable_single_table_constraint(
     assert isinstance(constraints[0], deprecated_single_table_programmable_constraint)
 
 
-def test_end_to_end_simple_constraint_with_no_fit(programmable_constraint):
+def test_end_to_end_simple_constraint_with_no_fit():
     """Test using a programmable constraint without a fit method."""
     # Setup
     data, metadata = download_demo('single_table', 'fake_hotel_guests')
@@ -277,12 +281,3 @@ def test_get_updated_metadata_is_passed_metadata_copy(programmable_constraint):
     })
     expected_modified_metadata.add_column('has_rewards#room_type', sdtype='categorical')
     assert updated_metadata.to_dict() == expected_modified_metadata.to_dict()
-
-
-def test_single_table_programmable_constraint_backwards_compatible():
-    """Test that old-style SingleTableProgrammableConstraints still work."""
-    # Setup
-
-    # Run
-
-    # Assert

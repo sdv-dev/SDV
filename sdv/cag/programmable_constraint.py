@@ -10,7 +10,7 @@ from sdv.cag.base import BaseConstraint
 class ProgrammableConstraint:
     """Base class to create programmable constraints."""
 
-    _is_single_table = True
+    _is_single_table = False
 
     @classmethod
     def load_constraint_from_dict(cls, parameters):
