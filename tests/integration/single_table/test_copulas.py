@@ -22,7 +22,10 @@ from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, 
 from sdv.metadata.metadata import Metadata
 from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
-from tests.integration.single_table.custom_constraints import SingleTableIfTrueThenZero
+from tests.integration.single_table.custom_constraints import (
+    IfTrueThenZero,
+    SingleTableIfTrueThenZero,
+)
 
 
 def test_synthesize_table_gaussian_copula(tmp_path):
@@ -128,7 +131,16 @@ def test_synthesize_table_gaussian_copula(tmp_path):
     assert real_data.shape[1] == simulated_synthetic_data.shape[1]
 
 
-def test_adding_constraints(tmp_path):
+@pytest.mark.parametrize(
+    'programmable_constraint',
+    [
+        IfTrueThenZero(
+            column_names=['has_rewards', 'amenities_fee'], table_name='fake_hotel_guests'
+        ),
+        SingleTableIfTrueThenZero(column_names=['has_rewards', 'amenities_fee']),
+    ],
+)
+def test_adding_constraints(tmp_path, programmable_constraint):
     """End to end test for adding constraints to a ``BaseSingleTableSynthesizer``.
 
     The following functionalities are being tested:
@@ -161,8 +173,7 @@ def test_adding_constraints(tmp_path):
     assert all(~violations)
 
     # Load custom constraint class
-    rewards_member_no_fee = SingleTableIfTrueThenZero(column_names=['has_rewards', 'amenities_fee'])
-    synthesizer.add_constraints([rewards_member_no_fee])
+    synthesizer.add_constraints([programmable_constraint])
 
     # Re-Fit the model
     synthesizer.preprocess(real_data)
