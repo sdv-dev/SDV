@@ -157,13 +157,13 @@ class TestPARSynthesizer:
         synthesizer = PARSynthesizer(metadata=metadata, context_columns=['gender', 'measurement'])
 
         multi_table_programmable_constraint = ProgrammableConstraint()
-        multi_table_programmable_constraint._is_single_table = False
         multi_table_error_msg = re.escape(
             'Constraint `ProgrammableConstraint` is not compatible '
             'with the single table synthesizers.'
         )
 
         programmable_constraint = ProgrammableConstraint()
+        programmable_constraint._is_single_table = True
         constraint_1 = MockConstraint(column_names=['time'])
         constraint_2 = MockConstraint(column_names=['time', 'gender'])
         overlapping_error_msg = re.escape(
