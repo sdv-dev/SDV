@@ -6,7 +6,11 @@ import sdv.cag
 def test_all_available_constraints_included_in_constraint_test_list(constraints_as_dicts):
     """Test that all available constraints are included in the test list."""
     # Setup
-    skipped_cag_module_classes = ['ProgrammableConstraint', 'ConstraintList']
+    skipped_cag_module_classes = [
+        'ProgrammableConstraint',
+        'SingleTableProgrammableConstraint',
+        'ConstraintList',
+    ]
     available_constraints = inspect.getmembers(sdv.cag, lambda x: inspect.isclass(x))
 
     available_constraints = {

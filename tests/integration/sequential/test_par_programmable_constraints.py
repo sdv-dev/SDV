@@ -11,6 +11,8 @@ from sdv.sequential import PARSynthesizer
 class SimpleCustomConstraint(ProgrammableConstraint):
     """Simple custom constraint for testing."""
 
+    _is_single_table = True
+
     def __init__(self, column_name):
         self.column_name = column_name
         self.table_name = None
@@ -56,6 +58,8 @@ class SimpleCustomConstraint(ProgrammableConstraint):
 
 class ConditionalConstraint(ProgrammableConstraint):
     """Constraint that enforces conditional logic between columns."""
+
+    _is_single_table = True
 
     def __init__(self, flag_column, target_column):
         self.flag_column = flag_column
@@ -225,6 +229,8 @@ def test_constraint_with_context_columns(sample_sequential_data, sample_metadata
     synthesizer = PARSynthesizer(sample_metadata, context_columns=['has_condition'], epochs=1)
 
     class BooleanConstraint(ProgrammableConstraint):
+        _is_single_table = True
+
         def __init__(self, column_name):
             self.column_name = column_name
 

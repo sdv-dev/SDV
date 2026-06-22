@@ -7,6 +7,7 @@ from sdv.cag.range import Range
 from sdv.cag.one_hot_encoding import OneHotEncoding
 from sdv.cag.programmable_constraint import (
     ProgrammableConstraint,
+    SingleTableProgrammableConstraint,
 )
 
 __all__ = (
@@ -16,4 +17,5 @@ __all__ = (
     'Range',
     'OneHotEncoding',
     'ProgrammableConstraint',
+    'SingleTableProgrammableConstraint',
 )
