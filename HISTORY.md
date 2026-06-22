@@ -1,5 +1,11 @@
 # Release Notes
 
+## v1.37.2 - 2026-06-22
+
+### New Features
+
+* Add backwards compatibility for deprecated programmable constraint - Issue [#2909](https://github.com/sdv-dev/SDV/issues/2909) by @frances-h
+
 ## v1.37.1 - 2026-06-11
 
 ### New Features
