@@ -3,9 +3,9 @@ copulas==0.14.1
 ctgan==0.12.1
 deepecho==0.8.1
 graphviz==0.21
-numpy==2.4.6
+numpy==2.5.0
 pandas==2.3.3
 platformdirs==4.10.0
 rdt==1.21.0
 sdmetrics==0.28.0
-tqdm==4.67.3
+tqdm==4.68.3
