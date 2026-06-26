@@ -1,5 +1,7 @@
 """Programmable Constraint Integration Tests."""
 
+import json
+
 import pandas as pd
 import pytest
 
@@ -216,6 +218,67 @@ def test_end_to_end_deprecated_programmable_single_table_constraint(
     original_combinations = set(zip(data['has_rewards'], data['room_type']))
     assert set(zip(sampled_data['has_rewards'], sampled_data['room_type'])) == original_combinations
     assert isinstance(constraints[0], deprecated_single_table_programmable_constraint)
+
+
+def test_get_constraints_filepath_with_programmable_constraint(tmp_path):
+    """Test saving a synthesizer's programmable constraint to JSON."""
+
+    # Setup
+    class MySerializableConstraint(ProgrammableConstraint):
+        _is_single_table = True
+
+        def __init__(self, column_names, table_name=None):
+            self.column_names = column_names
+            self.table_name = table_name
+
+        def transform(self, data):
+            return data
+
+        def get_updated_metadata(self, metadata):
+            return metadata
+
+        def reverse_transform(self, transformed_data):
+            return transformed_data
+
+        def is_valid(self, synthetic_data):
+            return {
+                table: pd.Series(True, index=table_data.index)
+                for table, table_data in synthetic_data.items()
+            }
+
+    filepath = tmp_path / 'constraints.json'
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'guests': {
+                'columns': {
+                    'has_rewards': {'sdtype': 'boolean'},
+                    'room_type': {'sdtype': 'categorical'},
+                },
+            },
+        },
+    })
+    my_constraint = MySerializableConstraint(
+        column_names=['has_rewards', 'room_type'], table_name='guests'
+    )
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_constraints([my_constraint])
+
+    # Run
+    synthesizer.get_constraints(filepath=filepath)
+
+    # Assert
+    with open(filepath, 'r') as f:
+        saved_constraints = json.load(f)
+
+    assert saved_constraints == [
+        {
+            'class_name': 'MySerializableConstraint',
+            'parameters': {
+                'column_names': ['has_rewards', 'room_type'],
+                'table_name': 'guests',
+            },
+        },
+    ]
 
 
 def test_end_to_end_simple_constraint_with_no_fit():

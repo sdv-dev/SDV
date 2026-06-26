@@ -12,6 +12,35 @@ class ProgrammableConstraint:
 
     _is_single_table = False
 
+    def get_constraint_dict(self):
+        """Return the constraint as a serialiazable dict.
+
+        Returns:
+            dict:
+                A dictionary with the following keys:
+                    - `class_name` [str]: The name of the constraint class.
+                    - `parameters` [dict]: A dictionary of the init parameters used to
+                       create this constraint instance.
+        """
+        args = inspect.getfullargspec(self.__init__)
+        keys = args.args[1:]
+        instanced = {}
+        for key in keys:
+            if hasattr(self, key) or hasattr(self, f'_{key}'):
+                instanced[key] = getattr(self, key, getattr(self, f'_{key}', None))
+        missing_attrs = list(set(keys) - set(instanced.keys()))
+        if missing_attrs:
+            missing_attrs = sorted(missing_attrs)
+            raise AttributeError(
+                'Cannot convert constraint to dictionary because required parameters '
+                f'{missing_attrs} are not saved as attributes on the constraint.'
+            )
+
+        return {
+            'class_name': self.__class__.__name__,
+            'parameters': instanced,
+        }
+
     @classmethod
     def load_constraint_from_dict(cls, parameters):
         """Uses the given parameters to recreate an instance of the constraint."""
@@ -160,25 +189,7 @@ class ProgrammableConstraintHarness(BaseConstraint):
                     - `parameters` [dict]: A dictionary of the init parameters used to
                        create this constraint instance.
         """
-        args = inspect.getfullargspec(self.programmable_constraint.__init__)
-        keys = args.args[1:]
-        instanced = {}
-        constraint = self.programmable_constraint
-        for key in keys:
-            if hasattr(constraint, key) or hasattr(constraint, f'_{key}'):
-                instanced[key] = getattr(constraint, key, getattr(constraint, f'_{key}', None))
-        missing_attrs = list(set(keys) - set(instanced.keys()))
-        if missing_attrs:
-            missing_attrs = sorted(missing_attrs)
-            raise AttributeError(
-                'Cannot convert constraint to dictionary because required parameters '
-                f'{missing_attrs} are not saved as attributes on the constraint.'
-            )
-
-        return {
-            'class_name': self.programmable_constraint.__class__.__name__,
-            'parameters': instanced,
-        }
+        return self.programmable_constraint.get_constraint_dict()
 
     def _validate_constraint_with_metadata(self, metadata):
         if self._is_programmable_single_table_constraint and len(metadata.tables) != 1:
