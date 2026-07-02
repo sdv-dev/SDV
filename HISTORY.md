@@ -1,5 +1,11 @@
 # Release Notes
 
+## v1.37.3 - 2026-07-02
+
+### Bugs Fixed
+
+* Unable to call `get_constraints` when using a `ColumnFormula` constraint - Issue [#2915](https://github.com/sdv-dev/SDV/issues/2915) by @fealho
+
 ## v1.37.2 - 2026-06-22
 
 ### New Features
