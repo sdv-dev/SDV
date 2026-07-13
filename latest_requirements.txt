@@ -8,4 +8,4 @@ pandas==2.3.3
 platformdirs==4.10.0
 rdt==1.21.0
 sdmetrics==0.28.0
-tqdm==4.68.3
+tqdm==4.68.4
