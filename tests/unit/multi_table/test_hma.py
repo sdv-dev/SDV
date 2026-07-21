@@ -11,14 +11,18 @@ from sdv.multi_table.hma import (
     HMASynthesizer,
 )
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
-from tests.utils import get_multi_table_data, get_multi_table_metadata
+from tests.utils import (
+    get_multi_table_data,
+    get_multi_table_metadata,
+    get_simplified_multi_table_metadata,
+)
 
 
 class TestHMASynthesizer:
     def test___init__(self):
         """Test the default initialization of the ``HMASynthesizer``."""
         # Run
-        metadata = get_multi_table_metadata()
+        metadata = get_simplified_multi_table_metadata()
         metadata.validate = Mock()
         instance = HMASynthesizer(metadata)
 
@@ -28,7 +32,7 @@ class TestHMASynthesizer:
         assert isinstance(instance._table_synthesizers['oseba'], GaussianCopulaSynthesizer)
         assert isinstance(instance._table_synthesizers['upravna_enota'], GaussianCopulaSynthesizer)
         assert instance._table_parameters == {
-            'nesreca': {'default_distribution': 'norm'},
+            'nesreca': {'default_distribution': 'beta'},
             'oseba': {'default_distribution': 'norm'},
             'upravna_enota': {'default_distribution': 'beta'},
         }
@@ -41,7 +45,7 @@ class TestHMASynthesizer:
         numerical_distribution_parameters = {
             'numerical_distributions': {'id_nesreca': 'gaussian_kde'}
         }
-        metadata = get_multi_table_metadata()
+        metadata = get_simplified_multi_table_metadata()
         instance = HMASynthesizer(metadata)
 
         # Run and Assert
@@ -63,7 +67,7 @@ class TestHMASynthesizer:
         and parameters from a trained ``copulas.univariate`` model.
         """
         # Setup
-        metadata = get_multi_table_metadata()
+        metadata = get_simplified_multi_table_metadata()
         child_table = pd.DataFrame({'id_nesreca': [0, 1, 2, 3], 'upravna_enota': [0, 1, 2, 3]})
         instance = HMASynthesizer(metadata)
 
@@ -72,6 +76,8 @@ class TestHMASynthesizer:
 
         # Assert
         expected = pd.DataFrame({
+            '__nesreca__upravna_enota__univariates__id_nesreca__a': [1.0] * 4,
+            '__nesreca__upravna_enota__univariates__id_nesreca__b': [1.0] * 4,
             '__nesreca__upravna_enota__univariates__id_nesreca__loc': [0.0, 1.0, 2.0, 3.0],
             '__nesreca__upravna_enota__univariates__id_nesreca__scale': [np.nan] * 4,
             '__nesreca__upravna_enota__num_rows': [1.0, 1.0, 1.0, 1.0],
@@ -82,7 +88,7 @@ class TestHMASynthesizer:
     def test__get_distributions(self):
         """Test the ``_get_distributions`` method."""
         # Setup
-        metadata = get_multi_table_metadata()
+        metadata = get_simplified_multi_table_metadata()
         instance = HMASynthesizer(metadata)
         instance.get_table_parameters = Mock()
         instance.get_table_parameters.side_effect = [
@@ -98,62 +104,41 @@ class TestHMASynthesizer:
         expected = {'nesreca': 'gamma', 'oseba': None, 'upravna_enota': None}
         assert result == expected
 
-    @patch('sdv.multi_table.hma.HMASynthesizer._estimate_num_columns')
-    @patch('sdv.multi_table.hma.HMASynthesizer._get_distributions')
-    def test__print_estimate_warning(self, get_distributions_mock, estimate_mock, capsys):
-        """Test that a warning appears if there are more than 1000 expected columns"""
+    def test__complex_schema_too_many_tables_error(self):
+        """Test that an error occurs if there are more than 5 tables."""
         # Setup
-        metadata = get_multi_table_metadata()
-        estimate_mock.side_effect = [{'nesreca': 2000}, {'nesreca': 10}]
-
-        key_phrases = [
-            r'PerformanceAlert:',
-            r'large number of columns.',
-            r'please visit datacebo.com and reach out to us for enterprise solutions.',
-        ]
-
-        # Run
-        HMASynthesizer(metadata)
-        captured = capsys.readouterr()
-
-        # Assert
-        get_distributions_mock.assert_called_once()
-        for constraint in key_phrases:
-            match = re.search(constraint, captured.out + captured.err)
-            assert match is not None
-
-        # Run
-        HMASynthesizer(metadata)
-        captured = capsys.readouterr()
-
-        # Assert that small amount of columns don't trigger the message
-        for constraint in key_phrases:
-            match = re.search(constraint, captured.out + captured.err)
-            assert match is None
-
-    @patch('sdv.multi_table.hma.HMASynthesizer._estimate_num_columns')
-    @patch('sdv.multi_table.hma.HMASynthesizer._get_distributions')
-    def test__print_estimate_warning_many_cols(self, get_distributions_mock, estimate_mock, capsys):
-        """Test that a warning appears if there are more than 1_000_000 expected columns"""
-        # Setup
-        metadata = get_multi_table_metadata()
-        estimate_mock.side_effect = [{'nesreca': 1_000_010}, {'nesreca': 10}]
-
-        # Run
-        HMASynthesizer(metadata)
-        captured = capsys.readouterr()
-
-        # Assert
-        expected_output = (
-            'PerformanceAlert: Using the HMASynthesizer on this metadata schema is not recommended.'
-            ' To model this data, HMA will generate a large number of columns. (1000000+ columns)\n'
-            '\n\nTable Name  # Columns in Metadata  Est # Columns\n'
-            '   nesreca                      1        1000000\n\n'
-            "We recommend simplifying your metadata schema using 'sdv.utils.poc.simplify_schema'."
-            '\nIf this is not possible, please visit datacebo.com and reach out to us for '
-            'enterprise solutions.\n\n'
+        metadata = Metadata.load_from_dict({
+            'tables': {f'table{i}': {'columns': {'col': {'sdtype': 'id'}}} for i in range(6)}
+        })
+        expected_error = re.escape(
+            'HMASynthesizer is not designed to handle a schema with more than 5 tables or '
+            'relationship depth greater than 2.\n'
+            'Please use SDV Enterprise to model this schema.\n\n'
+            'SDV Enterprise provides access to synthesizers that can easily scale with the '
+            'amount of data and complexity of your schema.\n\n'
+            'For more information, visit datacebo.com'
         )
-        assert captured.out == expected_output
+
+        # Run and Assert
+        with pytest.raises(SynthesizerInputError, match=expected_error):
+            HMASynthesizer(metadata)
+
+    def test__complex_schema_depth_error(self):
+        """Test that an error occurs if the depth is greater than 2."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        expected_error = re.escape(
+            'HMASynthesizer is not designed to handle a schema with more than 5 tables or '
+            'relationship depth greater than 2.\n'
+            'Please use SDV Enterprise to model this schema.\n\n'
+            'SDV Enterprise provides access to synthesizers that can easily scale with the '
+            'amount of data and complexity of your schema.\n\n'
+            'For more information, visit datacebo.com'
+        )
+
+        # Run and Assert
+        with pytest.raises(SynthesizerInputError, match=expected_error):
+            HMASynthesizer(metadata)
 
     def test__get_extension_foreign_key_only(self):
         """Test the ``_get_extension`` method.
@@ -223,7 +208,7 @@ class TestHMASynthesizer:
         This also updates ``self._augmented_tables`` and ``self._max_child_rows``.
         """
         # Setup
-        metadata = get_multi_table_metadata()
+        metadata = get_simplified_multi_table_metadata()
         instance = HMASynthesizer(metadata)
         metadata.add_column('value', 'nesreca', sdtype='numerical')
         metadata.add_column('oseba_value', 'oseba', sdtype='numerical')
@@ -257,7 +242,7 @@ class TestHMASynthesizer:
         assert instance._augmented_tables == ['oseba', 'nesreca']
         assert instance._max_child_rows['__oseba__id_nesreca__num_rows'] == 1
         mock_get_pbar_args.assert_called_once_with(
-            desc="(1/3) Tables 'nesreca' and 'oseba' ('id_nesreca')"
+            desc="(1/2) Tables 'nesreca' and 'oseba' ('id_nesreca')"
         )
 
     def test__pop_foreign_keys(self):
@@ -337,7 +322,7 @@ class TestHMASynthesizer:
         instance._get_pbar_args.return_value = {'desc': 'Modeling Tables'}
         instance._default_parameters = {}
 
-        metadata = get_multi_table_metadata()
+        metadata = get_simplified_multi_table_metadata()
         instance.metadata = metadata
         instance._table_sizes = {'upravna_enota': 3}
         instance._table_synthesizers = {
@@ -381,7 +366,7 @@ class TestHMASynthesizer:
     def test__augment_tables(self):
         """Test that ``_fit`` calls ``_model_tables`` only if the table has no parents."""
         # Setup
-        metadata = get_multi_table_metadata()
+        metadata = get_simplified_multi_table_metadata()
         instance = HMASynthesizer(metadata)
         instance._augment_table = Mock()
         data = get_multi_table_data()
@@ -806,7 +791,7 @@ class TestHMASynthesizer:
         distribution and its parameters.
         """
         # Setup
-        metadata = get_multi_table_metadata()
+        metadata = get_simplified_multi_table_metadata()
         instance = HMASynthesizer(metadata)
         data = {
             'nesreca': pd.DataFrame({
@@ -840,7 +825,7 @@ class TestHMASynthesizer:
     def test_get_learned_distributions_raises_an_error(self):
         """Test that ``get_learned_distributions`` raises an error."""
         # Setup
-        metadata = get_multi_table_metadata()
+        metadata = get_simplified_multi_table_metadata()
         metadata.add_column('value', 'nesreca', sdtype='numerical')
         metadata.add_column('value', 'oseba', sdtype='numerical')
         metadata.add_column('a_value', 'upravna_enota', sdtype='numerical')
@@ -856,7 +841,7 @@ class TestHMASynthesizer:
     def test_get_parameters(self):
         """Test that the synthesizer's parameters are being returned."""
         # Setup
-        metadata = get_multi_table_metadata()
+        metadata = get_simplified_multi_table_metadata()
         instance = HMASynthesizer(metadata, locales='en_CA')
 
         # Run
@@ -1129,6 +1114,7 @@ class TestHMASynthesizer:
                 },
             ],
         })
+        HMASynthesizer._validate_schema_complexity = Mock()
         synthesizer = HMASynthesizer(metadata)
         synthesizer.set_table_parameters(
             table_name='child_norm', table_parameters={'default_distribution': 'norm'}
@@ -1272,6 +1258,7 @@ class TestHMASynthesizer:
                 },
             ],
         })
+        HMASynthesizer._validate_schema_complexity = Mock()
         synthesizer = HMASynthesizer(metadata)
         synthesizer._finalize = Mock(return_value=data)
         distributions = synthesizer._get_distributions()
@@ -1385,6 +1372,7 @@ class TestHMASynthesizer:
                 },
             ],
         })
+        HMASynthesizer._validate_schema_complexity = Mock()
         synthesizer = HMASynthesizer(metadata)
         synthesizer._finalize = Mock(return_value=data)
         distributions = synthesizer._get_distributions()

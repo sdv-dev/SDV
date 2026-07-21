@@ -44,12 +44,6 @@ def data_metadata_1_to_1(fake_hotels):
 
     metadata_dict['relationships'] = [
         {
-            'parent_table_name': 'hotels',
-            'parent_primary_key': 'hotel_id',
-            'child_table_name': 'guests',
-            'child_foreign_key': 'hotel_id',
-        },
-        {
             'parent_table_name': 'guests',
             'parent_primary_key': 'guest_email',
             'child_table_name': 'rooms',
