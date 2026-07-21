@@ -187,6 +187,7 @@ PLOT_FUNCTIONS = {
     'get_column_plot': get_column_plot,
 }
 
+
 def __getattr__(name):
     if name in DEPRECATED_EVALUATION_FUNCTIONS:
         warnings.warn(
