@@ -181,14 +181,22 @@ DEPRECATED_EVALUATION_FUNCTIONS = {
     'run_diagnostic': run_diagnostic,
 }
 
+PLOT_FUNCTIONS = {
+    'get_cardinality_plot': get_cardinality_plot,
+    'get_column_pair_plot': get_column_pair_plot,
+    'get_column_plot': get_column_plot,
+}
 
 def __getattr__(name):
-    if name not in DEPRECATED_EVALUATION_FUNCTIONS:
+    if name in DEPRECATED_EVALUATION_FUNCTIONS:
+        warnings.warn(
+            "The evaluation functions are now accessible via the 'sdv.evaluation' module.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        return DEPRECATED_EVALUATION_FUNCTIONS.get(name)
+
+    if name not in PLOT_FUNCTIONS:
         raise AttributeError(f'module {__name__!r} has no attribute {name!r}')
 
-    warnings.warn(
-        "The evaluation functions are now accessible via the 'sdv.evaluation' module.",
-        FutureWarning,
-        stacklevel=2,
-    )
-    return DEPRECATED_EVALUATION_FUNCTIONS.get(name)
+    return PLOT_FUNCTIONS.get(name)
