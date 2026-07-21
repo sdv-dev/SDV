@@ -9,7 +9,7 @@ from sdv.evaluation._utils import _prepare_data_visualization
 from sdv.metadata.metadata import Metadata
 
 DEFAULT_SINGLE_TABLE_NAME = 'table'
-ALLOWED_TYPES = frozenset([pd.DataFrame, dict])
+ALLOWED_TYPES = (pd.DataFrame, dict)
 
 
 def _validate_data_type(data, argument_name):
