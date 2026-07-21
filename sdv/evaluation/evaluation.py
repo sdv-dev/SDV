@@ -1,4 +1,4 @@
-"""Methods to compare the real and synthetic data for single-table."""
+"""Methods to compare the real and synthetic data."""
 
 import pandas as pd
 from sdmetrics.reports import DiagnosticReport, QualityReport
