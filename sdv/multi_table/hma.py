@@ -10,7 +10,7 @@ import pandas as pd
 from rdt.transformers import FloatFormatter
 from tqdm import tqdm
 
-from sdv._utils import _get_root_tables
+from sdv._utils import _get_max_child_depth, _get_root_tables
 from sdv.errors import SynthesizerInputError
 from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.sampling import BaseHierarchicalSampler
@@ -184,6 +184,29 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             table_name: sum(columns_list) for table_name, columns_list in columns_per_table.items()
         }
 
+    @staticmethod
+    def _get_max_schema_depth(metadata):
+        """Calculate the maximum depth of the schema.
+
+        This method traverses all relationships and returns the length of the longest relationship
+        chain between tables.
+
+        Args:
+            metadata (sdv.Metadata):
+                Metadata representing the data tables this synthesizer will be used for.
+
+        Returns:
+            int:
+                The maximum depth of the schema.
+        """
+        max_depth = 1
+        child_map = metadata._get_child_map()
+        for root_table in _get_root_tables(metadata.relationships):
+            root_depth = _get_max_child_depth(child_map, root_table)
+            max_depth = root_depth if root_depth > max_depth else max_depth
+
+        return max_depth
+
     def __init__(self, metadata, locales=['en_US'], verbose=True):
         BaseMultiTableSynthesizer.__init__(self, metadata, locales=locales)
         self._table_sizes = {}
@@ -203,7 +226,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             child_tables.add(relationship['child_table_name'])
         for child_table_name in child_tables:
             self.set_table_parameters(child_table_name, {'default_distribution': 'norm'})
-        self._print_estimate_warning()
+        self._validate_schema_complexity()
 
     def set_table_parameters(self, table_name, table_parameters):
         """Update the table's synthesizer instantiation parameters.
@@ -260,42 +283,20 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
         return distributions
 
-    def _print_estimate_warning(self):
-        total_est_cols = 0
-        metadata_columns = self._get_num_data_columns(self.metadata)
-        print_table = []
-        distributions = self._get_distributions()
-        estimated_columns = self._estimate_num_columns(self.metadata, distributions)
-        for table, est_cols in estimated_columns.items():
-            entry = []
-            entry.append(table)
-            entry.append(sum(metadata_columns[table]))
-            total_est_cols += est_cols
-            entry.append(min(est_cols, PERFORMANCE_ALERT_DISPLAY_CAP))
-            print_table.append(entry)
+    def _validate_schema_complexity(self):
+        num_tables = len(self.metadata.tables)
+        schema_depth = self._get_max_schema_depth(self.metadata)
 
-        if total_est_cols > MAX_NUMBER_OF_COLUMNS:
-            display_total = (
-                f'{PERFORMANCE_ALERT_DISPLAY_CAP}+'
-                if total_est_cols > PERFORMANCE_ALERT_DISPLAY_CAP
-                else f'{total_est_cols}'
+        if num_tables > 5 or schema_depth > 2:
+            error_msg = (
+                'HMASynthesizer is not designed to handle a schema with more than 5 tables or '
+                'relationship depth greater than 2.\n'
+                'Please use SDV Enterprise to model this schema.\n\n'
+                'SDV Enterprise provides access to synthesizers that can easily scale with the '
+                'amount of data and complexity of your schema.\n\n'
+                'For more information, visit datacebo.com'
             )
-            self._print(
-                'PerformanceAlert: Using the HMASynthesizer on this metadata '
-                'schema is not recommended. To model this data, HMA will '
-                f'generate a large number of columns. ({display_total} columns)\n\n'
-            )
-            self._print(
-                pd.DataFrame(
-                    print_table, columns=['Table Name', '# Columns in Metadata', 'Est # Columns']
-                ).to_string(index=False)
-                + '\n'
-            )
-            self._print(
-                'We recommend simplifying your metadata schema using '
-                "'sdv.utils.poc.simplify_schema'.\nIf this is not possible, please visit "
-                'datacebo.com and reach out to us for enterprise solutions.\n'
-            )
+            raise SynthesizerInputError(error_msg)
 
     def preprocess(self, data):
         """Transform the raw data to numerical space.
