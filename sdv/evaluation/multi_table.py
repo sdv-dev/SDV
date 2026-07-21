@@ -178,9 +178,6 @@ def get_cardinality_plot(
 
 DEPRECATED_EVALUATION_FUNCTIONS = {
     'evaluate_quality': evaluate_quality,
-    'get_cardinality_plot': get_cardinality_plot,
-    'get_column_pair_plot': get_column_pair_plot,
-    'get_column_plot': get_column_plot,
     'run_diagnostic': run_diagnostic,
 }
 

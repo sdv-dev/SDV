@@ -171,8 +171,6 @@ def get_column_pair_plot(
 
 DEPRECATED_EVALUATION_FUNCTIONS = {
     'evaluate_quality': evaluate_quality,
-    'get_column_pair_plot': get_column_pair_plot,
-    'get_column_plot': get_column_plot,
     'run_diagnostic': run_diagnostic,
 }
 
