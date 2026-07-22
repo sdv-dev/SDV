@@ -1,9 +1,26 @@
+import importlib
+
 import pandas as pd
 import pytest
 
 from sdv.datasets.demo import download_demo
 from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, run_diagnostic
 from sdv.metadata.metadata import Metadata
+
+
+@pytest.mark.parametrize('function_name', ['evaluate_quality', 'run_diagnostic'])
+def test_importing_function_raises_future_warning(function_name):
+    """Test that deprecated evaluation functions produce a FutureWarning."""
+    # Setup
+    module = importlib.import_module('sdv.evaluation.multi_table')
+
+    # Run and Assert
+    with pytest.warns(
+        FutureWarning,
+        match=r'The evaluation functions are now accessible via the '
+        r"'sdv\.evaluation' module\.",
+    ):
+        getattr(module, function_name)
 
 
 def test_evaluation():

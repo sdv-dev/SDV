@@ -9,7 +9,7 @@ from sdmetrics.reports.multi_table.quality_report import QualityReport
 import sdv.evaluation.single_table as single_table_visualization
 
 
-def evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
+def _evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
     """Evaluate the quality of the synthetic data.
 
     Args:
@@ -32,7 +32,7 @@ def evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
     return quality_report
 
 
-def run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
+def _run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
     """Run diagnostic report for the synthetic data.
 
     Args:
@@ -177,8 +177,8 @@ def get_cardinality_plot(
 
 
 DEPRECATED_EVALUATION_FUNCTIONS = {
-    'evaluate_quality': evaluate_quality,
-    'run_diagnostic': run_diagnostic,
+    'evaluate_quality': _evaluate_quality,
+    'run_diagnostic': _run_diagnostic,
 }
 
 PLOT_FUNCTIONS = {
