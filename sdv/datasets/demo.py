@@ -764,7 +764,7 @@ def _save_file_content(
         dataset_name (str):
             The name of the dataset.
         filename (str):
-            The filename to fetch (``'README.txt'`` or ``'SOURCE.txt'`` or ``'schemas/postgre.sql'``).
+            The filename to fetch (``'README.txt'`` or ``'SOURCE.txt'`, ``'schemas/postgre.sql'``).
         output_filepath (str):
             Save the file contents at this path.
         bucket (str):
