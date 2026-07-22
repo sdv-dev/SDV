@@ -655,6 +655,56 @@ class TestMultiTableMetadata:
         # Assert
         assert set(result) == {'user_id', 'session_id', 'transaction_id'}
 
+    def test__get_max_schema_depth(self):
+        """Test returning the maximum depth of the schema."""
+        # Setup
+        metadata = Metadata()
+        metadata.relationships = [
+            {
+                'parent_table_name': 'root',
+                'child_table_name': 'child',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'id',
+            },
+            {
+                'parent_table_name': 'root',
+                'child_table_name': 'child',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'id',
+            },
+            {
+                'parent_table_name': 'root',
+                'child_table_name': 'grandchild',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'id',
+            },
+            {
+                'parent_table_name': 'child',
+                'child_table_name': 'grandchild',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'id',
+            },
+        ]
+
+        # Run
+        max_schema_depth = metadata._get_max_schema_depth()
+
+        # Assert
+        max_schema_depth == 3
+
+    def test__get_max_schema_depth_no_children(self):
+        """Test returning the maximum depth of the schema when no tables have children."""
+        # Setup
+        instance = Mock()
+        instance._get_child_map.return_value = {}
+        instance.relationships = []
+
+        # Run
+        max_schema_depth = MultiTableMetadata._get_max_schema_depth(instance)
+
+        # Assert
+        max_schema_depth == 1
+
     def test_add_relationship(self):
         """Test the ``add_relationship`` method of ``MultiTableMetadata``.
 

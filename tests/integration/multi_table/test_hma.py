@@ -655,10 +655,32 @@ class TestHMASynthesizer:
             match = re.search(constraint, captured.out + captured.err)
             assert match is not None
 
-    def test_error_complex_schema(self):
-        """Test that an error occurs if the schema is too complex."""
+    def test_error_complex_schema_depth(self):
+        """Test that an error occurs if the schema is too deep."""
         # Setup
         metadata = get_multi_table_metadata()
+
+        # Run
+        expected_msg = re.escape(
+            'HMASynthesizer is not designed to handle a schema with more than 5 tables or '
+            'relationship depth greater than 2.\n'
+            'Please use SDV Enterprise to model this schema.\n\n'
+            'SDV Enterprise provides access to synthesizers that can easily scale with the '
+            'amount of data and complexity of your schema.\n\n'
+            'For more information, visit datacebo.com'
+        )
+        with pytest.raises(SynthesizerInputError, match=expected_msg):
+            HMASynthesizer(metadata)
+
+    def test_error_complex_schema_num_tables(self):
+        """Test that an error occurs if the schema has too many tables."""
+        # Setup
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                f'table_{i}': {'columns': {'col': {'sdtype': 'id'}}}
+                for i in range(6)
+            }
+        })
 
         # Run
         expected_msg = re.escape(

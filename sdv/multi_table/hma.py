@@ -10,7 +10,7 @@ import pandas as pd
 from rdt.transformers import FloatFormatter
 from tqdm import tqdm
 
-from sdv._utils import _get_max_child_depth, _get_root_tables
+from sdv._utils import _get_root_tables
 from sdv.errors import SynthesizerInputError
 from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.sampling import BaseHierarchicalSampler
@@ -184,29 +184,6 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             table_name: sum(columns_list) for table_name, columns_list in columns_per_table.items()
         }
 
-    @staticmethod
-    def _get_max_schema_depth(metadata):
-        """Calculate the maximum depth of the schema.
-
-        This method traverses all relationships and returns the length of the longest relationship
-        chain between tables.
-
-        Args:
-            metadata (sdv.Metadata):
-                Metadata representing the data tables this synthesizer will be used for.
-
-        Returns:
-            int:
-                The maximum depth of the schema.
-        """
-        max_depth = 1
-        child_map = metadata._get_child_map()
-        for root_table in _get_root_tables(metadata.relationships):
-            root_depth = _get_max_child_depth(child_map, root_table)
-            max_depth = root_depth if root_depth > max_depth else max_depth
-
-        return max_depth
-
     def __init__(self, metadata, locales=['en_US'], verbose=True):
         BaseMultiTableSynthesizer.__init__(self, metadata, locales=locales)
         self._table_sizes = {}
@@ -285,7 +262,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
     def _validate_schema_complexity(self):
         num_tables = len(self.metadata.tables)
-        schema_depth = self._get_max_schema_depth(self.metadata)
+        schema_depth = self.metadata._get_max_schema_depth()
 
         if num_tables > 5 or schema_depth > 2:
             error_msg = (
