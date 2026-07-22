@@ -1832,3 +1832,27 @@ def test_save_resource_without_output_filepath(mock_save):
         )
 
     mock_save.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ('resource_filepath', 'error_type', 'error_message'),
+    [
+        (1, TypeError, '`resource_filepath` must be a string.'),
+        ('', ValueError, '`resource_filepath` cannot be empty.'),
+        (
+            '/schemas/postgre.sql',
+            ValueError,
+            "`resource_filepath` must be relative to the dataset and cannot begin with '/'.",
+        ),
+    ],
+)
+def test_save_resource_with_invalid_resource_filepath(resource_filepath, error_type, error_message):
+    """Test it errors for an invalid resource filepath."""
+    # Run and Assert
+    with pytest.raises(error_type, match=re.escape(error_message)):
+        save_resource(
+            modality='single_table',
+            dataset_name='dataset1',
+            resource_filepath=resource_filepath,
+            output_filepath='output.txt',
+        )

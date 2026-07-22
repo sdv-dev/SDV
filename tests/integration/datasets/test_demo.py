@@ -210,3 +210,20 @@ def test_save_resource_both_resource_filepath_resource_filename():
             output_filepath='SOURCE.txt',
             resource_filename='SOURCE.txt',
         )
+
+
+def test_save_resource_resource_filepath_with_leading_slash(tmp_path):
+    """Test a resource filepath with a leading slash errors."""
+    # Setup
+    error_msg = re.escape(
+        "`resource_filepath` must be relative to the dataset and cannot begin with '/'."
+    )
+
+    # Run and Assert
+    with pytest.raises(ValueError, match=error_msg):
+        save_resource(
+            modality='multi_table',
+            dataset_name='synthea',
+            resource_filepath='/schemas/postgre.sql',
+            output_filepath=tmp_path / 'postgre.sql',
+        )

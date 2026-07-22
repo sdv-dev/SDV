@@ -640,6 +640,20 @@ def _find_text_key(contents, dataset_prefix, filename):
     return None
 
 
+def _validate_resource_filepath(resource_filepath):
+    """Validate a resource filepath is a string, not undefined and does not begin with slash."""
+    if not isinstance(resource_filepath, str):
+        raise TypeError('`resource_filepath` must be a string.')
+
+    if not resource_filepath:
+        raise ValueError('`resource_filepath` cannot be empty.')
+
+    if resource_filepath.startswith('/'):
+        raise ValueError(
+            "`resource_filepath` must be relative to the dataset and cannot begin with '/'."
+        )
+
+
 def _validate_text_file_content(modality, output_filepath, filename):
     """Validation for the text file content method."""
     _validate_modalities(modality)
@@ -750,7 +764,7 @@ def _save_file_content(
         dataset_name (str):
             The name of the dataset.
         filename (str):
-            The filename to fetch (``'README.txt'`` or ``'SOURCE.txt'``).
+            The filename to fetch (``'README.txt'`` or ``'SOURCE.txt'`` or ``'schemas/postgre.sql'``).
         output_filepath (str):
             Save the file contents at this path.
         bucket (str):
@@ -914,6 +928,7 @@ def save_resource(
         warnings.warn(deprecation_msg, FutureWarning)
         resource_filepath = resource_filename
 
+    _validate_resource_filepath(resource_filepath)
     _save_file_content(
         modality=modality,
         dataset_name=dataset_name,
