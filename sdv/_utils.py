@@ -551,3 +551,15 @@ def _get_unreferenced_keys(parent_columns, child_columns):
 def _validate_boolean_parameter(parameter, parameter_name):
     if not isinstance(parameter, bool):
         raise ValueError(f"'{parameter_name}' must be a boolean value.")
+
+
+def _check_is_dict_of_dataframes(data, arg_name='data'):
+    error_message_data = (
+        f"'{arg_name}' must be a dictionary that maps table names to pandas DataFrames."
+    )
+    if not isinstance(data, dict):
+        raise ValueError(error_message_data)
+
+    for table_name, table in data.items():
+        if not isinstance(table, pd.DataFrame):
+            raise ValueError(error_message_data)
