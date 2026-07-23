@@ -1757,3 +1757,102 @@ def test_save_resource(mock_list, mock_save, tmp_path):
     # Assert
     assert output_filepath.exists()
     assert output_filepath.read_text() == 'saved to disk'
+
+
+@patch('sdv.datasets.demo._save_file_content')
+def test_save_resource_with_deprecated_resource_filename(mock_save):
+    """Test it supports and warns for the deprecated ``resource_filename`` parameter."""
+    # Setup
+    warning_msg = re.escape(
+        'Warning: The `resource_filename` parameter is deprecated. '
+        'Please use the `resource_filepath` parameter instead.'
+    )
+
+    # Run and Assert
+    with pytest.warns(FutureWarning, match=warning_msg):
+        save_resource(
+            modality='single_table',
+            dataset_name='dataset1',
+            resource_filename='README.txt',
+            output_filepath='output.txt',
+        )
+    mock_save.assert_called_once_with(
+        modality='single_table',
+        dataset_name='dataset1',
+        filename='README.txt',
+        output_filepath='output.txt',
+        bucket='sdv-datasets-public',
+        credentials=None,
+    )
+
+
+@patch('sdv.datasets.demo._save_file_content')
+def test_save_resource_with_both_resource_parameters(mock_save):
+    """Test it errors if both ``resource_filepath`` and ``resource_filename`` are provided."""
+    # Setup
+    error_msg = re.escape(
+        'Cannot use both `resource_filepath` and `resource_filename`. '
+        'Please use only `resource_filepath`.'
+    )
+
+    # Run and Assert
+    with pytest.raises(ValueError, match=error_msg):
+        save_resource(
+            modality='single_table',
+            dataset_name='dataset1',
+            resource_filepath='README.txt',
+            resource_filename='SOURCE.txt',
+            output_filepath='output.txt',
+        )
+    mock_save.assert_not_called()
+
+
+@patch('sdv.datasets.demo._save_file_content')
+def test_save_resource_without_resource_filepath(mock_save):
+    """Test it errors if ``resource_filepath`` is not provided."""
+    # Run and Assert
+    with pytest.raises(ValueError, match='Please provide a `resource_filepath`.'):
+        save_resource(
+            modality='single_table',
+            dataset_name='dataset1',
+            output_filepath='output.txt',
+        )
+    mock_save.assert_not_called()
+
+
+@patch('sdv.datasets.demo._save_file_content')
+def test_save_resource_without_output_filepath(mock_save):
+    """Test it errors if ``output_filepath`` is not provided."""
+    # Run and Assert
+    with pytest.raises(ValueError, match='Please provide an `output_filepath`.'):
+        save_resource(
+            modality='single_table',
+            dataset_name='dataset1',
+            resource_filepath='README.txt',
+        )
+
+    mock_save.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ('resource_filepath', 'error_type', 'error_message'),
+    [
+        (1, TypeError, '`resource_filepath` must be a string.'),
+        ('', ValueError, '`resource_filepath` cannot be empty.'),
+        (
+            '/schemas/postgre.sql',
+            ValueError,
+            "`resource_filepath` must be relative to the dataset and cannot begin with '/'.",
+        ),
+    ],
+)
+def test_save_resource_with_invalid_resource_filepath(resource_filepath, error_type, error_message):
+    """Test it errors for an invalid resource filepath."""
+    # Run and Assert
+    with pytest.raises(error_type, match=re.escape(error_message)):
+        save_resource(
+            modality='single_table',
+            dataset_name='dataset1',
+            resource_filepath=resource_filepath,
+            output_filepath='output.txt',
+        )

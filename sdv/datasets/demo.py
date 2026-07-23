@@ -640,6 +640,20 @@ def _find_text_key(contents, dataset_prefix, filename):
     return None
 
 
+def _validate_resource_filepath(resource_filepath):
+    """Validate a resource filepath is a string, not undefined and does not begin with slash."""
+    if not isinstance(resource_filepath, str):
+        raise TypeError('`resource_filepath` must be a string.')
+
+    if not resource_filepath:
+        raise ValueError('`resource_filepath` cannot be empty.')
+
+    if resource_filepath.startswith('/'):
+        raise ValueError(
+            "`resource_filepath` must be relative to the dataset and cannot begin with '/'."
+        )
+
+
 def _validate_text_file_content(modality, output_filepath, filename):
     """Validation for the text file content method."""
     _validate_modalities(modality)
@@ -750,7 +764,7 @@ def _save_file_content(
         dataset_name (str):
             The name of the dataset.
         filename (str):
-            The filename to fetch (``'README.txt'`` or ``'SOURCE.txt'``).
+            The filename to fetch (``'README.txt'`` or ``'SOURCE.txt'`, ``'schemas/postgre.sql'``).
         output_filepath (str):
             Save the file contents at this path.
         bucket (str):
@@ -860,10 +874,11 @@ def get_readme(
 def save_resource(
     modality,
     dataset_name,
-    resource_filename,
-    output_filepath,
+    resource_filepath=None,
+    output_filepath=None,
     s3_bucket_name='sdv-datasets-public',
     credentials=None,
+    resource_filename=None,
 ):
     """Save the resource to disk.
 
@@ -871,11 +886,12 @@ def save_resource(
         modality (str):
             The modality of the dataset: ``'single_table'``, ``'multi_table'``, ``'sequential'``.
         dataset_name (str):
-            The name of the dataset to get the README for.
-        resource_filename (str):
-            The name of the file to download from S3.
-        output_filepath (str or None):
-            Optional path where to save the file.
+            The name of the dataset to get the resource for.
+        resource_filepath (str):
+            The location of the file to download from S3. This can be a filename or a filepath.
+            The location of the file should be under the dataset.
+        output_filepath (str):
+            The filepath where the resource should be saved.
         s3_bucket_name (str, optional):
             The name of the bucket to download from. Only 'sdv-datasets-public' is supported in
             SDV Community. SDV Enterprise is required for other buckets. Defaults to
@@ -887,11 +903,36 @@ def save_resource(
                 'license_key': '<MY_LICENSE_KEY>'
             }
             Defaults to None.
+        resource_filename (str, optional):
+            **Deprecated.**
+            The name of the file to download from S3. Use
+            ``resource_filepath`` instead. Defaults to None.
     """
+    if resource_filepath is None and resource_filename is None:
+        raise ValueError('Please provide a `resource_filepath`.')
+
+    if output_filepath is None:
+        raise ValueError('Please provide an `output_filepath`.')
+
+    if resource_filepath and resource_filename:
+        raise ValueError(
+            'Cannot use both `resource_filepath` and `resource_filename`. '
+            'Please use only `resource_filepath`.'
+        )
+
+    if resource_filename is not None:
+        deprecation_msg = (
+            'Warning: The `resource_filename` parameter is deprecated. '
+            'Please use the `resource_filepath` parameter instead.'
+        )
+        warnings.warn(deprecation_msg, FutureWarning)
+        resource_filepath = resource_filename
+
+    _validate_resource_filepath(resource_filepath)
     _save_file_content(
         modality=modality,
         dataset_name=dataset_name,
-        filename=resource_filename,
+        filename=resource_filepath,
         output_filepath=output_filepath,
         bucket=s3_bucket_name,
         credentials=credentials,
