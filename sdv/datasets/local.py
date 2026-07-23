@@ -5,7 +5,7 @@ import warnings
 
 import pandas as pd
 
-from sdv._utils import _load_data_from_csv
+from sdv._utils import _load_data_from_csv, _check_is_dict_of_dataframes
 
 
 def load_csvs(folder_name, read_csv_parameters=None):
@@ -59,13 +59,7 @@ def save_csvs(data, folder_name, suffix=None, to_csv_parameters=None):
             A python dictionary of with string and value accepted by ``pandas.DataFrame.to_csv``
             function. Defaults to ``None``.
     """
-    error_message_data = "'data' must be a dictionary that maps table names to pandas DataFrames."
-    if not isinstance(data, dict):
-        raise ValueError(error_message_data)
-
-    for table_name, table in data.items():
-        if not isinstance(table, pd.DataFrame):
-            raise ValueError(error_message_data)
+    _check_is_dict_of_dataframes(data)
 
     if not os.path.exists(folder_name):
         os.makedirs(folder_name)
