@@ -890,8 +890,8 @@ def save_resource(
         resource_filepath (str):
             The location of the file to download from S3. This can be a filename or a filepath.
             The location of the file should be under the dataset.
-        output_filepath (str or None):
-            Optional path where to save the file.
+        output_filepath (str):
+            The filepath where the resource should be saved.
         s3_bucket_name (str, optional):
             The name of the bucket to download from. Only 'sdv-datasets-public' is supported in
             SDV Community. SDV Enterprise is required for other buckets. Defaults to
