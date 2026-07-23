@@ -676,10 +676,7 @@ class TestHMASynthesizer:
         """Test that an error occurs if the schema has too many tables."""
         # Setup
         metadata = Metadata.load_from_dict({
-            'tables': {
-                f'table_{i}': {'columns': {'col': {'sdtype': 'id'}}}
-                for i in range(6)
-            }
+            'tables': {f'table_{i}': {'columns': {'col': {'sdtype': 'id'}}} for i in range(6)}
         })
 
         # Run
