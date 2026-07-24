@@ -1,5 +1,12 @@
 # Release Notes
 
+## v1.37.4 - 2026-07-24
+
+### New Features
+
+* Consolidate single and multi-table evaluation reports into one - Issue [#2923](https://github.com/sdv-dev/SDV/issues/2923) by @pvk-developer
+* The `save_resource` for demo datasets should be able to handle filepaths (not just filenames) - Issue [#2917](https://github.com/sdv-dev/SDV/issues/2917) by @gsheni
+
 ## v1.37.3 - 2026-07-02
 
 ### Bugs Fixed
