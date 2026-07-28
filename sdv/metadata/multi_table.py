@@ -14,6 +14,8 @@ import pandas as pd
 from sdv._utils import (
     _cast_to_iterable,
     _format_invalid_values_string,
+    _get_max_child_depth,
+    _get_root_tables,
     _get_unreferenced_keys,
     _load_data_from_csv,
 )
@@ -288,6 +290,24 @@ class MultiTableMetadata:
     def _get_all_keys(self, table_name):
         foreign_keys = self._get_all_foreign_keys(table_name)
         return set(foreign_keys).union(self.tables[table_name]._get_primary_and_alternate_keys())
+
+    def _get_max_schema_depth(self):
+        """Calculate the maximum depth of this schema.
+
+        This method traverses all relationships and returns the length of the longest relationship
+        chain between tables.
+
+        Returns:
+            int:
+                The maximum depth of the schema.
+        """
+        max_depth = 1
+        child_map = self._get_child_map()
+        for root_table in _get_root_tables(self.relationships):
+            root_depth = _get_max_child_depth(child_map, root_table)
+            max_depth = root_depth if root_depth > max_depth else max_depth
+
+        return max_depth
 
     def add_relationship(
         self, parent_table_name, child_table_name, parent_primary_key, child_foreign_key

@@ -27,7 +27,7 @@ from sdv.metadata.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
 from sdv.utils import load_constraints
 from tests.integration.single_table.custom_constraints import MyConstraint
-from tests.utils import catch_sdv_logs
+from tests.utils import catch_sdv_logs, get_multi_table_metadata
 
 
 class TestHMASynthesizer:
@@ -655,162 +655,41 @@ class TestHMASynthesizer:
             match = re.search(constraint, captured.out + captured.err)
             assert match is not None
 
-    def test_warning_message_too_many_cols(self, capsys):
-        """Test that a warning appears if there are more than 1000 expected columns"""
+    def test_error_complex_schema_depth(self):
+        """Test that an error occurs if the schema is too deep."""
         # Setup
-        parent_columns = {'parent_id': {'sdtype': 'id'}, 'parent_data': {'sdtype': 'categorical'}}
-        child_columns = {'child_id': {'sdtype': 'id'}, 'parent_id': {'sdtype': 'id'}}
-        for i in range(999):
-            child_columns[f'col_{i}'] = {'sdtype': 'categorical'}
-
-        large_metadata = Metadata.load_from_dict({
-            'tables': {
-                'parent': {'columns': parent_columns, 'primary_key': 'parent_id'},
-                'child': {'columns': child_columns, 'primary_key': 'child_id'},
-            },
-            'relationships': [
-                {
-                    'parent_table_name': 'parent',
-                    'parent_primary_key': 'parent_id',
-                    'child_table_name': 'child',
-                    'child_foreign_key': 'parent_id',
-                }
-            ],
-        })
-
-        key_phrases = [
-            r'PerformanceAlert:',
-            r'large number of columns.',
-            r'please visit datacebo.com and reach out to us for enterprise solutions.',
-        ]
+        metadata = get_multi_table_metadata()
 
         # Run
-        HMASynthesizer(large_metadata)
+        expected_msg = re.escape(
+            'HMASynthesizer is not designed to handle a schema with more than 5 tables or '
+            'relationship depth greater than 2.\n'
+            'Please use SDV Enterprise to model this schema.\n\n'
+            'SDV Enterprise provides access to synthesizers that can easily scale with the '
+            'amount of data and complexity of your schema.\n\n'
+            'For more information, visit datacebo.com'
+        )
+        with pytest.raises(SynthesizerInputError, match=expected_msg):
+            HMASynthesizer(metadata)
 
-        captured = capsys.readouterr()
-
-        # Assert
-        for constraint in key_phrases:
-            match = re.search(constraint, captured.out + captured.err)
-            assert match is not None
-
-        # Setup small metadata that shouldn't trigger warning
-        small_metadata = Metadata.load_from_dict({
-            'tables': {
-                'parent': {
-                    'columns': {
-                        'parent_id': {'sdtype': 'id'},
-                        'parent_data': {'sdtype': 'categorical'},
-                    },
-                    'primary_key': 'parent_id',
-                },
-                'child': {
-                    'columns': {
-                        'child_id': {'sdtype': 'id'},
-                        'parent_id': {'sdtype': 'id'},
-                        'child_data': {'sdtype': 'categorical'},
-                    },
-                    'primary_key': 'child_id',
-                },
-            },
-            'relationships': [
-                {
-                    'parent_table_name': 'parent',
-                    'parent_primary_key': 'parent_id',
-                    'child_table_name': 'child',
-                    'child_foreign_key': 'parent_id',
-                }
-            ],
-        })
-
-        # Run
-        HMASynthesizer(small_metadata)
-
-        captured = capsys.readouterr()
-
-        # Assert that small amount of columns don't trigger the message
-        for constraint in key_phrases:
-            match = re.search(constraint, captured.out + captured.err)
-            assert match is None
-
-    def test_hma_three_linear_nodes(self):
-        """Test it works on a simple 'grandparent-parent-child' dataset."""
+    def test_error_complex_schema_num_tables(self):
+        """Test that an error occurs if the schema has too many tables."""
         # Setup
-        grandparent = pd.DataFrame(
-            data={'grandparent_ID': [0, 1, 2, 3, 4], 'data': ['0', '1', '2', '3', '4']}
-        )
-        parent = pd.DataFrame(
-            data={
-                'parent_ID': ['a', 'b', 'c', 'd', 'e'],
-                'grandparent_ID': [0, 0, 1, 1, 3],
-                'data': [True, False, False, False, True],
-            }
-        )
-        child = pd.DataFrame(
-            data={
-                'child_ID': ['00', '01', '02', '03', '04'],
-                'parent_ID': ['b', 'b', 'a', 'e', 'e'],
-                'data': ['Yes', 'Yes', 'Maybe', 'No', 'No'],
-            }
-        )
-        data = {'grandparent': grandparent, 'parent': parent, 'child': child}
         metadata = Metadata.load_from_dict({
-            'tables': {
-                'grandparent': {
-                    'primary_key': 'grandparent_ID',
-                    'columns': {
-                        'grandparent_ID': {'sdtype': 'id'},
-                        'data': {'sdtype': 'categorical'},
-                    },
-                },
-                'parent': {
-                    'primary_key': 'parent_ID',
-                    'columns': {
-                        'parent_ID': {'sdtype': 'id'},
-                        'grandparent_ID': {'sdtype': 'id'},
-                        'data': {'sdtype': 'categorical'},
-                    },
-                },
-                'child': {
-                    'primary_key': 'child_ID',
-                    'columns': {
-                        'child_ID': {'sdtype': 'id'},
-                        'parent_ID': {'sdtype': 'id'},
-                        'data': {'sdtype': 'categorical'},
-                    },
-                },
-            },
-            'relationships': [
-                {
-                    'parent_table_name': 'grandparent',
-                    'parent_primary_key': 'grandparent_ID',
-                    'child_table_name': 'parent',
-                    'child_foreign_key': 'grandparent_ID',
-                },
-                {
-                    'parent_table_name': 'parent',
-                    'parent_primary_key': 'parent_ID',
-                    'child_table_name': 'child',
-                    'child_foreign_key': 'parent_ID',
-                },
-            ],
+            'tables': {f'table_{i}': {'columns': {'col': {'sdtype': 'id'}}} for i in range(6)}
         })
-        synthesizer = HMASynthesizer(metadata)
 
         # Run
-        synthesizer.fit(data)
-        samples = synthesizer.sample(scale=1)
-
-        # Assert tables are the same
-        assert set(samples) == set(data)
-
-        # Assert columns are the same
-        for table_name, table in samples.items():
-            assert set(table.columns) == set(data[table_name].columns)
-
-        # Assert data values all exist in the original tables
-        for table_name, table in samples.items():
-            assert table['data'].isin(data[table_name]['data']).all()
+        expected_msg = re.escape(
+            'HMASynthesizer is not designed to handle a schema with more than 5 tables or '
+            'relationship depth greater than 2.\n'
+            'Please use SDV Enterprise to model this schema.\n\n'
+            'SDV Enterprise provides access to synthesizers that can easily scale with the '
+            'amount of data and complexity of your schema.\n\n'
+            'For more information, visit datacebo.com'
+        )
+        with pytest.raises(SynthesizerInputError, match=expected_msg):
+            HMASynthesizer(metadata)
 
     def test_hma_one_parent_two_children(self):
         """Test it works on a simple 'child-parent-child' dataset."""
@@ -938,132 +817,6 @@ class TestHMASynthesizer:
                     'parent_primary_key': 'parent_ID2',
                     'child_table_name': 'child',
                     'child_foreign_key': 'parent_ID2',
-                },
-            ],
-        })
-        synthesizer = HMASynthesizer(metadata)
-
-        # Run
-        synthesizer.fit(data)
-        samples = synthesizer.sample(scale=1)
-
-        # Assert tables are the same
-        assert set(samples) == set(data)
-
-        # Assert columns are the same
-        for table_name, table in samples.items():
-            assert set(table.columns) == set(data[table_name].columns)
-
-        # Assert data values all exist in the original tables
-        for table_name, table in samples.items():
-            assert table['data'].isin(data[table_name]['data']).all()
-
-    def test_hma_two_lineages_one_grandchild(self):
-        """Test it works on a dataset where one grandchild comes from two lineages.
-
-        Dataset has the shape:
-        r1    r2
-        \\    //
-         c1  c2
-          \\//
-           gc
-        """
-        # Setup
-        root1 = pd.DataFrame(
-            data={'id': [0, 1, 2, 3, 4], 'data': [True, False, False, False, True]}
-        )
-        root2 = pd.DataFrame(
-            data={'id': [0, 1, 2, 3, 4], 'data': [True, False, False, False, True]}
-        )
-        child1 = pd.DataFrame(
-            data={
-                'child_ID': ['a', 'b', 'c', 'd', 'e'],
-                'root1_ID': [0, 1, 2, 3, 3],
-                'data': [True, False, False, False, True],
-            }
-        )
-        child2 = pd.DataFrame(
-            data={
-                'child_ID': ['a', 'b', 'c', 'd', 'e'],
-                'root2_ID': [0, 1, 2, 3, 4],
-                'data': [True, False, False, False, True],
-            }
-        )
-        grandchild = pd.DataFrame(
-            data={
-                'grandchild_ID': ['a', 'b', 'c', 'd', 'e'],
-                'child1_ID': ['a', 'b', 'c', 'd', 'e'],
-                'child2_ID': ['a', 'b', 'c', 'd', 'e'],
-                'data': [True, False, False, False, True],
-            }
-        )
-        data = {
-            'root1': root1,
-            'root2': root2,
-            'child1': child1,
-            'child2': child2,
-            'grandchild': grandchild,
-        }
-        metadata = Metadata.load_from_dict({
-            'tables': {
-                'root1': {
-                    'primary_key': 'id',
-                    'columns': {'id': {'sdtype': 'id'}, 'data': {'sdtype': 'categorical'}},
-                },
-                'root2': {
-                    'primary_key': 'id',
-                    'columns': {'id': {'sdtype': 'id'}, 'data': {'sdtype': 'categorical'}},
-                },
-                'child1': {
-                    'primary_key': 'child_ID',
-                    'columns': {
-                        'child_ID': {'sdtype': 'id'},
-                        'root1_ID': {'sdtype': 'id'},
-                        'data': {'sdtype': 'categorical'},
-                    },
-                },
-                'child2': {
-                    'primary_key': 'child_ID',
-                    'columns': {
-                        'child_ID': {'sdtype': 'id'},
-                        'root2_ID': {'sdtype': 'id'},
-                        'data': {'sdtype': 'categorical'},
-                    },
-                },
-                'grandchild': {
-                    'primary_key': 'grandchild_ID',
-                    'columns': {
-                        'grandchild_ID': {'sdtype': 'id'},
-                        'child1_ID': {'sdtype': 'id'},
-                        'child2_ID': {'sdtype': 'id'},
-                        'data': {'sdtype': 'categorical'},
-                    },
-                },
-            },
-            'relationships': [
-                {
-                    'parent_table_name': 'root1',
-                    'parent_primary_key': 'id',
-                    'child_table_name': 'child1',
-                    'child_foreign_key': 'root1_ID',
-                },
-                {
-                    'parent_table_name': 'root2',
-                    'parent_primary_key': 'id',
-                    'child_table_name': 'child2',
-                    'child_foreign_key': 'root2_ID',
-                },
-                {
-                    'parent_table_name': 'child1',
-                    'parent_primary_key': 'child_ID',
-                    'child_table_name': 'grandchild',
-                    'child_foreign_key': 'child1_ID',
-                },
-                {
-                    'parent_table_name': 'child2',
-                    'parent_primary_key': 'child_ID',
-                    'child_table_name': 'grandchild',
-                    'child_foreign_key': 'child2_ID',
                 },
             ],
         })
@@ -1684,6 +1437,7 @@ class TestHMASynthesizer:
             'col_0': [1, 2, 2],
         })
         table_2 = pd.DataFrame({
+            'col_0': [1, 2, 3],
             'col_A': [1, 2, 3],
             'col_B': ['d', 'e', 'f'],
             'col_C': ['g', 'h', 'i'],
@@ -1707,6 +1461,7 @@ class TestHMASynthesizer:
                 },
                 'table_2': {
                     'columns': {
+                        'col_0': {'sdtype': 'id', 'regex_format': '[1-9]{20}'},
                         'col_A': {'sdtype': 'id', 'regex_format': '[1-9]{20}'},
                         'col_B': {'sdtype': 'categorical'},
                         'col_C': {'sdtype': 'categorical'},
@@ -1722,7 +1477,7 @@ class TestHMASynthesizer:
                 },
                 {
                     'parent_table_name': 'table_0',
-                    'child_table_name': 'table_1',
+                    'child_table_name': 'table_2',
                     'parent_primary_key': 'col_0',
                     'child_foreign_key': 'col_0',
                 },
@@ -1764,16 +1519,19 @@ class TestHMASynthesizer:
 
         # Check that a warning is raised
         assert len(captured_warnings) == 2
-        assert str(captured_warnings[0].message) == (
-            "The real data in 'table_0' and column 'col_0' was stored as 'int64' but the "
-            'synthetic data overflowed when casting back to this type. If this is a problem, '
-            'please check your input data and metadata settings.'
-        )
-        assert str(captured_warnings[1].message) == (
-            "The real data in 'table_1' and column 'col_1' was stored as 'int64' but the "
-            'synthetic data overflowed when casting back to this type. If this is a problem, '
-            'please check your input data and metadata settings.'
-        )
+        captured_msgs = {str(captured_warnings[0].message), str(str(captured_warnings[1].message))}
+        assert captured_msgs == {
+            (
+                "The real data in 'table_1' and column 'col_1' was stored as 'int64' but the "
+                'synthetic data overflowed when casting back to this type. If this is a problem, '
+                'please check your input data and metadata settings.'
+            ),
+            (
+                "The real data in 'table_0' and column 'col_0' was stored as 'int64' but the "
+                'synthetic data overflowed when casting back to this type. If this is a problem, '
+                'please check your input data and metadata settings.'
+            ),
+        }
 
     def test_ids_that_dont_fit_in_int64(self):
         """Test it when both real and synthetic data don't fit in int64."""
@@ -2040,14 +1798,18 @@ def test_hma_0_1_grandparent():
     metadata = Metadata().load_from_dict(metadata_dict)
     metadata.validate()
     metadata.validate_data(data)
-    synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
-    synthesizer.fit(data)
-    synthetic_data = synthesizer.sample()
-    child_df = synthetic_data['child']
-    data_col_max = child_df['data'].max()
-    data_col_min = child_df['data'].min()
-    assert child_df[child_df['data'] == data_col_max].shape[0] == 3
-    assert child_df[child_df['data'] == data_col_min].shape[0] == 3
+
+    # Run and Assert
+    expected_msg = re.escape(
+        'HMASynthesizer is not designed to handle a schema with more than 5 tables or '
+        'relationship depth greater than 2.\n'
+        'Please use SDV Enterprise to model this schema.\n\n'
+        'SDV Enterprise provides access to synthesizers that can easily scale with the '
+        'amount of data and complexity of your schema.\n\n'
+        'For more information, visit datacebo.com'
+    )
+    with pytest.raises(SynthesizerInputError, match=expected_msg):
+        HMASynthesizer(metadata=metadata, verbose=False)
 
 
 def test_parent_default_distribution_non_beta():
@@ -2059,7 +1821,6 @@ def test_parent_default_distribution_non_beta():
             'grandparent_id': range(10),
             'categories': list(np.random.choice(['T', 'F'], size=10)),
         }),
-        'grandparent': pd.DataFrame({'id': range(10)}),
     }
     metadata = Metadata.load_from_dict({
         'tables': {
@@ -2075,7 +1836,6 @@ def test_parent_default_distribution_non_beta():
                     'categories': {'sdtype': 'categorical'},
                 },
             },
-            'grandparent': {'primary_key': 'id', 'columns': {'id': {'sdtype': 'id'}}},
         },
         'relationships': [
             {
@@ -2083,12 +1843,6 @@ def test_parent_default_distribution_non_beta():
                 'child_table_name': 'child',
                 'parent_primary_key': 'id',
                 'child_foreign_key': 'parent_id',
-            },
-            {
-                'parent_table_name': 'grandparent',
-                'child_table_name': 'parent',
-                'parent_primary_key': 'id',
-                'child_foreign_key': 'grandparent_id',
             },
         ],
         'METADATA_SPEC_VERSION': 'V1',
@@ -2738,6 +2492,7 @@ def test__estimate_num_columns_to_be_modeled_various_sdtypes():
             },
         ],
     })
+    HMASynthesizer._validate_schema_complexity = Mock()
     synthesizer = HMASynthesizer(metadata)
     synthesizer._finalize = Mock(return_value=data)
     distributions = synthesizer._get_distributions()
@@ -3017,25 +2772,6 @@ class TestPrimaryKeyToPrimaryKey:
         # Run and Assert
         with pytest.raises(InvalidDataError, match=match_):
             synthesizer.fit(data)
-
-    def test_1_to_1_to_1_subset_to_subset(self, data_metadata_1_to_1_to_1_subset_to_subset):
-        """Test PK to PK to PK, with the 2nd and 3rd table having a subset."""
-        # Setup
-        data, metadata = data_metadata_1_to_1_to_1_subset_to_subset
-
-        # Run
-        synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
-        synthesizer.fit(data)
-        synthetic_data = synthesizer.sample(scale=1.0)
-
-        # Assert
-        assert set(synthetic_data['guests']['guest_email']).issuperset(
-            set(synthetic_data['guests_pii']['guest_email'])
-        )
-        assert set(synthetic_data['guests_pii']['guest_email']).issuperset(
-            set(synthetic_data['rooms']['guest_email'])
-        )
-        synthesizer.validate(synthetic_data)
 
     def test_1_to_1_to_1_arrow(self, data_metadata_1_to_1_subset_arrow):
         """Test PK to PK to PK in an arrow relationship."""

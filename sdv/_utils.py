@@ -417,6 +417,17 @@ def _get_root_tables(relationships):
     return parent_tables - child_tables
 
 
+def _get_max_child_depth(child_map, table):
+    """Return the max child depth for the given table."""
+    max_depth = 1
+    for child in child_map[table]:
+        child_depth = 1 + _get_max_child_depth(child_map, child)
+        if child_depth > max_depth:
+            max_depth = child_depth
+
+    return max_depth
+
+
 def generate_synthesizer_id(synthesizer):
     """Generate a unique identifier for the synthesizer instance.
 

@@ -29,7 +29,12 @@ from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.ctgan import CTGANSynthesizer
-from tests.utils import catch_sdv_logs, get_multi_table_data, get_multi_table_metadata
+from tests.utils import (
+    catch_sdv_logs,
+    get_multi_table_data,
+    get_multi_table_metadata,
+    get_simplified_multi_table_metadata,
+)
 
 
 class TestBaseMultiTableSynthesizer:
@@ -768,7 +773,7 @@ class TestBaseMultiTableSynthesizer:
     def test_auto_assign_transformers_missing_column(self):
         """Test errors when there is a missing column within a table"""
         # Setup
-        metadata = get_multi_table_metadata()
+        metadata = get_simplified_multi_table_metadata()
         synthesizer = HMASynthesizer(metadata)
         table1 = pd.DataFrame({'col1': [1, 2]})
         table2 = pd.DataFrame({'col2': [1, 2]})
