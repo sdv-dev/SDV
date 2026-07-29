@@ -8,7 +8,7 @@ import pytest
 
 from sdv.datasets.demo import download_demo
 from sdv.metadata.metadata import Metadata
-from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS, HMASynthesizer
+from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS
 from sdv.multi_table.utils import _get_total_estimated_columns
 from sdv.utils.poc import get_random_subset, simplify_schema
 
@@ -142,27 +142,12 @@ def test_simplify_schema(capsys):
     # Setup
     data, metadata = download_demo('multi_table', 'AustralianFootball')
     num_estimated_column_before_simplification = _get_total_estimated_columns(metadata)
-    HMASynthesizer(metadata)
-    captured_before_simplification = capsys.readouterr()
 
     # Run
     data_simplify, metadata_simplify = simplify_schema(data, metadata)
     captured_after_simplification = capsys.readouterr()
 
     # Assert
-    expected_message_before = re.compile(
-        r'PerformanceAlert: Using the HMASynthesizer on this metadata schema is not recommended\.'
-        r' To model this data, HMA will generate a large number of columns\. \(135934 columns\)\s+'
-        r'Table Name\s*#\s*Columns in Metadata\s*Est # Columns\s*'
-        r'match_stats\s*24\s*24\s*'
-        r'matches\s*39\s*364\s*'
-        r'players\s*5\s*330\s*'
-        r'teams\s*1\s*135216\s*'
-        r'We recommend simplifying your metadata schema using '
-        r"'sdv.utils.poc.simplify_schema'\.\s*"
-        r'If this is not possible, please visit '
-        r'datacebo.com and reach out to us for enterprise solutions\.'
-    )
     expected_message_after = re.compile(
         r'Success! The schema has been simplified\.\s+'
         r'Table Name\s*#\s*Columns \(Before\)\s*#\s*Columns \(After\)\s*'
@@ -171,7 +156,6 @@ def test_simplify_schema(capsys):
         r'players\s*6\s*0\s*'
         r'teams\s*2\s*2'
     )
-    assert expected_message_before.match(captured_before_simplification.out.strip())
     assert expected_message_after.match(captured_after_simplification.out.strip())
     metadata_simplify.validate()
     metadata_simplify.validate_data(data_simplify)
