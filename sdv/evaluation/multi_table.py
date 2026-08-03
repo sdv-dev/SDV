@@ -3,8 +3,7 @@
 import warnings
 
 from sdmetrics import visualization
-from sdmetrics.reports.multi_table.diagnostic_report import DiagnosticReport
-from sdmetrics.reports.multi_table.quality_report import QualityReport
+from sdmetrics.reports.multi_table import DiagnosticReport, QualityReport
 
 import sdv.evaluation.single_table as single_table_visualization
 
