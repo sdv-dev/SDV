@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
+from tests.utils import DataFrameDictMatcher
 
 from sdv.errors import VisualizationUnavailableError
 from sdv.evaluation.single_table import (
@@ -31,7 +32,10 @@ def test_evaluate_quality():
 
     # Assert
     QualityReport.generate.assert_called_once_with(
-        data1, data2, metadata._convert_to_single_table().to_dict(), True
+        DataFrameDictMatcher({'table': data1}),
+        DataFrameDictMatcher({'table': data2}),
+        metadata.to_dict(),
+        True,
     )
 
 
@@ -48,8 +52,12 @@ def test_evaluate_quality_metadata():
     evaluate_quality(data1, data2, metadata)
 
     # Assert
-    expected_metadata = metadata.tables['table'].to_dict()
-    QualityReport.generate.assert_called_once_with(data1, data2, expected_metadata, True)
+    QualityReport.generate.assert_called_once_with(
+        DataFrameDictMatcher({'table': data1}),
+        DataFrameDictMatcher({'table': data2}),
+        metadata.to_dict(),
+        True,
+    )
 
 
 def test_run_diagnostic():
@@ -67,7 +75,10 @@ def test_run_diagnostic():
 
     # Assert
     DiagnosticReport.generate.assert_called_once_with(
-        data1, data2, metadata._convert_to_single_table().to_dict(), True
+        DataFrameDictMatcher({'table': data1}),
+        DataFrameDictMatcher({'table': data2}),
+        metadata.to_dict(),
+        True,
     )
 
 
@@ -84,8 +95,12 @@ def test_run_diagnostic_metadata():
     run_diagnostic(data1, data2, metadata)
 
     # Assert
-    expected_metadata = metadata.tables['table'].to_dict()
-    DiagnosticReport.generate.assert_called_once_with(data1, data2, expected_metadata, True)
+    DiagnosticReport.generate.assert_called_once_with(
+        DataFrameDictMatcher({'table': data1}),
+        DataFrameDictMatcher({'table': data2}),
+        metadata.to_dict(),
+        True,
+    )
 
 
 @patch('sdmetrics.visualization.get_column_plot')
