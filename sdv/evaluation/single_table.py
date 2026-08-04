@@ -3,8 +3,7 @@
 import warnings
 
 from sdmetrics import visualization
-from sdmetrics.reports.single_table.diagnostic_report import DiagnosticReport
-from sdmetrics.reports.single_table.quality_report import QualityReport
+from sdmetrics.reports import DiagnosticReport, QualityReport
 
 from sdv.errors import VisualizationUnavailableError
 from sdv.evaluation._utils import _prepare_data_visualization
@@ -29,8 +28,9 @@ def _evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
         QualityReport:
             Single table quality report object.
     """
-    if isinstance(metadata, Metadata):
-        metadata = metadata._convert_to_single_table()
+    table_name = metadata._get_single_table_name()
+    real_data = {table_name: real_data}
+    synthetic_data = {table_name: synthetic_data}
 
     quality_report = QualityReport()
     quality_report.generate(real_data, synthetic_data, metadata.to_dict(), verbose)
@@ -56,8 +56,9 @@ def _run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
             Single table diagnostic report object.
     """
     diagnostic_report = DiagnosticReport()
-    if isinstance(metadata, Metadata):
-        metadata = metadata._convert_to_single_table()
+    table_name = metadata._get_single_table_name()
+    real_data = {table_name: real_data}
+    synthetic_data = {table_name: synthetic_data}
 
     diagnostic_report.generate(real_data, synthetic_data, metadata.to_dict(), verbose)
     return diagnostic_report

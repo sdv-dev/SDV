@@ -14,7 +14,7 @@ from packaging.requirements import Requirement
 from packaging.version import Version
 
 COMPARISONS = {'>=': operator.ge, '>': operator.gt, '<': operator.lt, '<=': operator.le}
-EXTERNAL_DEPENDENCY_CAPS_FOR_WINDOWS = {'torch': '2.9.0'}
+EXTERNAL_DEPENDENCY_CAPS_FOR_WINDOWS = {'torch': '2.9.0', 'pipx': '1.15.1'}
 
 if not hasattr(inspect, 'getargspec'):
     inspect.getargspec = inspect.getfullargspec
