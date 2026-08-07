@@ -1,4 +1,4 @@
-Run started:2026-07-24 17:39:56.414498+00:00
+Run started:2026-08-07 16:56:41.961983+00:00
 
 Test results:
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
@@ -100,12 +100,12 @@ Test results:
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b110_try_except_pass.html
-   Location: ./sdv/multi_table/hma.py:407:12
-406	                    index.append(foreign_key_value)
-407	            except Exception:
-408	                # Skip children rows subsets that fail
-409	                pass
-410	
+   Location: ./sdv/multi_table/hma.py:385:12
+384	                    index.append(foreign_key_value)
+385	            except Exception:
+386	                # Skip children rows subsets that fail
+387	                pass
+388	
 
 --------------------------------------------------
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
@@ -121,7 +121,7 @@ Test results:
 --------------------------------------------------
 
 Code scanned:
-	Total lines of code: 18491
+	Total lines of code: 18493
 	Total lines skipped (#nosec): 0
 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
 
