@@ -1,5 +1,15 @@
 # Release Notes
 
+## v1.37.5 - 2026-08-07
+
+### New Features
+
+* Update HMA `PerformanceAlert` to be an error - Issue [#2918](https://github.com/sdv-dev/SDV/issues/2918) by @frances-h
+
+### Bugs Fixed
+
+* Visualization functions are resulting in a FutureWarning - Issue [#2935](https://github.com/sdv-dev/SDV/issues/2935) by @frances-h
+
 ## v1.37.4 - 2026-07-24
 
 ### New Features
