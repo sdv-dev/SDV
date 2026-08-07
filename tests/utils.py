@@ -103,6 +103,53 @@ def get_multi_table_metadata():
     return Metadata.load_from_dict(dict_metadata)
 
 
+def get_simplified_multi_table_metadata():
+    """Return a simplified ``MultiTableMetadata`` object to be used with HMA tests."""
+    dict_metadata = {
+        'tables': {
+            'nesreca': {
+                'primary_key': 'id_nesreca',
+                'columns': {
+                    'upravna_enota': {'sdtype': 'id'},
+                    'id_nesreca': {'sdtype': 'id'},
+                    'nesreca_val': {'sdtype': 'numerical'},
+                },
+            },
+            'oseba': {
+                'columns': {
+                    'upravna_enota': {'sdtype': 'id'},
+                    'id_nesreca': {'sdtype': 'id'},
+                    'oseba_val': {'sdtype': 'numerical'},
+                }
+            },
+            'upravna_enota': {
+                'primary_key': 'id_upravna_enota',
+                'columns': {
+                    'id_upravna_enota': {'sdtype': 'id'},
+                    'upravna_val': {'sdtype': 'numerical'},
+                },
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'upravna_enota',
+                'parent_primary_key': 'id_upravna_enota',
+                'child_table_name': 'oseba',
+                'child_foreign_key': 'upravna_enota',
+            },
+            {
+                'parent_table_name': 'nesreca',
+                'parent_primary_key': 'id_nesreca',
+                'child_table_name': 'oseba',
+                'child_foreign_key': 'id_nesreca',
+            },
+        ],
+        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
+    }
+
+    return Metadata.load_from_dict(dict_metadata)
+
+
 def get_multi_table_data():
     """Return a dictionary containing some data for multi table."""
     data = {
