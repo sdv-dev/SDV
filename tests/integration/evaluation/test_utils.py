@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from sdv.evaluation import print_referential_integrity
+from sdv.evaluation.utils import print_referential_integrity
 from sdv.metadata import Metadata
 
 
@@ -43,6 +43,7 @@ def data_metadata_parent_child():
 
 @pytest.fixture()
 def data_metadata_parent_child_composite_keys():
+    """A parent-child dataset whose primary and foreign keys span two columns."""
     data = {
         'parent': pd.DataFrame({
             'A': [1, 1, 2, 3],
@@ -82,34 +83,57 @@ def data_metadata_parent_child_composite_keys():
 
 
 def test_print_referential_integrity(data_metadata_parent_child, capsys):
-    """Test `print_referential_integrity` with a simple parent-child dataset."""
+    """Test ``print_referential_integrity`` with a simple parent-child dataset."""
     # Setup
     synthetic_data, metadata = data_metadata_parent_child
 
     # Run
-    print_referential_integrity(metadata, synthetic_data, 'child', 'parent_id')
+    print_referential_integrity(metadata, synthetic_data, 'child', 'parent_id', num_rows=4)
 
     # Assert
     captured = capsys.readouterr().out
     assert 'Picking random child row: A' in captured
-    assert '✅ Found parent row! parent_id: 0' in captured
-    assert 'Picking random child row: C' in captured
-    assert '✅ Found parent row! parent_id: 1' in captured
-    assert 'Picking random child row: D' in captured
-    assert '❌ Unable to find the linked parent row' in captured
     assert 'Picking random child row: B' in captured
-    assert '✅ Found parent row! parent_id: 1' in captured
+    assert 'Picking random child row: C' in captured
+    assert 'Picking random child row: D' in captured
+    assert captured.count('✅ Found parent row! parent_id: 0') == 1
+    assert captured.count('✅ Found parent row! parent_id: 1') == 2
+    assert captured.count('❌ Unable to find the linked parent row') == 1
 
 
 def test_print_referential_integrity_composite_keys(
     data_metadata_parent_child_composite_keys, capsys
 ):
-    """Test `print_referential_integrity` with a parent-child dataset with composite keys."""
+    """Test ``print_referential_integrity`` with a parent-child dataset with composite keys.
+
+    The child table has no primary key, so no key value is printed in the heading. Two of its
+    ten rows reference a combination that is missing from the parent table.
+    """
     # Setup
-    synthetic_data, metadata = data_metadata_parent_child_composite_keys()
+    synthetic_data, metadata = data_metadata_parent_child_composite_keys
 
     # Run
-    print_referential_integrity(metadata, synthetic_data, 'child', ['A', 'B'])
+    print_referential_integrity(metadata, synthetic_data, 'child', ('A', 'B'), num_rows=10)
 
     # Assert
     captured = capsys.readouterr().out
+    assert captured.count('Picking random child row\n') == 10
+    assert captured.count('✅ Found parent row! A: 1, B: X') == 2
+    assert captured.count('✅ Found parent row! A: 1, B: Y') == 1
+    assert captured.count('✅ Found parent row! A: 2, B: X') == 1
+    assert captured.count('✅ Found parent row! A: 3, B: Z') == 1
+    assert captured.count('❌ Unable to find the linked parent row') == 5
+
+
+def test_print_referential_integrity_with_null_foreign_key(data_metadata_parent_child, capsys):
+    """Test that a null foreign key is reported as expected rather than as a broken link."""
+    # Setup
+    synthetic_data, metadata = data_metadata_parent_child
+    synthetic_data['child'].loc[0, 'parent_id'] = None
+
+    # Run
+    print_referential_integrity(metadata, synthetic_data, 'child', 'parent_id', num_rows=4)
+
+    # Assert
+    captured = capsys.readouterr().out
+    assert captured.count('✅ Foreign key is null; no linked parent row expected') == 1
