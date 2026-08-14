@@ -4,7 +4,7 @@ import warnings
 
 import pandas as pd
 
-from sdv._utils import _validate_boolean_parameter
+from sdv._utils import _is_datetime_type, _is_numerical, _validate_boolean_parameter
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
@@ -307,6 +307,35 @@ class Metadata(MultiTableMetadata):
         table_name = self._handle_table_name(table_name)
         self._validate_table_exists(table_name)
         self.tables[table_name].set_sequence_key(column_name)
+
+    def _validate_data(self, data, table_name=None):
+        """Validate data and warn about datetime formats that cannot be verified."""
+        super()._validate_data(data, table_name)
+        for current_table_name, table_data in data.items():
+            table_metadata = self.tables.get(current_table_name)
+            if table_metadata is None:
+                continue
+
+            for column_name, column_metadata in table_metadata.columns.items():
+                datetime_format = column_metadata.get('datetime_format')
+                if not datetime_format:
+                    continue
+
+                column_data = table_data[column_name]
+                has_datetime_objects = any(
+                    not isinstance(value, str)
+                    and not _is_numerical(value)
+                    and _is_datetime_type(value)
+                    for value in column_data.dropna().head(1000)
+                )
+                if has_datetime_objects:
+                    warnings.warn(
+                        f"The datetime format for column '{column_name}' "
+                        f"(table '{current_table_name}') could not be verified because the data "
+                        f"is represented as dtype '{column_data.dtype}'.\n"
+                        'Please omit the datetime format string from the metadata or cast the '
+                        'data to strings with the right format.'
+                    )
 
     def validate_table(self, data, table_name=None):
         """Validate a table against the metadata.

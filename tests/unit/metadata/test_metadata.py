@@ -1,4 +1,5 @@
 import re
+from datetime import date, datetime
 from unittest.mock import Mock, call, mock_open, patch
 
 import pandas as pd
@@ -573,6 +574,74 @@ class TestMetadataClass:
         # Run and Assert
         metadata.validate_data(data)
         assert metadata.METADATA_SPEC_VERSION == 'V1'
+
+    def test_validate_data_warns_when_datetime_format_cannot_be_verified(self):
+        """Test warnings for formatted datetime columns without verifiable formats."""
+        # Setup
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'guests': {
+                    'columns': {
+                        'datetime64_date': {
+                            'sdtype': 'datetime',
+                            'datetime_format': '%d %b %Y',
+                        },
+                        'timestamp_date': {
+                            'sdtype': 'datetime',
+                            'datetime_format': '%Y-%m-%d',
+                        },
+                        'datetime_date': {
+                            'sdtype': 'datetime',
+                            'datetime_format': '%Y-%m-%d',
+                        },
+                        'date_date': {
+                            'sdtype': 'datetime',
+                            'datetime_format': '%Y-%m-%d',
+                        },
+                        'string_date': {
+                            'sdtype': 'datetime',
+                            'datetime_format': '%d %b %Y',
+                        },
+                        'numerical_date': {
+                            'sdtype': 'datetime',
+                            'datetime_format': '%Y%m%d',
+                        },
+                    },
+                },
+            },
+        })
+        data = {
+            'guests': pd.DataFrame({
+                'datetime64_date': pd.to_datetime(['2026-07-21']),
+                'timestamp_date': pd.Series([pd.Timestamp('2026-07-21')], dtype='object'),
+                'datetime_date': pd.Series([datetime(2026, 7, 21)], dtype='object'),
+                'date_date': pd.Series([date(2026, 7, 21)], dtype='object'),
+                'string_date': ['21 Jul 2026'],
+                'numerical_date': [20260721],
+            }),
+        }
+
+        # Run
+        with pytest.warns(UserWarning) as raised_warnings:
+            metadata.validate_data(data)
+
+        # Assert
+        expected_warning_columns = {
+            'datetime64_date': 'datetime64[ns]',
+            'timestamp_date': 'object',
+            'datetime_date': 'object',
+            'date_date': 'object',
+        }
+        expected_messages = [
+            (
+                f"The datetime format for column '{column_name}' (table 'guests') could not be "
+                f"verified because the data is represented as dtype '{dtype}'.\n"
+                'Please omit the datetime format string from the metadata or cast the data to '
+                'strings with the right format.'
+            )
+            for column_name, dtype in expected_warning_columns.items()
+        ]
+        assert [str(warning.message) for warning in raised_warnings] == expected_messages
 
     def test_validate_table(self):
         """Test the ``validate_table``method."""
