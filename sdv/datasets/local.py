@@ -3,9 +3,7 @@
 import os
 import warnings
 
-import pandas as pd
-
-from sdv._utils import _load_data_from_csv, _check_is_dict_of_dataframes
+from sdv._utils import _check_is_dict_of_dataframes, _load_data_from_csv
 
 
 def load_csvs(folder_name, read_csv_parameters=None):
