@@ -61,17 +61,19 @@ def _get_parent_relationship(metadata, table_name, foreign_key_names):
             The columns making up the foreign key to look up.
 
     Returns:
-        tuple[str, list[str]]:
-            The parent table name and the columns making up its primary key.
+        tuple[str, list[str], list[str]]:
+            The parent table name, the columns making up its primary key, and the foreign key
+            columns in the order the relationship defines them.
     """
     for relationship in metadata.relationships:
         child_foreign_key = _cast_to_iterable(relationship['child_foreign_key'])
-        if table_name == relationship['child_table_name'] and child_foreign_key == list(
+        if table_name == relationship['child_table_name'] and set(child_foreign_key) == set(
             foreign_key_names
         ):
             return (
                 relationship['parent_table_name'],
                 _cast_to_iterable(relationship['parent_primary_key']),
+                child_foreign_key,
             )
 
     foreign_key = "', '".join(foreign_key_names)
@@ -118,7 +120,7 @@ def print_referential_integrity(
     foreign_key_names = _validate_referential_integrity_inputs(
         metadata, synthetic_data, table_name, foreign_key_name, num_rows
     )
-    parent_table_name, parent_primary_keys = _get_parent_relationship(
+    parent_table_name, parent_primary_keys, foreign_key_names = _get_parent_relationship(
         metadata, table_name, foreign_key_names
     )
 

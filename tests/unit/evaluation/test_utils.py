@@ -203,3 +203,40 @@ def test_print_referential_integrity_without_a_relationship():
     )
     with pytest.raises(ValueError, match=expected_message):
         print_referential_integrity(metadata, synthetic_data, 'child', 'child_id')
+
+
+def test_print_referential_integrity_with_reordered_composite_key(capsys):
+    """Test that a composite foreign key may be given in any order.
+
+    The metadata pairs each foreign key column with a primary key column by position, so the
+    values must be looked up using the order the relationship defines, not the order passed in.
+    """
+    # Setup
+    metadata = Metadata().load_from_dict({
+        'tables': {
+            'parent': {
+                'columns': {'P': {'sdtype': 'id'}, 'Q': {'sdtype': 'id'}},
+                'primary_key': ['P', 'Q'],
+            },
+            'child': {'columns': {'A': {'sdtype': 'id'}, 'B': {'sdtype': 'id'}}},
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'parent',
+                'parent_primary_key': ['P', 'Q'],
+                'child_table_name': 'child',
+                'child_foreign_key': ['A', 'B'],
+            }
+        ],
+    })
+    synthetic_data = {
+        'parent': pd.DataFrame({'P': [1], 'Q': ['X']}),
+        'child': pd.DataFrame({'A': [1], 'B': ['X']}),
+    }
+
+    # Run
+    print_referential_integrity(metadata, synthetic_data, 'child', ('B', 'A'), num_rows=1)
+
+    # Assert
+    captured = capsys.readouterr().out
+    assert '✅ Found parent row! P: 1, Q: X' in captured
