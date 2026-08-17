@@ -10,7 +10,7 @@ from sdmetrics import visualization
 from sdv.errors import InvalidDataTypeError, NotFittedError
 from sdv.single_table.base import BaseSingleTableSynthesizer
 from sdv.single_table.utils import detect_discrete_columns
-from sdv.utils.mixins import MissingModuleMixin
+from sdv.single_table.mixins import MissingModuleMixin
 
 try:
     from ctgan import CTGAN, TVAE
