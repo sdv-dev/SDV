@@ -27,11 +27,8 @@ from sdv import version
 from sdv._utils import (
     _check_regex_format,
     _groupby_list,
-    _validate_correct_synthesizer_loading,
-    check_sdv_versions_and_warn,
     check_synthesizer_version,
     generate_synthesizer_id,
-    warn_load_deprecated,
     warn_set_constraints_deprecated,
 )
 from sdv.cag._errors import ConstraintNotMetError
@@ -802,52 +799,6 @@ class BaseSynthesizer:
 
         with open(filepath, 'wb') as output:
             cloudpickle.dump(self, output)
-
-    @classmethod
-    def load(cls, filepath):
-        """Load a single-table synthesizer from a given path.
-
-        Args:
-            filepath (str):
-                A string describing the filepath of your saved synthesizer.
-
-        Returns:
-            SingleTableSynthesizer:
-                The loaded synthesizer.
-        """
-        warn_load_deprecated()
-        with open(filepath, 'rb') as f:
-            try:
-                synthesizer = cloudpickle.load(f)
-            except RuntimeError as e:
-                err_msg = (
-                    'Attempting to deserialize object on a CUDA device but '
-                    'torch.cuda.is_available() is False. If you are running on a CPU-only machine,'
-                    " please use torch.load with map_location=torch.device('cpu') "
-                    'to map your storages to the CPU.'
-                )
-                if str(e) == err_msg:
-                    raise SamplingError(
-                        'This synthesizer was created on a machine with GPU but the current '
-                        'machine is CPU-only. This feature is currently unsupported. We recommend'
-                        ' sampling on the same GPU-enabled machine.'
-                    )
-                raise e
-
-        _validate_correct_synthesizer_loading(synthesizer, cls)
-        check_synthesizer_version(synthesizer)
-        check_sdv_versions_and_warn(synthesizer)
-        if getattr(synthesizer, '_synthesizer_id', None) is None:
-            synthesizer._synthesizer_id = generate_synthesizer_id(synthesizer)
-
-        SYNTHESIZER_LOGGER.info({
-            'EVENT': 'Load',
-            'TIMESTAMP': datetime.datetime.now(),
-            'SYNTHESIZER CLASS NAME': synthesizer.__class__.__name__,
-            'SYNTHESIZER ID': synthesizer._synthesizer_id,
-        })
-
-        return synthesizer
 
     def reverse_transform_constraints(self, sampled):
         """Reverse transform the constraints."""

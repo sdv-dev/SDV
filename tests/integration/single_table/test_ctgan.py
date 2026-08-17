@@ -14,6 +14,7 @@ from sdv.errors import InvalidDataTypeError
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata.metadata import Metadata
 from sdv.single_table import CopulaGANSynthesizer, CTGANSynthesizer, TVAESynthesizer
+from sdv.utils import load_synthesizer
 
 
 def test__estimate_num_columns():
@@ -130,7 +131,7 @@ def test_synthesize_table_ctgan(tmp_path):
     # Assert - save/load model
     assert model_path.exists()
     assert model_path.is_file()
-    loaded_synthesizer = CTGANSynthesizer.load(model_path)
+    loaded_synthesizer = load_synthesizer(model_path)
     assert isinstance(synthesizer, CTGANSynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
     assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()

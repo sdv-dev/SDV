@@ -4,7 +4,7 @@ import re
 import warnings
 from collections import defaultdict
 from datetime import date, datetime
-from unittest.mock import ANY, Mock, call, mock_open, patch
+from unittest.mock import ANY, Mock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -2249,88 +2249,3 @@ class TestBaseMultiTableSynthesizer:
         with pytest.warns(Warning, match=warn_msg):
             filepath = os.path.join(tmp_path, 'output.pkl')
             synthesizer.save(filepath)
-
-    @patch('sdv.multi_table.base.datetime')
-    @patch('sdv.multi_table.base.generate_synthesizer_id')
-    @patch('sdv.multi_table.base.check_synthesizer_version')
-    @patch('sdv.multi_table.base.check_sdv_versions_and_warn')
-    @patch('sdv.multi_table.base.cloudpickle')
-    @patch('builtins.open', new_callable=mock_open)
-    @patch('sdv.multi_table.base.warn_load_deprecated')
-    @patch('sdv.multi_table.base._validate_correct_synthesizer_loading')
-    def test_load(
-        self,
-        mock_validate_correct_synthesizer_loading,
-        warn_load_deprecated,
-        mock_file,
-        cloudpickle_mock,
-        mock_check_sdv_versions_and_warn,
-        mock_check_synthesizer_version,
-        mock_generate_synthesizer_id,
-        mock_datetime,
-        caplog,
-    ):
-        """Test that the ``load`` method loads a stored synthesizer."""
-        # Setup
-        synthesizer_id = 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
-        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
-        mock_generate_synthesizer_id.return_value = synthesizer_id
-        synthesizer_mock = Mock(_fitted=False, _synthesizer_id=None)
-        cloudpickle_mock.load.return_value = synthesizer_mock
-
-        # Run
-        with catch_sdv_logs(caplog, logging.INFO, 'MultiTableSynthesizer'):
-            loaded_instance = BaseMultiTableSynthesizer.load('synth.pkl')
-
-        # Assert
-        mock_validate_correct_synthesizer_loading.assert_called_once_with(
-            synthesizer_mock, BaseMultiTableSynthesizer
-        )
-        warn_load_deprecated.assert_called_once_with()
-        mock_file.assert_called_once_with('synth.pkl', 'rb')
-        mock_check_sdv_versions_and_warn.assert_called_once_with(loaded_instance)
-        cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
-        assert loaded_instance == synthesizer_mock
-        mock_check_synthesizer_version.assert_called_once_with(synthesizer_mock)
-        assert loaded_instance._synthesizer_id == synthesizer_id
-        mock_generate_synthesizer_id.assert_called_once_with(synthesizer_mock)
-        assert caplog.messages[0] == str({
-            'EVENT': 'Load',
-            'TIMESTAMP': '2024-04-19 16:20:10.037183',
-            'SYNTHESIZER CLASS NAME': 'Mock',
-            'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
-        })
-
-    @patch('builtins.open')
-    @patch('sdv.multi_table.base.cloudpickle')
-    def test_load_runtime_error(self, cloudpickle_mock, mock_open):
-        """Test that the synthesizer's load method errors with the correct message."""
-        # Setup
-        cloudpickle_mock.load.side_effect = RuntimeError(
-            (
-                'Attempting to deserialize object on a CUDA device but '
-                'torch.cuda.is_available() is False. If you are running on a CPU-only machine,'
-                " please use torch.load with map_location=torch.device('cpu') "
-                'to map your storages to the CPU.'
-            )
-        )
-
-        # Run and Assert
-        err_msg = re.escape(
-            'This synthesizer was created on a machine with GPU but the current machine is'
-            ' CPU-only. This feature is currently unsupported. We recommend sampling on '
-            'the same GPU-enabled machine.'
-        )
-        with pytest.raises(SamplingError, match=err_msg):
-            BaseMultiTableSynthesizer.load('synth.pkl')
-
-    @patch('builtins.open')
-    @patch('sdv.multi_table.base.cloudpickle')
-    def test_load_runtime_error_no_change(self, cloudpickle_mock, mock_open):
-        """Test that the synthesizer's load method errors with the correct message."""
-        # Setup
-        cloudpickle_mock.load.side_effect = RuntimeError('Error')
-
-        # Run and Assert
-        with pytest.raises(RuntimeError, match='Error'):
-            BaseMultiTableSynthesizer.load('synth.pkl')
