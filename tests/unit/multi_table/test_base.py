@@ -203,20 +203,6 @@ class TestBaseMultiTableSynthesizer:
             call('longitude'),
         ])
 
-    def test___init___synthesizer_kwargs_deprecated(self):
-        """Test that the ``synthesizer_kwargs`` method is deprecated."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        metadata.validate = Mock()
-
-        # Run and Assert
-        warn_message = (
-            'The `synthesizer_kwargs` parameter is deprecated as of SDV 1.2.0 and does not '
-            'affect the synthesizer. Please use the `set_table_parameters` method instead.'
-        )
-        with pytest.warns(FutureWarning, match=warn_message):
-            BaseMultiTableSynthesizer(metadata, synthesizer_kwargs={})
-
     def test__handle_composite_keys(self):
         """Test the synthesizer errors if composite primary keys exist in the metadata."""
         # Setup

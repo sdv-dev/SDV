@@ -130,7 +130,7 @@ class BaseMultiTableSynthesizer:
                 'not supported in SDV Community.'
             )
 
-    def __init__(self, metadata, locales=['en_US'], synthesizer_kwargs=None):
+    def __init__(self, metadata, locales=['en_US']):
         self.metadata = metadata
         if type(metadata) is MultiTableMetadata:
             warnings.warn(DEPRECATION_MSG, FutureWarning)
@@ -151,13 +151,6 @@ class BaseMultiTableSynthesizer:
         self._original_table_columns = {}
         self.constraints = []
         self._single_table_constraints = []
-        if synthesizer_kwargs is not None:
-            warn_message = (
-                'The `synthesizer_kwargs` parameter is deprecated as of SDV 1.2.0 and does not '
-                'affect the synthesizer. Please use the `set_table_parameters` method instead.'
-            )
-            warnings.warn(warn_message, FutureWarning)
-
         if self.DEFAULT_SYNTHESIZER_KWARGS:
             for table_name in self.metadata.tables:
                 self._table_parameters[table_name] = deepcopy(self.DEFAULT_SYNTHESIZER_KWARGS)
