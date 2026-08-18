@@ -3,7 +3,6 @@ from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
-from tests.utils import DataFrameDictMatcher
 
 from sdv.errors import VisualizationUnavailableError
 from sdv.evaluation.single_table import (
@@ -15,6 +14,7 @@ from sdv.evaluation.single_table import (
     run_diagnostic,
 )
 from sdv.metadata.metadata import Metadata
+from tests.utils import DataFrameDictMatcher
 
 
 def test_evaluate_quality():
