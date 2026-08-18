@@ -370,7 +370,7 @@ class TestBaseMultiTableSynthesizer:
         result = instance.get_parameters()
 
         # Assert
-        assert result == {'locales': 'en_CA', 'synthesizer_kwargs': None}
+        assert result == {'locales': 'en_CA'}
 
     def test_set_table_parameters(self):
         """Test that the table's parameters are being updated.

@@ -18,7 +18,8 @@ from sdv.cag import Inequality
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError
-from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
+from sdv.evaluation import evaluate_quality
+from sdv.evaluation.single_table import get_column_pair_plot, get_column_plot
 from sdv.metadata.metadata import Metadata
 from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
