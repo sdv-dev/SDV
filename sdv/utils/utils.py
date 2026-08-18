@@ -64,6 +64,11 @@ def drop_unknown_references(data, metadata, drop_missing_values=False, verbose=T
                 message=r"No 'datetime_format' is present.*",
                 category=UserWarning,
             )
+            warnings.filterwarnings(
+                'ignore',
+                message=r'The datetime format for column .* could not be verified.*',
+                category=UserWarning,
+            )
             metadata.validate_data(data)
         if drop_missing_values:
             _validate_foreign_keys_not_null(metadata, data)
