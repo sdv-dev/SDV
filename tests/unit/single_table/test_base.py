@@ -379,21 +379,6 @@ class TestBaseSynthesizer:
         with pytest.raises(SynthesizerInputError, match=expected_error):
             BaseSingleTableSynthesizer(metadata)
 
-    def test_set_address_columns_warning(self):
-        """Test ``set_address_columns`` method when the synthesizer has been fitted."""
-        # Setup
-        synthesizer = BaseSynthesizer(Metadata())
-
-        # Run and Assert
-        expected_message = re.escape(
-            '`set_address_columns` is deprecated. Please add these columns directly to your'
-            ' metadata using `add_column_relationship`.'
-        )
-        with pytest.warns(FutureWarning, match=expected_message):
-            synthesizer.set_address_columns(
-                ['country_column', 'city_column'], anonymization_level='full'
-            )
-
     def test__resolve_gpu_parameters(self):
         """Test the `_resolve_gpu_parameters` method."""
         # Setup

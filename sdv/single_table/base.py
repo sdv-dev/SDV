@@ -219,14 +219,6 @@ class BaseSynthesizer:
             'SYNTHESIZER ID': self._synthesizer_id,
         })
 
-    def set_address_columns(self, column_names, anonymization_level='full'):
-        """Set the address multi-column transformer."""
-        warnings.warn(
-            '`set_address_columns` is deprecated. Please add these columns directly to your'
-            ' metadata using `add_column_relationship`.',
-            FutureWarning,
-        )
-
     def _validate_metadata(self, data):
         """Validate that the data follows the metadata."""
         errors = []
