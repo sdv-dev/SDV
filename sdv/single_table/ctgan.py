@@ -14,7 +14,6 @@ from sdv.single_table.utils import detect_discrete_columns
 
 try:
     from ctgan import CTGAN, TVAE
-    from ctgan.synthesizers._utils import get_enable_gpu_value
 
     import_error = None
 except ModuleNotFoundError as e:
@@ -158,10 +157,6 @@ class CTGANSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynth
         enable_gpu (bool):
             Whether to attempt to use GPU for computation.
             Defaults to ``True``.
-        cuda (bool or str):
-            **Deprecated**
-            If ``True``, use CUDA. If a ``str``, use the indicated device.
-            If ``False``, do not use cuda at all.
     """
 
     _model_sdtype_transformers = {'categorical': None, 'boolean': None}
@@ -186,7 +181,6 @@ class CTGANSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynth
         epochs=300,
         pac=10,
         enable_gpu=True,
-        cuda=None,
     ):
         if CTGAN is None:
             self.raise_module_not_found_error(import_error)
@@ -210,7 +204,7 @@ class CTGANSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynth
         self.verbose = verbose
         self.epochs = epochs
         self.pac = pac
-        self.enable_gpu = get_enable_gpu_value(enable_gpu, cuda)
+        self.enable_gpu = enable_gpu
         self._model_kwargs = {
             'embedding_dim': embedding_dim,
             'generator_dim': generator_dim,
@@ -361,10 +355,6 @@ class TVAESynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynthe
         enable_gpu (bool):
             Whether to attempt to use GPU for computation.
             Defaults to ``True``.
-        cuda (bool or str):
-            **Deprecated**
-            If ``True``, use CUDA. If a ``str``, use the indicated device.
-            If ``False``, do not use cuda at all.
     """
 
     _model_sdtype_transformers = {'categorical': None, 'boolean': None}
@@ -383,7 +373,6 @@ class TVAESynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynthe
         epochs=300,
         loss_factor=2,
         enable_gpu=True,
-        cuda=None,
     ):
         if TVAE is None:
             self.raise_module_not_found_error(import_error)
@@ -400,7 +389,7 @@ class TVAESynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynthe
         self.verbose = verbose
         self.epochs = epochs
         self.loss_factor = loss_factor
-        self.enable_gpu = get_enable_gpu_value(enable_gpu, cuda)
+        self.enable_gpu = enable_gpu
         self._model_kwargs = {
             'embedding_dim': embedding_dim,
             'compress_dims': compress_dims,
