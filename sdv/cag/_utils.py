@@ -173,23 +173,6 @@ def _remove_columns_from_metadata(metadata, table_name, columns_to_drop):
     return Metadata.load_from_dict(metadata)
 
 
-def _filter_old_style_constraints(constraints):
-    """Filter out old-style constraints."""
-    old_style_constraint = [
-        constraint for constraint in constraints if isinstance(constraint, dict)
-    ]
-    result = [constraint for constraint in constraints if constraint not in old_style_constraint]
-    if old_style_constraint:
-        warnings.warn(
-            'The `add_constraints` function no longer supports constraints using the older '
-            'dictionary-style definition. Such constraints will be ignored. Please supply '
-            'objects from `sdv.cag` instead.',
-            FutureWarning,
-        )
-
-    return result
-
-
 def _validate_constraints(constraints, synthesizer_fitted):
     """Validate the constraints.
 
@@ -211,7 +194,7 @@ def _validate_constraints(constraints, synthesizer_fitted):
             RefitWarning,
         )
 
-    return _filter_old_style_constraints(constraints)
+    return constraints
 
 
 def _validate_constraints_single_table(constraints, synthesizer_fitted):
