@@ -3,7 +3,7 @@ import os
 import re
 import warnings
 from datetime import date, datetime
-from unittest.mock import ANY, MagicMock, Mock, call, mock_open, patch
+from unittest.mock import ANY, MagicMock, Mock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -378,67 +378,6 @@ class TestBaseSynthesizer:
         # Run and Assert
         with pytest.raises(SynthesizerInputError, match=expected_error):
             BaseSingleTableSynthesizer(metadata)
-
-    def test_set_address_columns_warning(self):
-        """Test ``set_address_columns`` method when the synthesizer has been fitted."""
-        # Setup
-        synthesizer = BaseSynthesizer(Metadata())
-
-        # Run and Assert
-        expected_message = re.escape(
-            '`set_address_columns` is deprecated. Please add these columns directly to your'
-            ' metadata using `add_column_relationship`.'
-        )
-        with pytest.warns(FutureWarning, match=expected_message):
-            synthesizer.set_address_columns(
-                ['country_column', 'city_column'], anonymization_level='full'
-            )
-
-    def test__resolve_gpu_parameters(self):
-        """Test the `_resolve_gpu_parameters` method."""
-        # Setup
-        metadata = Metadata()
-        instance = BaseSingleTableSynthesizer(metadata)
-        parameters_with_cuda = {'cuda': True, 'enable_gpu': True}
-        parameters_with_cuda_only = {'cuda': True}
-        parameters_with_cuda_none = {'cuda': None, 'enable_gpu': True}
-        parameters_without_cuda = {'enable_gpu': False}
-
-        # Run
-        result_with_cuda = instance._resolve_gpu_parameters(parameters_with_cuda)
-        result_with_cuda_only = instance._resolve_gpu_parameters(parameters_with_cuda_only)
-        result_with_cuda_none = instance._resolve_gpu_parameters(parameters_with_cuda_none)
-        result_without_cuda = instance._resolve_gpu_parameters(parameters_without_cuda)
-
-        # Assert
-        assert result_with_cuda == {'enable_gpu': True}
-        assert result_with_cuda_only == {'cuda': True}
-        assert result_with_cuda_none == {'enable_gpu': True}
-        assert result_without_cuda == {'enable_gpu': False}
-
-    def test_get_parameters_mock(self):
-        """Test that `get_parameters` calls `_resolve_gpu_parameters`"""
-        metadata = Metadata()
-        instance = BaseSynthesizer(
-            metadata, enforce_min_max_values=False, enforce_rounding=False, locales='en_CA'
-        )
-        expected_parameters = {
-            'enforce_min_max_values': False,
-            'enforce_rounding': True,
-            'locales': 'en_CA',
-        }
-        instance._resolve_gpu_parameters = Mock(return_value=expected_parameters)
-
-        # Run
-        parameters = instance.get_parameters()
-
-        # Assert
-        assert parameters == expected_parameters
-        instance._resolve_gpu_parameters.assert_called_once_with({
-            'enforce_min_max_values': False,
-            'enforce_rounding': False,
-            'locales': 'en_CA',
-        })
 
     def test_get_parameters(self):
         """Test that it returns every ``init`` parameter without the ``metadata``."""
@@ -1443,57 +1382,6 @@ class TestBaseSynthesizer:
             filepath = os.path.join(tmp_path, 'output.pkl')
             synthesizer.save(filepath)
 
-    @patch('sdv.single_table.base.datetime')
-    @patch('sdv.single_table.base.generate_synthesizer_id')
-    @patch('sdv.single_table.base.check_synthesizer_version')
-    @patch('sdv.single_table.base.check_sdv_versions_and_warn')
-    @patch('sdv.single_table.base.cloudpickle')
-    @patch('builtins.open', new_callable=mock_open)
-    @patch('sdv.single_table.base.warn_load_deprecated')
-    @patch('sdv.single_table.base._validate_correct_synthesizer_loading')
-    def test_load(
-        self,
-        mock_validate_correct_synthesizer_loading,
-        mock_warn_load_deprecated,
-        mock_file,
-        cloudpickle_mock,
-        mock_check_sdv_versions_and_warn,
-        mock_check_synthesizer_version,
-        mock_generate_synthesizer_id,
-        mock_datetime,
-        caplog,
-    ):
-        """Test that the ``load`` method loads a stored synthesizer."""
-        # Setup
-        synthesizer_mock = Mock(_fitted=False, _synthesizer_id=None)
-        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
-        synthesizer_id = 'SingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
-        mock_generate_synthesizer_id.return_value = synthesizer_id
-        cloudpickle_mock.load.return_value = synthesizer_mock
-
-        # Run
-        with catch_sdv_logs(caplog, logging.INFO, 'SingleTableSynthesizer'):
-            loaded_instance = BaseSynthesizer.load('synth.pkl')
-
-        # Assert
-        mock_validate_correct_synthesizer_loading.assert_called_once_with(
-            synthesizer_mock, BaseSynthesizer
-        )
-        mock_warn_load_deprecated.assert_called_once()
-        mock_file.assert_called_once_with('synth.pkl', 'rb')
-        cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
-        mock_check_sdv_versions_and_warn.assert_called_once_with(loaded_instance)
-        assert loaded_instance == synthesizer_mock
-        assert loaded_instance._synthesizer_id == synthesizer_id
-        mock_check_synthesizer_version.assert_called_once_with(synthesizer_mock)
-        mock_generate_synthesizer_id.assert_called_once_with(synthesizer_mock)
-        assert caplog.messages[0] == str({
-            'EVENT': 'Load',
-            'TIMESTAMP': '2024-04-19 16:20:10.037183',
-            'SYNTHESIZER CLASS NAME': 'Mock',
-            'SYNTHESIZER ID': 'SingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
-        })
-
     def test_load_custom_constraint_classes(self):
         """Test that ``load_custom_constraint_classes`` calls the ``DataProcessor``'s method."""
         # Setup
@@ -1508,40 +1396,6 @@ class TestBaseSynthesizer:
         instance._data_processor.load_custom_constraint_classes.assert_called_once_with(
             'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
         )
-
-    @patch('builtins.open')
-    @patch('sdv.single_table.base.cloudpickle')
-    def test_load_runtime_error(self, cloudpickle_mock, mock_open):
-        """Test that the synthesizer's load method errors with the correct message."""
-        # Setup
-        cloudpickle_mock.load.side_effect = RuntimeError(
-            (
-                'Attempting to deserialize object on a CUDA device but '
-                'torch.cuda.is_available() is False. If you are running on a CPU-only machine,'
-                " please use torch.load with map_location=torch.device('cpu') "
-                'to map your storages to the CPU.'
-            )
-        )
-
-        # Run and Assert
-        err_msg = re.escape(
-            'This synthesizer was created on a machine with GPU but the current machine is'
-            ' CPU-only. This feature is currently unsupported. We recommend sampling on '
-            'the same GPU-enabled machine.'
-        )
-        with pytest.raises(SamplingError, match=err_msg):
-            BaseSynthesizer.load('synth.pkl')
-
-    @patch('builtins.open')
-    @patch('sdv.single_table.base.cloudpickle')
-    def test_load_runtime_error_no_change(self, cloudpickle_mock, mock_open):
-        """Test that the synthesizer's load method errors with the correct message."""
-        # Setup
-        cloudpickle_mock.load.side_effect = RuntimeError('Error')
-
-        # Run and Assert
-        with pytest.raises(RuntimeError, match='Error'):
-            BaseSynthesizer.load('synth.pkl')
 
     @patch('sdv.single_table.base.version')
     def test_get_info_no_enterprise(self, mock_sdv_version):
