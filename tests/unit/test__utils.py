@@ -32,7 +32,6 @@ from sdv._utils import (
     check_synthesizer_version,
     generate_synthesizer_id,
     get_possible_chars,
-    warn_load_deprecated,
 )
 from sdv.errors import SDVVersionWarning, SynthesizerInputError, VersionError
 from sdv.metadata import Metadata
@@ -1196,19 +1195,6 @@ def test__validate_datetime_format_same_timezone():
     # Assert
     assert len(invalid_values) == 0
     assert isinstance(column.tolist()[0], pd.Timestamp)
-
-
-def test_warn_load_deprecated():
-    """Test the `warn_load_deprecated` method."""
-    # Setup
-    expected_message = re.escape(
-        "The 'load' function will be deprecated in future versions of SDV. Please use"
-        " 'utils.load_synthesizer' instead.",
-    )
-
-    # Run and Assert
-    with pytest.warns(FutureWarning, match=expected_message):
-        warn_load_deprecated()
 
 
 def test__validate_correct_synthesizer_loading():

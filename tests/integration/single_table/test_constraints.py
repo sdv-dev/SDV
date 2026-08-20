@@ -14,6 +14,7 @@ from sdv.metadata.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
 from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
+from sdv.utils import load_synthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint
 
 
@@ -235,7 +236,7 @@ def test_custom_constraints_from_object(tmpdir):
 
     # Run - Save and Sample
     synthesizer.save(tmpdir / 'test.pkl')
-    loaded_instance = synthesizer.load(tmpdir / 'test.pkl')
+    loaded_instance = load_synthesizer(tmpdir / 'test.pkl')
     loaded_sampled = loaded_instance.sample(10)
     assert all(loaded_sampled['table']['numerical_col'] > 1)
 
@@ -272,7 +273,7 @@ def test_single_table_custom_constraints_from_object(tmpdir):
 
     # Run - Save and Sample
     synthesizer.save(tmpdir / 'test.pkl')
-    loaded_instance = synthesizer.load(tmpdir / 'test.pkl')
+    loaded_instance = load_synthesizer(tmpdir / 'test.pkl')
     loaded_sampled = loaded_instance.sample(10)
     assert all(loaded_sampled['numerical_col'] > 1)
 

@@ -1,57 +1,8 @@
 """Methods to compare the real and synthetic data for multi-table."""
 
-import warnings
-
 from sdmetrics import visualization
-from sdmetrics.reports.multi_table import DiagnosticReport, QualityReport
 
 import sdv.evaluation.single_table as single_table_visualization
-
-
-def _evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
-    """Evaluate the quality of the synthetic data.
-
-    Args:
-        real_data (dict):
-            Dictionary containing the real table data.
-        synthetic_column (dict):
-            Dictionary containing the synthetic table data.
-        metadata (Metadata):
-            The metadata object describing the real/synthetic data.
-        verbose (bool):
-            Whether or not to print report summary and progress.
-            Defaults to True.
-
-    Returns:
-        QualityReport:
-            Multi table quality report object.
-    """
-    quality_report = QualityReport()
-    quality_report.generate(real_data, synthetic_data, metadata.to_dict(), verbose)
-    return quality_report
-
-
-def _run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
-    """Run diagnostic report for the synthetic data.
-
-    Args:
-        real_data (dict):
-            Dictionary containing the real table data.
-        synthetic_column (dict):
-            Dictionary containing the synthetic table data.
-        metadata (Metadata):
-            The metadata object describing the real/synthetic data.
-        verbose (bool):
-            Whether or not to print report summary and progress.
-            Defaults to True.
-
-    Returns:
-        DiagnosticReport:
-            Multi table diagnostic report object.
-    """
-    diagnostic_report = DiagnosticReport()
-    diagnostic_report.generate(real_data, synthetic_data, metadata.to_dict(), verbose)
-    return diagnostic_report
 
 
 def get_column_plot(real_data, synthetic_data, metadata, table_name, column_name, plot_type=None):
@@ -175,11 +126,6 @@ def get_cardinality_plot(
     )
 
 
-DEPRECATED_EVALUATION_FUNCTIONS = {
-    'evaluate_quality': _evaluate_quality,
-    'run_diagnostic': _run_diagnostic,
-}
-
 PLOT_FUNCTIONS = {
     'get_cardinality_plot': get_cardinality_plot,
     'get_column_pair_plot': get_column_pair_plot,
@@ -188,14 +134,6 @@ PLOT_FUNCTIONS = {
 
 
 def __getattr__(name):
-    if name in DEPRECATED_EVALUATION_FUNCTIONS:
-        warnings.warn(
-            "The evaluation functions are now accessible via the 'sdv.evaluation' module.",
-            FutureWarning,
-            stacklevel=2,
-        )
-        return DEPRECATED_EVALUATION_FUNCTIONS.get(name)
-
     if name not in PLOT_FUNCTIONS:
         raise AttributeError(f'module {__name__!r} has no attribute {name!r}')
 
