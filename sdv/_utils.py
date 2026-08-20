@@ -509,15 +509,6 @@ def _check_regex_format(table_name, column_name, regex):
             ) from e
 
 
-def warn_load_deprecated():
-    """Warn that the `load` function is deprecated."""
-    warnings.warn(
-        "The 'load' function will be deprecated in future versions of SDV. Please use"
-        " 'utils.load_synthesizer' instead.",
-        FutureWarning,
-    )
-
-
 def warn_set_constraints_deprecated():
     """Warn that the `set_constraints` method on synthesizer is deprecated."""
     deprecation_msg = (

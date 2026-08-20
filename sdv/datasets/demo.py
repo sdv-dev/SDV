@@ -878,7 +878,6 @@ def save_resource(
     output_filepath=None,
     s3_bucket_name='sdv-datasets-public',
     credentials=None,
-    resource_filename=None,
 ):
     """Save the resource to disk.
 
@@ -903,30 +902,12 @@ def save_resource(
                 'license_key': '<MY_LICENSE_KEY>'
             }
             Defaults to None.
-        resource_filename (str, optional):
-            **Deprecated.**
-            The name of the file to download from S3. Use
-            ``resource_filepath`` instead. Defaults to None.
     """
-    if resource_filepath is None and resource_filename is None:
+    if resource_filepath is None:
         raise ValueError('Please provide a `resource_filepath`.')
 
     if output_filepath is None:
         raise ValueError('Please provide an `output_filepath`.')
-
-    if resource_filepath and resource_filename:
-        raise ValueError(
-            'Cannot use both `resource_filepath` and `resource_filename`. '
-            'Please use only `resource_filepath`.'
-        )
-
-    if resource_filename is not None:
-        deprecation_msg = (
-            'Warning: The `resource_filename` parameter is deprecated. '
-            'Please use the `resource_filepath` parameter instead.'
-        )
-        warnings.warn(deprecation_msg, FutureWarning)
-        resource_filepath = resource_filename
 
     _validate_resource_filepath(resource_filepath)
     _save_file_content(

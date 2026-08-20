@@ -92,10 +92,6 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
         enable_gpu (bool):
             Whether to attempt to use GPU for computation.
             Defaults to ``True``.
-        cuda (bool or str):
-            **Deprecated**
-            If ``True``, use CUDA. If an ``str``, use the indicated device.
-            If ``False``, do not use cuda at all.
         numerical_distributions (dict):
             Dictionary that maps field names from the table that is being modeled with
             the distribution that needs to be used. The distributions can be passed as either
@@ -146,7 +142,6 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
         enable_gpu=True,
         numerical_distributions=None,
         default_distribution=None,
-        cuda=None,
     ):
         super().__init__(
             metadata,
@@ -167,7 +162,6 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             epochs=epochs,
             pac=pac,
             enable_gpu=enable_gpu,
-            cuda=cuda,
         )
 
         validate_numerical_distributions(
