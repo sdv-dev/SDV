@@ -343,18 +343,6 @@ class BaseSynthesizer:
 
         return Metadata.load_from_dict(self.metadata.to_dict(), table_name)
 
-    def load_custom_constraint_classes(self, filepath, class_names):
-        """Load a custom constraint class for the current synthesizer.
-
-        Args:
-            filepath (str):
-                String representing the absolute or relative path to the python file where
-                the custom constraints are declared.
-            class_names (list):
-                A list of custom constraint classes to be imported.
-        """
-        self._data_processor.load_custom_constraint_classes(filepath, class_names)
-
     def auto_assign_transformers(self, data):
         """Automatically assign the required transformers for the given data and constraints.
 
@@ -894,7 +882,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
             if previous_rows is not None:
                 sampled = pd.concat([previous_rows, sampled], ignore_index=True)
-            sampled = self._data_processor.filter_valid(sampled)
 
             if conditions is not None:
                 sampled = self._filter_conditions(sampled, conditions, float_rtol)
@@ -1186,7 +1173,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         self._validate_fit_before_sample()
         self._check_input_metadata_updated()
         sample_timestamp = datetime.datetime.now()
-        has_constraints = bool(self._data_processor._constraints)
+        has_constraints = bool(self.get_constraints())
         has_batches = batch_size is not None and batch_size != num_rows
         show_progress_bar = has_constraints or has_batches
 

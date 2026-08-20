@@ -7,7 +7,7 @@ from pandas.api.types import is_object_dtype
 
 from sdv.cag import Inequality
 from sdv.cag._errors import ConstraintNotMetError
-from sdv.constraints.utils import (
+from sdv.cag.utils import (
     cast_to_datetime64,
 )
 from sdv.datasets.demo import download_demo

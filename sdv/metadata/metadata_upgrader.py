@@ -2,18 +2,6 @@
 
 import warnings
 
-from sdv.constraints import (
-    FixedCombinations,
-    Inequality,
-    Negative,
-    OneHotEncoding,
-    Positive,
-    Range,
-    ScalarInequality,
-    ScalarRange,
-    Unique,
-)
-
 
 def _upgrade_columns_and_keys(old_metadata):
     new_metadata = {}
@@ -69,30 +57,9 @@ def _upgrade_columns_and_keys(old_metadata):
     return new_metadata
 
 
-def _upgrade_positive_negative(old_constraint):
-    new_constraints = []
-    strict = old_constraint.get('strict')
-    old_name = old_constraint.get('constraint')
-    is_positive = old_name == 'sdv.constraints.tabular.Positive'
-    constraint_name = Positive.__name__ if is_positive else Negative.__name__
-    columns = old_constraint.get('columns')
-    if not isinstance(columns, list):
-        columns = [columns]
-
-    for column in columns:
-        new_constraint = {
-            'constraint_name': constraint_name,
-            'column_name': column,
-            'strict_boundaries': strict,
-        }
-        new_constraints.append(new_constraint)
-
-    return new_constraints
-
-
 def _upgrade_unique_combinations(old_constraint):
     new_constraint = {
-        'constraint_name': FixedCombinations.__name__,
+        'constraint_name': 'FixedCombinations',
         'column_names': old_constraint.get('columns'),
     }
 
@@ -117,39 +84,20 @@ def _upgrade_greater_than(old_constraint):
             warnings.warn(
                 f"Unable to upgrade the GreaterThan constraint specified for 'high' "
                 f"{high_column_name} and 'low' {low_column_name}. Manually add "
-                f'{Inequality.__name__} constraints to capture this logic.'
+                f'{"Inequality"} constraints to capture this logic.'
             )
             return []
 
         new_constraint = {
-            'constraint_name': Inequality.__name__,
+            'constraint_name': 'Inequality',
             'high_column_name': high if high_is_string else high[0],
             'low_column_name': low if low_is_string else low[0],
             'strict_boundaries': strict,
         }
         new_constraints.append(new_constraint)
 
-    elif scalar == 'low':
-        high = [high] if high_is_string else high
-        for column in high:
-            new_constraint = {
-                'constraint_name': ScalarInequality.__name__,
-                'column_name': column,
-                'relation': '>' if strict else '>=',
-                'value': low,
-            }
-            new_constraints.append(new_constraint)
-
     else:
-        low = [low] if low_is_string else low
-        for column in low:
-            new_constraint = {
-                'constraint_name': ScalarInequality.__name__,
-                'column_name': column,
-                'relation': '<' if strict else '<=',
-                'value': high,
-            }
-            new_constraints.append(new_constraint)
+        return None
 
     return new_constraints
 
@@ -163,50 +111,17 @@ def _upgrade_between(old_constraint):
     strict = old_constraint.get('strict', False)
     new_constraints = []
     if high_is_scalar and low_is_scalar:
-        new_constraint = {
-            'constraint_name': ScalarRange.__name__,
-            'column_name': constraint_column,
-            'low_value': low,
-            'high_value': high,
-            'strict_boundaries': strict,
-        }
-        new_constraints.append(new_constraint)
+        return None
 
     elif high_is_scalar and not low_is_scalar:
-        inequality_constraint = {
-            'constraint_name': Inequality.__name__,
-            'low_column_name': low,
-            'high_column_name': constraint_column,
-            'strict_boundaries': strict,
-        }
-        scalar_constraint = {
-            'constraint_name': ScalarInequality.__name__,
-            'column_name': constraint_column,
-            'relation': '<' if strict else '<=',
-            'value': high,
-        }
-        new_constraints.append(inequality_constraint)
-        new_constraints.append(scalar_constraint)
+        return None
 
     elif not high_is_scalar and low_is_scalar:
-        inequality_constraint = {
-            'constraint_name': Inequality.__name__,
-            'low_column_name': constraint_column,
-            'high_column_name': high,
-            'strict_boundaries': strict,
-        }
-        scalar_constraint = {
-            'constraint_name': ScalarInequality.__name__,
-            'column_name': constraint_column,
-            'relation': '>' if strict else '>=',
-            'value': low,
-        }
-        new_constraints.append(inequality_constraint)
-        new_constraints.append(scalar_constraint)
+        return None
 
     else:
         new_constraint = {
-            'constraint_name': Range.__name__,
+            'constraint_name': 'Range',
             'low_column_name': low,
             'middle_column_name': constraint_column,
             'high_column_name': high,
@@ -219,15 +134,7 @@ def _upgrade_between(old_constraint):
 
 def _upgrade_one_hot_encoding(old_constraint):
     new_constraint = {
-        'constraint_name': OneHotEncoding.__name__,
-        'column_names': old_constraint.get('columns'),
-    }
-    return [new_constraint]
-
-
-def _upgrade_unique(old_constraint):
-    new_constraint = {
-        'constraint_name': Unique.__name__,
+        'constraint_name': 'OneHotEncoding',
         'column_names': old_constraint.get('columns'),
     }
     return [new_constraint]
@@ -237,7 +144,7 @@ def _upgrade_constraint(old_constraint):
     new_constraints = []
     constraint_name = old_constraint.get('constraint')
     if constraint_name in ('sdv.constraints.tabular.Positive', 'sdv.constraints.tabular.Negative'):
-        new_constraints = _upgrade_positive_negative(old_constraint)
+        new_constraints = None
 
     elif constraint_name == 'sdv.constraints.tabular.UniqueCombinations':
         new_constraints = _upgrade_unique_combinations(old_constraint)
@@ -258,7 +165,7 @@ def _upgrade_constraint(old_constraint):
         new_constraints = _upgrade_one_hot_encoding(old_constraint)
 
     elif constraint_name == 'sdv.constraints.tabular.Unique':
-        new_constraints = _upgrade_unique(old_constraint)
+        new_constraints = None
 
     elif constraint_name == 'sdv.constraints.tabular.ColumnFormula':
         warnings.warn(
@@ -293,7 +200,8 @@ def _upgrade_constraints(old_metadata):
     new_constraints = []
     for constraint in old_constraints:
         new_constraint = _upgrade_constraint(constraint)
-        new_constraints += new_constraint
+        if new_constraint is not None:
+            new_constraints += new_constraint
 
     return new_constraints
 

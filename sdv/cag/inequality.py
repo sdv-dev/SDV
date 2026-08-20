@@ -15,7 +15,7 @@ from sdv.cag._utils import (
     _validate_table_name_if_defined,
 )
 from sdv.cag.base import BaseConstraint
-from sdv.constraints.utils import (
+from sdv.cag.utils import (
     _warn_if_timezone_aware_formats,
     cast_to_datetime64,
     compute_nans_column,

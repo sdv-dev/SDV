@@ -14,7 +14,7 @@ from sdv.cag._utils import (
     _validate_table_name_if_defined,
 )
 from sdv.cag.base import BaseConstraint
-from sdv.constraints.utils import get_mappable_combination
+from sdv.cag.utils import get_mappable_combination
 
 
 class FixedCombinations(BaseConstraint):

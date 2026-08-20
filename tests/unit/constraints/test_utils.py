@@ -1,4 +1,4 @@
-"""Tests for the sdv.constraints.utils module."""
+"""Tests for the sdv.cag.utils module."""
 
 from decimal import Decimal
 from unittest.mock import patch
@@ -6,7 +6,7 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 
-from sdv.constraints.utils import (
+from sdv.cag.utils import (
     _cast_to_type,
     _parse_datetime,
     _parse_datetime64_value,
@@ -557,7 +557,7 @@ def test_format_datetime_array_with_lower_precision_format():
     np.testing.assert_array_equal(result, expected_result)
 
 
-@patch('sdv.constraints.utils.downcast_datetime_to_lower_precision')
+@patch('sdv.cag.utils.downcast_datetime_to_lower_precision')
 def test_match_datetime_precision_low_has_higher_precision(mock_downcast):
     """Test `match_datetime_precision` when `low` has higher precision than `high`.
 
@@ -583,7 +583,7 @@ def test_match_datetime_precision_low_has_higher_precision(mock_downcast):
     np.testing.assert_array_equal(result_high, high)
 
 
-@patch('sdv.constraints.utils.downcast_datetime_to_lower_precision')
+@patch('sdv.cag.utils.downcast_datetime_to_lower_precision')
 def test_match_datetime_precision_high_has_higher_precision(mock_downcast):
     """Test `match_datetime_precision` when `high` has higher precision than `low`.
 
@@ -609,7 +609,7 @@ def test_match_datetime_precision_high_has_higher_precision(mock_downcast):
     np.testing.assert_array_equal(result_high, expected_high)
 
 
-@patch('sdv.constraints.utils.warnings.warn')
+@patch('sdv.cag.utils.warnings.warn')
 def test_warn_if_timezone_aware_formats_warns(mock_warn):
     """Test it calls warnings.warn if timezone-aware format is detected."""
     # Setup
@@ -627,7 +627,7 @@ def test_warn_if_timezone_aware_formats_warns(mock_warn):
     mock_warn.assert_called_once_with(expected_message, UserWarning)
 
 
-@patch('sdv.constraints.utils.warnings.warn')
+@patch('sdv.cag.utils.warnings.warn')
 def test_warn_if_timezone_aware_formats_no_warning(mock_warn):
     """Test it does not call warnings.warn if all formats are timezone-naive."""
     # Setup

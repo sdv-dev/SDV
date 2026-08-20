@@ -835,19 +835,6 @@ class BaseMultiTableSynthesizer:
             'because the table does not use a GAN-based model.'
         )
 
-    def load_custom_constraint_classes(self, filepath, class_names):
-        """Load a custom constraint class for each table's synthesizer.
-
-        Args:
-            filepath (str):
-                String representing the absolute or relative path to the python file where
-                the custom constraints are declared.
-            class_names (list):
-                A list of custom constraint classes to be imported.
-        """
-        for synthesizer in self._table_synthesizers.values():
-            synthesizer.load_custom_constraint_classes(filepath, class_names)
-
     def get_info(self):
         """Get dictionary with information regarding the synthesizer.
 

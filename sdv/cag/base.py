@@ -8,7 +8,7 @@ import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype
 
 from sdv._utils import _format_invalid_values_string
-from sdv.constraints.utils import (
+from sdv.cag.utils import (
     cast_to_datetime64,
 )
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
@@ -16,6 +16,16 @@ from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.errors import NotFittedError
 
 LOGGER = logging.getLogger(__name__)
+
+
+def get_subclasses(cls):
+    """Recursively find subclasses for the current class object."""
+    subclasses = {}
+    for subclass in cls.__subclasses__():
+        subclasses[subclass.__name__] = subclass
+        subclasses.update(get_subclasses(subclass))
+
+    return subclasses
 
 
 class BaseConstraint:

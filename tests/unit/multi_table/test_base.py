@@ -1946,44 +1946,6 @@ class TestBaseMultiTableSynthesizer:
         )
         assert reverse_transformed == constraint1.reverse_transform.return_value
 
-    def test_load_custom_constraint_classes(self):
-        """Test that the method calls the single table synthesizer's version of the method."""
-        # Setup
-        instance = Mock()
-        table_synth_mock = Mock()
-        instance._table_synthesizers = {'table': table_synth_mock}
-
-        # Run
-        BaseMultiTableSynthesizer.load_custom_constraint_classes(
-            instance, 'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
-        )
-
-        # Assert
-        table_synth_mock.load_custom_constraint_classes.assert_called_once_with(
-            'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
-        )
-
-    def test_load_custom_constraint_classes_multi_tables(self):
-        """Check that ``load_custom_constraint_classes`` is called for every tables."""
-        # Setup
-        instance = Mock()
-        table_synth_mock = Mock()
-        table_synth_mock_2 = Mock()
-        instance._table_synthesizers = {'table': table_synth_mock, 'table_2': table_synth_mock_2}
-
-        # Run
-        BaseMultiTableSynthesizer.load_custom_constraint_classes(
-            instance, 'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
-        )
-
-        # Assert
-        table_synth_mock.load_custom_constraint_classes.assert_called_once_with(
-            'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
-        )
-        table_synth_mock_2.load_custom_constraint_classes.assert_called_once_with(
-            'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
-        )
-
     @patch('sdv.multi_table.base.version')
     def test_get_info(self, mock_version):
         """Test the correct dictionary is returned.

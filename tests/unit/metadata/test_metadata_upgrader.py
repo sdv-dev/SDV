@@ -135,12 +135,6 @@ def test__upgrade_constraints_greater_than():
             'low_column_name': 'f',
             'strict_boundaries': True,
         },
-        {'constraint_name': 'ScalarInequality', 'column_name': 'a', 'relation': '>=', 'value': 10},
-        {'constraint_name': 'ScalarInequality', 'column_name': 'b', 'relation': '>=', 'value': 5},
-        {'constraint_name': 'ScalarInequality', 'column_name': 'c', 'relation': '>=', 'value': 5},
-        {'constraint_name': 'ScalarInequality', 'column_name': 'f', 'relation': '<=', 'value': 10},
-        {'constraint_name': 'ScalarInequality', 'column_name': 'c', 'relation': '<=', 'value': 5},
-        {'constraint_name': 'ScalarInequality', 'column_name': 'd', 'relation': '<=', 'value': 5},
     ]
 
     assert len(expected_constraints) == len(new_constraints)
@@ -260,100 +254,12 @@ def test__upgrade_constraints_between():
     # Assert
     expected_constraints = [
         {
-            'constraint_name': 'ScalarRange',
-            'column_name': 'z',
-            'low_value': 5,
-            'high_value': 10,
-            'strict_boundaries': True,
-        },
-        {
             'constraint_name': 'Range',
             'middle_column_name': 'z',
             'low_column_name': 'a',
             'high_column_name': 'b',
             'strict_boundaries': True,
         },
-        {
-            'constraint_name': 'Inequality',
-            'low_column_name': 'a',
-            'high_column_name': 'z',
-            'strict_boundaries': False,
-        },
-        {
-            'constraint_name': 'ScalarInequality',
-            'column_name': 'z',
-            'relation': '<=',
-            'value': 10,
-        },
-        {
-            'constraint_name': 'Inequality',
-            'low_column_name': 'z',
-            'high_column_name': 'b',
-            'strict_boundaries': False,
-        },
-        {
-            'constraint_name': 'ScalarInequality',
-            'column_name': 'z',
-            'relation': '>=',
-            'value': 5,
-        },
-    ]
-    assert len(expected_constraints) == len(new_constraints)
-    for constraint in expected_constraints:
-        assert constraint in new_constraints
-
-
-def test__upgrade_constraints_positive_and_negative():
-    """Test the ``_upgrade_constraints`` method with ``Positive`` and ``Negative`` constraints.
-
-    Input:
-        - Old metadata dict with the following constraints:
-        - ``Positive`` constraint with one column and 'strict' as True.
-        - ``Positive`` constraint with one column and 'strict' as False.
-        - ``Positive`` constraint with multiple columns and 'strict' as True.
-        - ``Positive`` constraint with multiple columns and 'strict' as False.
-        - ``Negative`` constraint with one column and 'strict' as True.
-        - ``Negative`` constraint with one column and 'strict' as False.
-        - ``Negative`` constraint with multiple columns and 'strict' as True.
-        - ``Negative`` constraint with multiple columns and 'strict' as False.
-
-    Output:
-        - Metadata with the following constraints:
-        - ``Positive`` constraint for every ``Positive`` that had strict as True.
-        - ``ScalarInequality`` for every ``Positive`` that had strict as False.
-        - ``Negative`` constraint for every ``Negative`` that had strict as True.
-        - ``ScalarInequality`` for every ``Negative`` that had strict as False.
-    """
-    # Setup
-    old_constraints = [
-        {'constraint': 'sdv.constraints.tabular.Positive', 'columns': 'a', 'strict': True},
-        {'constraint': 'sdv.constraints.tabular.Positive', 'columns': ['b', 'c'], 'strict': True},
-        {'constraint': 'sdv.constraints.tabular.Positive', 'columns': 'd', 'strict': False},
-        {'constraint': 'sdv.constraints.tabular.Positive', 'columns': ['e', 'f'], 'strict': False},
-        {'constraint': 'sdv.constraints.tabular.Negative', 'columns': 'a', 'strict': True},
-        {'constraint': 'sdv.constraints.tabular.Negative', 'columns': ['b', 'c'], 'strict': True},
-        {'constraint': 'sdv.constraints.tabular.Negative', 'columns': 'd', 'strict': False},
-        {'constraint': 'sdv.constraints.tabular.Negative', 'columns': ['e', 'f'], 'strict': False},
-    ]
-    old_metadata = {'constraints': old_constraints}
-
-    # Run
-    new_constraints = _upgrade_constraints(old_metadata)
-
-    # Assert
-    expected_constraints = [
-        {'constraint_name': 'Positive', 'column_name': 'a', 'strict_boundaries': True},
-        {'constraint_name': 'Positive', 'column_name': 'b', 'strict_boundaries': True},
-        {'constraint_name': 'Positive', 'column_name': 'c', 'strict_boundaries': True},
-        {'constraint_name': 'Positive', 'column_name': 'd', 'strict_boundaries': False},
-        {'constraint_name': 'Positive', 'column_name': 'e', 'strict_boundaries': False},
-        {'constraint_name': 'Positive', 'column_name': 'f', 'strict_boundaries': False},
-        {'constraint_name': 'Negative', 'column_name': 'a', 'strict_boundaries': True},
-        {'constraint_name': 'Negative', 'column_name': 'b', 'strict_boundaries': True},
-        {'constraint_name': 'Negative', 'column_name': 'c', 'strict_boundaries': True},
-        {'constraint_name': 'Negative', 'column_name': 'd', 'strict_boundaries': False},
-        {'constraint_name': 'Negative', 'column_name': 'e', 'strict_boundaries': False},
-        {'constraint_name': 'Negative', 'column_name': 'f', 'strict_boundaries': False},
     ]
     assert len(expected_constraints) == len(new_constraints)
     for constraint in expected_constraints:
@@ -389,7 +295,6 @@ def test__upgrade_constraints_simple_constraints():
     expected_constraints = [
         {'constraint_name': 'FixedCombinations', 'column_names': ['a', 'b']},
         {'constraint_name': 'OneHotEncoding', 'column_names': ['c', 'd']},
-        {'constraint_name': 'Unique', 'column_names': ['e', 'f']},
     ]
     assert len(expected_constraints) == len(new_constraints)
     for constraint in expected_constraints:
