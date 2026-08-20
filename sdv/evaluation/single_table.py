@@ -1,67 +1,10 @@
 """Methods to compare the real and synthetic data for single-table."""
 
-import warnings
-
 from sdmetrics import visualization
-from sdmetrics.reports import DiagnosticReport, QualityReport
 
 from sdv.errors import VisualizationUnavailableError
 from sdv.evaluation._utils import _prepare_data_visualization
 from sdv.metadata.metadata import Metadata
-
-
-def _evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
-    """Evaluate the quality of the synthetic data.
-
-    Args:
-        real_data (pd.DataFrame):
-            The table containing the real data.
-        synthetic_data (pd.DataFrame):
-            The table containing the synthetic data.
-        metadata (Metadata):
-            The metadata object describing the real/synthetic data.
-        verbose (bool):
-            Whether or not to print report summary and progress.
-            Defaults to True.
-
-    Returns:
-        QualityReport:
-            Single table quality report object.
-    """
-    table_name = metadata._get_single_table_name()
-    real_data = {table_name: real_data}
-    synthetic_data = {table_name: synthetic_data}
-
-    quality_report = QualityReport()
-    quality_report.generate(real_data, synthetic_data, metadata.to_dict(), verbose)
-    return quality_report
-
-
-def _run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
-    """Run diagnostic report for the synthetic data.
-
-    Args:
-        real_data (pd.DataFrame):
-            The table containing the real data.
-        synthetic_data (pd.DataFrame):
-            The table containing the synthetic data.
-        metadata (Metadata):
-            The metadata object describing the real/synthetic data.
-        verbose (bool):
-            Whether or not to print report summary and progress.
-            Defaults to True.
-
-    Returns:
-        DiagnosticReport:
-            Single table diagnostic report object.
-    """
-    diagnostic_report = DiagnosticReport()
-    table_name = metadata._get_single_table_name()
-    real_data = {table_name: real_data}
-    synthetic_data = {table_name: synthetic_data}
-
-    diagnostic_report.generate(real_data, synthetic_data, metadata.to_dict(), verbose)
-    return diagnostic_report
 
 
 def get_column_plot(real_data, synthetic_data, metadata, column_name, plot_type=None):
@@ -170,11 +113,6 @@ def get_column_pair_plot(
     return visualization.get_column_pair_plot(real_data, synthetic_data, column_names, plot_type)
 
 
-DEPRECATED_EVALUATION_FUNCTIONS = {
-    'evaluate_quality': _evaluate_quality,
-    'run_diagnostic': _run_diagnostic,
-}
-
 PLOT_FUNCTIONS = {
     'get_column_pair_plot': get_column_pair_plot,
     'get_column_plot': get_column_plot,
@@ -182,14 +120,6 @@ PLOT_FUNCTIONS = {
 
 
 def __getattr__(name):
-    if name in DEPRECATED_EVALUATION_FUNCTIONS:
-        warnings.warn(
-            "The evaluation functions are now accessible via the 'sdv.evaluation' module.",
-            FutureWarning,
-            stacklevel=2,
-        )
-        return DEPRECATED_EVALUATION_FUNCTIONS.get(name)
-
     if name not in PLOT_FUNCTIONS:
         raise AttributeError(f'module {__name__!r} has no attribute {name!r}')
 

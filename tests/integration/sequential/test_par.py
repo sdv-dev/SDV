@@ -13,6 +13,7 @@ from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError
 from sdv.metadata.metadata import Metadata
 from sdv.sequential import PARSynthesizer
+from sdv.utils import load_synthesizer
 
 
 def _get_par_data_and_metadata():
@@ -123,7 +124,7 @@ def test_save_and_load(tmp_path):
     instance.save(synthesizer_path)
 
     # Run
-    loaded_instance = PARSynthesizer.load(synthesizer_path)
+    loaded_instance = load_synthesizer(synthesizer_path)
 
     # Assert
     assert isinstance(loaded_instance, PARSynthesizer)
@@ -175,7 +176,7 @@ def test_synthesize_sequences(tmp_path):
     # Save and Load
     model_path = tmp_path / 'my_synthesizer.pkl'
     synthesizer.save(model_path)
-    loaded_synthesizer = PARSynthesizer.load(model_path)
+    loaded_synthesizer = load_synthesizer(model_path)
     loaded_sample = loaded_synthesizer.sample(100)
 
     # Assert
@@ -886,7 +887,7 @@ def test_par_save_load_with_id_context_columns(tmp_path):
     synthesizer.save(save_path)
 
     # Load synthesizer
-    loaded_synthesizer = PARSynthesizer.load(save_path)
+    loaded_synthesizer = load_synthesizer(save_path)
     loaded_sample = loaded_synthesizer.sample(num_sequences=2)
 
     # Assert

@@ -1,51 +1,13 @@
-from unittest.mock import Mock, call, patch
+from unittest.mock import call, patch
 
 import pandas as pd
 
 from sdv.evaluation.multi_table import (
-    DiagnosticReport,
-    QualityReport,
-    evaluate_quality,
     get_cardinality_plot,
     get_column_pair_plot,
     get_column_plot,
-    run_diagnostic,
 )
 from sdv.metadata.metadata import Metadata
-
-
-def test_evaluate_quality():
-    """Test ``generate`` is called for the ``QualityReport`` object."""
-    # Setup
-    table = pd.DataFrame({'col': [1, 2, 3]})
-    data1 = {'table': table}
-    data2 = {'table': pd.DataFrame({'col': [2, 1, 3]})}
-    metadata = Metadata()
-    metadata.detect_table_from_dataframe('table', table)
-    QualityReport.generate = Mock()
-
-    # Run
-    evaluate_quality(data1, data2, metadata)
-
-    # Assert
-    QualityReport.generate.assert_called_once_with(data1, data2, metadata.to_dict(), True)
-
-
-def test_run_diagnostic():
-    """Test ``generate`` is called for the ``DiagnosticReport`` object."""
-    # Setup
-    table = pd.DataFrame({'col': [1, 2, 3]})
-    data1 = {'table': table}
-    data2 = {'table': pd.DataFrame({'col': [2, 1, 3]})}
-    metadata = Metadata()
-    metadata.detect_table_from_dataframe('table', table)
-    DiagnosticReport.generate = Mock()
-
-    # Run
-    run_diagnostic(data1, data2, metadata)
-
-    # Assert
-    DiagnosticReport.generate.assert_called_once_with(data1, data2, metadata.to_dict(), True)
 
 
 @patch('sdv.evaluation.single_table.get_column_plot')

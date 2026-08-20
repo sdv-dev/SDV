@@ -2,6 +2,7 @@ import pandas as pd
 
 from sdv.metadata import Metadata
 from sdv.single_table import GaussianCopulaSynthesizer
+from sdv.utils import load_synthesizer
 
 
 def test_backward_compatibility_old_style_constraints(tmpdir):
@@ -32,7 +33,7 @@ def test_backward_compatibility_old_style_constraints(tmpdir):
     synthesizer.fit(data)
     samples = synthesizer.sample(len(data))
     synthesizer.save(tmpdir / 'test.pkl')
-    synthesizer_loaded = GaussianCopulaSynthesizer.load(tmpdir / 'test.pkl')
+    synthesizer_loaded = load_synthesizer(tmpdir / 'test.pkl')
     samples_loaded = synthesizer_loaded.sample(len(data))
 
     # Assert

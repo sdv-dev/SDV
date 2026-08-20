@@ -1,5 +1,5 @@
 import re
-from unittest.mock import ANY, Mock, mock_open, patch
+from unittest.mock import ANY, Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -1053,33 +1053,6 @@ class TestPARSynthesizer:
 
         # Assert
         cloudpickle_mock.dump.assert_called_once_with(synthesizer, ANY)
-
-    @patch('sdv.single_table.base.cloudpickle')
-    @patch('builtins.open', new_callable=mock_open)
-    @patch('sdv.single_table.base.warn_load_deprecated')
-    @patch('sdv.single_table.base._validate_correct_synthesizer_loading')
-    def test_load(
-        self, mock_validate_correct_synthesizer_loading, warn_load_mock, mock_file, cloudpickle_mock
-    ):
-        """Test that the ``load`` method loads a stored synthesizer."""
-        # Setup
-        synthesizer_mock = Mock(
-            _fitted_sdv_version=None,
-            _fitted_sdv_enterprise_version=None,
-        )
-        cloudpickle_mock.load.return_value = synthesizer_mock
-
-        # Run
-        loaded_instance = PARSynthesizer.load('synth.pkl')
-
-        # Assert
-        mock_validate_correct_synthesizer_loading.assert_called_once_with(
-            synthesizer_mock, PARSynthesizer
-        )
-        warn_load_mock.assert_called_once()
-        mock_file.assert_called_once_with('synth.pkl', 'rb')
-        cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
-        assert loaded_instance == synthesizer_mock
 
     def test___init___error_sequence_key_in_context(self):
         """Test that the sequence_key is not a context column"""

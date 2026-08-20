@@ -11,9 +11,11 @@ from rdt.transformers import FloatFormatter, LabelEncoder
 from sdv.cag import FixedCombinations
 from sdv.datasets.demo import download_demo
 from sdv.errors import InvalidDataTypeError
-from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
+from sdv.evaluation import evaluate_quality
+from sdv.evaluation.single_table import get_column_pair_plot, get_column_plot
 from sdv.metadata.metadata import Metadata
 from sdv.single_table import CopulaGANSynthesizer, CTGANSynthesizer, TVAESynthesizer
+from sdv.utils import load_synthesizer
 
 
 def test__estimate_num_columns():
@@ -130,7 +132,7 @@ def test_synthesize_table_ctgan(tmp_path):
     # Assert - save/load model
     assert model_path.exists()
     assert model_path.is_file()
-    loaded_synthesizer = CTGANSynthesizer.load(model_path)
+    loaded_synthesizer = load_synthesizer(model_path)
     assert isinstance(synthesizer, CTGANSynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
     assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
@@ -342,30 +344,14 @@ def test_enable_gpu_parameter(synthesizer_class):
     """Test that the `enable_gpu` parameter is correctly passed to the underlying model."""
     # Setup
     data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
-    expected_warning = re.escape(
-        '`cuda` parameter is deprecated and will be removed in a future release. '
-        'Please use `enable_gpu` instead.'
-    )
-    expected_error = re.escape(
-        'Cannot resolve the provided values of `cuda` and `enable_gpu` parameters. '
-        'Please use only `enable_gpu`.'
-    )
 
     # Run
     synthesizer_1 = synthesizer_class(metadata)
     synthesizer_2 = synthesizer_class(metadata, enable_gpu=False)
-    with pytest.warns(FutureWarning, match=expected_warning):
-        synthesizer_3 = synthesizer_class(metadata, cuda=True)
-
-    with pytest.raises(ValueError, match=expected_error):
-        synthesizer_class(metadata, enable_gpu=False, cuda=True)
-
     synthesizer_1.fit(data)
     synthesizer_2.fit(data)
-    synthesizer_3.fit(data)
     synthetic_data_1 = synthesizer_1.sample(10)
     synthetic_data_2 = synthesizer_2.sample(10)
-    synthetic_data_3 = synthesizer_3.sample(10)
 
     # Assert
     data_columns = data.columns.tolist()
@@ -384,10 +370,7 @@ def test_enable_gpu_parameter(synthesizer_class):
     assert synthesizer_1._model._device == expected_device
     assert synthesizer_2._model._enable_gpu is False
     assert synthesizer_2._model._device == torch.device('cpu')
-    assert synthesizer_3._model._enable_gpu is True
-    assert synthesizer_3._model._device == expected_device
     assert synthetic_data_1.columns.tolist() == data_columns
     assert synthetic_data_2.columns.tolist() == data_columns
-    assert synthetic_data_3.columns.tolist() == data_columns
     assert len(synthetic_data_1) == 10
-    assert len(synthetic_data_2) == len(synthetic_data_3) == 10
+    assert len(synthetic_data_2) == 10
