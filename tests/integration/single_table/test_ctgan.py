@@ -373,3 +373,4 @@ def test_enable_gpu_parameter(synthesizer_class):
     assert synthetic_data_1.columns.tolist() == data_columns
     assert synthetic_data_2.columns.tolist() == data_columns
     assert len(synthetic_data_1) == 10
+    assert len(synthetic_data_2) == 10
