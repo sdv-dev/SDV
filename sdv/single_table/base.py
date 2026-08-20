@@ -45,9 +45,9 @@ from sdv.errors import (
     SynthesizerInputError,
 )
 from sdv.logging import get_sdv_logger
+from sdv.metadata._single_table import _SingleTableMetadata
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
-from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling import Condition, DataFrameCondition
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
 
@@ -57,9 +57,6 @@ SYNTHESIZER_LOGGER = get_sdv_logger('SingleTableSynthesizer')
 
 COND_IDX = str(uuid.uuid4())
 FIXED_RNG_SEED = 73251
-DEPRECATION_MSG = (
-    "The 'SingleTableMetadata' is deprecated. Please use the new 'Metadata' class for synthesizers."
-)
 
 
 class BaseSynthesizer:
@@ -71,7 +68,7 @@ class BaseSynthesizer:
     Args:
         metadata (sdv.metadata.Metadata):
             Single table metadata representing the data that this synthesizer will be used for.
-            * sdv.metadata.SingleTableMetadata can be used but will be deprecated.
+            * sdv.metadata._SingleTableMetadata can be used but will be deprecated.
         enforce_min_max_values (bool):
             Specify whether or not to clip the data returned by ``reverse_transform`` of
             the numerical transformer, ``FloatFormatter``, to the min and max values seen
@@ -170,14 +167,7 @@ class BaseSynthesizer:
         # Points to a dynamic metadata object that could be modified by constraints
         self.metadata = metadata
 
-        self._table_name = Metadata.DEFAULT_SINGLE_TABLE_NAME
-        if isinstance(metadata, Metadata):
-            self._table_name = metadata._get_single_table_name()
-        else:
-            warnings.warn(DEPRECATION_MSG, FutureWarning)
-            self._table_name = Metadata.DEFAULT_SINGLE_TABLE_NAME
-            self.metadata = Metadata.load_from_dict(metadata.to_dict(), self._table_name)
-            self.metadata.tables[self._table_name]._updated = metadata._updated
+        self._table_name = metadata._get_single_table_name()
 
         self.metadata.validate()
         self._check_metadata_updated()
@@ -239,7 +229,7 @@ class BaseSynthesizer:
 
     def _get_table_metadata(self):
         if isinstance(self.metadata, Metadata):
-            return self.metadata.tables.get(self._table_name, SingleTableMetadata())
+            return self.metadata.tables.get(self._table_name, _SingleTableMetadata())
 
         return self.metadata
 

@@ -43,7 +43,7 @@ def drop_unknown_references(data, metadata, drop_missing_values=False, verbose=T
         data (dict):
             Dictionary that maps each table name (string) to the data for that
             table (pandas.DataFrame).
-        metadata (MultiTableMetadata):
+        metadata (Metadata):
             Metadata of the datasets.
         drop_missing_values (bool):
             Boolean describing whether or not to also drop foreign keys with missing values
@@ -239,7 +239,7 @@ def simplify_schema(data, metadata, verbose=True):
         data (dict):
             Dictionary that maps each table name (string) to the data for that
             table (pandas.DataFrame).
-        metadata (MultiTableMetadata):
+        metadata (Metadata):
             Metadata of the datasets.
         verbose (bool):
             If True, print information about the simplification process.
@@ -249,7 +249,7 @@ def simplify_schema(data, metadata, verbose=True):
         tuple:
             dict:
                 Dictionary with the simplified dataframes.
-            MultiTableMetadata:
+            Metadata:
                 Simplified metadata.
     """
     try:
@@ -292,7 +292,7 @@ def get_random_subset(data, metadata, main_table_name, num_rows, verbose=True):
         data (dict):
             Dictionary that maps each table name (string) to the data for that
             table (pandas.DataFrame).
-        metadata (MultiTableMetadata):
+        metadata (Metadata):
             Metadata of the datasets.
         main_table_name (str):
             Name of the main table.

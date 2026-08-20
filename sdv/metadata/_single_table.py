@@ -50,7 +50,7 @@ INT_REGEX_ZERO_ERROR_MESSAGE = (
 )
 
 
-class SingleTableMetadata:
+class _SingleTableMetadata:
     """Single Table Metadata class."""
 
     _SDTYPE_KWARGS = {
@@ -282,7 +282,7 @@ class SingleTableMetadata:
             self._validate_pii(column_name, **kwargs)
 
     def add_column(self, column_name, **kwargs):
-        """Add a column to the ``SingleTableMetadata``.
+        """Add a column to the ``_SingleTableMetadata``.
 
         Args:
             column_name (str):
@@ -331,7 +331,7 @@ class SingleTableMetadata:
         self._validate_column_args(column_name, sdtype, **kwargs_without_sdtype)
 
     def update_column(self, column_name, **kwargs):
-        """Update an existing column in the ``SingleTableMetadata``.
+        """Update an existing column in the ``_SingleTableMetadata``.
 
         Args:
             column_name (str):
@@ -341,7 +341,7 @@ class SingleTableMetadata:
 
         Raises:
             - ``InvalidMetadataError`` if the column doesn't already exist in the
-              ``SingleTableMetadata``.
+              ``_SingleTableMetadata``.
             - ``InvalidMetadataError`` if the column has unexpected values or ``kwargs`` for the
               current
               ``sdtype``.
@@ -448,7 +448,7 @@ class SingleTableMetadata:
         return matches
 
     def to_dict(self):
-        """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
+        """Return a python ``dict`` representation of the ``_SingleTableMetadata``."""
         metadata = {}
         for key in self._KEYS:
             not_version = key != 'METADATA_SPEC_VERSION'
@@ -802,7 +802,7 @@ class SingleTableMetadata:
         """
         if self.columns:
             raise InvalidMetadataError(
-                'Metadata already exists. Create a new ``SingleTableMetadata`` '
+                'Metadata already exists. Create a new ``_SingleTableMetadata`` '
                 'object to detect from other data sources.'
             )
 
@@ -825,7 +825,7 @@ class SingleTableMetadata:
         """
         if self.columns:
             raise InvalidMetadataError(
-                'Metadata already exists. Create a new ``SingleTableMetadata`` '
+                'Metadata already exists. Create a new ``_SingleTableMetadata`` '
                 'object to detect from other data sources.'
             )
 
@@ -1473,8 +1473,8 @@ class SingleTableMetadata:
         """Anonymize metadata by obfuscating column names.
 
         Returns:
-            SingleTableMetadata:
-                An anonymized SingleTableMetadata instance.
+            _SingleTableMetadata:
+                An anonymized _SingleTableMetadata instance.
         """
         anonymized_metadata = {'columns': {}}
 
@@ -1502,7 +1502,7 @@ class SingleTableMetadata:
         if self.sequence_index:
             anonymized_metadata['sequence_index'] = self._anonymized_column_map[self.sequence_index]
 
-        return SingleTableMetadata.load_from_dict(anonymized_metadata)
+        return _SingleTableMetadata.load_from_dict(anonymized_metadata)
 
     def visualize(self, show_table_details='full', output_filepath=None):
         """Create a visualization of the single-table dataset.
@@ -1550,7 +1550,7 @@ class SingleTableMetadata:
         return visualize_graph(node, [], output_filepath)
 
     def save_to_json(self, filepath, mode='write'):
-        """Save the current ``SingleTableMetadata`` in to a ``json`` file.
+        """Save the current ``_SingleTableMetadata`` in to a ``json`` file.
 
         Args:
             filepath (str):
@@ -1596,14 +1596,14 @@ class SingleTableMetadata:
 
     @classmethod
     def load_from_dict(cls, metadata_dict):
-        """Create a ``SingleTableMetadata`` instance from a python ``dict``.
+        """Create a ``_SingleTableMetadata`` instance from a python ``dict``.
 
         Args:
             metadata_dict (dict):
-                Python dictionary representing a ``SingleTableMetadata`` object.
+                Python dictionary representing a ``_SingleTableMetadata`` object.
 
         Returns:
-            Instance of ``SingleTableMetadata``. Column names are converted to
+            Instance of ``_SingleTableMetadata``. Column names are converted to
             string type.
         """
         instance = cls()
@@ -1634,7 +1634,7 @@ class SingleTableMetadata:
                 String that represents the ``path`` to the ``json`` file.
 
         Returns:
-            A ``SingleTableMetadata`` instance.
+            A ``_SingleTableMetadata`` instance.
 
         Raises:
             - An ``Error`` if the path does not exist.
@@ -1643,14 +1643,14 @@ class SingleTableMetadata:
         metadata = read_json(filepath)
         if 'METADATA_SPEC_VERSION' not in metadata:
             raise InvalidMetadataError(
-                'This metadata file is incompatible with the ``SingleTableMetadata`` '
+                'This metadata file is incompatible with the ``_SingleTableMetadata`` '
                 'class and version.'
             )
 
         return cls.load_from_dict(metadata)
 
     def __repr__(self):
-        """Pretty print the ``SingleTableMetadata``."""
+        """Pretty print the ``_SingleTableMetadata``."""
         printed = json.dumps(self.to_dict(), indent=4)
         return printed
 
@@ -1663,7 +1663,7 @@ class SingleTableMetadata:
                 String that represents the ``path`` to the old metadata ``json`` file.
 
         Returns:
-            A ``SingleTableMetadata`` instance.
+            A ``_SingleTableMetadata`` instance.
 
         Raises:
             Raises a ``ValueError`` if the filepath does not exist.

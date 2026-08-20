@@ -289,8 +289,7 @@ class TestCTGANSynthesizer:
         metadata = Metadata()
         metadata.add_table('table')
         metadata.add_column('id', 'table', sdtype='numerical')
-        single_metadata = metadata._convert_to_single_table()
-        instance = CTGANSynthesizer(single_metadata)
+        instance = CTGANSynthesizer(metadata)
         processed_data = Mock()
 
         # Run
@@ -507,8 +506,7 @@ class TestTVAESynthesizer:
         metadata = Metadata()
         metadata.add_table('table')
         metadata.add_column('id', 'table', sdtype='numerical')
-        single_metadata = metadata._convert_to_single_table()
-        instance = TVAESynthesizer(single_metadata)
+        instance = TVAESynthesizer(metadata)
         processed_data = Mock()
 
         # Run
