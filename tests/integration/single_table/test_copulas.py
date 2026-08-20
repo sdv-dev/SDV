@@ -18,10 +18,12 @@ from sdv.cag import Inequality
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError
-from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
+from sdv.evaluation import evaluate_quality
+from sdv.evaluation.single_table import get_column_pair_plot, get_column_plot
 from sdv.metadata.metadata import Metadata
 from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
+from sdv.utils import load_synthesizer
 from tests.integration.single_table.custom_constraints import (
     IfTrueThenZero,
     SingleTableIfTrueThenZero,
@@ -111,7 +113,7 @@ def test_synthesize_table_gaussian_copula(tmp_path):
     # Assert - save/load model
     assert model_path.exists()
     assert model_path.is_file()
-    loaded_synthesizer = GaussianCopulaSynthesizer.load(model_path)
+    loaded_synthesizer = load_synthesizer(model_path)
     assert isinstance(synthesizer, GaussianCopulaSynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
     assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
@@ -195,7 +197,7 @@ def test_adding_constraints(tmp_path, programmable_constraint):
     # Assert
     assert model_path.exists()
     assert model_path.is_file()
-    loaded_synthesizer = GaussianCopulaSynthesizer.load(model_path)
+    loaded_synthesizer = load_synthesizer(model_path)
 
     assert isinstance(loaded_synthesizer, GaussianCopulaSynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
