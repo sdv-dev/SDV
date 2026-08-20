@@ -14,7 +14,7 @@ from sdv.metadata.metadata import Metadata
 def test_get_column_plot(mock_plot):
     """Test the ``get_column_plot``.
 
-    Ensure that the ``get_column_plot`` is being called with the ``SingleTableMetadata`` object
+    Ensure that the ``get_column_plot`` is being called with the ``_SingleTableMetadata`` object
     and the expected table.
     """
     # Setup

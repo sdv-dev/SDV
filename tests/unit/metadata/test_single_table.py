@@ -12,13 +12,13 @@ import pandas as pd
 import pytest
 
 from sdv.errors import InvalidDataError
+from sdv.metadata._single_table import _SingleTableMetadata
 from sdv.metadata.errors import InvalidMetadataError
-from sdv.metadata.single_table import SingleTableMetadata
 from tests.utils import catch_sdv_logs
 
 
-class TestSingleTableMetadata:
-    """Test ``SingleTableMetadata`` class."""
+class Test_SingleTableMetadata:
+    """Test ``_SingleTableMetadata`` class."""
 
     VALID_KWARGS = [
         ('age', 'numerical', {}),
@@ -115,9 +115,9 @@ class TestSingleTableMetadata:
         })
 
     def test___init__(self):
-        """Test creating an instance of ``SingleTableMetadata``."""
+        """Test creating an instance of ``_SingleTableMetadata``."""
         # Run
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Assert
         assert instance.columns == {}
@@ -135,7 +135,7 @@ class TestSingleTableMetadata:
     def test__primary_key_is_composite(self, primary_key, expected_value):
         """Test the ``_primary_key_is_composite`` property."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.primary_key = primary_key
 
         # Run and Assert
@@ -153,7 +153,7 @@ class TestSingleTableMetadata:
     def test_primary_key(self, primary_key, expected_value):
         """Test property correctly handles the primary key."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
 
         # Run
         metadata.primary_key = primary_key
@@ -165,7 +165,7 @@ class TestSingleTableMetadata:
         """Test the ``_validate_numerical`` method.
 
         Setup:
-            - instance of ``SingleTableMetadata``
+            - instance of ``_SingleTableMetadata``
             - list of accepted computer representations.
 
         Input:
@@ -179,7 +179,7 @@ class TestSingleTableMetadata:
               not supported.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run / Assert
         instance._validate_numerical('age')
@@ -189,13 +189,13 @@ class TestSingleTableMetadata:
             instance._validate_numerical('age', computer_representation=36)
 
     @pytest.mark.parametrize(
-        'computer_representation', SingleTableMetadata._NUMERICAL_REPRESENTATIONS
+        'computer_representation', _SingleTableMetadata._NUMERICAL_REPRESENTATIONS
     )
     def test__validate_numerical_computer_representations(self, computer_representation):
         """Test the ``_validate_numerical`` method.
 
         Setup:
-            - instance of ``SingleTableMetadata``
+            - instance of ``_SingleTableMetadata``
             - list of accepted computer representations.
 
         Input:
@@ -209,7 +209,7 @@ class TestSingleTableMetadata:
               wrong.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run / Assert
         instance._validate_numerical('age', computer_representation=computer_representation)
@@ -218,7 +218,7 @@ class TestSingleTableMetadata:
         """Test the ``_validate_datetime`` method.
 
         Setup:
-            - instance of ``SingleTableMetadata``
+            - instance of ``_SingleTableMetadata``
 
         Input:
             - Column name.
@@ -230,7 +230,7 @@ class TestSingleTableMetadata:
             - ``InvalidMetadataError`` indicating the format ``%`` that has not been formatted.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run / Assert
         instance._validate_datetime('start_date', datetime_format='%Y-%m-%d')
@@ -246,7 +246,7 @@ class TestSingleTableMetadata:
         """Test the ``_validate_categorical`` method.
 
         Setup:
-            - instance of ``SingleTableMetadata``
+            - instance of ``_SingleTableMetadata``
 
         Input:
             - Column name.
@@ -262,7 +262,7 @@ class TestSingleTableMetadata:
               ``alphabetical``.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run / Assert
         instance._validate_categorical('name')
@@ -298,7 +298,7 @@ class TestSingleTableMetadata:
         """Test the ``_validate_id`` method.
 
         Setup:
-            - instance of ``SingleTableMetadata``
+            - instance of ``_SingleTableMetadata``
 
         Input:
             - Column name.
@@ -310,7 +310,7 @@ class TestSingleTableMetadata:
             - ``InvalidMetadataError``
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run / Assert
         instance._validate_id('phrase', regex_format='[A-z]')
@@ -322,7 +322,7 @@ class TestSingleTableMetadata:
         """Test the ``_validate_column_exists`` method.
 
         Setup:
-            - instance of ``SingleTableMetadata``
+            - instance of ``_SingleTableMetadata``
             - A list of ``_columns``.
 
         Input:
@@ -332,7 +332,7 @@ class TestSingleTableMetadata:
             - ``InvalidMetadataError`` when the column is not in the ``instance.columns``.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {
             'name': {'sdtype': 'categorical'},
             'age': {'sdtype': 'numerical'},
@@ -354,7 +354,7 @@ class TestSingleTableMetadata:
         """Test the ``_validate_unexpected_kwargs`` method.
 
         Setup:
-            - instance of ``SingleTableMetadata``
+            - instance of ``_SingleTableMetadata``
 
         Input:
             - Column name.
@@ -362,7 +362,7 @@ class TestSingleTableMetadata:
             - valid kwargs
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance._get_unexpected_kwargs = Mock(return_value=None)
 
         # Run
@@ -376,7 +376,7 @@ class TestSingleTableMetadata:
         """Test the ``_validate_unexpected_kwargs`` method.
 
         Setup:
-            - instance of ``SingleTableMetadata``
+            - instance of ``_SingleTableMetadata``
 
         Input:
             - Column name.
@@ -387,13 +387,13 @@ class TestSingleTableMetadata:
             - ``InvalidMetadataError`` is being raised for each sdtype.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance._validate_unexpected_kwargs(column_name, sdtype, **kwargs)
 
-    @patch('sdv.metadata.single_table.is_faker_function')
+    @patch('sdv.metadata._single_table.is_faker_function')
     def test__validate_column_invalid_sdtype(self, mock_is_faker_function):
         """Test the method with an invalid sdtype.
 
@@ -401,7 +401,7 @@ class TestSingleTableMetadata:
         then an error should be raised.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         mock_is_faker_function.return_value = False
 
         # Run and Assert
@@ -420,15 +420,15 @@ class TestSingleTableMetadata:
 
         mock_is_faker_function.assert_called_once_with('fake_type')
 
-    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
-    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_numerical')
+    @patch('sdv.metadata._single_table._SingleTableMetadata._validate_unexpected_kwargs')
+    @patch('sdv.metadata._single_table._SingleTableMetadata._validate_numerical')
     def test__validate_column_numerical(self, mock__validate_numerical, mock__validate_kwargs):
         """Test ``_validate_column`` method.
 
         Test the ``_validate_column`` method when a ``numerical`` sdtype is passed.
 
         Setup:
-            - Instance of ``SingleTableMetadata``.
+            - Instance of ``_SingleTableMetadata``.
 
         Input:
             - ``column_name`` - a string.
@@ -436,14 +436,14 @@ class TestSingleTableMetadata:
             - kwargs - any additional key word arguments.
 
         Mock:
-            - ``_validate_unexpected_kwargs`` function from ``SingleTableMetadata``.
-            - ``_validate_numerical`` function from ``SingleTableMetadata``.
+            - ``_validate_unexpected_kwargs`` function from ``_SingleTableMetadata``.
+            - ``_validate_numerical`` function from ``_SingleTableMetadata``.
 
         Side effects:
             - ``_validate_numerical`` has been called once.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run
         instance._validate_column_args('age', 'numerical', computer_representation='Int8')
@@ -454,15 +454,15 @@ class TestSingleTableMetadata:
         )
         mock__validate_numerical.assert_called_once_with('age', computer_representation='Int8')
 
-    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
-    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_categorical')
+    @patch('sdv.metadata._single_table._SingleTableMetadata._validate_unexpected_kwargs')
+    @patch('sdv.metadata._single_table._SingleTableMetadata._validate_categorical')
     def test__validate_column_categorical(self, mock__validate_categorical, mock__validate_kwargs):
         """Test ``_validate_column`` method.
 
         Test the ``_validate_column`` method when a ``categorical`` sdtype is passed.
 
         Setup:
-            - Instance of ``SingleTableMetadata``.
+            - Instance of ``_SingleTableMetadata``.
 
         Input:
             - ``column_name`` - a string.
@@ -471,13 +471,13 @@ class TestSingleTableMetadata:
 
         Mock:
             - ``_validate_unexpected_kwargs``
-            - ``_validate_categorical`` function from ``SingleTableMetadata``.
+            - ``_validate_categorical`` function from ``_SingleTableMetadata``.
 
         Side effects:
             - ``_validate_categorical`` has been called once.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run
         instance._validate_column_args('name', 'categorical', order=['a', 'b', 'c'])
@@ -486,14 +486,14 @@ class TestSingleTableMetadata:
         mock__validate_kwargs.assert_called_once_with('name', 'categorical', order=['a', 'b', 'c'])
         mock__validate_categorical.assert_called_once_with('name', order=['a', 'b', 'c'])
 
-    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
+    @patch('sdv.metadata._single_table._SingleTableMetadata._validate_unexpected_kwargs')
     def test__validate_column_boolean(self, mock__validate_kwargs):
         """Test ``_validate_column`` method.
 
         Test the ``_validate_column`` method when a ``boolean`` sdtype is passed.
 
         Setup:
-            - Instance of ``SingleTableMetadata``.
+            - Instance of ``_SingleTableMetadata``.
 
         Input:
             - ``column_name`` - a string.
@@ -506,7 +506,7 @@ class TestSingleTableMetadata:
         Side effects:
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run
         instance._validate_column_args('snythetic', 'boolean')
@@ -514,15 +514,15 @@ class TestSingleTableMetadata:
         # Assert
         mock__validate_kwargs.assert_called_once_with('snythetic', 'boolean')
 
-    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
-    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_datetime')
+    @patch('sdv.metadata._single_table._SingleTableMetadata._validate_unexpected_kwargs')
+    @patch('sdv.metadata._single_table._SingleTableMetadata._validate_datetime')
     def test__validate_column_datetime(self, mock__validate_datetime, mock__validate_kwargs):
         """Test ``_validate_column`` method.
 
         Test the ``_validate_column`` method when a ``datetime`` sdtype is passed.
 
         Setup:
-            - Instance of ``SingleTableMetadata``.
+            - Instance of ``_SingleTableMetadata``.
 
         Input:
             - ``column_name`` - a string.
@@ -531,13 +531,13 @@ class TestSingleTableMetadata:
 
         Mock:
             - ``_validate_unexpected_kwargs``
-            - ``_validate_datetime`` function from ``SingleTableMetadata``.
+            - ``_validate_datetime`` function from ``_SingleTableMetadata``.
 
         Side effects:
             - ``_validate_datetime`` has been called once.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run
         instance._validate_column_args('start', 'datetime')
@@ -546,15 +546,15 @@ class TestSingleTableMetadata:
         mock__validate_kwargs.assert_called_once_with('start', 'datetime')
         mock__validate_datetime.assert_called_once_with('start')
 
-    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
-    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_id')
+    @patch('sdv.metadata._single_table._SingleTableMetadata._validate_unexpected_kwargs')
+    @patch('sdv.metadata._single_table._SingleTableMetadata._validate_id')
     def test__validate_column_id(self, mock__validate_id, mock__validate_kwargs):
         """Test ``_validate_column`` method.
 
         Test the ``_validate_column`` method when a ``id`` sdtype is passed.
 
         Setup:
-            - Instance of ``SingleTableMetadata``.
+            - Instance of ``_SingleTableMetadata``.
 
         Input:
             - ``column_name`` - a string.
@@ -563,13 +563,13 @@ class TestSingleTableMetadata:
 
         Mock:
             - ``_validate_unexpected_kwargs``
-            - ``_validate_id`` function from ``SingleTableMetadata``.
+            - ``_validate_id`` function from ``_SingleTableMetadata``.
 
         Side effects:
             - ``_validate_id`` has been called once.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run
         instance._validate_column_args('phrase', 'id', regex_format='[A-z0-9]', pii=True)
@@ -580,7 +580,7 @@ class TestSingleTableMetadata:
         )
         mock__validate_id.assert_called_once_with('phrase', regex_format='[A-z0-9]', pii=True)
 
-    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
+    @patch('sdv.metadata._single_table._SingleTableMetadata._validate_unexpected_kwargs')
     def test__validate_pii_not_true_or_false(self, mock__validate_kwargs):
         """Test ``_validate_column`` method when ``pii`` is not ``True``or ``False``."""
         # Run and Assert
@@ -589,18 +589,18 @@ class TestSingleTableMetadata:
             'Expected a value of True or False.'
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
-            SingleTableMetadata._validate_pii('address', pii='some_text')
+            _SingleTableMetadata._validate_pii('address', pii='some_text')
 
-    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
+    @patch('sdv.metadata._single_table._SingleTableMetadata._validate_unexpected_kwargs')
     def test__validate_pii(self, mock__validate_kwargs):
         """Test ``_validate_column`` method when ``pii`` is ``True``or ``False``."""
         # Run and Assert
-        SingleTableMetadata._validate_pii('address', pii=True)
+        _SingleTableMetadata._validate_pii('address', pii=True)
 
     def test_update_column_sdtype(self):
         """Test that ``update_column`` updates the sdtype and keyword args for the given column."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'a': {'sdtype': 'numerical'}}
 
         # Run
@@ -612,7 +612,7 @@ class TestSingleTableMetadata:
     def test_update_column_add_extra_value(self):
         """Test that ``update_column`` updates only the keyword args for the given column."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'a': {'sdtype': 'numerical'}}
 
         # Run
@@ -631,7 +631,7 @@ class TestSingleTableMetadata:
         ``update_column`` instead.
 
         Setup:
-            - Instance of ``SingleTableMetadata``.
+            - Instance of ``_SingleTableMetadata``.
             - ``_columns`` with some values.
 
         Input:
@@ -641,7 +641,7 @@ class TestSingleTableMetadata:
             - ``InvalidMetadataError`` is being raised stating that the column exists.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'age': {'sdtype': 'numerical'}}
 
         # Run / Assert
@@ -658,7 +658,7 @@ class TestSingleTableMetadata:
         that it must be provided is raised.
 
         Setup:
-            - Instance of ``SingleTableMetadata``.
+            - Instance of ``_SingleTableMetadata``.
 
         Input:
             - A column name.
@@ -667,14 +667,14 @@ class TestSingleTableMetadata:
             - ``InvalidMetadataError`` is being raised stating that sdtype must be provided.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run / Assert
         error_msg = re.escape("Please provide a 'sdtype' for column 'synthetic'.")
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance.add_column('synthetic')
 
-    @patch('sdv.metadata.single_table.is_faker_function')
+    @patch('sdv.metadata._single_table.is_faker_function')
     def test_add_column_invalid_sdtype(self, mock_is_faker_function):
         """Test the method with an invalid sdtype.
 
@@ -682,7 +682,7 @@ class TestSingleTableMetadata:
         then an error should be raised.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         mock_is_faker_function.return_value = False
 
         # Run and Assert
@@ -702,7 +702,7 @@ class TestSingleTableMetadata:
         this is being added to the ``instance.columns``.
 
         Setup:
-            - Instance of ``SingleTableMetadata``.
+            - Instance of ``_SingleTableMetadata``.
 
         Input:
             - A column name.
@@ -712,7 +712,7 @@ class TestSingleTableMetadata:
             - ``instance.columns[column_name]`` now exists.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run
         instance.add_column('age', sdtype='numerical', computer_representation='Int8')
@@ -730,7 +730,7 @@ class TestSingleTableMetadata:
             Pass a column with an ``sdtype`` of ``phone_number``.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run
         instance.add_column('number', sdtype='phone_number')
@@ -741,7 +741,7 @@ class TestSingleTableMetadata:
     def test__get_unexpected_kwargs(self):
         """Test the ``_get_unexpected_kwargs`` method."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance._validate_unexpected_kwargs = Mock()
 
         # Run
@@ -755,7 +755,7 @@ class TestSingleTableMetadata:
     def test__validate_update_column_kwargs_with_sdtype(self):
         """Test the ``_validate_update_column`` when kwargs has the sdtype key."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance._validate_column_exists = Mock()
         instance._validate_column_args = Mock()
         instance.columns = {'age': {'sdtype': 'categorical'}}
@@ -774,7 +774,7 @@ class TestSingleTableMetadata:
     def test_update_column(self):
         """Test the ``update_column`` method."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance._validate_update_column = Mock()
         instance.columns = {'age': {'sdtype': 'numerical'}}
 
@@ -787,8 +787,8 @@ class TestSingleTableMetadata:
         )
         assert instance.columns['age'] == {'sdtype': 'categorical', 'order_by': 'numerical_value'}
 
-    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_column_args')
-    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_column_exists')
+    @patch('sdv.metadata._single_table._SingleTableMetadata._validate_column_args')
+    @patch('sdv.metadata._single_table._SingleTableMetadata._validate_column_exists')
     def test_update_column_sdtype_in_kwargs(
         self, mock__validate_column_exists, mock__validate_column
     ):
@@ -798,7 +798,7 @@ class TestSingleTableMetadata:
         as any additional.
 
         Setup:
-            - Instance of ``SingleTableMetadata``.
+            - Instance of ``_SingleTableMetadata``.
             - A column already in ``_columns``.
 
         Mock:
@@ -809,7 +809,7 @@ class TestSingleTableMetadata:
             - The column has been updated with the new ``sdtype`` and ``kwargs``.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'age': {'sdtype': 'numerical'}}
 
         # Run
@@ -822,8 +822,8 @@ class TestSingleTableMetadata:
             'age', 'categorical', order_by='numerical_value'
         )
 
-    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_column_args')
-    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_column_exists')
+    @patch('sdv.metadata._single_table._SingleTableMetadata._validate_column_args')
+    @patch('sdv.metadata._single_table._SingleTableMetadata._validate_column_exists')
     def test_update_column_no_sdtype(self, mock__validate_column_exists, mock__validate_column):
         """Test the ``update_column`` method.
 
@@ -831,7 +831,7 @@ class TestSingleTableMetadata:
         ``kwargs``.
 
         Setup:
-            - Instance of ``SingleTableMetadata``.
+            - Instance of ``_SingleTableMetadata``.
             - A column already in ``_columns``.
 
         Mock:
@@ -842,7 +842,7 @@ class TestSingleTableMetadata:
             - The column has been updated with the new ``kwargs``.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'age': {'sdtype': 'numerical'}}
 
         # Run
@@ -865,7 +865,7 @@ class TestSingleTableMetadata:
         raises an ``InvalidMetadataError``.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run / Assert
         error_msg = re.escape("Invalid values '(pii)' for 'numerical' sdtype.")
@@ -873,7 +873,7 @@ class TestSingleTableMetadata:
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance.update_columns(['col_1', 'col_2'], sdtype='numerical', pii=True)
 
-    @patch('sdv.metadata.single_table.is_faker_function')
+    @patch('sdv.metadata._single_table.is_faker_function')
     def test_update_columns_multiple_errors(self, mock_is_faker_function):
         """Test the ``update_columns`` method.
 
@@ -882,7 +882,7 @@ class TestSingleTableMetadata:
         """
         # Setup
         mock_is_faker_function.return_value = True
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {
             'col_1': {'sdtype': 'country_code'},
             'col_2': {'sdtype': 'numerical'},
@@ -903,7 +903,7 @@ class TestSingleTableMetadata:
     def test_update_columns(self):
         """Test the ``update_columns`` method."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance._validate_update_column = Mock()
         instance._get_unexpected_kwargs = Mock(return_value=None)
         instance.columns = {'age': {'sdtype': 'numerical'}, 'salary': {'sdtype': 'numerical'}}
@@ -922,12 +922,12 @@ class TestSingleTableMetadata:
             'salary': {'sdtype': 'categorical'},
         }
 
-    @patch('sdv.metadata.single_table.is_faker_function')
+    @patch('sdv.metadata._single_table.is_faker_function')
     def test_update_columns_kwargs_without_sdtype(self, mock_is_faker_function):
         """Test the ``update_columns`` method when there is no ``sdtype`` in the kwargs."""
         # Setup
         mock_is_faker_function.return_value = True
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {
             'col_1': {'sdtype': 'country_code'},
             'col_2': {'sdtype': 'latitude'},
@@ -953,7 +953,7 @@ class TestSingleTableMetadata:
     def test_update_columns_metadata(self):
         """Test the ``update_columns_metadata`` method."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance._validate_update_column = Mock()
         instance.columns = {'age': {'sdtype': 'numerical'}, 'salary': {'sdtype': 'numerical'}}
 
@@ -976,7 +976,7 @@ class TestSingleTableMetadata:
     def test_update_columns_metadata_multiple_error(self):
         """Test the ``update_columns_metadata`` method with multiple error."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'age': {'sdtype': 'numerical'}, 'hours': {'sdtype': 'numerical'}}
 
         # Run / Assert
@@ -997,7 +997,7 @@ class TestSingleTableMetadata:
     def test_get_column_names(self):
         """Test the ``get_column_names`` method filters for matching columns."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.columns = {
             'id': {'sdtype': 'id'},
             'value1': {'sdtype': 'numerical'},
@@ -1019,7 +1019,7 @@ class TestSingleTableMetadata:
     def test__detect_pii_columns(self):
         """Test the ``_detect_pii_column`` method."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
 
         # Run and Assert
         assert metadata._detect_pii_column('user_first_name') == 'first_name'
@@ -1045,7 +1045,7 @@ class TestSingleTableMetadata:
         """Test the ``determine_sdtype_for_numbers`` method.
 
         Setup:
-            - Instance of ``SingleTableMetadata``.
+            - Instance of ``_SingleTableMetadata``.
             - A series of numbers with less than 5 rows. Should be detected as numerical sdtype
             - A series of numbers with less than 10% unique values. Should be detected as
               categorical sdtype
@@ -1054,7 +1054,7 @@ class TestSingleTableMetadata:
         - A series of floats. Should be detected as numerical sdtype
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         data_less_than_5_rows = pd.Series([1, np.nan, 3, 4, 5])
         data_less_than_10_percent_unique_values = pd.Series([
@@ -1122,7 +1122,7 @@ class TestSingleTableMetadata:
     def test__determine_sdtype_for_objects(self):
         """Test the ``_determine_sdtype_for_objects`` method."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         data_datetime = pd.Series(['2022-01-01', '2022-02-01', '2022-03-01'])
         wrong_datetime = pd.Series(['2022-01-01', '01-02-2022', '2022-03-01', '2022-03-01'])
@@ -1153,7 +1153,7 @@ class TestSingleTableMetadata:
     def test__determine_sdtype_for_objects_subsample_datetime(self, mock_sample):
         """Test the ``_determine_sdtype_for_objects`` method with large a datetime column."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         data_datetime = pd.Series(['2022-01-01'] * 15000)
 
@@ -1166,7 +1166,7 @@ class TestSingleTableMetadata:
     def test__determine_sdtype_for_objects_silence_warning(self):
         """Test that UserWarning are silenced for ``_determine_sdtype_for_objects``."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         data = pd.Series(['warning1', 'warning2'])
 
         # Run
@@ -1180,7 +1180,7 @@ class TestSingleTableMetadata:
     def test__determine_sdtype_for_objects_with_none(self):
         """Test ``_determine_sdtype_for_objects`` with ``None`` in it."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         data = pd.Series([None] * 100)
 
         # Run
@@ -1193,7 +1193,7 @@ class TestSingleTableMetadata:
     def test__detect_columns(self, data):
         """Test the ``_detect_columns`` method."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         expected_datetime_format = '%Y-%m-%d'
         data['categorical_pk_candidate'] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k']
 
@@ -1223,7 +1223,7 @@ class TestSingleTableMetadata:
     def test__detect_columns_numerical_dtypes(self):
         """Test the ``_detect_columns`` method with numerical dtypes."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         data = pd.DataFrame({
             'Int8': pd.Series([1, 2, -3, pd.NA], dtype='Int8'),
             'Int16': pd.Series([1, 2, -3, pd.NA], dtype='Int16'),
@@ -1251,9 +1251,9 @@ class TestSingleTableMetadata:
     def test__detect_columns_primary_key_detection(self):
         """Test the ``_detect_columns`` primary key detection."""
         # Setup
-        metadata_without_primary_key_1 = SingleTableMetadata()
-        metadata_without_primary_key_2 = SingleTableMetadata()
-        metadata_with_primary_key = SingleTableMetadata()
+        metadata_without_primary_key_1 = _SingleTableMetadata()
+        metadata_without_primary_key_2 = _SingleTableMetadata()
+        metadata_with_primary_key = _SingleTableMetadata()
         data_without_primary_key_1 = pd.DataFrame({
             'email': ['sdv@sdv.dev', 'info@datacebo.com', 'info@gmail.co.uk', None],
             'numerical': [0, 1, 2, 1],
@@ -1288,7 +1288,7 @@ class TestSingleTableMetadata:
             'num2': [float('nan')] * 100,
             'date': [pd.NaT] * 100,
         })
-        stm = SingleTableMetadata()
+        stm = _SingleTableMetadata()
 
         # Run
         stm._detect_columns(data)
@@ -1299,11 +1299,11 @@ class TestSingleTableMetadata:
         stm.columns['num2']['sdtype'] == 'numerical'
         stm.columns['date']['sdtype'] == 'datetime'
 
-    @patch('sdv.metadata.single_table._get_datetime_format')
+    @patch('sdv.metadata._single_table._get_datetime_format')
     def test__detect_columns_with_error(self, mock__get_datetime_format):
         """Test the ``_detect_columns`` method with unsupported dtype."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         data = pd.DataFrame({
             'numerical': [1, 2, 3],
             'datetime': ['2022-01-01', '2022-02-01', '2022-03-01'],
@@ -1343,7 +1343,7 @@ class TestSingleTableMetadata:
     def test__detect_columns_invalid_data_format(self):
         """Test the ``_detect_columns`` method with an invalid data format."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         dict_data = [
             {
                 'key1': i,
@@ -1371,7 +1371,7 @@ class TestSingleTableMetadata:
         The primary key should be set as an 'id', while the other sdtypes should be 'unknown'.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run
         instance._detect_columns(data, infer_sdtypes=False)
@@ -1390,7 +1390,7 @@ class TestSingleTableMetadata:
     def test__detect_columns_without_infer_keys(self, data):
         """Test the _detect_columns when infer_keys is False."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run
         instance._detect_columns(data, infer_keys=None)
@@ -1415,7 +1415,7 @@ class TestSingleTableMetadata:
     def test__detect_columns_infer_sdtypes_false_infer_keys_primary_only(self, data):
         """Test the _detect_columns when infer_keys is True and infer sdtypes is False."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         data = data.rename(columns={'id': 'email'})
         data = data.drop(['alternate_id', 'alternate_id_string'], axis=1)
 
@@ -1445,35 +1445,35 @@ class TestSingleTableMetadata:
         ``InvalidMetadataError``.
 
         Setup:
-            - instance of ``SingleTableMetadata``.
+            - instance of ``_SingleTableMetadata``.
             - Add some value to ``instance.columns``.
 
         Side Effects:
             Raises an ``InvalidMetadataError`` stating that ``metadata`` already exists.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'column': {'sdtype': 'categorical'}}
 
         # Run / Assert
         err_msg = (
-            'Metadata already exists. Create a new ``SingleTableMetadata`` '
+            'Metadata already exists. Create a new ``_SingleTableMetadata`` '
             'object to detect from other data sources.'
         )
 
         with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.detect_from_dataframe('dataframe')
 
-    @patch('sdv.metadata.single_table.LOGGER')
+    @patch('sdv.metadata._single_table.LOGGER')
     def test_detect_from_dataframe(self, mock_log):
         """Test the ``dectect_from_dataframe`` method.
 
         Test that when given a ``pandas.DataFrame``, the current instance of
-        ``SingleTableMetadata`` is being updated with the ``sdtypes`` of each
+        ``_SingleTableMetadata`` is being updated with the ``sdtypes`` of each
         column in the ``pandas.DataFrame``.
 
         Setup:
-            - Instance of ``SingleTableMetadata``.
+            - Instance of ``_SingleTableMetadata``.
 
         Input:
             - ``pandas.DataFrame`` with multiple data types.
@@ -1483,7 +1483,7 @@ class TestSingleTableMetadata:
             - A message is being printed.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         data = pd.DataFrame({
             'categorical': ['cat', 'dog', 'cat', np.nan],
             'date': pd.to_datetime(['2021-02-02', np.nan, '2021-03-05', '2022-12-09']),
@@ -1510,7 +1510,7 @@ class TestSingleTableMetadata:
         ]
         mock_log.info.assert_has_calls(expected_log_calls)
 
-    @patch('sdv.metadata.single_table.LOGGER')
+    @patch('sdv.metadata._single_table.LOGGER')
     def test_detect_from_dataframe_numerical_columns(self, mock_log):
         """Test the detect from dataframe with columns that are integers"""
         # Setup
@@ -1545,7 +1545,7 @@ class TestSingleTableMetadata:
         }
 
         # Run
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.detect_from_dataframe(data)
 
         # Assert
@@ -1558,36 +1558,36 @@ class TestSingleTableMetadata:
         ``InvalidMetadataError``.
 
         Setup:
-            - instance of ``SingleTableMetadata``.
+            - instance of ``_SingleTableMetadata``.
             - Add some value to ``instance.columns``.
 
         Side Effects:
             Raises an ``InvalidMetadataError`` stating that ``metadata`` already exists.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'column': {'sdtype': 'categorical'}}
 
         # Run / Assert
         err_msg = (
-            'Metadata already exists. Create a new ``SingleTableMetadata`` '
+            'Metadata already exists. Create a new ``_SingleTableMetadata`` '
             'object to detect from other data sources.'
         )
 
         with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.detect_from_csv('filepath')
 
-    @patch('sdv.metadata.single_table.LOGGER')
+    @patch('sdv.metadata._single_table.LOGGER')
     def test_detect_from_csv(self, mock_log, tmp_path):
         """Test the ``dectect_from_csv`` method.
 
         Test that when given a file path to a ``csv`` file, the current instance of
-        ``SingleTableMetadata`` is being updated with the ``sdtypes`` of each
+        ``_SingleTableMetadata`` is being updated with the ``sdtypes`` of each
         column from the read data that is contained within the ``pandas.DataFrame`` from
         that ``csv`` file.
 
         Setup:
-            - Instance of ``SingleTableMetadata``.
+            - Instance of ``_SingleTableMetadata``.
 
         Input:
             - String that represents the ``path`` to the ``csv`` file.
@@ -1597,7 +1597,7 @@ class TestSingleTableMetadata:
             - A message is being printed.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         data = pd.DataFrame({
             'categorical': ['cat', 'dog', 'tiger', np.nan],
             'date': pd.to_datetime(['2021-02-02', np.nan, '2021-03-05', '2022-12-09']),
@@ -1626,17 +1626,17 @@ class TestSingleTableMetadata:
         ]
         mock_log.info.assert_has_calls(expected_log_calls)
 
-    @patch('sdv.metadata.single_table.LOGGER')
+    @patch('sdv.metadata._single_table.LOGGER')
     def test_detect_from_csv_with_kwargs(self, mock_log, tmp_path):
         """Test the ``dectect_from_csv`` method.
 
         Test that when given a file path to a ``csv`` file, the current instance of
-        ``SingleTableMetadata`` is being updated with the ``sdtypes`` of each
+        ``_SingleTableMetadata`` is being updated with the ``sdtypes`` of each
         column from the read data that is contained within the ``pandas.DataFrame`` from
         that ``csv`` file, having in consideration the ``kwargs`` that are passed.
 
         Setup:
-            - Instance of ``SingleTableMetadata``.
+            - Instance of ``_SingleTableMetadata``.
 
         Input:
             - String that represents the ``path`` to the ``csv`` file.
@@ -1647,7 +1647,7 @@ class TestSingleTableMetadata:
             - A message is being printed.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         data = pd.DataFrame({
             'categorical': ['cat', 'dog', 'tiger', np.nan],
             'date': pd.to_datetime(['2021-02-02', np.nan, '2021-03-05', '2022-12-09']),
@@ -1686,7 +1686,7 @@ class TestSingleTableMetadata:
             - True
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run
         out = instance._validate_key_datatype('10', 'primary')
@@ -1704,7 +1704,7 @@ class TestSingleTableMetadata:
             - False
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run
         out = instance._validate_key_datatype(10, 'primary')
@@ -1722,7 +1722,7 @@ class TestSingleTableMetadata:
             - False
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run
         out = instance._validate_key_datatype(('10', '20', '30'), 'primary')
@@ -1740,7 +1740,7 @@ class TestSingleTableMetadata:
             - False
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run
         out = instance._validate_key_datatype(['10', '20', '30'], 'primary')
@@ -1751,13 +1751,13 @@ class TestSingleTableMetadata:
     def test__validate_key_sequence_and_primary_key_same(self):
         """Test ``_validate_key`` for a column used as both sequence and primary keys."""
         # Setup
-        instance_primary = SingleTableMetadata()
+        instance_primary = _SingleTableMetadata()
         instance_primary.primary_key = 'A'
         error_msg_primary = re.escape(
             'The column (A) cannot be set as sequence_key as it is already set as the primary_key.'
         )
 
-        instance_sequence = SingleTableMetadata()
+        instance_sequence = _SingleTableMetadata()
         instance_sequence.sequence_key = 'A'
         error_msg_sequence = re.escape(
             'The column (A) cannot be set as primary_key as it is already set as the sequence_key.'
@@ -1779,7 +1779,7 @@ class TestSingleTableMetadata:
             - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         err_msg = "'primary_key' must be a string."
         # Run / Assert
@@ -1790,7 +1790,7 @@ class TestSingleTableMetadata:
         """Test that ``set_primary_key`` crashes for invalid arguments.
 
         Setup:
-            - A ``SingleTableMetadata`` instance with ``_columns`` set.
+            - A ``_SingleTableMetadata`` instance with ``_columns`` set.
 
         Input:
             - A column not present in ``_columns``.
@@ -1799,7 +1799,7 @@ class TestSingleTableMetadata:
             - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'a', 'd'}
 
         err_msg = (
@@ -1810,7 +1810,7 @@ class TestSingleTableMetadata:
             instance.set_primary_key('b')
             # NOTE: used to be ('a', 'b', 'd', 'c')
 
-    @patch('sdv.metadata.single_table.is_faker_function')
+    @patch('sdv.metadata._single_table.is_faker_function')
     def test_set_primary_key_validation_categorical(self, mock_is_faker_function):
         """Test that ``set_primary_key`` crashes when its sdtype is categorical.
 
@@ -1822,7 +1822,7 @@ class TestSingleTableMetadata:
         """
         # Setup
         mock_is_faker_function.return_value = False
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.add_column('column1', sdtype='categorical')
         instance.add_column('column2', sdtype='categorical')
         instance.add_column('column3', sdtype='id')
@@ -1839,7 +1839,7 @@ class TestSingleTableMetadata:
     def test_set_primary_key(self):
         """Test that ``set_primary_key`` sets the ``_primary_key`` value."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'column': {'sdtype': 'id'}}
 
         # Run
@@ -1852,7 +1852,7 @@ class TestSingleTableMetadata:
     def test_set_primary_key_column_in_relationship(self, primary_key):
         """Test that ``set_primary_key`` raises an error if the column is in relationship."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {
             'column': {'sdtype': 'id'},
             'column_b': {'sdtype': 'address'},
@@ -1875,7 +1875,7 @@ class TestSingleTableMetadata:
     def test_set_primary_key_singleton_composite_key(self):
         """Test a composite key with one element is set as a single primary key."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'column': {'sdtype': 'id'}}
 
         # Run
@@ -1887,7 +1887,7 @@ class TestSingleTableMetadata:
     def test_set_primary_key_duplicate_keys(self):
         """Test setting a composite key that has repeated columns."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'column': {'sdtype': 'id'}, 'column_b': {'sdtype': 'id'}}
 
         # Run and Assert
@@ -1898,7 +1898,7 @@ class TestSingleTableMetadata:
     def test_set_primary_key_duplicate_keys_multiple_duplicates(self):
         """Test setting a composite key that has repeated columns multiple times."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {
             'column': {'sdtype': 'id'},
             'column_b': {'sdtype': 'id'},
@@ -1915,7 +1915,7 @@ class TestSingleTableMetadata:
     def test_remove_primary_key(self):
         """Test that ``remove_primary_key`` removes the ``primary_key`` value."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'id': {'sdtype': 'id'}}
         instance.primary_key = 'id'
 
@@ -1925,11 +1925,11 @@ class TestSingleTableMetadata:
         # Assert
         assert instance.primary_key is None
 
-    @patch('sdv.metadata.single_table.warnings')
+    @patch('sdv.metadata._single_table.warnings')
     def test_remove_primary_key_warns_no_key_set(self, warning_mock):
         """Test that ``remove_primary_key`` removes the ``primary_key`` value."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'id': {'sdtype': 'id'}}
 
         # Run
@@ -1939,12 +1939,12 @@ class TestSingleTableMetadata:
         assert instance.primary_key is None
         warning_mock.warn.assert_called_once_with('No primary key exists to remove.')
 
-    @patch('sdv.metadata.single_table.warnings')
+    @patch('sdv.metadata._single_table.warnings')
     def test_set_primary_key_already_exists_warning(self, warning_mock):
         """Test that ``set_primary_key`` raises a warning when a primary key already exists.
 
         Setup:
-            - An instance of ``SingleTableMetadata`` with ``_primary_key`` set.
+            - An instance of ``_SingleTableMetadata`` with ``_primary_key`` set.
 
         Input:
             - String.
@@ -1953,7 +1953,7 @@ class TestSingleTableMetadata:
             - A warning should be raised.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'column1': {'sdtype': 'id'}}
         instance.primary_key = 'column0'
 
@@ -1965,7 +1965,7 @@ class TestSingleTableMetadata:
         warning_mock.warn.assert_called_once_with(warning_msg)
         assert instance.primary_key == 'column1'
 
-    @patch('sdv.metadata.single_table.warnings')
+    @patch('sdv.metadata._single_table.warnings')
     def test_set_primary_key_in_alternate_keys_warning(self, warning_mock):
         """Test that ``set_primary_key`` raises a warning the key is in ``self.alternate_keys``.
 
@@ -1973,7 +1973,7 @@ class TestSingleTableMetadata:
             Set the ``self.alternate_keys`` list to contain the key being added.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'column1': {'sdtype': 'id'}}
         instance.primary_key = 'column0'
         instance.alternate_keys = ['column1', 'column2']
@@ -2005,7 +2005,7 @@ class TestSingleTableMetadata:
             - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         err_msg = "'sequence_key' must be a string."
         # Run / Assert
@@ -2016,7 +2016,7 @@ class TestSingleTableMetadata:
         """Test that ``set_sequence_key`` crashes for invalid arguments.
 
         Setup:
-            - A ``SingleTableMetadata`` instance with ``_columns`` set.
+            - A ``_SingleTableMetadata`` instance with ``_columns`` set.
 
         Input:
             - A column not present in ``_columns``.
@@ -2025,7 +2025,7 @@ class TestSingleTableMetadata:
             - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'a', 'd'}
 
         err_msg = (
@@ -2036,7 +2036,7 @@ class TestSingleTableMetadata:
             instance.set_sequence_key('b')
             # NOTE: used to be ('a', 'b', 'd', 'c')
 
-    @patch('sdv.metadata.single_table.is_faker_function')
+    @patch('sdv.metadata._single_table.is_faker_function')
     def test_set_sequence_key_validation_categorical(self, mock_is_faker_function):
         """Test that ``set_sequence_key`` crashes when its sdtype is categorical.
 
@@ -2048,7 +2048,7 @@ class TestSingleTableMetadata:
         """
         # Setup
         mock_is_faker_function.return_value = False
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.add_column('column1', sdtype='categorical')
         instance.add_column('column2', sdtype='categorical')
         instance.add_column('column3', sdtype='id')
@@ -2065,7 +2065,7 @@ class TestSingleTableMetadata:
     def test_set_sequence_key(self):
         """Test that ``set_sequence_key`` sets the ``_sequence_key`` value."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'column': {'sdtype': 'id'}}
 
         # Run
@@ -2077,7 +2077,7 @@ class TestSingleTableMetadata:
     def test_set_sequence_key_tuple(self):
         """Test that ``set_sequence_key`` errors for tuples."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'col1': {'sdtype': 'id'}, 'col2': {'sdtype': 'id'}}
 
         # Run and Assert
@@ -2085,12 +2085,12 @@ class TestSingleTableMetadata:
         with pytest.raises(InvalidMetadataError, match=msg):
             instance.set_sequence_key(('col1', 'col2'))
 
-    @patch('sdv.metadata.single_table.warnings')
+    @patch('sdv.metadata._single_table.warnings')
     def test_set_sequence_key_warning(self, warning_mock):
         """Test that ``set_sequence_key`` raises a warning when a sequence key already exists.
 
         Setup:
-            - An instance of ``SingleTableMetadata`` with ``_sequence_key`` set.
+            - An instance of ``_SingleTableMetadata`` with ``_sequence_key`` set.
 
         Input:
             - String.
@@ -2099,7 +2099,7 @@ class TestSingleTableMetadata:
             - A warning should be raised.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'column1': {'sdtype': 'id'}}
         instance.sequence_key = 'column0'
 
@@ -2121,7 +2121,7 @@ class TestSingleTableMetadata:
             - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         err_msg = "'alternate_keys' must be a list of strings."
         # Run / Assert
@@ -2132,7 +2132,7 @@ class TestSingleTableMetadata:
         """Test that ``add_alternate_keys`` crashes for invalid arguments.
 
         Setup:
-            - A ``SingleTableMetadata`` instance with ``_columns`` set.
+            - A ``_SingleTableMetadata`` instance with ``_columns`` set.
 
         Input:
             - A list with unknown key column.
@@ -2141,7 +2141,7 @@ class TestSingleTableMetadata:
             - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'abc', '213', '312'}
 
         err_msg = (
@@ -2152,7 +2152,7 @@ class TestSingleTableMetadata:
             instance.add_alternate_keys(['abc', '123'])
             # NOTE: used to be ['abc', ('123', '213', '312'), 'bca']
 
-    @patch('sdv.metadata.single_table.is_faker_function')
+    @patch('sdv.metadata._single_table.is_faker_function')
     def test_add_alternate_keys_validation_categorical(self, mock_is_faker_function):
         """Test that ``add_alternate_keys`` crashes when its sdtype is categorical.
 
@@ -2164,7 +2164,7 @@ class TestSingleTableMetadata:
         """
         # Setup
         mock_is_faker_function.return_value = False
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.add_column('column1', sdtype='categorical')
         instance.add_column('column2', sdtype='categorical')
         instance.add_column('column3', sdtype='id')
@@ -2187,7 +2187,7 @@ class TestSingleTableMetadata:
         should be raised.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'column1': {'sdtype': 'numerical'}}
         instance.primary_key = 'column1'
 
@@ -2201,7 +2201,7 @@ class TestSingleTableMetadata:
     def test_add_alternate_keys(self):
         """Test that ``add_alternate_keys`` adds the columns to the ``_alternate_keys``."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {
             'column1': {'sdtype': 'id'},
             'column2': {'sdtype': 'id'},
@@ -2214,11 +2214,11 @@ class TestSingleTableMetadata:
         # Assert
         assert instance.alternate_keys == ['column1', 'column2', 'column3']
 
-    @patch('sdv.metadata.single_table.warnings')
+    @patch('sdv.metadata._single_table.warnings')
     def test_add_alternate_keys_duplicate(self, warnings_mock):
         """Test that the method does not add columns that are already in ``_alternate_keys``."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {
             'column1': {'sdtype': 'id'},
             'column2': {'sdtype': 'id'},
@@ -2244,7 +2244,7 @@ class TestSingleTableMetadata:
             - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         err_msg = "'sequence_index' must be a string."
         # Run / Assert
@@ -2255,7 +2255,7 @@ class TestSingleTableMetadata:
         """Test that ``set_sequence_index`` crashes for invalid arguments.
 
         Setup:
-            - A ``SingleTableMetadata`` instance with ``_columns`` set.
+            - A ``_SingleTableMetadata`` instance with ``_columns`` set.
 
         Input:
             - A string not present in ``_columns``.
@@ -2264,7 +2264,7 @@ class TestSingleTableMetadata:
             - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'a', 'd'}
 
         err_msg = (
@@ -2278,7 +2278,7 @@ class TestSingleTableMetadata:
     def test_set_sequence_index_column_not_numerical_or_datetime(self):
         """Test that the method errors if the column is not numerical or datetime."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'a': {'sdtype': 'numerical'}, 'd': {'sdtype': 'categorical'}}
 
         # Run / Assert
@@ -2289,7 +2289,7 @@ class TestSingleTableMetadata:
     def test_set_sequence_index(self):
         """Test that ``set_sequence_index`` sets the ``_sequence_index`` value."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'column': {'sdtype': 'numerical'}}
 
         # Run
@@ -2301,7 +2301,7 @@ class TestSingleTableMetadata:
     def test_validate_sequence_index_not_in_sequence_key(self):
         """Test the ``_validate_sequence_index_not_in_sequence_key`` method."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.sequence_key = ('abc', 'def')
         instance.sequence_index = 'abc'
 
@@ -2316,7 +2316,7 @@ class TestSingleTableMetadata:
     def test__validate_column_relationship(self):
         """Test the ``_validate_column_relationship`` method."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         mock_relationship_validation = Mock()
         instance._COLUMN_RELATIONSHIP_TYPES = {'mock_relationship': mock_relationship_validation}
         relationship = {'type': 'mock_relationship', 'column_names': ['a', 'b']}
@@ -2339,7 +2339,7 @@ class TestSingleTableMetadata:
     def test__validate_column_relationship_bad_relationship_type(self):
         """Test validation fails for an unknown relationship type."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance._COLUMN_RELATIONSHIP_TYPES = {'mock_relationship': Mock()}
         relationship = {'type': 'bad_relationship_type', 'column_names': ['a', 'b']}
 
@@ -2358,7 +2358,7 @@ class TestSingleTableMetadata:
         def validation_side_effect(*args, **kwargs):
             raise InvalidMetadataError("Columns ['a', 'b'] have unsupported sdtype.")
 
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         mock_relationship_validation = Mock()
         mock_relationship_validation.side_effect = validation_side_effect
         instance._COLUMN_RELATIONSHIP_TYPES = {'mock_relationship': mock_relationship_validation}
@@ -2386,7 +2386,7 @@ class TestSingleTableMetadata:
     def test__validate_column_relationship_with_other_relationships(self):
         """Test ``_validate_column_relationship_with_others``."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         column_relationships = [
             {'type': 'relationship_one', 'column_names': ['a', 'b']},
         ]
@@ -2407,7 +2407,7 @@ class TestSingleTableMetadata:
     def test__validate_column_relationship_raises_import_error(self, recwarn):
         """Test that ``_validate_column_relationship`` raises an `ImportError`."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         relationship = {'type': 'address', 'column_names': ['a', 'b']}
         instance.columns = {
             'a': {'sdtype': 'street_address'},
@@ -2434,7 +2434,7 @@ class TestSingleTableMetadata:
     def test__validate_column_relationship_column_belongs_to_primary_key(self, primary_key):
         """Test validation fails for columns that are in the primary keys."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         mock_relationship_validation = Mock()
         instance._COLUMN_RELATIONSHIP_TYPES = {'mock_relationship': mock_relationship_validation}
         relationship = {'type': 'mock_relationship', 'column_names': ['a', 'b']}
@@ -2453,7 +2453,7 @@ class TestSingleTableMetadata:
     def test__validate_all_column_relationships(self):
         """Test ``_validate_all_column_relationships`` method."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         mock_validate_relationship = Mock()
         instance._validate_column_relationship = mock_validate_relationship
         relationship_one = {'type': 'relationship_one', 'column_names': ['a', 'b']}
@@ -2472,7 +2472,7 @@ class TestSingleTableMetadata:
     def test__validate_all_column_relationships_invalid_relationship_structure(self):
         """Test validation fails if relationship is malformed."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         mock_validate_relationship = Mock()
         instance._validate_column_relationship = mock_validate_relationship
         column_relationships = [
@@ -2488,7 +2488,7 @@ class TestSingleTableMetadata:
     def test__validate_all_column_relationships_repeated_column(self):
         """Test validation fails if columns are repeated across column relationships."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         mock_validate_relationship = Mock()
         instance._validate_column_relationship = mock_validate_relationship
         column_relationships = [
@@ -2511,7 +2511,7 @@ class TestSingleTableMetadata:
         def mock_relationship_validate(relationship):
             raise InvalidMetadataError(f"Error in '{relationship['type']}' relationship.")
 
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         mock_validate_relationship = Mock()
         mock_validate_relationship.side_effect = mock_relationship_validate
         instance._validate_column_relationship = mock_validate_relationship
@@ -2530,7 +2530,7 @@ class TestSingleTableMetadata:
     def test_add_column_relationships(self):
         """Test ``add_column_relationship`` adds a column relationship."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         mock_validate_column_relationships = Mock()
         instance._validate_all_column_relationships = mock_validate_column_relationships
 
@@ -2561,7 +2561,7 @@ class TestSingleTableMetadata:
         def raise_user_warning(*args, **kwargs):
             warnings.warn('This is a warning', UserWarning)
 
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         mock_validate_column_relationships = Mock(side_effect=raise_user_warning)
         instance._validate_all_column_relationships = mock_validate_column_relationships
 
@@ -2581,14 +2581,14 @@ class TestSingleTableMetadata:
         Ensure the method calls the correct methods with the correct parameters.
 
         Setup:
-            - A ``SingleTableMetadata`` instance with:
+            - A ``_SingleTableMetadata`` instance with:
                 - ``_columns``, ``_primary_key``, ``_alternate_keys``,
                   ``_sequence_key`` and ``_sequence_index`` defined.
                 - ``_validate_key``, ``_validate_alternate_keys``, ``_validate_sequence_index``
                   and ``_validate_sequence_index_not_in_sequence_key`` mocked.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'col1': {'sdtype': 'numerical'}, 'col2': {'sdtype': 'numerical'}}
         instance.primary_key = 'col1'
         instance.alternate_keys = ['col2']
@@ -2631,7 +2631,7 @@ class TestSingleTableMetadata:
         """Test that an error is raised if the primary key is an int that can start with 0."""
         # Setup
         data = pd.DataFrame({'key': [1, 2, 3], 'info': ['a', 'b', 'c']})
-        metadata = SingleTableMetadata().load_from_dict({
+        metadata = _SingleTableMetadata().load_from_dict({
             'columns': {
                 'key': {'sdtype': 'id', 'regex_format': '[1-9]{3,4}'},
                 'info': {'sdtype': 'categorical'},
@@ -2656,7 +2656,7 @@ class TestSingleTableMetadata:
         """Test error is raised if data is not ``pd.DataFrame``."""
         # Setup
         data = np.ndarray([])
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
 
         # Run and Assert
         err_msg = "Data must be a DataFrame, not a <class 'numpy.ndarray'>."
@@ -2670,7 +2670,7 @@ class TestSingleTableMetadata:
             'col1': [1, 2, 3],
             'col2': [4, 5, 6],
         })
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
 
         # Run and Assert
         err_msg = re.escape(
@@ -2688,7 +2688,7 @@ class TestSingleTableMetadata:
             'col2': [4, 5, 6],
             'col3': [7, 8, 9],
         })
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('col1', sdtype='numerical')
         metadata.add_column('col4', sdtype='numerical')
         metadata.add_column('col5', sdtype='numerical')
@@ -2707,7 +2707,7 @@ class TestSingleTableMetadata:
         """Test error is raised if keys contain missing values.
 
         Setup:
-            A ``SingleTableMetadata`` instance with one primary key and multiple sequence
+            A ``_SingleTableMetadata`` instance with one primary key and multiple sequence
             and alternate keys. All the columns contain missing values except for one
             squence key and one alternate key, so we can ensure those don't show up
             in the error message.
@@ -2723,7 +2723,7 @@ class TestSingleTableMetadata:
             'ak_col2': [0, 1, np.nan],
             'ak_col3': [0, 1, 2],
         })
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('pk_col1', sdtype='id')
         metadata.add_column('pk_col2', sdtype='categorical')
         metadata.add_column('sk_col1', sdtype='id')
@@ -2761,7 +2761,7 @@ class TestSingleTableMetadata:
         """
         # Setup
         data = pd.DataFrame({'pk_col': [1], 'sk_col': [None]})
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('pk_col', sdtype='id')
         metadata.add_column('sk_col', sdtype='id')
         metadata.set_primary_key('pk_col')
@@ -2784,7 +2784,7 @@ class TestSingleTableMetadata:
             'ak_col2': [2, 2, 2, 2, 2],
             'ak_col3': [0, 1, 2, 3, 4],
         })
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('pk_col', sdtype='id')
         metadata.add_column('ak_col1', sdtype='id')
         metadata.add_column('ak_col2', sdtype='id')
@@ -2810,7 +2810,7 @@ class TestSingleTableMetadata:
             'pk_col1': [0, 1, 1, 0, 1],
             'pk_col2': [0, 1, 0, 0, 0],
         })
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('pk_col1', sdtype='id')
         metadata.add_column('pk_col2', sdtype='id')
         metadata.set_primary_key(['pk_col1', 'pk_col2'])
@@ -2828,7 +2828,7 @@ class TestSingleTableMetadata:
         """Test method doesn't raise when data is empty.
 
         Setup:
-            ``SingleTableMetadata`` with one column for each sdtype and for each key.
+            ``_SingleTableMetadata`` with one column for each sdtype and for each key.
         """
         # Setup
         data = pd.DataFrame({
@@ -2839,7 +2839,7 @@ class TestSingleTableMetadata:
             'num_col': [],
             'date_col': [],
         })
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('bool_col', sdtype='boolean')
         metadata.add_column('num_col', sdtype='numerical')
         metadata.add_column('date_col', sdtype='datetime')
@@ -2861,7 +2861,7 @@ class TestSingleTableMetadata:
             'num_col': [1, 2, 3],
             'date_col': [1, 2, 3],
         })
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('bool_col', sdtype='numerical')
         metadata.add_column('num_col', sdtype='numerical')
         metadata.add_column('date_col', sdtype='numerical')
@@ -2873,7 +2873,7 @@ class TestSingleTableMetadata:
         """Test method doesn't raise when data is an empty dataframe."""
         # Setup
         data = pd.DataFrame()
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
 
         # Run
         metadata.validate_data(data)
@@ -2882,7 +2882,7 @@ class TestSingleTableMetadata:
         """Test error is raised if column values don't satisfy their sdtype.
 
         Setup:
-            A ``SingleTableMetadata`` instance with two columns of each sdtype: numerical,
+            A ``_SingleTableMetadata`` instance with two columns of each sdtype: numerical,
             boolean and datetime. The first column of each will have 4 invalid values,
             while the second column will have at most 3.
         """
@@ -2895,7 +2895,7 @@ class TestSingleTableMetadata:
             'num1': ['a', 0, '10', True, False],
             'num2': [-1.2, datetime(1, 1, 1), np.nan, float('nan'), None],
         })
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('date1', sdtype='datetime')
         metadata.add_column('date2', sdtype='datetime')
         metadata.add_column('bool1', sdtype='boolean')
@@ -2952,7 +2952,7 @@ class TestSingleTableMetadata:
                 20220929111311000000,
             ],
         })
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('date_str', sdtype='datetime', datetime_format='%Y%m%d%H%M%S%f')
         metadata.add_column('date_int', sdtype='datetime', datetime_format='%Y%m%d%H%M%S%f')
         metadata.add_column('bad_date', sdtype='datetime', datetime_format='%Y%m%d%H%M%S%f')
@@ -2995,7 +2995,7 @@ class TestSingleTableMetadata:
                 '20220929',
             ]),
         })
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('warning_date_str', sdtype='datetime')
         metadata.add_column('valid_date', sdtype='datetime', datetime_format='%Y%m%d%H%M%S%f')
         metadata.add_column('datetime', sdtype='datetime')
@@ -3019,7 +3019,7 @@ class TestSingleTableMetadata:
         """Test the method doesn't crash when the passed data is valid.
 
         Setup:
-            ``SingleTableMetadata`` describing at least one valid column of each key and sdtype.
+            ``_SingleTableMetadata`` describing at least one valid column of each key and sdtype.
         """
         # Setup
         data = pd.DataFrame({
@@ -3032,7 +3032,7 @@ class TestSingleTableMetadata:
             'date_col': [np.nan, '2021-02-10', '2021-05-10'],
             'bool_col': [np.nan, True, False],
         })
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('pk_col', sdtype='id')
         metadata.add_column('sk_col1', sdtype='id')
         metadata.add_column('sk_col2', sdtype='id')
@@ -3055,7 +3055,7 @@ class TestSingleTableMetadata:
         """Test the method doesn't crash when the passed data is valid.
 
         Setup:
-            ``SingleTableMetadata`` describing at least one valid column of each key and sdtype.
+            ``_SingleTableMetadata`` describing at least one valid column of each key and sdtype.
         """
         # Setup
         data = pd.DataFrame({
@@ -3067,7 +3067,7 @@ class TestSingleTableMetadata:
             'numerical_col': [np.nan, -1, 1.54],
             'bool_col': [np.nan, True, False],
         })
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('pk_col', sdtype='id')
         metadata.add_column('sk_col1', sdtype='id')
         metadata.add_column('sk_col2', sdtype='id')
@@ -3089,17 +3089,17 @@ class TestSingleTableMetadata:
             metadata.validate_data(data)
 
     def test_to_dict(self):
-        """Test the ``to_dict`` method from ``SingleTableMetadata``.
+        """Test the ``to_dict`` method from ``_SingleTableMetadata``.
 
         Setup:
-            - Instance of ``SingleTableMetadata`` and modify the ``instance.columns`` to ensure
+            - Instance of ``_SingleTableMetadata`` and modify the ``instance.columns`` to ensure
             that ``to_dict`` works properly.
         Output:
             - A dictionary representation of the ``instance`` that does not modify the
               internal dictionaries.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns['my_column'] = 'value'
 
         # Run
@@ -3123,7 +3123,7 @@ class TestSingleTableMetadata:
         that old metadata to a dict.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns['my_column'] = 'value'
         del instance.column_relationships
 
@@ -3148,7 +3148,7 @@ class TestSingleTableMetadata:
             'sequence_index': None,
             'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
         }
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         expected_error = re.escape(
             "The metadata dictionary contains extra keys: 'invalid_key'. "
             "Valid keys are: 'METADATA_SPEC_VERSION', 'alternate_keys', "
@@ -3162,7 +3162,7 @@ class TestSingleTableMetadata:
         with pytest.raises(ValueError, match=expected_error):
             instance._valdiate_no_extra_keys_metadata_dict(metadata)
 
-    @patch('sdv.metadata.single_table.SingleTableMetadata._valdiate_no_extra_keys_metadata_dict')
+    @patch('sdv.metadata._single_table._SingleTableMetadata._valdiate_no_extra_keys_metadata_dict')
     def test_load_from_dict(self, mock_validate):
         """Test that ``load_from_dict`` returns a instance with the ``dict`` updated objects."""
         # Setup
@@ -3176,7 +3176,7 @@ class TestSingleTableMetadata:
         }
 
         # Run
-        instance = SingleTableMetadata.load_from_dict(my_metadata)
+        instance = _SingleTableMetadata.load_from_dict(my_metadata)
 
         # Assert
         mock_validate.assert_called_once_with(my_metadata)
@@ -3205,7 +3205,7 @@ class TestSingleTableMetadata:
         }
 
         # Run
-        instance = SingleTableMetadata.load_from_dict(my_metadata)
+        instance = _SingleTableMetadata.load_from_dict(my_metadata)
 
         # Assert
         assert instance.columns == {'1': 'value'}
@@ -3225,7 +3225,7 @@ class TestSingleTableMetadata:
         }
 
         # Run
-        instance = SingleTableMetadata.load_from_dict(my_metadata)
+        instance = _SingleTableMetadata.load_from_dict(my_metadata)
 
         # Assert
         assert instance.columns == {'pk': 'value'}
@@ -3257,7 +3257,7 @@ class TestSingleTableMetadata:
             "A file named 'filepath.json' does not exist. Please specify a different filename."
         )
         with pytest.raises(ValueError, match=error_msg):
-            SingleTableMetadata.load_from_json('filepath.json')
+            _SingleTableMetadata.load_from_json('filepath.json')
 
     @patch('sdv.metadata.utils.open')
     @patch('sdv.metadata.utils.Path')
@@ -3290,10 +3290,11 @@ class TestSingleTableMetadata:
 
         # Run / Assert
         error_msg = (
-            'This metadata file is incompatible with the ``SingleTableMetadata`` class and version.'
+            'This metadata file is incompatible with the ``_SingleTableMetadata`` '
+            'class and version.'
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
-            SingleTableMetadata.load_from_json('filepath.json')
+            _SingleTableMetadata.load_from_json('filepath.json')
 
     @patch('sdv.metadata.utils.open')
     @patch('sdv.metadata.utils.Path')
@@ -3313,11 +3314,11 @@ class TestSingleTableMetadata:
             - String representing a filepath.
 
         Output:
-            - ``SingleTableMetadata`` instance with the custom configuration from the ``json``
+            - ``_SingleTableMetadata`` instance with the custom configuration from the ``json``
               file (``json.load`` return value)
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         mock_path.return_value.exists.return_value = True
         mock_path.return_value.name = 'filepath.json'
         mock_json.load.return_value = {
@@ -3327,7 +3328,7 @@ class TestSingleTableMetadata:
         }
 
         # Run
-        instance = SingleTableMetadata.load_from_json('filepath.json')
+        instance = _SingleTableMetadata.load_from_json('filepath.json')
 
         # Assert
         assert instance.columns == {'animals': {'type': 'categorical'}}
@@ -3345,7 +3346,7 @@ class TestSingleTableMetadata:
         raises a ``ValueError`` when using the mode 'write'.
 
         Setup:
-            - instance of ``SingleTableMetadata``.
+            - instance of ``_SingleTableMetadata``.
         Mock:
             - Mock ``Path`` in order to point that the file does exist.
 
@@ -3353,7 +3354,7 @@ class TestSingleTableMetadata:
             - Raise ``ValueError`` pointing that the file does exist.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         mock_path.return_value.exists.return_value = True
         mock_path.return_value.name = 'filepath.json'
 
@@ -3372,7 +3373,7 @@ class TestSingleTableMetadata:
         works as expected with the mode 'overwrite'`.
 
         Setup:
-            - instance of ``SingleTableMetadata``.
+            - instance of ``_SingleTableMetadata``.
             - save file to tmp path
 
         Assert:
@@ -3380,7 +3381,7 @@ class TestSingleTableMetadata:
             - The data in the value matches the second run of save_to_json
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         file_name = tmp_path / 'singlefilepathtable.json'
         instance.save_to_json(file_name, 'write')
         with open(file_name, 'rb') as single_table_file:
@@ -3404,13 +3405,13 @@ class TestSingleTableMetadata:
         Test that invalid modes raise an error.
 
         Setup:
-            - instance of ``SingleTableMetadata``.
+            - instance of ``_SingleTableMetadata``.
 
         Side Effects:
             - Raise ``ValueError``saying mode is invalid.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         bad_mode = 'bad_mode'
         file_name = tmp_path / 'singlefilepathtable.json'
         error_msg = re.escape(f"Mode '{bad_mode}' must be in ['write', 'overwrite'].")
@@ -3419,7 +3420,7 @@ class TestSingleTableMetadata:
         with pytest.raises(ValueError, match=error_msg):
             instance.save_to_json(file_name, bad_mode)
 
-    @patch('sdv.metadata.single_table.datetime')
+    @patch('sdv.metadata._single_table.datetime')
     def test_save_to_json(self, mock_datetime, tmp_path, caplog):
         """Test the ``save_to_json`` method.
 
@@ -3427,7 +3428,7 @@ class TestSingleTableMetadata:
         it.
 
         Setup:
-            - instance of ``SingleTableMetadata``.
+            - instance of ``_SingleTableMetadata``.
             - Use ``TemporaryDirectory`` to store the file in order to read it afterwards and
               assert it's contents.
 
@@ -3436,7 +3437,7 @@ class TestSingleTableMetadata:
         """
         # Setup
         mock_datetime.now.return_value = '2024-04-19 16:20:10.037183'
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run
         file_name = tmp_path / 'singletable.json'
@@ -3456,7 +3457,7 @@ class TestSingleTableMetadata:
             saved_metadata = json.load(single_table_file)
             assert saved_metadata == instance.to_dict()
 
-    @patch('sdv.metadata.single_table.json')
+    @patch('sdv.metadata._single_table.json')
     def test___repr__(self, mock_json):
         """Test that the ``__repr__`` method.
 
@@ -3464,15 +3465,15 @@ class TestSingleTableMetadata:
         returns its output.
 
         Setup:
-            - Instance of ``SingleTableMetadata``.
+            - Instance of ``_SingleTableMetadata``.
         Mock:
-            - ``json`` from ``sdv.metadata.single_table``.
+            - ``json`` from ``sdv.metadata._single_table``.
 
         Output:
             - ``json.dumps`` return value.
         """
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run
         res = instance.__repr__()
@@ -3484,18 +3485,18 @@ class TestSingleTableMetadata:
     def test_visualize_with_invalid_input(self):
         """Test that a ``ValueError`` is being raised when ``show_table_details`` is incorrect."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
 
         # Run and Assert
         error_msg = "'show_table_details' should be 'full' or 'summarized'."
         with pytest.raises(ValueError, match=error_msg):
             instance.visualize(None)
 
-    @patch('sdv.metadata.single_table.visualize_graph')
+    @patch('sdv.metadata._single_table.visualize_graph')
     def test_visualize_metadata_full(self, mock_visualize_graph):
         """Test the ``visualize`` method when ``show_table_details`` is 'full'."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {
             'name': {'sdtype': 'categorical'},
             'age': {'sdtype': 'numerical'},
@@ -3513,11 +3514,11 @@ class TestSingleTableMetadata:
         }
         mock_visualize_graph.assert_called_once_with(expected_node, [], None)
 
-    @patch('sdv.metadata.single_table.visualize_graph')
+    @patch('sdv.metadata._single_table.visualize_graph')
     def test_visualize_metadata_summarized(self, mock_visualize_graph):
         """Test the ``visualize`` method when ``show_table_details`` is 'summarized'."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {
             'name': {'sdtype': 'categorical'},
             'age': {'sdtype': 'numerical'},
@@ -3537,13 +3538,13 @@ class TestSingleTableMetadata:
         expected_node = {'': node}
         mock_visualize_graph.assert_called_once_with(expected_node, [], None)
 
-    @patch('sdv.metadata.single_table.visualize_graph')
+    @patch('sdv.metadata._single_table.visualize_graph')
     def test_visualize_metadata_with_primary_alternate_and_sequence_keys(
         self, mock_visualize_graph
     ):
         """Test the ``visualize`` method when there are primary, alternate and sequence keys."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {
             'name': {'sdtype': 'categorical'},
             'timestamp': {'sdtype': 'datetime'},
@@ -3571,9 +3572,9 @@ class TestSingleTableMetadata:
         expected_node = {'': node}
         mock_visualize_graph.assert_called_once_with(expected_node, [], None)
 
-    @patch('sdv.metadata.single_table.read_json')
-    @patch('sdv.metadata.single_table.convert_metadata')
-    @patch('sdv.metadata.single_table.SingleTableMetadata.load_from_dict')
+    @patch('sdv.metadata._single_table.read_json')
+    @patch('sdv.metadata._single_table.convert_metadata')
+    @patch('sdv.metadata._single_table._SingleTableMetadata.load_from_dict')
     def test_upgrade_metadata(self, from_dict_mock, convert_mock, read_json_mock):
         """Test the ``upgrade_metadata`` method.
 
@@ -3599,16 +3600,16 @@ class TestSingleTableMetadata:
         from_dict_mock.return_value = new_metadata
 
         # Run
-        SingleTableMetadata.upgrade_metadata('old')
+        _SingleTableMetadata.upgrade_metadata('old')
 
         # Assert
         convert_mock.assert_called_once()
         read_json_mock.assert_called_once_with('old')
         new_metadata.validate.assert_called_once()
 
-    @patch('sdv.metadata.single_table.read_json')
-    @patch('sdv.metadata.single_table.convert_metadata')
-    @patch('sdv.metadata.single_table.SingleTableMetadata.load_from_dict')
+    @patch('sdv.metadata._single_table.read_json')
+    @patch('sdv.metadata._single_table.convert_metadata')
+    @patch('sdv.metadata._single_table._SingleTableMetadata.load_from_dict')
     def test_upgrade_metadata_multiple_tables(self, from_dict_mock, convert_mock, read_json_mock):
         """Test the ``upgrade_metadata`` method.
 
@@ -3635,15 +3636,15 @@ class TestSingleTableMetadata:
         read_json_mock.return_value = {'tables': {'table': {'columns': {}}}}
 
         # Run
-        SingleTableMetadata.upgrade_metadata('old')
+        _SingleTableMetadata.upgrade_metadata('old')
 
         # Assert
         convert_mock.assert_called_once_with({'columns': {}})
         new_metadata.validate.assert_called_once()
 
-    @patch('sdv.metadata.single_table.read_json')
-    @patch('sdv.metadata.single_table.convert_metadata')
-    @patch('sdv.metadata.single_table.SingleTableMetadata.load_from_dict')
+    @patch('sdv.metadata._single_table.read_json')
+    @patch('sdv.metadata._single_table.convert_metadata')
+    @patch('sdv.metadata._single_table._SingleTableMetadata.load_from_dict')
     def test_upgrade_metadata_multiple_tables_fails(
         self, from_dict_mock, convert_mock, read_json_mock
     ):
@@ -3677,12 +3678,12 @@ class TestSingleTableMetadata:
             'Try using the MultiTableMetadata class to upgrade this file.'
         )
         with pytest.raises(InvalidMetadataError, match=message):
-            SingleTableMetadata.upgrade_metadata('old')
+            _SingleTableMetadata.upgrade_metadata('old')
 
-    @patch('sdv.metadata.single_table.warnings')
-    @patch('sdv.metadata.single_table.read_json')
-    @patch('sdv.metadata.single_table.convert_metadata')
-    @patch('sdv.metadata.single_table.SingleTableMetadata.load_from_dict')
+    @patch('sdv.metadata._single_table.warnings')
+    @patch('sdv.metadata._single_table.read_json')
+    @patch('sdv.metadata._single_table.convert_metadata')
+    @patch('sdv.metadata._single_table._SingleTableMetadata.load_from_dict')
     def test_upgrade_metadata_validate_error(
         self, from_dict_mock, convert_mock, read_json_mock, warnings_mock
     ):
@@ -3711,7 +3712,7 @@ class TestSingleTableMetadata:
         new_metadata.validate.side_effect = InvalidMetadataError('blah')
 
         # Run
-        SingleTableMetadata.upgrade_metadata('old')
+        _SingleTableMetadata.upgrade_metadata('old')
 
         # Assert
         convert_mock.assert_called_once()
@@ -3725,7 +3726,7 @@ class TestSingleTableMetadata:
     def test_anonymize(self):
         """Test the ``anonymize`` method."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {
             'real_column1': {'sdtype': 'id', 'regex_format': r'\d{30}'},
             'real_column2': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
@@ -3764,7 +3765,7 @@ class TestSingleTableMetadata:
     def test__warn_data_column_order_mismatch(self):
         """Test that `_warn_data_column_order_mismatch` produces a warning."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata._check_data_columns_order = Mock(return_value=False)
         data = pd.DataFrame({'a': [1, 2], 'b': [2, 3]})
         metadata.detect_from_dataframe(data)
@@ -3780,7 +3781,7 @@ class TestSingleTableMetadata:
     def test__check_data_columns_order_matches(self):
         """Test that `_check_data_columns_order` returns the expected value."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         data = pd.DataFrame({'a': [1, 2], 'b': [2, 3]})
         metadata.detect_from_dataframe(data)
 
@@ -3793,7 +3794,7 @@ class TestSingleTableMetadata:
     def test__check_data_columns_order_mismatches(self):
         """Test that `_check_data_columns_order` returns `False` when columns mismatch."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         data = pd.DataFrame({'a': [1, 2], 'b': [2, 3]})
         metadata.detect_from_dataframe(data)
         test_data = data[['b', 'a']]
@@ -3821,7 +3822,7 @@ class TestSingleTableMetadata:
     def test__validate_keys_sdtype_valid_sdtypes(self, column_meta):
         """Test that the `_validate_keys_sdtype` will not raise an error if one column is ID."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'test_col': column_meta}
 
         # Run and Assert
@@ -3830,7 +3831,7 @@ class TestSingleTableMetadata:
     def test__validate_keys_sdtype_invalid_sdtypes(self):
         """Test that the `_validate_keys_sdtype` will not raise an error if one column is ID."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {
             'user_id': {'sdtype': 'id', 'regex_format': 'ID_[0-9]{1,2}'},
             'account_type': {'sdtype': 'categorical'},
@@ -3848,7 +3849,7 @@ class TestSingleTableMetadata:
     def test__detect_columns_verbose(self, data, capsys):
         """Test the ``_detect_columns`` method with verbose (print sdtypes and PK)."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         expected_output = (
             '\nDetecting table:\n'
             "- Column 'id': sdtype='id'\n"
@@ -3874,7 +3875,7 @@ class TestSingleTableMetadata:
     def test__detect_columns_verbose_infer_sdtypes_false(self, data, capsys):
         """Test the ``_detect_columns`` method with verbose (only print PK)."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         expected_output = (
             "\nDetecting primary key:\n- primary_key='id' "
             "(updating sdtype to 'id', removing 'pii' field)\n"
@@ -3890,7 +3891,7 @@ class TestSingleTableMetadata:
     def test__detect_columns_verbose_infer_keys_none(self, data, capsys):
         """Test the ``_detect_columns`` method with verbose (only print sdtypes)."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         expected_output = (
             '\nDetecting table:\n'
             "- Column 'id': sdtype='id'\n"
@@ -3918,7 +3919,7 @@ class TestSingleTableMetadata:
     def test__select_primary_key_verbose(self, capsys, table_name, table_str):
         """Test the ``_select_primary_key`` method with verbose ."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {
             'email': {'sdtype': 'unknown', 'pii': True},
         }
@@ -3946,7 +3947,7 @@ class TestSingleTableMetadata:
     def test__select_primary_key_verbose_removes_pii_only(self, capsys):
         """Test ``_select_primary_key`` verbose output when only the ``pii`` field is removed."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'email': {'sdtype': 'id', 'pii': False}}
         expected_output = (
             "\nDetecting primary key for table 'users':\n"
@@ -3972,7 +3973,7 @@ class TestSingleTableMetadata:
     def test__select_primary_key_verbose_updates_sdtype_only(self, capsys):
         """Test ``_select_primary_key`` verbose output when only the sdtype is updated to 'id'."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {'email': {'sdtype': 'unknown'}}
         expected_output = (
             "\nDetecting primary key for table 'users':\n"
@@ -3998,7 +3999,7 @@ class TestSingleTableMetadata:
     def test__select_primary_key_verbose_no_candidates(self, capsys):
         """Test the ``_select_primary_key`` method with verbose and no PK candidates."""
         # Setup
-        instance = SingleTableMetadata()
+        instance = _SingleTableMetadata()
         instance.columns = {
             'email': {'sdtype': 'unknown', 'pii': True},
         }
