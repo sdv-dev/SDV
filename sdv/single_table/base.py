@@ -8,7 +8,6 @@ import logging
 import math
 import operator
 import os
-import traceback
 import uuid
 import warnings
 from collections import defaultdict
@@ -29,13 +28,11 @@ from sdv._utils import (
     _groupby_list,
     check_synthesizer_version,
     generate_synthesizer_id,
-    warn_set_constraints_deprecated,
 )
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _convert_to_snake_case,
     _get_invalid_rows,
-    _load_constraints_from_file,
     _validate_constraints_single_table,
 )
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
@@ -518,33 +515,6 @@ class BaseSynthesizer:
 
         with open(path, 'w') as file:
             json.dump(constraints_dict_list, file, indent=4)
-
-    def set_constraints(self, filepath):
-        """Add all the constraints in the file to the synthesizer.
-
-        If any constraints have been added to the synthesizer, they will be removed before
-        the constraints from the file are set.
-
-        Args:
-            filepath (str):
-                The string path to the file containing the constraints to set on the synthesizer.
-        """
-        if self.get_constraints():
-            raise SynthesizerInputError(
-                'Cannot `set_constraints` since constraints have already been applied.'
-            )
-
-        warn_set_constraints_deprecated()
-        constraint_list = _load_constraints_from_file(filepath)
-
-        for constraint in constraint_list:
-            try:
-                self.add_constraints([constraint])
-            except Exception as e:
-                warnings.warn(
-                    f'Could not add constraint ({constraint}):\n'
-                    f'    {traceback.format_exception_only(type(e), e)[0]}'
-                )
 
     def validate_constraints(self, synthetic_data):
         """Validate synthetic_data against the constraints.
