@@ -24,7 +24,7 @@ from sdv.single_table import (
     TVAESynthesizer,
 )
 from sdv.single_table.base import BaseSingleTableSynthesizer
-from sdv.utils import load_constraints
+from sdv.utils import load_constraints, load_synthesizer
 
 METADATA = Metadata.load_from_dict({
     'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
@@ -602,7 +602,7 @@ def test_save_and_load(tmp_path):
     instance.save(synthesizer_path)
 
     # Run
-    loaded_instance = BaseSingleTableSynthesizer.load(synthesizer_path)
+    loaded_instance = load_synthesizer(synthesizer_path)
 
     # Assert
     assert isinstance(loaded_instance, BaseSingleTableSynthesizer)
@@ -621,7 +621,7 @@ def test_save_and_load_no_id(tmp_path):
     instance.save(synthesizer_path)
 
     # Run
-    loaded_instance = BaseSingleTableSynthesizer.load(synthesizer_path)
+    loaded_instance = load_synthesizer(synthesizer_path)
 
     # Assert
     assert isinstance(loaded_instance, BaseSingleTableSynthesizer)
@@ -649,7 +649,7 @@ def test_save_and_load_with_downgraded_version(tmp_path):
         'Downgrading your SDV version is not supported.'
     )
     with pytest.raises(VersionError, match=error_msg):
-        BaseSingleTableSynthesizer.load(synthesizer_path)
+        load_synthesizer(synthesizer_path)
 
 
 @patch('sdv.single_table.base.BaseSingleTableSynthesizer._fit')
