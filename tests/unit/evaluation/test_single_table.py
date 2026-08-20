@@ -1,106 +1,16 @@
 import re
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pandas as pd
 import pytest
 
 from sdv.errors import VisualizationUnavailableError
 from sdv.evaluation.single_table import (
-    DiagnosticReport,
-    QualityReport,
-    evaluate_quality,
     get_column_pair_plot,
     get_column_plot,
-    run_diagnostic,
 )
 from sdv.metadata.metadata import Metadata
 from tests.utils import DataFrameDictMatcher
-
-
-def test_evaluate_quality():
-    """Test ``generate`` is called for the ``QualityReport`` object."""
-    # Setup
-    data1 = pd.DataFrame({'col': [1, 2, 3]})
-    data2 = pd.DataFrame({'col': [2, 1, 3]})
-    metadata = Metadata()
-    metadata.add_table('table')
-    metadata.add_column('col', 'table', sdtype='numerical')
-    QualityReport.generate = Mock()
-
-    # Run
-    evaluate_quality(data1, data2, metadata)
-
-    # Assert
-    QualityReport.generate.assert_called_once_with(
-        DataFrameDictMatcher({'table': data1}),
-        DataFrameDictMatcher({'table': data2}),
-        metadata.to_dict(),
-        True,
-    )
-
-
-def test_evaluate_quality_metadata():
-    """Test ``generate`` is called for the ``QualityReport`` object with Metadata."""
-    # Setup
-    data1 = pd.DataFrame({'col': [1, 2, 3]})
-    data2 = pd.DataFrame({'col': [2, 1, 3]})
-    metadata_dict = {'columns': {'col': {'sdtype': 'numerical'}}}
-    metadata = Metadata.load_from_dict(metadata_dict)
-    QualityReport.generate = Mock()
-
-    # Run
-    evaluate_quality(data1, data2, metadata)
-
-    # Assert
-    QualityReport.generate.assert_called_once_with(
-        DataFrameDictMatcher({'table': data1}),
-        DataFrameDictMatcher({'table': data2}),
-        metadata.to_dict(),
-        True,
-    )
-
-
-def test_run_diagnostic():
-    """Test ``generate`` is called for the ``DiagnosticReport`` object."""
-    # Setup
-    data1 = pd.DataFrame({'col': [1, 2, 3]})
-    data2 = pd.DataFrame({'col': [2, 1, 3]})
-    metadata = Metadata()
-    metadata.add_table('table')
-    metadata.add_column('col', 'table', sdtype='numerical')
-    DiagnosticReport.generate = Mock(return_value=123)
-
-    # Run
-    run_diagnostic(data1, data2, metadata)
-
-    # Assert
-    DiagnosticReport.generate.assert_called_once_with(
-        DataFrameDictMatcher({'table': data1}),
-        DataFrameDictMatcher({'table': data2}),
-        metadata.to_dict(),
-        True,
-    )
-
-
-def test_run_diagnostic_metadata():
-    """Test ``generate`` is called for the ``DiagnosticReport`` object with Metadata."""
-    # Setup
-    data1 = pd.DataFrame({'col': [1, 2, 3]})
-    data2 = pd.DataFrame({'col': [2, 1, 3]})
-    metadata_dict = {'columns': {'col': {'sdtype': 'numerical'}}}
-    metadata = Metadata.load_from_dict(metadata_dict)
-    DiagnosticReport.generate = Mock(return_value=123)
-
-    # Run
-    run_diagnostic(data1, data2, metadata)
-
-    # Assert
-    DiagnosticReport.generate.assert_called_once_with(
-        DataFrameDictMatcher({'table': data1}),
-        DataFrameDictMatcher({'table': data2}),
-        metadata.to_dict(),
-        True,
-    )
 
 
 @patch('sdmetrics.visualization.get_column_plot')

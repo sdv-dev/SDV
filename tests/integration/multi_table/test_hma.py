@@ -21,11 +21,12 @@ from sdv.cag._errors import ConstraintNotMetError
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
 from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError, VersionError
-from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, get_column_plot
+from sdv.evaluation import evaluate_quality
+from sdv.evaluation.multi_table import get_column_pair_plot, get_column_plot
 from sdv.metadata import MultiTableMetadata
 from sdv.metadata.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
-from sdv.utils import load_constraints
+from sdv.utils import load_constraints, load_synthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint
 from tests.utils import catch_sdv_logs, get_multi_table_metadata
 
@@ -370,7 +371,7 @@ class TestHMASynthesizer:
         # Assert
         assert model_path.exists()
         assert model_path.is_file()
-        loaded_synthesizer = HMASynthesizer.load(model_path)
+        loaded_synthesizer = load_synthesizer(model_path)
 
         assert isinstance(synthesizer, HMASynthesizer)
         assert loaded_synthesizer.get_info() == synthesizer.get_info()
@@ -478,7 +479,7 @@ class TestHMASynthesizer:
         # Assert
         assert model_path.exists()
         assert model_path.is_file()
-        loaded_synthesizer = HMASynthesizer.load(model_path)
+        loaded_synthesizer = load_synthesizer(model_path)
 
         assert isinstance(synthesizer, HMASynthesizer)
         assert loaded_synthesizer.get_info() == synthesizer.get_info()
@@ -2074,7 +2075,7 @@ def test_save_and_load_with_downgraded_version(tmp_path):
         'Downgrading your SDV version is not supported.'
     )
     with pytest.raises(VersionError, match=error_msg):
-        HMASynthesizer.load(synthesizer_path)
+        load_synthesizer(synthesizer_path)
 
 
 def test_fit_raises_version_error():

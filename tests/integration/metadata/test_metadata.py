@@ -12,6 +12,7 @@ from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
+from sdv.utils import load_synthesizer
 from tests.utils import download_test_demo
 
 DEFAULT_TABLE_NAME = 'table'
@@ -606,7 +607,7 @@ def test_single_table_compatibility(tmp_path):
     # Assert
     assert os.path.exists(model_path)
     assert os.path.isfile(model_path)
-    loaded_synthesizer = GaussianCopulaSynthesizer.load(model_path)
+    loaded_synthesizer = load_synthesizer(model_path)
     assert isinstance(synthesizer, GaussianCopulaSynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
     assert loaded_synthesizer.metadata._convert_to_single_table().to_dict() == metadata.to_dict()
@@ -684,7 +685,7 @@ def test_multi_table_compatibility(tmp_path):
     assert os.path.isfile(model_path)
 
     # Load HMASynthesizer
-    loaded_synthesizer = HMASynthesizer.load(model_path)
+    loaded_synthesizer = load_synthesizer(model_path)
 
     # Asserts
     assert isinstance(synthesizer, HMASynthesizer)
