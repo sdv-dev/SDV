@@ -6,10 +6,10 @@ import pandas as pd
 import pytest
 from rdt.transformers import (
     AnonymizedFaker,
-    CustomLabelEncoder,
     FloatFormatter,
     IndexGenerator,
     LabelEncoder,
+    OrderedLabelEncoder,
     PseudoAnonymizedFaker,
     RegexGenerator,
 )
@@ -222,14 +222,14 @@ def test_custom_processing_anonymization():
     transformers_synthesizer = GaussianCopulaSynthesizer(metadata)
     anonymization_synthesizer = GaussianCopulaSynthesizer(metadata)
 
-    room_type_transformer = CustomLabelEncoder(order=['BASIC', 'DELUXE', 'SUITE'], add_noise=True)
+    room_type_transformer = OrderedLabelEncoder(order=['BASIC', 'DELUXE', 'SUITE'], add_noise=True)
     amenities_fee_transformer = FloatFormatter(
         learn_rounding_scheme=True, enforce_min_max_values=True, missing_value_replacement=0.00
     )
 
     sensitive_columns = ['guest_email', 'billing_address', 'credit_card_number']
     guest_email_transformer = AnonymizedFaker(
-        provider_name='misc', function_name='uuid4', enforce_uniqueness=True
+        provider_name='misc', function_name='uuid4', cardinality_rule='unique'
     )
     billing_address_transformer = PseudoAnonymizedFaker(
         provider_name='address', function_name='address'
