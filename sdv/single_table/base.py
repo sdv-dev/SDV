@@ -651,6 +651,11 @@ class BaseSynthesizer:
                     message=r"No 'datetime_format' is present.*",
                     category=UserWarning,
                 )
+                warnings.filterwarnings(
+                    'ignore',
+                    message=r'The datetime format for column .* could not be verified.*',
+                    category=UserWarning,
+                )
                 self._original_metadata.validate_data({self._table_name: data})
         else:
             self._original_metadata.validate_data({self._table_name: data})
