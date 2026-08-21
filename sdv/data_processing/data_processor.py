@@ -316,8 +316,8 @@ class DataProcessor:
         Returns:
             transformer:
                 Instance of ``rdt.transformers.text.RegexGenerator`` or
-                ``rdt.transformers.pii.AnonymizedFaker`` with ``enforce_uniqueness`` set to
-                ``True``.
+                ``rdt.transformers.pii.AnonymizedFaker`` with ``cardinality_rule`` set to
+                ``unique``.
         """
         default_regex_format = r'\d{30}' if is_numeric else '[0-1a-z]{5}'
         regex_format = column_metadata.get('regex_format', default_regex_format)

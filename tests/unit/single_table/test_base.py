@@ -603,7 +603,7 @@ class TestBaseSynthesizer:
         # Setup
         instance = Mock()
         instance._data_processor._hyper_transformer.field_transformers = {
-            'name': 'FrequencyEncoder',
+            'name': 'LabelEncoder',
             'salary': 'FloatFormatter',
             'salary#name': 'LabelEncoder',
             'address': None,
@@ -620,7 +620,7 @@ class TestBaseSynthesizer:
         # Assert
         assert result == {
             'salary': 'FloatFormatter',
-            'name': 'FrequencyEncoder',
+            'name': 'LabelEncoder',
             'address': None,
             'salary#name': 'LabelEncoder',
         }
