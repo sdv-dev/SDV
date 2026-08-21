@@ -12,9 +12,9 @@ from sdv.cag._utils import (
     _validate_columns_not_primary_key,
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
+    get_mappable_combination,
 )
 from sdv.cag.base import BaseConstraint
-from sdv.cag.utils import get_mappable_combination
 
 
 class FixedCombinations(BaseConstraint):

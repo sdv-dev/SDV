@@ -15,15 +15,13 @@ from sdv.cag._utils import (
     _validate_columns_not_primary_key,
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
-)
-from sdv.cag.base import BaseConstraint
-from sdv.cag.utils import (
     _warn_if_timezone_aware_formats,
     cast_to_datetime64,
     compute_nans_column,
     get_datetime_diff,
     revert_nans_columns,
 )
+from sdv.cag.base import BaseConstraint
 
 
 class Range(BaseConstraint):

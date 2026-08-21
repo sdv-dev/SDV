@@ -8,9 +8,7 @@ import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype
 
 from sdv._utils import _format_invalid_values_string
-from sdv.cag.utils import (
-    cast_to_datetime64,
-)
+from sdv.cag._utils import cast_to_datetime64
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.errors import NotFittedError
