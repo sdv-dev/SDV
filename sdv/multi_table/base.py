@@ -37,13 +37,9 @@ from sdv.errors import (
 )
 from sdv.logging import disable_single_table_logger, get_sdv_logger
 from sdv.metadata.metadata import Metadata
-from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 SYNTHESIZER_LOGGER = get_sdv_logger('MultiTableSynthesizer')
-DEPRECATION_MSG = (
-    "The 'MultiTableMetadata' is deprecated. Please use the new 'Metadata' class for synthesizers."
-)
 
 
 class BaseMultiTableSynthesizer:
@@ -53,7 +49,7 @@ class BaseMultiTableSynthesizer:
     multi table synthesizers need to implement, as well as common functionality.
 
     Args:
-        metadata (sdv.metadata.multi_table.MultiTableMetadata):
+        metadata (sdv.Metadata):
             Multi table metadata representing the data tables that this synthesizer will be used
             for.
         locales (list or str):
@@ -132,8 +128,6 @@ class BaseMultiTableSynthesizer:
 
     def __init__(self, metadata, locales=['en_US']):
         self.metadata = metadata
-        if type(metadata) is MultiTableMetadata:
-            warnings.warn(DEPRECATION_MSG, FutureWarning)
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', message=r'.*column relationship.*')
             self.metadata.validate()

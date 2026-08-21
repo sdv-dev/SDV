@@ -23,7 +23,6 @@ from sdv.datasets.local import load_csvs
 from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError, VersionError
 from sdv.evaluation import evaluate_quality
 from sdv.evaluation.multi_table import get_column_pair_plot, get_column_plot
-from sdv.metadata import MultiTableMetadata
 from sdv.metadata.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
 from sdv.utils import load_constraints, load_synthesizer
@@ -1056,11 +1055,6 @@ class TestHMASynthesizer:
 
         # Run 1
         with warnings.catch_warnings(record=True) as captured_warnings:
-            warnings.filterwarnings(
-                'ignore',
-                message=".*The 'SingleTableMetadata' is deprecated.*",
-                category=DeprecationWarning,
-            )
             warnings.simplefilter('always')
             instance = HMASynthesizer(metadata)
             instance.fit(data)
@@ -2570,11 +2564,10 @@ def test_column_order():
 
 
 def test_no_deprecation_warning_single_table_metadata_sampling():
-    """Test that no single-table metadata deprecation warning raises with `MultiTableMetadata`."""
+    """Test that no single-table metadata deprecation warning raises with `Metadata`."""
     # Setup
     data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
-    multi_metadata = MultiTableMetadata()
-    multi_metadata.detect_from_dataframes(data)
+    multi_metadata = Metadata.detect_from_dataframes(data)
     synthesizer = HMASynthesizer(multi_metadata)
     synthesizer.fit(data)
 

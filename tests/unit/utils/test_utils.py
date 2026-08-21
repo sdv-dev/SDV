@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from sdv.errors import InvalidDataError
-from sdv.metadata import SingleTableMetadata
+from sdv.metadata._single_table import _SingleTableMetadata
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
@@ -373,7 +373,7 @@ def test_drop_unknown_references_drop_all_rows(mock_get_rows_to_drop):
 def test_get_random_sequence_subset_no_sequence_key():
     """Test that an error is raised if no sequence_key is provided in the metadata."""
     # Setup
-    metadata = Mock(spec=SingleTableMetadata)
+    metadata = Mock(spec=_SingleTableMetadata)
     metadata.sequence_key = None
 
     # Run and Assert
@@ -388,7 +388,7 @@ def test_get_random_sequence_subset_no_sequence_key():
 def test_get_random_sequence_subset_sequence_key_not_in_data():
     """Test that an error is raised if the data doesn't contain the sequence_key."""
     # Setup
-    metadata = Mock(spec=SingleTableMetadata)
+    metadata = Mock(spec=_SingleTableMetadata)
     metadata.sequence_key = 'key'
 
     # Run and Assert
@@ -402,7 +402,7 @@ def test_get_random_sequence_subset_sequence_key_not_in_data():
 def test_get_random_sequence_subset_bad_long_sequence_subsampling_method():
     """Test that an error is raised if the long_sequence_subsampling_method is invalid."""
     # Setup
-    metadata = Mock(spec=SingleTableMetadata)
+    metadata = Mock(spec=_SingleTableMetadata)
     metadata.sequence_key = 'key'
 
     # Run and Assert
@@ -418,7 +418,7 @@ def test_get_random_sequence_subset_no_max_sequence_length(mock_np):
     """Test that the sequences are subsetted but each sequence is full."""
     # Setup
     data = pd.DataFrame({'key': ['a'] * 10 + ['b'] * 7 + ['c'] * 9 + ['d'] * 4, 'value': range(30)})
-    metadata = Mock(spec=SingleTableMetadata)
+    metadata = Mock(spec=_SingleTableMetadata)
     metadata.sequence_key = 'key'
     mock_np.random.permutation.return_value = np.array(['a', 'd'])
 
@@ -442,7 +442,7 @@ def test_get_random_sequence_subset_use_first_rows(mock_np):
     """
     # Setup
     data = pd.DataFrame({'key': ['a'] * 10 + ['b'] * 7 + ['c'] * 9 + ['d'] * 4, 'value': range(30)})
-    metadata = Mock(spec=SingleTableMetadata)
+    metadata = Mock(spec=_SingleTableMetadata)
     metadata.sequence_key = 'key'
     mock_np.random.permutation.return_value = np.array(['a', 'b', 'd'])
 
@@ -466,7 +466,7 @@ def test_get_random_sequence_subset_use_last_rows(mock_np):
     """
     # Setup
     data = pd.DataFrame({'key': ['a'] * 10 + ['b'] * 7 + ['c'] * 9 + ['d'] * 4, 'value': range(30)})
-    metadata = Mock(spec=SingleTableMetadata)
+    metadata = Mock(spec=_SingleTableMetadata)
     metadata.sequence_key = 'key'
     mock_np.random.permutation.return_value = np.array(['a', 'b', 'd'])
 
@@ -496,7 +496,7 @@ def test_get_random_sequence_subset_use_random_rows(mock_np):
     """
     # Setup
     data = pd.DataFrame({'key': ['a'] * 10 + ['b'] * 7 + ['c'] * 9 + ['d'] * 4, 'value': range(30)})
-    metadata = Mock(spec=SingleTableMetadata)
+    metadata = Mock(spec=_SingleTableMetadata)
     metadata.sequence_key = 'key'
     mock_np.random.permutation.side_effect = [
         np.array(['a', 'b', 'd']),
