@@ -1,5 +1,14 @@
 # Release Notes
 
+## v1.38.1 - 2026-08-21
+
+### New Features
+
+* Metadata/data validation should produce a warning for an unused datetime_format entry - Issue [#2930](https://github.com/sdv-dev/SDV/issues/2930) by @fealho
+* Add a check for overlapping combinations of data values between the real and synthetic data - Issue [#2921](https://github.com/sdv-dev/SDV/issues/2921) by @nemanja-vujic
+* Add a check for overlapping PII values between real and synthetic data - Issue [#2920](https://github.com/sdv-dev/SDV/issues/2920) by @nemanja-vujic
+* Add a manual check for referential integrity - Issue [#2919](https://github.com/sdv-dev/SDV/issues/2919) by @nemanja-vujic
+
 ## v1.38.0 - 2026-08-07
 
 ### New Features
