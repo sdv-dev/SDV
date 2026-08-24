@@ -8,7 +8,6 @@ import logging
 import math
 import operator
 import os
-import traceback
 import uuid
 import warnings
 from collections import defaultdict
@@ -29,13 +28,11 @@ from sdv._utils import (
     _groupby_list,
     check_synthesizer_version,
     generate_synthesizer_id,
-    warn_set_constraints_deprecated,
 )
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _convert_to_snake_case,
     _get_invalid_rows,
-    _load_constraints_from_file,
     _validate_constraints_single_table,
 )
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
@@ -346,18 +343,6 @@ class BaseSynthesizer:
 
         return Metadata.load_from_dict(self.metadata.to_dict(), table_name)
 
-    def load_custom_constraint_classes(self, filepath, class_names):
-        """Load a custom constraint class for the current synthesizer.
-
-        Args:
-            filepath (str):
-                String representing the absolute or relative path to the python file where
-                the custom constraints are declared.
-            class_names (list):
-                A list of custom constraint classes to be imported.
-        """
-        self._data_processor.load_custom_constraint_classes(filepath, class_names)
-
     def auto_assign_transformers(self, data):
         """Automatically assign the required transformers for the given data and constraints.
 
@@ -518,33 +503,6 @@ class BaseSynthesizer:
 
         with open(path, 'w') as file:
             json.dump(constraints_dict_list, file, indent=4)
-
-    def set_constraints(self, filepath):
-        """Add all the constraints in the file to the synthesizer.
-
-        If any constraints have been added to the synthesizer, they will be removed before
-        the constraints from the file are set.
-
-        Args:
-            filepath (str):
-                The string path to the file containing the constraints to set on the synthesizer.
-        """
-        if self.get_constraints():
-            raise SynthesizerInputError(
-                'Cannot `set_constraints` since constraints have already been applied.'
-            )
-
-        warn_set_constraints_deprecated()
-        constraint_list = _load_constraints_from_file(filepath)
-
-        for constraint in constraint_list:
-            try:
-                self.add_constraints([constraint])
-            except Exception as e:
-                warnings.warn(
-                    f'Could not add constraint ({constraint}):\n'
-                    f'    {traceback.format_exception_only(type(e), e)[0]}'
-                )
 
     def validate_constraints(self, synthetic_data):
         """Validate synthetic_data against the constraints.
@@ -929,7 +887,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
             if previous_rows is not None:
                 sampled = pd.concat([previous_rows, sampled], ignore_index=True)
-            sampled = self._data_processor.filter_valid(sampled)
 
             if conditions is not None:
                 sampled = self._filter_conditions(sampled, conditions, float_rtol)
@@ -1221,7 +1178,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         self._validate_fit_before_sample()
         self._check_input_metadata_updated()
         sample_timestamp = datetime.datetime.now()
-        has_constraints = bool(self._data_processor._constraints)
+        has_constraints = bool(self.get_constraints())
         has_batches = batch_size is not None and batch_size != num_rows
         show_progress_bar = has_constraints or has_batches
 
