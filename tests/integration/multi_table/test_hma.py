@@ -1944,16 +1944,11 @@ def test_get_constraints_and_load_constraints(tmp_path):
     synthesizer = HMASynthesizer(metadata)
     synthesizer.add_constraints([inequality_constraint, fixed_combinations_constraint])
     new_synthesizer = HMASynthesizer(metadata)
-    expected_warning = re.escape(
-        'Warning: The `set_constraints` method is deprecated. '
-        'Please use the `load_constraints` utility function to load constraints from a file '
-        'and add them to the synthesizer with the `add_constraints` method.'
-    )
 
     # Run
     synthesizer.get_constraints(filepath=filepath)
-    with pytest.warns(FutureWarning, match=expected_warning):
-        new_synthesizer.set_constraints(filepath=filepath)
+    constraints = load_constraints(filepath=filepath)
+    new_synthesizer.add_constraints(constraints)
 
     # Assert
     assert [str(constraint) for constraint in synthesizer.get_constraints()] == [
