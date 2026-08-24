@@ -187,19 +187,6 @@ class TestPARSynthesizer:
         with pytest.raises(SynthesizerInputError, match=mixed_constraint_error_msg):
             synthesizer.add_constraints([constraint_2])
 
-    @patch.object(BaseSynthesizer, 'load_custom_constraint_classes')
-    def test_load_custom_constraint_classes(self, base_load_mock):
-        """Test that custom constraint classes can be loaded (delegates to base class)."""
-        # Setup
-        metadata = self.get_metadata()
-        synthesizer = PARSynthesizer(metadata=metadata)
-
-        # Run
-        synthesizer.load_custom_constraint_classes(filepath='test', class_names=['TestClass'])
-
-        # Assert
-        base_load_mock.assert_called_once_with(filepath='test', class_names=['TestClass'])
-
     def test_get_parameters(self):
         """Test that it returns every ``init`` parameter without the ``metadata``."""
         # Setup
