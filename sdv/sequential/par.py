@@ -13,8 +13,7 @@ from rdt.transformers import FloatFormatter
 
 from sdv._utils import MODELABLE_SDTYPES, _cast_to_iterable, _groupby_list, _is_datetime_type
 from sdv.cag import ProgrammableConstraint
-from sdv.cag._utils import _validate_constraints_single_table
-from sdv.constraints.utils import cast_to_datetime64
+from sdv.cag._utils import _validate_constraints_single_table, cast_to_datetime64
 from sdv.errors import SamplingError, SynthesizerInputError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
