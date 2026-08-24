@@ -838,122 +838,6 @@ class TestBaseSynthesizer:
             indent=4,
         )
 
-    @patch('sdv.single_table.base.warn_set_constraints_deprecated')
-    @patch('sdv.cag._utils.open')
-    @patch('sdv.cag._utils.json')
-    @patch('sdv.cag._utils.load_constraint_from_dict')
-    def test_set_constraints(
-        self,
-        mock_load_constraint_from_dict,
-        mock_json,
-        mock_open,
-        mock_warn_set_constraints_deprecated,
-    ):
-        """Test setting constraints from file."""
-        # Setup
-        mock_json.load.return_value = [
-            {'class_name': 'ConstraintClass1', 'parameters': {}},
-            {
-                'class_name': 'InvalidConstraint',
-                'parameters': {},
-            },
-            {
-                'class_name': 'UnknownConstraint',
-                'parameters': {},
-            },
-            {
-                'class_name': 'ConstraintClass2',
-                'parameters': {},
-            },
-        ]
-        mock_constraint1 = Mock()
-        mock_constraint2 = Mock()
-        mock_invalid_constraint = Mock(__repr__=lambda _: 'InvalidConstraint()')
-        mock_constraints = {
-            'ConstraintClass1': mock_constraint1,
-            'ConstraintClass2': mock_constraint2,
-            'InvalidConstraint': mock_invalid_constraint,
-        }
-
-        def load_constraint_from_dict_mock(mock_constraint):
-            if mock_constraint['class_name'] == 'UnknownConstraint':
-                raise ValueError("Unknown `constraint_class` 'UnknownConstraint'.")
-
-            return mock_constraints[mock_constraint['class_name']]
-
-        def add_constraints_mock(mock_constraint):
-            if mock_constraint[0] == mock_invalid_constraint:
-                raise ValueError('Cannot add constraint.')
-
-        mock_load_constraint_from_dict.side_effect = load_constraint_from_dict_mock
-
-        instance = Mock()
-        instance.get_constraints.return_value = []
-        instance.add_constraints.side_effect = add_constraints_mock
-
-        filepath = 'path/to/constraints.json'
-
-        # Run
-        expected_constraint_load_warning = re.escape(
-            "Could not load constraint ({'class_name': 'UnknownConstraint', 'parameters': {}}):\n"
-            "    ValueError: Unknown `constraint_class` 'UnknownConstraint'."
-        )
-        expected_constraint_add_warning = re.escape(
-            'Could not add constraint (InvalidConstraint()):\n    ValueError: Cannot add constraint'
-        )
-        with pytest.warns(UserWarning, match=expected_constraint_load_warning):
-            with pytest.warns(UserWarning, match=expected_constraint_add_warning):
-                BaseSynthesizer.set_constraints(instance, filepath)
-
-        # Assert
-        mock_open.assert_called_once_with(filepath, 'r')
-        mock_load_constraint_from_dict.assert_has_calls([
-            call({'class_name': 'ConstraintClass1', 'parameters': {}}),
-            call({'class_name': 'InvalidConstraint', 'parameters': {}}),
-            call({'class_name': 'UnknownConstraint', 'parameters': {}}),
-            call({'class_name': 'ConstraintClass2', 'parameters': {}}),
-        ])
-        instance.add_constraints.assert_has_calls([
-            call([mock_constraint1]),
-            call([mock_invalid_constraint]),
-            call([mock_constraint2]),
-        ])
-        mock_warn_set_constraints_deprecated.assert_called_once()
-
-    @patch('sdv.single_table.base._load_constraints_from_file')
-    def test_set_constraints_warns_deprecated(self, mock_load_constraints_from_file):
-        """Test ``set_constraints`` emits a deprecation warning."""
-        # Setup
-        filepath = 'path/to/constraints.json'
-        instance = Mock()
-        instance.get_constraints.return_value = []
-        mock_load_constraints_from_file.return_value = []
-        expected_message = re.escape(
-            'Warning: The `set_constraints` method is deprecated. '
-            'Please use the `load_constraints` utility function to load constraints from a file '
-            'and add them to the synthesizer with the `add_constraints` method.'
-        )
-
-        # Run
-        with pytest.warns(FutureWarning, match=expected_message):
-            BaseSynthesizer.set_constraints(instance, filepath)
-
-        # Assert
-        mock_load_constraints_from_file.assert_called_once_with(filepath)
-
-    def test__set_constraints_errors_with_existing_constraints(self):
-        """Test ``set_constraints`` errors if constraints already applied."""
-        # Setup
-        instance = Mock()
-        instance.get_constraints.return_value = [Mock()]
-
-        # Run and Assert
-        expected_msg = re.escape(
-            'Cannot `set_constraints` since constraints have already been applied.'
-        )
-        with pytest.raises(SynthesizerInputError, match=expected_msg):
-            BaseSynthesizer.set_constraints(instance, 'path/to/constraints.json')
-
     @patch('sdv.single_table.base.DataProcessor')
     def test__fit(self, mock_data_processor):
         """Test that ``NotImplementedError`` is being raised."""
@@ -1382,21 +1266,6 @@ class TestBaseSynthesizer:
             filepath = os.path.join(tmp_path, 'output.pkl')
             synthesizer.save(filepath)
 
-    def test_load_custom_constraint_classes(self):
-        """Test that ``load_custom_constraint_classes`` calls the ``DataProcessor``'s method."""
-        # Setup
-        instance = Mock()
-
-        # Run
-        BaseSynthesizer.load_custom_constraint_classes(
-            instance, 'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
-        )
-
-        # Assert
-        instance._data_processor.load_custom_constraint_classes.assert_called_once_with(
-            'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
-        )
-
     @patch('sdv.single_table.base.version')
     def test_get_info_no_enterprise(self, mock_sdv_version):
         """Test the correct dictionary is returned.
@@ -1578,7 +1447,6 @@ class TestBaseSingleTableSynthesizer:
         instance._random_state_set = False
         instance._sample.return_value = pd.DataFrame()
         instance._data_processor.reverse_transform.return_value = data
-        instance._data_processor.filter_valid.return_value = data
         instance._data_processor._hyper_transformer._input_columns = []
         instance._reject_sampling_constraints = []
         instance._chained_constraints = []
@@ -1595,9 +1463,6 @@ class TestBaseSingleTableSynthesizer:
             instance._sample.return_value, conditions=None
         )
         instance.reverse_transform_constraints.assert_called_once_with(
-            instance._data_processor.reverse_transform.return_value
-        )
-        instance._data_processor.filter_valid.assert_called_once_with(
             instance._data_processor.reverse_transform.return_value
         )
         instance._set_random_state.assert_called_once_with(73251)
@@ -1630,9 +1495,6 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor.reverse_transform.assert_called_once_with(
             instance._sample.return_value, conditions=conditions
         )
-        instance._data_processor.filter_valid.assert_called_once_with(
-            instance._data_processor.reverse_transform.return_value
-        )
 
     def test__sample_rows_with_previous_rows(self):
         """Test that previous rows are being concatenated when provided to ``_sample``."""
@@ -1646,7 +1508,6 @@ class TestBaseSingleTableSynthesizer:
         instance = Mock()
         instance._sample.return_value = pd.DataFrame()
         instance._data_processor._hyper_transformer._input_columns = []
-        instance._data_processor.filter_valid = lambda x: x
         instance._data_processor.reverse_transform.return_value = data
         instance._reject_sampling_constraints = []
         instance._chained_constraints = []
