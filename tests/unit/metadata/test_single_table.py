@@ -3675,7 +3675,7 @@ class Test_SingleTableMetadata:
         # Run
         message = (
             'There are multiple tables specified in the JSON. '
-            'Try using the MultiTableMetadata class to upgrade this file.'
+            'Try using the Metadata class to upgrade this file.'
         )
         with pytest.raises(InvalidMetadataError, match=message):
             _SingleTableMetadata.upgrade_metadata('old')

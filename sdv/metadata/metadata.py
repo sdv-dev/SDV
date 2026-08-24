@@ -1320,7 +1320,7 @@ class Metadata:
         Checks the following rules:
             * every table of the data satisfies its own metadata
             * all tables of the metadata are present in the data
-            * all foreign keys belong to a primay key
+            * all foreign keys belong to a primary key
 
         Args:
             data (dict):

@@ -67,8 +67,7 @@ class BaseSynthesizer:
 
     Args:
         metadata (sdv.metadata.Metadata):
-            Single table metadata representing the data that this synthesizer will be used for.
-            * sdv.metadata._SingleTableMetadata can be used but will be deprecated.
+            Metadata representing the data that this synthesizer will be used for.
         enforce_min_max_values (bool):
             Specify whether or not to clip the data returned by ``reverse_transform`` of
             the numerical transformer, ``FloatFormatter``, to the min and max values seen
