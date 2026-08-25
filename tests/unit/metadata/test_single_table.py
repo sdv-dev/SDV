@@ -2714,6 +2714,58 @@ class Test_SingleTableMetadata:
         assert output_1 == []
         assert output_2 == [message]
 
+    @pytest.mark.parametrize(
+        ('column', 'expected_errors'),
+        [
+            (pd.Series([True, False, None], name='bool'), []),
+            (
+                pd.Series(['a', 0, 'b', 2, 'c', 4], name='num'),
+                ["Invalid values found for numerical column 'num': ['a', 'b', 'c']."],
+            ),
+            (
+                pd.Series([-99, -1, 0, 1, 4, 29, 99], name='num'),
+                [
+                    "Out of range values found for numerical column 'num': "
+                    "[-1, -99, 29, '+ 1 more']."
+                ],
+            ),
+            (
+                pd.Series(['a', 'b', 'c', 'x', 'y', 'z'], name='categorical'),
+                [
+                    "Out of range values found for categorical column 'categorical': "
+                    "['x', 'y', 'z']."
+                ],
+            ),
+            (
+                pd.Series(['01/2015', '05/2028', '03/2022'], name='datetime'),
+                ["Out of range values found for datetime column 'datetime': ['01/2015']."],
+            ),
+        ],
+    )
+    def test__validate_column_data(self, column, expected_errors):
+        """Test ``_validate_column_data`` validates data and ranges."""
+        # Setup
+        instance = _SingleTableMetadata.load_from_dict({
+            'columns': {
+                'bool': {'sdtype': 'boolean'},
+                'num': {'sdtype': 'numerical', 'range_min': 0.0, 'range_max': 10.0},
+                'categorical': {'sdtype': 'categorical', 'range_values': ['a', 'b', 'c']},
+                'datetime': {
+                    'sdtype': 'datetime',
+                    'datetime_format': '%m/%Y',
+                    'range_min': '01/2020',
+                },
+            }
+        })
+
+        # Run
+        sdtype_warnings = {}
+        errors = instance._validate_column_data(column, sdtype_warnings)
+
+        # Assert
+        assert sdtype_warnings == {}
+        assert errors == expected_errors
+
     def test_validate_data_wrong_type(self):
         """Test error is raised if data is not ``pd.DataFrame``."""
         # Setup

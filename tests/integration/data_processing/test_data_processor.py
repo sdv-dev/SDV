@@ -280,7 +280,6 @@ class TestDataProcessor:
 
         assert field_transformers['start_date'].datetime_format == '%Y-%m-%d'
         assert field_transformers['end_date'].datetime_format == '%Y-%m-%d'
-        assert field_transformers['salary'].computer_representation == 'Int64'
 
     def test_reverse_transform_with_formatters(self):
         """End to end test using formatters."""

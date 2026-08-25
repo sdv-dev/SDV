@@ -1432,6 +1432,14 @@ class _SingleTableMetadata:
 
         return set(column[~valid])
 
+    @staticmethod
+    def _get_out_of_range_values(column, min_value, max_value):
+        exceeds_min_value = False if min_value is None else (column < min_value)
+        exceeds_max_value = False if max_value is None else (column > max_value)
+        invalid = (~column.isna()) & (exceeds_min_value | exceeds_max_value)
+
+        return invalid
+
     def _validate_column_data(self, column, sdtype_warnings):
         """Validate the values of the given column against its specified sdtype properties.
 
@@ -1452,17 +1460,29 @@ class _SingleTableMetadata:
         """
         column_metadata = self.columns[column.name]
         sdtype = column_metadata['sdtype']
+        missing_values_allowed = column_metadata.get('range_is_nullable', True)
+        range_min = column_metadata.get('range_min')
+        range_max = column_metadata.get('range_max')
+        range_values = column_metadata.get('range_values')
         invalid_values = None
+        out_of_range_values = None
+        errors = []
 
         # boolean values must be True/False, None or missing values
         # int/str are not allowed
         if sdtype == 'boolean':
             invalid_values = self._get_invalid_column_values(column, _is_boolean_type)
 
+        if sdtype == 'categorical' and range_values is not None:
+            out_of_range_values = set(column.dropna().unique()) - set(range_values)
+
         # numerical values must be int/float, None or missing values
         # str/bool are not allowed
         if sdtype == 'numerical':
             invalid_values = self._get_invalid_column_values(column, _is_numerical_type)
+            if not invalid_values:
+                out_of_range_mask = self._get_out_of_range_values(column, range_min, range_max)
+                out_of_range_values = set(column[out_of_range_mask])
 
         # datetime values must be castable to datetime, None or missing values
         if sdtype == 'datetime':
@@ -1478,6 +1498,19 @@ class _SingleTableMetadata:
                     lambda x: pd.isna(x) | _is_datetime_type(x),
                 )
 
+            if not invalid_values:
+                if range_min is not None:
+                    range_min = _cast_to_datetime64(range_min, datetime_format=datetime_format)
+
+                if range_max is not None:
+                    range_max = _cast_to_datetime64(range_max, datetime_format=datetime_format)
+
+                column_values = _cast_to_datetime64(column, datetime_format=datetime_format)
+                out_of_range_mask = self._get_out_of_range_values(
+                    column_values, range_min, range_max
+                )
+                out_of_range_values = set(column[out_of_range_mask])
+
             if datetime_format is None and column.dtype == 'O':
                 sdtype_warnings['Column Name'].append(column.name)
                 sdtype_warnings['sdtype'].append(sdtype)
@@ -1485,9 +1518,22 @@ class _SingleTableMetadata:
 
         if invalid_values:
             invalid_values = _format_invalid_values_string(invalid_values, 3)
-            return [f"Invalid values found for {sdtype} column '{column.name}': {invalid_values}."]
+            errors += [
+                f"Invalid values found for {sdtype} column '{column.name}': {invalid_values}."
+            ]
+        elif out_of_range_values:
+            invalid_values = _format_invalid_values_string(out_of_range_values, 3)
+            errors += [
+                f"Out of range values found for {sdtype} column '{column.name}': {invalid_values}."
+            ]
 
-        return []
+        if not missing_values_allowed and any(pd.isna(column)):
+            errors += [
+                f"Invalid null values found for {sdtype} column '{column.name}': "
+                '`range_is_nullable` is set to False.'
+            ]
+
+        return errors
 
     def _check_data_columns_order(self, data_columns):
         data_columns = [column for column in data_columns if column in self.columns]
