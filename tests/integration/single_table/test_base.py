@@ -14,7 +14,6 @@ from sdv import version
 from sdv.cag import FixedCombinations, Inequality
 from sdv.datasets.demo import download_demo
 from sdv.errors import InvalidDataError, SamplingError, VersionError
-from sdv.metadata import SingleTableMetadata
 from sdv.metadata.metadata import Metadata
 from sdv.sampling import Condition
 from sdv.single_table import (
@@ -705,43 +704,6 @@ def test_metadata_updated_no_warning(mock__fit, tmp_path):
     assert len(captured_warnings) == 0
 
 
-@patch('sdv.single_table.base.BaseSingleTableSynthesizer._fit')
-def test_metadata_updated_warning_detect(mock__fit):
-    """Test that using ``detect_from_dataframe`` without saving the metadata raise a warning.
-
-    The warning is expected to be raised only once during synthesizer initialization. It should
-    not be raised again when calling ``fit``.
-    """
-    # Setup
-    data = pd.DataFrame({
-        'col 1': [1, 2, 3],
-        'col 2': [4, 5, 6],
-        'col 3': ['a', 'b', 'c'],
-    })
-    metadata = SingleTableMetadata()
-    metadata.detect_from_dataframe(data)
-    expected_user_message = (
-        "We strongly recommend saving the metadata using 'save_to_json' for replicability"
-        ' in future SDV versions.'
-    )
-    expected_deprecation_message = (
-        "The 'SingleTableMetadata' is deprecated. "
-        "Please use the new 'Metadata' class for synthesizers."
-    )
-
-    # Run
-    with warnings.catch_warnings(record=True) as record:
-        instance = BaseSingleTableSynthesizer(metadata)
-        instance.fit(data)
-
-    # Assert
-    assert len(record) == 2
-    assert record[0].category is FutureWarning
-    assert str(record[0].message) == expected_deprecation_message
-    assert record[1].category is UserWarning
-    assert str(record[1].message) == expected_user_message
-
-
 parametrization = [
     ('update_column', {'column_name': 'col 1', 'sdtype': 'categorical'}),
     ('set_primary_key', {'column_name': 'col 1'}),
@@ -781,10 +743,9 @@ def test_metadata_updated_warning(method, kwargs):
     )
 
     # Run
-    single_metadata = metadata._convert_to_single_table()
-    single_metadata.__getattribute__(method)(**kwargs)
+    metadata.__getattribute__(method)(**kwargs)
     with pytest.warns(UserWarning, match=expected_message):
-        instance = BaseSingleTableSynthesizer(single_metadata)
+        instance = BaseSingleTableSynthesizer(metadata)
 
     # Assert
     assert instance.metadata.tables['table']._updated is False
@@ -889,8 +850,7 @@ def test_fit_int_primary_key_regex_includes_zero(synthesizer_class, regex):
         'b': [4, 5, 6],
         'c': ['a', 'b', 'c'],
     })
-    metadata = SingleTableMetadata()
-    metadata.detect_from_dataframe(data)
+    metadata = Metadata.detect_from_dataframe(data)
     metadata.update_column('a', sdtype='id', regex_format=regex)
     metadata.set_primary_key('a')
 
