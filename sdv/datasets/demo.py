@@ -490,9 +490,8 @@ def download_demo(
 
     Returns:
         tuple (data, metadata):
-            If ``data`` is single table or sequential, it is a DataFrame.
-            If ``data`` is multi table, it is a dictionary mapping table name to DataFrame.
-            ``metadata`` is of class ``Metadata`` which can represent single table or multi table.
+            ``data``is a dictionary mapping table name to DataFrame
+            ``metadata`` is of class ``Metadata``
 
     Raises:
         Error:
@@ -510,10 +509,6 @@ def download_demo(
         credentials,
     )
     data = _load_data_from_zip(data, s3_bucket_name, dataset_name, output_folder_name)
-
-    if modality != 'multi_table':
-        data = data.popitem()[1]
-
     metadata = _get_metadata(metadata_bytes, dataset_name, output_folder_name)
     return data, metadata
 
