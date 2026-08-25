@@ -563,9 +563,9 @@ class BaseSynthesizer:
 
         if _metadata_range_exceeds_real(data, self._original_metadata):
             warnings.warn(
-                'Metadata contains range information that exceeds the real data. '
-                'Extrapolating ranges is only availabe within the SDV Enterprise '
-                'Targeted Sampling add-on.'
+                'The training data does not cover the full range. Synthetic data will be '
+                'based on the training data. To extrapolate ranges for full coverage, '
+                'please use the Targeted Sampling bundle.'
             )
 
     def validate(self, data):

@@ -687,7 +687,7 @@ def test_anonymize():
     # Assert
     anonymized.validate()
 
-    assert anonymized.METADATA_SPEC_VERSION == 'V1'
+    assert anonymized.METADATA_SPEC_VERSION == 'V2'
     assert anonymized.tables.keys() == {'table1', 'table2'}
     assert len(anonymized.relationships) == len(metadata.relationships)
     assert anonymized.relationships[0]['parent_table_name'] == 'table1'
