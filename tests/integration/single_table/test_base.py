@@ -908,3 +908,27 @@ def test_sample_from_conditions_not_fitted_raises_error():
     # Run and Assert
     with pytest.raises(SamplingError, match=expected_message):
         GaussianCopulaSynthesizer(METADATA).sample_from_conditions(conditions=conditions)
+
+
+@pytest.mark.parametrize('synthesizer_class', SYNTHESIZERS_CLASSES)
+def test_range_extrapolation_warns_to_install_bundle(synthesizer_class):
+    """Test that range extrapolation warns the user."""
+    # Setup
+    data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
+    metadata.update_column('room_rate', 'fake_hotel_guests', range_min=(min(data['room_rate']) - 1))
+    synthesizer = synthesizer_class(metadata)
+
+    # Run and Assert
+    expected_msg = re.escape(
+        'The training data does not cover the full range. Synthetic data will be '
+        'based on the training data. To extrapolate ranges for full coverage, '
+        'please use the Targeted Sampling bundle.'
+    )
+    with pytest.warns(UserWarning, match=expected_msg):
+        synthesizer.fit(data)
+
+    # Run
+    sampled = synthesizer.sample(1000)
+
+    # Assert
+    assert min(sampled['room_rate']) >= min(data['room_rate'])

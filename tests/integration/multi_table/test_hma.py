@@ -2704,6 +2704,29 @@ def test_datetime_warning_doesnt_repeat():
     assert len(matching_warnings) == 1
 
 
+def test_range_extrapolation_warns_to_install_bundle():
+    """Test fit warns the user that ranges will be extrapolated without the bundle."""
+    # Setup
+    data, metadata = download_demo('multi_table', 'fake_hotels')
+    metadata.update_column('room_rate', 'guests', range_min=(min(data['guests']['room_rate']) - 1))
+    hmasynthesizer = HMASynthesizer(metadata)
+
+    # Run and Assert
+    expected_msg = re.escape(
+        'The training data does not cover the full range. Synthetic data will be '
+        'based on the training data. To extrapolate ranges for full coverage, '
+        'please use the Targeted Sampling bundle.'
+    )
+    with pytest.warns(UserWarning, match=expected_msg):
+        hmasynthesizer.fit(data)
+
+    # Run
+    sample = hmasynthesizer.sample(1)
+
+    # Assert
+    assert min(sample['guests']['room_rate']) >= min(data['guests']['room_rate'])
+
+
 class TestPrimaryKeyToPrimaryKey:
     def test_1_to_1(self, data_metadata_1_to_1):
         """Test HMA handles PK to PK (1 to 1) and synthetic data matches cardinality."""
