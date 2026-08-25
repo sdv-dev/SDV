@@ -22,9 +22,8 @@ from sdv.errors import (
     SynthesizerInputError,
     VersionError,
 )
+from sdv.metadata._single_table import INT_REGEX_ZERO_ERROR_MESSAGE, _SingleTableMetadata
 from sdv.metadata.metadata import Metadata
-from sdv.metadata.multi_table import MultiTableMetadata
-from sdv.metadata.single_table import INT_REGEX_ZERO_ERROR_MESSAGE, SingleTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
@@ -155,23 +154,7 @@ class TestBaseMultiTableSynthesizer:
             'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         })
 
-    def test___init___deprecated(self):
-        """Test that init with old MultiTableMetadata gives a future warnging."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        multi_metadata = MultiTableMetadata.load_from_dict(metadata.to_dict())
-        multi_metadata.validate = Mock()
-
-        deprecation_msg = re.escape(
-            "The 'MultiTableMetadata' is deprecated. Please use the new "
-            "'Metadata' class for synthesizers."
-        )
-
-        # Run
-        with pytest.warns(FutureWarning, match=deprecation_msg):
-            BaseMultiTableSynthesizer(multi_metadata)
-
-    @patch('sdv.metadata.single_table.is_faker_function')
+    @patch('sdv.metadata._single_table.is_faker_function')
     def test__init__column_relationship_warning(self, mock_is_faker_function):
         """Test that a warning is raised only once when the metadata has column relationships."""
         # Setup
@@ -289,7 +272,7 @@ class TestBaseMultiTableSynthesizer:
         })
         columns = ('country_column', 'city_column')
         metadata.validate = Mock()
-        SingleTableMetadata.validate = Mock()
+        _SingleTableMetadata.validate = Mock()
         instance = BaseMultiTableSynthesizer(metadata)
         instance._table_synthesizers['address_table'].set_address_columns = Mock()
 
@@ -307,7 +290,7 @@ class TestBaseMultiTableSynthesizer:
         metadata = Metadata()
         columns = ('country_column', 'city_column')
         metadata.validate = Mock()
-        SingleTableMetadata.validate = Mock()
+        _SingleTableMetadata.validate = Mock()
         instance = BaseMultiTableSynthesizer(metadata)
 
         # Run and Assert
@@ -1071,8 +1054,8 @@ class TestBaseMultiTableSynthesizer:
             RefitWarning,
         )
 
-    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_metadata_matches_data')
-    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_primary_key')
+    @patch('sdv.metadata._single_table._SingleTableMetadata._validate_metadata_matches_data')
+    @patch('sdv.metadata._single_table._SingleTableMetadata._validate_primary_key')
     def test_preprocess_single_table_preprocess_raises_error_0_int_regex(
         self, mock_validate_pk, mock_validate
     ):
@@ -1456,7 +1439,9 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
-        instance._table_synthesizers['nesreca'] = CTGANSynthesizer(metadata.tables['nesreca'])
+        instance._table_synthesizers['nesreca'] = CTGANSynthesizer(
+            metadata.get_table_metadata('nesreca')
+        )
 
         # Run and Assert
         msg = re.escape(
@@ -1482,7 +1467,9 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
-        instance._table_synthesizers['nesreca'] = CTGANSynthesizer(metadata.tables['nesreca'])
+        instance._table_synthesizers['nesreca'] = CTGANSynthesizer(
+            metadata.get_table_metadata('nesreca')
+        )
 
         # Run and Assert
         error_msg = 'Loss values are not available yet. Please fit your synthesizer first.'

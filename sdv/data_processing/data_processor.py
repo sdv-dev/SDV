@@ -17,7 +17,7 @@ from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.errors import NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.errors import SynthesizerInputError
-from sdv.metadata.single_table import SingleTableMetadata
+from sdv.metadata._single_table import _SingleTableMetadata
 
 LOGGER = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class DataProcessor:
     anonymization.
 
     Args:
-        metadata (metadata.SingleTableMetadata):
+        metadata (metadata._SingleTableMetadata):
             The single table metadata instance that will be used to apply
             transformations to the data.
         enforce_rounding (bool):
@@ -1029,7 +1029,7 @@ class DataProcessor:
                 If passed, set the ``enforce_min_max_values`` on the new instance.
         """
         instance = cls(
-            metadata=SingleTableMetadata.load_from_dict(metadata_dict['metadata']),
+            metadata=_SingleTableMetadata.load_from_dict(metadata_dict['metadata']),
             enforce_rounding=enforce_rounding,
             enforce_min_max_values=enforce_min_max_values,
             model_kwargs=metadata_dict.get('model_kwargs'),

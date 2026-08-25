@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.metadata.single_table import SingleTableMetadata
+from sdv.metadata._single_table import _SingleTableMetadata
 from sdv.single_table.utils import (
     _key_order,
     check_num_rows,
@@ -22,7 +22,7 @@ from sdv.single_table.utils import (
 def test_detect_discrete_columns():
     """Test that the detect discrete columns returns a list columns that are not continuum."""
     # Setup
-    metadata = SingleTableMetadata()
+    metadata = _SingleTableMetadata()
     metadata.columns = {
         'name': {
             'sdtype': 'categorical',
@@ -55,7 +55,7 @@ def test_detect_discrete_columns():
 def test_detect_discrete_columns_numerical():
     """Test it for numerical columns."""
     # Setup
-    metadata = SingleTableMetadata()
+    metadata = _SingleTableMetadata()
     data = pd.DataFrame({
         'float': [0.1] * 1000,
         'nan': [np.nan] * 1000,
@@ -78,7 +78,7 @@ def test_detect_discrete_columns_with_categorical_transformer():
     we validate that the column should not be treated as discrete.
     """
     # Setup
-    metadata = SingleTableMetadata.load_from_dict({
+    metadata = _SingleTableMetadata.load_from_dict({
         'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
         'columns': {
             'name': {'sdtype': 'categorical'},
