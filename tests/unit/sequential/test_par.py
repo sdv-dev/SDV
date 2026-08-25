@@ -10,9 +10,9 @@ from sdv.cag import ProgrammableConstraint
 from sdv.cag.base import BaseConstraint
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import InvalidDataError, NotFittedError, SamplingError, SynthesizerInputError
+from sdv.metadata._single_table import _SingleTableMetadata
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
-from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling import Condition
 from sdv.sequential.par import PARSynthesizer, _diff_and_bfill
 from sdv.single_table.base import BaseSynthesizer
@@ -483,7 +483,7 @@ class TestPARSynthesizer:
         data = self.get_data()
         par = PARSynthesizer(metadata, context_columns=['gender'])
         initial_synthesizer = Mock()
-        context_metadata = SingleTableMetadata.load_from_dict({
+        context_metadata = _SingleTableMetadata.load_from_dict({
             'columns': {'gender': {'sdtype': 'categorical'}, 'name': {'sdtype': 'id'}}
         })
         par._context_synthesizer = initial_synthesizer
@@ -520,7 +520,7 @@ class TestPARSynthesizer:
         data['time'] = data['time'].apply(lambda x: x.timestamp())
         par = PARSynthesizer(metadata, context_columns=['time'])
         initial_synthesizer = Mock()
-        context_metadata = SingleTableMetadata.load_from_dict({
+        context_metadata = _SingleTableMetadata.load_from_dict({
             'columns': {'time': {'sdtype': 'numerical'}, 'name': {'sdtype': 'id'}}
         })
         par._context_synthesizer = initial_synthesizer
@@ -530,7 +530,7 @@ class TestPARSynthesizer:
         # Run
         par._fit_context_model(data)
 
-        converted_context_metadata = SingleTableMetadata.load_from_dict({
+        converted_context_metadata = _SingleTableMetadata.load_from_dict({
             'columns': {'time': {'sdtype': 'numerical'}, 'name': {'sdtype': 'id'}}
         })
 
