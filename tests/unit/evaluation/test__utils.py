@@ -2,14 +2,14 @@ import numpy as np
 import pandas as pd
 
 from sdv.evaluation._utils import _prepare_data_visualization
-from sdv.metadata import SingleTableMetadata
+from sdv.metadata._single_table import _SingleTableMetadata
 
 
 def test__prepare_data_visualization():
     """Test ``_prepare_data_visualization``."""
     # Setup
     np.random.seed(0)
-    metadata = SingleTableMetadata.load_from_dict({
+    metadata = _SingleTableMetadata.load_from_dict({
         'columns': {
             'col1': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
             'col2': {'sdtype': 'numerical'},

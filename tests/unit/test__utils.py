@@ -35,7 +35,6 @@ from sdv._utils import (
 )
 from sdv.errors import SDVVersionWarning, SynthesizerInputError, VersionError
 from sdv.metadata import Metadata
-from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table import CTGANSynthesizer, GaussianCopulaSynthesizer
 from sdv.single_table.base import BaseSingleTableSynthesizer
 from tests.utils import SeriesMatcher
@@ -698,7 +697,7 @@ def test_generate_synthesizer_id(mock_version, mock_uuid):
     # Setup
     mock_version.community = '1.0.0'
     mock_uuid.uuid4.return_value = '92aff11e-9a56-49d1-a280-990d1231a5f5'
-    metadata = SingleTableMetadata()
+    metadata = Metadata.load_from_dict({})
     metadata.add_column('key', sdtype='id')
     synthesizer = BaseSingleTableSynthesizer(metadata)
 
