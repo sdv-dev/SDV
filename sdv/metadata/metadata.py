@@ -42,7 +42,7 @@ WARNINGS_COLUMN_ORDER = ['Table Name', 'Column Name', 'sdtype', 'datetime_format
 class Metadata:
     """Metadata class that handles all metadata."""
 
-    METADATA_SPEC_VERSION = 'V1'
+    METADATA_SPEC_VERSION = 'V2'
     DEFAULT_SINGLE_TABLE_NAME = 'table'
 
     def __init__(self):
@@ -132,6 +132,23 @@ class Metadata:
                     f"Relationship between tables ('{parent_table_name}', '{child_table_name}') "
                     'is invalid. The primary and foreign key columns are not the same type.'
                 )
+
+    def _validate_foreign_key_range_info(self, child_table_name, child_foreign_key):
+        child_table_columns = self.tables[child_table_name].columns
+        key = _cast_to_iterable(child_foreign_key)
+        range_keys = {'range_min', 'range_max', 'range_values'}
+        invalid_keys = []
+        for key_col in key:
+            key_metadata = child_table_columns[key_col]
+            if range_keys.intersection(set(key_metadata.keys())):
+                invalid_keys.append(key_col)
+
+        if invalid_keys:
+            raise InvalidMetadataError(
+                f"Foreign key column(s) {invalid_keys} in table '{child_table_name}' "
+                'cannot contain range information. Only `range_is_nullable` '
+                'is allowed for foreign key columns.'
+            )
 
     def _validate_circular_relationships(
         self, parent, children=None, visited=None, child_map=None, errors=None
@@ -252,6 +269,8 @@ class Metadata:
         self._validate_relationship_sdtypes(
             parent_table_name, parent_primary_key, child_table_name, child_foreign_key
         )
+
+        self._validate_foreign_key_range_info(child_table_name, child_foreign_key)
 
     def _get_parent_map(self):
         parent_map = defaultdict(set)

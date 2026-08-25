@@ -2,7 +2,7 @@ import operator
 import re
 import string
 from datetime import datetime, timedelta, timezone
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -15,6 +15,7 @@ from sdv import version
 from sdv._utils import (
     _cast_to_datetime64,
     _check_regex_format,
+    _column_range_exceeds_real,
     _compare_versions,
     _convert_to_timedelta,
     _create_unique_name,
@@ -25,6 +26,7 @@ from sdv._utils import (
     _get_transformer_init_kwargs,
     _is_datetime_type,
     _is_numerical,
+    _metadata_range_exceeds_real,
     _parse_datetime,
     _parse_datetime64_value,
     _validate_boolean_parameter,
@@ -1385,3 +1387,98 @@ def test__validate_boolean_parameter():
     _validate_boolean_parameter(True, 'param_name')
     with pytest.raises(ValueError, match=expected_message):
         _validate_boolean_parameter('True', 'param_name')
+
+
+@pytest.mark.parametrize(
+    ('column', 'col_meta', 'expected'),
+    [
+        (pd.Series(['A', 'B', 'C']), {'sdtype': 'id', 'range_is_nullable': True}, True),
+        (pd.Series(['A', 'B', 'C']), {'sdtype': 'id', 'range_is_nullable': False}, False),
+        (
+            pd.Series([10, 20, 30]),
+            {'sdtype': 'numerical', 'range_min': 0.0},
+            True,
+        ),
+        (pd.Series([np.nan] * 10), {'sdtype': 'numerical'}, False),
+        (
+            pd.Series(['31/12/2019', '09/08/2023', '03/22/2021']),
+            {
+                'sdtype': 'datetime',
+                'datetime_format': '%d/%m/%Y',
+                'range_min': '31/12/2019',
+                'range_max': '01/01/2030',
+            },
+            True,
+        ),
+        (
+            pd.Series([None] * 5),
+            {
+                'sdtype': 'datetime',
+                'datetime_format': '%d/%m/%Y',
+                'range_min': '31/12/2019',
+                'range_max': '01/01/2030',
+            },
+            True,
+        ),
+        (
+            pd.Series(['x', 'y', 'z']),
+            {
+                'sdtype': 'categorical',
+            },
+            False,
+        ),
+        (
+            pd.Series(['a', 'b', 'b', 'a']),
+            {'sdtype': 'categorical', 'range_values': ['a', 'b', 'c']},
+            True,
+        ),
+        (
+            pd.Series([None] * 10),
+            {'sdtype': 'categorical', 'range_values': ['a', 'b', 'c']},
+            True,
+        ),
+    ],
+)
+def test__column_range_exceeds_real(column, col_meta, expected):
+    """Test checking if a column's range exceeds the given data"""
+    # Run
+    range_exceeds_data = _column_range_exceeds_real(column, col_meta)
+
+    # Assert
+    assert range_exceeds_data == expected
+
+
+@patch('sdv._utils._column_range_exceeds_real')
+def test__metadata_range_exceeds_real(mock__column_range_exceeds_real):
+    """Test checking if the metadata range information exceeds the data."""
+    # Setup
+    data = {
+        'table1': pd.DataFrame({
+            'col1': range(5),
+            'col2': ['a', 'b', 'a', 'b', 'a'],
+            'col3': ['01/2020', '02/2020', '03/2021', '01/2022', '12/2024'],
+        }),
+    }
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table1': {
+                'columns': {
+                    'col1': {'sdtype': 'numerical'},
+                    'col2': {'sdtype': 'categorical'},
+                    'col3': {'sdtype': 'datetime'},
+                }
+            }
+        }
+    })
+
+    mock__column_range_exceeds_real.side_effect = [False, True]
+
+    # Run
+    output = _metadata_range_exceeds_real(data, metadata)
+
+    # Assert
+    assert output is True
+    mock__column_range_exceeds_real.assert_called_with([
+        call(data['col1'], {'sdtype': 'numerical'}),
+        call(data['col2'], {'sdtype': 'categorical'}),
+    ])

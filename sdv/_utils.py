@@ -620,3 +620,51 @@ def _check_is_dict_of_dataframes(data, arg_name='data'):
     for table_name, table in data.items():
         if not isinstance(table, pd.DataFrame):
             raise ValueError(error_message_data)
+
+
+def _column_range_exceeds_real(column, col_meta):
+    range_is_nullable = col_meta.get('range_is_nullable', False)
+    if not any(pd.isna(column)) and range_is_nullable:
+        return True
+
+    column = column.dropna()
+    if col_meta['sdtype'] in ['datetime', 'numerical']:
+        range_min = col_meta.get('range_min')
+        range_max = col_meta.get('range_max')
+        if range_min is None and range_max is None:
+            return False
+        elif column.empty:
+            return True
+
+        if col_meta['sdtype'] == 'datetime':
+            datetime_format = col_meta.get('datetime_format')
+            column = _cast_to_datetime64(column, datetime_format)
+            if range_min is not None:
+                range_min = _cast_to_datetime64(range_min, datetime_format)
+
+            if range_max is not None:
+                range_max = _cast_to_datetime64(range_max, datetime_format)
+
+        min_bound_met = any(column.dropna() <= range_min) if range_min is not None else True
+        max_bound_met = any(column.dropna() >= range_max) if range_max is not None else True
+        return not (min_bound_met and max_bound_met)
+
+    elif col_meta['sdtype'] == 'categorical':
+        if 'range_values' not in col_meta:
+            return False
+
+        if not set(col_meta['range_values']).issubset(set(column.unique())):
+            return True
+
+    return False
+
+
+def _metadata_range_exceeds_real(data, metadata):
+    """Returns whether the metadata range information exceeds the real data range."""
+    for table_name, table_data in data.items():
+        for column in table_data.columns:
+            col_meta = metadata.tables[table_name].columns[column]
+            if _column_range_exceeds_real(table_data[column], col_meta):
+                return True
+
+    return False

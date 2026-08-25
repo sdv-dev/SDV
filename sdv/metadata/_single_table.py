@@ -133,7 +133,7 @@ class _SingleTableMetadata:
         'gps': GPSValidator.validate,
     }
 
-    METADATA_SPEC_VERSION = 'SINGLE_TABLE_V1'
+    METADATA_SPEC_VERSION = 'SINGLE_TABLE_V2'
     _DEFAULT_SDTYPES = list(_SDTYPE_KWARGS) + list(SDTYPE_ANONYMIZERS)
     _MIN_ROWS_FOR_PREDICTION = 5
     _NUMERICAL_DTYPES = frozenset(['i', 'f', 'u'])

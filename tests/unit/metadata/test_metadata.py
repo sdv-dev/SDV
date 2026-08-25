@@ -470,6 +470,22 @@ class TestMetadataClass:
                 seen_foreign_keys=seen_foreign_keys,
             )
 
+    def test__validate_foreign_key_range_info(self):
+        """Test validating foreign key columns do not have ranges set."""
+        # Setup
+        instance = Mock()
+        child_mock = Mock(columns={'col1': {'sdtype': 'numerical', 'range_min': 0.0}})
+        instance.tables = {'child': child_mock}
+
+        # Run and Assert
+        expected_error = re.escape(
+            "Foreign key column(s) ['col1'] in table 'child' "
+            'cannot contain range information. Only `range_is_nullable` '
+            'is allowed for foreign key columns.'
+        )
+        with pytest.raises(InvalidMetadataError, match=expected_error):
+            Metadata._validate_foreign_key_range_info(instance, 'child', 'col1')
+
     def test__validate_circular_relationships(self):
         """Test the ``_validate_circular_relationships`` method of ``Metadata``.
 
