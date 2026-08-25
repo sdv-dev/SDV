@@ -135,13 +135,15 @@ class MultiTableConstraint(ProgrammableConstraint):
 @pytest.fixture
 def sample_sequential_data():
     """Create sample sequential data for testing."""
-    data = pd.DataFrame({
-        'patient_id': [1, 1, 1, 2, 2, 2, 3, 3, 3],
-        'visit_number': [1, 2, 3, 1, 2, 3, 1, 2, 3],
-        'measurement': [10.5, 12.3, 15.1, 8.2, 9.7, 11.4, 13.8, 16.2, 18.9],
-        'has_condition': [False, False, False, True, True, True, False, False, False],
-        'treatment_score': [5.0, 6.2, 7.5, 0.0, 0.0, 0.0, 7.1, 8.0, 9.2],
-    })
+    data = {
+        'table': pd.DataFrame({
+            'patient_id': [1, 1, 1, 2, 2, 2, 3, 3, 3],
+            'visit_number': [1, 2, 3, 1, 2, 3, 1, 2, 3],
+            'measurement': [10.5, 12.3, 15.1, 8.2, 9.7, 11.4, 13.8, 16.2, 18.9],
+            'has_condition': [False, False, False, True, True, True, False, False, False],
+            'treatment_score': [5.0, 6.2, 7.5, 0.0, 0.0, 0.0, 7.1, 8.0, 9.2],
+        })
+    }
     return data
 
 

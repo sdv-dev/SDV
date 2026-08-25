@@ -17,10 +17,12 @@ from tests.utils import run_constraint, run_copula, run_hma
 
 @pytest.fixture()
 def data():
-    return pd.DataFrame({
-        'A': [1, 2, 3, 1, 2, 1],
-        'B': [10, 20, 30, 10, 20, 10],
-    })
+    return {
+        'table': pd.DataFrame({
+            'A': [1, 2, 3, 1, 2, 1],
+            'B': [10, 20, 30, 10, 20, 10],
+        })
+    }
 
 
 @pytest.fixture()

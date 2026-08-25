@@ -14,11 +14,13 @@ from tests.utils import run_constraint, run_copula, run_hma
 
 @pytest.fixture()
 def data():
-    return pd.DataFrame({
-        'a': [1, 0, 0],
-        'b': [0, 1, 0],
-        'c': [0, 0, 1],
-    })
+    return {
+        'table': pd.DataFrame({
+            'a': [1, 0, 0],
+            'b': [0, 1, 0],
+            'c': [0, 0, 1],
+        })
+    }
 
 
 @pytest.fixture()

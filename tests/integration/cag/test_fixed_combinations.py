@@ -15,18 +15,24 @@ from tests.utils import run_constraint, run_copula, run_hma
 
 @pytest.fixture()
 def data():
-    return pd.DataFrame({
-        'A': [1, 2, 3, 1, 2, 1],
-        'B': [10, 20, 30, 10, 20, 10],
-    })
+    return {
+        'table1': pd.DataFrame({
+            'A': [1, 2, 3, 1, 2, 1],
+            'B': [10, 20, 30, 10, 20, 10],
+        })
+    }
 
 
 @pytest.fixture()
 def metadata():
     return Metadata.load_from_dict({
-        'columns': {
-            'A': {'sdtype': 'categorical'},
-            'B': {'sdtype': 'categorical'},
+        'tables': {
+            'table1': {
+                'columns': {
+                    'A': {'sdtype': 'categorical'},
+                    'B': {'sdtype': 'categorical'},
+                }
+            }
         }
     })
 
@@ -75,13 +81,17 @@ def test_fixed_combinations_integers(data, metadata, constraint):
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
-        'columns': {
-            'A#B': {'sdtype': 'categorical'},
+        'tables': {
+            'table1': {
+                'columns': {
+                    'A#B': {'sdtype': 'categorical'},
+                }
+            }
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-    assert list(transformed.columns) == ['A#B']
-    pd.testing.assert_frame_equal(data, reverse_transformed)
+    assert list(transformed['table1'].columns) == ['A#B']
+    pd.testing.assert_frame_equal(data['table1'], reverse_transformed['table1'])
 
 
 def test_fixed_combinations_integers_copula(data, metadata, constraint):
@@ -94,7 +104,7 @@ def test_fixed_combinations_integers_copula(data, metadata, constraint):
     assert len(synthetic_data) == 1000
     pd.testing.assert_frame_equal(
         synthetic_data.drop_duplicates(ignore_index=True),
-        data.drop_duplicates(ignore_index=True),
+        data['table1'].drop_duplicates(ignore_index=True),
         check_like=True,
     )
 

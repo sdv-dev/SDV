@@ -14,7 +14,7 @@ from tests.utils import run_constraint, run_copula, run_hma
 
 @pytest.fixture()
 def data():
-    return pd.DataFrame({'A': [10, 20, 30, 40, 50]})
+    return {'table': pd.DataFrame({'A': [10, 20, 30, 40, 50]})}
 
 
 @pytest.fixture()
