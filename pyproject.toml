@@ -44,7 +44,7 @@ dependencies = [
     "ctgan>=0.12.0;python_version>='3.14'",
     "deepecho>=0.7.0;python_version<'3.14'",
     "deepecho>=0.8.0;python_version>='3.14'",
-    "rdt @ git+https://github.com/sdv-dev/RDT.git@issue-1102-remove-deprecated-functionality",
+    "rdt @ git+https://github.com/sdv-dev/RDT.git@rdt_2.0",
     "sdmetrics>=0.28.1",
     'platformdirs>=4.0',
     'pyyaml>=6.0.1',
