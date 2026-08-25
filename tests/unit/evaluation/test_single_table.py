@@ -10,7 +10,6 @@ from sdv.evaluation.single_table import (
     get_column_plot,
 )
 from sdv.metadata.metadata import Metadata
-from tests.utils import DataFrameDictMatcher
 
 
 @patch('sdmetrics.visualization.get_column_plot')
