@@ -558,6 +558,9 @@ class BaseSynthesizer:
         return data
 
     def _check_ranges(self, data):
+        if isinstance(data, pd.DataFrame):
+            data = {self._table_name: data}
+
         if _metadata_range_exceeds_real(data, self._original_metadata):
             warnings.warn(
                 'Metadata contains range information that exceeds the real data. '

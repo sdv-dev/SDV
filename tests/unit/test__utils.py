@@ -1478,7 +1478,7 @@ def test__metadata_range_exceeds_real(mock__column_range_exceeds_real):
 
     # Assert
     assert output is True
-    mock__column_range_exceeds_real.assert_called_with([
-        call(data['col1'], {'sdtype': 'numerical'}),
-        call(data['col2'], {'sdtype': 'categorical'}),
+    mock__column_range_exceeds_real.assert_has_calls([
+        call(data['table1']['col1'], {'sdtype': 'numerical'}),
+        call(data['table1']['col2'], {'sdtype': 'categorical'}),
     ])

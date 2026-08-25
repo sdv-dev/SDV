@@ -143,7 +143,7 @@ class Test_SingleTableMetadata:
         assert instance.sequence_key is None
         assert instance.alternate_keys == []
         assert instance.sequence_index is None
-        assert instance._version == 'SINGLE_TABLE_V1'
+        assert instance._version == 'SINGLE_TABLE_V2'
         assert instance._updated is False
 
     @pytest.mark.parametrize(
@@ -1603,7 +1603,7 @@ class Test_SingleTableMetadata:
                 '19': {'sdtype': 'numerical'},
                 '20': {'sdtype': 'numerical'},
             },
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         }
 
         # Run
@@ -3222,7 +3222,7 @@ class Test_SingleTableMetadata:
         # Assert
         assert result == {
             'columns': {'my_column': 'value'},
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         }
 
         # Ensure that the output object does not alterate the inside object
@@ -3247,7 +3247,7 @@ class Test_SingleTableMetadata:
         # Assert
         assert result == {
             'columns': {'my_column': 'value'},
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         }
 
     def test__valdiate_no_extra_keys_metadata_dict(self):
@@ -3260,7 +3260,7 @@ class Test_SingleTableMetadata:
             'alternate_keys': [],
             'sequence_key': None,
             'sequence_index': None,
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         }
         instance = _SingleTableMetadata()
         expected_error = re.escape(
@@ -3286,7 +3286,7 @@ class Test_SingleTableMetadata:
             'alternate_keys': [],
             'sequence_key': None,
             'sequence_index': None,
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         }
 
         # Run
@@ -3299,7 +3299,7 @@ class Test_SingleTableMetadata:
         assert instance.sequence_key is None
         assert instance.alternate_keys == []
         assert instance.sequence_index is None
-        assert instance._version == 'SINGLE_TABLE_V1'
+        assert instance._version == 'SINGLE_TABLE_V2'
 
     def test_load_from_dict_integer(self):
         """Test that ``load_from_dict`` returns a instance with the ``dict`` updated objects.
@@ -3315,7 +3315,7 @@ class Test_SingleTableMetadata:
             'alternate_keys': [],
             'sequence_key': None,
             'sequence_index': None,
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         }
 
         # Run
@@ -3327,7 +3327,7 @@ class Test_SingleTableMetadata:
         assert instance.sequence_key is None
         assert instance.alternate_keys == []
         assert instance.sequence_index is None
-        assert instance._version == 'SINGLE_TABLE_V1'
+        assert instance._version == 'SINGLE_TABLE_V2'
 
     def test_load_from_dict_composite_key_single_element(self):
         """Test that a primary key list with a single element is set as a single primary key."""
@@ -3335,7 +3335,7 @@ class Test_SingleTableMetadata:
         my_metadata = {
             'columns': {'pk': 'value'},
             'primary_key': ['pk'],
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         }
 
         # Run
@@ -3344,7 +3344,7 @@ class Test_SingleTableMetadata:
         # Assert
         assert instance.columns == {'pk': 'value'}
         assert instance.primary_key == 'pk'
-        assert instance._version == 'SINGLE_TABLE_V1'
+        assert instance._version == 'SINGLE_TABLE_V2'
 
     @patch('sdv.metadata.utils.Path')
     def test_load_from_json_path_does_not_exist(self, mock_path):
@@ -3438,7 +3438,7 @@ class Test_SingleTableMetadata:
         mock_json.load.return_value = {
             'columns': {'animals': {'type': 'categorical'}},
             'primary_key': 'animals',
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         }
 
         # Run
@@ -3450,7 +3450,7 @@ class Test_SingleTableMetadata:
         assert instance.sequence_key is None
         assert instance.alternate_keys == []
         assert instance.sequence_index is None
-        assert instance._version == 'SINGLE_TABLE_V1'
+        assert instance._version == 'SINGLE_TABLE_V2'
 
     @patch('sdv.metadata.utils.Path')
     def test_save_to_json_file_exists_write(self, mock_path):

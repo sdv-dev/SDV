@@ -160,7 +160,7 @@ def test__remove_columns_from_metadata_single():
             }
         },
         'relationships': [],
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
     })
 
     # Run

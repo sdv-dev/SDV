@@ -26,7 +26,7 @@ from sdv.single_table.base import BaseSingleTableSynthesizer
 from sdv.utils import load_constraints, load_synthesizer
 
 METADATA = Metadata.load_from_dict({
-    'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+    'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
     'columns': {
         'column1': {'sdtype': 'numerical'},
         'column2': {'sdtype': 'numerical'},
@@ -264,7 +264,7 @@ def test_sampling(synthesizer):
 def test_sampling_reset_sampling(synthesizer):
     """Test ``sample`` method for each synthesizer using ``reset_sampling``."""
     metadata = Metadata.load_from_dict({
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         'columns': {
             'column1': {'sdtype': 'numerical'},
             'column2': {'sdtype': 'address'},

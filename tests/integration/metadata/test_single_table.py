@@ -22,9 +22,9 @@ def test_single_table_metadata():
     result = instance.to_dict()
 
     # Assert
-    assert result == {'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'}
+    assert result == {'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2'}
     assert instance.columns == {}
-    assert instance._version == 'SINGLE_TABLE_V1'
+    assert instance._version == 'SINGLE_TABLE_V2'
     assert instance.primary_key is None
     assert instance.sequence_key is None
     assert instance.alternate_keys == []
@@ -41,7 +41,7 @@ def test_single_table_metadata_composite_primary_key():
             'pk_col3': {'sdtype': 'categorical'},
         },
         'primary_key': ['pk_col1', 'pk_col2', 'pk_col3'],
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
     }
 
     instance = _SingleTableMetadata()
@@ -56,7 +56,7 @@ def test_single_table_metadata_composite_primary_key():
     # Assert
     assert result == expected_metadata_dict
     assert instance.columns == expected_metadata_dict['columns']
-    assert instance._version == 'SINGLE_TABLE_V1'
+    assert instance._version == 'SINGLE_TABLE_V2'
     assert instance.primary_key == expected_metadata_dict['primary_key']
     assert instance.sequence_key is None
     assert instance.alternate_keys == []
@@ -262,7 +262,7 @@ def test_upgrade_metadata(tmp_path):
         },
         'primary_key': 'student_id',
         'alternate_keys': ['ssn', 'drivers_license'],
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
     }
     assert new_metadata == expected_metadata
 
@@ -280,7 +280,7 @@ def test_validate_unknown_sdtype():
 
     # Assert
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         'columns': {
             'hotel_id': {'sdtype': 'id'},
             'city': {'sdtype': 'city', 'pii': True},
@@ -332,7 +332,7 @@ def test_detect_from_dataframe_with_pii_names():
 
     # Assert
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         'primary_key': 'USER PHONE NUMBER',
         'columns': {
             'USER PHONE NUMBER': {'sdtype': 'phone_number', 'pii': True},
@@ -390,7 +390,7 @@ def test_update_columns():
 
     # Assert
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         'columns': {
             'col1': {'sdtype': 'numerical'},
             'col2': {'sdtype': 'numerical'},
@@ -452,7 +452,7 @@ def test_update_columns_metadata():
 
     # Assert
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         'columns': {
             'col1': {'sdtype': 'numerical'},
             'col2': {'sdtype': 'numerical'},

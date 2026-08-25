@@ -1840,7 +1840,7 @@ def test_parent_default_distribution_non_beta():
                 'child_foreign_key': 'parent_id',
             },
         ],
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
     })
     synthesizer = HMASynthesizer(metadata)
     synthesizer.set_table_parameters('parent', {'default_distribution': 'norm'})

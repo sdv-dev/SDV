@@ -1726,7 +1726,7 @@ class Metadata:
             - An ``Error`` if the ``json`` file does not contain the ``METADATA_SPEC_VERSION``.
         """
         metadata = read_json(filepath)
-        if metadata.get('METADATA_SPEC_VERSION') == 'SINGLE_TABLE_V1':
+        if metadata.get('METADATA_SPEC_VERSION', '').startswith('SINGLE_TABLE'):
             single_table_name = single_table_name or cls.DEFAULT_SINGLE_TABLE_NAME
             warnings.warn(
                 'You are loading an older _SingleTableMetadata object. This will be converted into'

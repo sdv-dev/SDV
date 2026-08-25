@@ -945,7 +945,7 @@ class TestDataProcessor:
             'numerical_column': [12321, 198, 1958],
         })
         metadata = _SingleTableMetadata().load_from_dict({
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
             'columns': {'numerical_column': {'sdtype': 'unknown', 'pii': True}},
         })
         dp = DataProcessor(metadata)
@@ -963,7 +963,7 @@ class TestDataProcessor:
             'id_column': ['id1', 'id2', 'id3'],
         })
         metadata = _SingleTableMetadata().load_from_dict({
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
             'columns': {'id_column': {'sdtype': 'id'}},
         })
         dp = DataProcessor(metadata)

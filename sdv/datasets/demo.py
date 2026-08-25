@@ -192,11 +192,13 @@ def _find_data_zip_key(contents, dataset_prefix, bucket):
     )
 
 
-def _get_first_v1_metadata_bytes(contents, dataset_prefix, bucket, client):
+def _get_first_v2_metadata_bytes(contents, dataset_prefix, bucket, client):
     """Find and return bytes of the first V1 metadata JSON under `dataset_prefix`.
 
     Scans S3 listing `contents` and, for any JSON file directly under the dataset prefix,
-    downloads and returns its bytes if it contains METADATA_SPEC_VERSION == 'V1'.
+    downloads and returns its bytes if it contains METADATA_SPEC_VERSION == 'V2'.
+
+    If no valid 'V2' metadata is found, returns the first 'V1' metadata found instead.
 
     Returns:
         bytes:
@@ -215,15 +217,16 @@ def _get_first_v1_metadata_bytes(contents, dataset_prefix, bucket, client):
 
     candidate_keys = _search_contents_keys(contents, is_direct_json_under_prefix)
 
-    for key in candidate_keys:
-        try:
-            raw = _get_data_from_bucket(key, bucket=bucket, client=client)
-            metadict = json.loads(raw)
-            if isinstance(metadict, dict) and metadict.get('METADATA_SPEC_VERSION') == 'V1':
-                return raw
+    for version in ['V2', 'V1']:
+        for key in candidate_keys:
+            try:
+                raw = _get_data_from_bucket(key, bucket=bucket, client=client)
+                metadict = json.loads(raw)
+                if isinstance(metadict, dict) and metadict.get('METADATA_SPEC_VERSION') == version:
+                    return raw
 
-        except Exception:
-            continue
+            except Exception:
+                continue
 
     dataset_name = _get_dataset_name_from_prefix(dataset_prefix)
     raise DemoResourceNotFoundError(
@@ -342,7 +345,7 @@ def _download(modality, dataset_name, bucket, credentials=None):
     contents = _list_objects(dataset_prefix, bucket=bucket, client=client)
     zip_key = _find_data_zip_key(contents, dataset_prefix, bucket)
     data_bytes = io.BytesIO(_get_data_from_bucket(zip_key, bucket=bucket, client=client))
-    metadata_bytes = _get_first_v1_metadata_bytes(
+    metadata_bytes = _get_first_v2_metadata_bytes(
         contents, dataset_prefix, bucket=bucket, client=client
     )
 
