@@ -45,9 +45,10 @@ def _format_metadata_value(value):
         str:
             The formatted value as a string.
     """
-    if isinstance(value, bool) or value is None:
+    if isinstance(value, str):
+        return f"'{value}'"
+    else:
         return str(value)
-    return f"'{value}'"
 
 
 def _format_column_metadata(sdtype_info):

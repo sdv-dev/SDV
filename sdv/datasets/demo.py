@@ -429,7 +429,13 @@ def _get_metadata(metadata_bytes, dataset_name, output_folder_name=None):
     """
     try:
         metadict = json.loads(metadata_bytes)
-        metadata = Metadata().load_from_dict(metadict, dataset_name)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore',
+                category=FutureWarning,
+                module='sdv.metadata._single_table',
+            )
+            metadata = Metadata().load_from_dict(metadict, dataset_name)
     except Exception as e:
         raise DemoResourceNotFoundError(
             f"Could not parse the metadata for dataset '{dataset_name}'. "

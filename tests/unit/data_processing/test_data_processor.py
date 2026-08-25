@@ -381,7 +381,7 @@ class TestDataProcessor:
         metadata = _SingleTableMetadata()
         metadata.add_column('col1', sdtype='categorical')
         metadata.add_column('col2', sdtype='id')
-        metadata.add_column('col3', sdtype='numerical', computer_representation='Int8')
+        metadata.add_column('col3', sdtype='numerical')
         metadata.set_primary_key('col2')
         dp = DataProcessor(metadata)
 
@@ -401,7 +401,7 @@ class TestDataProcessor:
         metadata = _SingleTableMetadata()
         metadata.add_column('col1', sdtype='categorical')
         metadata.add_column('col2', sdtype='id')
-        metadata.add_column('col3', sdtype='numerical', computer_representation='Int8')
+        metadata.add_column('col3', sdtype='numerical')
         metadata.set_primary_key('col2')
         dp = DataProcessor(metadata)
 
@@ -593,11 +593,10 @@ class TestDataProcessor:
         dp = DataProcessor(_SingleTableMetadata())
 
         # Run
-        result = dp._get_transformer_instance('numerical', {'computer_representation': 'Int32'})
+        result = dp._get_transformer_instance('numerical', {'range_min': 0.0})
 
         # Assert
         assert isinstance(result, FloatFormatter)
-        assert result.computer_representation == 'Int32'
 
     def test__get_transformer_instance_passes_kwargs_from_default(self):
         """Test the ``_get_transformer_instance`` uses the default transformers kwargs.
@@ -607,20 +606,19 @@ class TestDataProcessor:
         """
         # Setup
         dp = DataProcessor(_SingleTableMetadata())
-        dp._transformers_by_sdtype['numerical'] = FloatFormatter(
+        dp._transformers_by_sdtype['datetime'] = UnixTimestampEncoder(
             missing_value_replacement='random',
             missing_value_generation='from_column',
-            learn_rounding_scheme=False,
         )
 
         # Run
-        result = dp._get_transformer_instance('numerical', {'computer_representation': 'Int32'})
+        result = dp._get_transformer_instance('datetime', {'datetime_format': '%Y-%m-%d'})
 
         # Assert
-        assert isinstance(result, FloatFormatter)
+        assert isinstance(result, UnixTimestampEncoder)
+        assert result.datetime_format == '%Y-%m-%d'
         assert result.missing_value_replacement == 'random'
         assert result.missing_value_generation == 'from_column'
-        assert result.learn_rounding_scheme is False
 
     def test__create_config(self):
         """Test the ``_create_config`` method.
@@ -1176,8 +1174,8 @@ class TestDataProcessor:
         """Test the ``_fit_formatters`` method.
 
         Runs the methods through three columns: a non-numerical column, which should
-        be skipped by the method, and two numerical ones (with different values for
-        ``computer_representation``), which should create and learn a ``NumericalFormatter``.
+        be skipped by the method, and two numerical ones, which should create and learn
+        a ``NumericalFormatter``.
 
         Setup:
             - ``_SingleTableMetadata`` describing the three columns.
@@ -1186,15 +1184,15 @@ class TestDataProcessor:
         # Setup
         data = pd.DataFrame({
             'col1': ['abc', 'def'],
-            'col2': [1, 2],
-            'col3': [3, 4],
+            'col2': pd.Series([1, 2], dtype='int8'),
+            'col3': pd.Series([3, 4], dtype='float'),
             'date_col1': ['16-05-2023', '14-04-2022'],
             'date_col2': pd.to_datetime(['2021-02-15', '2022-05-16']),
         })
         metadata = _SingleTableMetadata()
         metadata.add_column('col1', sdtype='categorical')
         metadata.add_column('col2', sdtype='numerical')
-        metadata.add_column('col3', sdtype='numerical', computer_representation='Int8')
+        metadata.add_column('col3', sdtype='numerical')
         metadata.add_column('date_col1', sdtype='datetime')
         metadata.add_column('date_col2', sdtype='datetime', datetime_format='%Y-%d-%M')
         dp = DataProcessor(metadata, enforce_rounding=False, enforce_min_max_values=False)
@@ -1208,12 +1206,10 @@ class TestDataProcessor:
         assert isinstance(dp.formatters['col2'], NumericalFormatter)
         assert dp.formatters['col2'].enforce_rounding is False
         assert dp.formatters['col2'].enforce_min_max_values is False
-        assert dp.formatters['col2'].computer_representation == 'Float'
 
         assert isinstance(dp.formatters['col3'], NumericalFormatter)
         assert dp.formatters['col3'].enforce_rounding is False
         assert dp.formatters['col3'].enforce_min_max_values is False
-        assert dp.formatters['col3'].computer_representation == 'Int8'
 
         learn_format_mock.assert_has_calls([call(data['col2']), call(data['col3'])])
 

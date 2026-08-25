@@ -373,8 +373,16 @@ class DataProcessor:
         ):
             return self.create_anonymized_transformer(sdtype, column_metadata, None, self._locales)
 
+        non_param_keys = [
+            'decimal_places',
+            'range_min',
+            'range_max',
+            'range_is_nullable',
+            'pii',
+            'sdtype',
+        ]
         parameters = {
-            key: value for key, value in column_metadata.items() if key not in ['pii', 'sdtype']
+            key: value for key, value in column_metadata.items() if key not in non_param_keys
         }
         return self._get_sdtype_transformer(sdtype, parameters, transformer)
 
@@ -754,9 +762,11 @@ class DataProcessor:
             column_metadata = self.metadata.columns.get(column_name)
             sdtype = column_metadata.get('sdtype')
             if sdtype == 'numerical' and column_name != self._primary_key:
+                decimal_places = column_metadata.get('decimal_places')
                 self.formatters[column_name] = NumericalFormatter(
                     enforce_rounding=self._enforce_rounding,
                     enforce_min_max_values=self._enforce_min_max_values,
+                    decimal_places=decimal_places,
                 )
                 self.formatters[column_name].learn_format(data[column_name])
 

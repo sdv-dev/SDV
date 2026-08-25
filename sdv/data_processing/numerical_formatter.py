@@ -45,10 +45,15 @@ class NumericalFormatter:
     _rounding_digits = None
 
     def __init__(
-        self, enforce_rounding=False, enforce_min_max_values=False, computer_representation='Float'
+        self,
+        enforce_rounding=False,
+        enforce_min_max_values=False,
+        decimal_places=None,
+        computer_representation='Float',
     ):
-        self.enforce_rounding = enforce_rounding
+        self.enforce_rounding = enforce_rounding or (decimal_places is not None)
         self.enforce_min_max_values = enforce_min_max_values
+        self.decimal_places = decimal_places
         self.computer_representation = computer_representation
 
     def learn_format(self, column):
@@ -63,7 +68,8 @@ class NumericalFormatter:
             self._min_value = column.min()
             self._max_value = column.max()
 
-        if self.enforce_rounding:
+        self._rounding_digis = self.decimal_places
+        if self.enforce_rounding and self.decimal_places is None:
             self._rounding_digits = learn_rounding_digits(column)
 
     def format_data(self, column):
