@@ -25,7 +25,7 @@ from rdt.transformers import (
 )
 from tqdm import tqdm
 
-from sdv.metadata import SingleTableMetadata
+from sdv.metadata._single_table import _SingleTableMetadata
 from sdv.single_table import GaussianCopulaSynthesizer
 from tests.benchmark.excluded_tests import EXCLUDED_DATA_TYPES
 from tests.benchmark.included_tests import INCLUDED_CONSTRAINT_TESTS
@@ -178,7 +178,7 @@ def prevent_tqdm_output():
 
 def _get_metadata_for_dtype_and_sdtype(dtype, sdtype_dict):
     """Return the expected metadata."""
-    metadata = SingleTableMetadata.load_from_dict({'columns': {dtype: sdtype_dict}})
+    metadata = _SingleTableMetadata.load_from_dict({'columns': {dtype: sdtype_dict}})
     return metadata
 
 
