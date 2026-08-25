@@ -816,14 +816,14 @@ def test_validate_metadata_with_reused_foreign_keys():
         'tables': {
             'A1': {
                 'columns': {
-                    'data': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'data': {'sdtype': 'numerical'},
                     'id': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
                 },
                 'primary_key': 'id',
             },
             'A2': {
                 'columns': {
-                    'data': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'data': {'sdtype': 'numerical'},
                     'id': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
                     'fk1_A1': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
                 },
@@ -831,7 +831,7 @@ def test_validate_metadata_with_reused_foreign_keys():
             },
             'A3': {
                 'columns': {
-                    'data': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'data': {'sdtype': 'numerical'},
                     'id': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
                     'fk1_A1': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
                     'fk2_A1': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},

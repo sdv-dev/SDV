@@ -74,8 +74,8 @@ def test_download_demo_single_table(mock_list, mock_get, tmpdir):
         'tables': {
             'ring': {
                 'columns': {
-                    '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-                    '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    '0': {'sdtype': 'numerical'},
+                    '1': {'sdtype': 'numerical'},
                 }
             }
         },
@@ -102,8 +102,8 @@ def test_download_demo_single_table(mock_list, mock_get, tmpdir):
         'tables': {
             'ring': {
                 'columns': {
-                    '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-                    '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    '0': {'sdtype': 'numerical'},
+                    '1': {'sdtype': 'numerical'},
                 },
             }
         },
@@ -173,8 +173,8 @@ def test_download_demo_single_table_no_output_folder(mock_list, mock_get):
         'tables': {
             'ring': {
                 'columns': {
-                    '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-                    '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    '0': {'sdtype': 'numerical'},
+                    '1': {'sdtype': 'numerical'},
                 }
             }
         },
@@ -194,8 +194,8 @@ def test_download_demo_single_table_no_output_folder(mock_list, mock_get):
         'tables': {
             'ring': {
                 'columns': {
-                    '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-                    '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    '0': {'sdtype': 'numerical'},
+                    '1': {'sdtype': 'numerical'},
                 },
             }
         },
@@ -229,9 +229,9 @@ def test_download_demo_timeseries(mock_list, mock_get, tmpdir):
         'tables': {
             'Libras': {
                 'columns': {
-                    'e_id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-                    'dim_0': {'sdtype': 'numerical', 'computer_representation': 'Float'},
-                    'dim_1': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'e_id': {'sdtype': 'numerical'},
+                    'dim_0': {'sdtype': 'numerical'},
+                    'dim_1': {'sdtype': 'numerical'},
                     'ml_class': {'sdtype': 'categorical'},
                 }
             }
@@ -260,9 +260,9 @@ def test_download_demo_timeseries(mock_list, mock_get, tmpdir):
         'tables': {
             'Libras': {
                 'columns': {
-                    'e_id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-                    'dim_0': {'sdtype': 'numerical', 'computer_representation': 'Float'},
-                    'dim_1': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'e_id': {'sdtype': 'numerical'},
+                    'dim_0': {'sdtype': 'numerical'},
+                    'dim_1': {'sdtype': 'numerical'},
                     'ml_class': {'sdtype': 'categorical'},
                 }
             }
@@ -301,7 +301,7 @@ def test_download_demo_multi_table(mock_list, mock_get, tmpdir):
                 'columns': {
                     'character_id': {'sdtype': 'id', 'regex_format': '^[1-9]{1,2}$'},
                     'name': {'sdtype': 'categorical'},
-                    'age': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'age': {'sdtype': 'numerical'},
                 },
                 'primary_key': 'character_id',
             },
@@ -317,7 +317,7 @@ def test_download_demo_multi_table(mock_list, mock_get, tmpdir):
                     'character_id': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
                     'family_id': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
                     'type': {'sdtype': 'categorical'},
-                    'generation': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'generation': {'sdtype': 'numerical'},
                 },
             },
         },
@@ -720,7 +720,7 @@ def test_download_demo_writes_metadata_and_discovers_nested_csv(mock_list, mock_
         'tables': {
             'my_table': {
                 'columns': {
-                    'a': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'a': {'sdtype': 'numerical'},
                     'b': {'sdtype': 'categorical'},
                 }
             }
@@ -1248,7 +1248,7 @@ def test_download_demo_warns_for_non_csv_in_memory(mock_list, mock_get):
         'tables': {
             'good': {
                 'columns': {
-                    'id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'id': {'sdtype': 'numerical'},
                     'name': {'sdtype': 'categorical'},
                 }
             }
@@ -1294,7 +1294,7 @@ def test_download_demo_on_disk_warns_failed_csv_only(mock_list, mock_get, tmp_pa
         'tables': {
             'good': {
                 'columns': {
-                    'x': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'x': {'sdtype': 'numerical'},
                 }
             }
         },
@@ -1350,7 +1350,7 @@ def test_download_demo_handles_non_utf8_in_memory(mock_list, mock_get):
         'tables': {
             'nonutf': {
                 'columns': {
-                    'id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'id': {'sdtype': 'numerical'},
                     'name': {'sdtype': 'categorical'},
                 }
             }
@@ -1391,7 +1391,7 @@ def test_download_demo_handles_non_utf8_on_disk(mock_list, mock_get, tmp_path):
         'tables': {
             'nonutf': {
                 'columns': {
-                    'id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'id': {'sdtype': 'numerical'},
                     'name': {'sdtype': 'categorical'},
                 }
             }
@@ -1639,8 +1639,8 @@ def test_download_demo_with_output_folder_name_single_table(mock_list, mock_get,
         'tables': {
             'ring': {
                 'columns': {
-                    '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-                    '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    '0': {'sdtype': 'numerical'},
+                    '1': {'sdtype': 'numerical'},
                 }
             }
         },
@@ -1693,7 +1693,7 @@ def test_download_demo_writes_csvs_to_disk_multi_table(mock_list, mock_get, tmp_
             'characters': {
                 'columns': {
                     'character_id': {'sdtype': 'id'},
-                    'age': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'age': {'sdtype': 'numerical'},
                     'name': {'sdtype': 'categorical'},
                 },
                 'primary_key': 'character_id',

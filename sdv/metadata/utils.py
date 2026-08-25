@@ -60,7 +60,7 @@ def _format_column_metadata(sdtype_info):
     Returns:
         str:
             A comma-separated `key=value` string with 'sdtype' first.
-            (`sdtype='numerical', computer_representation='Float'`)
+            (`sdtype='numerical', range_min=0.0`)
     """
     parts = [f'{k}={_format_metadata_value(v)}' for k, v in sdtype_info.items()]
     parts.sort(key=lambda p: not p.startswith('sdtype='))

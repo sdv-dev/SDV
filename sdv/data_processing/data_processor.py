@@ -754,11 +754,9 @@ class DataProcessor:
             column_metadata = self.metadata.columns.get(column_name)
             sdtype = column_metadata.get('sdtype')
             if sdtype == 'numerical' and column_name != self._primary_key:
-                representation = column_metadata.get('computer_representation', 'Float')
                 self.formatters[column_name] = NumericalFormatter(
                     enforce_rounding=self._enforce_rounding,
                     enforce_min_max_values=self._enforce_min_max_values,
-                    computer_representation=representation,
                 )
                 self.formatters[column_name].learn_format(data[column_name])
 

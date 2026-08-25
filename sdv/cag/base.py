@@ -209,9 +209,7 @@ class BaseConstraint:
                 sdtype = column_metadata.get('sdtype')
 
                 if sdtype == 'numerical' and column_name != primary_key:
-                    representation = column_metadata.get('computer_representation', 'Float')
                     self._formatters[table_name][column_name] = NumericalFormatter(
-                        computer_representation=representation,
                         enforce_rounding=True,
                         enforce_min_max_values=True,
                     )

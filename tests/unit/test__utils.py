@@ -822,7 +822,6 @@ def test__get_transformer_init_kwargs():
     transformer = FloatFormatter(
         missing_value_replacement=None,
         learn_rounding_scheme=True,
-        computer_representation='Float64',
         enforce_min_max_values=False,
     )
 
@@ -833,7 +832,6 @@ def test__get_transformer_init_kwargs():
     transformer_kwarg_dict == {
         'missing_value_replacement': None,
         'learn_rounding_scheme': True,
-        'computer_representation': 'Float64',
     }
 
 
