@@ -3,7 +3,6 @@
 import inspect
 import logging
 import uuid
-import warnings
 from copy import deepcopy
 
 import numpy as np
@@ -17,7 +16,6 @@ from sdv.cag._utils import _validate_constraints_single_table, cast_to_datetime6
 from sdv.errors import SamplingError, SynthesizerInputError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
-from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
 from sdv.single_table.base import BaseSynthesizer
@@ -101,7 +99,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             context_columns_dict[column] = table_metadata.columns[column]
 
         context_metadata_dict['columns'] = self._update_context_column_dict(context_columns_dict)
-        return SingleTableMetadata.load_from_dict(context_metadata_dict)
+        return Metadata.load_from_dict(context_metadata_dict, single_table_name=self._table_name)
 
     def _update_context_column_dict(self, context_columns_dict):
         """Update context column dictionary based on available transformers.
@@ -184,13 +182,11 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             'verbose': verbose,
         }
         context_metadata = self._get_context_metadata()
-        with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', message=".*The 'SingleTableMetadata' is deprecated.*")
-            self._context_synthesizer = GaussianCopulaSynthesizer(
-                metadata=context_metadata,
-                enforce_min_max_values=enforce_min_max_values,
-                enforce_rounding=enforce_rounding,
-            )
+        self._context_synthesizer = GaussianCopulaSynthesizer(
+            metadata=context_metadata,
+            enforce_min_max_values=enforce_min_max_values,
+            enforce_rounding=enforce_rounding,
+        )
 
     def get_parameters(self):
         """Return the parameters used to instantiate the synthesizer."""
@@ -436,7 +432,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
 
     def _fit_context_model(self, transformed):
         LOGGER.debug(f'Fitting context synthesizer {self._context_synthesizer.__class__.__name__}')
-        context_metadata: SingleTableMetadata = self._get_context_metadata()
+        context_metadata: Metadata = self._get_context_metadata()
         if self.context_columns or self._extra_context_columns:
             context_cols = (
                 self._sequence_key + self.context_columns + list(self._extra_context_columns.keys())
@@ -449,13 +445,11 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             context[constant_column] = 0
             context_metadata.add_column(constant_column, sdtype='numerical')
 
-        with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', message=".*The 'SingleTableMetadata' is deprecated.*")
-            self._context_synthesizer = GaussianCopulaSynthesizer(
-                context_metadata,
-                enforce_min_max_values=self._context_synthesizer.enforce_min_max_values,
-                enforce_rounding=self._context_synthesizer.enforce_rounding,
-            )
+        self._context_synthesizer = GaussianCopulaSynthesizer(
+            context_metadata,
+            enforce_min_max_values=self._context_synthesizer.enforce_min_max_values,
+            enforce_rounding=self._context_synthesizer.enforce_rounding,
+        )
         context = context.groupby(self._sequence_key).first().reset_index()
         self._context_synthesizer.fit(context)
 

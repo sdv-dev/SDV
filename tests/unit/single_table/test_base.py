@@ -28,9 +28,9 @@ from sdv.errors import (
     SynthesizerInputError,
     VersionError,
 )
+from sdv.metadata._single_table import _SingleTableMetadata
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
-from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling.tabular import Condition, DataFrameCondition
 from sdv.single_table import (
     CopulaGANSynthesizer,
@@ -87,7 +87,7 @@ class TestBaseSynthesizer:
         instance = Mock()
         instance.metadata = Mock()
         instance.metadata._check_updated_flag.return_value = True
-        instance._input_metadata = SingleTableMetadata()
+        instance._input_metadata = _SingleTableMetadata()
 
         # Run
         expected_message = re.escape(
@@ -221,7 +221,7 @@ class TestBaseSynthesizer:
         assert instance._fitted is False
         assert instance._synthesizer_id == synthesizer_id
         args, kwargs = mock_data_processor.call_args
-        assert isinstance(kwargs['metadata'], SingleTableMetadata)
+        assert isinstance(kwargs['metadata'], _SingleTableMetadata)
         assert kwargs['enforce_rounding'] == instance.enforce_rounding
         assert kwargs['enforce_min_max_values'] == instance.enforce_min_max_values
         assert kwargs['locales'] == instance.locales
@@ -240,39 +240,6 @@ class TestBaseSynthesizer:
             'SYNTHESIZER CLASS NAME': 'BaseSynthesizer',
             'SYNTHESIZER ID': 'SingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         })
-
-    def test__init__with_old_metadata_future_warning(self):
-        """Test that future warning is thrown when using `SingleTableMetadata`.
-
-        This test also ensures that the multiple metadata objects stored in the instance are
-        as expected. Where:
-            - `_input_metadata` points to the original input one (id matches).
-            - `metadata` is a new instance of `Metadata`.
-            - `_original_metadata` is a new instance of `Metadata` but the id does not match
-              the `metadata` one.
-        """
-        # Setup
-        metadata = SingleTableMetadata.load_from_dict({
-            'columns': {
-                'a': {'sdtype': 'categorical'},
-            }
-        })
-        warn_msg = re.escape(
-            "The 'SingleTableMetadata' is deprecated. Please use the new "
-            "'Metadata' class for synthesizers."
-        )
-        # Run
-        with pytest.warns(FutureWarning, match=warn_msg):
-            instance = BaseSynthesizer(metadata)
-
-        # Assert
-        assert isinstance(instance._input_metadata, SingleTableMetadata)
-        assert isinstance(instance._original_metadata, Metadata)
-        assert isinstance(instance.metadata, Metadata)
-        assert id(instance._input_metadata) == id(metadata)
-        assert id(instance._original_metadata) != id(instance.metadata)
-        assert instance._original_metadata.to_dict() == instance.metadata.to_dict()
-        assert instance._input_metadata.to_dict() != instance.metadata.to_dict()
 
     def test___init__with_unified_metadata(self):
         """Test initialization with unified metadata."""
@@ -328,7 +295,7 @@ class TestBaseSynthesizer:
         assert instance.locales == 'en_CA'
         assert instance._data_processor == mock_data_processor.return_value
         args = mock_data_processor.call_args[1]
-        assert isinstance(args['metadata'], SingleTableMetadata)
+        assert isinstance(args['metadata'], _SingleTableMetadata)
         assert args['enforce_rounding'] == instance.enforce_rounding
         assert args['enforce_min_max_values'] == instance.enforce_min_max_values
         assert args['locales'] == instance.locales
@@ -970,7 +937,7 @@ class TestBaseSynthesizer:
     def test_fit_raises_warning_if_metadata_updated(self):
         """Test that ``fit`` raises a warning if the original metadata was updated."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata.load_from_dict({})
         metadata.add_column('column_a', sdtype='numerical')
         instance = BaseSynthesizer(metadata)
         instance._fit = Mock()
@@ -2179,7 +2146,7 @@ class TestBaseSingleTableSynthesizer:
     def test_sample_warns_if_metadata_updated(self, mock_datetime, caplog):
         """Test that if we call sample with updated metadata a warning will be shown."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata.load_from_dict({})
         metadata.add_column('column_a', sdtype='numerical')
         instance = BaseSingleTableSynthesizer(metadata)
         instance._sample_with_progress_bar = Mock(return_value=pd.DataFrame())

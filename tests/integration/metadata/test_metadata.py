@@ -1,19 +1,17 @@
-import os
+import json
 import re
 from copy import deepcopy
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
 
+from sdv.datasets.demo import download_demo
+from sdv.metadata._single_table import _SingleTableMetadata
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
-from sdv.metadata.multi_table import MultiTableMetadata
-from sdv.metadata.single_table import SingleTableMetadata
-from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
-from sdv.utils import load_synthesizer
-from tests.utils import download_test_demo
+from tests.utils import download_test_demo, get_multi_table_metadata
 
 DEFAULT_TABLE_NAME = 'table'
 
@@ -35,7 +33,7 @@ def test_metadata_to_dict():
 def test_load_from_json_single_table_metadata(tmp_path):
     """Test the ``load_from_json`` method with a single table metadata."""
     # Setup
-    old_metadata = SingleTableMetadata.load_from_dict({
+    old_metadata = _SingleTableMetadata.load_from_dict({
         'columns': {
             'column_1': {'sdtype': 'numerical'},
             'column_2': {'sdtype': 'categorical'},
@@ -43,7 +41,7 @@ def test_load_from_json_single_table_metadata(tmp_path):
     })
     old_metadata.save_to_json(tmp_path / 'metadata.json')
     expected_warning = re.escape(
-        'You are loading an older SingleTableMetadata object. This will be converted '
+        'You are loading an older _SingleTableMetadata object. This will be converted '
         f"into the new Metadata object with a placeholder table name ('{DEFAULT_TABLE_NAME}')."
         ' Please save this new object for future usage.'
     )
@@ -568,149 +566,6 @@ def test_detect_from_csvs(tmp_path):
     }
 
     assert metadata.to_dict() == expected_metadata
-
-
-def test_single_table_compatibility(tmp_path):
-    """Test if SingleTableMetadata still has compatibility with single table synthesizers."""
-    # Setup
-    data, _ = download_test_demo('single_table', 'fake_hotel_guests')
-    warn_msg = (
-        "The 'SingleTableMetadata' is deprecated. Please use the new "
-        "'Metadata' class for synthesizers."
-    )
-
-    single_table_metadata_dict = {
-        'primary_key': 'guest_email',
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
-        'columns': {
-            'guest_email': {'sdtype': 'email', 'pii': True},
-            'has_rewards': {'sdtype': 'boolean'},
-            'room_type': {'sdtype': 'categorical'},
-            'amenities_fee': {'sdtype': 'numerical', 'computer_representation': 'Float'},
-            'checkin_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
-            'checkout_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
-            'room_rate': {'sdtype': 'numerical', 'computer_representation': 'Float'},
-            'billing_address': {'sdtype': 'address', 'pii': True},
-            'credit_card_number': {'sdtype': 'credit_card_number', 'pii': True},
-        },
-    }
-    metadata = SingleTableMetadata.load_from_dict(single_table_metadata_dict)
-    assert isinstance(metadata, SingleTableMetadata)
-
-    # Run
-    with pytest.warns(FutureWarning, match=warn_msg):
-        synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.fit(data)
-    model_path = os.path.join(tmp_path, 'synthesizer.pkl')
-    synthesizer.save(model_path)
-
-    # Assert
-    assert os.path.exists(model_path)
-    assert os.path.isfile(model_path)
-    loaded_synthesizer = load_synthesizer(model_path)
-    assert isinstance(synthesizer, GaussianCopulaSynthesizer)
-    assert loaded_synthesizer.get_info() == synthesizer.get_info()
-    assert loaded_synthesizer.metadata._convert_to_single_table().to_dict() == metadata.to_dict()
-    loaded_sample = loaded_synthesizer.sample(10)
-    synthesizer.validate(loaded_sample)
-
-    # Run against Metadata
-    synthesizer_2 = GaussianCopulaSynthesizer(Metadata.load_from_dict(metadata.to_dict()))
-    synthesizer_2.fit(data)
-    metadata_sample = synthesizer.sample(10)
-    assert loaded_synthesizer.metadata.to_dict() == synthesizer_2.metadata.to_dict()
-    assert metadata_sample.columns.to_list() == loaded_sample.columns.to_list()
-
-
-def test_multi_table_compatibility(tmp_path):
-    """Test if MultiTableMetadata still has compatibility with multi table synthesizers."""
-    # Setup
-    data, _ = download_test_demo('multi_table', 'fake_hotels')
-    warn_msg = re.escape(
-        "The 'MultiTableMetadata' is deprecated. Please use the new "
-        "'Metadata' class for synthesizers."
-    )
-
-    multi_dict = {
-        'tables': {
-            'guests': {
-                'primary_key': 'guest_email',
-                'columns': {
-                    'guest_email': {'sdtype': 'email', 'pii': True},
-                    'hotel_id': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
-                    'has_rewards': {'sdtype': 'boolean'},
-                    'room_type': {'sdtype': 'categorical'},
-                    'amenities_fee': {'sdtype': 'numerical', 'computer_representation': 'Float'},
-                    'checkin_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
-                    'checkout_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
-                    'room_rate': {'sdtype': 'numerical', 'computer_representation': 'Float'},
-                    'billing_address': {'sdtype': 'address', 'pii': True},
-                    'credit_card_number': {'sdtype': 'credit_card_number', 'pii': True},
-                },
-            },
-            'hotels': {
-                'primary_key': 'hotel_id',
-                'columns': {
-                    'hotel_id': {'sdtype': 'id', 'regex_format': 'HID_[0-9]{3}'},
-                    'city': {'sdtype': 'categorical'},
-                    'state': {'sdtype': 'categorical'},
-                    'rating': {'sdtype': 'numerical', 'computer_representation': 'Float'},
-                    'classification': {'sdtype': 'categorical'},
-                },
-            },
-        },
-        'relationships': [
-            {
-                'parent_table_name': 'hotels',
-                'parent_primary_key': 'hotel_id',
-                'child_table_name': 'guests',
-                'child_foreign_key': 'hotel_id',
-            }
-        ],
-        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
-    }
-    metadata = MultiTableMetadata.load_from_dict(multi_dict)
-    assert type(metadata) is MultiTableMetadata
-
-    # Run
-    with pytest.warns(FutureWarning, match=warn_msg):
-        synthesizer = HMASynthesizer(metadata)
-
-    synthesizer.fit(data)
-    model_path = os.path.join(tmp_path, 'synthesizer.pkl')
-    synthesizer.save(model_path)
-
-    # Assert
-    assert os.path.exists(model_path)
-    assert os.path.isfile(model_path)
-
-    # Load HMASynthesizer
-    loaded_synthesizer = load_synthesizer(model_path)
-
-    # Asserts
-    assert isinstance(synthesizer, HMASynthesizer)
-    assert loaded_synthesizer.get_info() == synthesizer.get_info()
-
-    # Load Metadata
-    expected_metadata = metadata.to_dict()
-
-    # Asserts
-
-    assert loaded_synthesizer.metadata.to_dict() == expected_metadata
-
-    # Sample from loaded synthesizer
-    loaded_sample = loaded_synthesizer.sample(10)
-    synthesizer.validate(loaded_sample)
-
-    # Run against Metadata
-    synthesizer_2 = HMASynthesizer(Metadata.load_from_dict(metadata.to_dict()))
-    synthesizer_2.fit(data)
-    metadata_sample = synthesizer.sample(10)
-    expected_metadata = loaded_synthesizer.metadata.to_dict()
-    expected_metadata['METADATA_SPEC_VERSION'] = 'V1'
-    assert expected_metadata == synthesizer_2.metadata.to_dict()
-    for table in metadata_sample:
-        assert metadata_sample[table].columns.to_list() == loaded_sample[table].columns.to_list()
 
 
 params = [
@@ -1657,7 +1512,7 @@ def test_add_column_relationship_fails_with_primary_key_column():
     """Test that adding a column relationship fails if the column is part of the primary key.
 
     This test also adds a `billing` mutation to the column relationship types
-    for `SingleTableMetadata`. The error that is being raised otherwise
+    for `_SingleTableMetadata`. The error that is being raised otherwise
     is `ImportError` instead of `InvalidMetadataError`.
     """
     # Setup
@@ -1665,7 +1520,7 @@ def test_add_column_relationship_fails_with_primary_key_column():
     metadata.update_column(column_name='billing_address', sdtype='street_address')
     metadata.set_primary_key(['guest_email', 'billing_address'])
     expected_msg = "Cannot use primary key 'billing_address' in column relationship."
-    SingleTableMetadata._COLUMN_RELATIONSHIP_TYPES['billing'] = Mock()
+    _SingleTableMetadata._COLUMN_RELATIONSHIP_TYPES['billing'] = Mock()
 
     # Run and Assert
     with pytest.raises(InvalidMetadataError, match=expected_msg):
@@ -1674,8 +1529,8 @@ def test_add_column_relationship_fails_with_primary_key_column():
         )
 
     # Test cleanup: remove 'billing' from the class-level relationship types.
-    # Without this, the mutation would leak into later SingleTableMetadata instances.
-    SingleTableMetadata._COLUMN_RELATIONSHIP_TYPES.pop('billing')
+    # Without this, the mutation would leak into later _SingleTableMetadata instances.
+    _SingleTableMetadata._COLUMN_RELATIONSHIP_TYPES.pop('billing')
 
 
 def test_metadata_fails_for_relationship_with_set_primary_key_column_in_relationship():
@@ -1856,3 +1711,395 @@ def test_detect_from_dataframes_verbose_no_pk_found(capsys):
     captured = capsys.readouterr().out
     assert expected_output == captured
     assert metadata.tables['users'].primary_key is None
+
+
+def test_multi_table_metadata():
+    """Test ``to_dict`` method on ``Metadata``."""
+    # Create an instance
+    instance = Metadata()
+
+    # To dict
+    result = instance.to_dict()
+
+    # Assert
+    assert result == {'tables': {}, 'relationships': [], 'METADATA_SPEC_VERSION': 'V1'}
+    assert instance.tables == {}
+    assert instance.relationships == []
+
+
+def test_multi_table_metadata_composite_keys():
+    """Test ``Metadata`` with composite keys."""
+    # Setup
+    metadata_dict = {
+        'tables': {
+            'table1': {
+                'columns': {
+                    'table1_id': {'sdtype': 'id'},
+                    'cat_col': {'sdtype': 'categorical'},
+                },
+                'primary_key': ['table1_id', 'cat_col'],
+            },
+            'table2': {
+                'columns': {
+                    'pk': {'sdtype': 'id'},
+                    'fk1': {'sdtype': 'id'},
+                    'fk2': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'pk',
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'table1',
+                'parent_primary_key': ['table1_id', 'cat_col'],
+                'child_table_name': 'table2',
+                'child_foreign_key': ['fk1', 'fk2'],
+            },
+        ],
+    }
+
+    # Run
+    instance = Metadata.load_from_dict(metadata_dict)
+    result = instance.to_dict()
+
+    # Assert
+    instance.validate()
+    assert result == {**metadata_dict, 'METADATA_SPEC_VERSION': 'V1'}
+    assert instance.relationships == metadata_dict['relationships']
+
+
+@patch('rdt.transformers')
+def test_add_column_relationship(mock_rdt_transformers):
+    """Test ``add_column_relationship`` method."""
+
+    # Setup
+    class RandomLocationGeneratorMock:
+        @classmethod
+        def _validate_sdtypes(cls, columns_to_sdtypes):
+            pass
+
+    mock_rdt_transformers.address.RandomLocationGenerator = RandomLocationGeneratorMock
+    _, instance = download_demo('multi_table', 'fake_hotels')
+    instance.update_column('city', 'hotels', sdtype='city')
+    instance.update_column('state', 'hotels', sdtype='state')
+
+    # Run
+    instance.add_column_relationship('address', ['city', 'state'], 'hotels')
+
+    # Assert
+    instance.validate()
+    assert instance.tables['hotels'].column_relationships == [
+        {'type': 'address', 'column_names': ['city', 'state']}
+    ]
+
+
+def test_remove_primary_key():
+    # Setup
+    metadata = get_multi_table_metadata()
+
+    # Run
+    metadata.remove_primary_key('nesreca')
+
+    # Assert
+    expected_relationships = [
+        {
+            'parent_table_name': 'upravna_enota',
+            'parent_primary_key': 'id_upravna_enota',
+            'child_table_name': 'nesreca',
+            'child_foreign_key': 'upravna_enota',
+        },
+        {
+            'parent_table_name': 'upravna_enota',
+            'parent_primary_key': 'id_upravna_enota',
+            'child_table_name': 'oseba',
+            'child_foreign_key': 'upravna_enota',
+        },
+    ]
+    assert metadata.tables['nesreca'].primary_key is None
+    assert metadata.relationships == expected_relationships
+
+
+def test_upgrade_metadata(tmp_path):
+    """Test the ``upgrade_metadata`` method."""
+    # Setup
+    old_metadata = {
+        'tables': {
+            'nesreca': {
+                'fields': {
+                    'upravna_enota': {
+                        'type': 'id',
+                        'subtype': 'integer',
+                        'ref': {'table': 'upravna_enota', 'field': 'id_upravna_enota'},
+                    },
+                    'id_nesreca': {'type': 'id', 'subtype': 'integer'},
+                },
+                'primary_key': 'id_nesreca',
+            },
+            'oseba': {
+                'fields': {
+                    'upravna_enota': {
+                        'type': 'id',
+                        'subtype': 'integer',
+                        'ref': {'table': 'upravna_enota', 'field': 'id_upravna_enota'},
+                    },
+                    'id_nesreca': {
+                        'type': 'id',
+                        'subtype': 'integer',
+                        'ref': {'table': 'nesreca', 'field': 'id_nesreca'},
+                    },
+                },
+            },
+            'upravna_enota': {
+                'fields': {'id_upravna_enota': {'type': 'id', 'subtype': 'integer'}},
+                'primary_key': 'id_upravna_enota',
+            },
+        }
+    }
+    filepath = tmp_path / 'old.json'
+    old_metadata_file = open(filepath, 'w')
+    json.dump(old_metadata, old_metadata_file)
+    old_metadata_file.close()
+
+    # Run
+    new_metadata = Metadata.upgrade_metadata(filepath=filepath).to_dict()
+
+    # Assert
+    expected_metadata = {
+        'tables': {
+            'nesreca': {
+                'primary_key': 'id_nesreca',
+                'columns': {
+                    'upravna_enota': {'sdtype': 'id', 'regex_format': r'\d{30}'},
+                    'id_nesreca': {'sdtype': 'id', 'regex_format': r'\d{30}'},
+                },
+            },
+            'oseba': {
+                'columns': {
+                    'upravna_enota': {'sdtype': 'id', 'regex_format': r'\d{30}'},
+                    'id_nesreca': {'sdtype': 'id', 'regex_format': r'\d{30}'},
+                }
+            },
+            'upravna_enota': {
+                'primary_key': 'id_upravna_enota',
+                'columns': {'id_upravna_enota': {'sdtype': 'id', 'regex_format': r'\d{30}'}},
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'upravna_enota',
+                'parent_primary_key': 'id_upravna_enota',
+                'child_table_name': 'nesreca',
+                'child_foreign_key': 'upravna_enota',
+            },
+            {
+                'parent_table_name': 'upravna_enota',
+                'parent_primary_key': 'id_upravna_enota',
+                'child_table_name': 'oseba',
+                'child_foreign_key': 'upravna_enota',
+            },
+            {
+                'parent_table_name': 'nesreca',
+                'parent_primary_key': 'id_nesreca',
+                'child_table_name': 'oseba',
+                'child_foreign_key': 'id_nesreca',
+            },
+        ],
+        'METADATA_SPEC_VERSION': 'V1',
+    }
+    assert new_metadata['METADATA_SPEC_VERSION'] == expected_metadata['METADATA_SPEC_VERSION']
+    assert new_metadata['tables'] == expected_metadata['tables']
+    for relationship in new_metadata['relationships']:
+        assert relationship in expected_metadata['relationships']
+
+
+def test_detect_from_dataframes():
+    """Test the ``detect_from_dataframes`` method."""
+    # Setup
+    real_data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+
+    # Run
+    metadata = Metadata.detect_from_dataframes(real_data)
+
+    # Assert
+    metadata.update_column(
+        table_name='hotels',
+        column_name='classification',
+        sdtype='categorical',
+    )
+
+    expected_metadata = {
+        'tables': {
+            'hotels': {
+                'columns': {
+                    'hotel_id': {'sdtype': 'id'},
+                    'city': {'sdtype': 'city', 'pii': True},
+                    'state': {'sdtype': 'administrative_unit', 'pii': True},
+                    'rating': {'sdtype': 'numerical'},
+                    'classification': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'hotel_id',
+            },
+            'guests': {
+                'columns': {
+                    'guest_email': {'sdtype': 'email', 'pii': True},
+                    'hotel_id': {'sdtype': 'id'},
+                    'has_rewards': {'sdtype': 'categorical'},
+                    'room_type': {'sdtype': 'categorical'},
+                    'amenities_fee': {'sdtype': 'numerical'},
+                    'checkin_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
+                    'checkout_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
+                    'room_rate': {'sdtype': 'numerical'},
+                    'billing_address': {'sdtype': 'categorical'},
+                    'credit_card_number': {'sdtype': 'credit_card_number', 'pii': True},
+                },
+                'primary_key': 'guest_email',
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'hotels',
+                'child_table_name': 'guests',
+                'parent_primary_key': 'hotel_id',
+                'child_foreign_key': 'hotel_id',
+            }
+        ],
+        'METADATA_SPEC_VERSION': 'V1',
+    }
+    assert metadata.to_dict() == expected_metadata
+
+
+def test_get_column_names():
+    """Test the ``get_column_names`` method."""
+    # Setup
+    metadata = get_multi_table_metadata()
+
+    # Run
+    matches = metadata.get_column_names('nesreca', sdtype='id')
+
+    # Assert
+    assert set(matches) == {'upravna_enota', 'id_nesreca'}
+
+
+def test_get_table_metadata():
+    """Test the ``get_table_metadata`` method."""
+    # Setup
+    metadata = get_multi_table_metadata()
+    metadata.add_column('latitude', 'nesreca', sdtype='latitude')
+    metadata.add_column('longitude', 'nesreca', sdtype='longitude')
+    metadata.add_column_relationship('gps', ['latitude', 'longitude'], 'nesreca')
+
+    # Run
+    table_metadata = metadata.get_table_metadata('nesreca')
+
+    # Assert
+    assert isinstance(table_metadata, Metadata)
+    expected_metadata = {
+        'METADATA_SPEC_VERSION': 'V1',
+        'relationships': [],
+        'tables': {
+            'nesreca': {
+                'column_relationships': [
+                    {'column_names': ['latitude', 'longitude'], 'type': 'gps'}
+                ],
+                'columns': {
+                    'id_nesreca': {'sdtype': 'id'},
+                    'latitude': {'pii': True, 'sdtype': 'latitude'},
+                    'longitude': {'pii': True, 'sdtype': 'longitude'},
+                    'nesreca_val': {'sdtype': 'numerical'},
+                    'upravna_enota': {'sdtype': 'id'},
+                },
+                'primary_key': 'id_nesreca',
+            }
+        },
+    }
+    assert table_metadata.to_dict() == expected_metadata
+
+
+def test_add_relationship_matching_composite_primary_key():
+    """Test that add_relationship succeeds when parent_primary_key matches the actual PK."""
+    # Setup
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'accounts': {
+                'columns': {
+                    'user_id': {'sdtype': 'id'},
+                    'account_type': {'sdtype': 'id'},
+                    'col1': {'sdtype': 'numerical'},
+                },
+                'primary_key': ['user_id', 'account_type'],
+            },
+            'transactions': {
+                'columns': {
+                    'transaction_id': {'sdtype': 'id'},
+                    'user_id': {'sdtype': 'id'},
+                    'account_type': {'sdtype': 'id'},
+                },
+                'primary_key': 'transaction_id',
+            },
+        },
+    })
+
+    # Run
+    metadata.add_relationship(
+        parent_table_name='accounts',
+        child_table_name='transactions',
+        parent_primary_key=['account_type', 'user_id'],
+        child_foreign_key=['account_type', 'user_id'],
+    )
+
+    # Assert
+    assert len(metadata.relationships) == 1
+
+
+@pytest.mark.parametrize(
+    'parent_primary_key, child_foreign_key',
+    [
+        (['user_id', 'account_type'], ['user_id', 'account_type']),
+        (
+            ['user_id', 'account_type', 'region', 'bogus'],
+            ['user_id', 'account_type', 'region', 'bogus'],
+        ),
+        (['user_id', 'bogus'], ['user_id', 'bogus']),
+    ],
+    ids=['subset of actual pk', 'superset of actual pk', 'partial overlap'],
+)
+def test_add_relationship_mismatched_primary_key(parent_primary_key, child_foreign_key):
+    """Test that add_relationship raises when parent_primary_key doesn't match the actual PK."""
+    # Setup
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'accounts': {
+                'columns': {
+                    'user_id': {'sdtype': 'id'},
+                    'account_type': {'sdtype': 'id'},
+                    'region': {'sdtype': 'id'},
+                    'bogus': {'sdtype': 'id'},
+                    'col1': {'sdtype': 'numerical'},
+                },
+                'primary_key': ['user_id', 'account_type', 'region'],
+            },
+            'transactions': {
+                'columns': {
+                    'transaction_id': {'sdtype': 'id'},
+                    'user_id': {'sdtype': 'id'},
+                    'account_type': {'sdtype': 'id'},
+                    'region': {'sdtype': 'id'},
+                    'bogus': {'sdtype': 'id'},
+                },
+                'primary_key': 'transaction_id',
+            },
+        },
+    })
+
+    # Run and Assert
+    error_msg = re.escape(
+        f'Relationship between tables (accounts, transactions) '
+        f'has a mismatched primary key {sorted(parent_primary_key)}.'
+    )
+    with pytest.raises(InvalidMetadataError, match=error_msg):
+        metadata.add_relationship(
+            parent_table_name='accounts',
+            child_table_name='transactions',
+            parent_primary_key=parent_primary_key,
+            child_foreign_key=child_foreign_key,
+        )

@@ -20,7 +20,7 @@ from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.errors import NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.errors import SynthesizerInputError
-from sdv.metadata.single_table import SingleTableMetadata
+from sdv.metadata._single_table import _SingleTableMetadata
 
 
 class TestDataProcessor:
@@ -50,7 +50,7 @@ class TestDataProcessor:
     def test__detect_multi_column_transformers_address(self, transformers_mock):
         """Test the ``_detect_multi_column_transformers`` method with address relationship."""
         # Setup
-        metadata = SingleTableMetadata().load_from_dict({
+        metadata = _SingleTableMetadata().load_from_dict({
             'columns': {
                 'country_column': {'sdtype': 'country_code'},
                 'city_column': {'sdtype': 'city'},
@@ -60,7 +60,7 @@ class TestDataProcessor:
             ],
         })
         metadata._valid_column_relationships = metadata.column_relationships
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.metadata = metadata
         dp._locales = ['en_US', 'en_GB']
         randomlocationgenerator = Mock()
@@ -79,7 +79,7 @@ class TestDataProcessor:
     def test__detect_multi_column_transformers_gps(self, transformers_mock):
         """Test the ``_detect_multi_column_transformers`` method with gps relationship."""
         # Setup
-        metadata = SingleTableMetadata().load_from_dict({
+        metadata = _SingleTableMetadata().load_from_dict({
             'columns': {
                 'latitude_column': {'sdtype': 'latitude'},
                 'longitude_column': {'sdtype': 'longitude'},
@@ -89,7 +89,7 @@ class TestDataProcessor:
             ],
         })
         metadata._valid_column_relationships = metadata.column_relationships
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.metadata = metadata
         dp._locales = ['en_US', 'en_GB']
         gpsnoiser = Mock()
@@ -106,7 +106,7 @@ class TestDataProcessor:
     def test__detect_multi_column_transformers_gps_address(self, transformers_mock):
         """Test the ``_detect_multi_column_transformers`` method with different relationships."""
         # Setup
-        metadata = SingleTableMetadata().load_from_dict({
+        metadata = _SingleTableMetadata().load_from_dict({
             'columns': {
                 'latitude_column': {'sdtype': 'latitude'},
                 'longitude_column': {'sdtype': 'longitude'},
@@ -119,7 +119,7 @@ class TestDataProcessor:
             ],
         })
         metadata._valid_column_relationships = metadata.column_relationships
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.metadata = metadata
         dp._locales = ['en_US', 'en_GB']
         gpsnoiser = Mock()
@@ -161,7 +161,7 @@ class TestDataProcessor:
             - enforce_min_max_values set to False.
         """
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('col', sdtype='id')
         metadata.add_column('col_2', sdtype='id')
         metadata.add_alternate_keys(['col_2'])
@@ -216,7 +216,7 @@ class TestDataProcessor:
     def test___init___with_id_columns_use_old_behavior(self):
         """Test the ``__init__`` method with id_columns_use_old_behavior parameter."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('id_col_1', sdtype='id')
         metadata.add_column('id_col_2', sdtype='id')
         metadata.add_column('regular_col', sdtype='categorical')
@@ -234,26 +234,26 @@ class TestDataProcessor:
         """Test the ``__init__`` method without using mocks.
 
         Setup:
-            - Create ``SingleTableMetadata`` instance with one column and one constraint.
+            - Create ``_SingleTableMetadata`` instance with one column and one constraint.
 
         Input:
-            - The ``SingleTableMetadata``.
+            - The ``_SingleTableMetadata``.
         """
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('col', sdtype='numerical')
 
         # Run
         instance = DataProcessor(metadata=metadata)
 
         # Assert
-        assert isinstance(instance.metadata, SingleTableMetadata)
+        assert isinstance(instance.metadata, _SingleTableMetadata)
         assert instance.metadata.columns == {'col': {'sdtype': 'numerical'}}
 
     def test__get_grouped_columns(self):
         """Test the ``_get_grouped_columns`` method."""
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.grouped_columns_to_transformers = {
             ('col1', 'col2'): 'transformer_A',
             ('col3', 'col4'): 'transformer_B',
@@ -282,7 +282,7 @@ class TestDataProcessor:
             - The original DataProcessor instance.
         """
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('high', sdtype='numerical')
         metadata.add_column('low', sdtype='numerical')
         instance = DataProcessor(metadata=metadata)
@@ -313,7 +313,7 @@ class TestDataProcessor:
             - The original DataProcessor instance.
         """
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('col', sdtype='numerical')
         instance = DataProcessor(metadata=metadata)
 
@@ -341,7 +341,7 @@ class TestDataProcessor:
             - model key word args.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp._model_kwargs = {'model': {'arg1': 10, 'arg2': True}}
 
         # Run
@@ -363,7 +363,7 @@ class TestDataProcessor:
             - ``_model_kwargs`` should be set.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
 
         # Run
         dp.set_model_kwargs('model', {'arg1': 10, 'arg2': True})
@@ -378,7 +378,7 @@ class TestDataProcessor:
         ``sdtype`` as value. When ``primary_keys`` is ``False`` this should not be included.
         """
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('col1', sdtype='categorical')
         metadata.add_column('col2', sdtype='id')
         metadata.add_column('col3', sdtype='numerical', computer_representation='Int8')
@@ -398,7 +398,7 @@ class TestDataProcessor:
         ``sdtype`` as value. When ``primary_keys`` is ``True`` this should be included.
         """
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('col1', sdtype='categorical')
         metadata.add_column('col2', sdtype='id')
         metadata.add_column('col3', sdtype='numerical', computer_representation='Int8')
@@ -574,7 +574,7 @@ class TestDataProcessor:
         from the dictionary ``self._transformers_by_sdtype``.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp._get_transformer_with_parameters = Mock(return_value='FloatFormatter')
 
         # Run
@@ -590,7 +590,7 @@ class TestDataProcessor:
         of a transformer with those.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
 
         # Run
         result = dp._get_transformer_instance('numerical', {'computer_representation': 'Int32'})
@@ -606,7 +606,7 @@ class TestDataProcessor:
         when creating a new instance of a transformer.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp._transformers_by_sdtype['numerical'] = FloatFormatter(
             missing_value_replacement='random',
             missing_value_generation='from_column',
@@ -657,7 +657,7 @@ class TestDataProcessor:
             'unknown': ['a', 'b', 'c'],
             'address': ['123 Main St', '456 Main St', '789 Main St'],
         })
-        dp = DataProcessor(SingleTableMetadata(), locales=locales)
+        dp = DataProcessor(_SingleTableMetadata(), locales=locales)
         dp.metadata = Mock()
         dp._enforce_min_max_values = True
         dp.create_anonymized_transformer = Mock()
@@ -821,7 +821,7 @@ class TestDataProcessor:
             'unknown_pii_true': ['a', 'b', 'c'],
             'unknown_pii_false': ['a', 'b', 'c'],
         })
-        metadata = SingleTableMetadata().load_from_dict({
+        metadata = _SingleTableMetadata().load_from_dict({
             'columns': {
                 'name_pii': {'sdtype': 'name'},
                 'phone_pii': {'sdtype': 'phone_number', 'pii': True},
@@ -879,7 +879,7 @@ class TestDataProcessor:
             'country_column': ['US', 'ES', 'US'],
             'city_column': ['New York', 'Madrid', 'New York'],
         })
-        metadata = SingleTableMetadata().load_from_dict({
+        metadata = _SingleTableMetadata().load_from_dict({
             'columns': {
                 'country_column': {'sdtype': 'country'},
                 'city_column': {'sdtype': 'city'},
@@ -916,7 +916,7 @@ class TestDataProcessor:
             'phone_number': ['+1 (234) 535-2341', '+1 (334) 535-2341'],
             'email': ['test@gmail.com', 'test2@gmail.com.br'],
         })
-        metadata = SingleTableMetadata().load_from_dict({
+        metadata = _SingleTableMetadata().load_from_dict({
             'columns': {
                 'email': {'sdtype': 'email'},
                 'phone_number': {'sdtype': 'phone_number'},
@@ -946,7 +946,7 @@ class TestDataProcessor:
         data = pd.DataFrame({
             'numerical_column': [12321, 198, 1958],
         })
-        metadata = SingleTableMetadata().load_from_dict({
+        metadata = _SingleTableMetadata().load_from_dict({
             'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
             'columns': {'numerical_column': {'sdtype': 'unknown', 'pii': True}},
         })
@@ -964,7 +964,7 @@ class TestDataProcessor:
         data = pd.DataFrame({
             'id_column': ['id1', 'id2', 'id3'],
         })
-        metadata = SingleTableMetadata().load_from_dict({
+        metadata = _SingleTableMetadata().load_from_dict({
             'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
             'columns': {'id_column': {'sdtype': 'id'}},
         })
@@ -981,7 +981,7 @@ class TestDataProcessor:
     def test__get_id_column_config_with_old_behavior(self):
         """Test _get_id_column_config with a column in id_columns_use_old_behavior."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('id_col', sdtype='id')
         data = pd.DataFrame({'id_col': ['id1', 'id2', 'id3']})
 
@@ -1000,7 +1000,7 @@ class TestDataProcessor:
     def test_update_transformers_not_fitted(self):
         """Test when ``self._hyper_transformer`` is ``None`` raises a ``NotFittedError``."""
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
 
         # Run and Assert
         error_msg = (
@@ -1012,7 +1012,7 @@ class TestDataProcessor:
     def test_update_transformer_with_multi_column(self):
         """Test when a multi-column transformer is updated."""
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.grouped_columns_to_transformers = {
             ('col_3', 'col_4'): 'transformer_3',
         }
@@ -1042,7 +1042,7 @@ class TestDataProcessor:
 
     def test_update_transformers_ignores_rdt_refit_warning(self):
         """Test silencing hypertransformer refit warning (replaced by SDV warning elsewhere)"""
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('col1', sdtype='numerical')
         metadata.add_column('col2', sdtype='numerical')
 
@@ -1058,7 +1058,7 @@ class TestDataProcessor:
         ``RegexGenerator`` for keys.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp._keys = ['pk_column', 'b']
         dp._hyper_transformer = Mock()
 
@@ -1089,7 +1089,7 @@ class TestDataProcessor:
             - ``HyperTransformer`` should fit the data.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         ht_mock.return_value._fitted = False
         data = pd.DataFrame({'a': [1, 2, 3]})
 
@@ -1116,7 +1116,7 @@ class TestDataProcessor:
             - ``HyperTransformer`` should not fit the data.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         ht_mock.return_value._fitted = False
         ht_mock.return_value.field_transformers = {}
         data = pd.DataFrame()
@@ -1136,7 +1136,7 @@ class TestDataProcessor:
         This should not re-fit or re-create the ``self._hyper_transformer``.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp._hyper_transformer = Mock()
         dp._hyper_transformer.field_transformers = {'name': 'categorical'}
         dp._hyper_transformer._fitted = True
@@ -1160,7 +1160,7 @@ class TestDataProcessor:
         the ``self._hyper_transformer``.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         ht_mock.return_value._fitted = True
         ht_mock.return_value._modified_config = True
         data = pd.DataFrame({'a': [1, 2, 3]})
@@ -1180,7 +1180,7 @@ class TestDataProcessor:
         ``computer_representation``), which should create and learn a ``NumericalFormatter``.
 
         Setup:
-            - ``SingleTableMetadata`` describing the three columns.
+            - ``_SingleTableMetadata`` describing the three columns.
             - A mock of ``NumericalFormatter.learn_format``.
         """
         # Setup
@@ -1191,7 +1191,7 @@ class TestDataProcessor:
             'date_col1': ['16-05-2023', '14-04-2022'],
             'date_col2': pd.to_datetime(['2021-02-15', '2022-05-16']),
         })
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('col1', sdtype='categorical')
         metadata.add_column('col2', sdtype='numerical')
         metadata.add_column('col3', sdtype='numerical', computer_representation='Int8')
@@ -1380,7 +1380,7 @@ class TestDataProcessor:
         """
         # Setup
         data = pd.DataFrame({'item 0': [0, 1, 2], 'item 1': [True, True, False]}, index=[0, 1, 2])
-        dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
+        dp = DataProcessor(_SingleTableMetadata(), table_name='table_name')
         dp._hyper_transformer = Mock()
         dp.get_sdtypes = Mock()
         dp.get_sdtypes.return_value = {'item 0': 'numerical', 'item 1': 'boolean'}
@@ -1462,7 +1462,7 @@ class TestDataProcessor:
             },
             index=[0, 1, 2],
         )
-        dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
+        dp = DataProcessor(_SingleTableMetadata(), table_name='table_name')
         dp._hyper_transformer = Mock()
         dp._hyper_transformer.transform_subset.return_value = data
         dp._hyper_transformer.field_transformers = {'id': object()}
@@ -1509,7 +1509,7 @@ class TestDataProcessor:
         """
         # Setup
         data = pd.DataFrame({'item 0': [0, 1, 2], 'item 1': [True, True, False]}, index=[0, 1, 2])
-        dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
+        dp = DataProcessor(_SingleTableMetadata(), table_name='table_name')
 
         # Run and Assert
         with pytest.raises(NotFittedError):
@@ -1529,7 +1529,7 @@ class TestDataProcessor:
         """
         # Setup
         data = pd.DataFrame({'item 0': [0, 1, 2], 'item 1': [True, True, False]}, index=[0, 1, 2])
-        dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
+        dp = DataProcessor(_SingleTableMetadata(), table_name='table_name')
         dp._hyper_transformer = Mock()
         dp._hyper_transformer.transform_subset.side_effect = ConfigNotSetError()
         dp.get_sdtypes = Mock()
@@ -1566,7 +1566,7 @@ class TestDataProcessor:
             - The reverse transformed data.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.fitted = True
         dp.metadata = Mock()
         dp.metadata.columns = {'a': None, 'b': None, 'c': None, 'key': None, 'd': None}
@@ -1615,7 +1615,7 @@ class TestDataProcessor:
         data = pd.DataFrame({
             'col': [99999999999999999990, 99999999999999999991, 99999999999999999992]
         })
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp._dtypes = {'col': 'int64'}
         dp.metadata = Mock()
         dp.metadata.columns = {'col': None}
@@ -1654,7 +1654,7 @@ class TestDataProcessor:
             - The reverse transformed data.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
+        dp = DataProcessor(_SingleTableMetadata(), table_name='table_name')
         dp.fitted = True
         dp.metadata = Mock()
         dp.metadata.columns = {'a': None, 'b': None, 'c': None}
@@ -1696,7 +1696,7 @@ class TestDataProcessor:
         """
         # Setup
         data = pd.DataFrame({'item 0': [0, 1, 2], 'item 1': [True, True, False]}, index=[0, 1, 2])
-        dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
+        dp = DataProcessor(_SingleTableMetadata(), table_name='table_name')
 
         # Run and Assert
         with pytest.raises(NotFittedError):
@@ -1715,7 +1715,7 @@ class TestDataProcessor:
         """
         # Setup
         data = pd.DataFrame({'bar': [0.2, 1.7, 2]})
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.fitted = True
         dp._hyper_transformer = Mock()
         dp._hyper_transformer._output_columns = []
@@ -1742,7 +1742,7 @@ class TestDataProcessor:
         """
         # Setup
         data = pd.DataFrame({'bar': ['a', 'b', 'c']})
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.fitted = True
         dp._hyper_transformer = Mock()
         dp._hyper_transformer._output_columns = []
@@ -1776,7 +1776,7 @@ class TestDataProcessor:
         """
         # Setup
         data = pd.DataFrame({'bar': [1.0, 2.0, np.nan]})
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.fitted = True
         dp._hyper_transformer = Mock()
         dp._hyper_transformer._output_columns = []
@@ -1809,7 +1809,7 @@ class TestDataProcessor:
         """
         # Setup
         data = pd.DataFrame({'bar': ['a', 'b', 'c']})
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.fitted = True
         dp._hyper_transformer = Mock()
         dp._hyper_transformer._output_columns = []
@@ -1838,7 +1838,7 @@ class TestDataProcessor:
         unchanged.
 
         Setup:
-            - ``SingleTableMetadata`` describing the three columns.
+            - ``_SingleTableMetadata`` describing the three columns.
             - Two mocks of ``NumericalFormatter``, one for each numerical column,
             with the appropriate return value for the ``format_data`` method.
             - ``formatters`` attribute should have a dict of the two numerical columns
@@ -1846,7 +1846,7 @@ class TestDataProcessor:
         """
         # Setup
         data = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4], 'col3': ['abc', 'def']})
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('col1', sdtype='numerical')
         metadata.add_column('col2', sdtype='numerical')
         metadata.add_column('col3', sdtype='categorical')
@@ -1891,7 +1891,7 @@ class TestDataProcessor:
             'col2': ['16-05-2023', '14-04-2022'],
             'col3': pd.to_datetime(['2021-02-15', '2022-05-16']),
         })
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('col1', sdtype='categorical')
         metadata.add_column('col2', sdtype='datetime')
         metadata.add_column('col3', sdtype='datetime', datetime_format='%Y-%d-%M')
@@ -1922,7 +1922,7 @@ class TestDataProcessor:
         in the conditions dict should use the condition instead.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.fitted = True
         dp.metadata = Mock()
         dp.metadata.columns = {
@@ -1985,7 +1985,7 @@ class TestDataProcessor:
     def test__get_id_column_config_with_pii_behavior(self):
         """Test _get_id_column_config behavior with PII columns using a non-id sdtype."""
         # Setup - use a PII sdtype instead of 'id' with pii=True
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('ssn_col', sdtype='ssn')  # Use a PII sdtype
         data = pd.DataFrame({'ssn_col': ['123-45-6789', '987-65-4321', '555-55-5555']})
 

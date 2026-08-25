@@ -22,7 +22,7 @@ from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError
-from sdv.metadata import SingleTableMetadata
+from sdv.metadata._single_table import _SingleTableMetadata
 from sdv.metadata.metadata import Metadata
 
 
@@ -363,7 +363,7 @@ class TestDataProcessor:
             'numerical_col': np.random.rand(20),
         })
 
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.detect_from_dataframe(data)
 
         dp = DataProcessor(metadata)
@@ -378,7 +378,7 @@ class TestDataProcessor:
         """Test that updating to transformer to id generator is valid"""
         # Setup
         data = pd.DataFrame({'user_id': list(range(4)), 'user_cat': ['a', 'b', 'c', 'd']})
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.detect_from_dataframe(data)
         metadata.update_column('user_id', sdtype='id')
         metadata.set_primary_key('user_id')
@@ -439,7 +439,7 @@ class TestDataProcessor:
         # Setup
         data = pd.DataFrame({column_name: data_series})
         data_with_nans = pd.DataFrame({column_name: [1.1, 2.2, 3.3, np.nan]})
-        metadata = SingleTableMetadata.load_from_dict({
+        metadata = _SingleTableMetadata.load_from_dict({
             'columns': {column_name: {'sdtype': 'numerical'}}
         })
         data_processor = DataProcessor(metadata)
@@ -465,7 +465,7 @@ class TestDataProcessor:
             'amount': [100.0, 250.5, 75.0, 300.0],
         })
 
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('user_id', sdtype='id')
         metadata.add_column('session_id', sdtype='id')
         metadata.add_column('transaction_id', sdtype='id')
