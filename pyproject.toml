@@ -48,6 +48,7 @@ dependencies = [
     "sdmetrics>=0.28.1",
     'platformdirs>=4.0',
     'pyyaml>=6.0.1',
+    'plotly<7'
 ]
 
 [project.urls]
