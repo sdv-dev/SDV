@@ -5,9 +5,9 @@ import pandas as pd
 import pytest
 from pandas.api.types import is_object_dtype
 
+from sdv._utils import _cast_to_datetime64
 from sdv.cag import Inequality
 from sdv.cag._errors import ConstraintNotMetError
-from sdv.cag._utils import cast_to_datetime64
 from sdv.datasets.demo import download_demo
 from sdv.evaluation import run_diagnostic
 from sdv.metadata import Metadata
@@ -1038,8 +1038,8 @@ def test_datetime_values_are_clipped_to_min_max_in_constraint():
 
     for col in ['checkin_date', 'checkout_date']:
         assert data[col].dtype == synthetic_data[col].dtype
-        data[col] = cast_to_datetime64(data[col], datetime_format=datetime_format)
-        synthetic_data[col] = cast_to_datetime64(
+        data[col] = _cast_to_datetime64(data[col], datetime_format=datetime_format)
+        synthetic_data[col] = _cast_to_datetime64(
             synthetic_data[col], datetime_format=datetime_format
         )
 

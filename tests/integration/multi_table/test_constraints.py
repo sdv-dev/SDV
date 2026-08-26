@@ -94,9 +94,9 @@ def test_add_constraint_iteratively():
     assert all(sampled['parent_table']['colB'] < sampled['parent_table']['colC'])
 
 
-@pytest.mark.parametrize('computer_representation, dtype', [('Int64', 'int64'), ('Int8', 'int8')])
-def test_ohe_with_computer_representation(computer_representation, dtype):
-    """Test OneHotEncoding constraint with integer columns and computer representation"""
+@pytest.mark.parametrize('dtype', ['int64', 'int16', 'int8'])
+def test_ohe_with_integer_dtypes(dtype):
+    """Test OneHotEncoding constraint with integer columns with different integer dtypes."""
     # Setup
     metadata = Metadata.load_from_dict({
         'tables': {
@@ -104,11 +104,9 @@ def test_ohe_with_computer_representation(computer_representation, dtype):
                 'columns': {
                     'a': {
                         'sdtype': 'numerical',
-                        'computer_representation': computer_representation,
                     },
                     'b': {
                         'sdtype': 'numerical',
-                        'computer_representation': computer_representation,
                     },
                 },
             },

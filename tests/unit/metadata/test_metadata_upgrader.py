@@ -42,10 +42,10 @@ def test_convert_metadata():
         'columns': {
             'start_date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
             'end_date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
-            'salary': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'salary': {'sdtype': 'numerical'},
             'duration': {'sdtype': 'categorical'},
             'student_id': {'sdtype': 'id', 'regex_format': r'\d{30}'},
-            'high_perc': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+            'high_perc': {'sdtype': 'numerical'},
             'placed': {'sdtype': 'boolean'},
             'ssn': {'sdtype': 'ssn', 'pii': True},
             'credit_card': {'sdtype': 'credit_card_number', 'pii': True},

@@ -127,7 +127,6 @@ class OneHotEncoding(BaseConstraint):
             for column in self._column_names:
                 new_col_name = _create_unique_name(f'OHE#{column}', metadata_columns)
                 col_meta = metadata.tables[table_name].columns[column]
-                col_meta.pop('computer_representation', None)
                 if col_meta['sdtype'] in ['categorical', 'boolean']:
                     col_meta['sdtype'] = 'numerical'
 

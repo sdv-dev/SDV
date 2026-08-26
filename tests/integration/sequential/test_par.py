@@ -254,7 +254,7 @@ def test_par_subset_of_data_simplified():
                 'sdtype': 'datetime',
             },
         },
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
     })
     synthesizer = PARSynthesizer(metadata, epochs=0)
 
@@ -271,7 +271,7 @@ def test_par_missing_sequence_index():
     # Setup
     metadata_dict = {
         'columns': {'value': {'sdtype': 'numerical'}, 'e_id': {'sdtype': 'id'}},
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         'sequence_key': 'e_id',
     }
 
@@ -404,7 +404,7 @@ def test_par_sequence_index_is_numerical():
             'time_in_cycles': {'sdtype': 'numerical'},
         },
         'sequence_key': 'engine_no',
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
     }
     metadata = Metadata.load_from_dict(metadata_dict)
     data = pd.DataFrame({'engine_no': [0, 0, 1, 1], 'time_in_cycles': [1, 2, 3, 4]})
