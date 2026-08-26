@@ -8,14 +8,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sdv._utils import _cast_to_datetime64
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _cast_to_type,
     _convert_to_snake_case,
     _is_list_of_type,
     _load_constraints_from_file,
-    _parse_datetime,
-    _parse_datetime64_value,
     _remove_columns_from_metadata,
     _validate_columns_not_primary_key,
     _validate_constraints,
@@ -23,7 +22,6 @@ from sdv.cag._utils import (
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
     _warn_if_timezone_aware_formats,
-    cast_to_datetime64,
     compute_nans_column,
     downcast_datetime_to_lower_precision,
     format_datetime_array,
@@ -162,7 +160,7 @@ def test__remove_columns_from_metadata_single():
             }
         },
         'relationships': [],
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
     })
 
     # Run
@@ -548,101 +546,6 @@ def test_sigmoid():
     assert res == expected_res
 
 
-def test_cast_to_datetime64():
-    """Test the ``cast_to_datetime64`` function.
-
-    Setup:
-        - String value representing a datetime
-        - List value with a ``np.nan`` and string values.
-        - pd.Series with datetime values.
-    Output:
-        - A single np.datetime64
-        - A list of np.datetime64
-        - A series of np.datetime64
-    """
-    # Setup
-    string_value = '2021-02-02'
-    list_value = [None, np.nan, '2021-02-02']
-    series_value = pd.Series(['2021-02-02', None, pd.NaT])
-
-    # Run
-    string_out = cast_to_datetime64(string_value)
-    list_out = cast_to_datetime64(list_value)
-    series_out = cast_to_datetime64(series_value)
-
-    # Assert
-    expected_string_output = np.datetime64('2021-02-02')
-    expected_series_output = pd.Series([
-        np.datetime64('2021-02-02'),
-        np.datetime64('NaT'),
-        np.datetime64('NaT'),
-    ])
-    expected_list_output = np.array(
-        [np.datetime64('NaT'), np.datetime64('NaT'), '2021-02-02'], dtype='datetime64[ns]'
-    )
-    np.testing.assert_array_equal(expected_list_output, list_out)
-    pd.testing.assert_series_equal(expected_series_output, series_out)
-    assert expected_string_output == string_out
-
-
-def test_cast_to_datetime64_datetime_format():
-    """Test it when `datetime_format` is passed."""
-    # Setup
-    string_value = '2021-02-02'
-    list_value = [None, np.nan, '2021-02-02']
-    series_value = pd.Series(['2021-02-02', None, pd.NaT])
-
-    # Run
-    string_out = cast_to_datetime64(string_value, datetime_format='%Y-%m-%d')
-    list_out = cast_to_datetime64(list_value, datetime_format='%Y-%m-%d')
-    series_out = cast_to_datetime64(series_value, datetime_format='%Y-%m-%d')
-
-    # Assert
-    expected_string_output = np.datetime64('2021-02-02')
-    expected_series_output = pd.Series([
-        np.datetime64('2021-02-02'),
-        np.datetime64('NaT'),
-        np.datetime64('NaT'),
-    ])
-    expected_list_output = np.array(
-        [np.datetime64('NaT'), np.datetime64('NaT'), '2021-02-02'], dtype='datetime64[ns]'
-    )
-    np.testing.assert_array_equal(expected_list_output, list_out)
-    pd.testing.assert_series_equal(expected_series_output, series_out)
-    assert expected_string_output == string_out
-
-
-def test_cast_to_datetime64_ignore_timezone():
-    """Test `cast_to_datetime64` with timezone-aware inputs and ignore_timezone=True."""
-    # Setup
-    string_value = '2021-02-02 10:00:00 -0500'
-    list_value = [None, np.nan, '2021-02-02 10:00:00 -0500']
-    series_value = pd.Series(['2021-02-02 10:00:00 -0500', None, pd.NaT])
-
-    datetime_format = '%Y-%m-%d %H:%M:%S %z'
-
-    # Run
-    string_out = cast_to_datetime64(string_value, datetime_format=datetime_format)
-    list_out = cast_to_datetime64(list_value, datetime_format=datetime_format)
-    series_out = cast_to_datetime64(series_value, datetime_format=datetime_format)
-
-    # Assert
-    expected_string_output = np.datetime64('2021-02-02T10:00:00')
-    expected_series_output = pd.Series([
-        np.datetime64('2021-02-02T10:00:00'),
-        np.datetime64('NaT'),
-        np.datetime64('NaT'),
-    ])
-    expected_list_output = np.array(
-        [np.datetime64('NaT'), np.datetime64('NaT'), np.datetime64('2021-02-02T10:00:00')],
-        dtype='datetime64[ns]',
-    )
-
-    np.testing.assert_array_equal(expected_list_output, list_out)
-    pd.testing.assert_series_equal(expected_series_output, series_out)
-    assert expected_string_output == string_out
-
-
 def test_matches_datetime_format():
     """Test the ``matches_datetime_format`` method.
 
@@ -957,7 +860,7 @@ def test_downcast_datetime_to_lower_precision():
     result = downcast_datetime_to_lower_precision(data, target_format)
 
     # Assert
-    np.testing.assert_array_equal(result, cast_to_datetime64(expected_result))
+    np.testing.assert_array_equal(result, _cast_to_datetime64(expected_result))
 
 
 def test_downcast_datetime_to_lower_precision_to_day():
@@ -973,7 +876,7 @@ def test_downcast_datetime_to_lower_precision_to_day():
     result = downcast_datetime_to_lower_precision(data, target_format)
 
     # Assert
-    np.testing.assert_array_equal(result, cast_to_datetime64(expected_result))
+    np.testing.assert_array_equal(result, _cast_to_datetime64(expected_result))
 
 
 def test_format_datetime_array_with_lower_precision_format():
@@ -1073,69 +976,3 @@ def test_warn_if_timezone_aware_formats_no_warning(mock_warn):
 
     # Assert
     mock_warn.assert_not_called()
-
-
-def test__parse_datetime64_value():
-    """Test `_parse_datetime64_value` with valid date string and format."""
-    # Setup
-    value = '2021-02-02'
-    expected = np.datetime64('2021-02-02')
-
-    # Run
-    result = _parse_datetime64_value(value, datetime_format='%Y-%m-%d')
-
-    # Assert
-    assert result == expected
-
-
-def test__parse_datetime64_value_with_nat():
-    """Test `_parse_datetime64_value` with NaN input returns NaT."""
-    # Run
-    result_none = _parse_datetime64_value(None)
-    result_nan = _parse_datetime64_value(np.nan)
-
-    # Assert
-    assert np.isnat(result_none)
-    assert np.isnat(result_nan)
-
-
-def test__parse_datetime64_value_ignores_timezone():
-    """Test `_parse_datetime64_value` strips timezone info when ignore_timezone=True."""
-    # Setup
-    value = '2021-02-02 15:00:00+0200'
-    dt_format = '%Y-%m-%d %H:%M:%S%z'
-
-    # Run
-    result = _parse_datetime64_value(value, datetime_format=dt_format, ignore_timezone=True)
-
-    # Assert
-    assert isinstance(result, np.datetime64)
-    assert str(result) == '2021-02-02T15:00:00.000000000'
-
-
-def test__parse_datetime_with_series_and_timezone_and_ignore_tz():
-    """Test `_parse_datetime` on a Series with timezone info."""
-    # Setup
-    series = pd.Series(['2020-01-01 10:00:00+0000', '2021-01-01 12:00:00+0200'])
-    dt_format = '%Y-%m-%d %H:%M:%S%z'
-
-    # Run
-    result = _parse_datetime(series, datetime_format=dt_format, ignore_timezone=True)
-
-    # Assert
-    assert isinstance(result, pd.Series)
-    assert result.dt.tz is None
-
-
-def test__parse_datetime_without_ignoring_timezone():
-    """Test `_parse_datetime` keeps tz-aware timestamps when ignore_timezone=False."""
-    # Setup
-    value = '2021-02-02 12:00:00+0200'
-    dt_format = '%Y-%m-%d %H:%M:%S%z'
-
-    # Run
-    result = _parse_datetime(value, datetime_format=dt_format, ignore_timezone=False)
-
-    # Assert
-    assert result.tzinfo is not None
-    assert str(result).endswith('+02:00')

@@ -239,8 +239,7 @@ class TestDataProcessor:
         Test that the method sets an expected list of transformers for the given
         data types of the ``metadata`` and also respects the extra parameters
         that those have. In this case the columns ``start_date`` and ``end_date`` have
-        a ``datetime_format`` which has to be set to the ``UnixTimestampEncoder`` and
-        the column ``salary`` has a ``computer_representation`` set to ``Int64``.
+        a ``datetime_format`` which has to be set to the ``UnixTimestampEncoder``.
         """
         # Setup
         data, metadata = download_demo(
@@ -281,7 +280,6 @@ class TestDataProcessor:
 
         assert field_transformers['start_date'].datetime_format == '%Y-%m-%d'
         assert field_transformers['end_date'].datetime_format == '%Y-%m-%d'
-        assert field_transformers['salary'].computer_representation == 'Int64'
 
     def test_reverse_transform_with_formatters(self):
         """End to end test using formatters."""

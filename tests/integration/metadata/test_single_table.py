@@ -22,9 +22,9 @@ def test_single_table_metadata():
     result = instance.to_dict()
 
     # Assert
-    assert result == {'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'}
+    assert result == {'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2'}
     assert instance.columns == {}
-    assert instance._version == 'SINGLE_TABLE_V1'
+    assert instance._version == 'SINGLE_TABLE_V2'
     assert instance.primary_key is None
     assert instance.sequence_key is None
     assert instance.alternate_keys == []
@@ -41,7 +41,7 @@ def test_single_table_metadata_composite_primary_key():
             'pk_col3': {'sdtype': 'categorical'},
         },
         'primary_key': ['pk_col1', 'pk_col2', 'pk_col3'],
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
     }
 
     instance = _SingleTableMetadata()
@@ -56,7 +56,7 @@ def test_single_table_metadata_composite_primary_key():
     # Assert
     assert result == expected_metadata_dict
     assert instance.columns == expected_metadata_dict['columns']
-    assert instance._version == 'SINGLE_TABLE_V1'
+    assert instance._version == 'SINGLE_TABLE_V2'
     assert instance.primary_key == expected_metadata_dict['primary_key']
     assert instance.sequence_key is None
     assert instance.alternate_keys == []
@@ -179,7 +179,7 @@ def test_validate_errors(mock_rdt_transformers):
         'col5': {'sdtype': 'categorical', 'order': ''},
         'col6': {'sdtype': 'categorical', 'order_by': ''},
         'col7': {'sdtype': 'categorical', 'order': '', 'order_by': ''},
-        'col8': {'sdtype': 'numerical', 'computer_representation': 'value'},
+        'col8': {'sdtype': 'numerical'},
         'col9': {'sdtype': 'datetime', 'datetime_format': '%1-%Y-%m-%d-%'},
         'col10': {'sdtype': 'id', 'regex_format': '[A-{6}'},
         'col11': {'sdtype': 'state'},
@@ -209,7 +209,6 @@ def test_validate_errors(mock_rdt_transformers):
         " Ordering method must be 'numerical_value' or 'alphabetical'."
         "\nCategorical column 'col7' has both an 'order' and 'order_by' attribute."
         ' Only 1 is allowed.'
-        "\nInvalid value for 'computer_representation' 'value' for column 'col8'."
         "\nInvalid datetime format string '%1-%Y-%m-%d-%' for datetime column 'col9'."
         "\nInvalid regex format string '[A-{6}' for id column 'col10'."
         '\nColumn relationships have following errors:\n'
@@ -253,17 +252,17 @@ def test_upgrade_metadata(tmp_path):
         'columns': {
             'start_date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
             'end_date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
-            'salary': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'salary': {'sdtype': 'numerical'},
             'duration': {'sdtype': 'categorical'},
             'student_id': {'sdtype': 'id', 'regex_format': r'\d{30}'},
-            'high_perc': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+            'high_perc': {'sdtype': 'numerical'},
             'placed': {'sdtype': 'boolean'},
             'ssn': {'sdtype': 'id', 'regex_format': r'\d{30}'},
             'drivers_license': {'sdtype': 'id', 'regex_format': 'regex'},
         },
         'primary_key': 'student_id',
         'alternate_keys': ['ssn', 'drivers_license'],
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
     }
     assert new_metadata == expected_metadata
 
@@ -281,7 +280,7 @@ def test_validate_unknown_sdtype():
 
     # Assert
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         'columns': {
             'hotel_id': {'sdtype': 'id'},
             'city': {'sdtype': 'city', 'pii': True},
@@ -333,7 +332,7 @@ def test_detect_from_dataframe_with_pii_names():
 
     # Assert
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         'primary_key': 'USER PHONE NUMBER',
         'columns': {
             'USER PHONE NUMBER': {'sdtype': 'phone_number', 'pii': True},
@@ -387,19 +386,18 @@ def test_update_columns():
     metadata.update_columns(
         ['col1', 'col3', 'col4', 'col5', 'col6'],
         sdtype='numerical',
-        computer_representation='Int64',
     )
 
     # Assert
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         'columns': {
-            'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'col1': {'sdtype': 'numerical'},
             'col2': {'sdtype': 'numerical'},
-            'col3': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-            'col4': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-            'col5': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-            'col6': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'col3': {'sdtype': 'numerical'},
+            'col4': {'sdtype': 'numerical'},
+            'col5': {'sdtype': 'numerical'},
+            'col6': {'sdtype': 'numerical'},
         },
     }
     assert metadata.to_dict() == expected_metadata
@@ -425,7 +423,6 @@ def test_update_columns_invalid_kwargs_combination():
         metadata.update_columns(
             ['col1', 'col3', 'col4', 'col5', 'col6'],
             sdtype='numerical',
-            computer_representation='Int64',
             pii=True,
         )
 
@@ -446,7 +443,7 @@ def test_update_columns_metadata():
 
     # Run
     metadata.update_columns_metadata({
-        'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+        'col1': {'sdtype': 'numerical'},
         'col3': {'sdtype': 'email', 'pii': True},
         'col4': {'sdtype': 'phone_number', 'pii': False},
         'col5': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
@@ -455,9 +452,9 @@ def test_update_columns_metadata():
 
     # Assert
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         'columns': {
-            'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'col1': {'sdtype': 'numerical'},
             'col2': {'sdtype': 'numerical'},
             'col3': {'sdtype': 'email', 'pii': True},
             'col4': {'sdtype': 'phone_number', 'pii': False},
@@ -490,7 +487,7 @@ def test_update_columns_metadata_invalid_kwargs_combination():
     )
     with pytest.raises(InvalidMetadataError, match=expected_message):
         metadata.update_columns_metadata({
-            'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64', 'pii': True},
+            'col1': {'sdtype': 'numerical', 'pii': True},
             'col2': {'pii': True},
         })
 
@@ -595,7 +592,7 @@ def test_anonymize():
             'sequence_key': {'sdtype': 'id'},
             'alternate_id1': {'sdtype': 'email', 'pii': True},
             'alternate_id2': {'sdtype': 'name', 'pii': True},
-            'numerical': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+            'numerical': {'sdtype': 'numerical'},
             'categorical': {'sdtype': 'categorical'},
         },
         'primary_key': 'primary_key',
