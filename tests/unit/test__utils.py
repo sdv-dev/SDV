@@ -1399,6 +1399,11 @@ def test__validate_boolean_parameter():
             {'sdtype': 'numerical', 'range_min': 0.0},
             True,
         ),
+        (
+            pd.Series([10, 20, 30]),
+            {'sdtype': 'numerical', 'range_max': 50},
+            True,
+        ),
         (pd.Series([np.nan] * 10), {'sdtype': 'numerical'}, False),
         (
             pd.Series(['31/12/2019', '09/08/2023', '03/22/2021']),

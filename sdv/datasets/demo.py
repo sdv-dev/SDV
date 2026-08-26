@@ -193,7 +193,7 @@ def _find_data_zip_key(contents, dataset_prefix, bucket):
 
 
 def _get_first_v2_metadata_bytes(contents, dataset_prefix, bucket, client):
-    """Find and return bytes of the first V1 metadata JSON under `dataset_prefix`.
+    """Find and return bytes of the first V2 metadata JSON under `dataset_prefix`.
 
     Scans S3 listing `contents` and, for any JSON file directly under the dataset prefix,
     downloads and returns its bytes if it contains METADATA_SPEC_VERSION == 'V2'.
@@ -202,7 +202,7 @@ def _get_first_v2_metadata_bytes(contents, dataset_prefix, bucket, client):
 
     Returns:
         bytes:
-            The bytes of the first V1 metadata JSON.
+            The bytes of the first V2 metadata JSON.
     """
     prefix_lower = dataset_prefix.lower()
 
