@@ -9,7 +9,7 @@ from decimal import Decimal
 import numpy as np
 import pandas as pd
 
-from sdv._utils import _cast_to_iterable
+from sdv._utils import _cast_to_datetime64, _cast_to_iterable
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.errors import RefitWarning, SynthesizerInputError, TableNameError
 from sdv.metadata import Metadata
@@ -40,70 +40,6 @@ PRECISION_LEVELS = {
     '%x': 0,  # Locale-based date
     '%X': 0,  # Locale-based time
 }
-
-
-def cast_to_datetime64(value, datetime_format=None, ignore_timezone=True):
-    """Cast a given value to a ``numpy.datetime64`` format.
-
-    Args:
-        value (pandas.Series, np.ndarray, list, or str):
-            Input data to convert.
-        datetime_format (str, optional):
-            Datetime format of the `value`.
-        ignore_timezone (bool):
-            If True, strips `%z` or `%Z` from the format and removes tzinfo.
-
-    Returns:
-        numpy.datetime64, pandas.Series, or numpy.ndarray of datetime64
-    """
-    if datetime_format:
-        datetime_format = datetime_format.replace('%#', '%').replace('%-', '%')
-
-    if isinstance(value, str):
-        return _parse_datetime64_value(value, datetime_format, ignore_timezone)
-
-    elif isinstance(value, pd.Series):
-        dt_series = _parse_datetime(value, datetime_format, ignore_timezone)
-        return dt_series.astype('datetime64[ns]')
-
-    elif isinstance(value, (np.ndarray, list)):
-        return np.array([
-            _parse_datetime64_value(val, datetime_format, ignore_timezone) for val in value
-        ])
-
-
-def _parse_datetime64_value(value, datetime_format=None, ignore_timezone=True):
-    """Parse a single value into `datetime64`, optionally ignoring timezone."""
-    if pd.isna(value):
-        return pd.NaT.to_datetime64()
-
-    return _parse_datetime(value, datetime_format, ignore_timezone).to_datetime64()
-
-
-def _parse_datetime(value, datetime_format, ignore_timezone):
-    is_series = isinstance(value, pd.Series)
-    parsed_value = pd.to_datetime(value, format=datetime_format, errors='coerce')
-
-    if is_series and ignore_timezone and hasattr(parsed_value, 'dt'):
-        if hasattr(parsed_value.dt, 'tz_localize'):
-            parsed_value = parsed_value.dt.tz_localize(None)
-
-    elif ignore_timezone and hasattr(parsed_value, 'tz_localize'):
-        if isinstance(parsed_value, (list, tuple, pd.Series, np.ndarray)):
-            parsed_value = [
-                new_value.replace(tzinfo=None)
-                if isinstance(new_value, datetime)
-                else new_value.tz_localize(None)
-                for new_value in parsed_value
-            ]
-
-        else:
-            parsed_value = parsed_value.tz_localize(None)
-
-    if is_series and not isinstance(parsed_value, pd.Series):
-        return pd.Series(parsed_value)
-
-    return parsed_value
 
 
 def matches_datetime_format(value, datetime_format):
@@ -265,8 +201,8 @@ def get_datetime_diff(high, low, high_datetime_format=None, low_datetime_format=
             The difference between the high and low column values.
     """
     if dtype == 'O':
-        low = cast_to_datetime64(low, low_datetime_format)
-        high = cast_to_datetime64(high, high_datetime_format)
+        low = _cast_to_datetime64(low, low_datetime_format)
+        high = _cast_to_datetime64(high, high_datetime_format)
 
         if low_datetime_format != high_datetime_format:
             low, high = match_datetime_precision(
@@ -374,7 +310,7 @@ def downcast_datetime_to_lower_precision(data, target_format):
         str: The datetime string in the lower precision format.
     """
     downcasted_data = format_datetime_array(data, target_format)
-    return cast_to_datetime64(downcasted_data, target_format)
+    return _cast_to_datetime64(downcasted_data, target_format)
 
 
 def format_datetime_array(datetime_array, target_format):

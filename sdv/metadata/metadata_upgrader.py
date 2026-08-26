@@ -13,13 +13,7 @@ def _upgrade_columns_and_keys(old_metadata):
         subtype = field_meta.get('subtype')
         column_meta['sdtype'] = old_type
 
-        if old_type == 'numerical':
-            if subtype == 'float':
-                column_meta['computer_representation'] = 'Float'
-            elif subtype == 'integer':
-                column_meta['computer_representation'] = 'Int64'
-
-        elif old_type == 'datetime':
+        if old_type == 'datetime':
             datetime_format = field_meta.get('format')
             if datetime_format:
                 column_meta['datetime_format'] = datetime_format

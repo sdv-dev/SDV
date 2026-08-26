@@ -2,7 +2,7 @@ import operator
 import re
 import string
 from datetime import datetime, timedelta, timezone
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -13,7 +13,9 @@ from rdt.transformers.numerical import FloatFormatter
 
 from sdv import version
 from sdv._utils import (
+    _cast_to_datetime64,
     _check_regex_format,
+    _column_range_exceeds_real,
     _compare_versions,
     _convert_to_timedelta,
     _create_unique_name,
@@ -24,6 +26,9 @@ from sdv._utils import (
     _get_transformer_init_kwargs,
     _is_datetime_type,
     _is_numerical,
+    _metadata_range_exceeds_real,
+    _parse_datetime,
+    _parse_datetime64_value,
     _validate_boolean_parameter,
     _validate_correct_synthesizer_loading,
     _validate_datetime_format,
@@ -822,7 +827,6 @@ def test__get_transformer_init_kwargs():
     transformer = FloatFormatter(
         missing_value_replacement=None,
         learn_rounding_scheme=True,
-        computer_representation='Float64',
         enforce_min_max_values=False,
     )
 
@@ -833,7 +837,6 @@ def test__get_transformer_init_kwargs():
     transformer_kwarg_dict == {
         'missing_value_replacement': None,
         'learn_rounding_scheme': True,
-        'computer_representation': 'Float64',
     }
 
 
@@ -857,6 +860,20 @@ def test__check_regex_format(mock_strings_from_regex):
     mock_strings_from_regex.assert_called_once_with(regex)
 
 
+def test__parse_datetime_with_series_and_timezone_and_ignore_tz():
+    """Test `_parse_datetime` on a Series with timezone info."""
+    # Setup
+    series = pd.Series(['2020-01-01 10:00:00+0000', '2021-01-01 12:00:00+0200'])
+    dt_format = '%Y-%m-%d %H:%M:%S%z'
+
+    # Run
+    result = _parse_datetime(series, datetime_format=dt_format, ignore_timezone=True)
+
+    # Assert
+    assert isinstance(result, pd.Series)
+    assert result.dt.tz is None
+
+
 @pytest.mark.parametrize(
     'value, datetime_format, expected',
     [
@@ -877,6 +894,153 @@ def test__datetime_string_matches_format(value, datetime_format, expected):
 
     # Assert
     assert result is expected
+
+
+def test__parse_datetime_without_ignoring_timezone():
+    """Test `_parse_datetime` keeps tz-aware timestamps when ignore_timezone=False."""
+    # Setup
+    value = '2021-02-02 12:00:00+0200'
+    dt_format = '%Y-%m-%d %H:%M:%S%z'
+
+    # Run
+    result = _parse_datetime(value, datetime_format=dt_format, ignore_timezone=False)
+
+    # Assert
+    assert result.tzinfo is not None
+    assert str(result).endswith('+02:00')
+
+
+def test__parse_datetime64_value():
+    """Test `_parse_datetime64_value` with valid date string and format."""
+    # Setup
+    value = '2021-02-02'
+    expected = np.datetime64('2021-02-02')
+
+    # Run
+    result = _parse_datetime64_value(value, datetime_format='%Y-%m-%d')
+
+    # Assert
+    assert result == expected
+
+
+def test__parse_datetime64_value_with_nat():
+    """Test `_parse_datetime64_value` with NaN input returns NaT."""
+    # Run
+    result_none = _parse_datetime64_value(None)
+    result_nan = _parse_datetime64_value(np.nan)
+
+    # Assert
+    assert np.isnat(result_none)
+    assert np.isnat(result_nan)
+
+
+def test__parse_datetime64_value_ignores_timezone():
+    """Test `_parse_datetime64_value` strips timezone info when ignore_timezone=True."""
+    # Setup
+    value = '2021-02-02 15:00:00+0200'
+    dt_format = '%Y-%m-%d %H:%M:%S%z'
+
+    # Run
+    result = _parse_datetime64_value(value, datetime_format=dt_format, ignore_timezone=True)
+
+    # Assert
+    assert isinstance(result, np.datetime64)
+    assert str(result) == '2021-02-02T15:00:00.000000000'
+
+
+def test__cast_to_datetime64():
+    """Test the ``cast_to_datetime64`` function.
+
+    Setup:
+        - String value representing a datetime
+        - List value with a ``np.nan`` and string values.
+        - pd.Series with datetime values.
+    Output:
+        - A single np.datetime64
+        - A list of np.datetime64
+        - A series of np.datetime64
+    """
+    # Setup
+    string_value = '2021-02-02'
+    list_value = [None, np.nan, '2021-02-02']
+    series_value = pd.Series(['2021-02-02', None, pd.NaT])
+
+    # Run
+    string_out = _cast_to_datetime64(string_value)
+    list_out = _cast_to_datetime64(list_value)
+    series_out = _cast_to_datetime64(series_value)
+
+    # Assert
+    expected_string_output = np.datetime64('2021-02-02')
+    expected_series_output = pd.Series([
+        np.datetime64('2021-02-02'),
+        np.datetime64('NaT'),
+        np.datetime64('NaT'),
+    ])
+    expected_list_output = np.array(
+        [np.datetime64('NaT'), np.datetime64('NaT'), '2021-02-02'], dtype='datetime64[ns]'
+    )
+    np.testing.assert_array_equal(expected_list_output, list_out)
+    pd.testing.assert_series_equal(expected_series_output, series_out)
+    assert expected_string_output == string_out
+
+
+def test__cast_to_datetime64_datetime_format():
+    """Test it when `datetime_format` is passed."""
+    # Setup
+    string_value = '2021-02-02'
+    list_value = [None, np.nan, '2021-02-02']
+    series_value = pd.Series(['2021-02-02', None, pd.NaT])
+
+    # Run
+    string_out = _cast_to_datetime64(string_value, datetime_format='%Y-%m-%d')
+    list_out = _cast_to_datetime64(list_value, datetime_format='%Y-%m-%d')
+    series_out = _cast_to_datetime64(series_value, datetime_format='%Y-%m-%d')
+
+    # Assert
+    expected_string_output = np.datetime64('2021-02-02')
+    expected_series_output = pd.Series([
+        np.datetime64('2021-02-02'),
+        np.datetime64('NaT'),
+        np.datetime64('NaT'),
+    ])
+    expected_list_output = np.array(
+        [np.datetime64('NaT'), np.datetime64('NaT'), '2021-02-02'], dtype='datetime64[ns]'
+    )
+    np.testing.assert_array_equal(expected_list_output, list_out)
+    pd.testing.assert_series_equal(expected_series_output, series_out)
+    assert expected_string_output == string_out
+
+
+def test__cast_to_datetime64_ignore_timezone():
+    """Test `cast_to_datetime64` with timezone-aware inputs and ignore_timezone=True."""
+    # Setup
+    string_value = '2021-02-02 10:00:00 -0500'
+    list_value = [None, np.nan, '2021-02-02 10:00:00 -0500']
+    series_value = pd.Series(['2021-02-02 10:00:00 -0500', None, pd.NaT])
+
+    datetime_format = '%Y-%m-%d %H:%M:%S %z'
+
+    # Run
+    string_out = _cast_to_datetime64(string_value, datetime_format=datetime_format)
+    list_out = _cast_to_datetime64(list_value, datetime_format=datetime_format)
+    series_out = _cast_to_datetime64(series_value, datetime_format=datetime_format)
+
+    # Assert
+    expected_string_output = np.datetime64('2021-02-02T10:00:00')
+    expected_series_output = pd.Series([
+        np.datetime64('2021-02-02T10:00:00'),
+        np.datetime64('NaT'),
+        np.datetime64('NaT'),
+    ])
+    expected_list_output = np.array(
+        [np.datetime64('NaT'), np.datetime64('NaT'), np.datetime64('2021-02-02T10:00:00')],
+        dtype='datetime64[ns]',
+    )
+
+    np.testing.assert_array_equal(expected_list_output, list_out)
+    pd.testing.assert_series_equal(expected_series_output, series_out)
+    assert expected_string_output == string_out
 
 
 @pytest.fixture()
@@ -1223,3 +1387,103 @@ def test__validate_boolean_parameter():
     _validate_boolean_parameter(True, 'param_name')
     with pytest.raises(ValueError, match=expected_message):
         _validate_boolean_parameter('True', 'param_name')
+
+
+@pytest.mark.parametrize(
+    ('column', 'col_meta', 'expected'),
+    [
+        (pd.Series(['A', 'B', 'C']), {'sdtype': 'id', 'range_is_nullable': True}, True),
+        (pd.Series(['A', 'B', 'C']), {'sdtype': 'id', 'range_is_nullable': False}, False),
+        (
+            pd.Series([10, 20, 30]),
+            {'sdtype': 'numerical', 'range_min': 0.0},
+            True,
+        ),
+        (
+            pd.Series([10, 20, 30]),
+            {'sdtype': 'numerical', 'range_max': 50},
+            True,
+        ),
+        (pd.Series([np.nan] * 10), {'sdtype': 'numerical'}, False),
+        (
+            pd.Series(['31/12/2019', '09/08/2023', '03/22/2021']),
+            {
+                'sdtype': 'datetime',
+                'datetime_format': '%d/%m/%Y',
+                'range_min': '31/12/2019',
+                'range_max': '01/01/2030',
+            },
+            True,
+        ),
+        (
+            pd.Series([None] * 5),
+            {
+                'sdtype': 'datetime',
+                'datetime_format': '%d/%m/%Y',
+                'range_min': '31/12/2019',
+                'range_max': '01/01/2030',
+            },
+            True,
+        ),
+        (
+            pd.Series(['x', 'y', 'z']),
+            {
+                'sdtype': 'categorical',
+            },
+            False,
+        ),
+        (
+            pd.Series(['a', 'b', 'b', 'a']),
+            {'sdtype': 'categorical', 'range_values': ['a', 'b', 'c']},
+            True,
+        ),
+        (
+            pd.Series([None] * 10),
+            {'sdtype': 'categorical', 'range_values': ['a', 'b', 'c']},
+            True,
+        ),
+    ],
+)
+def test__column_range_exceeds_real(column, col_meta, expected):
+    """Test checking if a column's range exceeds the given data"""
+    # Run
+    range_exceeds_data = _column_range_exceeds_real(column, col_meta)
+
+    # Assert
+    assert range_exceeds_data == expected
+
+
+@patch('sdv._utils._column_range_exceeds_real')
+def test__metadata_range_exceeds_real(mock__column_range_exceeds_real):
+    """Test checking if the metadata range information exceeds the data."""
+    # Setup
+    data = {
+        'table1': pd.DataFrame({
+            'col1': range(5),
+            'col2': ['a', 'b', 'a', 'b', 'a'],
+            'col3': ['01/2020', '02/2020', '03/2021', '01/2022', '12/2024'],
+        }),
+    }
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table1': {
+                'columns': {
+                    'col1': {'sdtype': 'numerical'},
+                    'col2': {'sdtype': 'categorical'},
+                    'col3': {'sdtype': 'datetime'},
+                }
+            }
+        }
+    })
+
+    mock__column_range_exceeds_real.side_effect = [False, True]
+
+    # Run
+    output = _metadata_range_exceeds_real(data, metadata)
+
+    # Assert
+    assert output is True
+    mock__column_range_exceeds_real.assert_has_calls([
+        call(data['table1']['col1'], {'sdtype': 'numerical'}),
+        call(data['table1']['col2'], {'sdtype': 'categorical'}),
+    ])
