@@ -10,9 +10,15 @@ import pandas as pd
 import tqdm
 from rdt.transformers import FloatFormatter
 
-from sdv._utils import MODELABLE_SDTYPES, _cast_to_iterable, _groupby_list, _is_datetime_type
+from sdv._utils import (
+    MODELABLE_SDTYPES,
+    _cast_to_datetime64,
+    _cast_to_iterable,
+    _groupby_list,
+    _is_datetime_type,
+)
 from sdv.cag import ProgrammableConstraint
-from sdv.cag._utils import _validate_constraints_single_table, cast_to_datetime64
+from sdv.cag._utils import _validate_constraints_single_table
 from sdv.errors import SamplingError, SynthesizerInputError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
@@ -313,7 +319,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         )
 
         if _is_datetime_type(sequence_index[self._sequence_index]):
-            sequence_index[self._sequence_index] = cast_to_datetime64(
+            sequence_index[self._sequence_index] = _cast_to_datetime64(
                 sequence_index[self._sequence_index]
             ).astype(np.int64)
 

@@ -79,7 +79,7 @@ def test_detect_discrete_columns_with_categorical_transformer():
     """
     # Setup
     metadata = _SingleTableMetadata.load_from_dict({
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         'columns': {
             'name': {'sdtype': 'categorical'},
             'age': {'sdtype': 'numerical'},
