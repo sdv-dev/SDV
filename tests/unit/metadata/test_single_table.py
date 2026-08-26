@@ -22,24 +22,42 @@ class Test_SingleTableMetadata:
 
     VALID_KWARGS = [
         ('age', 'numerical', {}),
-        ('age', 'numerical', {'computer_representation': 'Int8'}),
+        ('age', 'numerical', {'range_min': 18.0}),
+        ('age', 'numerical', {'range_max': 100.0}),
+        ('age', 'numerical', {'range_min': 18.0, 'range_max': 100.0}),
+        ('age', 'numerical', {'range_is_nullable': True}),
+        ('age', 'numerical', {'decimal_places': 2}),
         ('start_date', 'datetime', {}),
         ('start_date', 'datetime', {'datetime_format': '%Y-%d'}),
-        ('name', 'categorical', {}),
+        ('start_date', 'datetime', {'range_min': '2020-01-01'}),
+        ('start_date', 'datetime', {'range_max': datetime.now()}),
+        ('start_date', 'datetime', {'range_min': '2020-01-01', 'range_max': '2022-12-31'}),
+        (
+            'start_date',
+            'datetime',
+            {'range_min': '2020-01', 'range_max': '2022-31', 'datetime_format': '%Y-%d'},
+        ),
+        ('start_date', 'datetime', {'range_is_nullable': True}),
         ('name', 'categorical', {'order_by': 'alphabetical'}),
         ('name', 'categorical', {'order': ['a', 'b', 'c']}),
+        ('name', 'categorical', {'order': ['a', 'b', 'c']}),
+        ('name', 'categorical', {'range_values': ['a', 'b', 'c', 'd', 'e']}),
+        ('name', 'categorical', {'range_is_nullable': True}),
         ('synthetic', 'boolean', {}),
+        ('synthetic', 'boolean', {'range_is_nullable': False}),
         ('phrase', 'id', {}),
         ('phrase', 'id', {'regex_format': '[A-z]'}),
+        ('phrase', 'id', {'range_is_nullable': False}),
         ('phone', 'phone_number', {}),
         ('phone', 'phone_number', {'pii': True}),
+        ('phone', 'phone_number', {'range_is_nullable': True}),
     ]
 
     INVALID_KWARGS = [
         (
             'age',
             'numerical',
-            {'computer_representation': 'Int8', 'datetime_format': None, 'pii': True},
+            {'range_min': 0.0, 'datetime_format': None, 'pii': True},
             re.escape("Invalid values '(datetime_format, pii)' for numerical column 'age'."),
         ),
         (
@@ -125,7 +143,7 @@ class Test_SingleTableMetadata:
         assert instance.sequence_key is None
         assert instance.alternate_keys == []
         assert instance.sequence_index is None
-        assert instance._version == 'SINGLE_TABLE_V1'
+        assert instance._version == 'SINGLE_TABLE_V2'
         assert instance._updated is False
 
     @pytest.mark.parametrize(
@@ -161,74 +179,54 @@ class Test_SingleTableMetadata:
         # Assert
         metadata.primary_key == expected_value
 
-    def test__validate_numerical_default_and_invalid(self):
-        """Test the ``_validate_numerical`` method.
-
-        Setup:
-            - instance of ``_SingleTableMetadata``
-            - list of accepted computer representations.
-
-        Input:
-            - Column name.
-            - sdtype numerical
-            - computer representation
-
-        Side Effects:
-            - Passes when no ``computer_representation`` is provided
-            - ``InvalidMetadataError`` is raised stating that the ``computer_representation`` is
-              not supported.
-        """
+    def test__validate_numerical(self):
+        """Test the ``_validate_numerical`` method."""
         # Setup
         instance = _SingleTableMetadata()
 
         # Run / Assert
         instance._validate_numerical('age')
-
-        error_msg = re.escape("Invalid value for 'computer_representation' '36' for column 'age'.")
-        with pytest.raises(InvalidMetadataError, match=error_msg):
-            instance._validate_numerical('age', computer_representation=36)
+        instance._validate_numerical('age', range_min=0.0, range_max=100.0)
 
     @pytest.mark.parametrize(
-        'computer_representation', _SingleTableMetadata._NUMERICAL_REPRESENTATIONS
+        ('invalid_kwargs', 'expected_err'),
+        [
+            (
+                {'range_min': '2020-01-01', 'decimal_places': 0.5},
+                re.escape(
+                    "Invalid `decimal_places` for numerical column 'age'. "
+                    'The `decimal_places` must be an integer greater than or equal to zero.\n'
+                    "Invalid `range_min` for numerical column 'age'. "
+                    'Range values must be a float or int.'
+                ),
+            ),
+            (
+                {'range_min': '2020-01-01', 'range_max': '2022-12-31'},
+                re.escape(
+                    "Invalid `range_min` and `range_max` for numerical column 'age'. "
+                    'Range values must be a float or int.'
+                ),
+            ),
+            (
+                {'range_min': 100.0, 'range_max': 0.0},
+                re.escape(
+                    "Invalid `range_max` and `range_min` for numerical column 'age'. "
+                    'The `range_max` cannot be less than `range_min`.'
+                ),
+            ),
+        ],
     )
-    def test__validate_numerical_computer_representations(self, computer_representation):
-        """Test the ``_validate_numerical`` method.
-
-        Setup:
-            - instance of ``_SingleTableMetadata``
-            - list of accepted computer representations.
-
-        Input:
-            - Column name.
-            - sdtype numerical
-            - computer representation
-
-        Side Effects:
-            - Passes with the correct ``computer_representation``
-            - ``InvalidMetadataError`` is raised stating that the ``computer_representation`` is
-              wrong.
-        """
+    def test__validate_numerical_invalid_ranges(self, invalid_kwargs, expected_err):
+        """Test the ``_validate_numerical`` method with invalid range values."""
         # Setup
         instance = _SingleTableMetadata()
 
         # Run / Assert
-        instance._validate_numerical('age', computer_representation=computer_representation)
+        with pytest.raises(InvalidMetadataError, match=expected_err):
+            instance._validate_numerical('age', **invalid_kwargs)
 
-    def test__validate_datetime(self):
-        """Test the ``_validate_datetime`` method.
-
-        Setup:
-            - instance of ``_SingleTableMetadata``
-
-        Input:
-            - Column name.
-            - sdtype datetime
-            - Valid ``datetime_format``.
-            - Invalid ``datetime_format``.
-
-        Side Effects:
-            - ``InvalidMetadataError`` indicating the format ``%`` that has not been formatted.
-        """
+    def test__validate_datetime_with_datetime_formats(self):
+        """Test the ``_validate_datetime`` method validates the `datetime_format`."""
         # Setup
         instance = _SingleTableMetadata()
 
@@ -241,6 +239,49 @@ class Test_SingleTableMetadata:
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance._validate_datetime('start_date', datetime_format='%1-%Y-%m-%d-%')
+
+    @pytest.mark.parametrize(
+        ('invalid_kwargs', 'expected_error'),
+        [
+            (
+                {'range_min': 'not a date'},
+                re.escape(
+                    "Invalid `range_min` for datetime column 'start_date'. "
+                    'Range values must be valid datetimes.'
+                ),
+            ),
+            (
+                {
+                    'range_min': '01-01-2025',
+                    'range_max': '01-07-2026',
+                    'datetime_format': '%Y-%m-%d',
+                },
+                re.escape(
+                    "Invalid `range_min` and `range_max` for datetime column 'start_date'. "
+                    'Range values must be valid datetimes that match the `datetime_format`.'
+                ),
+            ),
+            (
+                {
+                    'range_min': '2025-01-01',
+                    'range_max': '2020-01-01',
+                    'datetime_format': '%Y-%m-%d',
+                },
+                re.escape(
+                    "Invalid `range_max` and `range_min` datetime column 'start_date'. "
+                    'The `range_max` cannot be less than `range_min`.'
+                ),
+            ),
+        ],
+    )
+    def test__validate_datetime_with_datetime_ranges(self, invalid_kwargs, expected_error):
+        """Test the ``_validate_datetime`` method validates the range information."""
+        # Setup
+        instance = _SingleTableMetadata()
+
+        # Run / Assert
+        with pytest.raises(InvalidMetadataError, match=expected_error):
+            instance._validate_datetime('start_date', **invalid_kwargs)
 
     def test__validate_categorical(self):
         """Test the ``_validate_categorical`` method.
@@ -269,6 +310,7 @@ class Test_SingleTableMetadata:
         instance._validate_categorical('name', order_by='alphabetical')
         instance._validate_categorical('name', order_by='numerical_value')
         instance._validate_categorical('name', order=['a', 'b', 'c'])
+        instance._validate_categorical('name', range_values=['a', 'b', 'c'])
 
         error_msg = re.escape(
             "Categorical column 'name' has both an 'order' and 'order_by' "
@@ -294,6 +336,16 @@ class Test_SingleTableMetadata:
         with pytest.raises(InvalidMetadataError, match=error_msg_order):
             instance._validate_categorical('name', order=[])
 
+        error_msg_range_values = re.escape(
+            "Invalid `range_values` value provided for categorical column 'name'. "
+            'The `range_values` must be a list with 1 or more elements.'
+        )
+        with pytest.raises(InvalidMetadataError, match=error_msg_range_values):
+            instance._validate_categorical('name', range_values='a')
+
+        with pytest.raises(InvalidMetadataError, match=error_msg_range_values):
+            instance._validate_categorical('name', range_values=[])
+
     def test__validate_id(self):
         """Test the ``_validate_id`` method.
 
@@ -317,6 +369,20 @@ class Test_SingleTableMetadata:
         error_msg = re.escape("Invalid regex format string '[A-z{' for id column 'phrase'.")
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance._validate_id('phrase', regex_format='[A-z{')
+
+    def test__validate_null_range(self):
+        """Test validating the `range_is_nullable` parameter."""
+        # Setup
+        instance = _SingleTableMetadata()
+
+        # Run and Assert
+        instance._validate_null_range('col', range_is_nullable=True)
+
+        expected_error = re.escape(
+            "Invalid `range_is_nullable` value for column 'col'. Expected a value of True or False."
+        )
+        with pytest.raises(InvalidMetadataError, match=expected_error):
+            instance._validate_null_range('col', range_is_nullable='false')
 
     def test__validate_column_exists(self):
         """Test the ``_validate_column_exists`` method.
@@ -420,39 +486,37 @@ class Test_SingleTableMetadata:
 
         mock_is_faker_function.assert_called_once_with('fake_type')
 
+    @pytest.mark.parametrize('sdtype', ['numerical', 'datetime', 'categorical', 'boolean', 'id'])
+    def test__validate_column_validates_null_range(self, sdtype):
+        """Test the method validates the `range_is_nullable`."""
+        # Setup
+        instance = _SingleTableMetadata()
+        mock__validate_null_range = Mock()
+        instance._validate_null_range = mock__validate_null_range
+
+        # Run
+        instance._validate_column_args('col', sdtype)
+        instance._validate_column_args('col', sdtype, range_is_nullable=True)
+
+        # Assert
+        mock__validate_null_range.assert_has_calls([
+            call('col'),
+            call('col', range_is_nullable=True),
+        ])
+
     @patch('sdv.metadata._single_table._SingleTableMetadata._validate_unexpected_kwargs')
     @patch('sdv.metadata._single_table._SingleTableMetadata._validate_numerical')
     def test__validate_column_numerical(self, mock__validate_numerical, mock__validate_kwargs):
-        """Test ``_validate_column`` method.
-
-        Test the ``_validate_column`` method when a ``numerical`` sdtype is passed.
-
-        Setup:
-            - Instance of ``_SingleTableMetadata``.
-
-        Input:
-            - ``column_name`` - a string.
-            - ``sdtype`` - a string 'numerical'.
-            - kwargs - any additional key word arguments.
-
-        Mock:
-            - ``_validate_unexpected_kwargs`` function from ``_SingleTableMetadata``.
-            - ``_validate_numerical`` function from ``_SingleTableMetadata``.
-
-        Side effects:
-            - ``_validate_numerical`` has been called once.
-        """
+        """Test the ``_validate_column`` method when a ``numerical`` sdtype is passed."""
         # Setup
         instance = _SingleTableMetadata()
 
         # Run
-        instance._validate_column_args('age', 'numerical', computer_representation='Int8')
+        instance._validate_column_args('age', 'numerical', range_min=0.0)
 
         # Assert
-        mock__validate_kwargs.assert_called_once_with(
-            'age', 'numerical', computer_representation='Int8'
-        )
-        mock__validate_numerical.assert_called_once_with('age', computer_representation='Int8')
+        mock__validate_kwargs.assert_called_once_with('age', 'numerical', range_min=0.0)
+        mock__validate_numerical.assert_called_once_with('age', range_min=0.0)
 
     @patch('sdv.metadata._single_table._SingleTableMetadata._validate_unexpected_kwargs')
     @patch('sdv.metadata._single_table._SingleTableMetadata._validate_categorical')
@@ -616,12 +680,10 @@ class Test_SingleTableMetadata:
         instance.columns = {'a': {'sdtype': 'numerical'}}
 
         # Run
-        instance.update_column('a', computer_representation='Int64')
+        instance.update_column('a', range_min=18)
 
         # Assert
-        assert instance.columns == {
-            'a': {'sdtype': 'numerical', 'computer_representation': 'Int64'}
-        }
+        assert instance.columns == {'a': {'sdtype': 'numerical', 'range_min': 18}}
 
     def test_add_column_column_name_in_columns(self):
         """Test ``add_column`` method.
@@ -715,10 +777,10 @@ class Test_SingleTableMetadata:
         instance = _SingleTableMetadata()
 
         # Run
-        instance.add_column('age', sdtype='numerical', computer_representation='Int8')
+        instance.add_column('age', sdtype='numerical', range_min=18)
 
         # Assert
-        assert instance.columns['age'] == {'sdtype': 'numerical', 'computer_representation': 'Int8'}
+        assert instance.columns['age'] == {'sdtype': 'numerical', 'range_min': 18}
 
     def test_add_column_other_sdtype(self):
         """Test ``add_column`` with an ``sdtype`` that isn't in our base ``sdtypes``..
@@ -1541,7 +1603,7 @@ class Test_SingleTableMetadata:
                 '19': {'sdtype': 'numerical'},
                 '20': {'sdtype': 'numerical'},
             },
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         }
 
         # Run
@@ -2652,6 +2714,58 @@ class Test_SingleTableMetadata:
         assert output_1 == []
         assert output_2 == [message]
 
+    @pytest.mark.parametrize(
+        ('column', 'expected_errors'),
+        [
+            (pd.Series([True, False, None], name='bool'), []),
+            (
+                pd.Series(['a', 0, 'b', 2, 'c', 4], name='num'),
+                ["Invalid values found for numerical column 'num': ['a', 'b', 'c']."],
+            ),
+            (
+                pd.Series([-99, -1, 0, 1, 4, 29, 99], name='num'),
+                [
+                    "Out of range values found for numerical column 'num': "
+                    "[-1, -99, 29, '+ 1 more']."
+                ],
+            ),
+            (
+                pd.Series(['a', 'b', 'c', 'x', 'y', 'z'], name='categorical'),
+                [
+                    "Out of range values found for categorical column 'categorical': "
+                    "['x', 'y', 'z']."
+                ],
+            ),
+            (
+                pd.Series(['01/2015', '05/2028', '03/2022'], name='datetime'),
+                ["Out of range values found for datetime column 'datetime': ['01/2015']."],
+            ),
+        ],
+    )
+    def test__validate_column_data(self, column, expected_errors):
+        """Test ``_validate_column_data`` validates data and ranges."""
+        # Setup
+        instance = _SingleTableMetadata.load_from_dict({
+            'columns': {
+                'bool': {'sdtype': 'boolean'},
+                'num': {'sdtype': 'numerical', 'range_min': 0.0, 'range_max': 10.0},
+                'categorical': {'sdtype': 'categorical', 'range_values': ['a', 'b', 'c']},
+                'datetime': {
+                    'sdtype': 'datetime',
+                    'datetime_format': '%m/%Y',
+                    'range_min': '01/2020',
+                },
+            }
+        })
+
+        # Run
+        sdtype_warnings = {}
+        errors = instance._validate_column_data(column, sdtype_warnings)
+
+        # Assert
+        assert sdtype_warnings == {}
+        assert errors == expected_errors
+
     def test_validate_data_wrong_type(self):
         """Test error is raised if data is not ``pd.DataFrame``."""
         # Setup
@@ -3108,7 +3222,7 @@ class Test_SingleTableMetadata:
         # Assert
         assert result == {
             'columns': {'my_column': 'value'},
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         }
 
         # Ensure that the output object does not alterate the inside object
@@ -3133,7 +3247,7 @@ class Test_SingleTableMetadata:
         # Assert
         assert result == {
             'columns': {'my_column': 'value'},
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         }
 
     def test__valdiate_no_extra_keys_metadata_dict(self):
@@ -3146,7 +3260,7 @@ class Test_SingleTableMetadata:
             'alternate_keys': [],
             'sequence_key': None,
             'sequence_index': None,
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         }
         instance = _SingleTableMetadata()
         expected_error = re.escape(
@@ -3172,7 +3286,7 @@ class Test_SingleTableMetadata:
             'alternate_keys': [],
             'sequence_key': None,
             'sequence_index': None,
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         }
 
         # Run
@@ -3185,7 +3299,7 @@ class Test_SingleTableMetadata:
         assert instance.sequence_key is None
         assert instance.alternate_keys == []
         assert instance.sequence_index is None
-        assert instance._version == 'SINGLE_TABLE_V1'
+        assert instance._version == 'SINGLE_TABLE_V2'
 
     def test_load_from_dict_integer(self):
         """Test that ``load_from_dict`` returns a instance with the ``dict`` updated objects.
@@ -3201,7 +3315,7 @@ class Test_SingleTableMetadata:
             'alternate_keys': [],
             'sequence_key': None,
             'sequence_index': None,
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         }
 
         # Run
@@ -3213,7 +3327,7 @@ class Test_SingleTableMetadata:
         assert instance.sequence_key is None
         assert instance.alternate_keys == []
         assert instance.sequence_index is None
-        assert instance._version == 'SINGLE_TABLE_V1'
+        assert instance._version == 'SINGLE_TABLE_V2'
 
     def test_load_from_dict_composite_key_single_element(self):
         """Test that a primary key list with a single element is set as a single primary key."""
@@ -3221,7 +3335,7 @@ class Test_SingleTableMetadata:
         my_metadata = {
             'columns': {'pk': 'value'},
             'primary_key': ['pk'],
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         }
 
         # Run
@@ -3230,7 +3344,7 @@ class Test_SingleTableMetadata:
         # Assert
         assert instance.columns == {'pk': 'value'}
         assert instance.primary_key == 'pk'
-        assert instance._version == 'SINGLE_TABLE_V1'
+        assert instance._version == 'SINGLE_TABLE_V2'
 
     @patch('sdv.metadata.utils.Path')
     def test_load_from_json_path_does_not_exist(self, mock_path):
@@ -3324,7 +3438,7 @@ class Test_SingleTableMetadata:
         mock_json.load.return_value = {
             'columns': {'animals': {'type': 'categorical'}},
             'primary_key': 'animals',
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         }
 
         # Run
@@ -3336,7 +3450,7 @@ class Test_SingleTableMetadata:
         assert instance.sequence_key is None
         assert instance.alternate_keys == []
         assert instance.sequence_index is None
-        assert instance._version == 'SINGLE_TABLE_V1'
+        assert instance._version == 'SINGLE_TABLE_V2'
 
     @patch('sdv.metadata.utils.Path')
     def test_save_to_json_file_exists_write(self, mock_path):
@@ -3845,6 +3959,27 @@ class Test_SingleTableMetadata:
         )
         with pytest.raises(InvalidMetadataError, match=expected_msg):
             instance._validate_keys_sdtype(['col1', 'col2'], 'primary')
+
+    def test__validate_keys_nullable_range(self):
+        """Test that `_validate_keys_sdtype` errors if any columns have a nullable range."""
+        # Setup
+        instance = _SingleTableMetadata()
+        instance.columns = {
+            'user_id': {'sdtype': 'id', 'regex_format': 'ID_[0-9]{1,2}'},
+            'account_type': {'sdtype': 'categorical'},
+            'col1': {'sdtype': 'numerical', 'range_is_nullable': False},
+            'col2': {'sdtype': 'numerical', 'range_is_nullable': True},
+        }
+
+        # Run and Assert
+        instance._validate_keys_nullable_range(['user_id'], 'primary')
+        instance._validate_keys_nullable_range(['col1'], 'primary')
+
+        expected_error = re.escape(
+            "The primary_keys ['col2'] cannot have `range_is_nullable` set to `True`."
+        )
+        with pytest.raises(InvalidMetadataError, match=expected_error):
+            instance._validate_keys_nullable_range(['col2'], 'primary')
 
     def test__detect_columns_verbose(self, data, capsys):
         """Test the ``_detect_columns`` method with verbose (print sdtypes and PK)."""
