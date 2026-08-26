@@ -9,6 +9,7 @@ from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from pandas.api.types import is_float, is_integer
 from pandas.core.tools.datetimes import _guess_datetime_format_for_array
@@ -159,6 +160,70 @@ def _datetime_string_matches_format(value, datetime_format):
         return value == parsed.strftime(datetime_format)
     except ValueError:
         return False
+
+
+def _parse_datetime(value, datetime_format, ignore_timezone):
+    is_series = isinstance(value, pd.Series)
+    parsed_value = pd.to_datetime(value, format=datetime_format, errors='coerce')
+
+    if is_series and ignore_timezone and hasattr(parsed_value, 'dt'):
+        if hasattr(parsed_value.dt, 'tz_localize'):
+            parsed_value = parsed_value.dt.tz_localize(None)
+
+    elif ignore_timezone and hasattr(parsed_value, 'tz_localize'):
+        if isinstance(parsed_value, (list, tuple, pd.Series, np.ndarray)):
+            parsed_value = [
+                new_value.replace(tzinfo=None)
+                if isinstance(new_value, datetime)
+                else new_value.tz_localize(None)
+                for new_value in parsed_value
+            ]
+
+        else:
+            parsed_value = parsed_value.tz_localize(None)
+
+    if is_series and not isinstance(parsed_value, pd.Series):
+        return pd.Series(parsed_value)
+
+    return parsed_value
+
+
+def _parse_datetime64_value(value, datetime_format=None, ignore_timezone=True):
+    """Parse a single value into `datetime64`, optionally ignoring timezone."""
+    if pd.isna(value):
+        return pd.NaT.to_datetime64()
+
+    return _parse_datetime(value, datetime_format, ignore_timezone).to_datetime64()
+
+
+def _cast_to_datetime64(value, datetime_format=None, ignore_timezone=True):
+    """Cast a given value to a ``numpy.datetime64`` format.
+
+    Args:
+        value (pandas.Series, np.ndarray, list, or str):
+            Input data to convert.
+        datetime_format (str, optional):
+            Datetime format of the `value`.
+        ignore_timezone (bool):
+            If True, strips `%z` or `%Z` from the format and removes tzinfo.
+
+    Returns:
+        numpy.datetime64, pandas.Series, or numpy.ndarray of datetime64
+    """
+    if datetime_format:
+        datetime_format = datetime_format.replace('%#', '%').replace('%-', '%')
+
+    if isinstance(value, str):
+        return _parse_datetime64_value(value, datetime_format, ignore_timezone)
+
+    elif isinstance(value, pd.Series):
+        dt_series = _parse_datetime(value, datetime_format, ignore_timezone)
+        return dt_series.astype('datetime64[ns]')
+
+    elif isinstance(value, (np.ndarray, list)):
+        return np.array([
+            _parse_datetime64_value(val, datetime_format, ignore_timezone) for val in value
+        ])
 
 
 def _convert_to_timedelta(column):
@@ -555,3 +620,51 @@ def _check_is_dict_of_dataframes(data, arg_name='data'):
     for table_name, table in data.items():
         if not isinstance(table, pd.DataFrame):
             raise ValueError(error_message_data)
+
+
+def _column_range_exceeds_real(column, col_meta):
+    range_is_nullable = col_meta.get('range_is_nullable', False)
+    if not any(pd.isna(column)) and range_is_nullable:
+        return True
+
+    column = column.dropna()
+    if col_meta['sdtype'] in ['datetime', 'numerical']:
+        range_min = col_meta.get('range_min')
+        range_max = col_meta.get('range_max')
+        if range_min is None and range_max is None:
+            return False
+        elif column.empty:
+            return True
+
+        if col_meta['sdtype'] == 'datetime':
+            datetime_format = col_meta.get('datetime_format')
+            column = _cast_to_datetime64(column, datetime_format)
+            if range_min is not None:
+                range_min = _cast_to_datetime64(range_min, datetime_format)
+
+            if range_max is not None:
+                range_max = _cast_to_datetime64(range_max, datetime_format)
+
+        min_bound_met = any(column.dropna() <= range_min) if range_min is not None else True
+        max_bound_met = any(column.dropna() >= range_max) if range_max is not None else True
+        return not (min_bound_met and max_bound_met)
+
+    elif col_meta['sdtype'] == 'categorical':
+        if 'range_values' not in col_meta:
+            return False
+
+        if not set(col_meta['range_values']).issubset(set(column.unique())):
+            return True
+
+    return False
+
+
+def _metadata_range_exceeds_real(data, metadata):
+    """Returns whether the metadata range information exceeds the real data range."""
+    for table_name, table_data in data.items():
+        for column in table_data.columns:
+            col_meta = metadata.tables[table_name].columns[column]
+            if _column_range_exceeds_real(table_data[column], col_meta):
+                return True
+
+    return False

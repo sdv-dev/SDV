@@ -226,7 +226,7 @@ class TestBaseConstraint:
                 'table': {
                     'columns': {
                         'col1': {'sdtype': 'categorical'},
-                        'col2': {'sdtype': 'numerical', 'computer_representation': 'Int8'},
+                        'col2': {'sdtype': 'numerical'},
                         'col3': {'sdtype': 'numerical'},
                         'date_col1': {'sdtype': 'datetime'},
                         'date_col2': {'sdtype': 'datetime'},
@@ -252,8 +252,8 @@ class TestBaseConstraint:
         data = {
             'table': pd.DataFrame({
                 'col1': ['abc', 'def'],
-                'col2': [1, 2],
-                'col3': [3, 4],
+                'col2': pd.Series([1, 2], dtype='int8'),
+                'col3': pd.Series([3, 4], dtype='float'),
                 'date_col1': ['16-05-2023', '14-04-2022'],
                 'date_col2': pd.to_datetime(['2021-02-15', '2022-05-16']),
             }),
@@ -276,12 +276,12 @@ class TestBaseConstraint:
         assert isinstance(formatters['table']['col2'], NumericalFormatter)
         assert formatters['table']['col2'].enforce_rounding is True
         assert formatters['table']['col2'].enforce_min_max_values is True
-        assert formatters['table']['col2'].computer_representation == 'Int8'
+        assert formatters['table']['col2']._dtype == 'int8'
 
         assert isinstance(formatters['table']['col3'], NumericalFormatter)
         assert formatters['table']['col3'].enforce_rounding is True
         assert formatters['table']['col3'].enforce_min_max_values is True
-        assert formatters['table']['col3'].computer_representation == 'Float'
+        assert formatters['table']['col3']._dtype == 'float'
 
         assert isinstance(formatters['table']['date_col1'], DatetimeFormatter)
         assert isinstance(formatters['table']['date_col2'], DatetimeFormatter)

@@ -16,7 +16,7 @@ from sdv.datasets.demo import (
     _find_data_zip_key,
     _find_text_key,
     _get_data_from_bucket,
-    _get_first_v1_metadata_bytes,
+    _get_first_v2_metadata_bytes,
     _get_metadata,
     _get_text_file_content,
     _iter_metainfo_yaml_entries,
@@ -70,12 +70,12 @@ def test_download_demo_single_table(mock_list, mock_get, tmpdir):
     df = pd.DataFrame({'0': [0, 0], '1': [0, 0]})
     zip_bytes = _make_zip_with_csv('ring.csv', df)
     meta_bytes = json.dumps({
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'tables': {
             'ring': {
                 'columns': {
-                    '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-                    '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    '0': {'sdtype': 'numerical'},
+                    '1': {'sdtype': 'numerical'},
                 }
             }
         },
@@ -102,12 +102,12 @@ def test_download_demo_single_table(mock_list, mock_get, tmpdir):
         'tables': {
             'ring': {
                 'columns': {
-                    '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-                    '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    '0': {'sdtype': 'numerical'},
+                    '1': {'sdtype': 'numerical'},
                 },
             }
         },
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'relationships': [],
     }
     assert metadata.to_dict() == expected_metadata_dict
@@ -139,7 +139,7 @@ def test__download(mock_list, mock_get_data_from_bucket):
     ]
     df = pd.DataFrame({'a': [1, 2]})
     zip_bytes = _make_zip_with_csv('ring.csv', df)
-    meta_bytes = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
+    meta_bytes = json.dumps({'METADATA_SPEC_VERSION': 'V2'}).encode()
     mock_get_data_from_bucket.side_effect = lambda key, bucket, client: (
         zip_bytes if key.endswith('data.zip') else meta_bytes
     )
@@ -169,12 +169,12 @@ def test_download_demo_single_table_no_output_folder(mock_list, mock_get):
     df = pd.DataFrame({'0': [0, 0], '1': [0, 0]})
     zip_bytes = _make_zip_with_csv('ring.csv', df)
     meta_bytes = json.dumps({
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'tables': {
             'ring': {
                 'columns': {
-                    '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-                    '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    '0': {'sdtype': 'numerical'},
+                    '1': {'sdtype': 'numerical'},
                 }
             }
         },
@@ -194,12 +194,12 @@ def test_download_demo_single_table_no_output_folder(mock_list, mock_get):
         'tables': {
             'ring': {
                 'columns': {
-                    '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-                    '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    '0': {'sdtype': 'numerical'},
+                    '1': {'sdtype': 'numerical'},
                 },
             }
         },
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'relationships': [],
     }
     assert metadata.to_dict() == expected_metadata_dict
@@ -224,14 +224,14 @@ def test_download_demo_timeseries(mock_list, mock_get, tmpdir):
     })
     zip_bytes = _make_zip_with_csv('Libras.csv', df)
     meta_bytes = json.dumps({
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'relationships': [],
         'tables': {
             'Libras': {
                 'columns': {
-                    'e_id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-                    'dim_0': {'sdtype': 'numerical', 'computer_representation': 'Float'},
-                    'dim_1': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'e_id': {'sdtype': 'numerical'},
+                    'dim_0': {'sdtype': 'numerical'},
+                    'dim_1': {'sdtype': 'numerical'},
                     'ml_class': {'sdtype': 'categorical'},
                 }
             }
@@ -255,14 +255,14 @@ def test_download_demo_timeseries(mock_list, mock_get, tmpdir):
     })
     pd.testing.assert_frame_equal(table.head(2), expected_table)
     expected_metadata_dict = {
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'relationships': [],
         'tables': {
             'Libras': {
                 'columns': {
-                    'e_id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-                    'dim_0': {'sdtype': 'numerical', 'computer_representation': 'Float'},
-                    'dim_1': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'e_id': {'sdtype': 'numerical'},
+                    'dim_0': {'sdtype': 'numerical'},
+                    'dim_1': {'sdtype': 'numerical'},
                     'ml_class': {'sdtype': 'categorical'},
                 }
             }
@@ -301,7 +301,7 @@ def test_download_demo_multi_table(mock_list, mock_get, tmpdir):
                 'columns': {
                     'character_id': {'sdtype': 'id', 'regex_format': '^[1-9]{1,2}$'},
                     'name': {'sdtype': 'categorical'},
-                    'age': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'age': {'sdtype': 'numerical'},
                 },
                 'primary_key': 'character_id',
             },
@@ -317,7 +317,7 @@ def test_download_demo_multi_table(mock_list, mock_get, tmpdir):
                     'character_id': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
                     'family_id': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
                     'type': {'sdtype': 'categorical'},
-                    'generation': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'generation': {'sdtype': 'numerical'},
                 },
             },
         },
@@ -335,7 +335,7 @@ def test_download_demo_multi_table(mock_list, mock_get, tmpdir):
                 'child_foreign_key': 'character_id',
             },
         ],
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
     }).encode()
     mock_get.side_effect = lambda key, bucket, client: (
         zip_bytes if key.endswith('data.zip') else meta_bytes
@@ -376,9 +376,39 @@ def test__find_data_zip_key():
 
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
-def test__get_first_v1_metadata_bytes(mock_get):
+def test__get_first_v2_metadata_bytes(mock_get):
     # Setup
     v2 = json.dumps({'METADATA_SPEC_VERSION': 'V2'}).encode()
+    bad = b'not-json'
+    v1 = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
+
+    def side_effect(key, bucket, client):
+        return {
+            'single_table/dataset/k1_metadata.json': v2,
+            'single_table/dataset/k2.json': bad,
+            'single_table/dataset/k_metadata_k.json': v1,
+        }[key]
+
+    mock_get.side_effect = side_effect
+    contents = [
+        {'Key': 'single_table/dataset/k1_metadata.json'},
+        {'Key': 'single_table/dataset/k2.json'},
+        {'Key': 'single_table/dataset/k_metadata_k.json'},
+    ]
+
+    # Run
+    got = _get_first_v2_metadata_bytes(
+        contents, 'single_table/dataset/', bucket='test_bucket', client=None
+    )
+
+    # Assert
+    assert got == v2
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+def test__get_first_v2_metadata_bytes_falls_back_to_v1(mock_get):
+    # Setup
+    v2 = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
     bad = b'not-json'
     v1 = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
 
@@ -397,7 +427,7 @@ def test__get_first_v1_metadata_bytes(mock_get):
     ]
 
     # Run
-    got = _get_first_v1_metadata_bytes(
+    got = _get_first_v2_metadata_bytes(
         contents, 'single_table/dataset/', bucket='test_bucket', client=None
     )
 
@@ -593,7 +623,7 @@ def test_download_demo_success_single_table(mock_list, mock_get):
     df = pd.DataFrame({'id': [1, 2], 'name': ['a', 'b']})
     zip_bytes = _make_zip_with_csv('word.csv', df)
     meta_bytes = json.dumps({
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'tables': {
             'word': {
                 'columns': {
@@ -642,14 +672,14 @@ def test_download_demo_missing_zip_raises(mock_list):
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
 @patch('sdv.datasets.demo._list_objects')
-def test_download_demo_no_v1_metadata_raises(mock_list, mock_get):
+def test_download_demo_no_valid_metadata_raises(mock_list, mock_get):
     # Setup
     mock_list.return_value = [
         {'Key': 'single_table/word/data.zip'},
         {'Key': 'single_table/word/metadata.json'},
     ]
     mock_get.side_effect = lambda key, bucket, client: json.dumps({
-        'METADATA_SPEC_VERSION': 'V2'
+        'METADATA_SPEC_VERSION': 'V000'
     }).encode()
 
     # Run and Assert
@@ -666,7 +696,7 @@ def test__get_metadata_warns_on_save_error(_mock_open, tmp_path):
     """_get_metadata should emit a warning if writing metadata.json fails."""
     # Setup
     meta = {
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'relationships': [],
         'tables': {
             't': {
@@ -716,11 +746,11 @@ def test_download_demo_writes_metadata_and_discovers_nested_csv(mock_list, mock_
 
     zip_bytes = buf.getvalue()
     meta_dict = {
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'tables': {
             'my_table': {
                 'columns': {
-                    'a': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'a': {'sdtype': 'numerical'},
                     'b': {'sdtype': 'categorical'},
                 }
             }
@@ -1208,7 +1238,7 @@ def test_download_demo_raises_when_no_csv_in_zip_single_table(mock_list, mock_ge
         zf.writestr('README.txt', 'no tables here')
 
     zip_bytes = zip_buf.getvalue()
-    meta_bytes = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
+    meta_bytes = json.dumps({'METADATA_SPEC_VERSION': 'V2'}).encode()
 
     mock_get.side_effect = lambda key, client, bucket: (
         zip_bytes if key.endswith('data.zip') else meta_bytes
@@ -1244,11 +1274,11 @@ def test_download_demo_warns_for_non_csv_in_memory(mock_list, mock_get):
     zip_bytes = buf.getvalue()
 
     meta_bytes = json.dumps({
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'tables': {
             'good': {
                 'columns': {
-                    'id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'id': {'sdtype': 'numerical'},
                     'name': {'sdtype': 'categorical'},
                 }
             }
@@ -1290,11 +1320,11 @@ def test_download_demo_on_disk_warns_failed_csv_only(mock_list, mock_get, tmp_pa
     zip_bytes = buf.getvalue()
 
     meta_bytes = json.dumps({
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'tables': {
             'good': {
                 'columns': {
-                    'x': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'x': {'sdtype': 'numerical'},
                 }
             }
         },
@@ -1346,11 +1376,11 @@ def test_download_demo_handles_non_utf8_in_memory(mock_list, mock_get):
     zip_bytes = buf.getvalue()
 
     meta_bytes = json.dumps({
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'tables': {
             'nonutf': {
                 'columns': {
-                    'id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'id': {'sdtype': 'numerical'},
                     'name': {'sdtype': 'categorical'},
                 }
             }
@@ -1387,11 +1417,11 @@ def test_download_demo_handles_non_utf8_on_disk(mock_list, mock_get, tmp_path):
     zip_bytes = buf.getvalue()
 
     meta_bytes = json.dumps({
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'tables': {
             'nonutf': {
                 'columns': {
-                    'id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'id': {'sdtype': 'numerical'},
                     'name': {'sdtype': 'categorical'},
                 }
             }
@@ -1635,12 +1665,12 @@ def test_download_demo_with_output_folder_name_single_table(mock_list, mock_get,
     df = pd.DataFrame({'0': [0, 0], '1': [0, 0]})
     zip_bytes = _make_zip_with_csv('ring.csv', df)
     meta_bytes = json.dumps({
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'tables': {
             'ring': {
                 'columns': {
-                    '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-                    '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    '0': {'sdtype': 'numerical'},
+                    '1': {'sdtype': 'numerical'},
                 }
             }
         },
@@ -1681,7 +1711,7 @@ def test_download_demo_writes_csvs_to_disk_multi_table(mock_list, mock_get, tmp_
         zf.writestr('characters.csv', characters.to_csv(index=False))
     zip_bytes = buf.getvalue()
     meta_bytes = json.dumps({
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'tables': {
             'families': {
                 'columns': {
@@ -1693,7 +1723,7 @@ def test_download_demo_writes_csvs_to_disk_multi_table(mock_list, mock_get, tmp_
             'characters': {
                 'columns': {
                     'character_id': {'sdtype': 'id'},
-                    'age': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'age': {'sdtype': 'numerical'},
                     'name': {'sdtype': 'categorical'},
                 },
                 'primary_key': 'character_id',

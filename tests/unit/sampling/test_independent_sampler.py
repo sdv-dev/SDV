@@ -469,7 +469,7 @@ class TestBaseIndependentSampler:
         metadata = Mock()
         metadata.tables = {
             'guests': {
-                'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+                'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
                 'primary_key': 'key_1',
                 'columns': {
                     'key_1': {
@@ -478,7 +478,7 @@ class TestBaseIndependentSampler:
                 },
             },
             'hotels': {
-                'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+                'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
                 'primary_key': 'key_2',
                 'columns': {
                     'key_2': {

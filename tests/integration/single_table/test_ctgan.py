@@ -194,7 +194,7 @@ def test_categorical_metadata_with_int_data():
     """
     # Setup
     metadata_dict = {
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         'columns': {
             'A': {'sdtype': 'categorical'},
             'B': {'sdtype': 'numerical'},
