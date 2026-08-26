@@ -470,6 +470,22 @@ class TestMetadataClass:
                 seen_foreign_keys=seen_foreign_keys,
             )
 
+    def test__validate_foreign_key_range_info(self):
+        """Test validating foreign key columns do not have ranges set."""
+        # Setup
+        instance = Mock()
+        child_mock = Mock(columns={'col1': {'sdtype': 'numerical', 'range_min': 0.0}})
+        instance.tables = {'child': child_mock}
+
+        # Run and Assert
+        expected_error = re.escape(
+            "Foreign key column(s) ['col1'] in table 'child' "
+            'cannot contain range information. Only `range_is_nullable` '
+            'is allowed for foreign key columns.'
+        )
+        with pytest.raises(InvalidMetadataError, match=expected_error):
+            Metadata._validate_foreign_key_range_info(instance, 'child', 'col1')
+
     def test__validate_circular_relationships(self):
         """Test the ``_validate_circular_relationships`` method of ``Metadata``.
 
@@ -812,7 +828,7 @@ class TestMetadataClass:
                     'child_foreign_key': 'pk',
                 }
             ],
-            'METADATA_SPEC_VERSION': 'V1',
+            'METADATA_SPEC_VERSION': 'V2',
         }
 
     def test_remove_relationship(self):
@@ -1434,7 +1450,7 @@ class TestMetadataClass:
                     'child_foreign_key': 'pk',
                 }
             ],
-            'METADATA_SPEC_VERSION': 'V1',
+            'METADATA_SPEC_VERSION': 'V2',
         }
 
     def test__validate_foreign_keys(self):
@@ -1554,7 +1570,7 @@ class TestMetadataClass:
 
         # Run and Assert
         metadata.validate_data(data)
-        assert metadata.METADATA_SPEC_VERSION == 'V1'
+        assert metadata.METADATA_SPEC_VERSION == 'V2'
 
     def test_validate_data_missing_table(self):
         """Test that an error is being raised when there is a missing table in the dictionary."""
@@ -1793,7 +1809,7 @@ class TestMetadataClass:
                     'child_foreign_key': 'fk',
                 },
             ],
-            'METADATA_SPEC_VERSION': 'V1',
+            'METADATA_SPEC_VERSION': 'V2',
         }
 
         metadata = Metadata.load_from_dict(metadata_dict)
@@ -1880,7 +1896,7 @@ class TestMetadataClass:
                     'child_foreign_key': 'fk',
                 },
             ],
-            'METADATA_SPEC_VERSION': 'V1',
+            'METADATA_SPEC_VERSION': 'V2',
         }
 
         metadata = Metadata.load_from_dict(metadata_dict)
@@ -2008,7 +2024,7 @@ class TestMetadataClass:
                     'chil_foreign_key': 'branch_id',
                 }
             ],
-            'METADATA_SPEC_VERSION': 'V1',
+            'METADATA_SPEC_VERSION': 'V2',
         }
         assert result == expected_result
 
@@ -3372,7 +3388,7 @@ class TestMetadataClass:
         mock_read_json.return_value = {
             'columns': {'animals': {'type': 'categorical'}},
             'primary_key': 'animals',
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         }
         warning_message = (
             'You are loading an older _SingleTableMetadata object. This will be converted'
@@ -3402,7 +3418,7 @@ class TestMetadataClass:
             assert instance.tables[table_name].sequence_key is None
             assert instance.tables[table_name].alternate_keys == []
             assert instance.tables[table_name].sequence_index is None
-            assert instance.tables[table_name]._version == 'SINGLE_TABLE_V1'
+            assert instance.tables[table_name]._version == 'SINGLE_TABLE_V2'
 
     @patch('builtins.open', new_callable=mock_open)
     @patch('sdv.metadata.utils.Path')
@@ -3432,7 +3448,7 @@ class TestMetadataClass:
                 'table1': {
                     'columns': {'animals': {'type': 'categorical'}},
                     'primary_key': 'animals',
-                    'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+                    'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
                 }
             },
             'relationships': {},
@@ -3448,7 +3464,7 @@ class TestMetadataClass:
         assert instance.tables['table1'].sequence_key is None
         assert instance.tables['table1'].alternate_keys == []
         assert instance.tables['table1'].sequence_index is None
-        assert instance.tables['table1']._version == 'SINGLE_TABLE_V1'
+        assert instance.tables['table1']._version == 'SINGLE_TABLE_V2'
 
     @patch('sdv.metadata.utils.open')
     @patch('sdv.metadata.utils.Path')
@@ -3480,7 +3496,7 @@ class TestMetadataClass:
                 'table1': {
                     'columns': {'animals': {'type': 'categorical'}},
                     'primary_key': 'animals',
-                    'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+                    'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
                 }
             },
             'relationships': {},
@@ -3496,7 +3512,7 @@ class TestMetadataClass:
         assert instance.tables['table1'].sequence_key is None
         assert instance.tables['table1'].alternate_keys == []
         assert instance.tables['table1'].sequence_index is None
-        assert instance.tables['table1']._version == 'SINGLE_TABLE_V1'
+        assert instance.tables['table1']._version == 'SINGLE_TABLE_V2'
 
     @patch('sdv.metadata.utils.Path')
     def test_save_to_json_file_exists_write(self, mock_path):
@@ -3773,7 +3789,7 @@ class TestMetadataClass:
                     'child_foreign_key': 'id',
                 }
             ],
-            'METADATA_SPEC_VERSION': 'V1',
+            'METADATA_SPEC_VERSION': 'V2',
         }
         from_dict_mock.assert_called_once_with(expected_new_metadata)
         new_metadata.validate.assert_called_once()
@@ -3825,7 +3841,7 @@ class TestMetadataClass:
         expected_new_metadata = {
             'tables': {},
             'relationships': [],
-            'METADATA_SPEC_VERSION': 'V1',
+            'METADATA_SPEC_VERSION': 'V2',
         }
         from_dict_mock.assert_called_once_with(expected_new_metadata)
         new_metadata.validate.assert_called_once()
@@ -3918,7 +3934,7 @@ class TestMetadataClass:
                         'col2': {'sdtype': 'categorical'},
                     },
                     'primary_key': 'col1',
-                    'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+                    'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
                 },
                 'table2': {
                     'columns': {
@@ -3926,7 +3942,7 @@ class TestMetadataClass:
                         'col2': {'sdtype': 'id', 'regex_format': 'ID_[0-9]{3}'},
                     },
                     'primary_key': 'col1',
-                    'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+                    'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
                 },
             },
             'relationships': [
@@ -4300,7 +4316,7 @@ class TestMetadataClass:
             'alternate_keys': [],
             'sequence_key': None,
             'sequence_index': None,
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         }
 
         # Run
@@ -4313,7 +4329,7 @@ class TestMetadataClass:
         assert instance.tables['table'].sequence_key is None
         assert instance.tables['table'].alternate_keys == []
         assert instance.tables['table'].sequence_index is None
-        assert instance.tables['table']._version == 'SINGLE_TABLE_V1'
+        assert instance.tables['table']._version == 'SINGLE_TABLE_V2'
 
     def test_load_from_dict_integer_single_table(self):
         """Test that ``load_from_dict`` returns a instance of single-table ``Metadata``.
@@ -4330,7 +4346,7 @@ class TestMetadataClass:
             'alternate_keys': [],
             'sequence_key': None,
             'sequence_index': None,
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         }
 
         # Run
@@ -4425,7 +4441,7 @@ class TestMetadataClass:
             'alternate_keys': [],
             'sequence_key': None,
             'sequence_index': None,
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         }
 
         instance = Metadata()
@@ -4439,7 +4455,7 @@ class TestMetadataClass:
         assert instance.tables['table'].alternate_keys == []
         assert instance.tables['table'].sequence_key is None
         assert instance.tables['table'].sequence_index is None
-        assert instance.tables['table'].METADATA_SPEC_VERSION == 'SINGLE_TABLE_V1'
+        assert instance.tables['table'].METADATA_SPEC_VERSION == 'SINGLE_TABLE_V2'
 
     def test_validate_invalid_relationship_foreign_key_reused(self, metadata_instance):
         """Test the method ``validate``.
@@ -4481,7 +4497,7 @@ class TestMetadataClass:
 
         # Run
         test_metadata.validate()
-        assert test_metadata.METADATA_SPEC_VERSION == 'V1'
+        assert test_metadata.METADATA_SPEC_VERSION == 'V2'
 
     def test_validate_data_no_relationships(self):
         """Test that no error is being raised when the data is valid but has no relationships."""
@@ -4494,7 +4510,7 @@ class TestMetadataClass:
 
         # Run and Assert
         metadata.validate_data(data)
-        assert metadata.METADATA_SPEC_VERSION == 'V1'
+        assert metadata.METADATA_SPEC_VERSION == 'V2'
 
     def test_validate_data_warns_when_datetime_format_cannot_be_verified(self):
         """Test warnings for formatted datetime columns without verifiable formats."""
@@ -4904,7 +4920,7 @@ class TestMetadataClass:
                 }
             },
             'relationships': [],
-            'METADATA_SPEC_VERSION': 'V1',
+            'METADATA_SPEC_VERSION': 'V2',
         }
         metadata = Metadata.load_from_dict(metadata_dict)
 

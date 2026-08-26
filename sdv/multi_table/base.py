@@ -16,6 +16,7 @@ from tqdm import tqdm
 
 from sdv import version
 from sdv._utils import (
+    _metadata_range_exceeds_real,
     check_synthesizer_version,
     generate_synthesizer_id,
 )
@@ -477,6 +478,14 @@ class BaseMultiTableSynthesizer:
 
         return errors
 
+    def _check_ranges(self, data, metadata):
+        if _metadata_range_exceeds_real(data, self._original_metadata):
+            warnings.warn(
+                'The training data does not cover the full range. Synthetic data will be '
+                'based on the training data. To extrapolate ranges for full coverage, '
+                'please use the Targeted Sampling bundle.'
+            )
+
     def validate(self, data):
         """Validate the data.
 
@@ -489,14 +498,16 @@ class BaseMultiTableSynthesizer:
         errors = []
         metadata = self._original_metadata
         metadata.validate_data(data)
-        data = self._validate_transform_constraints(data, enforce_constraint_fitting=True)
-        for table_name in data:
+        transformed = self._validate_transform_constraints(data, enforce_constraint_fitting=True)
+        for table_name in transformed:
             if table_name in self._table_synthesizers:
                 # Validate rules specific to each synthesizer
-                errors += self._table_synthesizers[table_name]._validate(data[table_name])
+                errors += self._table_synthesizers[table_name]._validate(transformed[table_name])
 
         if errors:
             raise InvalidDataError(errors)
+
+        self._check_ranges(data, metadata)
 
     def _validate_table_name(self, table_name):
         if table_name not in self._table_synthesizers:

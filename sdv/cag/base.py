@@ -7,8 +7,7 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype
 
-from sdv._utils import _format_invalid_values_string
-from sdv.cag._utils import cast_to_datetime64
+from sdv._utils import _cast_to_datetime64, _format_invalid_values_string
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.errors import NotFittedError
@@ -209,9 +208,7 @@ class BaseConstraint:
                 sdtype = column_metadata.get('sdtype')
 
                 if sdtype == 'numerical' and column_name != primary_key:
-                    representation = column_metadata.get('computer_representation', 'Float')
                     self._formatters[table_name][column_name] = NumericalFormatter(
-                        computer_representation=representation,
                         enforce_rounding=True,
                         enforce_min_max_values=True,
                     )
@@ -230,7 +227,7 @@ class BaseConstraint:
 
                     values = data[table_name][column_name]
                     if not is_datetime64_any_dtype(values.dtype):
-                        values = cast_to_datetime64(data[table_name][column_name], datetime_format)
+                        values = _cast_to_datetime64(data[table_name][column_name], datetime_format)
 
                     self._datetime_min_max_value[table_name][column_name] = (
                         values.min(),
@@ -262,7 +259,7 @@ class BaseConstraint:
 
                     dt_values = table_data[column_name]
                     if not is_datetime64_any_dtype(dt_values.dtype):
-                        dt_values = cast_to_datetime64(dt_values, formatter.datetime_format)
+                        dt_values = _cast_to_datetime64(dt_values, formatter.datetime_format)
 
                     column_data = dt_values.clip(lower=min_value, upper=max_value)
                     table_data[column_name] = formatter.format_data(column_data)

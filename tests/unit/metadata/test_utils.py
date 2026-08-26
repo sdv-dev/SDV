@@ -42,13 +42,13 @@ def test__format_column_metadata_sdtype_only():
 def test__format_column_metadata_with_kwargs():
     """Test ``_format_column_metadata`` formats a dict with sdtype and additional kwargs."""
     # Setup
-    sdtype_info = {'sdtype': 'numerical', 'computer_representation': 'Float'}
+    sdtype_info = {'sdtype': 'numerical', 'range_min': 0.0}
 
     # Run
     result = _format_column_metadata(sdtype_info)
 
     # Assert
-    assert result == "sdtype='numerical', computer_representation='Float'"
+    assert result == "sdtype='numerical', range_min=0.0"
 
 
 def test__format_column_metadata_sdtype_reordered_to_front():

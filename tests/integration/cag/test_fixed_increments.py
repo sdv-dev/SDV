@@ -102,7 +102,7 @@ def test_fixed_increments_integers(dtype):
     data = pd.DataFrame({dtype: series})
     metadata = Metadata.load_from_dict({
         'columns': {
-            dtype: {'sdtype': 'numerical', 'computer_representation': dtype},
+            dtype: {'sdtype': 'numerical'},
         }
     })
     constraint = FixedIncrements(dtype, increment_value=increment_value)
@@ -237,10 +237,10 @@ def test_fixedincrements_with_nullable_pandas_dtypes():
     })
     metadata = Metadata.load_from_dict({
         'columns': {
-            'UInt8': {'sdtype': 'numerical', 'computer_representation': 'UInt8'},
-            'UInt16': {'sdtype': 'numerical', 'computer_representation': 'UInt16'},
-            'UInt32': {'sdtype': 'numerical', 'computer_representation': 'UInt32'},
-            'UInt64': {'sdtype': 'numerical', 'computer_representation': 'UInt64'},
+            'UInt8': {'sdtype': 'numerical'},
+            'UInt16': {'sdtype': 'numerical'},
+            'UInt32': {'sdtype': 'numerical'},
+            'UInt64': {'sdtype': 'numerical'},
         }
     })
     constraints = [

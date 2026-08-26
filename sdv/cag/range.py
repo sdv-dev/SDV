@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_object_dtype
 
-from sdv._utils import _convert_to_timedelta, _create_unique_name
+from sdv._utils import _cast_to_datetime64, _convert_to_timedelta, _create_unique_name
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _get_is_valid_dict,
@@ -16,7 +16,6 @@ from sdv.cag._utils import (
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
     _warn_if_timezone_aware_formats,
-    cast_to_datetime64,
     compute_nans_column,
     get_datetime_diff,
     revert_nans_columns,
@@ -150,9 +149,9 @@ class Range(BaseConstraint):
         high = table_data[self._high_column_name]
 
         if self._is_datetime and is_object_dtype(self._dtype):
-            low = cast_to_datetime64(low, self._low_datetime_format)
-            mid = cast_to_datetime64(mid, self._middle_datetime_format)
-            high = cast_to_datetime64(high, self._high_datetime_format)
+            low = _cast_to_datetime64(low, self._low_datetime_format)
+            mid = _cast_to_datetime64(mid, self._middle_datetime_format)
+            high = _cast_to_datetime64(high, self._high_datetime_format)
 
         low_is_nan = pd.isna(low)
         mid_is_nan = pd.isna(mid)
@@ -342,13 +341,13 @@ class Range(BaseConstraint):
 
         low = table_data[self._low_column_name].to_numpy()
         if self._is_datetime and is_object_dtype(self._dtype):
-            low = cast_to_datetime64(low, self._low_datetime_format)
+            low = _cast_to_datetime64(low, self._low_datetime_format)
             middle = pd.Series(low_diff_column + low).astype(self._dtype)
             high = pd.Series(high_diff_column + middle.to_numpy()).astype(self._dtype)
-            table_data[self._middle_column_name] = cast_to_datetime64(
+            table_data[self._middle_column_name] = _cast_to_datetime64(
                 middle, self._middle_datetime_format
             )
-            table_data[self._high_column_name] = cast_to_datetime64(
+            table_data[self._high_column_name] = _cast_to_datetime64(
                 high, self._high_datetime_format
             )
 

@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_object_dtype
 
-from sdv._utils import _convert_to_timedelta, _create_unique_name
+from sdv._utils import _cast_to_datetime64, _convert_to_timedelta, _create_unique_name
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _get_is_valid_dict,
@@ -14,7 +14,6 @@ from sdv.cag._utils import (
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
     _warn_if_timezone_aware_formats,
-    cast_to_datetime64,
     compute_nans_column,
     get_datetime_diff,
     match_datetime_precision,
@@ -127,8 +126,8 @@ class Inequality(BaseConstraint):
         if is_datetime and is_object_dtype(table_data[self._low_column_name]):
             low_format = self._get_datetime_format(metadata, table_name, self._low_column_name)
             high_format = self._get_datetime_format(metadata, table_name, self._high_column_name)
-            low = cast_to_datetime64(low, low_format)
-            high = cast_to_datetime64(high, high_format)
+            low = _cast_to_datetime64(low, low_format)
+            high = _cast_to_datetime64(high, high_format)
 
             format_matches = bool(low_format == high_format)
             if not format_matches:
@@ -291,7 +290,7 @@ class Inequality(BaseConstraint):
 
         low = table_data[self._low_column_name].to_numpy()
         if self._is_datetime and is_object_dtype(self._dtype):
-            table_data[self._low_column_name] = low = cast_to_datetime64(low)
+            table_data[self._low_column_name] = low = _cast_to_datetime64(low)
 
         table_data[self._high_column_name] = pd.Series(diff_column + low).astype(self._dtype)
         table_data = revert_nans_columns(table_data, self._nan_column_name)

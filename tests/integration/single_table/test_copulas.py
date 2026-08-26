@@ -514,12 +514,12 @@ def test_support_nullable_pandas_dtypes():
     })
     metadata = Metadata().load_from_dict({
         'columns': {
-            'Int8': {'sdtype': 'numerical', 'computer_representation': 'Int8'},
-            'Int16': {'sdtype': 'numerical', 'computer_representation': 'Int16'},
-            'Int32': {'sdtype': 'numerical', 'computer_representation': 'Int32'},
-            'Int64': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-            'Float32': {'sdtype': 'numerical', 'computer_representation': 'Float32'},
-            'Float64': {'sdtype': 'numerical', 'computer_representation': 'Float64'},
+            'Int8': {'sdtype': 'numerical'},
+            'Int16': {'sdtype': 'numerical'},
+            'Int32': {'sdtype': 'numerical'},
+            'Int64': {'sdtype': 'numerical'},
+            'Float32': {'sdtype': 'numerical'},
+            'Float64': {'sdtype': 'numerical'},
         }
     })
 

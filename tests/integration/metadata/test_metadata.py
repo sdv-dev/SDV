@@ -25,7 +25,7 @@ def test_metadata_to_dict():
     result = instance.to_dict()
 
     # Assert
-    assert result == {'tables': {}, 'relationships': [], 'METADATA_SPEC_VERSION': 'V1'}
+    assert result == {'tables': {}, 'relationships': [], 'METADATA_SPEC_VERSION': 'V2'}
     assert instance.tables == {}
     assert instance.relationships == []
 
@@ -61,7 +61,7 @@ def test_load_from_json_single_table_metadata(tmp_path):
             },
         },
         'relationships': [],
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
     }
 
 
@@ -116,7 +116,7 @@ def test_detect_from_dataframes_multi_table():
                 'child_foreign_key': 'hotel_id',
             }
         ],
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
     }
     assert metadata.to_dict() == expected_metadata
 
@@ -172,7 +172,7 @@ def test_detect_from_dataframes_multi_table_without_infer_sdtypes():
                 'parent_table_name': 'hotels',
             }
         ],
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
     }
     assert metadata.to_dict() == expected_metadata
 
@@ -221,7 +221,7 @@ def test_detect_from_dataframes_multi_table_with_infer_keys_primary_only():
             },
         },
         'relationships': [],
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
     }
     assert metadata.to_dict() == expected_metadata
 
@@ -268,7 +268,7 @@ def test_detect_from_dataframes_multi_table_with_infer_keys_none():
             },
         },
         'relationships': [],
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
     }
     assert metadata.to_dict() == expected_metadata
 
@@ -284,7 +284,7 @@ def test_detect_from_dataframes_single_table():
 
     # Assert
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'tables': {
             'table_1': {
                 'columns': {
@@ -313,7 +313,7 @@ def test_detect_from_dataframes_single_table_infer_sdtypes_false():
 
     # Assert
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'tables': {
             'table_1': {
                 'columns': {
@@ -344,7 +344,7 @@ def test_detect_from_dataframes_single_table_infer_keys_primary_only():
 
     # Assert
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'tables': {
             'table_1': {
                 'columns': {
@@ -373,7 +373,7 @@ def test_detect_from_dataframes_single_table_infer_keys_none():
 
     # Assert
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'tables': {
             'table_1': {
                 'columns': {
@@ -402,7 +402,7 @@ def test_detect_from_dataframe():
 
     # Assert
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'tables': {
             DEFAULT_TABLE_NAME: {
                 'columns': {
@@ -431,7 +431,7 @@ def test_detect_from_dataframe_infer_sdtypes_false():
 
     # Assert
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'tables': {
             DEFAULT_TABLE_NAME: {
                 'columns': {
@@ -460,7 +460,7 @@ def test_detect_from_dataframe_infer_keys_none():
 
     # Assert
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'tables': {
             DEFAULT_TABLE_NAME: {
                 'columns': {
@@ -488,7 +488,7 @@ def test_detect_from_dataframe_infer_keys_none_infer_sdtypes_false():
 
     # Assert
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'tables': {
             DEFAULT_TABLE_NAME: {
                 'columns': {
@@ -562,7 +562,7 @@ def test_detect_from_csvs(tmp_path):
                 'child_foreign_key': 'hotel_id',
             }
         ],
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
     }
 
     assert metadata.to_dict() == expected_metadata
@@ -687,7 +687,7 @@ def test_anonymize():
     # Assert
     anonymized.validate()
 
-    assert anonymized.METADATA_SPEC_VERSION == 'V1'
+    assert anonymized.METADATA_SPEC_VERSION == 'V2'
     assert anonymized.tables.keys() == {'table1', 'table2'}
     assert len(anonymized.relationships) == len(metadata.relationships)
     assert anonymized.relationships[0]['parent_table_name'] == 'table1'
@@ -816,14 +816,14 @@ def test_validate_metadata_with_reused_foreign_keys():
         'tables': {
             'A1': {
                 'columns': {
-                    'data': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'data': {'sdtype': 'numerical'},
                     'id': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
                 },
                 'primary_key': 'id',
             },
             'A2': {
                 'columns': {
-                    'data': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'data': {'sdtype': 'numerical'},
                     'id': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
                     'fk1_A1': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
                 },
@@ -831,7 +831,7 @@ def test_validate_metadata_with_reused_foreign_keys():
             },
             'A3': {
                 'columns': {
-                    'data': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'data': {'sdtype': 'numerical'},
                     'id': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
                     'fk1_A1': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
                     'fk2_A1': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
@@ -1017,7 +1017,7 @@ def test_remove_table(metadata_instance):
                 'child_foreign_key': 'user_id',
             },
         ],
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
     }
     assert expected_metadata_dict == metadata_instance.to_dict()
     assert metadata_instance._multi_table_updated
@@ -1088,7 +1088,7 @@ def test_remove_column(metadata_instance):
                 'child_foreign_key': 'product_id',
             },
         ],
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
     }
     assert expected_metadata_dict == metadata_instance.to_dict()
     assert metadata_instance._multi_table_updated
@@ -1157,7 +1157,7 @@ def test_remove_column_column_relationships(metadata_instance):
                 'child_foreign_key': 'manufacturer',
             },
         ],
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
     }
     assert expected_metadata_dict == metadata_instance.to_dict()
     assert metadata_instance._multi_table_updated
@@ -1203,7 +1203,7 @@ def test_remove_column_column_is_sequence_key(sequential_metadata):
             },
         },
         'relationships': [],
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
     }
     assert expected_metadata_dict == sequential_metadata.to_dict()
     assert sequential_metadata._multi_table_updated
@@ -1228,7 +1228,7 @@ def test_remove_column_column_is_sequence_index(sequential_metadata):
             },
         },
         'relationships': [],
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
     }
     assert expected_metadata_dict == sequential_metadata.to_dict()
     assert sequential_metadata._multi_table_updated
@@ -1267,7 +1267,7 @@ def test_remove_column_alternate_key():
             },
         },
         'relationships': [],
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
     }
     assert expected_metadata_dict == metadata.to_dict()
     assert metadata._multi_table_updated
@@ -1436,7 +1436,7 @@ def test_set_primary_key_pk_to_pk():
                 'child_foreign_key': 'table_A_primary_key',
             }
         ],
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
     }
     assert metadata_instance.to_dict() == expected_metadata
 
@@ -1722,7 +1722,7 @@ def test_multi_table_metadata():
     result = instance.to_dict()
 
     # Assert
-    assert result == {'tables': {}, 'relationships': [], 'METADATA_SPEC_VERSION': 'V1'}
+    assert result == {'tables': {}, 'relationships': [], 'METADATA_SPEC_VERSION': 'V2'}
     assert instance.tables == {}
     assert instance.relationships == []
 
@@ -1764,7 +1764,7 @@ def test_multi_table_metadata_composite_keys():
 
     # Assert
     instance.validate()
-    assert result == {**metadata_dict, 'METADATA_SPEC_VERSION': 'V1'}
+    assert result == {**metadata_dict, 'METADATA_SPEC_VERSION': 'V2'}
     assert instance.relationships == metadata_dict['relationships']
 
 
@@ -1904,7 +1904,7 @@ def test_upgrade_metadata(tmp_path):
                 'child_foreign_key': 'id_nesreca',
             },
         ],
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
     }
     assert new_metadata['METADATA_SPEC_VERSION'] == expected_metadata['METADATA_SPEC_VERSION']
     assert new_metadata['tables'] == expected_metadata['tables']
@@ -1963,7 +1963,7 @@ def test_detect_from_dataframes():
                 'child_foreign_key': 'hotel_id',
             }
         ],
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
     }
     assert metadata.to_dict() == expected_metadata
 
@@ -1994,7 +1994,7 @@ def test_get_table_metadata():
     # Assert
     assert isinstance(table_metadata, Metadata)
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
         'relationships': [],
         'tables': {
             'nesreca': {

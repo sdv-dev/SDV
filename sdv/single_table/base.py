@@ -26,6 +26,7 @@ from sdv import version
 from sdv._utils import (
     _check_regex_format,
     _groupby_list,
+    _metadata_range_exceeds_real,
     check_synthesizer_version,
     generate_synthesizer_id,
 )
@@ -556,6 +557,17 @@ class BaseSynthesizer:
         self._constraints_fitted = True
         return data
 
+    def _check_ranges(self, data):
+        if isinstance(data, pd.DataFrame):
+            data = {self._table_name: data}
+
+        if _metadata_range_exceeds_real(data, self._original_metadata):
+            warnings.warn(
+                'The training data does not cover the full range. Synthetic data will be '
+                'based on the training data. To extrapolate ranges for full coverage, '
+                'please use the Targeted Sampling bundle.'
+            )
+
     def validate(self, data):
         """Validate data.
 
@@ -594,6 +606,8 @@ class BaseSynthesizer:
         synthesizer_errors = self._validate(data)  # Validate rules specific to each synthesizer
         if synthesizer_errors:
             raise InvalidDataError(synthesizer_errors)
+
+        self._check_ranges(data)
 
     def _preprocess_helper(self, data):
         """This method is used to preprocess the data.

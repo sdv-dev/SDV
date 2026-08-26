@@ -38,7 +38,7 @@ class TestBaseLocalHandler:
         # Assert
         assert isinstance(metadata, Metadata)
         assert metadata.to_dict() == {
-            'METADATA_SPEC_VERSION': 'V1',
+            'METADATA_SPEC_VERSION': 'V2',
             'relationships': [
                 {
                     'child_foreign_key': 'hotel_id',
