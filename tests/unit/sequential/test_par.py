@@ -924,28 +924,19 @@ class TestPARSynthesizer:
         par._sample_from_par.assert_called_once_with(context_columns, 5)
 
     def test_sample(self):
-        """Test that the method samples the context columns and uses them to sample from PAR."""
+        """Test that the method is not supported for sequential synthesizers."""
         # Setup
-        metadata = self.get_metadata()
-        par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
-        par._context_synthesizer = Mock()
-        context_columns = pd.DataFrame({
-            'name': ['John', 'John', 'Jane'],
-            'gender': ['M', 'M', 'F'],
-        })
-        par._context_synthesizer._sample_with_progress_bar.return_value = context_columns
-        par._sample = Mock()
+        par = PARSynthesizer(metadata=self.get_metadata())
 
-        # Run
-        par.sample(DEFAULT_SINGLE_TABLE_NAME, 3, 2)
-
-        # Assert
-        par._context_synthesizer._sample_with_progress_bar.assert_called_once_with(
-            3, output_file_path='disable', show_progress_bar=False
+        # Run and Assert
+        error_message = re.escape(
+            "'sample' is not supported for sequential synthesizers. "
+            "Please use 'sample_sequences' instead."
         )
-        par._sample.assert_called_once_with(context_columns, 2)
+        with pytest.raises(NotImplementedError, match=error_message):
+            par.sample(DEFAULT_SINGLE_TABLE_NAME, 3)
 
-    def test_sample_sequence_key_needs_to_be_filled_in(self):
+    def test_sample_sequences_sequence_key_needs_to_be_filled_in(self):
         """Test that the method adds the sequence key to the context columns if necessary."""
         # Setup
         metadata = self.get_metadata()
@@ -956,7 +947,7 @@ class TestPARSynthesizer:
         par._sample = Mock()
 
         # Run
-        par.sample(DEFAULT_SINGLE_TABLE_NAME, 3, 2)
+        par.sample_sequences(num_sequences=3, sequence_length=2)
 
         # Assert
         par._context_synthesizer._sample_with_progress_bar.assert_called_once_with(
@@ -1023,7 +1014,7 @@ class TestPARSynthesizer:
 
         # Run and Assert
         error_message = re.escape(
-            "This synthesizer does not have any context columns. Please use 'sample()' "
+            "This synthesizer does not have any context columns. Please use 'sample_sequences()' "
             'to sample new sequences.'
         )
         with pytest.raises(SamplingError, match=error_message):
@@ -1195,7 +1186,7 @@ class TestPARSynthesizer:
         })
         pd.testing.assert_frame_equal(sampled, expected_output)
 
-    def test_sample_with_all_null_column_numerical(self):
+    def test_sample_sequences_with_all_null_column_numerical(self):
         """Test that sampling works correctly with all-null numerical columns."""
         # Setup
         data = pd.DataFrame({
@@ -1218,16 +1209,14 @@ class TestPARSynthesizer:
         # Run
         synthesizer = PARSynthesizer(metadata=metadata, epochs=1)
         synthesizer.fit({DEFAULT_SINGLE_TABLE_NAME: data})
-        result = synthesizer.sample(DEFAULT_SINGLE_TABLE_NAME, num_sequences=2)[
-            DEFAULT_SINGLE_TABLE_NAME
-        ]
+        result = synthesizer.sample_sequences(num_sequences=2)[DEFAULT_SINGLE_TABLE_NAME]
 
         # Assert
         assert 'all_null_col' in result.columns
         assert result['all_null_col'].isna().all()
         assert len(result) > 0
 
-    def test_sample_with_all_null_column_categorical(self):
+    def test_sample_sequences_with_all_null_column_categorical(self):
         """Test that sampling works correctly with all-null categorical columns."""
         # Setup
         data = pd.DataFrame({
@@ -1250,9 +1239,7 @@ class TestPARSynthesizer:
         # Run
         synthesizer = PARSynthesizer(metadata=metadata, epochs=1)
         synthesizer.fit({DEFAULT_SINGLE_TABLE_NAME: data})
-        result = synthesizer.sample(DEFAULT_SINGLE_TABLE_NAME, num_sequences=2)[
-            DEFAULT_SINGLE_TABLE_NAME
-        ]
+        result = synthesizer.sample_sequences(num_sequences=2)[DEFAULT_SINGLE_TABLE_NAME]
 
         # Assert
         assert 'all_null_cat_col' in result.columns
@@ -1262,7 +1249,7 @@ class TestPARSynthesizer:
     @pytest.mark.filterwarnings(
         'error:Series.__getitem__ treating keys as positions is deprecated:FutureWarning'
     )
-    def test_sample_with_multiple_all_null_columns(self):
+    def test_sample_sequences_with_multiple_all_null_columns(self):
         """Test that sampling works correctly with multiple all-null columns."""
         # Setup
         data = pd.DataFrame({
@@ -1293,9 +1280,7 @@ class TestPARSynthesizer:
         # Run
         synthesizer = PARSynthesizer(metadata=metadata, epochs=1)
         synthesizer.fit({DEFAULT_SINGLE_TABLE_NAME: data})
-        result = synthesizer.sample(DEFAULT_SINGLE_TABLE_NAME, num_sequences=2)[
-            DEFAULT_SINGLE_TABLE_NAME
-        ]
+        result = synthesizer.sample_sequences(num_sequences=2)[DEFAULT_SINGLE_TABLE_NAME]
 
         # Assert
         assert 'all_null_col1' in result.columns
@@ -1303,3 +1288,31 @@ class TestPARSynthesizer:
         assert result['all_null_col1'].isna().all()
         assert result['all_null_col2'].isna().all()
         assert len(result) > 0
+
+    def test_sample_sequences(self):
+        """Test that ``sample_sequences`` method."""
+        # Setup
+        metadata = self.get_metadata()
+        par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
+        par._context_synthesizer = Mock()
+        context_columns = pd.DataFrame({
+            'name': ['John', 'John', 'Jane'],
+            'gender': ['M', 'M', 'F'],
+        })
+        par._context_synthesizer._sample_with_progress_bar.return_value = context_columns
+        sampled_table_data = pd.DataFrame({
+            'name': ['John', 'John', 'Jane'],
+            'measurement': [10, 20, 30],
+        })
+        par._sample = Mock(return_value=sampled_table_data)
+
+        # Run
+        result = par.sample_sequences(num_sequences=3, sequence_length=2)
+
+        # Assert
+        par._context_synthesizer._sample_with_progress_bar.assert_called_once_with(
+            3, output_file_path='disable', show_progress_bar=False
+        )
+        par._sample.assert_called_once_with(context_columns, 2)
+        assert list(result) == ['table']
+        pd.testing.assert_frame_equal(result['table'], sampled_table_data)

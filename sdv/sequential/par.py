@@ -626,12 +626,40 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         sampled = self._data_processor.reverse_transform(sampled)
         return self.reverse_transform_constraints(sampled)
 
-    def sample(self, table_name, num_sequences, sequence_length=None):
-        """Sample new sequences.
+    def sample(
+        self,
+        table_name,
+        num_rows,
+        max_tries_per_batch=100,
+        batch_size=None,
+        output_folder_path=None,
+    ):
+        """Sample rows from a table.
+
+        Row-based sampling is not supported for sequential synthesizers. Use
+        ``sample_sequences`` instead.
 
         Args:
             table_name (str):
                 Name of the table to sample.
+            num_rows (int):
+                Number of rows to sample.
+            max_tries_per_batch (int):
+                Number of times to retry sampling discarded rows. Defaults to 100.
+            batch_size (int or None):
+                The batch size to sample. Defaults to ``None``.
+            output_folder_path (str or None):
+                Folder where sampled tables should be written. Defaults to ``None``.
+        """
+        raise NotImplementedError(
+            "'sample' is not supported for sequential synthesizers. "
+            "Please use 'sample_sequences' instead."
+        )
+
+    def sample_sequences(self, num_sequences, sequence_length=None):
+        """Sample new sequences.
+
+        Args:
             num_sequences (int):
                 Number of sequences to sample.
             sequence_length (int):
@@ -642,17 +670,10 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             dict[str, pandas.DataFrame]:
                 Dictionary mapping the table name to the sampled sequences.
         """
-        if table_name != self._table_name:
-            raise ValueError(
-                'The provided table name does not match the metadata:'
-                f"\nTable '{table_name}' is not present in the metadata."
-            )
-
         if self._sequence_key:
             context_columns = self._context_synthesizer._sample_with_progress_bar(
                 num_sequences, output_file_path='disable', show_progress_bar=False
             )
-
         else:
             context_columns = pd.DataFrame(index=range(num_sequences or 1))
 
@@ -661,7 +682,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                 context_columns[column] = range(len(context_columns))
 
         sampled_table_data = self._sample(context_columns, sequence_length)
-        return {table_name: sampled_table_data}
+        return {self._table_name: sampled_table_data}
 
     def sample_sequential_columns(self, context_columns, sequence_length=None):
         """Sample the sequential columns based on the provided context columns.
@@ -679,8 +700,8 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         """
         if not self.context_columns:
             raise SamplingError(
-                "This synthesizer does not have any context columns. Please use 'sample()' "
-                'to sample new sequences.'
+                'This synthesizer does not have any context columns. Please use '
+                "'sample_sequences()' to sample new sequences."
             )
 
         condition_columns = list(
