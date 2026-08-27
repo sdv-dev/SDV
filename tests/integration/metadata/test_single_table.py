@@ -179,7 +179,7 @@ def test_validate_errors(mock_rdt_transformers):
         'col5': {'sdtype': 'categorical', 'order': ''},
         'col6': {'sdtype': 'categorical', 'order_by': ''},
         'col7': {'sdtype': 'categorical', 'order': '', 'order_by': ''},
-        'col8': {'sdtype': 'numerical'},
+        'col8': {'sdtype': 'numerical', 'computer_representation': 'value'},
         'col9': {'sdtype': 'datetime', 'datetime_format': '%1-%Y-%m-%d-%'},
         'col10': {'sdtype': 'id', 'regex_format': '[A-{6}'},
         'col11': {'sdtype': 'state'},
@@ -203,12 +203,10 @@ def test_validate_errors(mock_rdt_transformers):
         ' These columns must be different.'
         "\n'alternate_keys' must be a list of strings."
         "\nInvalid values '(invalid1)' for categorical column 'col4'."
-        "\nInvalid order value provided for categorical column 'col5'."
-        " The 'order' must be a list with 1 or more elements."
-        "\nUnknown ordering method '' provided for categorical column 'col6'."
-        " Ordering method must be 'numerical_value' or 'alphabetical'."
-        "\nCategorical column 'col7' has both an 'order' and 'order_by' attribute."
-        ' Only 1 is allowed.'
+        "\nInvalid values '(order)' for categorical column 'col5'."
+        "\nInvalid values '(order_by)' for categorical column 'col6'."
+        "\nInvalid values '(order, order_by)' for categorical column 'col7'."
+        "\nInvalid values '(computer_representation)' for numerical column 'col8'."
         "\nInvalid datetime format string '%1-%Y-%m-%d-%' for datetime column 'col9'."
         "\nInvalid regex format string '[A-{6}' for id column 'col10'."
         '\nColumn relationships have following errors:\n'
@@ -217,7 +215,8 @@ def test_validate_errors(mock_rdt_transformers):
         'Please provide a column that is compatible with Address data.\n'
         "Unknown column relationship type 'fake_relationship'. Must be one of ['address', 'gps']."
     )
-    # Run / Assert
+
+    # Run and Assert
     with pytest.raises(InvalidMetadataError, match=err_msg):
         instance.validate()
 
