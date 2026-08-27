@@ -354,9 +354,9 @@ class TestHMASynthesizer:
             input_data['upravna_enota'], 'upravna_enota'
         )
         instance._clear_nans.assert_called_once_with(input_data['upravna_enota'])
-        upravna_enota_model.fit_processed_data.assert_called_once_with(
-            augmented_data['upravna_enota']
-        )
+        upravna_enota_model.fit_processed_data.assert_called_once_with({
+            'upravna_enota': augmented_data['upravna_enota']
+        })
 
         upravna_enota_model._get_parameters.assert_called_once()
         assert instance._default_parameters['upravna_enota'] == {

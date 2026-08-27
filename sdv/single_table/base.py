@@ -345,8 +345,8 @@ class BaseSynthesizer:
                 Dictionary mapping the table name to the raw data that will be used
                 to fit the model.
         """
+        self.validate(data)
         table_data = _get_single_table_data(data)
-        self.validate(table_data)
         table_data = self._validate_transform_constraints(table_data)
         self._data_processor.prepare_for_fitting(table_data)
 
@@ -561,9 +561,6 @@ class BaseSynthesizer:
         return table_data
 
     def _check_ranges(self, data):
-        if isinstance(data, pd.DataFrame):
-            data = {self._table_name: data}
-
         if _metadata_range_exceeds_real(data, self._original_metadata):
             warnings.warn(
                 'The training data does not cover the full range. Synthetic data will be '
@@ -571,8 +568,8 @@ class BaseSynthesizer:
                 'please use the Targeted Sampling bundle.'
             )
 
-    def validate(self, table_data):
-        """Validate table data.
+    def validate(self, data):
+        """Validate the data.
 
         This method will validate the data against:
         - The metadata
@@ -582,9 +579,11 @@ class BaseSynthesizer:
         and then restore it.
 
         Args:
-            table_data (pandas.DataFrame):
-                The table data to validate.
+            data (dict[str, pandas.DataFrame]):
+                Dictionary mapping the table name to the data to validate.
         """
+        table_data = _get_single_table_data(data)
+
         # Suppress duplicate datetime_format warning only when this single-table synthesizer
         # is embedded inside a multi-table synthesizer
         if getattr(self, '_suppress_datetime_format_warning', False):
@@ -618,7 +617,6 @@ class BaseSynthesizer:
         """Preprocess the table data.
 
         It will:
-        - Validate the data.
         - Warn if the model has already been fitted.
         - Validate the data against the constraints and transform it.
 
@@ -630,7 +628,6 @@ class BaseSynthesizer:
             pandas.DataFrame:
                 The table data after constraint transformation.
         """
-        self.validate(table_data)
         if self._fitted:
             msg = (
                 'This model has already been fitted. To use the new preprocessed data, '
@@ -659,6 +656,7 @@ class BaseSynthesizer:
         table_data = _get_single_table_data(data)
         table_name = next(iter(data))
         is_converted = self._store_and_convert_original_cols(table_data)
+        self.validate(data)
         table_data = self._preprocess_helper(table_data)
         processed_table_data = self._preprocess(table_data)
         if is_converted:

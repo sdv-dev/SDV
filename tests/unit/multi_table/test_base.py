@@ -677,12 +677,12 @@ class TestBaseMultiTableSynthesizer:
         instance.auto_assign_transformers(data)
 
         # Assert
-        instance._table_synthesizers['nesreca'].auto_assign_transformers.assert_called_once_with(
-            table1
-        )
-        instance._table_synthesizers['oseba'].auto_assign_transformers.assert_called_once_with(
-            table2
-        )
+        instance._table_synthesizers['nesreca'].auto_assign_transformers.assert_called_once_with({
+            'nesreca': table1
+        })
+        instance._table_synthesizers['oseba'].auto_assign_transformers.assert_called_once_with({
+            'oseba': table2
+        })
 
     def test_auto_assign_transformers_foreign_key_none(self):
         """Test that each table's foreign key transformers are set to None."""
@@ -861,7 +861,7 @@ class TestBaseMultiTableSynthesizer:
         instance._assign_table_transformers(synthesizer, 'oseba', table_data)
 
         # Assert
-        synthesizer.auto_assign_transformers.assert_called_once_with(table_data)
+        synthesizer.auto_assign_transformers.assert_called_once_with({'oseba': table_data})
         synthesizer.update_transformers.assert_called_once_with({'a': None, 'b': None})
 
     def test_preprocess(self):
@@ -919,7 +919,7 @@ class TestBaseMultiTableSynthesizer:
             call('upravna_enota'),
         ]
 
-        synth_nesreca.auto_assign_transformers.assert_called_once_with(data['nesreca'])
+        synth_nesreca.auto_assign_transformers.assert_called_once_with({'nesreca': data['nesreca']})
         synth_nesreca._preprocess.assert_called_once_with(data['nesreca'])
         synth_nesreca.update_transformers.assert_called_once_with({'a': None, 'b': None})
         synth_nesreca._validate_transform_constraints.assert_called_once_with(data['nesreca'])

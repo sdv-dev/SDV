@@ -292,10 +292,12 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                 'To proceed, please remove the sequence key from the context_columns parameter.'
             )
 
-    def _validate_context_columns(self, data):
+    def _validate_context_columns(self, table_data):
         errors = []
         if self.context_columns:
-            for sequence_key_value, data_values in data.groupby(_groupby_list(self._sequence_key)):
+            for sequence_key_value, data_values in table_data.groupby(
+                _groupby_list(self._sequence_key)
+            ):
                 for context_column in self.context_columns:
                     if len(data_values[context_column].unique()) > 1:
                         errors.append(
@@ -307,12 +309,12 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
 
         return errors
 
-    def _validate(self, data):
-        data = self._validate_transform_constraints(data)
-        return self._validate_context_columns(data)
+    def _validate(self, table_data):
+        table_data = self._validate_transform_constraints(table_data)
+        return self._validate_context_columns(table_data)
 
-    def _transform_sequence_index(self, data):
-        sequence_index = data[self._sequence_key + [self._sequence_index]]
+    def _transform_sequence_index(self, table_data):
+        sequence_index = table_data[self._sequence_key + [self._sequence_index]]
         sequence_index_context = sequence_index.groupby(self._sequence_key).agg('first')
         sequence_index_context = sequence_index_context.rename(
             columns={self._sequence_index: f'{self._sequence_index}.context'}
@@ -338,8 +340,10 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
 
         sequence_index_sequence = sequence_index_sequence.fillna(fill_value)
 
-        data[self._sequence_index] = sequence_index_sequence[self._sequence_index].to_numpy()
-        data = data.merge(sequence_index_context, left_on=self._sequence_key, right_index=True)
+        table_data[self._sequence_index] = sequence_index_sequence[self._sequence_index].to_numpy()
+        table_data = table_data.merge(
+            sequence_index_context, left_on=self._sequence_key, right_index=True
+        )
 
         self.extended_columns[self._sequence_index] = FloatFormatter(enforce_min_max_values=True)
         self.extended_columns[self._sequence_index].fit(
@@ -347,7 +351,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         )
         self._extra_context_columns[f'{self._sequence_index}.context'] = {'sdtype': 'numerical'}
 
-        return data
+        return table_data
 
     def auto_assign_transformers(self, data):
         """Automatically assign the required transformers for the given data and constraints.
@@ -356,14 +360,15 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         with the required transformers for the current data.
 
         Args:
-            data (dict):
-                Mapping of table name to pandas.DataFrame.
+            data (dict[str, pandas.DataFrame]):
+                Dictionary mapping the table name to the raw data that will be used
+                to fit the model.
 
         Raises:
             InvalidDataError:
                 If a table of the data is not present in the metadata.
         """
-        self._data_processor.prepare_for_fitting(data)
+        super().auto_assign_transformers(data)
         # Ensure that sequence index does not get auto assigned with enforce_min_max_values
         if self._sequence_index:
             sequence_index_transformer = self.get_transformers()[self._sequence_index]
@@ -379,22 +384,22 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             if self._get_table_metadata().columns[col]['sdtype'] not in MODELABLE_SDTYPES
         ]
 
-    def _reorder_context_columns(self, context_columns, timeseries_data):
-        order = {column: i for i, column in enumerate(timeseries_data.columns)}
+    def _reorder_context_columns(self, context_columns, processed_table_data):
+        order = {column: i for i, column in enumerate(processed_table_data.columns)}
         return sorted(context_columns, key=lambda x: order.get(x, float('inf')))
 
-    def _preprocess(self, data):
-        """Transform the raw data to numerical space.
+    def _preprocess(self, table_data):
+        """Transform the raw table data to numerical space.
 
         For PAR, none of the sequence keys are transformed.
 
         Args:
-            data (pandas.DataFrame):
-                The raw data to be transformed.
+            table_data (pandas.DataFrame):
+                The raw table data to be transformed.
 
         Returns:
             pandas.DataFrame:
-                The preprocessed data.
+                The preprocessed table data.
         """
         self._extra_context_columns = {}
         sequence_key_transformers = {
@@ -403,15 +408,15 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         }
 
         if not self._data_processor._prepared_for_fitting:
-            self.auto_assign_transformers(data)
+            self.auto_assign_transformers({self._table_name: table_data})
 
         self.update_transformers(sequence_key_transformers)
-        preprocessed = super()._preprocess(data)
+        processed_table_data = super()._preprocess(table_data)
 
         if self._sequence_index:
-            preprocessed = self._transform_sequence_index(preprocessed)
+            processed_table_data = self._transform_sequence_index(processed_table_data)
 
-        return preprocessed
+        return processed_table_data
 
     def update_transformers(self, column_name_to_transformer):
         """Update any of the transformers assigned to each of the column names.
@@ -436,16 +441,16 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
 
         super().update_transformers(column_name_to_transformer)
 
-    def _fit_context_model(self, transformed):
+    def _fit_context_model(self, processed_table_data):
         LOGGER.debug(f'Fitting context synthesizer {self._context_synthesizer.__class__.__name__}')
         context_metadata: Metadata = self._get_context_metadata()
         if self.context_columns or self._extra_context_columns:
             context_cols = (
                 self._sequence_key + self.context_columns + list(self._extra_context_columns.keys())
             )
-            context = transformed[context_cols]
+            context = processed_table_data[context_cols]
         else:
-            context = transformed[self._sequence_key].copy()
+            context = processed_table_data[self._sequence_key].copy()
             # Add constant column to allow modeling
             constant_column = str(uuid.uuid4())
             context[constant_column] = 0
@@ -457,11 +462,11 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             enforce_rounding=self._context_synthesizer.enforce_rounding,
         )
         context = context.groupby(self._sequence_key).first().reset_index()
-        self._context_synthesizer.fit(context)
+        self._context_synthesizer.fit({self._table_name: context})
 
-    def _generate_sequences(self, timeseries_data):
+    def _generate_sequences(self, processed_table_data):
         sequences = assemble_sequences(
-            timeseries_data,
+            processed_table_data,
             self._sequence_key,
             self.context_columns + list(self._extra_context_columns.keys()),
             self.segment_size,
@@ -482,12 +487,12 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
 
         return sequences
 
-    def _generate_context_and_data_types(self, timeseries_data):
+    def _generate_context_and_data_types(self, processed_table_data):
         id_context_columns = self._get_id_context_columns()
         data_types = []
         context_types = []
         for field in self._output_columns:
-            dtype = timeseries_data[field].dtype
+            dtype = processed_table_data[field].dtype
             kind = dtype.kind
             if kind in ('i', 'f'):
                 data_type = 'continuous'
@@ -517,39 +522,40 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
 
         return context_types, data_types
 
-    def _fit_sequence_columns(self, timeseries_data):
+    def _fit_sequence_columns(self, processed_table_data):
         self._model = PARModel(**self._model_kwargs)
-        self._output_columns = list(timeseries_data.columns)
+        self._output_columns = list(processed_table_data.columns)
         self._data_columns = [
             column
-            for column in timeseries_data.columns
+            for column in processed_table_data.columns
             if column
             not in (
                 self._sequence_key + self.context_columns + list(self._extra_context_columns.keys())
             )
         ]
 
-        sequences = self._generate_sequences(timeseries_data)
-        context_types, data_types = self._generate_context_and_data_types(timeseries_data)
+        sequences = self._generate_sequences(processed_table_data)
+        context_types, data_types = self._generate_context_and_data_types(processed_table_data)
 
         # Validate and fit
         self._model.fit_sequences(sequences, context_types, data_types)
 
-    def _fit(self, processed_data):
-        """Fit this model to the data.
+    def _fit(self, processed_table_data):
+        """Fit this model to the processed table data.
 
         Args:
-            processed_data (pandas.DataFrame):
-                pandas.DataFrame containing both the sequences,
-                the entity columns and the context columns.
+            processed_table_data (pandas.DataFrame):
+                Processed table data containing the sequences, entity columns and context columns.
         """
-        self.context_columns = self._reorder_context_columns(self.context_columns, processed_data)
+        self.context_columns = self._reorder_context_columns(
+            self.context_columns, processed_table_data
+        )
 
         if self._sequence_key:
-            self._fit_context_model(processed_data)
+            self._fit_context_model(processed_table_data)
 
         LOGGER.debug(f'Fitting {self.__class__.__name__} model to table')
-        self._fit_sequence_columns(processed_data)
+        self._fit_sequence_columns(processed_table_data)
 
     def _sample_from_par(self, context, sequence_length=None):
         """Sample new sequences.
@@ -620,10 +626,12 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         sampled = self._data_processor.reverse_transform(sampled)
         return self.reverse_transform_constraints(sampled)
 
-    def sample(self, num_sequences, sequence_length=None):
+    def sample(self, table_name, num_sequences, sequence_length=None):
         """Sample new sequences.
 
         Args:
+            table_name (str):
+                Name of the table to sample.
             num_sequences (int):
                 Number of sequences to sample.
             sequence_length (int):
@@ -631,9 +639,15 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                 be sampled from the model.
 
         Returns:
-            pandas.DataFrame:
-                Table containing the sampled sequences in the same format as the fitted data.
+            dict[str, pandas.DataFrame]:
+                Dictionary mapping the table name to the sampled sequences.
         """
+        if table_name != self._table_name:
+            raise ValueError(
+                'The provided table name does not match the metadata:'
+                f"\nTable '{table_name}' is not present in the metadata."
+            )
+
         if self._sequence_key:
             context_columns = self._context_synthesizer._sample_with_progress_bar(
                 num_sequences, output_file_path='disable', show_progress_bar=False
@@ -646,7 +660,8 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             if column not in context_columns:
                 context_columns[column] = range(len(context_columns))
 
-        return self._sample(context_columns, sequence_length)
+        sampled_table_data = self._sample(context_columns, sequence_length)
+        return {table_name: sampled_table_data}
 
     def sample_sequential_columns(self, context_columns, sequence_length=None):
         """Sample the sequential columns based on the provided context columns.

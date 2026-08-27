@@ -16,7 +16,6 @@ from tqdm import tqdm
 
 from sdv import version
 from sdv._utils import (
-    _metadata_range_exceeds_real,
     check_synthesizer_version,
     generate_synthesizer_id,
 )
@@ -461,7 +460,7 @@ class BaseMultiTableSynthesizer:
         errors = []
         for table_name, table_data in data.items():
             try:
-                self._table_synthesizers[table_name].validate(table_data)
+                self._table_synthesizers[table_name].validate({table_name: table_data})
 
             except InvalidDataError as error:
                 error_msg = f"Table: '{table_name}'"
@@ -478,14 +477,6 @@ class BaseMultiTableSynthesizer:
 
         return errors
 
-    def _check_ranges(self, data, metadata):
-        if _metadata_range_exceeds_real(data, self._original_metadata):
-            warnings.warn(
-                'The training data does not cover the full range. Synthetic data will be '
-                'based on the training data. To extrapolate ranges for full coverage, '
-                'please use the Targeted Sampling bundle.'
-            )
-
     def validate(self, data):
         """Validate the data.
 
@@ -498,16 +489,14 @@ class BaseMultiTableSynthesizer:
         errors = []
         metadata = self._original_metadata
         metadata.validate_data(data)
-        transformed = self._validate_transform_constraints(data, enforce_constraint_fitting=True)
-        for table_name in transformed:
+        data = self._validate_transform_constraints(data, enforce_constraint_fitting=True)
+        for table_name in data:
             if table_name in self._table_synthesizers:
                 # Validate rules specific to each synthesizer
-                errors += self._table_synthesizers[table_name]._validate(transformed[table_name])
+                errors += self._table_synthesizers[table_name]._validate(data[table_name])
 
         if errors:
             raise InvalidDataError(errors)
-
-        self._check_ranges(data, metadata)
 
     def _validate_table_name(self, table_name):
         if table_name not in self._table_synthesizers:
@@ -523,7 +512,7 @@ class BaseMultiTableSynthesizer:
         if it is not the primary key in the table, then the transformer is set to None (
         meaning no transformer is assigned).
         """
-        synthesizer.auto_assign_transformers(table_data)
+        synthesizer.auto_assign_transformers({table_name: table_data})
         primary_key = self.metadata.tables[table_name].primary_key
         foreign_key_columns = self.metadata._get_all_foreign_keys(table_name)
         column_name_to_transformers = {

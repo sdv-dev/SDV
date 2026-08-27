@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 from rdt.transformers import FloatFormatter, UnixTimestampEncoder
 
+from sdv._utils import DEFAULT_SINGLE_TABLE_NAME
 from sdv.cag import ProgrammableConstraint
 from sdv.cag.base import BaseConstraint
 from sdv.data_processing.data_processor import DataProcessor
@@ -281,7 +282,7 @@ class TestPARSynthesizer:
             "sequence (['sk_col1']=2)."
         )
         with pytest.raises(InvalidDataError, match=err_msg):
-            instance.validate(data)
+            instance.validate({DEFAULT_SINGLE_TABLE_NAME: data})
 
     @pytest.mark.filterwarnings('error::FutureWarning')
     def test__transform_sequence(self):
@@ -373,11 +374,11 @@ class TestPARSynthesizer:
         data = self.get_data()
 
         # Run
-        par.preprocess(data)
+        par.preprocess({DEFAULT_SINGLE_TABLE_NAME: data})
 
         # Assert
         expected_transformers = {'name': None}
-        par.auto_assign_transformers.assert_called_once_with(data)
+        par.auto_assign_transformers.assert_called_once_with({DEFAULT_SINGLE_TABLE_NAME: data})
         par.update_transformers.assert_called_once_with(expected_transformers)
         base_preprocess_mock.assert_called_once_with(data)
 
@@ -400,7 +401,7 @@ class TestPARSynthesizer:
         data = self.get_data()
 
         # Run
-        par.preprocess(data)
+        par.preprocess({DEFAULT_SINGLE_TABLE_NAME: data})
 
         # Assert
         expected_transformers = {'name': None}
@@ -419,7 +420,7 @@ class TestPARSynthesizer:
         column_name_to_transformer = {'time': transformer}
 
         # Run
-        instance.auto_assign_transformers(data)
+        instance.auto_assign_transformers({DEFAULT_SINGLE_TABLE_NAME: data})
         instance.update_transformers(column_name_to_transformer)
 
         # Assert
@@ -433,7 +434,7 @@ class TestPARSynthesizer:
         instance = PARSynthesizer(metadata, context_columns=['time'])
 
         # Run and Assert
-        instance.auto_assign_transformers(data)
+        instance.auto_assign_transformers({DEFAULT_SINGLE_TABLE_NAME: data})
         err_msg = 'Transformers for context columns are not allowed to be updated.'
         with pytest.raises(SynthesizerInputError, match=err_msg):
             instance.update_transformers({'time': FloatFormatter()})
@@ -449,7 +450,7 @@ class TestPARSynthesizer:
         instance = PARSynthesizer(metadata, context_columns=['gender', 'height'])
 
         # Run
-        instance.fit(data)
+        instance.fit({DEFAULT_SINGLE_TABLE_NAME: data})
 
         # Assert
         assert instance.context_columns == ['height', 'gender']
@@ -465,7 +466,7 @@ class TestPARSynthesizer:
         instance = PARSynthesizer(metadata, context_columns=['gender', 'height'])
 
         # Run
-        instance.fit(data)
+        instance.fit({DEFAULT_SINGLE_TABLE_NAME: data})
 
         # Assert
         assert instance.context_columns == ['gender', 'height']
@@ -498,7 +499,7 @@ class TestPARSynthesizer:
             enforce_min_max_values=initial_synthesizer.enforce_min_max_values,
             enforce_rounding=initial_synthesizer.enforce_rounding,
         )
-        fitted_data = gaussian_copula_mock().fit.mock_calls[0][1][0]
+        fitted_data = gaussian_copula_mock().fit.mock_calls[0][1][0][DEFAULT_SINGLE_TABLE_NAME]
         expected_fitted_data = pd.DataFrame({
             'name': ['Doe', 'Jane', 'John'],
             'gender': ['M', 'F', 'M'],
@@ -541,7 +542,7 @@ class TestPARSynthesizer:
             enforce_rounding=initial_synthesizer.enforce_rounding,
         )
         assert converted_context_metadata.columns == context_metadata.columns
-        fitted_data = gaussian_copula_mock().fit.mock_calls[0][1][0]
+        fitted_data = gaussian_copula_mock().fit.mock_calls[0][1][0][DEFAULT_SINGLE_TABLE_NAME]
         expected_fitted_data = pd.DataFrame({
             'name': ['Doe', 'Jane', 'John'],
             'time': [1.578010e09, 1.577837e09, 1.577923e09],
@@ -570,7 +571,7 @@ class TestPARSynthesizer:
 
         # Run
         par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
-        par.auto_assign_transformers(data)
+        par.auto_assign_transformers({DEFAULT_SINGLE_TABLE_NAME: data})
 
         # Assert
         assert (
@@ -596,7 +597,7 @@ class TestPARSynthesizer:
         par._fit_context_model(data)
 
         # Assert
-        fitted_data = par._context_synthesizer.fit.mock_calls[0][1][0]
+        fitted_data = par._context_synthesizer.fit.mock_calls[0][1][0][DEFAULT_SINGLE_TABLE_NAME]
         expected_fitted_data = pd.DataFrame({'name': ['Doe', 'Jane', 'John'], 'abc': [0, 0, 0]})
         pd.testing.assert_frame_equal(fitted_data.sort_values(by='name'), expected_fitted_data)
 
@@ -649,7 +650,7 @@ class TestPARSynthesizer:
         metadata = self.get_metadata()
         metadata.update_column('measurement', 'table', sdtype='categorical')
         par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
-        par.auto_assign_transformers(data)
+        par.auto_assign_transformers({DEFAULT_SINGLE_TABLE_NAME: data})
         sequences = [
             {'context': np.array(['M'], dtype=object), 'data': [['2020-01-03'], [65.0]]},
             {'context': np.array(['F'], dtype=object), 'data': [['2020-01-01'], [55.0]]},
@@ -936,7 +937,7 @@ class TestPARSynthesizer:
         par._sample = Mock()
 
         # Run
-        par.sample(3, 2)
+        par.sample(DEFAULT_SINGLE_TABLE_NAME, 3, 2)
 
         # Assert
         par._context_synthesizer._sample_with_progress_bar.assert_called_once_with(
@@ -955,7 +956,7 @@ class TestPARSynthesizer:
         par._sample = Mock()
 
         # Run
-        par.sample(3, 2)
+        par.sample(DEFAULT_SINGLE_TABLE_NAME, 3, 2)
 
         # Assert
         par._context_synthesizer._sample_with_progress_bar.assert_called_once_with(
@@ -1108,7 +1109,7 @@ class TestPARSynthesizer:
         # Setup
         par = PARSynthesizer(metadata=self.get_metadata(), context_columns=['time'])
         data = self.get_data()
-        par.fit(data)
+        par.fit({DEFAULT_SINGLE_TABLE_NAME: data})
 
         par._context_synthesizer = Mock()
         par._context_synthesizer._model.columns = ['time', 'extra_col']
@@ -1216,8 +1217,10 @@ class TestPARSynthesizer:
 
         # Run
         synthesizer = PARSynthesizer(metadata=metadata, epochs=1)
-        synthesizer.fit(data)
-        result = synthesizer.sample(num_sequences=2)
+        synthesizer.fit({DEFAULT_SINGLE_TABLE_NAME: data})
+        result = synthesizer.sample(DEFAULT_SINGLE_TABLE_NAME, num_sequences=2)[
+            DEFAULT_SINGLE_TABLE_NAME
+        ]
 
         # Assert
         assert 'all_null_col' in result.columns
@@ -1246,8 +1249,10 @@ class TestPARSynthesizer:
 
         # Run
         synthesizer = PARSynthesizer(metadata=metadata, epochs=1)
-        synthesizer.fit(data)
-        result = synthesizer.sample(num_sequences=2)
+        synthesizer.fit({DEFAULT_SINGLE_TABLE_NAME: data})
+        result = synthesizer.sample(DEFAULT_SINGLE_TABLE_NAME, num_sequences=2)[
+            DEFAULT_SINGLE_TABLE_NAME
+        ]
 
         # Assert
         assert 'all_null_cat_col' in result.columns
@@ -1287,8 +1292,10 @@ class TestPARSynthesizer:
 
         # Run
         synthesizer = PARSynthesizer(metadata=metadata, epochs=1)
-        synthesizer.fit(data)
-        result = synthesizer.sample(num_sequences=2)
+        synthesizer.fit({DEFAULT_SINGLE_TABLE_NAME: data})
+        result = synthesizer.sample(DEFAULT_SINGLE_TABLE_NAME, num_sequences=2)[
+            DEFAULT_SINGLE_TABLE_NAME
+        ]
 
         # Assert
         assert 'all_null_col1' in result.columns

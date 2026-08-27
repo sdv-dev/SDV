@@ -18,6 +18,7 @@ from rdt.transformers import (
 )
 
 from sdv import version
+from sdv._utils import DEFAULT_SINGLE_TABLE_NAME
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
 from sdv.errors import (
@@ -440,24 +441,27 @@ class TestBaseSynthesizer:
         Mock _validate_metadata, _validate_constraints and _validate, with no errors being raised.
         """
         # Setup
-        data = pd.DataFrame()
+        table_data = pd.DataFrame()
+        data = {DEFAULT_SINGLE_TABLE_NAME: table_data}
         metadata = Metadata()
         instance = BaseSynthesizer(metadata)
         instance._validate = Mock(return_value=[])
         instance._validate_transform_constraints = Mock()
         instance._original_metadata.validate_data = Mock()
+        instance._check_ranges = Mock()
 
         # Run
         instance.validate(data)
 
         # Assert
         instance._original_metadata.validate_data.assert_called_once_with({
-            instance._table_name: data
+            instance._table_name: table_data
         })
-        instance._validate.assert_called_once_with(data)
+        instance._validate.assert_called_once_with(table_data)
         instance._validate_transform_constraints.assert_called_once_with(
-            data, enforce_constraint_fitting=True
+            table_data, enforce_constraint_fitting=True
         )
+        instance._check_ranges.assert_called_once_with(data)
 
     def test_validate_raises_invalid_data_for_metadata(self):
         """Test that if ``metadata`` validation fails we raise an error for it.
@@ -466,7 +470,8 @@ class TestBaseSynthesizer:
         returning an error, and ensure that they are all called and the error is surfaced.
         """
         # Setup
-        data = pd.DataFrame()
+        table_data = pd.DataFrame()
+        data = {DEFAULT_SINGLE_TABLE_NAME: table_data}
         metadata = Metadata()
         instance = BaseSynthesizer(metadata)
         instance._original_metadata.validate_data = Mock(
@@ -481,7 +486,7 @@ class TestBaseSynthesizer:
 
         # Assert auxiliary methods are called
         instance._original_metadata.validate_data.assert_called_once_with({
-            instance._table_name: data
+            instance._table_name: table_data
         })
         instance._validate.assert_not_called()
 
@@ -494,12 +499,16 @@ class TestBaseSynthesizer:
         (eg. '00123' and '0123').
         """
         # Setup
-        data = pd.DataFrame({'key': [1, 2, 3], 'info': ['a', 'b', 'c']})
+        data = {
+            DEFAULT_SINGLE_TABLE_NAME: pd.DataFrame({'key': [1, 2, 3], 'info': ['a', 'b', 'c']})
+        }
         metadata = Metadata()
-        metadata.add_table('table')
-        metadata.add_column('key', 'table', sdtype='id', regex_format='[0-9]{3,4}')
-        metadata.add_column('info', 'table', sdtype='categorical')
-        metadata.set_primary_key('key', 'table')
+        metadata.add_table(DEFAULT_SINGLE_TABLE_NAME)
+        metadata.add_column(
+            'key', DEFAULT_SINGLE_TABLE_NAME, sdtype='id', regex_format='[0-9]{3,4}'
+        )
+        metadata.add_column('info', DEFAULT_SINGLE_TABLE_NAME, sdtype='categorical')
+        metadata.set_primary_key('key', DEFAULT_SINGLE_TABLE_NAME)
         instance = BaseSynthesizer(metadata)
 
         # Run and Assert
@@ -517,43 +526,62 @@ class TestBaseSynthesizer:
         that the first character can be a 0. If it isn't possible, then no error should be raised.
         """
         # Setup
-        data = pd.DataFrame({'key': [1, 2, 3], 'info': ['a', 'b', 'c']})
+        data = {
+            DEFAULT_SINGLE_TABLE_NAME: pd.DataFrame({'key': [1, 2, 3], 'info': ['a', 'b', 'c']})
+        }
         metadata = Metadata()
-        metadata.add_table('table')
-        metadata.add_column('key', 'table', sdtype='id', regex_format='[1-9]{3,4}')
-        metadata.add_column('info', 'table', sdtype='categorical')
-        metadata.set_primary_key('key', 'table')
+        metadata.add_table(DEFAULT_SINGLE_TABLE_NAME)
+        metadata.add_column(
+            'key', DEFAULT_SINGLE_TABLE_NAME, sdtype='id', regex_format='[1-9]{3,4}'
+        )
+        metadata.add_column('info', DEFAULT_SINGLE_TABLE_NAME, sdtype='categorical')
+        metadata.set_primary_key('key', DEFAULT_SINGLE_TABLE_NAME)
         instance = BaseSynthesizer(metadata)
 
         # Run and Assert
         instance.validate(data)
 
-    def test_auto_assign_transformers(self):
+    @patch('sdv.single_table.base._get_single_table_data')
+    def test_auto_assign_transformers(self, mock_get_single_table_data):
         """Test that the ``DataProcessor.prepare_for_fitting`` is being called."""
         # Setup
         instance = Mock()
-        data = pd.DataFrame({'name': ['John', 'Doe', 'Johanna'], 'salary': [80.0, 90.0, 120.0]})
-        instance._validate_transform_constraints = Mock(return_value=data)
+        table_data = pd.DataFrame({
+            'name': ['John', 'Doe', 'Johanna'],
+            'salary': [80.0, 90.0, 120.0],
+        })
+        data = {DEFAULT_SINGLE_TABLE_NAME: table_data}
+        mock_get_single_table_data.return_value = table_data
+        instance._validate_transform_constraints = Mock(return_value=table_data)
 
         # Run
         BaseSynthesizer.auto_assign_transformers(instance, data)
 
         # Assert
         instance.validate.assert_called_once_with(data)
-        instance._validate_transform_constraints.assert_called_once_with(data)
-        instance._data_processor.prepare_for_fitting.assert_called_once_with(data)
+        mock_get_single_table_data.assert_called_once_with(data)
+        instance._validate_transform_constraints.assert_called_once_with(table_data)
+        instance._data_processor.prepare_for_fitting.assert_called_once_with(table_data)
 
     def test_auto_assign_transformers_with_invalid_data(self):
         """Test that auto_assign_transformer throws useful error about invalid data"""
         # Setup
         metadata = Metadata.load_from_dict({
-            'columns': {
-                'a': {'sdtype': 'categorical'},
+            'tables': {
+                DEFAULT_SINGLE_TABLE_NAME: {
+                    'columns': {
+                        'a': {'sdtype': 'categorical'},
+                    }
+                }
             }
         })
         synthesizer = GaussianCopulaSynthesizer(metadata)
         # input data that does not match the metadata
-        data = pd.DataFrame({'b': list(np.random.choice(['M', 'F'], size=10))})
+        data = {
+            DEFAULT_SINGLE_TABLE_NAME: pd.DataFrame({
+                'b': list(np.random.choice(['M', 'F'], size=10))
+            })
+        }
         error_msg = re.escape(
             'The provided data does not match the metadata:\n'
             'Errors in table:\n'
@@ -632,8 +660,8 @@ class TestBaseSynthesizer:
         # Setup
         instance = Mock()
         instance._fitted = True
-        data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
-        instance._composite_keys.transform.return_value = data
+        table_data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
+        instance._composite_keys.transform.return_value = table_data
         instance._validate_transform_constraints.side_effect = lambda x: x
         expected_warning = (
             'This model has already been fitted. To use the new preprocessed data, please '
@@ -641,13 +669,12 @@ class TestBaseSynthesizer:
         )
 
         # Run
-        result = BaseSynthesizer._preprocess_helper(instance, data)
+        result = BaseSynthesizer._preprocess_helper(instance, table_data)
 
         # Assert
         mock_warnings.warn.assert_called_once_with(expected_warning, RefitWarning)
-        instance.validate.assert_called_once_with(data)
-        instance._validate_transform_constraints.assert_called_once_with(data)
-        pd.testing.assert_frame_equal(result, data)
+        instance._validate_transform_constraints.assert_called_once_with(table_data)
+        pd.testing.assert_frame_equal(result, table_data)
 
     def test__preprocess(self):
         """Test the method preprocesses the data.
@@ -676,19 +703,20 @@ class TestBaseSynthesizer:
         # Setup
         instance = Mock()
         instance._fitted = True
-        data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
-        instance._preprocess_helper.return_value = data
+        table_data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
+        data = {DEFAULT_SINGLE_TABLE_NAME: table_data}
+        instance._preprocess_helper.return_value = table_data
         instance._store_and_convert_original_cols = Mock(return_value=False)
-        instance._preprocess.return_value = data
+        instance._preprocess.return_value = table_data
 
         # Run
         result = BaseSynthesizer.preprocess(instance, data)
 
         # Assert
-        instance._store_and_convert_original_cols.assert_called_once_with(data)
-        instance._preprocess_helper.assert_called_once_with(data)
-        instance._preprocess.assert_called_once_with(data)
-        pd.testing.assert_frame_equal(result, data)
+        instance._store_and_convert_original_cols.assert_called_once_with(table_data)
+        instance._preprocess_helper.assert_called_once_with(table_data)
+        instance._preprocess.assert_called_once_with(table_data)
+        pd.testing.assert_frame_equal(result[DEFAULT_SINGLE_TABLE_NAME], table_data)
 
     def test_preprocess_int_columns(self):
         """Test the preprocess method.
@@ -699,7 +727,7 @@ class TestBaseSynthesizer:
         # Setup
         metadata = Metadata().load_from_dict({
             'tables': {
-                'table': {
+                DEFAULT_SINGLE_TABLE_NAME: {
                     'columns': {
                         1: {'sdtype': 'id'},
                         2: {'sdtype': 'id'},
@@ -711,11 +739,13 @@ class TestBaseSynthesizer:
         instance = BaseSynthesizer(metadata)
         instance._fitted = False
         instance._original_columns = pd.Index([1, 2, 'str'])
-        data = pd.DataFrame({
-            1: ['John', 'Doe', 'John Doe'],
-            2: ['John', 'Doe', 'John Doe'],
-            'str': ['John', 'Doe', 'John Doe'],
-        })
+        data = {
+            DEFAULT_SINGLE_TABLE_NAME: pd.DataFrame({
+                1: ['John', 'Doe', 'John Doe'],
+                2: ['John', 'Doe', 'John Doe'],
+                'str': ['John', 'Doe', 'John Doe'],
+            })
+        }
 
         # Run
         instance.preprocess(data)
@@ -727,7 +757,7 @@ class TestBaseSynthesizer:
             'str': ['John', 'Doe', 'John Doe'],
         })
 
-        pd.testing.assert_frame_equal(data, corrected_frame)
+        pd.testing.assert_frame_equal(data[DEFAULT_SINGLE_TABLE_NAME], corrected_frame)
 
     @patch('sdv.single_table.base.deepcopy')
     def test__get_all_constraints_list_constraint(self, copy_mock):
@@ -829,14 +859,14 @@ class TestBaseSynthesizer:
             _fitted_sdv_enterprise_version=None,
             _synthesizer_id='SingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         )
-        processed_data = pd.DataFrame({'column_a': [1, 2, 3]})
+        processed_data = {DEFAULT_SINGLE_TABLE_NAME: pd.DataFrame({'column_a': [1, 2, 3]})}
 
         # Run
         with catch_sdv_logs(caplog, logging.INFO, 'SingleTableSynthesizer'):
             BaseSynthesizer.fit_processed_data(instance, processed_data)
 
         # Assert
-        instance._fit.assert_called_once_with(processed_data)
+        instance._fit.assert_called_once_with(processed_data[DEFAULT_SINGLE_TABLE_NAME])
         assert caplog.messages[0] == str({
             'EVENT': 'Fit processed data',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',
@@ -858,7 +888,7 @@ class TestBaseSynthesizer:
             _fitted_sdv_version='1.0.0',
             _fitted_sdv_enterprise_version=None,
         )
-        processed_data = pd.DataFrame({'column_a': [1, 2, 3]})
+        processed_data = {DEFAULT_SINGLE_TABLE_NAME: pd.DataFrame({'column_a': [1, 2, 3]})}
         instance._random_state_set = True
         instance._fitted = True
 
@@ -886,7 +916,12 @@ class TestBaseSynthesizer:
             _synthesizer_id='SingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         )
         instance._store_and_convert_original_cols.return_value = False
-        data = pd.DataFrame({'column_a': [1, 2, 3], 'name': ['John', 'Doe', 'Johanna']})
+        data = {
+            DEFAULT_SINGLE_TABLE_NAME: pd.DataFrame({
+                'column_a': [1, 2, 3],
+                'name': ['John', 'Doe', 'Johanna'],
+            })
+        }
         instance._random_state_set = True
         instance._fitted = True
 
@@ -921,7 +956,7 @@ class TestBaseSynthesizer:
             _fitted_sdv_version='1.0.0',
             _fitted_sdv_enterprise_version=None,
         )
-        data = pd.DataFrame({'column_a': [1, 2, 3]})
+        data = {DEFAULT_SINGLE_TABLE_NAME: pd.DataFrame({'column_a': [1, 2, 3]})}
         instance._random_state_set = True
         instance._fitted = True
 
@@ -942,7 +977,7 @@ class TestBaseSynthesizer:
         instance = BaseSynthesizer(metadata)
         instance._fit = Mock()
 
-        data = pd.DataFrame({'column_a': [1, 2, 3]})
+        data = {DEFAULT_SINGLE_TABLE_NAME: pd.DataFrame({'column_a': [1, 2, 3]})}
         instance._random_state_set = True
         instance._fitted = True
         metadata.update_column('column_a', sdtype='categorical')
@@ -1244,12 +1279,12 @@ class TestBaseSynthesizer:
             do it: https://docs.python.org/3/library/unittest.mock-examples.html#partial-mocking
         """
         # Setup
-        data = pd.DataFrame({'col': [1, 2, 3]})
+        data = {DEFAULT_SINGLE_TABLE_NAME: pd.DataFrame({'col': [1, 2, 3]})}
         mock_sdv_version.community = '1.0.0'
         mock_sdv_version.enterprise = None
         metadata = Metadata()
-        metadata.add_table('table')
-        metadata.add_column('col', 'table', sdtype='numerical')
+        metadata.add_table(DEFAULT_SINGLE_TABLE_NAME)
+        metadata.add_column('col', DEFAULT_SINGLE_TABLE_NAME, sdtype='numerical')
 
         with patch('sdv.single_table.base.datetime.datetime') as mock_date:
             mock_date.today.return_value = datetime(2023, 1, 23)
@@ -1292,7 +1327,7 @@ class TestBaseSynthesizer:
             do it: https://docs.python.org/3/library/unittest.mock-examples.html#partial-mocking
         """
         # Setup
-        data = pd.DataFrame({'col': [1, 2, 3]})
+        data = {'table': pd.DataFrame({'col': [1, 2, 3]})}
         mock_sdv_version.community = '1.0.0'
         mock_sdv_version.enterprise = '1.2.0'
         metadata = Metadata()
@@ -2077,7 +2112,7 @@ class TestBaseSingleTableSynthesizer:
 
         # Run and Assert
         with pytest.raises(SamplingError, match=expected_message):
-            BaseSingleTableSynthesizer.sample(instance, 10)
+            BaseSingleTableSynthesizer.sample(instance, DEFAULT_SINGLE_TABLE_NAME, 10)
 
     def test__sample_with_progress_bar_without_output_filepath(self):
         """Test that ``_sample_with_progress_bar`` raises an error
@@ -2108,7 +2143,7 @@ class TestBaseSingleTableSynthesizer:
         num_rows = 10
         max_tries_per_batch = 50
         batch_size = 5
-        output_file_path = 'temp.csv'
+        output_file_path = 'temp'
         instance = Mock(
             _synthesizer_id='BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         )
@@ -2120,6 +2155,7 @@ class TestBaseSingleTableSynthesizer:
         with catch_sdv_logs(caplog, logging.INFO, logger='SingleTableSynthesizer'):
             result = BaseSingleTableSynthesizer.sample(
                 instance,
+                DEFAULT_SINGLE_TABLE_NAME,
                 num_rows,
                 max_tries_per_batch,
                 batch_size,
@@ -2128,10 +2164,12 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         instance._sample_with_progress_bar.assert_called_once_with(
-            10, 50, 5, 'temp.csv', show_progress_bar=True
+            10, 50, 5, f'temp/{DEFAULT_SINGLE_TABLE_NAME}.csv', show_progress_bar=True
         )
         instance._check_input_metadata_updated.assert_called_once_with()
-        pd.testing.assert_frame_equal(result, pd.DataFrame({'col': [1, 2, 3]}))
+        pd.testing.assert_frame_equal(
+            result[DEFAULT_SINGLE_TABLE_NAME], pd.DataFrame({'col': [1, 2, 3]})
+        )
         assert caplog.messages[0] == str({
             'EVENT': 'Sample',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',
@@ -2160,7 +2198,7 @@ class TestBaseSingleTableSynthesizer:
             'existing synthesizer. Please create a new synthesizer with the modified metadata.'
         )
         with pytest.warns(UserWarning, match=warn_msg):
-            instance.sample(5)
+            instance.sample(DEFAULT_SINGLE_TABLE_NAME, 5)
 
     def test__validate_conditions_unseen_columns(self):
         """Test that conditions are within the original metadata columns."""
@@ -2604,7 +2642,7 @@ class TestBaseSingleTableSynthesizer:
         instance._validate_fit_before_sample = Mock()
 
         # Run
-        BaseSingleTableSynthesizer.sample(instance, 10)
+        BaseSingleTableSynthesizer.sample(instance, DEFAULT_SINGLE_TABLE_NAME, 10)
 
         # Assert
         instance._validate_fit_before_sample.assert_called_once_with()
