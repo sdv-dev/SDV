@@ -554,11 +554,7 @@ def _is_numerical(value):
 def _get_transformer_init_kwargs(transformer):
     """Get the dict of arguments used to instantiate the given transformer."""
     args = inspect.getfullargspec(transformer.__init__).args[1:]
-    return {
-        key: getattr(transformer, key)
-        for key in args
-        if key != 'model_missing_values' and hasattr(transformer, key)
-    }
+    return {key: getattr(transformer, key) for key in args if hasattr(transformer, key)}
 
 
 def _check_regex_format(table_name, column_name, regex):
