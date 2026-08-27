@@ -47,6 +47,7 @@ dependencies = [
     "rdt>=1.18.2;python_version<'3.14'",
     "rdt>=1.20.0;python_version>='3.14'",
     "sdmetrics>=0.28.1",
+    "plotly<7.0.0",
     'platformdirs>=4.0',
     'pyyaml>=6.0.1',
 ]

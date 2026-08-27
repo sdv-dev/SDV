@@ -133,6 +133,10 @@ class BaseMultiTableSynthesizer:
                 'not supported in SDV Community.'
             )
 
+    def _validate_schema_complexity(self):
+        """Implement this function for slow synthesizers."""
+        pass
+
     def __init__(self, metadata, locales=['en_US'], synthesizer_kwargs=None):
         self.metadata = metadata
         if type(metadata) is MultiTableMetadata:
@@ -141,6 +145,7 @@ class BaseMultiTableSynthesizer:
             warnings.filterwarnings('ignore', message=r'.*column relationship.*')
             self.metadata.validate()
 
+        self._validate_schema_complexity()
         self._check_metadata_updated()
         self._original_metadata = deepcopy(self.metadata)
         self._modified_multi_table_metadata = deepcopy(self.metadata)
