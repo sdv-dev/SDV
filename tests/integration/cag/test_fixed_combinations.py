@@ -292,6 +292,7 @@ def test_fixed_combinations_multiple_constraints_reject_sampling():
     assert original_metadata.to_dict() == metadata.to_dict()
 
     # Get unique combinations from original data
+    data = data['table']
     original_ab_combos = set(zip(data['A'], data['B']))
     original_ac_combos = set(zip(data['A'], data['C']))
 

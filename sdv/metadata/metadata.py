@@ -1198,7 +1198,7 @@ class Metadata:
         )
         if errors:
             raise InvalidMetadataError(
-                'The metadata is not valid' + '\n'.join(str(e) for e in errors)
+                'The metadata is not valid ' + '\n'.join(str(e) for e in errors)
             )
 
     def _validate_missing_tables(self, data):

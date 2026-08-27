@@ -103,6 +103,7 @@ def test_sample_from_conditions_with_batch_size():
         'column2': list(range(100)),
         'column3': list(range(100)),
     })
+    data = {'table': data}
 
     metadata = Metadata()
     metadata.add_table('table')
@@ -111,7 +112,7 @@ def test_sample_from_conditions_with_batch_size():
     metadata.add_column('column3', 'table', sdtype='numerical')
 
     model = GaussianCopulaSynthesizer(metadata)
-    model.fit({model._table_name: data})
+    model.fit(data)
     conditions = [Condition({'column1': 10}, num_rows=100), Condition({'column1': 50}, num_rows=10)]
 
     # Run
@@ -130,6 +131,7 @@ def test_sample_from_conditions_negative_float():
         'column2': list(range(100)),
         'column3': list(range(100)),
     })
+    data = {'table': data}
 
     metadata = Metadata()
     metadata.add_table('table')
@@ -138,7 +140,7 @@ def test_sample_from_conditions_negative_float():
     metadata.add_column('column3', 'table', sdtype='numerical')
 
     model = GaussianCopulaSynthesizer(metadata)
-    model.fit({model._table_name: data})
+    model.fit(data)
     conditions = [
         Condition({'column1': -10.0}, num_rows=100),
         Condition({'column1': -50}, num_rows=10),
@@ -383,6 +385,7 @@ def test_modeling_with_complex_datetimes():
             ],
         }
     )
+    data = {'table': data}
 
     test_metadata = {
         'columns': {
@@ -395,11 +398,12 @@ def test_modeling_with_complex_datetimes():
     metadata = Metadata.load_from_dict(test_metadata)
     metadata.validate()
     synth = GaussianCopulaSynthesizer(metadata)
-    synth.validate({synth._table_name: data})
-    synth.fit({synth._table_name: data})
-    sampled = synth.sample(synth._table_name, 10)[synth._table_name]
+    synth.validate(data)
+    synth.fit(data)
+    sampled = synth.sample('table', 10)
 
     # Assert
+    sampled = sampled['table']
     synth.validate({synth._table_name: sampled})
 
 
@@ -681,36 +685,37 @@ def test_metadata_updated_no_warning(mock__fit, tmp_path):
         'col 2': [4, 5, 6],
         'col 3': ['a', 'b', 'c'],
     })
+    data = {'table': data}
 
     # Run 1
     with warnings.catch_warnings(record=True) as captured_warnings:
         warnings.simplefilter('always')
         instance = BaseSingleTableSynthesizer(metadata_from_dict)
-        instance.fit({instance._table_name: data})
+        instance.fit(data)
 
     # Assert
     assert len(captured_warnings) == 0
 
     # Run 2
-    metadata_detect = Metadata.detect_from_dataframes({'mock_table': data})
+    metadata_detect = Metadata.detect_from_dataframes(data)
     file_name = tmp_path / 'singletable.json'
     metadata_detect.save_to_json(file_name)
     with warnings.catch_warnings(record=True) as captured_warnings:
         warnings.simplefilter('always')
         instance = BaseSingleTableSynthesizer(metadata_detect)
-        instance.fit({instance._table_name: data})
+        instance.fit(data)
 
     # Assert
     assert len(captured_warnings) == 0
 
     # Run 3
     instance = BaseSingleTableSynthesizer(metadata_detect)
-    metadata_detect.update_column('col 1', 'mock_table', sdtype='categorical')
+    metadata_detect.update_column('col 1', 'table', sdtype='categorical')
     file_name = tmp_path / 'singletable_2.json'
     metadata_detect.save_to_json(file_name)
     with warnings.catch_warnings(record=True) as captured_warnings:
         warnings.simplefilter('always')
-        instance.fit({instance._table_name: data})
+        instance.fit(data)
 
     # Assert
     assert len(captured_warnings) == 0
@@ -771,7 +776,8 @@ def test_fit_raises_version_error():
         'col 2': [4, 5, 6],
         'col 3': ['a', 'b', 'c'],
     })
-    metadata = Metadata.detect_from_dataframes({'table': data})
+    data = {'table': data}
+    metadata = Metadata.detect_from_dataframes(data)
     instance = BaseSingleTableSynthesizer(metadata)
     instance._fitted_sdv_version = '1.0.0'
 
@@ -782,7 +788,7 @@ def test_fit_raises_version_error():
         'synthesizer.'
     )
     with pytest.raises(VersionError, match=expected_message):
-        instance.fit({instance._table_name: data})
+        instance.fit(data)
 
 
 @pytest.mark.parametrize('synthesizer_class', SYNTHESIZERS_CLASSES)
@@ -792,7 +798,7 @@ def test_fit_and_sample_numerical_col_names(synthesizer_class):
     num_rows = 50
     num_cols = 10
     values = {i: np.random.randint(0, 100, size=num_rows) for i in range(num_cols)}
-    data = pd.DataFrame(values)
+    data = {'table': pd.DataFrame(values)}
     metadata = Metadata()
     metadata_dict = {'columns': {}}
     for i in range(num_cols):
@@ -801,12 +807,12 @@ def test_fit_and_sample_numerical_col_names(synthesizer_class):
 
     # Run
     synth = synthesizer_class(metadata)
-    synth.fit({synth._table_name: data})
-    sample_1 = synth.sample(synth._table_name, 10)[synth._table_name]
-    sample_2 = synth.sample(synth._table_name, 10)[synth._table_name]
+    synth.fit(data)
+    sample_1 = synth.sample('table', 10)['table']
+    sample_2 = synth.sample('table', 10)['table']
 
-    assert sample_1.columns.tolist() == data.columns.tolist()
-    assert sample_2.columns.tolist() == data.columns.tolist()
+    assert sample_1.columns.tolist() == data['table'].columns.tolist()
+    assert sample_2.columns.tolist() == data['table'].columns.tolist()
 
     # Assert
     with pytest.raises(AssertionError):

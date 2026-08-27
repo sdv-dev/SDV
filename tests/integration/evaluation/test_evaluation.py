@@ -73,45 +73,19 @@ def _get_multi_table_data():
     return real_data, synthetic_data, metadata
 
 
-@pytest.mark.parametrize(
-    (
-        'data_function',
-        'expected_quality_score',
-        'expected_properties',
-    ),
-    [
-        pytest.param(
-            _get_single_table_data,
-            0.8666666666666667,
-            pd.DataFrame({
-                'Property': ['Data Validity', 'Data Structure'],
-                'Score': [1.0, 1.0],
-            }),
-            id='dataframe',
-        ),
-        pytest.param(
-            _get_multi_table_data,
-            0.9566297110928815,
-            pd.DataFrame({
-                'Property': [
-                    'Data Validity',
-                    'Data Structure',
-                    'Relationship Validity',
-                ],
-                'Score': [1.0, 1.0, 1.0],
-            }),
-            id='dictionary',
-        ),
-    ],
-)
-def test_evaluation(
-    data_function,
-    expected_quality_score,
-    expected_properties,
-):
-    """Test `evaluate_quality` and `run_diagnostic` with DataFrames and dictionaries."""
+def test_evaluation():
+    """Test `evaluate_quality` and `run_diagnostic` with a dictionary of DataFrames."""
     # Setup
-    real_data, synthetic_data, metadata = data_function()
+    real_data, synthetic_data, metadata = _get_multi_table_data()
+    expected_quality_score = 0.9566297110928815
+    expected_properties = pd.DataFrame({
+        'Property': [
+            'Data Validity',
+            'Data Structure',
+            'Relationship Validity',
+        ],
+        'Score': [1.0, 1.0, 1.0],
+    })
 
     # Run
     quality_report = evaluate_quality(real_data, synthetic_data, metadata, verbose=False)

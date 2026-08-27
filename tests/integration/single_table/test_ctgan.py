@@ -160,6 +160,7 @@ def test_categoricals_are_not_preprocessed():
             'alcohol': ['medium', 'medium', 'low', 'high', 'low'],
         }
     )
+    data = {'table': data}
     metadata = Metadata.load_from_dict({
         'columns': {
             'age': {'sdtype': 'numerical'},
@@ -170,7 +171,7 @@ def test_categoricals_are_not_preprocessed():
 
     # Run auto_assign_transformers
     synth1 = CTGANSynthesizer(metadata)
-    synth1.auto_assign_transformers({synth1._table_name: data})
+    synth1.auto_assign_transformers(data)
     transformers1 = synth1.get_transformers()
 
     # Assert
@@ -179,7 +180,7 @@ def test_categoricals_are_not_preprocessed():
 
     # Run fit
     synth2 = CTGANSynthesizer(metadata, epochs=1)
-    synth2.fit({synth2._table_name: data})
+    synth2.fit(data)
     transformers2 = synth2.get_transformers()
 
     # Assert
@@ -212,13 +213,16 @@ def test_categorical_metadata_with_int_data():
         'B': list(range(50)),
         'C': [str(i) for i in range(50)],
     })
+    data = {'table': data}
 
     # Run
     synth = CTGANSynthesizer(metadata, epochs=10)
-    synth.fit({synth._table_name: data})
-    synthetic_data = synth.sample(synth._table_name, 1000)[synth._table_name]
+    synth.fit(data)
+    synthetic_data = synth.sample('table', 1000)
 
     # Assert
+    data = data['table']
+    synthetic_data = synthetic_data['table']
     original_categories = set(data['A'].unique())
     synthetic_categories_for_a = set(synthetic_data['A'].unique())
     new_categories_for_a = synthetic_categories_for_a - original_categories
@@ -278,7 +282,7 @@ def test_ctgansynthesizer_with_constraints_generating_categorical_values():
     my_synthesizer.fit(data)
 
     # Assert
-    sampled_data = my_synthesizer.sample('student_placements', 10)
+    sampled_data = my_synthesizer.sample('student_placements', 10)['student_placements']
     assert len(sampled_data) == 10
 
 
@@ -305,6 +309,7 @@ def test_ctgan_with_dropped_columns():
     samples = synth.sample('table', 10)
 
     # Assert
+    samples = samples['table']
     assert len(samples) == 10
     assert samples.columns.tolist() == ['user_id', 'user_ssn']
     assert all(id_val.startswith('sdv-id-') for id_val in samples['user_id'])

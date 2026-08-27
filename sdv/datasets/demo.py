@@ -490,7 +490,7 @@ def download_demo(
 
     Returns:
         tuple (data, metadata):
-            ``data``is a dictionary mapping table name to DataFrame
+            ``data`` is a dictionary mapping table name to DataFrame
             ``metadata`` is of class ``Metadata``
 
     Raises:

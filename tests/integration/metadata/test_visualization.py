@@ -26,14 +26,15 @@ def test_visualize_graph_for_single_table():
     """Test it runs when a column name contains symbols."""
     # Setup
     data = pd.DataFrame({'\\|=/bla@#$324%^,"&*()><...': ['a', 'b', 'c']})
-    metadata = Metadata.detect_from_dataframes({'table': data})
+    data = {'table': data}
+    metadata = Metadata.detect_from_dataframes(data)
     model = GaussianCopulaSynthesizer(metadata)
 
     # Run
     metadata.visualize()
     metadata.validate()
     model.fit(data)
-    model.sample(10)
+    model.sample('table', 10)
 
 
 def test_visualize_graph_for_multi_table():

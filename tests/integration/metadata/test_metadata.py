@@ -1295,13 +1295,15 @@ def test_loading_invalid_single_table_metadata():
 def test_validate_empty_metadata():
     """Test that the metadata is invalid if it is empty."""
     # Setup
-    metadata = Metadata()
-    synthesizer = GaussianCopulaSynthesizer(metadata)
+    metadata = Metadata.load_from_dict({})
 
     # Run and Assert
-    err_msg = 'The metadata is empty. Please add at least one table to the metadata.'
+    err_msg = re.escape(
+        "The metadata is not valid Table 'table' has 0 columns. "
+        "Use 'add_column' to specify its columns."
+    )
     with pytest.raises(InvalidMetadataError, match=err_msg):
-        synthesizer.fit(pd.DataFrame())
+        GaussianCopulaSynthesizer(metadata)
 
 
 def test_validate_pk_to_pk(primary_key_to_primary_key):
@@ -1574,6 +1576,7 @@ def test_detect_from_dataframe_verbose_single(capsys):
     """Test 'detect_from_dataframe' with verbose True with single table."""
     # Setup
     data, _ = download_test_demo(modality='single_table', dataset_name='fake_hotel_guests')
+    data_table = data['fake_hotel_guests']
     expected_print = (
         "\nDetecting table 'table':\n"
         "- Column 'guest_email': sdtype='email', pii=True\n"
@@ -1590,7 +1593,7 @@ def test_detect_from_dataframe_verbose_single(capsys):
     )
 
     # Run
-    metadata = Metadata.detect_from_dataframe(data, verbose=True)
+    metadata = Metadata.detect_from_dataframe(data_table, verbose=True)
 
     # Assert
     captured = capsys.readouterr().out

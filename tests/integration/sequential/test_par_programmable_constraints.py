@@ -135,16 +135,15 @@ class MultiTableConstraint(ProgrammableConstraint):
 @pytest.fixture
 def sample_sequential_data():
     """Create sample sequential data for testing."""
-    data = {
-        'table': pd.DataFrame({
-            'patient_id': [1, 1, 1, 2, 2, 2, 3, 3, 3],
-            'visit_number': [1, 2, 3, 1, 2, 3, 1, 2, 3],
-            'measurement': [10.5, 12.3, 15.1, 8.2, 9.7, 11.4, 13.8, 16.2, 18.9],
-            'has_condition': [False, False, False, True, True, True, False, False, False],
-            'treatment_score': [5.0, 6.2, 7.5, 0.0, 0.0, 0.0, 7.1, 8.0, 9.2],
-        })
-    }
-    return data
+    data = pd.DataFrame({
+        'patient_id': [1, 1, 1, 2, 2, 2, 3, 3, 3],
+        'visit_number': [1, 2, 3, 1, 2, 3, 1, 2, 3],
+        'measurement': [10.5, 12.3, 15.1, 8.2, 9.7, 11.4, 13.8, 16.2, 18.9],
+        'has_condition': [False, False, False, True, True, True, False, False, False],
+        'treatment_score': [5.0, 6.2, 7.5, 0.0, 0.0, 0.0, 7.1, 8.0, 9.2],
+    })
+
+    return {'patients': data}
 
 
 @pytest.fixture
@@ -193,9 +192,11 @@ def test_end_to_end_with_simple_constraint(sample_sequential_data, sample_metada
 
     # Run
     synthesizer.fit(sample_sequential_data)
-    synthetic_data = synthesizer.sample(num_sequences=2)
+    synthetic_data = synthesizer.sample_sequences(num_sequences=2)
 
     # Assert
+    synthetic_data = synthetic_data['patients']
+    sample_sequential_data = sample_sequential_data['patients']
     assert len(synthetic_data) > 0
     assert 'measurement' in synthetic_data.columns
     assert 'patient_id' in synthetic_data.columns
@@ -215,9 +216,10 @@ def test_end_to_end_with_conditional_constraint(sample_sequential_data, sample_m
 
     # Run
     synthesizer.fit(sample_sequential_data)
-    synthetic_data = synthesizer.sample(num_sequences=2)
+    synthetic_data = synthesizer.sample_sequences(num_sequences=2)
 
     # Assert
+    synthetic_data = synthetic_data['patients']
     assert len(synthetic_data) > 0
 
     condition_true = synthetic_data['has_condition'] == True  # noqa: E712
@@ -265,9 +267,10 @@ def test_constraint_with_context_columns(sample_sequential_data, sample_metadata
 
     # Run
     synthesizer.fit(sample_sequential_data)
-    synthetic_data = synthesizer.sample(num_sequences=2)
+    synthetic_data = synthesizer.sample_sequences(num_sequences=2)
 
     # Assert
+    synthetic_data = synthetic_data['patients']
     assert len(synthetic_data) > 0
     assert 'has_condition' in synthetic_data.columns
 
@@ -281,9 +284,10 @@ def test_constraint_with_non_context_columns(sample_sequential_data, sample_meta
 
     # Run
     synthesizer.fit(sample_sequential_data)
-    synthetic_data = synthesizer.sample(num_sequences=2)
+    synthetic_data = synthesizer.sample_sequences(num_sequences=2)
 
     # Assert
+    synthetic_data = synthetic_data['patients']
     assert len(synthetic_data) > 0
     assert 'measurement' in synthetic_data.columns
 
@@ -298,9 +302,10 @@ def test_multiple_constraints_same_type(sample_sequential_data, sample_metadata)
 
     # Run
     synthesizer.fit(sample_sequential_data)
-    synthetic_data = synthesizer.sample(num_sequences=2)
+    synthetic_data = synthesizer.sample_sequences(num_sequences=2)
 
     # Assert
+    synthetic_data = synthetic_data['patients']
     assert len(synthetic_data) > 0
     constraints = synthesizer.get_constraints()
     assert len(constraints) == 2
@@ -315,9 +320,10 @@ def test_validate_constraints(sample_sequential_data, sample_metadata):
     synthesizer.fit(sample_sequential_data)
 
     # Run
-    synthetic_data = synthesizer.sample(num_sequences=3)
+    synthetic_data = synthesizer.sample_sequences(num_sequences=3)
 
     # Assert
+    synthetic_data = synthetic_data['patients']
     is_valid = constraint.is_valid({'patients': synthetic_data})
     assert list(is_valid.keys()) == ['patients']
     assert all(is_valid['patients'])

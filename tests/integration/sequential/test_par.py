@@ -152,9 +152,9 @@ def test_synthesize_sequences(tmp_path):
     """
     # Setup
     real_data, metadata = download_demo(modality='sequential', dataset_name='nasdaq100_2019')
-    assert real_data[real_data['Symbol'] == 'AMZN']['Sector'].unique()
     table_name = 'nasdaq100_2019'
-    real_data = {table_name: real_data}
+    real_table = real_data[table_name]
+    assert real_table[real_table['Symbol'] == 'AMZN']['Sector'].unique()
     synthesizer = PARSynthesizer(metadata, epochs=1, context_columns=['Sector', 'Industry'])
     custom_synthesizer = PARSynthesizer(
         metadata, epochs=1, context_columns=['Sector', 'Industry'], verbose=True
@@ -226,9 +226,9 @@ def test_par_subset_of_data():
     )
 
     # modify the data by choosing a subset of it
-    data_subset = data.copy()
+    data_subset = data['nasdaq100_2019'].copy()
     np.random.seed(1234)
-    symbols = data['Symbol'].unique()
+    symbols = data['nasdaq100_2019']['Symbol'].unique()
 
     # only select a subset of data in each sequence
     for i, symbol in enumerate(symbols):
@@ -311,11 +311,10 @@ def test_with_constraints():
     real_data, metadata = download_demo(modality='sequential', dataset_name='nasdaq100_2019')
     synthesizer = PARSynthesizer(metadata, epochs=1)
     constraint = FixedCombinations(column_names=['Sector', 'Industry'])
+    table_name = 'nasdaq100_2019'
 
     # Run
     synthesizer.add_constraints([constraint])
-    table_name = 'nasdaq100_2019'
-    real_data = {table_name: real_data}
     synthesizer.fit(real_data)
     samples = synthesizer.sample_sequences(50, 10)
 
@@ -341,11 +340,10 @@ def test_constraints_and_context_column():
     real_data, metadata = download_demo(modality='sequential', dataset_name='nasdaq100_2019')
     synthesizer = PARSynthesizer(metadata, epochs=1, context_columns=['Sector', 'Industry'])
     constraint = FixedCombinations(column_names=['Sector', 'Industry'])
+    table_name = 'nasdaq100_2019'
 
     # Run
     synthesizer.add_constraints([constraint])
-    table_name = 'nasdaq100_2019'
-    real_data = {table_name: real_data}
     synthesizer.fit(real_data)
     samples = synthesizer.sample_sequences(50, 10)
 
@@ -501,9 +499,10 @@ def test_par_categorical_column_represented_by_floats():
     """Test to see if categorical columns work fine with float representation."""
     # Setup
     data, metadata = download_demo('sequential', 'nasdaq100_2019')
-    data['category'] = [100.0 if i % 2 == 0 else 50.0 for i in data.index]
+    data_table = data['nasdaq100_2019']
+    data_table['category'] = [100.0 if i % 2 == 0 else 50.0 for i in data_table.index]
     metadata.add_column('category', 'nasdaq100_2019', sdtype='categorical')
-    data = {'nasdaq100_2019': data}
+    data = {'nasdaq100_2019': data_table}
 
     # Run
     synth = PARSynthesizer(metadata, epochs=1)
@@ -977,6 +976,7 @@ def test_add_constraints_mixed_context_and_non_context():
         'seq_col': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         'numerical': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
     })
+    data = {'table': data}
 
     metadata = Metadata.load_from_dict({
         'tables': {
@@ -996,9 +996,7 @@ def test_add_constraints_mixed_context_and_non_context():
     synthesizer = PARSynthesizer(
         metadata, epochs=1, context_columns=['context_col', 'other_context']
     )
-
     context_constraint = FixedCombinations(column_names=['context_col', 'other_context'])
-    data = {'table': data}
 
     # Run
     synthesizer.add_constraints([context_constraint])
@@ -1029,6 +1027,7 @@ def test_add_constraints_with_context_columns():
             'numerical': [0.23, 0.34, 0.56, 0.67, 0.22, 0.23, 0.26, 0.20, 0.34, 0.45],
         }
     )
+    data = {'table': data}
 
     metadata = Metadata.load_from_dict({
         'tables': {
@@ -1049,15 +1048,17 @@ def test_add_constraints_with_context_columns():
         }
     })
 
+    # Run
     synthesizer = PARSynthesizer(
         metadata, context_columns=['context_0', 'context_1', 'context_2', 'other_context_col']
     )
     context_constraint = OneHotEncoding(column_names=['context_0', 'context_1', 'context_2'])
     seq_constraint = OneHotEncoding(column_names=['seq_0', 'seq_1', 'seq_2'])
-    data = {'table': data}
     synthesizer.add_constraints([context_constraint, seq_constraint])
     synthesizer.fit(data)
     samples = synthesizer.sample_sequences(5)
+
+    # Assert
     synthesizer.validate(samples)
 
 

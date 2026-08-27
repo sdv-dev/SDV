@@ -70,15 +70,18 @@ def test_column_relationships_with_constraints():
         'code': ['000', '001', '002'] * 2,
         'description': ['code 0', 'code 1', 'code 2'] * 2,
     })
+    data = {'table': data}
     constraint = FixedCombinations(table_name='table', column_names=['code', 'description'])
     synth = GaussianCopulaSynthesizer(metadata)
 
     # Run
     synth.add_constraints([constraint])
-    synth.fit({synth._table_name: data})
-    samples = synth.sample(synth._table_name, 100)[synth._table_name]
+    synth.fit(data)
+    samples = synth.sample(synth._table_name, 100)
 
     # Assert
+    data = data['table']
+    samples = samples['table']
     assert samples.columns.tolist() == data.columns.to_list()
     expected_combinations = {('000', 'code 0'), ('001', 'code 1'), ('002', 'code 2')}
     sampled_combinations = {
@@ -102,11 +105,11 @@ def test_conditional_sampling_with_constraints(demo_data, demo_metadata):
 
     # Run
     synth.add_constraints([constraint])
-    synth.fit({synth._table_name: demo_data})
+    synth.fit(demo_data)
     samples = synth.sample_from_conditions([my_condition])
 
     # Assert
-    assert samples.columns.tolist() == demo_data.columns.to_list()
+    assert samples.columns.tolist() == demo_data['fake_hotel_guests'].columns.to_list()
     assert all(samples['checkin_date'] == '04 Feb 2020')
     valid_dates = samples[['checkin_date', 'checkout_date']].dropna()
     checkin_dates = pd.to_datetime(valid_dates['checkin_date'], format=datetime_format)
@@ -128,11 +131,11 @@ def test_conditional_sampling_with_constraints_transforms_if_possible(demo_data,
 
     # Run
     synth.add_constraints([constraint])
-    synth.fit({synth._table_name: demo_data})
+    synth.fit(demo_data)
     samples = synth.sample_from_conditions([my_condition])
 
     # Assert
-    assert samples.columns.tolist() == demo_data.columns.to_list()
+    assert samples.columns.tolist() == demo_data['fake_hotel_guests'].columns.to_list()
     assert all(samples['checkin_date'] == '04 Feb 2020')
     assert all(samples['checkout_date'] == '10 Feb 2020')
 
@@ -165,6 +168,7 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
         'state': ['CA', 'CA', 'IL', 'CA', 'CA'],
         'age': [27, 28, 26, 21, 30],
     })
+    data = {'table': data}
 
     metadata = Metadata()
     metadata.add_table('table')
@@ -181,7 +185,7 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
         pd.DataFrame({'city#state': [0.75], 'age': [30]}),
     ]
     gm_mock.return_value.sample.side_effect = sampled_numeric_data
-    model.fit({model._table_name: data})
+    model.fit(data)
 
     # Run
     conditions = [Condition({'age': 30, 'state': 'CA'}, num_rows=5)]
@@ -292,8 +296,9 @@ def test_synthesizer_with_inequality_constraint(demo_data, demo_metadata):
     synthesizer.fit(demo_data)
 
     # Run and Assert
-    sampled = synthesizer.sample('table', num_rows=500)['table']
-    synthesizer.validate({'table': sampled})
+    sampled = synthesizer.sample('fake_hotel_guests', num_rows=500)
+    synthesizer.validate(sampled)
+    sampled = sampled['fake_hotel_guests']
     _sampled = sampled[~sampled['checkout_date'].isna()]
     checkin_dates = pd.to_datetime(_sampled['checkin_date'], format=datetime_format)
     checkout_dates = pd.to_datetime(_sampled['checkout_date'], format=datetime_format)
@@ -309,6 +314,7 @@ def test_inequality_constraint_with_datetimes_and_nones():
             'B': [None, '2021-03-04', '2021-12-31', None] * 2,
         }
     )
+    data = {'table': data}
 
     metadata = Metadata.load_from_dict({
         'columns': {
@@ -320,14 +326,15 @@ def test_inequality_constraint_with_datetimes_and_nones():
     metadata.validate()
     synth = GaussianCopulaSynthesizer(metadata)
     synth.add_constraints([Inequality(low_column_name='A', high_column_name='B')])
-    synth.validate({synth._table_name: data})
+    synth.validate(data)
 
     # Run
-    synth.fit({synth._table_name: data})
-    sampled = synth.sample(synth._table_name, 10)[synth._table_name]
+    synth.fit(data)
+    sampled = synth.sample('table', 10)
 
     # Assert
-    synth.validate({synth._table_name: sampled})
+    synth.validate(sampled)
+    sampled = sampled['table']
     expected_sampled = pd.DataFrame({
         'A': [
             '2020-01-02',
@@ -367,6 +374,7 @@ def test_range_constraint_with_datetimes_and_nones():
             'C': [None, '2022-03-04', '2022-12-31', None],
         }
     )
+    data = {'table': data}
 
     metadata = Metadata.load_from_dict({
         'columns': {
@@ -386,13 +394,14 @@ def test_range_constraint_with_datetimes_and_nones():
             strict_boundaries=False,
         )
     ])
-    synth.validate({synth._table_name: data})
+    synth.validate(data)
 
     # Run
-    synth.fit({synth._table_name: data})
-    sampled = synth.sample(synth._table_name, 10)[synth._table_name]
+    synth.fit(data)
+    sampled = synth.sample('table', 10)
 
     # Assert
+    sampled = sampled['table']
     expected_sampled = pd.DataFrame({
         'A': [
             '2020-01-02',
@@ -528,6 +537,7 @@ def test_timezone_aware_constraints():
     data = pd.DataFrame({'col1': ['2020-02-02'], 'col2': ['2020-02-05']})
     data['col1'] = pd.to_datetime(data['col1']).dt.tz_localize('UTC')
     data['col2'] = pd.to_datetime(data['col2']).dt.tz_localize('UTC')
+    data = {'table': data}
 
     metadata = Metadata()
     metadata.add_table('table')
@@ -541,8 +551,8 @@ def test_timezone_aware_constraints():
     # Run
     synth = GaussianCopulaSynthesizer(metadata)
     synth.add_constraints([my_constraint])
-    synth.fit({synth._table_name: data})
-    samples = synth.sample(synth._table_name, 100)[synth._table_name]
+    synth.fit(data)
+    samples = synth.sample('table', 100)['table']
 
     # Assert
     assert all(samples['col1'] < samples['col2'])
@@ -559,8 +569,10 @@ def test_overlapping_constraint_logs(caplog, demo_data, demo_metadata):
     column_metadata = demo_metadata.tables['fake_hotel_guests'].columns['checkout_date']
     datetime_format = column_metadata['datetime_format']
     demo_metadata.add_column('billing_date', sdtype='datetime', datetime_format=datetime_format)
+    demo_data = demo_data['fake_hotel_guests']
     demo_data['billing_date'] = pd.to_datetime(demo_data['checkout_date']) + pd.Timedelta(5, 'D')
     demo_data['billing_date'] = demo_data['billing_date'].dt.strftime(datetime_format)
+    demo_data = {'fake_hotel_guests': demo_data}
 
     synth = GaussianCopulaSynthesizer(demo_metadata)
 
@@ -575,7 +587,7 @@ def test_overlapping_constraint_logs(caplog, demo_data, demo_metadata):
     with caplog.at_level(logging.INFO, logger='sdv.single_table.base'):
         synth.add_constraints([checkin_checkout_constraint, overlapped_constraint])
 
-    synth.fit({synth._table_name: demo_data})
+    synth.fit(demo_data)
 
     # Assert
     expected_logs = ['Enforcing constraint Inequality using reject sampling.']
@@ -616,10 +628,11 @@ def test_constraint_datetime_check():
 
     synth = GaussianCopulaSynthesizer(metadata)
     synth.add_constraints([my_constraint])
-    synth.fit({synth._table_name: data['table']})
-    samples = synth.sample(synth._table_name, 3)[synth._table_name]
+    synth.fit(data)
+    samples = synth.sample('table', 3)
 
     # Assert
+    samples = samples['table']
     expected_dataframe = pd.DataFrame({
         'low_col': ['13 Sep, 15', '19 Jan, 15', '02 Jun, 14'],
         'high_col': ['23 Oct, 15', '09 Mar, 15', '12 Jul, 14'],

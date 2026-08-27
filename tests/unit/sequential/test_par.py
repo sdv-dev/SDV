@@ -282,7 +282,7 @@ class TestPARSynthesizer:
             "sequence (['sk_col1']=2)."
         )
         with pytest.raises(InvalidDataError, match=err_msg):
-            instance.validate({DEFAULT_SINGLE_TABLE_NAME: data})
+            instance.validate({'table': data})
 
     @pytest.mark.filterwarnings('error::FutureWarning')
     def test__transform_sequence(self):
@@ -369,16 +369,18 @@ class TestPARSynthesizer:
         # Setup
         metadata = self.get_metadata()
         par = PARSynthesizer(metadata=metadata)
-        par.auto_assign_transformers = Mock()
+        par._data_processor.prepare_for_fitting = Mock()
+        par._disable_sequence_index_min_max = Mock()
         par.update_transformers = Mock()
         data = self.get_data()
 
         # Run
-        par.preprocess({DEFAULT_SINGLE_TABLE_NAME: data})
+        par.preprocess({'table': data})
 
         # Assert
         expected_transformers = {'name': None}
-        par.auto_assign_transformers.assert_called_once_with({DEFAULT_SINGLE_TABLE_NAME: data})
+        par._data_processor.prepare_for_fitting.assert_called_once()
+        par._disable_sequence_index_min_max.assert_called_once()
         par.update_transformers.assert_called_once_with(expected_transformers)
         base_preprocess_mock.assert_called_once_with(data)
 
@@ -401,7 +403,7 @@ class TestPARSynthesizer:
         data = self.get_data()
 
         # Run
-        par.preprocess({DEFAULT_SINGLE_TABLE_NAME: data})
+        par.preprocess({'table': data})
 
         # Assert
         expected_transformers = {'name': None}
@@ -420,7 +422,7 @@ class TestPARSynthesizer:
         column_name_to_transformer = {'time': transformer}
 
         # Run
-        instance.auto_assign_transformers({DEFAULT_SINGLE_TABLE_NAME: data})
+        instance.auto_assign_transformers({'table': data})
         instance.update_transformers(column_name_to_transformer)
 
         # Assert
@@ -434,7 +436,7 @@ class TestPARSynthesizer:
         instance = PARSynthesizer(metadata, context_columns=['time'])
 
         # Run and Assert
-        instance.auto_assign_transformers({DEFAULT_SINGLE_TABLE_NAME: data})
+        instance.auto_assign_transformers({'table': data})
         err_msg = 'Transformers for context columns are not allowed to be updated.'
         with pytest.raises(SynthesizerInputError, match=err_msg):
             instance.update_transformers({'time': FloatFormatter()})
@@ -446,11 +448,12 @@ class TestPARSynthesizer:
         data = self.get_data()
 
         data.insert(1, 'height', [160, 170, 180])
+        data = {'table': data}
         metadata.add_column('height', 'table', sdtype='numerical')
         instance = PARSynthesizer(metadata, context_columns=['gender', 'height'])
 
         # Run
-        instance.fit({DEFAULT_SINGLE_TABLE_NAME: data})
+        instance.fit(data)
 
         # Assert
         assert instance.context_columns == ['height', 'gender']
@@ -459,14 +462,15 @@ class TestPARSynthesizer:
         """Test that the context columns is still the same order."""
         # Setup
         metadata = self.get_metadata()
-        data = self.get_data()
+        table_data = self.get_data()
 
-        data.insert(2, 'height', [160, 170, 180])
+        table_data.insert(2, 'height', [160, 170, 180])
+        data = {'table': table_data}
         metadata.add_column('height', 'table', sdtype='numerical')
         instance = PARSynthesizer(metadata, context_columns=['gender', 'height'])
 
         # Run
-        instance.fit({DEFAULT_SINGLE_TABLE_NAME: data})
+        instance.fit(data)
 
         # Assert
         assert instance.context_columns == ['gender', 'height']
@@ -571,7 +575,7 @@ class TestPARSynthesizer:
 
         # Run
         par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
-        par.auto_assign_transformers({DEFAULT_SINGLE_TABLE_NAME: data})
+        par.auto_assign_transformers({'table': data})
 
         # Assert
         assert (
@@ -650,7 +654,7 @@ class TestPARSynthesizer:
         metadata = self.get_metadata()
         metadata.update_column('measurement', 'table', sdtype='categorical')
         par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
-        par.auto_assign_transformers({DEFAULT_SINGLE_TABLE_NAME: data})
+        par.auto_assign_transformers({'table': data})
         sequences = [
             {'context': np.array(['M'], dtype=object), 'data': [['2020-01-03'], [65.0]]},
             {'context': np.array(['F'], dtype=object), 'data': [['2020-01-01'], [55.0]]},
@@ -1099,8 +1103,9 @@ class TestPARSynthesizer:
         """Test that the method converts datetime values to numerical space before sampling."""
         # Setup
         par = PARSynthesizer(metadata=self.get_metadata(), context_columns=['time'])
-        data = self.get_data()
-        par.fit({DEFAULT_SINGLE_TABLE_NAME: data})
+        table_data = self.get_data()
+        data = {'table': table_data}
+        par.fit(data)
 
         par._context_synthesizer = Mock()
         par._context_synthesizer._model.columns = ['time', 'extra_col']
@@ -1196,6 +1201,7 @@ class TestPARSynthesizer:
             'measurement': [55, 60, 65] * 3,
             'all_null_col': [np.nan] * 9,
         })
+        data = {'table': data}
 
         metadata = Metadata()
         metadata.add_table('table')
@@ -1208,8 +1214,8 @@ class TestPARSynthesizer:
 
         # Run
         synthesizer = PARSynthesizer(metadata=metadata, epochs=1)
-        synthesizer.fit({DEFAULT_SINGLE_TABLE_NAME: data})
-        result = synthesizer.sample_sequences(num_sequences=2)[DEFAULT_SINGLE_TABLE_NAME]
+        synthesizer.fit(data)
+        result = synthesizer.sample_sequences(num_sequences=2)['table']
 
         # Assert
         assert 'all_null_col' in result.columns
@@ -1226,6 +1232,7 @@ class TestPARSynthesizer:
             'measurement': [55, 60, 65] * 3,
             'all_null_cat_col': [np.nan] * 9,
         })
+        data = {'table': data}
 
         metadata = Metadata()
         metadata.add_table('table')
@@ -1238,8 +1245,8 @@ class TestPARSynthesizer:
 
         # Run
         synthesizer = PARSynthesizer(metadata=metadata, epochs=1)
-        synthesizer.fit({DEFAULT_SINGLE_TABLE_NAME: data})
-        result = synthesizer.sample_sequences(num_sequences=2)[DEFAULT_SINGLE_TABLE_NAME]
+        synthesizer.fit(data)
+        result = synthesizer.sample_sequences(num_sequences=2)['table']
 
         # Assert
         assert 'all_null_cat_col' in result.columns
@@ -1260,6 +1267,7 @@ class TestPARSynthesizer:
             'all_null_col1': [np.nan] * 9,
             'all_null_col2': [np.nan] * 9,
         })
+        data = {'table': data}
 
         metadata = Metadata().load_from_dict({
             'tables': {
@@ -1279,8 +1287,8 @@ class TestPARSynthesizer:
 
         # Run
         synthesizer = PARSynthesizer(metadata=metadata, epochs=1)
-        synthesizer.fit({DEFAULT_SINGLE_TABLE_NAME: data})
-        result = synthesizer.sample_sequences(num_sequences=2)[DEFAULT_SINGLE_TABLE_NAME]
+        synthesizer.fit(data)
+        result = synthesizer.sample_sequences(num_sequences=2)['table']
 
         # Assert
         assert 'all_null_col1' in result.columns

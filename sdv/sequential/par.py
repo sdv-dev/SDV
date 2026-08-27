@@ -353,6 +353,15 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
 
         return table_data
 
+    def _disable_sequence_index_min_max(self):
+        """Disable min/max enforcement for the sequence index transformer."""
+        if self._sequence_index:
+            sequence_index_transformer = self.get_transformers()[self._sequence_index]
+            if sequence_index_transformer and getattr(
+                sequence_index_transformer, 'enforce_min_max_values', False
+            ):
+                sequence_index_transformer.enforce_min_max_values = False
+
     def auto_assign_transformers(self, data):
         """Automatically assign the required transformers for the given data and constraints.
 
@@ -369,13 +378,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                 If a table of the data is not present in the metadata.
         """
         super().auto_assign_transformers(data)
-        # Ensure that sequence index does not get auto assigned with enforce_min_max_values
-        if self._sequence_index:
-            sequence_index_transformer = self.get_transformers()[self._sequence_index]
-            if sequence_index_transformer and getattr(
-                sequence_index_transformer, 'enforce_min_max_values', False
-            ):
-                sequence_index_transformer.enforce_min_max_values = False
+        self._disable_sequence_index_min_max()
 
     def _get_id_context_columns(self):
         return [
@@ -408,7 +411,8 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         }
 
         if not self._data_processor._prepared_for_fitting:
-            self.auto_assign_transformers({self._table_name: table_data})
+            self._data_processor.prepare_for_fitting(table_data)
+            self._disable_sequence_index_min_max()
 
         self.update_transformers(sequence_key_transformers)
         processed_table_data = super()._preprocess(table_data)
@@ -462,7 +466,8 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             enforce_rounding=self._context_synthesizer.enforce_rounding,
         )
         context = context.groupby(self._sequence_key).first().reset_index()
-        self._context_synthesizer.fit({self._table_name: context})
+        context = {self._table_name: context}
+        self._context_synthesizer.fit(context)
 
     def _generate_sequences(self, processed_table_data):
         sequences = assemble_sequences(
