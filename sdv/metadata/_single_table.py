@@ -59,10 +59,10 @@ class _SingleTableMetadata:
         'numerical': frozenset(['range_min', 'range_max', 'range_is_nullable', 'decimal_places']),
         'datetime': frozenset(['datetime_format', 'range_min', 'range_max', 'range_is_nullable']),
         'categorical': frozenset(['range_values', 'range_is_nullable']),
+        'ordinal': frozenset(['range_values', 'range_is_nullable']),
         'boolean': frozenset(['range_is_nullable']),
         'id': frozenset(['regex_format', 'range_is_nullable']),
         'unknown': frozenset(['pii', 'range_is_nullable']),
-        'ordinal': frozenset([]),
     }
 
     _DTYPES_TO_SDTYPES = {
@@ -225,27 +225,7 @@ class _SingleTableMetadata:
 
     @staticmethod
     def _validate_categorical(column_name, **kwargs):
-        order = kwargs.get('order')
-        order_by = kwargs.get('order_by')
         range_values = kwargs.get('range_values')
-        if order is not None and order_by is not None:
-            raise InvalidMetadataError(
-                f"Categorical column '{column_name}' has both an 'order' and 'order_by' "
-                'attribute. Only 1 is allowed.'
-            )
-        if order_by is not None and order_by not in ('numerical_value', 'alphabetical'):
-            raise InvalidMetadataError(
-                f"Unknown ordering method '{order_by}' provided for categorical column "
-                f"'{column_name}'. Ordering method must be 'numerical_value' or 'alphabetical'."
-            )
-        if (isinstance(order, list) and not len(order)) or (
-            not isinstance(order, list) and order is not None
-        ):
-            raise InvalidMetadataError(
-                f"Invalid order value provided for categorical column '{column_name}'. "
-                "The 'order' must be a list with 1 or more elements."
-            )
-
         if range_values is not None and (
             not isinstance(range_values, list) or len(range_values) == 0
         ):
@@ -257,6 +237,24 @@ class _SingleTableMetadata:
         if range_values is not None and any(pd.isna(value) for value in range_values):
             raise InvalidMetadataError(
                 f"Invalid `range_values` value provided for categorical column '{column_name}'. "
+                'The `range_values` list must not contain null values, use the `range_is_nullable` '
+                'parameter instead.'
+            )
+
+    @staticmethod
+    def _validate_ordinal(column_name, **kwargs):
+        range_values = kwargs.get('range_values')
+        if range_values is not None and (
+            not isinstance(range_values, list) or len(range_values) == 0
+        ):
+            raise InvalidMetadataError(
+                f"Invalid `range_values` value provided for ordinal column '{column_name}'. "
+                'The `range_values` must be a list with 1 or more elements.'
+            )
+
+        if range_values is not None and any(pd.isna(value) for value in range_values):
+            raise InvalidMetadataError(
+                f"Invalid `range_values` value provided for ordinal column '{column_name}'. "
                 'The `range_values` list must not contain null values, use the `range_is_nullable` '
                 'parameter instead.'
             )
@@ -345,6 +343,8 @@ class _SingleTableMetadata:
         self._validate_null_range(column_name, **kwargs)
         if sdtype == 'categorical':
             self._validate_categorical(column_name, **kwargs)
+        if sdtype == 'ordinal':
+            self._validate_ordinal(column_name, **kwargs)
         elif sdtype == 'numerical':
             self._validate_numerical(column_name, **kwargs)
         elif sdtype == 'datetime':
@@ -1734,25 +1734,55 @@ class _SingleTableMetadata:
             )
 
     @classmethod
-    def _load_col_from_dict(cls, column_name, column_dict):
+    def _load_col_from_dict(cls, column_name, column_dict, metadata_version):
         """If the sdtype is numerical, skip the `computer_representation` parameter."""
-        if not isinstance(column_dict, dict):
+        if metadata_version == 'V2' or not isinstance(column_dict, dict):
             return column_dict
 
         sdtype = column_dict.get('sdtype')
-        if sdtype != 'numerical':
-            return column_dict
+        if sdtype == 'categorical' and ('order' in column_dict or 'order_by' in column_dict):
+            warnings.warn(
+                '`order` and `order_by` parameters are deprecated for categorical '
+                f"column '{column_name}'. Ordinal sdtype will be used instead.",
+                category=FutureWarning,
+            )
+            column_dict['sdtype'] = 'ordinal'
+            if 'order' in column_dict:
+                column_dict['range_values'] = column_dict.pop('order')
 
-        if 'computer_representation' in column_dict:
+            if 'order_by' in column_dict:
+                del column_dict['order_by']
+
+        elif sdtype == 'numerical' and 'computer_representation' in column_dict:
             warnings.warn(
                 f"`computer_representation` key for numerical column '{column_name}' "
                 'is deprecated and will be ignored.',
                 category=FutureWarning,
             )
+            del column_dict['computer_representation']
 
-        return {
-            key: value for key, value in column_dict.items() if key != 'computer_representation'
-        }
+        return column_dict
+
+    @classmethod
+    def _load_from_dict(cls, metadata_dict, version='V2'):
+        instance = cls()
+        instance._valdiate_no_extra_keys_metadata_dict(metadata_dict)
+        for key in instance._KEYS:
+            value = deepcopy(metadata_dict.get(key))
+            if value:
+                if key == 'columns':
+                    value = {
+                        str(key): cls._load_col_from_dict(key, col, version)
+                        for key, col in value.items()
+                    }
+                elif key == 'primary_key':
+                    if isinstance(value, list) and len(value) == 1:
+                        value = value[0]
+
+                setattr(instance, f'{key}', value)
+
+        instance._primary_key_candidates = None
+        return instance
 
     @classmethod
     def load_from_dict(cls, metadata_dict):
@@ -1766,23 +1796,7 @@ class _SingleTableMetadata:
             Instance of ``_SingleTableMetadata``. Column names are converted to
             string type.
         """
-        instance = cls()
-        instance._valdiate_no_extra_keys_metadata_dict(metadata_dict)
-        for key in instance._KEYS:
-            value = deepcopy(metadata_dict.get(key))
-            if value:
-                if key == 'columns':
-                    value = {
-                        str(key): cls._load_col_from_dict(key, col) for key, col in value.items()
-                    }
-                elif key == 'primary_key':
-                    if isinstance(value, list) and len(value) == 1:
-                        value = value[0]
-
-                setattr(instance, f'{key}', value)
-
-        instance._primary_key_candidates = None
-        return instance
+        return cls._load_from_dict(metadata_dict)
 
     @classmethod
     def load_from_json(cls, filepath):

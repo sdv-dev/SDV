@@ -38,11 +38,12 @@ class Test_SingleTableMetadata:
             {'range_min': '2020-01', 'range_max': '2022-31', 'datetime_format': '%Y-%d'},
         ),
         ('start_date', 'datetime', {'range_is_nullable': True}),
-        ('name', 'categorical', {'order_by': 'alphabetical'}),
-        ('name', 'categorical', {'order': ['a', 'b', 'c']}),
-        ('name', 'categorical', {'order': ['a', 'b', 'c']}),
+        ('name', 'categorical', {}),
         ('name', 'categorical', {'range_values': ['a', 'b', 'c', 'd', 'e']}),
         ('name', 'categorical', {'range_is_nullable': True}),
+        ('ranking', 'ordinal', {}),
+        ('ranking', 'ordinal', {'range_values': ['a', 'b', 'c', 'd', 'e']}),
+        ('ranking', 'ordinal', {'range_is_nullable': True}),
         ('synthetic', 'boolean', {}),
         ('synthetic', 'boolean', {'range_is_nullable': False}),
         ('phrase', 'id', {}),
@@ -71,6 +72,12 @@ class Test_SingleTableMetadata:
             'categorical',
             {'pii': True, 'ordering': ['a', 'b'], 'ordered': 'numerical_values'},
             re.escape("Invalid values '(ordered, ordering, pii)' for categorical column 'name'."),
+        ),
+        (
+            'ranking',
+            'ordinal',
+            {'pii': True, 'order': ['a', 'b'], 'order_by': 'numerical_values'},
+            re.escape("Invalid values '(order, order_by, pii)' for ordinal column 'ranking'."),
         ),
         (
             'synthetic',
@@ -284,57 +291,13 @@ class Test_SingleTableMetadata:
             instance._validate_datetime('start_date', **invalid_kwargs)
 
     def test__validate_categorical(self):
-        """Test the ``_validate_categorical`` method.
-
-        Setup:
-            - instance of ``_SingleTableMetadata``
-
-        Input:
-            - Column name.
-            - sdtype categorical.
-            - A valid ``order_by``.
-            - A valid ``order``.
-            - An invalid ``order_by`` and ``order``.
-
-        Side Effects:
-            - ``InvalidMetadataError`` when both ``order`` and ``order_by`` are present.
-            - ``InvalidMetadataError`` when ``order`` is an empty list or a random string.
-            - ``InvalidMetadataError`` when ``order_by`` is not ``numerical_value`` or
-              ``alphabetical``.
-        """
+        """Test the ``_validate_categorical`` method."""
         # Setup
         instance = _SingleTableMetadata()
 
         # Run / Assert
         instance._validate_categorical('name')
-        instance._validate_categorical('name', order_by='alphabetical')
-        instance._validate_categorical('name', order_by='numerical_value')
-        instance._validate_categorical('name', order=['a', 'b', 'c'])
         instance._validate_categorical('name', range_values=['a', 'b', 'c'])
-
-        error_msg = re.escape(
-            "Categorical column 'name' has both an 'order' and 'order_by' "
-            'attribute. Only 1 is allowed.'
-        )
-        with pytest.raises(InvalidMetadataError, match=error_msg):
-            instance._validate_categorical('name', order_by='alphabetical', order=['a', 'b', 'c'])
-
-        error_msg_order_by = re.escape(
-            "Unknown ordering method 'my_ordering' provided for categorical column "
-            "'name'. Ordering method must be 'numerical_value' or 'alphabetical'."
-        )
-        with pytest.raises(InvalidMetadataError, match=error_msg_order_by):
-            instance._validate_categorical('name', order_by='my_ordering')
-
-        error_msg_order = re.escape(
-            "Invalid order value provided for categorical column 'name'. "
-            "The 'order' must be a list with 1 or more elements."
-        )
-        with pytest.raises(InvalidMetadataError, match=error_msg_order):
-            instance._validate_categorical('name', order='my_ordering')
-
-        with pytest.raises(InvalidMetadataError, match=error_msg_order):
-            instance._validate_categorical('name', order=[])
 
         error_msg_range_values = re.escape(
             "Invalid `range_values` value provided for categorical column 'name'. "
@@ -345,6 +308,25 @@ class Test_SingleTableMetadata:
 
         with pytest.raises(InvalidMetadataError, match=error_msg_range_values):
             instance._validate_categorical('name', range_values=[])
+
+    def test__validate_ordinal(self):
+        """Test the ``_validate_ordinal`` method."""
+        # Setup
+        instance = _SingleTableMetadata()
+
+        # Run / Assert
+        instance._validate_ordinal('name')
+        instance._validate_ordinal('name', range_values=['a', 'b', 'c'])
+
+        error_msg_range_values = re.escape(
+            "Invalid `range_values` value provided for ordinal column 'name'. "
+            'The `range_values` must be a list with 1 or more elements.'
+        )
+        with pytest.raises(InvalidMetadataError, match=error_msg_range_values):
+            instance._validate_ordinal('name', range_values='a')
+
+        with pytest.raises(InvalidMetadataError, match=error_msg_range_values):
+            instance._validate_ordinal('name', range_values=[])
 
     def test__validate_id(self):
         """Test the ``_validate_id`` method.
@@ -841,13 +823,13 @@ class Test_SingleTableMetadata:
         instance.columns = {'age': {'sdtype': 'numerical'}}
 
         # Run
-        instance.update_column('age', sdtype='categorical', order_by='numerical_value')
+        instance.update_column('age', sdtype='categorical', range_values=['a', 'b'])
 
         # Assert
         instance._validate_update_column.assert_called_once_with(
-            'age', sdtype='categorical', order_by='numerical_value'
+            'age', sdtype='categorical', range_values=['a', 'b']
         )
-        assert instance.columns['age'] == {'sdtype': 'categorical', 'order_by': 'numerical_value'}
+        assert instance.columns['age'] == {'sdtype': 'categorical', 'range_values': ['a', 'b']}
 
     @patch('sdv.metadata._single_table._SingleTableMetadata._validate_column_args')
     @patch('sdv.metadata._single_table._SingleTableMetadata._validate_column_exists')
@@ -875,14 +857,12 @@ class Test_SingleTableMetadata:
         instance.columns = {'age': {'sdtype': 'numerical'}}
 
         # Run
-        instance.update_column('age', sdtype='categorical', order_by='numerical_value')
+        instance.update_column('age', sdtype='categorical', range_values=['a', 'b'])
 
         # Assert
-        assert instance.columns['age'] == {'sdtype': 'categorical', 'order_by': 'numerical_value'}
+        assert instance.columns['age'] == {'sdtype': 'categorical', 'range_values': ['a', 'b']}
         mock__validate_column_exists.assert_called_once_with('age')
-        mock__validate_column.assert_called_once_with(
-            'age', 'categorical', order_by='numerical_value'
-        )
+        mock__validate_column.assert_called_once_with('age', 'categorical', range_values=['a', 'b'])
 
     @patch('sdv.metadata._single_table._SingleTableMetadata._validate_column_args')
     @patch('sdv.metadata._single_table._SingleTableMetadata._validate_column_exists')
@@ -3275,6 +3255,93 @@ class Test_SingleTableMetadata:
         metadata['invalid_key'] = 'extra_value'
         with pytest.raises(ValueError, match=expected_error):
             instance._valdiate_no_extra_keys_metadata_dict(metadata)
+
+    @pytest.mark.parametrize(
+        ('col_meta_dict', 'version'),
+        [
+            (['a', 'b', 'c'], 'V1'),
+            ({'sdtype': 'id'}, 'V1'),
+            ({'sdtype': 'invalid'}, 'V1'),
+            ({'sdtype': 'numerical', 'range_min': 0.0}, 'V1'),
+            ({'sdtype': 'categorical', 'range_values': ['a', 'b', 'c']}, 'V1'),
+            ({'sdtype': 'numerical', 'computer_representation': 'Int8'}, 'V2'),
+        ],
+    )
+    def test__load_col_from_dict(self, col_meta_dict, version):
+        """Test loading V1 column dicts to be compatible with V2.
+
+        Test that V2 and V1 columns that are compatible are compatible with V2
+        are returned unchanged.
+        """
+        # Setup
+        instance = _SingleTableMetadata()
+        expected = col_meta_dict.copy()
+
+        # Run
+        output_col_meta = instance._load_col_from_dict('col', col_meta_dict, version)
+
+        # Assert
+        assert output_col_meta == expected
+
+    @pytest.mark.parametrize(
+        ('col_meta_dict', 'expected_col_meta'),
+        [
+            (
+                {'sdtype': 'categorical', 'order': ['a', 'b', 'c']},
+                {'sdtype': 'ordinal', 'range_values': ['a', 'b', 'c']},
+            ),
+            (
+                {'sdtype': 'categorical', 'order_by': 'numerical'},
+                {'sdtype': 'ordinal'},
+            ),
+            (
+                {
+                    'sdtype': 'categorical',
+                    'order': ['a', 'b', 'c'],
+                    'order_by': True,
+                    'extra': None,
+                },
+                {'sdtype': 'ordinal', 'range_values': ['a', 'b', 'c'], 'extra': None},
+            ),
+        ],
+    )
+    def test__load_col_from_dict_upgrades_categoricals(self, col_meta_dict, expected_col_meta):
+        """Test loading categorical V1 column dicts are made compatible with V2.
+
+        Test that V1 categorical columns with `order` or `order_by` are converted to
+        ordinal sdtype.
+        """
+        # Setup
+        instance = _SingleTableMetadata()
+
+        # Run and Assert
+        expected_warning = re.escape(
+            '`order` and `order_by` parameters are deprecated for categorical '
+            "column 'col'. Ordinal sdtype will be used instead.",
+        )
+        with pytest.warns(FutureWarning, match=expected_warning):
+            output_col_meta_dict = instance._load_col_from_dict('col', col_meta_dict, 'V1')
+
+        # Assert
+        assert output_col_meta_dict == expected_col_meta
+
+    def test__load_col_from_dict_upgrades_numerical(self):
+        """Test loading numerical V1 column dicts drops `computer_representation`."""
+        # Setup
+        instance = _SingleTableMetadata()
+        col_meta_dict = {'sdtype': 'numerical', 'computer_representation': 'Int8'}
+        expected_col_meta = {'sdtype': 'numerical'}
+
+        # Run and Assert
+        expected_warning = re.escape(
+            "`computer_representation` key for numerical column 'col' "
+            'is deprecated and will be ignored.',
+        )
+        with pytest.warns(FutureWarning, match=expected_warning):
+            output_col_meta_dict = instance._load_col_from_dict('col', col_meta_dict, 'V1')
+
+        # Assert
+        assert output_col_meta_dict == expected_col_meta
 
     @patch('sdv.metadata._single_table._SingleTableMetadata._valdiate_no_extra_keys_metadata_dict')
     def test_load_from_dict(self, mock_validate):
