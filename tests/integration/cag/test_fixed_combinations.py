@@ -43,9 +43,12 @@ def constraint():
 
 
 @pytest.fixture()
-def data_multi(data):
+def data_multi():
     return {
-        'table1': data,
+        'table1': pd.DataFrame({
+            'A': [1, 2, 3, 1, 2, 1],
+            'B': [10, 20, 30, 10, 20, 10],
+        }),
         'table2': pd.DataFrame({'id': range(5)}),
     }
 
@@ -98,7 +101,7 @@ def test_fixed_combinations_integers_copula(data, metadata, constraint):
     """Test that FixedCombinations constraint works with integer columns using Copula."""
     # Run
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample(1000)
+    synthetic_data = synthesizer.sample('table1', 1000)['table1']
 
     # Assert
     assert len(synthetic_data) == 1000
@@ -112,36 +115,44 @@ def test_fixed_combinations_integers_copula(data, metadata, constraint):
 def test_fixed_combinations_with_nans(metadata, constraint):
     """Test that FixedCombinations constraint works with NaNs."""
     # Setup
-    data = pd.DataFrame({
-        'A': pd.Categorical([1, 2, np.nan, 1, 2, 1]),
-        'B': pd.Categorical([10, 20, 30, 10, 20, None]),
-    })
+    data = {
+        'table1': pd.DataFrame({
+            'A': pd.Categorical([1, 2, np.nan, 1, 2, 1]),
+            'B': pd.Categorical([10, 20, 30, 10, 20, None]),
+        })
+    }
 
     # Run
     updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
-        'columns': {
-            'A#B': {'sdtype': 'categorical'},
+        'tables': {
+            'table1': {
+                'columns': {
+                    'A#B': {'sdtype': 'categorical'},
+                }
+            }
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-    assert list(transformed.columns) == ['A#B']
-    pd.testing.assert_frame_equal(data, reverse_transformed)
+    assert list(transformed['table1'].columns) == ['A#B']
+    pd.testing.assert_frame_equal(data['table1'], reverse_transformed['table1'])
 
 
 def test_fixed_combinations_with_nans_copula(metadata, constraint):
     """Test that FixedCombinations constraint works with NaNs using Copula."""
     # Setup
-    data = pd.DataFrame({
-        'A': [1, 2, np.nan, 1, 2, 1],
-        'B': [10, 20, 30, 10, 20, 10],
-    })
+    data = {
+        'table1': pd.DataFrame({
+            'A': [1, 2, np.nan, 1, 2, 1],
+            'B': [10, 20, 30, 10, 20, 10],
+        })
+    }
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample(1000)
+    synthetic_data = synthesizer.sample('table1', 1000)['table1']
 
     # Assert
     expected_out = pd.DataFrame({
@@ -197,6 +208,7 @@ def test_fixed_combinations_multiple_constraints():
         'C': [100, 200, 300, 100, 200, 100],
         'D': [1000, 2000, 3000, 1000, 2000, 1000],
     })
+    data = {'table': data}
     metadata = Metadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'categorical'},
@@ -212,11 +224,12 @@ def test_fixed_combinations_multiple_constraints():
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.add_constraints(constraints=[constraint1, constraint2])
     synthesizer.fit(data)
-    samples = synthesizer.sample(101)
+    samples = synthesizer.sample('table', 101)['table']
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
 
     # Assert
+    data = data['table']
     expected_updated_metadata = Metadata.load_from_dict({
         'columns': {
             'A#B': {'sdtype': 'categorical'},
@@ -248,6 +261,7 @@ def test_fixed_combinations_multiple_constraints_reject_sampling():
         'B': [10, 20, 30, 10, 20, 10],
         'C': [100, 200, 300, 100, 200, 100],
     })
+    data = {'table': data}
     metadata = Metadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'categorical'},
@@ -262,7 +276,7 @@ def test_fixed_combinations_multiple_constraints_reject_sampling():
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.add_constraints(constraints=[constraint1, constraint2])
     synthesizer.fit(data)
-    samples = synthesizer.sample(100)
+    samples = synthesizer.sample('table', 100)['table']
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
 
@@ -299,6 +313,7 @@ def test_fixed_combinations_multiple_constraints_three_constraints():
         'C': [100, 200, 300, 100, 200, 100],
         'D': [1000, 2000, 3000, 1000, 2000, 1000],
     })
+    data = {'table': data}
     metadata = Metadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'categorical'},
@@ -315,11 +330,12 @@ def test_fixed_combinations_multiple_constraints_three_constraints():
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.add_constraints(constraints=[constraint1, constraint2, constraint3])
     synthesizer.fit(data)
-    samples = synthesizer.sample(100)
+    samples = synthesizer.sample('table', 100)['table']
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
 
     # Assert
+    data = data['table']
     expected_updated_metadata = Metadata.load_from_dict({
         'columns': {
             'A#B': {'sdtype': 'categorical'},
@@ -352,18 +368,24 @@ def test_fixed_combinations_multiple_constraints_three_constraints_reject_sampli
     Test that when the second constraint in the chain fails, the third constraint still works.
     """
     # Setup
-    data = pd.DataFrame({
-        'A': [1, 2, 3, 1, 2, 1],
-        'B': [10, 20, 30, 10, 20, 10],
-        'C': [100, 200, 300, 100, 200, 100],
-        'D': [1000, 2000, 3000, 1000, 2000, 1000],
-    })
+    data = {
+        'table1': pd.DataFrame({
+            'A': [1, 2, 3, 1, 2, 1],
+            'B': [10, 20, 30, 10, 20, 10],
+            'C': [100, 200, 300, 100, 200, 100],
+            'D': [1000, 2000, 3000, 1000, 2000, 1000],
+        })
+    }
     metadata = Metadata.load_from_dict({
-        'columns': {
-            'A': {'sdtype': 'categorical'},
-            'B': {'sdtype': 'categorical'},
-            'C': {'sdtype': 'categorical'},
-            'D': {'sdtype': 'categorical'},
+        'tables': {
+            'table1': {
+                'columns': {
+                    'A': {'sdtype': 'categorical'},
+                    'B': {'sdtype': 'categorical'},
+                    'C': {'sdtype': 'categorical'},
+                    'D': {'sdtype': 'categorical'},
+                }
+            }
         }
     })
     constraint1 = FixedCombinations(['A', 'B'])
@@ -372,15 +394,19 @@ def test_fixed_combinations_multiple_constraints_three_constraints_reject_sampli
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint1, constraint3, constraint2])
-    samples = synthesizer.sample(100)
+    samples = synthesizer.sample('table1', 100)['table1']
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
-        'columns': {
-            'A#B': {'sdtype': 'categorical'},
-            'C#D': {'sdtype': 'categorical'},
+        'tables': {
+            'table1': {
+                'columns': {
+                    'A#B': {'sdtype': 'categorical'},
+                    'C#D': {'sdtype': 'categorical'},
+                }
+            }
         }
     }).to_dict()
 
@@ -389,9 +415,9 @@ def test_fixed_combinations_multiple_constraints_three_constraints_reject_sampli
     assert original_metadata.to_dict() == metadata.to_dict()
 
     # Get unique combinations from original data
-    original_ab_combos = set(zip(data['A'], data['B']))
-    original_cd_combos = set(zip(data['C'], data['D']))
-    original_ac_combos = set(zip(data['A'], data['C']))
+    original_ab_combos = set(zip(data['table1']['A'], data['table1']['B']))
+    original_cd_combos = set(zip(data['table1']['C'], data['table1']['D']))
+    original_ac_combos = set(zip(data['table1']['A'], data['table1']['C']))
 
     # Get unique combinations from synthetic data
     synthetic_ab_combos = set(zip(samples['A'], samples['B']))
@@ -408,22 +434,23 @@ def test_validate_constraints(data, metadata, constraint):
     """Test validate_constraints works with synthetic data generated with FixedCombinations."""
     # Setup
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample(100)
+    synthetic_data = synthesizer.sample('table1', 100)
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
-    original_ab_combos = set(zip(data['A'], data['B']))
-    synthetic_ab_combos = set(zip(synthetic_data['A'], synthetic_data['B']))
+    original_ab_combos = set(zip(data['table1']['A'], data['table1']['B']))
+    synthetic_ab_combos = set(zip(synthetic_data['table1']['A'], synthetic_data['table1']['B']))
     assert original_ab_combos == synthetic_ab_combos
 
 
 def test_validate_constraints_raises(data, metadata, constraint):
     """Test validate_constraints raises an error with bad synthetic data with FixedCombinations."""
     # Setup
-    synthetic_data = data.copy()
+    synthetic_data = data['table1'].copy()
     synthetic_data['B'] = [11, 21, 31, 11, 21, 11]
+    synthetic_data = {'table1': synthetic_data}
     synthesizer = run_copula(data, metadata, [constraint])
     msg = re.escape(
         'The fixed combinations requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more'

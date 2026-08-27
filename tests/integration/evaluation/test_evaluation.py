@@ -9,6 +9,7 @@ from sdv.single_table.copulas import GaussianCopulaSynthesizer
 def _get_single_table_data():
     """Return single-table real data, synthetic data and metadata."""
     real_data = pd.DataFrame({'col': [1, 2, 3]})
+    real_data = {'table': real_data}
 
     metadata = Metadata()
     metadata.add_table('table')
@@ -19,7 +20,7 @@ def _get_single_table_data():
         default_distribution='truncnorm',
     )
     synthesizer.fit(real_data)
-    synthetic_data = synthesizer.sample(10)
+    synthetic_data = {'table': synthesizer.sample('table', 10)}
 
     return real_data, synthetic_data, metadata
 

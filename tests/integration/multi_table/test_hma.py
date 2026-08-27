@@ -21,8 +21,7 @@ from sdv.cag._errors import ConstraintNotMetError
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
 from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError, VersionError
-from sdv.evaluation import evaluate_quality
-from sdv.evaluation.multi_table import get_column_pair_plot, get_column_plot
+from sdv.evaluation import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
 from sdv.utils import load_constraints, load_synthesizer

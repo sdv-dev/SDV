@@ -102,9 +102,8 @@ def test_download_demo_sequential(output_path, tmp_path):
     # Assert
     assert isinstance(metadata, Metadata)
     metadata.validate()
-    metadata = metadata._convert_to_single_table()
     metadata.validate_data(data)
-    assert len(data) > 1
+    assert len(data['ArticularyWordRecognition']) > 1
     if output_folder_name:
         assert (output_folder_name / 'metadata.json').is_file()
         csv_files = list((output_folder_name / 'data').glob('*.csv'))

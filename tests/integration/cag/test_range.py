@@ -12,11 +12,13 @@ from tests.utils import run_constraint, run_copula, run_hma
 
 @pytest.fixture()
 def data():
-    return pd.DataFrame({
+    data = pd.DataFrame({
         'A': [1, 2, 3, 1, 2, 1],
         'B': [10, 20, 30, 10, 20, 10],
         'C': [100, 200, 300, 100, 200, 100],
     })
+
+    return {'table': data}
 
 
 @pytest.fixture()
@@ -41,7 +43,7 @@ def constraint():
 
 @pytest.fixture()
 def data_datetime():
-    return pd.DataFrame({
+    data = pd.DataFrame({
         'A': [
             pd.Timestamp('2024-01-01'),
             pd.Timestamp('2024-01-02'),
@@ -67,6 +69,7 @@ def data_datetime():
             pd.Timestamp('2024-01-08'),
         ],
     })
+    return {'table': data}
 
 
 @pytest.fixture()
@@ -81,9 +84,13 @@ def metadata_datetime():
 
 
 @pytest.fixture()
-def data_multi(data):
+def data_multi():
     return {
-        'table1': data,
+        'table1': pd.DataFrame({
+            'A': [1, 2, 3, 1, 2, 1],
+            'B': [10, 20, 30, 10, 20, 10],
+            'C': [100, 200, 300, 100, 200, 100],
+        }),
         'table2': pd.DataFrame({'id': range(5)}),
     }
 
@@ -121,7 +128,7 @@ def constraint_multi():
 @pytest.fixture()
 def data_multi_datetime(data_datetime):
     return {
-        'table1': data_datetime,
+        'table1': data_datetime['table'],
         'table2': pd.DataFrame({'id': range(5)}),
     }
 
@@ -152,6 +159,9 @@ def test_range_constraint_integers(data, metadata, constraint):
     updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
+    transformed = transformed['table']
+    reverse_transformed = reverse_transformed['table']
+    data = data['table']
     expected_updated_metadata = Metadata.load_from_dict({
         'columns': {
             'A.fillna': {'sdtype': 'numerical'},
@@ -173,11 +183,15 @@ def test_range_constraint_with_nans(metadata, constraint):
         'B': [np.nan, 20, 30, 10, 20, None],
         'C': [None, 200, 300, 100, 200, None],
     })
+    data = {'table': data}
 
     # Run
     updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
+    data = data['table']
+    transformed = transformed['table']
+    reverse_transformed = reverse_transformed['table']
     expected_updated_metadata = Metadata.load_from_dict({
         'columns': {
             'A.fillna': {'sdtype': 'numerical'},
@@ -207,10 +221,11 @@ def test_all_possible_nans_configurations(constraint, metadata):
             'C': [3, 7, 8, 4, np.nan, 9, np.nan, np.nan, np.nan],
         }
     )
+    data = {'table': data}
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample(10000)
+    synthetic_data = synthesizer.sample('table', 10000)['table']
 
     # Assert
     synt_data_not_nan_low_middle = synthetic_data[
@@ -260,11 +275,11 @@ def test_range_constraint_datetime(data_datetime, metadata_datetime, constraint)
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-    assert list(transformed.columns) == ['A.fillna', 'A#B', 'B#C', 'A#B#C.nan_component']
+    assert list(transformed['table'].columns) == ['A.fillna', 'A#B', 'B#C', 'A#B#C.nan_component']
 
     # Check that the timestamps are very close to each other
     for col in ['A', 'B', 'C']:
-        diff = (data[col] - reverse_transformed[col]).abs()
+        diff = (data['table'][col] - reverse_transformed['table'][col]).abs()
         assert (diff.dt.total_seconds() < 1e-6).all()
 
 
@@ -298,11 +313,15 @@ def test_range_constraint_datetime_nans(metadata_datetime, constraint):
             pd.Timestamp('2024-01-08'),
         ],
     })
+    data = {'table': data}
 
     # Run
     updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
 
     # Assert
+    data = data['table']
+    transformed = transformed['table']
+    reverse_transformed = reverse_transformed['table']
     expected_updated_metadata = Metadata.load_from_dict({
         'columns': {
             'A.fillna': {'sdtype': 'datetime'},
@@ -377,6 +396,7 @@ def test_range_multiple_constraints():
         'high1': [10, 20, 30, 10, 20, 10],
         'high2': [10, 20, 30, 10, 20, 10],
     })
+    data = {'table': data}
     metadata = Metadata.load_from_dict({
         'columns': {
             'low': {'sdtype': 'numerical'},
@@ -398,11 +418,12 @@ def test_range_multiple_constraints():
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint1, constraint2])
-    samples = synthesizer.sample(100)
+    samples = synthesizer.sample('table', 100)
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
 
     # Assert
+    samples = samples['table']
     expected_updated_metadata = Metadata.load_from_dict({
         'columns': {
             'low.fillna': {'sdtype': 'numerical'},
@@ -431,6 +452,7 @@ def test_range_multiple_constraints_different_mid_columns():
         'high1': [10, 20, 30, 10, 20, 10],
         'high2': [10, 20, 30, 10, 20, 10],
     })
+    data = {'table': data}
     metadata = Metadata.load_from_dict({
         'columns': {
             'low': {'sdtype': 'numerical'},
@@ -453,11 +475,12 @@ def test_range_multiple_constraints_different_mid_columns():
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint1, constraint2])
-    samples = synthesizer.sample(100)
+    samples = synthesizer.sample('table', 100)
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
 
     # Assert
+    samples = samples['table']
     expected_updated_metadata = Metadata.load_from_dict({
         'columns': {
             'low.fillna.fillna': {'sdtype': 'numerical'},
@@ -483,7 +506,7 @@ def test_validate_constraints(data, metadata, constraint):
     """Test validate_constraints works with synthetic data generated with Range."""
     # Setup
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample(100)
+    synthetic_data = synthesizer.sample('table', 100)['table']
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
@@ -497,10 +520,11 @@ def test_validate_constraints_raises(data, metadata, constraint):
     """Test validate_constraints raises an error with bad synthetic data with Range."""
     # Setup
     synthetic_data = pd.DataFrame({
-        'A': data['B'],
-        'B': data['A'],
-        'C': data['C'],
+        'A': data['table']['B'],
+        'B': data['table']['A'],
+        'C': data['table']['C'],
     })
+    synthetic_data = {'table': synthetic_data}
     synthesizer = run_copula(data, metadata, [constraint])
     msg = re.escape('The range requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more')
 
@@ -512,11 +536,13 @@ def test_validate_constraints_raises(data, metadata, constraint):
 def test_invalid_data(data, metadata, constraint):
     """Test validate_constraints raises an error with bad synthetic data with Range."""
     # Setup
+    data = data['table']
     invalid_data = pd.DataFrame({
         'A': data['B'],
         'B': data['A'],
         'C': data['C'],
     })
+    invalid_data = {'table': invalid_data}
     msg = re.escape(
         "Data is not valid for the 'Range' constraint in table 'table':\n"
         '    A  B    C\n0  10  1  100\n1  20  2  200\n2  30  3  300\n3  10'
