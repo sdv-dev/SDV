@@ -691,6 +691,23 @@ class TestHMASynthesizer:
         with pytest.raises(SynthesizerInputError, match=expected_msg):
             HMASynthesizer(metadata)
 
+    def test_error_complex_schema_occurs_before_composite_key_errors(self):
+        """Test that given a complex schema, that error shows before checking composite keys."""
+        # Setup
+        _, metadata = download_demo(modality='multi_table', dataset_name='adventure-works')
+
+        # Run and Assert
+        error_msg = (
+            'HMASynthesizer is not designed to handle a schema with more than 5 tables or '
+            'relationship depth greater than 2.\n'
+            'Please use SDV Enterprise to model this schema.\n\n'
+            'SDV Enterprise provides access to synthesizers that can easily scale with the '
+            'amount of data and complexity of your schema.\n\n'
+            'For more information, visit datacebo.com'
+        )
+        with pytest.raises(SynthesizerInputError, match=error_msg):
+            HMASynthesizer(metadata)
+
     def test_hma_one_parent_two_children(self):
         """Test it works on a simple 'child-parent-child' dataset."""
         # Setup

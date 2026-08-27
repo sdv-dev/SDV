@@ -203,7 +203,6 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             child_tables.add(relationship['child_table_name'])
         for child_table_name in child_tables:
             self.set_table_parameters(child_table_name, {'default_distribution': 'norm'})
-        self._validate_schema_complexity()
 
     def set_table_parameters(self, table_name, table_parameters):
         """Update the table's synthesizer instantiation parameters.
