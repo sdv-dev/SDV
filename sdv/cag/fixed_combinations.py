@@ -61,7 +61,8 @@ class FixedCombinations(BaseConstraint):
         - If `table_name` is None then the metadata contains only a single table
         - If `table_name` is not None, then the metadata contains a table with the same name.
         - All columns in `column_names` are present in the target table.
-        - All columns in `column_names` have either 'categorical' or 'boolean' as their sdtype.
+        - All columns in `column_names` have either 'categorical', 'ordinal', or 'boolean' as their
+          sdtype.
         - Columns relationships do not partially contain columns in `column_names`.
         """
         _validate_table_and_column_names(self.table_name, self.column_names, metadata)
@@ -69,10 +70,10 @@ class FixedCombinations(BaseConstraint):
         _validate_columns_not_primary_key(table_name, self.column_names, metadata)
         for column in self.column_names:
             col_sdtype = metadata.tables[table_name].columns[column]['sdtype']
-            if col_sdtype not in ['boolean', 'categorical']:
+            if col_sdtype not in ['boolean', 'categorical', 'ordinal']:
                 raise ConstraintNotMetError(
                     f"Column '{column}' has an incompatible sdtype ('{col_sdtype}'). The column "
-                    "sdtype must be either 'boolean' or 'categorical'."
+                    "sdtype must be either 'boolean', 'categorical', or 'ordinal'."
                 )
 
         column_set = set(self.column_names)

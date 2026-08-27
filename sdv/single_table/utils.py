@@ -45,7 +45,7 @@ def detect_discrete_columns(metadata, data, transformers):
             if sdtype in ['numerical', 'datetime']:
                 continue
 
-            elif sdtype in ['categorical', 'boolean']:
+            elif sdtype in ['categorical', 'boolean', 'ordinal']:
                 transformer = transformers.get(column)
                 if transformer and transformer.get_output_sdtypes().get(column) == 'float':
                     continue

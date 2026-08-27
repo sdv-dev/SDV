@@ -620,6 +620,38 @@ class TestDataProcessor:
         assert result.missing_value_replacement == 'random'
         assert result.missing_value_generation == 'from_column'
 
+    def test__get_categorical_transformer_handles_range_values(self):
+        """Test the ``_get_categorical_transformer`` removes 'range_values' parameter."""
+        # Setup
+        dp = DataProcessor(_SingleTableMetadata())
+        dp._get_transformer_with_parameters = Mock(return_value='UniformEncoder')
+        transformer = 'UniformEncoder'
+        parameters = {'range_values': ['a', 'b', 'c']}
+
+        # Run
+        result = dp._get_categorical_transformer(parameters, transformer)
+
+        # Assert
+        dp._get_transformer_with_parameters.assert_called_once_with({}, transformer)
+        assert result == 'UniformEncoder'
+
+    def test__get_ordinal_transformer_handles_range_values(self):
+        """Test the ``_get_ordinal_transformer`` renames 'range_values' parameter."""
+        # Setup
+        dp = DataProcessor(_SingleTableMetadata())
+        dp._get_transformer_with_parameters = Mock(return_value='UniformEncoder')
+        transformer = 'UniformEncoder'
+        parameters = {'range_values': ['a', 'b', 'c']}
+
+        # Run
+        result = dp._get_ordinal_transformer(parameters, transformer)
+
+        # Assert
+        dp._get_transformer_with_parameters.assert_called_once_with(
+            {'order': ['a', 'b', 'c']}, transformer
+        )
+        assert result == 'UniformEncoder'
+
     def test__create_config(self):
         """Test the ``_create_config`` method.
 

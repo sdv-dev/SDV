@@ -54,7 +54,7 @@ def _get_column_plot(real_data, synthetic_data, metadata, column_name, plot_type
         plot_type (str or None):
             The plot to be used. Can choose between ``distplot``, ``bar`` or ``None``. If ``None`
             select between ``distplot`` or ``bar`` depending on the data that the column contains,
-            ``distplot`` for datetime and numerical values and ``bar`` for categorical.
+            ``distplot`` for datetime and numerical values and ``bar`` for categorical and ordinal.
             Defaults to ``None``.
 
     Returns:
@@ -68,7 +68,7 @@ def _get_column_plot(real_data, synthetic_data, metadata, column_name, plot_type
     if plot_type is None:
         if sdtype in ['datetime', 'numerical']:
             plot_type = 'distplot'
-        elif sdtype in ['categorical', 'boolean']:
+        elif sdtype in ['categorical', 'ordinal', 'boolean']:
             plot_type = 'bar'
 
         else:
@@ -104,8 +104,8 @@ def _get_column_pair_plot(
             The plot to be used. Can choose between ``box``, ``heatmap``, ``scatter``, ``violin``
             or ``None``. If ``None` select between ``box``, ``heatmap`` or ``scatter`` depending
             on the data that the column contains, ``scatter`` used for datetime and numerical
-            values, ``heatmap`` for categorical and ``box`` for a mix of both. Defaults to
-            ``None``.
+            values, ``heatmap`` for categorical and ordinal, and ``box`` for a mix of both. Defaults
+            to ``None``.
         sample_size (int or None):
             The number of samples to use for the plot. If ``None`` use the whole dataset.
             Defaults to ``None``.
@@ -123,7 +123,7 @@ def _get_column_pair_plot(
             sdtype = metadata.columns.get(column_name)['sdtype']
             if sdtype in ['numerical', 'datetime']:
                 plot_type.append('scatter')
-            elif sdtype in ['categorical', 'boolean']:
+            elif sdtype in ['categorical', 'ordinal', 'boolean']:
                 plot_type.append('heatmap')
             else:
                 raise VisualizationUnavailableError(
@@ -200,8 +200,8 @@ def get_column_pair_plot(
             The plot to be used. Can choose between ``box``, ``heatmap``, ``scatter``, ``violin``
             or ``None``. If ``None` select between ``box``, ``heatmap`` or ``scatter`` depending
             on the data that the column contains, ``scatter`` used for datetime and numerical
-            values, ``heatmap`` for categorical and ``box`` for a mix of both. Defaults to
-            ``None``.
+            values, ``heatmap`` for categorical, and ordinal, and ``box`` for a mix of both.
+            Defaults to ``None``.
         sample_size (int or None):
             The number of samples to plot. If ``None``, all samples are plotted.
             Defaults to ``None``.
