@@ -58,10 +58,11 @@ class _SingleTableMetadata:
     _SDTYPE_KWARGS = {
         'numerical': frozenset(['range_min', 'range_max', 'range_is_nullable', 'decimal_places']),
         'datetime': frozenset(['datetime_format', 'range_min', 'range_max', 'range_is_nullable']),
-        'categorical': frozenset(['order', 'order_by', 'range_values', 'range_is_nullable']),
+        'categorical': frozenset(['range_values', 'range_is_nullable']),
         'boolean': frozenset(['range_is_nullable']),
         'id': frozenset(['regex_format', 'range_is_nullable']),
         'unknown': frozenset(['pii', 'range_is_nullable']),
+        'ordinal': frozenset([]),
     }
 
     _DTYPES_TO_SDTYPES = {
