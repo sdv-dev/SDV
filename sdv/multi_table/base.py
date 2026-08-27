@@ -128,7 +128,7 @@ class BaseMultiTableSynthesizer:
         """Implement this function for slow synthesizers."""
         pass
 
-    def __init__(self, metadata, locales=['en_US'], synthesizer_kwargs=None):
+    def __init__(self, metadata, locales=['en_US']):
         self.metadata = metadata
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', message=r'.*column relationship.*')
