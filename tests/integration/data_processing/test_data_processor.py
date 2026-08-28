@@ -13,7 +13,6 @@ from rdt.transformers import (
     FloatFormatter,
     IndexGenerator,
     OrderedUniformEncoder,
-    OrderedLabelEncoder,
     UniformEncoder,
     UnixTimestampEncoder,
 )
