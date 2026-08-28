@@ -27,7 +27,6 @@ class BaseHierarchicalSampler:
         self.metadata = metadata
         self._null_foreign_key_percentages = {}
         self._table_synthesizers = table_synthesizers
-        self._table_sizes = table_sizes
 
     def _recreate_child_synthesizer(self, child_name, parent_name, parent_row):
         """Recreate a child table's synthesizer based on the parent's row.
@@ -285,7 +284,7 @@ class BaseHierarchicalSampler:
 
         return final_data
 
-    def _sample(self, scale=1.0):
+    def _sample(self, scale=1.0, batch_size=None, max_tries_per_batch=100):
         """Sample the entire dataset.
 
         Returns a dictionary with all the tables of the dataset. The amount of rows sampled will
@@ -325,8 +324,8 @@ class BaseHierarchicalSampler:
 
         if send_min_sample_warning:
             warn_msg = (
-                "The 'scale' parameter is too small. Some tables may have 1 row."
-                ' For better quality data, please choose a larger scale.'
+                "The 'num_rows' parameter is too small. Some tables may have 1 row."
+                ' For better quality data, please choose a larger num_rows.'
             )
             warnings.warn(warn_msg)
 

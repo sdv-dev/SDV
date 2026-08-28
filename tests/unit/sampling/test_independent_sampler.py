@@ -20,7 +20,6 @@ class TestBaseIndependentSampler:
         # Assert
         assert instance.metadata == metadata
         assert instance._table_synthesizers == {}
-        assert instance._table_sizes == {}
 
     def test__add_foreign_key_columns(self):
         """Test that ``_add_foreign_key_columns`` raises a ``NotImplementedError``."""
@@ -40,17 +39,16 @@ class TestBaseIndependentSampler:
     def test__sample_table(self):
         """Test sampling a table."""
         # Setup
-        table_synthesizer = Mock()
-        table_synthesizer._sample_batch.return_value = pd.DataFrame({
+        instance = Mock()
+        instance._sample_in_batches = Mock()
+        instance._sample_in_batches.return_value = pd.DataFrame({
             'user_id': [1, 2, 3],
             'name': ['John', 'Doe', 'Johanna'],
         })
-
-        instance = Mock()
-        instance._table_synthesizers = {'users': table_synthesizer}
+        table_synthesizer = Mock()
+        result = {}
 
         # Run
-        result = {}
         BaseIndependentSampler._sample_table(instance, table_synthesizer, 'users', 3, result)
 
         # Assert
@@ -60,7 +58,9 @@ class TestBaseIndependentSampler:
                 'name': ['John', 'Doe', 'Johanna'],
             })
         }
-        table_synthesizer._sample_batch.assert_called_once_with(3, keep_extra_columns=True)
+        instance._sample_in_batches.assert_called_once_with(
+            synthesizer=table_synthesizer, num_rows=3, batch_size=None, max_tries_per_batch=100
+        )
         pd.testing.assert_frame_equal(result['users'], expected_result['users'])
 
     def test__connect_table(self):
@@ -491,8 +491,8 @@ class TestBaseIndependentSampler:
         instance._table_synthesizers = {'hotels': Mock(), 'guests': Mock()}
         instance.metadata = metadata
         warning_msg = re.escape(
-            "The 'scale' parameter is too small. Some tables may have 1 row."
-            ' For better quality data, please choose a larger scale.'
+            "The 'num_rows' parameter is too small. Some tables may have 1 row."
+            ' For better quality data, please choose a larger num_rows.'
         )
 
         # Run and Assert

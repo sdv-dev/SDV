@@ -235,13 +235,13 @@ def test_custom_constraints_from_object(tmpdir):
     synthesizer.fit_processed_data(processed_data)
 
     # Run - sample
-    sampled = synthesizer.sample(10)
+    sampled = synthesizer.sample('table', 10 * len(data['table']))
     assert all(sampled['table']['numerical_col'] > 1)
 
     # Run - Save and Sample
     synthesizer.save(tmpdir / 'test.pkl')
     loaded_instance = load_synthesizer(tmpdir / 'test.pkl')
-    loaded_sampled = loaded_instance.sample(10)
+    loaded_sampled = loaded_instance.sample('table', 10 * len(data['table']))
     assert all(loaded_sampled['table']['numerical_col'] > 1)
 
 

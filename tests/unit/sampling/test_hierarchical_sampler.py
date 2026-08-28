@@ -19,7 +19,6 @@ class TestBaseHierarchicalSampler:
         # Assert
         assert instance.metadata == metadata
         assert instance._table_synthesizers == {}
-        assert instance._table_sizes == {}
 
     def test__recreate_child_synthesizer(self):
         """Test that ``_recreate_child_synthesizer`` raises a ``NotImplementedError``."""

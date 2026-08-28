@@ -117,7 +117,7 @@ def test_end_to_end_programmable_constraint_multi_table(programmable_constraint)
 
     # Run
     synthesizer.fit(data)
-    sampled_data = synthesizer.sample(scale=1.0)
+    sampled_data = synthesizer.sample('guests', len(data['guests']))
     constraints = synthesizer.get_constraints()
 
     # Assert

@@ -56,7 +56,7 @@ def test_visualize_graph_for_multi_table():
     metadata.visualize()
     metadata.validate()
     model.fit(tables)
-    model.sample(10)
+    model.sample('1', 10 * len(tables['1']))
 
 
 def test_visualize_pk_to_pk(primary_key_to_primary_key):

@@ -900,7 +900,7 @@ def test_validate_constraints_multi(data_multi, metadata_multi, constraint_multi
     """Test validate_constraints works with multitable synthetic data generated with Inequality."""
     # Setup
     synthesizer = run_hma(data_multi, metadata_multi, [constraint_multi])
-    synthetic_data = synthesizer.sample(100)
+    synthetic_data = synthesizer.sample('table1', 100 * len(data_multi['table1']))
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)

@@ -989,7 +989,7 @@ class TestHMASynthesizer:
 
         # Run actual modeling
         synthesizer.fit(data)
-        synthesizer.sample()
+        synthesizer.sample(table_name='parent', num_rows=3)
 
         # Assert estimated number of columns is correct
         tables = synthesizer._finalize.call_args[0][0]
@@ -1136,7 +1136,7 @@ class TestHMASynthesizer:
 
         # Run actual modeling
         synthesizer.fit(data)
-        synthesizer.sample()
+        synthesizer.sample(table_name='parent', num_rows=3)
 
         # Assert estimated number of columns is correct
         tables = synthesizer._finalize.call_args[0][0]
@@ -1268,7 +1268,7 @@ class TestHMASynthesizer:
 
         # Run actual modeling
         synthesizer.fit(data)
-        synthesizer.sample(scale=1)
+        synthesizer.sample(table_name='root1', num_rows=3)
 
         # Assert estimated number of columns is correct
         tables = synthesizer._finalize.call_args[0][0]
@@ -1382,7 +1382,7 @@ class TestHMASynthesizer:
 
         # Run actual modeling
         synthesizer.fit(data)
-        synthesizer.sample()
+        synthesizer.sample(table_name='parent', num_rows=3)
 
         # Assert estimated number of columns is correct
         tables = synthesizer._finalize.call_args[0][0]

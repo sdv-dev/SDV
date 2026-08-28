@@ -679,3 +679,17 @@ def _get_single_table_data(data):
     """Return the single table DataFrame from the data dictionary."""
     _validate_data_single_table(data)
     return next(iter(data.values()))
+
+
+def _validate_positive_integer(parameter_name, value):
+    """Validate that a parameter is a positive integer."""
+    if (
+        not isinstance(value, (int, float))
+        or value <= 0
+        or not float(value).is_integer()
+        or isinstance(value, bool)
+    ):
+        raise SynthesizerInputError(
+            f"Invalid parameter for '{parameter_name}' ({value}). "
+            'Please provide an integer that is greater than 0.'
+        )

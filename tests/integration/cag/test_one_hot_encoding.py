@@ -109,7 +109,7 @@ def test_end_to_end_multi(data_multi, metadata_multi):
     # Setup
     constraint = OneHotEncoding(column_names=['a', 'b', 'c'], table_name='table1')
     synthesizer = run_hma(data_multi, metadata_multi, [constraint])
-    synthetic_data = synthesizer.sample(100)
+    synthetic_data = synthesizer.sample('table1', 100 * len(data_multi['table1']))
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
@@ -264,7 +264,7 @@ def test_end_to_end_categorical_multi(data_multi, metadata_multi):
 
     # Run
     synthesizer = run_hma(data_multi, metadata_multi, [constraint])
-    synthetic = synthesizer.sample(200)
+    synthetic = synthesizer.sample('table1', 200 * len(data_multi['table1']))
     synthesizer.validate_constraints(synthetic_data=synthetic)
 
     # Assert
@@ -357,7 +357,7 @@ def test_onehot_encoding_with_multi_table_diagnostic_report(data_multi, metadata
     # Setup
     constraint = OneHotEncoding(column_names=['a', 'b', 'c'], table_name='table1')
     synthesizer = run_hma(data_multi, metadata_multi, [constraint])
-    synthetic_data = synthesizer.sample(1)
+    synthetic_data = synthesizer.sample('table1', len(data_multi['table1']))
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
