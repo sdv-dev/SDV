@@ -222,7 +222,7 @@ def test_get_combination_overlap_detects_a_single_shared_row():
     real_data, _ = _get_demographic_data()
     synthetic_data = pd.concat(
         [
-            real_data.iloc[[2]],
+            real_data['customer'].iloc[[2]],
             pd.DataFrame({
                 'date_of_birth': ['1993-04-04'],
                 'zipcode': [30301],
@@ -231,6 +231,7 @@ def test_get_combination_overlap_detects_a_single_shared_row():
         ],
         ignore_index=True,
     )
+    synthetic_data = {'customer': synthetic_data}
 
     # Run
     result = get_combination_overlap(

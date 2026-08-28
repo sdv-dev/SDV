@@ -6,7 +6,6 @@ import pandas as pd
 import pytest
 from rdt.transformers import FloatFormatter, UnixTimestampEncoder
 
-from sdv._utils import DEFAULT_SINGLE_TABLE_NAME
 from sdv.cag import ProgrammableConstraint
 from sdv.cag.base import BaseConstraint
 from sdv.data_processing.data_processor import DataProcessor
@@ -503,7 +502,7 @@ class TestPARSynthesizer:
             enforce_min_max_values=initial_synthesizer.enforce_min_max_values,
             enforce_rounding=initial_synthesizer.enforce_rounding,
         )
-        fitted_data = gaussian_copula_mock().fit.mock_calls[0][1][0][DEFAULT_SINGLE_TABLE_NAME]
+        fitted_data = gaussian_copula_mock().fit.mock_calls[0][1][0]['table']
         expected_fitted_data = pd.DataFrame({
             'name': ['Doe', 'Jane', 'John'],
             'gender': ['M', 'F', 'M'],
@@ -546,7 +545,7 @@ class TestPARSynthesizer:
             enforce_rounding=initial_synthesizer.enforce_rounding,
         )
         assert converted_context_metadata.columns == context_metadata.columns
-        fitted_data = gaussian_copula_mock().fit.mock_calls[0][1][0][DEFAULT_SINGLE_TABLE_NAME]
+        fitted_data = gaussian_copula_mock().fit.mock_calls[0][1][0]['table']
         expected_fitted_data = pd.DataFrame({
             'name': ['Doe', 'Jane', 'John'],
             'time': [1.578010e09, 1.577837e09, 1.577923e09],
@@ -601,7 +600,7 @@ class TestPARSynthesizer:
         par._fit_context_model(data)
 
         # Assert
-        fitted_data = par._context_synthesizer.fit.mock_calls[0][1][0][DEFAULT_SINGLE_TABLE_NAME]
+        fitted_data = par._context_synthesizer.fit.mock_calls[0][1][0]['table']
         expected_fitted_data = pd.DataFrame({'name': ['Doe', 'Jane', 'John'], 'abc': [0, 0, 0]})
         pd.testing.assert_frame_equal(fitted_data.sort_values(by='name'), expected_fitted_data)
 
@@ -938,7 +937,7 @@ class TestPARSynthesizer:
             "Please use 'sample_sequences' instead."
         )
         with pytest.raises(NotImplementedError, match=error_message):
-            par.sample(DEFAULT_SINGLE_TABLE_NAME, 3)
+            par.sample('table', 3)
 
     def test_sample_sequences_sequence_key_needs_to_be_filled_in(self):
         """Test that the method adds the sequence key to the context columns if necessary."""

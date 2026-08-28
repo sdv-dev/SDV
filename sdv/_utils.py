@@ -25,7 +25,6 @@ except ImportError:
 
 
 MODELABLE_SDTYPES = ['categorical', 'numerical', 'datetime', 'boolean']
-DEFAULT_SINGLE_TABLE_NAME = 'table'
 
 
 def _cast_to_iterable(value, iterable_type=None):

@@ -695,6 +695,9 @@ class TestHMASynthesizer:
         # Setup
         _, metadata = download_demo(modality='multi_table', dataset_name='adventure-works')
 
+        # The metadata contains the `order_by` key for categorical which we don't support for 2.0
+        metadata.tables['WorkOrderRouting'].columns['OperationSequence'] = {'sdtype': 'categorical'}
+
         # Run and Assert
         error_msg = (
             'HMASynthesizer is not designed to handle a schema with more than 5 tables or '
