@@ -1,5 +1,11 @@
 # Release Notes
 
+## v1.38.2 - 2026-08-28
+
+### New Features
+
+* If a schema is too complex for SDV Community (HMA), then that should be the first error shown - Issue [#2965](https://github.com/sdv-dev/SDV/issues/2965) by @amontanez24
+
 ## v1.38.1 - 2026-08-21
 
 ### New Features
