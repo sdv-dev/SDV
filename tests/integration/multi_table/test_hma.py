@@ -856,6 +856,90 @@ class TestHMASynthesizer:
         for table_name, table in samples.items():
             assert table['data'].isin(data[table_name]['data']).all()
 
+    def test_sample_in_batches(self):
+        """Test sampling in batches on a simple 'parent-child-parent' dataset."""
+        # Setup
+        child = pd.DataFrame(
+            data={
+                'child_ID': ['a', 'b', 'c', 'd', 'e'],
+                'parent_ID1': [0, 1, 2, 3, 3],
+                'parent_ID2': [0, 1, 2, 3, 4],
+                'data': ['0', '1', '2', '3', '4'],
+            }
+        )
+        parent1 = pd.DataFrame(
+            data={'parent_ID1': [0, 1, 2, 3, 4], 'data': [True, False, False, False, True]}
+        )
+        parent2 = pd.DataFrame(
+            data={'parent_ID2': [0, 1, 2, 3, 4], 'data': ['Yes', 'Yes', 'Maybe', 'No', 'No']}
+        )
+        data = {'parent1': parent1, 'child': child, 'parent2': parent2}
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'parent1': {
+                    'primary_key': 'parent_ID1',
+                    'columns': {
+                        'parent_ID1': {'sdtype': 'id'},
+                        'data': {'sdtype': 'categorical'},
+                    },
+                },
+                'parent2': {
+                    'primary_key': 'parent_ID2',
+                    'columns': {
+                        'parent_ID2': {'sdtype': 'id'},
+                        'data': {'sdtype': 'categorical'},
+                    },
+                },
+                'child': {
+                    'primary_key': 'child_ID',
+                    'columns': {
+                        'child_ID': {'sdtype': 'id'},
+                        'parent_ID1': {'sdtype': 'id'},
+                        'parent_ID2': {'sdtype': 'id'},
+                        'data': {'sdtype': 'categorical'},
+                    },
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'parent1',
+                    'parent_primary_key': 'parent_ID1',
+                    'child_table_name': 'child',
+                    'child_foreign_key': 'parent_ID1',
+                },
+                {
+                    'parent_table_name': 'parent2',
+                    'parent_primary_key': 'parent_ID2',
+                    'child_table_name': 'child',
+                    'child_foreign_key': 'parent_ID2',
+                },
+            ],
+        })
+        synthesizer = HMASynthesizer(metadata)
+
+        # Run
+        synthesizer.fit(data)
+        samples = synthesizer.sample(
+            table_name='parent1',
+            num_rows=5,
+            batch_size=2,
+            max_tries_per_batch=50,
+        )
+
+        # Assert tables are the same
+        assert set(samples) == set(data)
+
+        # Assert the requested table has the requested number of rows
+        assert len(samples['parent1']) == 5
+
+        # Assert columns are the same
+        for table_name, table in samples.items():
+            assert set(table.columns) == set(data[table_name].columns)
+
+        # Assert data values all exist in the original tables
+        for table_name, table in samples.items():
+            assert table['data'].isin(data[table_name]['data']).all()
+
     def test_hma_numerical_distributions(self):
         """Test it runs when 'numerical_distributions' is set (GH#1605)."""
         # Setup

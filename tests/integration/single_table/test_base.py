@@ -403,8 +403,7 @@ def test_modeling_with_complex_datetimes():
     sampled = synth.sample('table', 10)
 
     # Assert
-    sampled = sampled['table']
-    synth.validate({synth._table_name: sampled})
+    synth.validate(sampled)
 
 
 def test_auto_assign_transformers_and_update_with_pii():

@@ -1430,6 +1430,54 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(SamplingError, match=error_msg):
             instance.sample('table', 1)
 
+    def test__resolve_scale(self):
+        """Test that ``_resolve_scale`` method."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance._table_sizes = {'table': 10}
+
+        # Run
+        scale_1 = instance._resolve_scale('table', 10)
+        scale_2 = instance._resolve_scale('table', 20)
+        scale_3 = instance._resolve_scale('table', 5)
+
+        # Assert
+        assert scale_1 == 1
+        assert scale_2 == 2
+        assert scale_3 == 0.5
+
+    def test__sample_in_batches(self):
+        """Test that ``_sample_in_batches`` method."""
+        # Setup
+        instance = Mock()
+        synthesizer = Mock()
+        synthesizer._sample_batch.side_effect = [
+            pd.DataFrame({'col': [1, 2, 3, 4]}),
+            pd.DataFrame({'col': [5, 6, 7, 8]}),
+            pd.DataFrame({'col': [9, 10]}),
+        ]
+
+        expected = pd.DataFrame({'col': list(range(1, 11))})
+
+        # Run
+        result = BaseMultiTableSynthesizer._sample_in_batches(
+            instance,
+            synthesizer=synthesizer,
+            num_rows=10,
+            batch_size=4,
+            max_tries_per_batch=100,
+        )
+
+        # Assert
+        expected_calls = [
+            call(4, max_tries=100, keep_extra_columns=True),
+            call(4, max_tries=100, keep_extra_columns=True),
+            call(2, max_tries=100, keep_extra_columns=True),
+        ]
+        assert synthesizer._sample_batch.call_args_list == expected_calls
+        pd.testing.assert_frame_equal(result, expected)
+
     @patch('sdv.multi_table.base.datetime')
     def test_sample(self, mock_datetime, caplog):
         """Test that ``sample`` calls the ``_sample`` with the given arguments."""
@@ -1442,6 +1490,7 @@ class TestBaseMultiTableSynthesizer:
         instance._sample = Mock(return_value=data)
         instance._validate_sample_input = Mock()
         instance._resolve_scale = Mock(return_value=1.5)
+        instance._save_sampled_data = Mock()
         instance._original_table_columns = {
             'nesreca': ['upravna_enota', 'id_nesreca', 'nesreca_val'],
         }
@@ -1451,12 +1500,13 @@ class TestBaseMultiTableSynthesizer:
 
         # Run
         with catch_sdv_logs(caplog, logging.INFO, logger='MultiTableSynthesizer'):
-            instance.sample(table_name='nesreca', num_rows=10)
+            result = instance.sample(table_name='nesreca', num_rows=10, output_folder_path='output')
 
         # Assert
         instance._sample.assert_called_once_with(
             scale=1.5, batch_size=None, max_tries_per_batch=100
         )
+        instance._save_sampled_data.assert_called_once_with(result, 'output')
         assert caplog.messages[0] == str({
             'EVENT': 'Sample',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',

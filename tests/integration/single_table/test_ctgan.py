@@ -36,12 +36,13 @@ def test__estimate_num_columns():
         'categorical3': [float('nan'), np.nan, None],
         'boolean': [True, False, True],
     })
+    data = {'table': data}
     instance = CTGANSynthesizer(metadata)
 
     # Run
-    instance.auto_assign_transformers({instance._table_name: data})
+    instance.auto_assign_transformers(data)
     instance.update_transformers({'categorical2': LabelEncoder()})
-    result = instance._estimate_num_columns(data)
+    result = instance._estimate_num_columns(data['table'])
 
     # Assert
     assert result == {

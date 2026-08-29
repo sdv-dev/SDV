@@ -656,6 +656,7 @@ def test_datetime_column_mixed_timezones():
             dtype='object',
         ),
     })
+    data = {'table': data}
     metadata = Metadata.load_from_dict({
         'tables': {
             'table': {
@@ -669,7 +670,7 @@ def test_datetime_column_mixed_timezones():
     synth = GaussianCopulaSynthesizer(metadata)
 
     # Run
-    synth.auto_assign_transformers({synth._table_name: data})
+    synth.auto_assign_transformers(data)
 
     # Assert
-    assert synth.validate({synth._table_name: data}) is None
+    assert synth.validate(data) is None

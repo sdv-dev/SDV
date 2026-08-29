@@ -598,9 +598,9 @@ class BaseSynthesizer:
                     message=r'The datetime format for column .* could not be verified.*',
                     category=UserWarning,
                 )
-                self._original_metadata.validate_data({self._table_name: table_data})
+                self._original_metadata.validate_data(data)
         else:
-            self._original_metadata.validate_data({self._table_name: table_data})
+            self._original_metadata.validate_data(data)
         self._validate_transform_constraints(table_data, enforce_constraint_fitting=True)
 
         # Retaining the logic of returning errors and raising them here to maintain consistency

@@ -441,7 +441,7 @@ def test_range_constraint_with_datetimes_and_nones():
         ],
     })
     pd.testing.assert_frame_equal(expected_sampled, sampled)
-    synth.validate({synth._table_name: sampled})
+    synth.validate({'table': sampled})
 
 
 def test_inequality_constraint_all_possible_nans_configurations():

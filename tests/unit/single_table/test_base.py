@@ -453,9 +453,7 @@ class TestBaseSynthesizer:
         instance.validate(data)
 
         # Assert
-        instance._original_metadata.validate_data.assert_called_once_with({
-            instance._table_name: table_data
-        })
+        instance._original_metadata.validate_data.assert_called_once_with(data)
         instance._validate.assert_called_once_with(table_data)
         instance._validate_transform_constraints.assert_called_once_with(
             table_data, enforce_constraint_fitting=True
@@ -484,9 +482,7 @@ class TestBaseSynthesizer:
             instance.validate(data)
 
         # Assert auxiliary methods are called
-        instance._original_metadata.validate_data.assert_called_once_with({
-            instance._table_name: table_data
-        })
+        instance._original_metadata.validate_data.assert_called_once_with(data)
         instance._validate.assert_not_called()
 
     def test_validate_int_primary_key_regex_starts_with_zero(self):

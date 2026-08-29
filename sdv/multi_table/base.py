@@ -17,6 +17,7 @@ from tqdm import tqdm
 
 from sdv import version
 from sdv._utils import (
+    _metadata_range_exceeds_real,
     _validate_positive_integer,
     check_synthesizer_version,
     generate_synthesizer_id,
@@ -479,6 +480,14 @@ class BaseMultiTableSynthesizer:
 
         return errors
 
+    def _check_ranges(self, data):
+        if _metadata_range_exceeds_real(data, self._original_metadata):
+            warnings.warn(
+                'The training data does not cover the full range. Synthetic data will be '
+                'based on the training data. To extrapolate ranges for full coverage, '
+                'please use the Targeted Sampling bundle.'
+            )
+
     def validate(self, data):
         """Validate the data.
 
@@ -489,13 +498,16 @@ class BaseMultiTableSynthesizer:
                 A dictionary of table names to pd.DataFrames.
         """
         errors = []
-        metadata = self._original_metadata
-        metadata.validate_data(data)
-        data = self._validate_transform_constraints(data, enforce_constraint_fitting=True)
-        for table_name in data:
+        self._original_metadata.validate_data(data)
+        self._check_ranges(data)
+
+        transformed_data = self._validate_transform_constraints(
+            data,
+            enforce_constraint_fitting=True,
+        )
+        for table_name, table_data in transformed_data.items():
             if table_name in self._table_synthesizers:
-                # Validate rules specific to each synthesizer
-                errors += self._table_synthesizers[table_name]._validate(data[table_name])
+                errors += self._table_synthesizers[table_name]._validate(table_data)
 
         if errors:
             raise InvalidDataError(errors)
@@ -787,7 +799,7 @@ class BaseMultiTableSynthesizer:
             current_batch_size = min(batch_size, remaining_rows)
             batch = synthesizer._sample_batch(
                 current_batch_size,
-                max_tries_per_batch=max_tries_per_batch,
+                max_tries=max_tries_per_batch,
                 keep_extra_columns=True,
             )
             sampled.append(batch)
@@ -807,7 +819,7 @@ class BaseMultiTableSynthesizer:
 
         Args:
             table_name (str):
-                The name of the table to sample.
+                The name of the main table to sample.
             num_rows (int):
                 The number of rows to sample.
             batch_size (int, optional):
@@ -836,18 +848,18 @@ class BaseMultiTableSynthesizer:
 
         table_columns = getattr(self, '_original_table_columns', {})
 
-        for sampled_table_name in sampled_data:
-            table_data = sampled_data[sampled_table_name][
-                self.get_metadata().get_column_names(sampled_table_name)
+        for _table_name in sampled_data:
+            table_data = sampled_data[_table_name][
+                self.get_metadata().get_column_names(_table_name)
             ]
 
-            if sampled_table_name in table_columns:
-                if isinstance(table_columns[sampled_table_name], dict):
-                    table_data = table_data.rename(columns=table_columns[sampled_table_name])
+            if _table_name in table_columns:
+                if isinstance(table_columns[_table_name], dict):
+                    table_data = table_data.rename(columns=table_columns[_table_name])
                 else:
-                    table_data.columns = table_columns[sampled_table_name]
+                    table_data.columns = table_columns[_table_name]
 
-            sampled_data[sampled_table_name] = table_data
+            sampled_data[_table_name] = table_data
 
         if output_folder_path is not None:
             self._save_sampled_data(sampled_data, output_folder_path)
