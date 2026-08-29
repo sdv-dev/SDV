@@ -217,13 +217,14 @@ def _cast_to_datetime64(value, datetime_format=None, ignore_timezone=True):
         return _parse_datetime64_value(value, datetime_format, ignore_timezone)
 
     elif isinstance(value, pd.Series):
-        return pd.Series([
-            _parse_datetime64_value(
-                val,
-                datetime_format,
-                ignore_timezone,
-            )
-            for val in value
+        return pd.Series(
+            [
+                _parse_datetime64_value(
+                    val,
+                    datetime_format,
+                    ignore_timezone,
+                )
+                for val in value
             ],
             index=value.index,
             dtype='datetime64[ns]',
