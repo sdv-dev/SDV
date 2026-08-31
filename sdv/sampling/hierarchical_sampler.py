@@ -84,7 +84,7 @@ class BaseHierarchicalSampler:
 
         num_rows = round(num_rows)
         if num_rows == 0:
-            return synthesizer._sample_batch(0, keep_extra_columns=True)
+            return pd.DataFrame()
 
         return self._sample_in_batches(
             synthesizer,

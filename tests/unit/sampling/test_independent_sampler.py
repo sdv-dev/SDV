@@ -386,12 +386,21 @@ class TestBaseIndependentSampler:
             'sessions_id': ['a', 'c', 'b'],
         })
 
-        def _sample_table(synthesizer, table_name, num_rows, sampled_data):
+        def _sample_table(
+            synthesizer,
+            table_name,
+            num_rows,
+            sampled_data,
+            batch_size=None,
+            max_tries_per_batch=100,
+        ):
             _sample_table_mock(
                 synthesizer=synthesizer,
                 table_name=table_name,
                 num_rows=num_rows,
                 sampled_data=sampled_data.copy(),
+                batch_size=batch_size,
+                max_tries_per_batch=max_tries_per_batch,
             )
             sampled_data[table_name] = expected_sample[table_name]
 
@@ -427,17 +436,26 @@ class TestBaseIndependentSampler:
         instance._reverse_transform_constraints = Mock(side_effect=lambda x: x)
 
         # Run
-        result = BaseIndependentSampler._sample(instance)
+        result = BaseIndependentSampler._sample(
+            instance, scale=1.0, batch_size=10, max_tries_per_batch=20
+        )
 
         # Assert
         users_call = call(
-            synthesizer=users_synthesizer, table_name='users', num_rows=3, sampled_data={}
+            synthesizer=users_synthesizer,
+            table_name='users',
+            num_rows=3,
+            sampled_data={},
+            batch_size=10,
+            max_tries_per_batch=20,
         )
         sessions_call = call(
             synthesizer=sessions_synthesizer,
             table_name='sessions',
             num_rows=5,
             sampled_data={'users': DataFrameMatcher(expected_sample['users'])},
+            batch_size=10,
+            max_tries_per_batch=20,
         )
         transactions_call = call(
             synthesizer=transactions_synthesizer,
@@ -447,6 +465,8 @@ class TestBaseIndependentSampler:
                 'users': DataFrameMatcher(expected_sample['users']),
                 'sessions': DataFrameMatcher(expected_sample['sessions']),
             },
+            batch_size=10,
+            max_tries_per_batch=20,
         )
         _sample_table_mock.assert_has_calls([users_call, sessions_call, transactions_call])
 

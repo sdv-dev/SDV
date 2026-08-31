@@ -70,8 +70,6 @@ class TestBaseHierarchicalSampler:
         """Test that ``_sample_rows`` supports sampling zero rows."""
         # Setup
         synthesizer = Mock()
-        expected = pd.DataFrame(columns=['id', 'value'])
-        synthesizer._sample_batch.return_value = expected
         instance = Mock()
 
         # Run
@@ -84,11 +82,7 @@ class TestBaseHierarchicalSampler:
         )
 
         # Assert
-        pd.testing.assert_frame_equal(result, expected)
-        synthesizer._sample_batch.assert_called_once_with(
-            0,
-            keep_extra_columns=True,
-        )
+        pd.testing.assert_frame_equal(result, pd.DataFrame())
         instance._sample_in_batches.assert_not_called()
 
     def test__sample_rows_missing_num_rows(self):

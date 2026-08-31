@@ -152,7 +152,12 @@ class BaseIndependentSampler:
 
         return final_data
 
-    def _sample(self, scale=1.0):
+    def _sample(
+        self,
+        scale=1.0,
+        batch_size=None,
+        max_tries_per_batch=100,
+    ):
         """Sample the entire dataset.
 
         Returns a dictionary with all the tables of the dataset. The amount of rows sampled will
@@ -167,6 +172,10 @@ class BaseIndependentSampler:
                 create more rows than the original data by a factor of ``scale``.
                 If ``scale`` is lower than ``1.0`` create fewer rows by the factor of ``scale``
                 than the original tables. Defaults to ``1.0``.
+            batch_size (int, optional):
+                The batch size for sampling. Defaults to None.
+            max_tries_per_batch (int, optional):
+                The maximum number of tries per batch. Defaults to 100.
 
         Returns:
             dict:
@@ -186,6 +195,8 @@ class BaseIndependentSampler:
                 table_name=table,
                 num_rows=num_rows,
                 sampled_data=sampled_data,
+                batch_size=batch_size,
+                max_tries_per_batch=max_tries_per_batch,
             )
 
         if send_min_sample_warning:

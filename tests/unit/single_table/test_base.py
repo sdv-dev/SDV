@@ -691,6 +691,8 @@ class TestBaseSynthesizer:
         instance._preprocess_helper.return_value = table_data
         instance._store_and_convert_original_cols = Mock(return_value=False)
         instance._preprocess.return_value = table_data
+        instance.metadata = Mock()
+        instance.metadata._get_single_table_name = Mock(return_value='table')
 
         # Run
         result = BaseSynthesizer.preprocess(instance, data)

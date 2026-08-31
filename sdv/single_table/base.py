@@ -654,7 +654,7 @@ class BaseSynthesizer:
                 Dictionary mapping the table name to the preprocessed data.
         """
         table_data = _get_single_table_data(data)
-        table_name = next(iter(data))
+        table_name = self.metadata._get_single_table_name()
         is_converted = self._store_and_convert_original_cols(table_data)
         self.validate(data)
         table_data = self._preprocess_helper(table_data)
