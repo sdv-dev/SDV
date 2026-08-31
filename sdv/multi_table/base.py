@@ -843,8 +843,11 @@ class BaseMultiTableSynthesizer:
                 max_tries_per_batch=max_tries_per_batch,
             )
 
-        total_rows = sum(len(table) for table in sampled_data.values())
-        total_columns = sum(len(table.columns) for table in sampled_data.values())
+        total_rows = 0
+        total_columns = 0
+        for table in sampled_data.values():
+            total_rows += len(table)
+            total_columns += len(table.columns)
 
         table_columns = getattr(self, '_original_table_columns', {})
 
