@@ -18,6 +18,7 @@ import yaml
 from botocore import UNSIGNED
 from botocore.client import Config
 
+from sdv.datasets._utils import process_adventure_works
 from sdv.errors import DemoResourceNotFoundError, DemoResourceNotFoundWarning
 from sdv.metadata.metadata import Metadata
 
@@ -506,6 +507,8 @@ def download_demo(
         data = data.popitem()[1]
 
     metadata = _get_metadata(metadata_bytes, dataset_name, output_folder_name)
+    if dataset_name == 'adventure-works':
+        data, metadata = process_adventure_works(data, metadata)
     return data, metadata
 
 
