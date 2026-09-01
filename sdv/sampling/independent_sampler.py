@@ -23,7 +23,6 @@ class BaseIndependentSampler:
     def __init__(self, metadata, table_synthesizers, table_sizes):
         self.metadata = metadata
         self._table_synthesizers = table_synthesizers
-        self._table_sizes = table_sizes
 
     def _add_foreign_key_columns(self, child_table, parent_table, child_name, parent_name):
         """Add all the foreign keys that connect the child table to the parent table.
@@ -40,7 +39,15 @@ class BaseIndependentSampler:
         """
         raise NotImplementedError()
 
-    def _sample_table(self, synthesizer, table_name, num_rows, sampled_data):
+    def _sample_table(
+        self,
+        synthesizer,
+        table_name,
+        num_rows,
+        sampled_data,
+        batch_size=None,
+        max_tries_per_batch=100,
+    ):
         """Sample a single table and all its children.
 
         Args:
@@ -52,10 +59,19 @@ class BaseIndependentSampler:
                 Number of rows to sample for the table.
             sampled_data (dict):
                 A dictionary mapping table names to sampled tables (pd.DataFrame).
+            batch_size (int, optional):
+                The number of rows to sample per batch. Defaults to None.
+            max_tries_per_batch (int, optional):
+                The maximum number of attempts to sample a batch successfully. Defaults to 100.
         """
         LOGGER.info(f'Sampling {num_rows} rows from table {table_name}')
+        sampled_rows = self._sample_in_batches(
+            synthesizer=synthesizer,
+            num_rows=num_rows,
+            batch_size=batch_size,
+            max_tries_per_batch=max_tries_per_batch,
+        )
 
-        sampled_rows = synthesizer._sample_batch(num_rows, keep_extra_columns=True)
         sampled_data[table_name] = sampled_rows
 
     def _connect_tables(self, sampled_data):
@@ -136,7 +152,12 @@ class BaseIndependentSampler:
 
         return final_data
 
-    def _sample(self, scale=1.0):
+    def _sample(
+        self,
+        scale=1.0,
+        batch_size=None,
+        max_tries_per_batch=100,
+    ):
         """Sample the entire dataset.
 
         Returns a dictionary with all the tables of the dataset. The amount of rows sampled will
@@ -151,6 +172,10 @@ class BaseIndependentSampler:
                 create more rows than the original data by a factor of ``scale``.
                 If ``scale`` is lower than ``1.0`` create fewer rows by the factor of ``scale``
                 than the original tables. Defaults to ``1.0``.
+            batch_size (int, optional):
+                The batch size for sampling. Defaults to None.
+            max_tries_per_batch (int, optional):
+                The maximum number of tries per batch. Defaults to 100.
 
         Returns:
             dict:
@@ -160,7 +185,7 @@ class BaseIndependentSampler:
         sampled_data = {}
         send_min_sample_warning = False
         for table in self.metadata.tables:
-            num_rows = int(self._table_sizes[table] * scale)
+            num_rows = round(self._table_sizes[table] * scale)
             if num_rows <= 0:
                 send_min_sample_warning = True
                 num_rows = 1
@@ -170,12 +195,14 @@ class BaseIndependentSampler:
                 table_name=table,
                 num_rows=num_rows,
                 sampled_data=sampled_data,
+                batch_size=batch_size,
+                max_tries_per_batch=max_tries_per_batch,
             )
 
         if send_min_sample_warning:
             warn_msg = (
-                "The 'scale' parameter is too small. Some tables may have 1 row."
-                ' For better quality data, please choose a larger scale.'
+                "The 'num_rows' parameter is too small. Some tables may have 1 row."
+                ' For better quality data, please choose a larger num_rows.'
             )
             warnings.warn(warn_msg)
 

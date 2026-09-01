@@ -27,7 +27,6 @@ class BaseHierarchicalSampler:
         self.metadata = metadata
         self._null_foreign_key_percentages = {}
         self._table_synthesizers = table_synthesizers
-        self._table_sizes = table_sizes
 
     def _recreate_child_synthesizer(self, child_name, parent_name, parent_row):
         """Recreate a child table's synthesizer based on the parent's row.
@@ -57,7 +56,13 @@ class BaseHierarchicalSampler:
         """
         raise NotImplementedError()
 
-    def _sample_rows(self, synthesizer, num_rows=None):
+    def _sample_rows(
+        self,
+        synthesizer,
+        num_rows=None,
+        batch_size=None,
+        max_tries_per_batch=100,
+    ):
         """Sample ``num_rows`` from ``synthesizer``.
 
         Args:
@@ -65,6 +70,10 @@ class BaseHierarchicalSampler:
                 The fitted synthesizer for the table.
             num_rows (int):
                 Number of rows to sample.
+            batch_size (int, optional):
+                The batch size for sampling. Defaults to None.
+            max_tries_per_batch (int, optional):
+                The maximum number of tries per batch. Defaults to 100.
 
         Returns:
             pandas.DataFrame:
@@ -73,9 +82,27 @@ class BaseHierarchicalSampler:
         if num_rows is None:
             num_rows = synthesizer._num_rows
 
-        return synthesizer._sample_batch(round(num_rows), keep_extra_columns=True)
+        num_rows = round(num_rows)
+        if num_rows == 0:
+            return pd.DataFrame()
 
-    def _add_child_rows(self, child_name, parent_name, parent_row, sampled_data, num_rows=None):
+        return self._sample_in_batches(
+            synthesizer,
+            num_rows=num_rows,
+            batch_size=batch_size,
+            max_tries_per_batch=max_tries_per_batch,
+        )
+
+    def _add_child_rows(
+        self,
+        child_name,
+        parent_name,
+        parent_row,
+        sampled_data,
+        num_rows=None,
+        batch_size=None,
+        max_tries_per_batch=100,
+    ):
         """Sample the child rows that reference the parent row.
 
         Args:
@@ -90,6 +117,10 @@ class BaseHierarchicalSampler:
             num_rows (int):
                 Number of rows to sample. If None, infers number of child rows to sample
                 from the parent row. Defaults to None.
+            batch_size (int, optional):
+                The batch size for sampling. Defaults to None.
+            max_tries_per_batch (int, optional):
+                The maximum number of tries per batch. Defaults to 100.
         """
         # A child table is created based on only one foreign key.
         foreign_key = self.metadata._get_foreign_keys(parent_name, child_name)[0]
@@ -98,7 +129,12 @@ class BaseHierarchicalSampler:
 
         child_synthesizer = self._recreate_child_synthesizer(child_name, parent_name, parent_row)
 
-        sampled_rows = self._sample_rows(child_synthesizer, num_rows)
+        sampled_rows = self._sample_rows(
+            child_synthesizer,
+            num_rows,
+            batch_size=batch_size,
+            max_tries_per_batch=max_tries_per_batch,
+        )
         if len(sampled_rows):
             parent_key = self.metadata.tables[parent_name].primary_key
             if foreign_key in sampled_rows:
@@ -189,7 +225,14 @@ class BaseHierarchicalSampler:
                         if sum(sampled_data[table_name][num_rows_key]) == total_parent_rows:
                             break
 
-    def _sample_children(self, table_name, sampled_data, scale=1.0):
+    def _sample_children(
+        self,
+        table_name,
+        sampled_data,
+        scale=1.0,
+        batch_size=None,
+        max_tries_per_batch=100,
+    ):
         """Recursively sample the children of a table.
 
         This method will loop through the children of a table and sample rows for that child for
@@ -201,6 +244,12 @@ class BaseHierarchicalSampler:
                 Name of the table (parent) to sample children for.
             sampled_data (dict):
                 A dictionary mapping table names to sampled tables (pd.DataFrame).
+            scale (float):
+                The scale factor to apply to the child table sizes. Defaults to 1.0.
+            batch_size (int, optional):
+                The batch size for sampling. Defaults to None.
+            max_tries_per_batch (int, optional):
+                The maximum number of tries per batch. Defaults to 100.
         """
         for child_name in self.metadata._get_child_map()[table_name]:
             self._enforce_table_size(child_name, table_name, scale, sampled_data)
@@ -212,6 +261,8 @@ class BaseHierarchicalSampler:
                         parent_name=table_name,
                         parent_row=row,
                         sampled_data=sampled_data,
+                        batch_size=batch_size,
+                        max_tries_per_batch=max_tries_per_batch,
                     )
 
                 foreign_key = self.metadata._get_foreign_keys(table_name, child_name)[0]
@@ -229,6 +280,8 @@ class BaseHierarchicalSampler:
                         parent_row=parent_row,
                         sampled_data=sampled_data,
                         num_rows=1,
+                        batch_size=batch_size,
+                        max_tries_per_batch=max_tries_per_batch,
                     )
 
                 total_num_rows = round(self._table_sizes[child_name] * scale)
@@ -242,9 +295,17 @@ class BaseHierarchicalSampler:
                         parent_row=None,
                         sampled_data=sampled_data,
                         num_rows=num_null_rows,
+                        batch_size=batch_size,
+                        max_tries_per_batch=max_tries_per_batch,
                     )
 
-                self._sample_children(table_name=child_name, sampled_data=sampled_data, scale=scale)
+                self._sample_children(
+                    table_name=child_name,
+                    sampled_data=sampled_data,
+                    scale=scale,
+                    batch_size=batch_size,
+                    max_tries_per_batch=max_tries_per_batch,
+                )
 
     def _finalize(self, sampled_data):
         """Remove extra columns from sampled tables and apply finishing touches.
@@ -285,7 +346,7 @@ class BaseHierarchicalSampler:
 
         return final_data
 
-    def _sample(self, scale=1.0):
+    def _sample(self, scale=1.0, batch_size=None, max_tries_per_batch=100):
         """Sample the entire dataset.
 
         Returns a dictionary with all the tables of the dataset. The amount of rows sampled will
@@ -300,6 +361,10 @@ class BaseHierarchicalSampler:
                 create more rows than the original data by a factor of ``scale``.
                 If ``scale`` is lower than ``1.0`` create fewer rows by the factor of ``scale``
                 than the original tables. Defaults to ``1.0``.
+            batch_size (int, optional):
+                The batch size for sampling. Defaults to None.
+            max_tries_per_batch (int, optional):
+                The maximum number of tries per batch. Defaults to 100.
 
         Returns:
             dict:
@@ -320,13 +385,24 @@ class BaseHierarchicalSampler:
 
             synthesizer = self._table_synthesizers[table]
             LOGGER.info(f'Sampling {num_rows} rows from table {table}')
-            sampled_data[table] = self._sample_rows(synthesizer, num_rows)
-            self._sample_children(table_name=table, sampled_data=sampled_data, scale=scale)
+            sampled_data[table] = self._sample_rows(
+                synthesizer,
+                num_rows,
+                batch_size=batch_size,
+                max_tries_per_batch=max_tries_per_batch,
+            )
+            self._sample_children(
+                table_name=table,
+                sampled_data=sampled_data,
+                scale=scale,
+                batch_size=batch_size,
+                max_tries_per_batch=max_tries_per_batch,
+            )
 
         if send_min_sample_warning:
             warn_msg = (
-                "The 'scale' parameter is too small. Some tables may have 1 row."
-                ' For better quality data, please choose a larger scale.'
+                "The 'num_rows' parameter is too small. Some tables may have 1 row."
+                ' For better quality data, please choose a larger num_rows.'
             )
             warnings.warn(warn_msg)
 

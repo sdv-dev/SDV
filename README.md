@@ -119,7 +119,7 @@ The SDV library allows you to evaluate the synthetic data by comparing it to the
 started by generating a quality report.
 
 ```python
-from sdv.evaluation.single_table import evaluate_quality
+from sdv.evaluation import evaluate_quality
 
 quality_report = evaluate_quality(real_data, synthetic_data, metadata)
 ```
@@ -140,7 +140,7 @@ This object computes an overall quality score on a scale of 0 to 100% (100 being
 as detailed breakdowns. For more insights, you can also visualize the synthetic vs. real data.
 
 ```python
-from sdv.evaluation.single_table import get_column_plot
+from sdv.evaluation import get_column_plot
 
 fig = get_column_plot(
     real_data=real_data,
