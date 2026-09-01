@@ -316,6 +316,28 @@ class DataProcessor:
             rdt.transformers.BaseTransformer:
                 A categorical transformer.
         """
+        if 'range_values' in parameters:
+            parameters.pop('range_values')
+
+        return self._get_transformer_with_parameters(parameters, transformer)
+
+    def _get_ordinal_transformer(self, parameters, transformer):
+        """Get an ordinal transformer.
+
+        Args:
+            parameters (dict):
+                The parameters for the transformer.
+            transformer (rdt.transformers.BaseTransformer):
+                An ordinal transformer.
+
+        Returns:
+            rdt.transformers.BaseTransformer:
+                An ordinal transformer.
+        """
+        if 'range_values' in parameters:
+            order = parameters.pop('range_values')
+            parameters['order'] = order
+
         return self._get_transformer_with_parameters(parameters, transformer)
 
     def _get_numerical_transformer(self, parameters, transformer):
@@ -353,6 +375,7 @@ class DataProcessor:
             'datetime': self._get_datetime_transformer,
             'numerical': self._get_numerical_transformer,
             'categorical': self._get_categorical_transformer,
+            'ordinal': self._get_ordinal_transformer,
             'boolean': self._get_boolean_transformer,
         }
         transformer_fn = transformer_map.get(sdtype)

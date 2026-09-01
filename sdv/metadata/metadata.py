@@ -1617,6 +1617,7 @@ class Metadata:
                 Python dictionary representing a ``Metadata`` or
                 ``_SingleTableMetadata`` object.
         """
+        version = metadata.get('METADATA_SPEC_VERSION', 'V2')
         if 'tables' not in metadata:
             if single_table_name is None:
                 single_table_name = self.DEFAULT_SINGLE_TABLE_NAME
@@ -1629,7 +1630,9 @@ class Metadata:
         self._validate_no_extra_keys_metadata_dict(metadata)
         for table_name, table_dict in metadata.get('tables', {}).items():
             try:
-                self.tables[table_name] = _SingleTableMetadata.load_from_dict(table_dict)
+                self.tables[table_name] = _SingleTableMetadata._load_from_dict(
+                    table_dict, version=version
+                )
             except ValueError as error:
                 raise ValueError(
                     f"Invalid metadata dict for table '{table_name}':\n {str(error)}"
