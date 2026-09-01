@@ -87,7 +87,12 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             Whether to print progress to console or not.
     """
 
-    _model_sdtype_transformers = {'categorical': None, 'numerical': None, 'boolean': None}
+    _model_sdtype_transformers = {
+        'categorical': None,
+        'ordinal': None,
+        'numerical': None,
+        'boolean': None,
+    }
 
     def _get_context_metadata(self):
         context_metadata_dict = {}
@@ -507,7 +512,8 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                     .columns.get(field, {})
                     .get('sdtype', None)
                 )
-                if sdtype == 'categorical':  # Check if metadata overrides this data type
+                if sdtype in ['categorical', 'ordinal']:
+                    # Check if metadata overrides this data type
                     transformer = self.get_transformers().get(field)
                     if not transformer or transformer.get_output_sdtypes().get(field) != 'float':
                         data_type = 'categorical'

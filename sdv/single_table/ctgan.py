@@ -158,7 +158,7 @@ class CTGANSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynth
             Defaults to ``True``.
     """
 
-    _model_sdtype_transformers = {'categorical': None, 'boolean': None}
+    _model_sdtype_transformers = {'categorical': None, 'boolean': None, 'ordinal': None}
 
     def __init__(
         self,
@@ -245,7 +245,7 @@ class CTGANSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynth
             if sdtypes[column] in {'numerical', 'datetime'}:
                 num_generated_columns[column] = 11
 
-            elif sdtypes[column] in {'categorical', 'boolean'}:
+            elif sdtypes[column] in {'categorical', 'boolean', 'ordinal'}:
                 if transformers.get(column) is None:
                     num_categories = data[column].fillna(np.nan).nunique(dropna=False)
                     num_generated_columns[column] = num_categories
@@ -355,7 +355,7 @@ class TVAESynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynthe
             Defaults to ``True``.
     """
 
-    _model_sdtype_transformers = {'categorical': None, 'boolean': None}
+    _model_sdtype_transformers = {'categorical': None, 'boolean': None, 'ordinal': None}
 
     def __init__(
         self,

@@ -264,7 +264,7 @@ class BaseSynthesizer:
         table_metadata = self._get_table_metadata()
         for column in column_name_to_transformer:
             sdtype = table_metadata.columns.get(column, {}).get('sdtype')
-            if sdtype in {'categorical', 'boolean'}:
+            if sdtype in {'categorical', 'boolean', 'ordinal'}:
                 warnings.warn(
                     f"Replacing the default transformer for column '{column}' "
                     'might impact the quality of your synthetic data.'
