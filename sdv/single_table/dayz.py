@@ -134,7 +134,7 @@ def _detect_column_parameters(data, metadata, table_name):
             params.update(_detect_numerical_column_parameters(data[column_name]))
         elif sdtype == 'datetime':
             params.update(_detect_datetime_column_parameters(data[column_name], column_metadata))
-        elif sdtype == 'categorical':
+        elif sdtype in ['categorical', 'ordinal']:
             params.update(_detect_categorical_column_parameters(data[column_name]))
 
         params['missing_values_proportion'] = _compute_missing_values_proportion(data[column_name])
@@ -323,7 +323,7 @@ def _validate_column_parameters(table, column, column_metadata, column_parameter
         _validate_numerical_parameters(column_parameters, column_table_msg)
     elif sdtype == 'datetime':
         _validate_datetime_parameters(column_parameters, column_metadata, column_table_msg)
-    elif sdtype == 'categorical':
+    elif sdtype in ['categorical', 'ordinal']:
         _validate_categorical_parameters(column_parameters, column_table_msg)
 
     if 'missing_values_proportion' in column_parameters:

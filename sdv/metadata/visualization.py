@@ -5,7 +5,7 @@ from collections import defaultdict
 
 import graphviz
 
-DEFAULT_SDTYPES = ['id', 'numerical', 'categorical', 'datetime', 'boolean']
+DEFAULT_SDTYPES = ['id', 'numerical', 'categorical', 'ordinal', 'datetime', 'boolean']
 BACKGROUND_COLOR = '#B7E9FF'
 
 
