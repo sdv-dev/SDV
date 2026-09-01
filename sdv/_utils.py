@@ -16,7 +16,7 @@ from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 from rdt.transformers.utils import _GENERATORS, strings_from_regex
 
 from sdv import version
-from sdv.errors import SDVVersionWarning, SynthesizerInputError, VersionError
+from sdv.errors import InvalidDataTypeError, SDVVersionWarning, SynthesizerInputError, VersionError
 
 try:
     from re import _parser as sre_parse
@@ -217,8 +217,18 @@ def _cast_to_datetime64(value, datetime_format=None, ignore_timezone=True):
         return _parse_datetime64_value(value, datetime_format, ignore_timezone)
 
     elif isinstance(value, pd.Series):
-        dt_series = _parse_datetime(value, datetime_format, ignore_timezone)
-        return dt_series.astype('datetime64[ns]')
+        return pd.Series(
+            [
+                _parse_datetime64_value(
+                    val,
+                    datetime_format,
+                    ignore_timezone,
+                )
+                for val in value
+            ],
+            index=value.index,
+            dtype='datetime64[ns]',
+        )
 
     elif isinstance(value, (np.ndarray, list)):
         return np.array([
@@ -331,7 +341,7 @@ def check_sdv_versions_and_warn(synthesizer):
     """Check if the current SDV and SDV Enterprise versions mismatch.
 
     Args:
-        synthesizer (BaseSynthesizer or BaseMultiTableSynthesizer):
+        synthesizer (BaseSynthesizer):
             An SDV model instance to check versions against.
 
     Raises:
@@ -424,7 +434,7 @@ def check_synthesizer_version(synthesizer, is_fit_method=False, compare_operator
     """Check if the current synthesizer version is greater than the package version.
 
     Args:
-        synthesizer (BaseSynthesizer or BaseMultiTableSynthesizer):
+        synthesizer (BaseSynthesizer):
             An SDV model instance to check versions against.
         is_fit_method (bool):
             Whether or not this function is being called by a ``fit`` function.
@@ -500,7 +510,7 @@ def generate_synthesizer_id(synthesizer):
     and the last part of a UUID4 composed by 36 random characters.
 
     Args:
-        synthesizer (BaseSynthesizer or BaseMultiTableSynthesizer):
+        synthesizer (BaseSynthesizer):
             An SDV model instance to check versions against.
 
     Returns:
@@ -664,3 +674,32 @@ def _metadata_range_exceeds_real(data, metadata):
                 return True
 
     return False
+
+
+def _validate_data_single_table(data):
+    """Validate that the data is a dictionary with a single table."""
+    if len(data) != 1:
+        raise InvalidDataTypeError(
+            'The `data` parameter must be a dictionary containing exactly one table name '
+            'mapped to a pandas DataFrame.'
+        )
+
+
+def _get_single_table_data(data):
+    """Return the single table DataFrame from the data dictionary."""
+    _validate_data_single_table(data)
+    return next(iter(data.values()))
+
+
+def _validate_positive_integer(parameter_name, value):
+    """Validate that a parameter is a positive integer."""
+    if (
+        not isinstance(value, (int, float))
+        or value <= 0
+        or not float(value).is_integer()
+        or isinstance(value, bool)
+    ):
+        raise SynthesizerInputError(
+            f"Invalid parameter for '{parameter_name}' ({value}). "
+            'Please provide an integer that is greater than 0.'
+        )

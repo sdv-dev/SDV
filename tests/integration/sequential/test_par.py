@@ -26,7 +26,8 @@ def _get_par_data_and_metadata():
         'context': ['a', 'a', 'b', 'b'],
         'context_date': [date, date, date, date],
     })
-    metadata = Metadata.detect_from_dataframes({'table': data})
+    data = {'table': data}
+    metadata = Metadata.detect_from_dataframes(data)
     metadata.update_column('entity', 'table', sdtype='id')
     metadata.set_sequence_key('entity', 'table')
 
@@ -40,7 +41,8 @@ def test_par():
     # Setup
     data = load_demo()
     data['date'] = pd.to_datetime(data['date'])
-    metadata = Metadata.detect_from_dataframes({'table': data})
+    data = {'table': data}
+    metadata = Metadata.detect_from_dataframes(data)
     metadata.update_column('store_id', 'table', sdtype='id')
     metadata.set_sequence_key('store_id', 'table')
 
@@ -54,9 +56,11 @@ def test_par():
 
     # Run
     model.fit(data)
-    sampled = model.sample(100)
+    sampled = model.sample_sequences(100)
 
     # Assert
+    sampled = sampled['table']
+    data = data['table']
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
     assert (sampled.notna().sum(axis=1) != 0).all()
@@ -76,7 +80,8 @@ def test_column_after_date_simple():
         'date': [date, date],
         'col2': ['hello', 'world'],
     })
-    metadata = Metadata.detect_from_dataframes({'table': data})
+    data = {'table': data}
+    metadata = Metadata.detect_from_dataframes(data)
     metadata.update_column('col', 'table', sdtype='id')
     metadata.set_sequence_key('col', 'table')
 
@@ -85,9 +90,11 @@ def test_column_after_date_simple():
     # Run
     model = PARSynthesizer(metadata=metadata, epochs=1)
     model.fit(data)
-    sampled = model.sample(1)
+    sampled = model.sample_sequences(1)
 
     # Assert
+    sampled = sampled['table']
+    data = data['table']
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
     assert (sampled.notna().sum(axis=1) != 0).all()
@@ -101,13 +108,15 @@ def test_column_after_date_complex():
     # Run
     model = PARSynthesizer(metadata=metadata, context_columns=['context', 'context_date'], epochs=1)
     model.fit(data)
-    sampled = model.sample(2)
-    context_columns = data[['context', 'context_date']]
+    sampled = model.sample_sequences(2)
+    context_columns = data['table'][['context', 'context_date']]
     sample_with_conditions = model.sample_sequential_columns(context_columns=context_columns)
 
     # Assert
-    assert sampled.shape == data.shape
-    assert (sampled.dtypes == data.dtypes).all()
+    sampled = sampled['table']
+    table_data = data['table']
+    assert sampled.shape == table_data.shape
+    assert (sampled.dtypes == table_data.dtypes).all()
     assert (sampled.notna().sum(axis=1) != 0).all()
 
     expected_date = datetime.datetime.strptime('2020-01-01', '%Y-%m-%d')
@@ -143,7 +152,9 @@ def test_synthesize_sequences(tmp_path):
     """
     # Setup
     real_data, metadata = download_demo(modality='sequential', dataset_name='nasdaq100_2019')
-    assert real_data[real_data['Symbol'] == 'AMZN']['Sector'].unique()
+    table_name = 'nasdaq100_2019'
+    real_table = real_data[table_name]
+    assert real_table[real_table['Symbol'] == 'AMZN']['Sector'].unique()
     synthesizer = PARSynthesizer(metadata, epochs=1, context_columns=['Sector', 'Industry'])
     custom_synthesizer = PARSynthesizer(
         metadata, epochs=1, context_columns=['Sector', 'Industry'], verbose=True
@@ -167,8 +178,8 @@ def test_synthesize_sequences(tmp_path):
     custom_synthesizer.fit(real_data)
 
     # Run - Sample
-    synthetic_data = synthesizer.sample(num_sequences=10)
-    custom_synthetic_data = custom_synthesizer.sample(num_sequences=3, sequence_length=2)
+    synthetic_data = synthesizer.sample_sequences(num_sequences=10)
+    custom_synthetic_data = custom_synthesizer.sample_sequences(num_sequences=3, sequence_length=2)
     custom_synthetic_data_conditional = custom_synthesizer.sample_sequential_columns(
         context_columns=scenario_context, sequence_length=2
     )
@@ -177,7 +188,7 @@ def test_synthesize_sequences(tmp_path):
     model_path = tmp_path / 'my_synthesizer.pkl'
     synthesizer.save(model_path)
     loaded_synthesizer = load_synthesizer(model_path)
-    loaded_sample = loaded_synthesizer.sample(100)
+    loaded_sample = loaded_synthesizer.sample_sequences(100)
 
     # Assert
     assert all(custom_synthetic_data_conditional['Symbol'].value_counts() == 2)
@@ -200,7 +211,7 @@ def test_synthesize_sequences(tmp_path):
     assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
     synthesizer.validate(synthetic_data)
     synthesizer.validate(custom_synthetic_data)
-    synthesizer.validate(custom_synthetic_data_conditional)
+    synthesizer.validate({table_name: custom_synthetic_data_conditional})
     synthesizer.validate(loaded_sample)
     loaded_synthesizer.validate(synthetic_data)
     loaded_synthesizer.validate(loaded_sample)
@@ -215,9 +226,9 @@ def test_par_subset_of_data():
     )
 
     # modify the data by choosing a subset of it
-    data_subset = data.copy()
+    data_subset = data['nasdaq100_2019'].copy()
     np.random.seed(1234)
-    symbols = data['Symbol'].unique()
+    symbols = data['nasdaq100_2019']['Symbol'].unique()
 
     # only select a subset of data in each sequence
     for i, symbol in enumerate(symbols):
@@ -228,11 +239,12 @@ def test_par_subset_of_data():
 
     # now run PAR
     synthesizer = PARSynthesizer(metadata, epochs=1, verbose=True)
-    synthesizer.fit(data_subset)
-    synthetic_data = synthesizer.sample(num_sequences=5)
+    table_name = 'nasdaq100_2019'
+    synthesizer.fit({table_name: data_subset})
+    synthetic_data = synthesizer.sample_sequences(num_sequences=5)
 
     # assert that the synthetic data doesn't contain NaN values in sequence index column
-    assert not pd.isna(synthetic_data['Date']).any()
+    assert not pd.isna(synthetic_data[table_name]['Date']).any()
 
 
 def test_par_subset_of_data_simplified():
@@ -257,13 +269,14 @@ def test_par_subset_of_data_simplified():
         'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
     })
     synthesizer = PARSynthesizer(metadata, epochs=0)
+    data = {'table': data}
 
     # Run
     synthesizer.fit(data)
-    synthetic_data = synthesizer.sample(num_sequences=50)
+    synthetic_data = synthesizer.sample_sequences(num_sequences=50)
 
     # Assert
-    assert not pd.isna(synthetic_data['date']).any()
+    assert not pd.isna(synthetic_data['table']['date']).any()
 
 
 def test_par_missing_sequence_index():
@@ -278,13 +291,16 @@ def test_par_missing_sequence_index():
     metadata = Metadata().load_from_dict(metadata_dict)
 
     data = pd.DataFrame({'value': [10, 20, 30], 'e_id': [1, 2, 3]})
+    data = {'table': data}
 
     # Run
     synthesizer = PARSynthesizer(metadata, epochs=1)
     synthesizer.fit(data)
-    sampled = synthesizer.sample(num_sequences=3)
+    sampled = synthesizer.sample_sequences(num_sequences=3)
 
     # Assert
+    sampled = sampled['table']
+    data = data['table']
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
 
@@ -295,16 +311,19 @@ def test_with_constraints():
     real_data, metadata = download_demo(modality='sequential', dataset_name='nasdaq100_2019')
     synthesizer = PARSynthesizer(metadata, epochs=1)
     constraint = FixedCombinations(column_names=['Sector', 'Industry'])
+    table_name = 'nasdaq100_2019'
 
     # Run
     synthesizer.add_constraints([constraint])
     synthesizer.fit(real_data)
-    samples = synthesizer.sample(50, 10)
+    samples = synthesizer.sample_sequences(50, 10)
 
     # Assert
+    samples = samples[table_name]
+    real_table_data = real_data[table_name]
     real_data_pairs = zip(
-        real_data['Sector'].apply(lambda x: None if pd.isna(x) else x),
-        real_data['Industry'].apply(lambda x: None if pd.isna(x) else x),
+        real_table_data['Sector'].apply(lambda x: None if pd.isna(x) else x),
+        real_table_data['Industry'].apply(lambda x: None if pd.isna(x) else x),
     )
     sample_pairs = zip(
         samples['Sector'].apply(lambda x: None if pd.isna(x) else x),
@@ -321,16 +340,19 @@ def test_constraints_and_context_column():
     real_data, metadata = download_demo(modality='sequential', dataset_name='nasdaq100_2019')
     synthesizer = PARSynthesizer(metadata, epochs=1, context_columns=['Sector', 'Industry'])
     constraint = FixedCombinations(column_names=['Sector', 'Industry'])
+    table_name = 'nasdaq100_2019'
 
     # Run
     synthesizer.add_constraints([constraint])
     synthesizer.fit(real_data)
-    samples = synthesizer.sample(50, 10)
+    samples = synthesizer.sample_sequences(50, 10)
 
     # Assert
+    samples = samples[table_name]
+    real_table_data = real_data[table_name]
     real_data_pairs = zip(
-        real_data['Sector'].apply(lambda x: None if pd.isna(x) else x),
-        real_data['Industry'].apply(lambda x: None if pd.isna(x) else x),
+        real_table_data['Sector'].apply(lambda x: None if pd.isna(x) else x),
+        real_table_data['Industry'].apply(lambda x: None if pd.isna(x) else x),
     )
     sample_pairs = zip(
         samples['Sector'].apply(lambda x: None if pd.isna(x) else x),
@@ -376,7 +398,8 @@ def test_par_unique_sequence_index_with_enforce_min_max():
     test_df[['visits', 'pre_date']] = test_df[['visits', 'pre_date']].apply(
         pd.to_datetime, format='%Y-%m-%d', errors='coerce'
     )
-    metadata = Metadata.detect_from_dataframes({'table': test_df})
+    test_df = {'table': test_df}
+    metadata = Metadata.detect_from_dataframes(test_df)
     metadata.update_column(table_name='table', column_name='s_key', sdtype='id')
     metadata.set_sequence_key('s_key', 'table')
 
@@ -387,9 +410,10 @@ def test_par_unique_sequence_index_with_enforce_min_max():
 
     # Run
     synthesizer.fit(test_df)
-    synth_df = synthesizer.sample(num_sequences=50, sequence_length=50)
+    synth_df = synthesizer.sample_sequences(num_sequences=50, sequence_length=50)
 
     # Assert
+    synth_df = synth_df['table']
     for i in synth_df['s_key'].unique():
         seq_df = synth_df[synth_df['s_key'] == i]
         has_duplicates = seq_df['visits'].duplicated().any()
@@ -408,11 +432,12 @@ def test_par_sequence_index_is_numerical():
     }
     metadata = Metadata.load_from_dict(metadata_dict)
     data = pd.DataFrame({'engine_no': [0, 0, 1, 1], 'time_in_cycles': [1, 2, 3, 4]})
+    data = {'table': data}
 
     s1 = PARSynthesizer(metadata, epochs=1)
     s1.fit(data)
-    sample = s1.sample(2, 5)
-    assert sample.columns.to_list() == data.columns.to_list()
+    sample = s1.sample_sequences(2, 5)
+    assert sample['table'].columns.to_list() == data['table'].columns.to_list()
 
 
 def test_init_error_sequence_key_in_context():
@@ -457,32 +482,36 @@ def test_par_with_datetime_context():
         'sequence_index': 'timestamp',
     })
 
+    data = {'table': data}
+
     # Run
     synth = PARSynthesizer(metadata, epochs=1, verbose=True, context_columns=['birthdate'])
 
     synth.fit(data)
-    sample = synth.sample(num_sequences=1)
+    sample = synth.sample_sequences(num_sequences=1)
     expected_birthdate = pd.Series(['1984-02-23'] * 5, name='birthdate')
 
     # Assert
-    pd.testing.assert_series_equal(sample['birthdate'], expected_birthdate)
+    pd.testing.assert_series_equal(sample['table']['birthdate'], expected_birthdate)
 
 
 def test_par_categorical_column_represented_by_floats():
     """Test to see if categorical columns work fine with float representation."""
     # Setup
     data, metadata = download_demo('sequential', 'nasdaq100_2019')
-    data['category'] = [100.0 if i % 2 == 0 else 50.0 for i in data.index]
+    data_table = data['nasdaq100_2019']
+    data_table['category'] = [100.0 if i % 2 == 0 else 50.0 for i in data_table.index]
     metadata.add_column('category', 'nasdaq100_2019', sdtype='categorical')
+    data = {'nasdaq100_2019': data_table}
 
     # Run
     synth = PARSynthesizer(metadata, epochs=1)
     synth.fit(data)
-    sampled = synth.sample(num_sequences=10)
+    sampled = synth.sample_sequences(num_sequences=10)
 
     # Assert
     synth.validate(sampled)
-    assert sampled['category'].isin(data['category']).all()
+    assert sampled['nasdaq100_2019']['category'].isin(data['nasdaq100_2019']['category']).all()
 
 
 def test_par_categorical_column_updated_to_float():
@@ -511,15 +540,17 @@ def test_par_categorical_column_updated_to_float():
         }
     })
 
+    data = {'table': data}
+
     # Run
     synthesizer = PARSynthesizer(metadata, epochs=1)
     synthesizer.auto_assign_transformers(data)
     synthesizer.update_transformers({'column': UniformEncoder()})
     synthesizer.fit(data)
-    sampled = synthesizer.sample(num_sequences=10)
+    sampled = synthesizer.sample_sequences(num_sequences=10)
 
     # Assert
-    assert sampled['column'].isin(data['column']).all()
+    assert sampled['table']['column'].isin(data['table']['column']).all()
 
 
 @patch('sdv.sequential.par.PARModel', None)
@@ -564,12 +595,14 @@ def test_par_with_all_null_column():
     })
 
     synthesizer = PARSynthesizer(metadata, epochs=1)
+    data = {'table': data}
 
     # Run
     synthesizer.fit(data)
-    result = synthesizer.sample(num_sequences=2)
+    result = synthesizer.sample_sequences(num_sequences=2)
 
     # Assert
+    result = result['table']
     assert 'all_null_col' in result.columns
     assert result['all_null_col'].isna().all()
     assert len(result) > 0
@@ -599,13 +632,15 @@ def test_par_unique_sequence_key_with_regex():
         }
     })
 
+    data = {'table': data}
+
     # Run
     synthesizer = PARSynthesizer(metadata, epochs=1)
     synthesizer.fit(data)
-    sample = synthesizer.sample(num_sequences=20)
+    sample = synthesizer.sample_sequences(num_sequences=20)
 
     # Assert
-    assert sample['sequence_key'].nunique() == 20
+    assert sample['table']['sequence_key'].nunique() == 20
     transformer = synthesizer._context_synthesizer.get_transformers()['sequence_key']
     transformer.cardinality_rule == 'unique'
 
@@ -636,14 +671,18 @@ def test_par_with_context_column_as_id():
         }
     })
 
+    data = {'table': data}
+
     # Run
     synthesizer = PARSynthesizer(metadata, epochs=1, context_columns=['event_source'])
     synthesizer.fit(data)
-    sampled = synthesizer.sample(num_sequences=2)
+    sampled = synthesizer.sample_sequences(num_sequences=2)
 
     # Assert
-    assert sampled['event_id'].isin(data['event_id']).all()
-    assert sampled['column_B'].isin(data['column_B']).all()
+    sampled = sampled['table']
+    table_data = data['table']
+    assert sampled['event_id'].isin(table_data['event_id']).all()
+    assert sampled['column_B'].isin(table_data['column_B']).all()
 
 
 def test_par_with_multiple_id_context_columns():
@@ -677,16 +716,19 @@ def test_par_with_multiple_id_context_columns():
         }
     })
 
+    data = {'table': data}
+
     # Run
     synthesizer = PARSynthesizer(
         metadata, epochs=1, context_columns=['user_id', 'device_id', 'session_id']
     )
     synthesizer.fit(data)
-    sampled = synthesizer.sample(num_sequences=4)
+    sampled = synthesizer.sample_sequences(num_sequences=4)
 
     # Assert
+    sampled = sampled['table']
     assert len(sampled) > 0
-    assert set(sampled.columns) == set(data.columns)
+    assert set(sampled.columns) == set(data['table'].columns)
     for seq_id in sampled['sequence_id'].unique():
         seq_data = sampled[sampled['sequence_id'] == seq_id]
         assert seq_data['user_id'].nunique() == 1
@@ -725,16 +767,19 @@ def test_par_with_pii_context_columns():
         }
     })
 
+    data = {'table': data}
+
     # Run
     synthesizer = PARSynthesizer(
         metadata, epochs=1, context_columns=['user_id', 'device_id', 'session_id']
     )
     synthesizer.fit(data)
-    sampled = synthesizer.sample(num_sequences=4)
+    sampled = synthesizer.sample_sequences(num_sequences=4)
 
     # Assert
+    sampled = sampled['table']
     assert len(sampled) > 0
-    assert set(sampled.columns) == set(data.columns)
+    assert set(sampled.columns) == set(data['table'].columns)
     for seq_id in sampled['sequence_id'].unique():
         seq_data = sampled[sampled['sequence_id'] == seq_id]
         assert seq_data['user_id'].nunique() == 1
@@ -773,16 +818,19 @@ def test_par_with_mixed_context_columns_including_id():
         }
     })
 
+    data = {'table': data}
+
     # Run
     synthesizer = PARSynthesizer(
         metadata, epochs=1, context_columns=['hospital_id', 'doctor_category']
     )
     synthesizer.fit(data)
-    sampled = synthesizer.sample(num_sequences=4)
+    sampled = synthesizer.sample_sequences(num_sequences=4)
 
     # Assert
+    sampled = sampled['table']
     assert len(sampled) > 0
-    assert set(sampled.columns) == set(data.columns)
+    assert set(sampled.columns) == set(data['table'].columns)
 
     # Check context columns remain constant within sequences
     for patient_id in sampled['patient_id'].unique():
@@ -829,6 +877,8 @@ def test_par_sample_sequential_columns_with_id_context():
         'product_category': ['Electronics', 'Books'],
     })
 
+    data = {'table': data}
+
     # Run
     synthesizer = PARSynthesizer(
         metadata, epochs=1, context_columns=['customer_id', 'product_category']
@@ -838,7 +888,7 @@ def test_par_sample_sequential_columns_with_id_context():
 
     # Assert
     assert len(sampled) == 6  # 2 sequences * 3 length
-    assert set(sampled.columns) == set(data.columns)
+    assert set(sampled.columns) == set(data['table'].columns)
 
     seq1_data = sampled[sampled['order_id'] == 'ORD-NEW1']
     seq2_data = sampled[sampled['order_id'] == 'ORD-NEW2']
@@ -878,6 +928,8 @@ def test_par_save_load_with_id_context_columns(tmp_path):
         }
     })
 
+    data = {'table': data}
+
     # Create and fit synthesizer
     synthesizer = PARSynthesizer(metadata, epochs=1, context_columns=['operator_id', 'shift_id'])
     synthesizer.fit(data)
@@ -888,7 +940,7 @@ def test_par_save_load_with_id_context_columns(tmp_path):
 
     # Load synthesizer
     loaded_synthesizer = load_synthesizer(save_path)
-    loaded_sample = loaded_synthesizer.sample(num_sequences=2)
+    loaded_sample = loaded_synthesizer.sample_sequences(num_sequences=2)
 
     # Assert
     assert save_path.exists()
@@ -897,12 +949,13 @@ def test_par_save_load_with_id_context_columns(tmp_path):
     assert loaded_synthesizer.metadata.to_dict() == synthesizer.metadata.to_dict()
 
     # Test that loaded synthesizer produces valid samples
-    assert len(loaded_sample) > 0
-    assert set(loaded_sample.columns) == set(data.columns)
+    sampled_table = loaded_sample['table']
+    assert len(sampled_table) > 0
+    assert set(sampled_table.columns) == set(data['table'].columns)
 
     # Verify context columns remain constant in loaded synthesizer samples
-    for machine_id in loaded_sample['machine_id'].unique():
-        machine_data = loaded_sample[loaded_sample['machine_id'] == machine_id]
+    for machine_id in sampled_table['machine_id'].unique():
+        machine_data = sampled_table[sampled_table['machine_id'] == machine_id]
         assert machine_data['operator_id'].nunique() == 1
         assert machine_data['shift_id'].nunique() == 1
 
@@ -923,6 +976,7 @@ def test_add_constraints_mixed_context_and_non_context():
         'seq_col': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         'numerical': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
     })
+    data = {'table': data}
 
     metadata = Metadata.load_from_dict({
         'tables': {
@@ -942,17 +996,16 @@ def test_add_constraints_mixed_context_and_non_context():
     synthesizer = PARSynthesizer(
         metadata, epochs=1, context_columns=['context_col', 'other_context']
     )
-
     context_constraint = FixedCombinations(column_names=['context_col', 'other_context'])
 
     # Run
     synthesizer.add_constraints([context_constraint])
     synthesizer.fit(data)
-    samples = synthesizer.sample(num_sequences=5)
+    samples = synthesizer.sample_sequences(num_sequences=5)
 
     # Assert
-    real_data_pairs = set(zip(data['context_col'], data['other_context']))
-    sample_pairs = set(zip(samples['context_col'], samples['other_context']))
+    real_data_pairs = set(zip(data['table']['context_col'], data['table']['other_context']))
+    sample_pairs = set(zip(samples['table']['context_col'], samples['table']['other_context']))
     assert sample_pairs.issubset(real_data_pairs)
 
     synthesizer.validate(samples)
@@ -974,6 +1027,7 @@ def test_add_constraints_with_context_columns():
             'numerical': [0.23, 0.34, 0.56, 0.67, 0.22, 0.23, 0.26, 0.20, 0.34, 0.45],
         }
     )
+    data = {'table': data}
 
     metadata = Metadata.load_from_dict({
         'tables': {
@@ -994,6 +1048,7 @@ def test_add_constraints_with_context_columns():
         }
     })
 
+    # Run
     synthesizer = PARSynthesizer(
         metadata, context_columns=['context_0', 'context_1', 'context_2', 'other_context_col']
     )
@@ -1001,7 +1056,9 @@ def test_add_constraints_with_context_columns():
     seq_constraint = OneHotEncoding(column_names=['seq_0', 'seq_1', 'seq_2'])
     synthesizer.add_constraints([context_constraint, seq_constraint])
     synthesizer.fit(data)
-    samples = synthesizer.sample(5)
+    samples = synthesizer.sample_sequences(5)
+
+    # Assert
     synthesizer.validate(samples)
 
 
@@ -1036,16 +1093,17 @@ def test_par_context_columns_invariance():
     synthesizer1 = PARSynthesizer(metadata, epochs=1, context_columns=['context1', 'context2'])
 
     synthesizer2 = PARSynthesizer(metadata, epochs=1, context_columns=['context2', 'context1'])
+    data = {'table': data}
 
     # Run
     synthesizer1.fit(data)
-    samples1 = synthesizer1.sample(num_sequences=3, sequence_length=2)
+    samples1 = synthesizer1.sample_sequences(num_sequences=3, sequence_length=2)
 
     synthesizer2.fit(data)
-    samples2 = synthesizer2.sample(num_sequences=3, sequence_length=2)
+    samples2 = synthesizer2.sample_sequences(num_sequences=3, sequence_length=2)
 
     # Assert
-    assert samples1.shape == samples2.shape
-    assert samples1.columns.equals(samples2.columns)
+    assert samples1['table'].shape == samples2['table'].shape
+    assert samples1['table'].columns.equals(samples2['table'].columns)
     synthesizer1.validate(samples2)
     synthesizer2.validate(samples1)

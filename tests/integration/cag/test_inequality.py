@@ -17,10 +17,12 @@ from tests.utils import run_constraint, run_copula, run_hma
 
 @pytest.fixture()
 def data():
-    return pd.DataFrame({
-        'A': [1, 2, 3, 1, 2, 1],
-        'B': [10, 20, 30, 10, 20, 10],
-    })
+    return {
+        'table': pd.DataFrame({
+            'A': [1, 2, 3, 1, 2, 1],
+            'B': [10, 20, 30, 10, 20, 10],
+        })
+    }
 
 
 @pytest.fixture()
@@ -42,9 +44,12 @@ def constraint():
 
 
 @pytest.fixture()
-def data_multi(data):
+def data_multi():
     return {
-        'table1': data,
+        'table1': pd.DataFrame({
+            'A': [1, 2, 3, 1, 2, 1],
+            'B': [10, 20, 30, 10, 20, 10],
+        }),
         'table2': pd.DataFrame({'id': range(5)}),
     }
 
@@ -79,11 +84,13 @@ def constraint_multi():
 
 @pytest.fixture()
 def data_reject():
-    return pd.DataFrame({
-        'low': [1, 2, 3, 1, 2, 1],
-        'low2': [1, 2, 3, 1, 2, 1],
-        'high': [10, 20, 30, 10, 20, 10],
-    })
+    return {
+        'table': pd.DataFrame({
+            'low': [1, 2, 3, 1, 2, 1],
+            'low2': [1, 2, 3, 1, 2, 1],
+            'high': [10, 20, 30, 10, 20, 10],
+        })
+    }
 
 
 @pytest.fixture()
@@ -125,18 +132,20 @@ def test_inequality_constraint_integers(data, metadata, constraint):
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-    assert list(transformed.columns) == ['A.fillna', 'A#B', 'A#B.nan_component']
-    pd.testing.assert_frame_equal(data, reverse_transformed)
+    assert list(transformed['table'].columns) == ['A.fillna', 'A#B', 'A#B.nan_component']
+    pd.testing.assert_frame_equal(data['table'], reverse_transformed['table'])
 
 
 def test_all_possible_nans_configurations(constraint, metadata):
     """Test it works with all possible NaN configurations."""
     # Setup
-    data = pd.DataFrame(data={'A': [0, 1, np.nan, np.nan, 2], 'B': [2, np.nan, 3, np.nan, 3]})
+    data = {
+        'table': pd.DataFrame(data={'A': [0, 1, np.nan, np.nan, 2], 'B': [2, np.nan, 3, np.nan, 3]})
+    }
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample(10000)
+    synthetic_data = synthesizer.sample('table', 10000)['table']
 
     # Assert
     assert (~(pd.isna(synthetic_data['A'])) & ~(pd.isna(synthetic_data['B']))).any()
@@ -148,10 +157,12 @@ def test_all_possible_nans_configurations(constraint, metadata):
 def test_inequality_constraint_with_nans(metadata, constraint):
     """Test that Inequality constraint works with NaNs."""
     # Setup
-    data = pd.DataFrame({
-        'A': [None, 2, np.nan, 1, 2, 1],
-        'B': [np.nan, 20, 30, 10, 20, None],
-    })
+    data = {
+        'table': pd.DataFrame({
+            'A': [None, 2, np.nan, 1, 2, 1],
+            'B': [np.nan, 20, 30, 10, 20, None],
+        })
+    }
 
     # Run
     updated_metadata, transformed, reverse_transformed = run_constraint(constraint, data, metadata)
@@ -165,36 +176,38 @@ def test_inequality_constraint_with_nans(metadata, constraint):
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-    assert list(transformed.columns) == ['A.fillna', 'A#B', 'A#B.nan_component']
+    assert list(transformed['table'].columns) == ['A.fillna', 'A#B', 'A#B.nan_component']
     pd.testing.assert_frame_equal(
-        pd.concat([data.iloc[:2], data.iloc[3:]]),
-        pd.concat([reverse_transformed.iloc[:2], reverse_transformed.iloc[3:]]),
+        pd.concat([data['table'].iloc[:2], data['table'].iloc[3:]]),
+        pd.concat([reverse_transformed['table'].iloc[:2], reverse_transformed['table'].iloc[3:]]),
     )
-    assert 1 < reverse_transformed.iloc[2]['B'] < 30
-    assert pd.isna(reverse_transformed.iloc[2]['A'])
+    assert 1 < reverse_transformed['table'].iloc[2]['B'] < 30
+    assert pd.isna(reverse_transformed['table'].iloc[2]['A'])
 
 
 def test_inequality_constraint_datetime(constraint):
     """Test that Inequality constraint works with datetime columns."""
     # Setup
-    data = pd.DataFrame({
-        'A': [
-            pd.Timestamp('2024-01-01'),
-            pd.Timestamp('2024-01-02'),
-            pd.Timestamp('2024-01-03'),
-            pd.Timestamp('2024-01-01'),
-            pd.Timestamp('2024-01-02'),
-            pd.Timestamp('2024-01-01'),
-        ],
-        'B': [
-            pd.Timestamp('2024-01-02'),
-            pd.Timestamp('2024-01-03'),
-            pd.Timestamp('2024-01-04'),
-            pd.Timestamp('2024-01-05'),
-            pd.Timestamp('2024-01-06'),
-            pd.Timestamp('2024-01-07'),
-        ],
-    })
+    data = {
+        'table': pd.DataFrame({
+            'A': [
+                pd.Timestamp('2024-01-01'),
+                pd.Timestamp('2024-01-02'),
+                pd.Timestamp('2024-01-03'),
+                pd.Timestamp('2024-01-01'),
+                pd.Timestamp('2024-01-02'),
+                pd.Timestamp('2024-01-01'),
+            ],
+            'B': [
+                pd.Timestamp('2024-01-02'),
+                pd.Timestamp('2024-01-03'),
+                pd.Timestamp('2024-01-04'),
+                pd.Timestamp('2024-01-05'),
+                pd.Timestamp('2024-01-06'),
+                pd.Timestamp('2024-01-07'),
+            ],
+        })
+    }
     metadata = Metadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'datetime'},
@@ -214,35 +227,37 @@ def test_inequality_constraint_datetime(constraint):
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-    assert list(transformed.columns) == ['A.fillna', 'A#B', 'A#B.nan_component']
+    assert list(transformed['table'].columns) == ['A.fillna', 'A#B', 'A#B.nan_component']
 
     # Check that the timestamps are very close to each other
     for col in ['A', 'B']:
-        diff = (data[col] - reverse_transformed[col]).abs()
+        diff = (data['table'][col] - reverse_transformed['table'][col]).abs()
         assert (diff.dt.total_seconds() < 1e-6).all()
 
 
 def test_inequality_constraint_datetime_nans(constraint):
     """Test that Inequality constraint works with datetime columns with NaNs."""
     # Setup
-    data = pd.DataFrame({
-        'A': [
-            np.nan,
-            pd.Timestamp('2024-01-02'),
-            None,
-            pd.Timestamp('2024-01-01'),
-            pd.Timestamp('2024-01-02'),
-            pd.Timestamp('2024-01-01'),
-        ],
-        'B': [
-            pd.Timestamp('2024-01-02'),
-            None,
-            np.nan,
-            pd.Timestamp('2024-01-05'),
-            pd.Timestamp('2024-01-06'),
-            pd.Timestamp('2024-01-07'),
-        ],
-    })
+    data = {
+        'table': pd.DataFrame({
+            'A': [
+                np.nan,
+                pd.Timestamp('2024-01-02'),
+                None,
+                pd.Timestamp('2024-01-01'),
+                pd.Timestamp('2024-01-02'),
+                pd.Timestamp('2024-01-01'),
+            ],
+            'B': [
+                pd.Timestamp('2024-01-02'),
+                None,
+                np.nan,
+                pd.Timestamp('2024-01-05'),
+                pd.Timestamp('2024-01-06'),
+                pd.Timestamp('2024-01-07'),
+            ],
+        })
+    }
     metadata = Metadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'datetime'},
@@ -262,14 +277,15 @@ def test_inequality_constraint_datetime_nans(constraint):
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-    assert list(transformed.columns) == ['A.fillna', 'A#B', 'A#B.nan_component']
+    assert list(transformed['table'].columns) == ['A.fillna', 'A#B', 'A#B.nan_component']
 
-    pd.testing.assert_series_equal(data['A'], reverse_transformed['A'])
-    assert pd.Timestamp('2024-01-01') < reverse_transformed['B'][0] < pd.Timestamp('2024-01-07')
-    assert pd.isna(reverse_transformed['B'][1])
-    assert pd.isna(reverse_transformed['B'][2])
+    pd.testing.assert_series_equal(data['table']['A'], reverse_transformed['table']['A'])
+    assert pd.Timestamp('2024-01-01') < reverse_transformed['table']['B'][0]
+    assert reverse_transformed['table']['B'][0] < pd.Timestamp('2024-01-07')
+    assert pd.isna(reverse_transformed['table']['B'][1])
+    assert pd.isna(reverse_transformed['table']['B'][2])
 
-    diff = (data['B'][3:] - reverse_transformed['B'][3:]).abs()
+    diff = (data['table']['B'][3:] - reverse_transformed['table']['B'][3:]).abs()
     assert (diff.dt.total_seconds() < 1e-6).all()
 
 
@@ -311,7 +327,7 @@ def test_inequality_with_numerical(data, metadata, constraint):
     """Test it works with numerical columns."""
     # Run
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample(num_rows=10)
+    synthetic_data = synthesizer.sample('table', num_rows=10)['table']
 
     # Assert
     assert (synthetic_data['A'] < synthetic_data['B']).all()
@@ -328,18 +344,20 @@ def test_inequality_with_timestamp_and_date():
     within the same day.
     """
     # Setup
-    data = pd.DataFrame(
-        data={
-            'SUBMISSION_TIMESTAMP': [
-                '2016-07-10 17:04:00',
-                '2016-07-11 13:23:00',
-                '2016-07-12 08:45:30',
-                '2016-07-11 12:00:00',
-                '2016-07-12 10:30:00',
-            ],
-            'DUE_DATE': ['2016-07-10', '2016-07-11', '2016-07-12', '2016-07-13', '2016-07-14'],
-        }
-    )
+    data = {
+        'table': pd.DataFrame(
+            data={
+                'SUBMISSION_TIMESTAMP': [
+                    '2016-07-10 17:04:00',
+                    '2016-07-11 13:23:00',
+                    '2016-07-12 08:45:30',
+                    '2016-07-11 12:00:00',
+                    '2016-07-12 10:30:00',
+                ],
+                'DUE_DATE': ['2016-07-10', '2016-07-11', '2016-07-12', '2016-07-13', '2016-07-14'],
+            }
+        )
+    }
 
     metadata = Metadata.load_from_dict({
         'tables': {
@@ -362,7 +380,7 @@ def test_inequality_with_timestamp_and_date():
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample(num_rows=10)
+    synthetic_data = synthesizer.sample('table', num_rows=10)['table']
 
     # Assert
     assert is_object_dtype(synthetic_data['SUBMISSION_TIMESTAMP'].dtype)
@@ -387,18 +405,20 @@ def test_inequality_with_timestamp_and_date_strict_boundaries():
     be raised.
     """
     # Setup
-    data = pd.DataFrame(
-        data={
-            'SUBMISSION_TIMESTAMP': [
-                '2016-07-10 17:04:00',
-                '2016-07-11 13:23:00',
-                '2016-07-12 08:45:30',
-                '2016-07-11 12:00:00',
-                '2016-07-12 10:30:00',
-            ],
-            'DUE_DATE': ['2016-07-10', '2016-07-11', '2016-07-12', '2016-07-13', '2016-07-14'],
-        }
-    )
+    data = {
+        'table': pd.DataFrame(
+            data={
+                'SUBMISSION_TIMESTAMP': [
+                    '2016-07-10 17:04:00',
+                    '2016-07-11 13:23:00',
+                    '2016-07-12 08:45:30',
+                    '2016-07-11 12:00:00',
+                    '2016-07-12 10:30:00',
+                ],
+                'DUE_DATE': ['2016-07-10', '2016-07-11', '2016-07-12', '2016-07-13', '2016-07-14'],
+            }
+        )
+    }
 
     metadata = Metadata.load_from_dict({
         'tables': {
@@ -449,7 +469,7 @@ def test_inequality_constraint_date_less_than_timestamp_strict_boundaries():
             'DUE_DATE': ['2024-11-12', '2024-11-13', '2024-11-14', '2024-11-15', '2024-11-16'],
         }
     )
-
+    data = {'table': data}
     metadata = Metadata.load_from_dict({
         'tables': {
             'table': {
@@ -499,6 +519,7 @@ def test_inequality_constraint_timestamp_less_than_date_strict_boundaries():
             'DUE_DATE': ['2024-11-12', '2024-11-13', '2024-11-14', '2024-11-15', '2024-11-16'],
         }
     )
+    data = {'table': data}
 
     metadata = Metadata.load_from_dict({
         'tables': {
@@ -550,6 +571,7 @@ def test_inequality_constraint_date_less_than_timestamp_no_strict_boundaries():
             'DUE_DATE': ['2024-11-12', '2024-11-13', '2024-11-14', '2024-11-15', '2024-11-16'],
         }
     )
+    data = {'table': data}
 
     metadata = Metadata.load_from_dict({
         'tables': {
@@ -573,7 +595,7 @@ def test_inequality_constraint_date_less_than_timestamp_no_strict_boundaries():
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample(10)
+    synthetic_data = synthesizer.sample('table', 10)['table']
 
     # Assert
     assert is_object_dtype(synthetic_data['SUBMISSION_TIMESTAMP'].dtype)
@@ -610,6 +632,7 @@ def test_inequality_constraint_timestamp_less_than_date_no_strict_boundaries():
             'DUE_DATE': ['2024-11-12', '2024-11-13', '2024-11-14', '2024-11-15', '2024-11-16'],
         }
     )
+    data = {'table': data}
 
     metadata = Metadata.load_from_dict({
         'tables': {
@@ -633,7 +656,7 @@ def test_inequality_constraint_timestamp_less_than_date_no_strict_boundaries():
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample(10)
+    synthetic_data = synthesizer.sample('table', 10)['table']
 
     # Assert
     assert is_object_dtype(synthetic_data['SUBMISSION_TIMESTAMP'].dtype)
@@ -656,6 +679,7 @@ def test_inequality_multiple_patterns():
         'high1': [10, 20, 30, 10, 20, 10],
         'high2': [10, 20, 30, 10, 20, 10],
     })
+    data = {'table': data}
     metadata = Metadata.load_from_dict({
         'columns': {
             'low': {'sdtype': 'numerical'},
@@ -674,7 +698,7 @@ def test_inequality_multiple_patterns():
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint1, constraint2])
-    samples = synthesizer.sample(100)
+    samples = synthesizer.sample('table', 100)['table']
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
 
@@ -702,7 +726,7 @@ def test_inequality_multiple_constraints_reject_sampling(
     """Test that Inequality constraint works with multiple constraints using reject sampling."""
     # Run
     synthesizer = run_copula(data_reject, metadata_reject, constraints_reject)
-    samples = synthesizer.sample(10)
+    samples = synthesizer.sample('table', 10)['table']
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
 
@@ -731,6 +755,7 @@ def test_inequality_multiple_constraints_one_constraint_invalid_column():
         'mid': values + 1,
         'high': values + 2,
     })
+    data = {'table': data}
     metadata = Metadata.load_from_dict({
         'columns': {
             'low': {'sdtype': 'numerical'},
@@ -749,7 +774,7 @@ def test_inequality_multiple_constraints_one_constraint_invalid_column():
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint1, constraint2])
-    samples = synthesizer.sample(1000000)
+    samples = synthesizer.sample('table', 1000000)['table']
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
 
@@ -764,9 +789,7 @@ def test_inequality_multiple_constraints_one_constraint_invalid_column():
     }).to_dict()
 
     assert expected_updated_metadata == updated_metadata.to_dict()
-
     assert original_metadata.to_dict() == metadata.to_dict()
-
     assert all(samples['low'] <= samples['mid'])
     assert all(samples['mid'] <= samples['high'])
 
@@ -776,6 +799,7 @@ def test_inequality_many_constraints():
     # Setup
     values = np.random.randint(0, 100, size=1000)
     data = pd.DataFrame({f'{i}': values + i for i in range(10)})
+    data = {'table': data}
     metadata = Metadata.load_from_dict({
         'columns': {f'{i}': {'sdtype': 'numerical'} for i in range(10)}
     })
@@ -785,7 +809,7 @@ def test_inequality_many_constraints():
 
     # Run
     synthesizer = run_copula(data, metadata, constraints)
-    samples = synthesizer.sample(100)
+    samples = synthesizer.sample('table', 100)['table']
 
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
@@ -829,11 +853,11 @@ def test_inequality_with_nan():
 
     # Run
     synthesizer = run_copula(data, metadata, [inequality_cag])
-    sampled_data = synthesizer.sample(100)
-    synthesizer.validate(sampled_data)
+    sampled_data = synthesizer.sample('fake_hotel_guests', 100)['fake_hotel_guests']
+    synthesizer.validate({'fake_hotel_guests': sampled_data})
 
     # Assert
-    assert data['checkout_date'].isna().sum() > 0
+    assert data['fake_hotel_guests']['checkout_date'].isna().sum() > 0
     assert sampled_data['checkout_date'].isna().sum() > 0
     valid_dates = sampled_data[['checkin_date', 'checkout_date']].dropna()
     assert all(
@@ -845,7 +869,7 @@ def test_validate_constraints(data, metadata, constraint):
     """Test validate_constraints works with synthetic data generated with Inequality."""
     # Setup
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample(100)
+    synthetic_data = synthesizer.sample('table', 100)['table']
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
@@ -861,8 +885,9 @@ def test_validate_constraints_raises(data, metadata, constraint):
         'A': [10, 20, 30, 10, 20, 10],
         'B': [1, 2, 3, 1, 2, 1],
     })
-    assert all(data['A'] < data['B'])
-    assert all(synthetic_data['A'] > synthetic_data['B'])
+    synthetic_data = {'table': synthetic_data}
+    assert all(data['table']['A'] < data['table']['B'])
+    assert all(synthetic_data['table']['A'] > synthetic_data['table']['B'])
     synthesizer = run_copula(data, metadata, [constraint])
     msg = re.escape('The inequality requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more')
 
@@ -875,7 +900,7 @@ def test_validate_constraints_multi(data_multi, metadata_multi, constraint_multi
     """Test validate_constraints works with multitable synthetic data generated with Inequality."""
     # Setup
     synthesizer = run_hma(data_multi, metadata_multi, [constraint_multi])
-    synthetic_data = synthesizer.sample(100)
+    synthetic_data = synthesizer.sample('table1', 100 * len(data_multi['table1']))
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
@@ -888,13 +913,13 @@ def test_validate_constraints_multi_with_reject(data_reject, metadata_reject, co
     """Test validate_constraints works with reject sampling."""
     # Setup
     synthesizer = run_copula(data_reject, metadata_reject, constraints_reject)
-    synthetic_data = synthesizer.sample(100)
+    synthetic_data = synthesizer.sample('table', 100)
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
-    assert all(synthetic_data['low'] <= synthetic_data['high'])
+    assert all(synthetic_data['table']['low'] <= synthetic_data['table']['high'])
 
 
 def test_validate_constraints_multi_with_reject_raises(
@@ -910,6 +935,7 @@ def test_validate_constraints_multi_with_reject_raises(
         'low2': [10, 20, 30, 10, 20, 10],
         'high': [5, 4, 6, 7, 8, 9],
     })
+    synthetic_data = {'table': synthetic_data}
     msg = re.escape(
         'The inequality requirement is not met for row indices: 0, 1, 2, 3, 4, +1 more.'
     )
@@ -929,6 +955,7 @@ def test_validate_constraints_multi_raises(data_multi, metadata_multi, constrain
         }),
         'table2': pd.DataFrame({'id': range(5)}),
     }
+    synthetic_data = {'table1': synthetic_data['table1']}
     synthesizer = run_hma(data_multi, metadata_multi, [constraint_multi])
     msg = re.escape(
         "Table 'table1': The inequality requirement is not met for "
@@ -944,6 +971,7 @@ def test_invalid_data():
     """Test that the Inequality constraint raises an error with invalid data."""
     # Setup
     data, metadata = download_demo('single_table', 'fake_hotel_guests')
+    data = data['fake_hotel_guests']
     constraint = Inequality(
         low_column_name='checkin_date',
         high_column_name='checkout_date',
@@ -952,6 +980,8 @@ def test_invalid_data():
     clean_data = data[~(data[['checkin_date', 'checkout_date']].isna().any(axis=1))]
     data_invalid = clean_data.copy()
     data_invalid.loc[0, 'checkin_date'] = '31 Dec 2020'
+    data_invalid = {'fake_hotel_guests': data_invalid}
+    clean_data = {'fake_hotel_guests': clean_data}
     expected_error_msg = re.escape(
         "Data is not valid for the 'Inequality' constraint in table 'fake_hotel_guests':\n"
         '  checkin_date checkout_date\n0  31 Dec 2020   29 Dec 2020'
@@ -1011,7 +1041,7 @@ def test_low_column_formatting_maintained():
     synthesizer = run_copula(data, metadata, constraints=[inequality_cag])
 
     # Run
-    sampled_data = synthesizer.sample(100)
+    sampled_data = synthesizer.sample('fake_hotel_guests', 100)['fake_hotel_guests']
 
     # Assert
     assert all(sampled_data['room_rate'].round(2) == sampled_data['room_rate'])
@@ -1028,14 +1058,15 @@ def test_datetime_values_are_clipped_to_min_max_in_constraint():
 
     # Run
     synthesizer = run_copula(data, metadata, constraints=[constraint])
-    synthetic_data = synthesizer.sample(len(data))
+    synthetic_data = synthesizer.sample('fake_hotel_guests', len(data))
     diagnostic_report = run_diagnostic(data, synthetic_data, metadata)
 
     # Assert
-    metadata.validate_data({'fake_hotel_guests': synthetic_data})
+    metadata.validate_data(synthetic_data)
     synthesizer.validate(synthetic_data)
     assert diagnostic_report.get_score() == 1.0
-
+    data = data['fake_hotel_guests']
+    synthetic_data = synthetic_data['fake_hotel_guests']
     for col in ['checkin_date', 'checkout_date']:
         assert data[col].dtype == synthetic_data[col].dtype
         data[col] = _cast_to_datetime64(data[col], datetime_format=datetime_format)

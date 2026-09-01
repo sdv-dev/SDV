@@ -1197,9 +1197,9 @@ class Metadata:
             errors, self._validate_child_map_circular_relationship, child_map
         )
         if errors:
-            raise InvalidMetadataError(
-                'The metadata is not valid' + '\n'.join(str(e) for e in errors)
-            )
+            error_message = '\n'.join(str(error) for error in errors)
+            separator = '' if error_message.startswith('\n') else '\n'
+            raise InvalidMetadataError('The metadata is not valid' + separator + error_message)
 
     def _validate_missing_tables(self, data):
         """Validate the data doesn't have all the columns in the metadata."""

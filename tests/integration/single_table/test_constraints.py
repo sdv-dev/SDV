@@ -70,15 +70,18 @@ def test_column_relationships_with_constraints():
         'code': ['000', '001', '002'] * 2,
         'description': ['code 0', 'code 1', 'code 2'] * 2,
     })
+    data = {'table': data}
     constraint = FixedCombinations(table_name='table', column_names=['code', 'description'])
     synth = GaussianCopulaSynthesizer(metadata)
 
     # Run
     synth.add_constraints([constraint])
     synth.fit(data)
-    samples = synth.sample(100)
+    samples = synth.sample(synth._table_name, 100)
 
     # Assert
+    data = data['table']
+    samples = samples['table']
     assert samples.columns.tolist() == data.columns.to_list()
     expected_combinations = {('000', 'code 0'), ('001', 'code 1'), ('002', 'code 2')}
     sampled_combinations = {
@@ -106,7 +109,7 @@ def test_conditional_sampling_with_constraints(demo_data, demo_metadata):
     samples = synth.sample_from_conditions([my_condition])
 
     # Assert
-    assert samples.columns.tolist() == demo_data.columns.to_list()
+    assert samples.columns.tolist() == demo_data['fake_hotel_guests'].columns.to_list()
     assert all(samples['checkin_date'] == '04 Feb 2020')
     valid_dates = samples[['checkin_date', 'checkout_date']].dropna()
     checkin_dates = pd.to_datetime(valid_dates['checkin_date'], format=datetime_format)
@@ -132,7 +135,7 @@ def test_conditional_sampling_with_constraints_transforms_if_possible(demo_data,
     samples = synth.sample_from_conditions([my_condition])
 
     # Assert
-    assert samples.columns.tolist() == demo_data.columns.to_list()
+    assert samples.columns.tolist() == demo_data['fake_hotel_guests'].columns.to_list()
     assert all(samples['checkin_date'] == '04 Feb 2020')
     assert all(samples['checkout_date'] == '10 Feb 2020')
 
@@ -165,6 +168,7 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
         'state': ['CA', 'CA', 'IL', 'CA', 'CA'],
         'age': [27, 28, 26, 21, 30],
     })
+    data = {'table': data}
 
     metadata = Metadata()
     metadata.add_table('table')
@@ -231,13 +235,13 @@ def test_custom_constraints_from_object(tmpdir):
     synthesizer.fit_processed_data(processed_data)
 
     # Run - sample
-    sampled = synthesizer.sample(10)
+    sampled = synthesizer.sample('table', 10 * len(data['table']))
     assert all(sampled['table']['numerical_col'] > 1)
 
     # Run - Save and Sample
     synthesizer.save(tmpdir / 'test.pkl')
     loaded_instance = load_synthesizer(tmpdir / 'test.pkl')
-    loaded_sampled = loaded_instance.sample(10)
+    loaded_sampled = loaded_instance.sample('table', 10 * len(data['table']))
     assert all(loaded_sampled['table']['numerical_col'] > 1)
 
 
@@ -249,8 +253,9 @@ def test_single_table_custom_constraints_from_object(tmpdir):
         'numerical_col': [2, 3, 4],
         'categorical_col': ['a', 'b', 'a'],
     })
+    data = {'table': data}
 
-    metadata = Metadata.detect_from_dataframes({'table': data})
+    metadata = Metadata.detect_from_dataframes(data)
     metadata.update_column(table_name='table', column_name='pii_col', sdtype='address', pii=True)
     synthesizer = GaussianCopulaSynthesizer(
         metadata, enforce_min_max_values=False, enforce_rounding=False
@@ -262,19 +267,19 @@ def test_single_table_custom_constraints_from_object(tmpdir):
     processed_data = synthesizer.preprocess(data)
 
     # Assert Processed Data
-    assert all(processed_data['numerical_col'] == data['numerical_col'] ** 2)
+    assert all(processed_data['table']['numerical_col'] == data['table']['numerical_col'] ** 2)
 
     # Run - Fit the model
     synthesizer.fit_processed_data(processed_data)
 
     # Run - sample
-    sampled = synthesizer.sample(10)
+    sampled = synthesizer.sample('table', 10)['table']
     assert all(sampled['numerical_col'] > 1)
 
     # Run - Save and Sample
     synthesizer.save(tmpdir / 'test.pkl')
     loaded_instance = load_synthesizer(tmpdir / 'test.pkl')
-    loaded_sampled = loaded_instance.sample(10)
+    loaded_sampled = loaded_instance.sample('table', 10)['table']
     assert all(loaded_sampled['numerical_col'] > 1)
 
 
@@ -291,8 +296,9 @@ def test_synthesizer_with_inequality_constraint(demo_data, demo_metadata):
     synthesizer.fit(demo_data)
 
     # Run and Assert
-    sampled = synthesizer.sample(num_rows=500)
+    sampled = synthesizer.sample('fake_hotel_guests', num_rows=500)
     synthesizer.validate(sampled)
+    sampled = sampled['fake_hotel_guests']
     _sampled = sampled[~sampled['checkout_date'].isna()]
     checkin_dates = pd.to_datetime(_sampled['checkin_date'], format=datetime_format)
     checkout_dates = pd.to_datetime(_sampled['checkout_date'], format=datetime_format)
@@ -308,6 +314,7 @@ def test_inequality_constraint_with_datetimes_and_nones():
             'B': [None, '2021-03-04', '2021-12-31', None] * 2,
         }
     )
+    data = {'table': data}
 
     metadata = Metadata.load_from_dict({
         'columns': {
@@ -323,10 +330,11 @@ def test_inequality_constraint_with_datetimes_and_nones():
 
     # Run
     synth.fit(data)
-    sampled = synth.sample(10)
+    sampled = synth.sample('table', 10)
 
     # Assert
     synth.validate(sampled)
+    sampled = sampled['table']
     expected_sampled = pd.DataFrame({
         'A': [
             '2020-01-02',
@@ -366,6 +374,7 @@ def test_range_constraint_with_datetimes_and_nones():
             'C': [None, '2022-03-04', '2022-12-31', None],
         }
     )
+    data = {'table': data}
 
     metadata = Metadata.load_from_dict({
         'columns': {
@@ -389,9 +398,10 @@ def test_range_constraint_with_datetimes_and_nones():
 
     # Run
     synth.fit(data)
-    sampled = synth.sample(10)
+    sampled = synth.sample('table', 10)
 
     # Assert
+    sampled = sampled['table']
     expected_sampled = pd.DataFrame({
         'A': [
             '2020-01-02',
@@ -431,13 +441,14 @@ def test_range_constraint_with_datetimes_and_nones():
         ],
     })
     pd.testing.assert_frame_equal(expected_sampled, sampled)
-    synth.validate(sampled)
+    synth.validate({'table': sampled})
 
 
 def test_inequality_constraint_all_possible_nans_configurations():
     """Test that the inequality constraint works with all possible NaN configurations."""
     # Setup
     data = pd.DataFrame(data={'A': [0, 1, np.nan, np.nan, 2], 'B': [2, np.nan, 3, np.nan, 3]})
+    data = {'table': data}
 
     metadata = Metadata.load_from_dict({
         'columns': {
@@ -451,9 +462,10 @@ def test_inequality_constraint_all_possible_nans_configurations():
 
     # Run
     synthesizer.fit(data)
-    synthetic_data = synthesizer.sample(10000)
+    synthetic_data = synthesizer.sample('table', 10000)
 
     # Assert
+    synthetic_data = synthetic_data['table']
     assert (~(pd.isna(synthetic_data['A'])) & ~(pd.isna(synthetic_data['B']))).any()
     assert ((pd.isna(synthetic_data['A'])) & ~(pd.isna(synthetic_data['B']))).any()
     assert (~(pd.isna(synthetic_data['A'])) & (pd.isna(synthetic_data['B']))).any()
@@ -470,6 +482,7 @@ def test_range_constraint_all_possible_nans_configurations():
             'high': [3, 7, 8, 4, np.nan, 9, np.nan, np.nan, np.nan],
         }
     )
+    data = {'table': data}
 
     metadata_dict = {
         'columns': {
@@ -490,9 +503,10 @@ def test_range_constraint_all_possible_nans_configurations():
     synthesizer.add_constraints([my_constraint])
     synthesizer.fit(data)
 
-    s_data = synthesizer.sample(2000)
+    s_data = synthesizer.sample('table', 2000)
 
     # Assert
+    s_data = s_data['table']
     synt_data_not_nan_low_middle = s_data[~(pd.isna(s_data['low'])) & ~(pd.isna(s_data['middle']))]
     synt_data_not_nan_middle_high = s_data[
         ~(pd.isna(s_data['middle'])) & ~(pd.isna(s_data['high']))
@@ -523,6 +537,7 @@ def test_timezone_aware_constraints():
     data = pd.DataFrame({'col1': ['2020-02-02'], 'col2': ['2020-02-05']})
     data['col1'] = pd.to_datetime(data['col1']).dt.tz_localize('UTC')
     data['col2'] = pd.to_datetime(data['col2']).dt.tz_localize('UTC')
+    data = {'table': data}
 
     metadata = Metadata()
     metadata.add_table('table')
@@ -537,7 +552,7 @@ def test_timezone_aware_constraints():
     synth = GaussianCopulaSynthesizer(metadata)
     synth.add_constraints([my_constraint])
     synth.fit(data)
-    samples = synth.sample(100)
+    samples = synth.sample('table', 100)['table']
 
     # Assert
     assert all(samples['col1'] < samples['col2'])
@@ -554,8 +569,10 @@ def test_overlapping_constraint_logs(caplog, demo_data, demo_metadata):
     column_metadata = demo_metadata.tables['fake_hotel_guests'].columns['checkout_date']
     datetime_format = column_metadata['datetime_format']
     demo_metadata.add_column('billing_date', sdtype='datetime', datetime_format=datetime_format)
+    demo_data = demo_data['fake_hotel_guests']
     demo_data['billing_date'] = pd.to_datetime(demo_data['checkout_date']) + pd.Timedelta(5, 'D')
     demo_data['billing_date'] = demo_data['billing_date'].dt.strftime(datetime_format)
+    demo_data = {'fake_hotel_guests': demo_data}
 
     synth = GaussianCopulaSynthesizer(demo_metadata)
 
@@ -611,10 +628,11 @@ def test_constraint_datetime_check():
 
     synth = GaussianCopulaSynthesizer(metadata)
     synth.add_constraints([my_constraint])
-    synth.fit(data['table'])
-    samples = synth.sample(3)
+    synth.fit(data)
+    samples = synth.sample('table', 3)
 
     # Assert
+    samples = samples['table']
     expected_dataframe = pd.DataFrame({
         'low_col': ['13 Sep, 15', '19 Jan, 15', '02 Jun, 14'],
         'high_col': ['23 Oct, 15', '09 Mar, 15', '12 Jul, 14'],
