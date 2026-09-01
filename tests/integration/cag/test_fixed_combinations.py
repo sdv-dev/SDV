@@ -30,7 +30,7 @@ def metadata():
             'table1': {
                 'columns': {
                     'A': {'sdtype': 'categorical'},
-                    'B': {'sdtype': 'categorical'},
+                    'B': {'sdtype': 'ordinal'},
                 }
             }
         }
@@ -60,7 +60,7 @@ def metadata_multi():
             'table1': {
                 'columns': {
                     'A': {'sdtype': 'categorical'},
-                    'B': {'sdtype': 'categorical'},
+                    'B': {'sdtype': 'ordinal'},
                 }
             },
             'table2': {

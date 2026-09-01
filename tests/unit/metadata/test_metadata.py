@@ -2070,7 +2070,7 @@ class TestMetadataClass:
 
         single_table_accounts = object()
         single_table_branches = object()
-        mock__SingleTableMetadata.load_from_dict.side_effect = [
+        mock__SingleTableMetadata._load_from_dict.side_effect = [
             single_table_accounts,
             single_table_branches,
         ]
@@ -2095,6 +2095,11 @@ class TestMetadataClass:
             }
         ]
 
+        mock__SingleTableMetadata._load_from_dict.assert_has_calls([
+            call(multitable_metadata['tables']['accounts'], version='V2'),
+            call(multitable_metadata['tables']['branches'], version='V2'),
+        ])
+
     @patch('sdv.metadata.metadata._SingleTableMetadata')
     def test__set_metadata_invalid_keys_single_table(self, mock__SingleTableMetadata):
         """Test ``_set_metadata`` with invalid keys in single table metadata."""
@@ -2110,7 +2115,7 @@ class TestMetadataClass:
                 }
             },
         }
-        mock__SingleTableMetadata.load_from_dict.side_effect = [
+        mock__SingleTableMetadata._load_from_dict.side_effect = [
             ValueError('Invalid key in single table metadata'),
         ]
         expected_error_msg = re.escape(
@@ -2207,7 +2212,7 @@ class TestMetadataClass:
 
         single_table_accounts = object()
         single_table_branches = object()
-        mock__SingleTableMetadata.load_from_dict.side_effect = [
+        mock__SingleTableMetadata._load_from_dict.side_effect = [
             single_table_accounts,
             single_table_branches,
         ]
@@ -2230,6 +2235,11 @@ class TestMetadataClass:
                 'child_foreign_key': 'branch_id',
             }
         ]
+
+        mock__SingleTableMetadata._load_from_dict.assert_has_calls([
+            call(multitable_metadata['tables']['accounts'], version='V2'),
+            call(multitable_metadata['tables']['branches'], version='V2'),
+        ])
 
     @patch('sdv.metadata.metadata._SingleTableMetadata')
     def test_load_from_dict_integer(self, mock__SingleTableMetadata):
@@ -2287,7 +2297,7 @@ class TestMetadataClass:
             '1': {'sdtype': 'numerical'},
             'name': {'sdtype': 'id'},
         }
-        mock__SingleTableMetadata.load_from_dict.side_effect = [
+        mock__SingleTableMetadata._load_from_dict.side_effect = [
             single_table_accounts,
             single_table_branches,
         ]
@@ -2309,6 +2319,11 @@ class TestMetadataClass:
                 'child_foreign_key': '1',
             }
         ]
+
+        mock__SingleTableMetadata._load_from_dict.assert_has_calls([
+            call(multitable_metadata['tables']['accounts'], version='V2'),
+            call(multitable_metadata['tables']['branches'], version='V2'),
+        ])
 
     @patch('sdv.metadata.metadata.json')
     def test___repr__(self, mock_json):
@@ -3850,7 +3865,7 @@ class TestMetadataClass:
             'To use this with the SDV, please fix the following errors.\n blah'
         )
 
-    @patch('sdv.metadata.metadata._SingleTableMetadata.load_from_dict')
+    @patch('sdv.metadata.metadata._SingleTableMetadata._load_from_dict')
     def test_anonymize(self, mock_load):
         """Test ``anonymize`` method."""
         # Setup
@@ -4201,7 +4216,7 @@ class TestMetadataClass:
 
         single_table_accounts = object()
         single_table_branches = object()
-        mock__SingleTableMetadata.load_from_dict.side_effect = [
+        mock__SingleTableMetadata._load_from_dict.side_effect = [
             single_table_accounts,
             single_table_branches,
         ]
@@ -4223,6 +4238,11 @@ class TestMetadataClass:
                 'child_foreign_key': 'branch_id',
             }
         ]
+
+        mock__SingleTableMetadata._load_from_dict.assert_has_calls([
+            call(multitable_metadata['tables']['accounts'], version='V2'),
+            call(multitable_metadata['tables']['branches'], version='V2'),
+        ])
 
     @patch('sdv.metadata.metadata._SingleTableMetadata')
     def test_load_from_dict_integer_multi_table(self, mock__SingleTableMetadata):
@@ -4280,7 +4300,7 @@ class TestMetadataClass:
             '1': {'sdtype': 'numerical'},
             'name': {'sdtype': 'id'},
         }
-        mock__SingleTableMetadata.load_from_dict.side_effect = [
+        mock__SingleTableMetadata._load_from_dict.side_effect = [
             single_table_accounts,
             single_table_branches,
         ]
@@ -4302,6 +4322,11 @@ class TestMetadataClass:
                 'child_foreign_key': '1',
             }
         ]
+
+        mock__SingleTableMetadata._load_from_dict.assert_has_calls([
+            call(multitable_metadata['tables']['accounts'], version='V2'),
+            call(multitable_metadata['tables']['branches'], version='V2'),
+        ])
 
     def test_load_from_dict_single_table(self):
         """Test that ``load_from_dict`` returns a instance of single-table ``Metadata``.
@@ -4402,7 +4427,7 @@ class TestMetadataClass:
 
         single_table_accounts = object()
         single_table_branches = object()
-        mock__SingleTableMetadata.load_from_dict.side_effect = [
+        mock__SingleTableMetadata._load_from_dict.side_effect = [
             single_table_accounts,
             single_table_branches,
         ]
@@ -4427,7 +4452,13 @@ class TestMetadataClass:
             }
         ]
 
-    def test__set_metadata_single_table(self, metadata_instance):
+        mock__SingleTableMetadata._load_from_dict.assert_has_calls([
+            call(multitable_metadata['tables']['accounts'], version='V2'),
+            call(multitable_metadata['tables']['branches'], version='V2'),
+        ])
+
+    @patch('sdv.metadata.metadata._SingleTableMetadata')
+    def test__set_metadata_single_table(self, mock__SingleTableMetadata):
         """Test the ``_set_metadata`` method for ``Metadata``.
 
         Setup:
@@ -4441,8 +4472,11 @@ class TestMetadataClass:
             'alternate_keys': [],
             'sequence_key': None,
             'sequence_index': None,
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
         }
+        mock__SingleTableMetadata._load_from_dict.side_effect = lambda *args, **kwargs: (
+            _SingleTableMetadata._load_from_dict(*args, **kwargs)
+        )
 
         instance = Metadata()
 
@@ -4450,12 +4484,16 @@ class TestMetadataClass:
         instance._set_metadata_dict(single_table_metadata)
 
         # Assert
+        mock__SingleTableMetadata._load_from_dict.assert_called_once_with(
+            single_table_metadata, version='SINGLE_TABLE_V1'
+        )
+
         assert instance.tables['table'].columns == {'my_column': 'value'}
         assert instance.tables['table'].primary_key == 'pk'
         assert instance.tables['table'].alternate_keys == []
         assert instance.tables['table'].sequence_key is None
         assert instance.tables['table'].sequence_index is None
-        assert instance.tables['table'].METADATA_SPEC_VERSION == 'SINGLE_TABLE_V2'
+        assert instance.tables['table'].METADATA_SPEC_VERSION == 'SINGLE_TABLE_V1'
 
     def test_validate_invalid_relationship_foreign_key_reused(self, metadata_instance):
         """Test the method ``validate``.

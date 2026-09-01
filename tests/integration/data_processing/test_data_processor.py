@@ -12,6 +12,7 @@ from rdt.transformers import (
     BinaryEncoder,
     FloatFormatter,
     IndexGenerator,
+    OrderedUniformEncoder,
     UniformEncoder,
     UnixTimestampEncoder,
 )
@@ -24,6 +25,14 @@ from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError
 from sdv.metadata._single_table import _SingleTableMetadata
 from sdv.metadata.metadata import Metadata
+
+
+@pytest.fixture
+def data_metadata():
+    data, metadata = download_demo(modality='single_table', dataset_name='student_placements_pii')
+    metadata.update_column('duration', sdtype='ordinal')
+
+    return data['student_placements_pii'], metadata._convert_to_single_table()
 
 
 class TestDataProcessor:
@@ -236,7 +245,7 @@ class TestDataProcessor:
         assert len(reverse_transformed.secondary_id.unique()) == size
         assert len(reverse_transformed.fnlwgt.unique()) == size
 
-    def test_prepare_for_fitting(self):
+    def test_prepare_for_fitting(self, data_metadata):
         """Test the ``prepare_for_fitting`` method.
 
         Test that the method sets an expected list of transformers for the given
@@ -245,11 +254,8 @@ class TestDataProcessor:
         a ``datetime_format`` which has to be set to the ``UnixTimestampEncoder``.
         """
         # Setup
-        data, metadata = download_demo(
-            modality='single_table', dataset_name='student_placements_pii'
-        )
-        data = data['student_placements_pii']
-        dp = DataProcessor(metadata._convert_to_single_table())
+        data, single_table_metadata = data_metadata
+        dp = DataProcessor(single_table_metadata)
 
         # Run
         dp.prepare_for_fitting(data)
@@ -262,7 +268,7 @@ class TestDataProcessor:
             'placed': UniformEncoder,
             'student_id': AnonymizedFaker,
             'experience_years': FloatFormatter,
-            'duration': UniformEncoder,
+            'duration': OrderedUniformEncoder,
             'salary': FloatFormatter,
             'second_perc': FloatFormatter,
             'start_date': UnixTimestampEncoder,
@@ -285,12 +291,11 @@ class TestDataProcessor:
         assert field_transformers['start_date'].datetime_format == '%Y-%m-%d'
         assert field_transformers['end_date'].datetime_format == '%Y-%m-%d'
 
-    def test_reverse_transform_with_formatters(self):
+    def test_reverse_transform_with_formatters(self, data_metadata):
         """End to end test using formatters."""
         # Setup
-        data, metadata = download_demo(modality='single_table', dataset_name='student_placements')
-        data = data['student_placements']
-        dp = DataProcessor(metadata._convert_to_single_table())
+        data, single_table_metadata = data_metadata
+        dp = DataProcessor(single_table_metadata)
 
         # Run
         dp.fit(data)
@@ -325,12 +330,11 @@ class TestDataProcessor:
         reversed_end_date_format = _get_datetime_format(reversed_end_date.iloc[0])
         assert end_date_data_format == reversed_end_date_format
 
-    def test_refit_hypertransformer(self):
+    def test_refit_hypertransformer(self, data_metadata):
         """Test data processor re-fits _hyper_transformer."""
         # Setup
-        data, metadata = download_demo(modality='single_table', dataset_name='student_placements')
-        data = data['student_placements']
-        dp = DataProcessor(metadata._convert_to_single_table())
+        data, single_table_metadata = data_metadata
+        dp = DataProcessor(single_table_metadata)
 
         # Run
         dp.fit(data)

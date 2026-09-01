@@ -102,7 +102,7 @@ class TestFixedCombinations:
         # Run and assert
         expected_msg = re.escape(
             "Column 'col2' has an incompatible sdtype ('id'). The column sdtype "
-            "must be either 'boolean' or 'categorical'."
+            "must be either 'boolean', 'categorical', or 'ordinal'."
         )
         with pytest.raises(ConstraintNotMetError, match=expected_msg):
             instance._validate_constraint_with_metadata(metadata)

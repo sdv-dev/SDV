@@ -24,7 +24,7 @@ except ImportError:
     import sre_parse
 
 
-MODELABLE_SDTYPES = ['categorical', 'numerical', 'datetime', 'boolean']
+MODELABLE_SDTYPES = ['categorical', 'ordinal', 'numerical', 'datetime', 'boolean']
 
 
 def _cast_to_iterable(value, iterable_type=None):
@@ -234,6 +234,8 @@ def _cast_to_datetime64(value, datetime_format=None, ignore_timezone=True):
         return np.array([
             _parse_datetime64_value(val, datetime_format, ignore_timezone) for val in value
         ])
+
+    return _parse_datetime64_value(value, datetime_format, ignore_timezone)
 
 
 def _convert_to_timedelta(column):
@@ -655,7 +657,7 @@ def _column_range_exceeds_real(column, col_meta):
         max_bound_met = any(column.dropna() >= range_max) if range_max is not None else True
         return not (min_bound_met and max_bound_met)
 
-    elif col_meta['sdtype'] == 'categorical':
+    elif col_meta['sdtype'] in ['categorical', 'ordinal']:
         if 'range_values' not in col_meta:
             return False
 
