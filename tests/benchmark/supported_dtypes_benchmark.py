@@ -24,7 +24,7 @@ from rdt.transformers import (
 )
 from tqdm import tqdm
 
-from sdv.metadata._single_table import _SingleTableMetadata
+from sdv.metadata import Metadata
 from sdv.single_table import GaussianCopulaSynthesizer
 from tests.benchmark.excluded_tests import EXCLUDED_DATA_TYPES
 from tests.benchmark.included_tests import INCLUDED_CONSTRAINT_TESTS
@@ -76,6 +76,7 @@ METADATA_SDTYPES = (
     {'sdtype': 'id'},
     {'sdtype': 'datetime', 'datetime_format': '%Y%m%d'},
     {'sdtype': 'categorical'},
+    {'sdtype': 'ordinal'},
 )
 
 
@@ -176,7 +177,7 @@ def prevent_tqdm_output():
 
 def _get_metadata_for_dtype_and_sdtype(dtype, sdtype_dict):
     """Return the expected metadata."""
-    metadata = _SingleTableMetadata.load_from_dict({'columns': {dtype: sdtype_dict}})
+    metadata = Metadata.load_from_dict({'tables': {'table': {'columns': {dtype: sdtype_dict}}}})
     return metadata
 
 
@@ -386,6 +387,7 @@ def _create_single_column_constraint_and_data(constraint, data, dtype, sdtype):
 
 
 def _create_multi_column_constraint_data_and_metadata(constraint, data, dtype, sdtype, metadata):
+    table_name = metadata._get_single_table_name()
     constraint_class = constraint.get('constraint_class')
     constraints = []
     if constraint_class == 'FixedCombinations':
@@ -393,11 +395,11 @@ def _create_multi_column_constraint_data_and_metadata(constraint, data, dtype, s
             dtype_sdtype = EXPECTED_METADATA_SDTYPES.get(dtype_name, 'unknown')
             if dtype_sdtype in ('categorical', 'boolean'):
                 data[f'{dtype}_{dtype_name}'] = data[dtype]
-                metadata.columns[f'{dtype}_{dtype_name}'] = {'sdtype': sdtype}
+                metadata.tables[table_name].columns[f'{dtype}_{dtype_name}'] = {'sdtype': sdtype}
                 new_constraint = deepcopy(constraint)
                 data[dtype_name] = dtype_data[dtype_name]
                 dtype_sdtype = EXPECTED_METADATA_SDTYPES.get(dtype_name, 'unknown')
-                metadata.columns[dtype_name] = {'sdtype': dtype_sdtype}
+                metadata.tables[table_name].columns[dtype_name] = {'sdtype': dtype_sdtype}
                 new_constraint['constraint_parameters']['column_names'].append(dtype_name)
                 new_constraint['constraint_parameters']['column_names'].append(
                     f'{dtype}_{dtype_name}'
@@ -407,14 +409,14 @@ def _create_multi_column_constraint_data_and_metadata(constraint, data, dtype, s
     elif constraint_class == 'Inequality':
         if sdtype == 'numerical':
             data['high'] = data[dtype] * 10
-            metadata.columns['high'] = {'sdtype': 'numerical'}
+            metadata.tables[table_name].columns['high'] = {'sdtype': 'numerical'}
 
     elif constraint_class == 'Range':
         if sdtype == 'numerical':
             data['mid'] = data[dtype] * 5
             data['high'] = data[dtype] * 10
-            metadata.columns['mid'] = {'sdtype': 'numerical'}
-            metadata.columns['high'] = {'sdtype': 'numerical'}
+            metadata.tables[table_name].columns['mid'] = {'sdtype': 'numerical'}
+            metadata.tables[table_name].columns['high'] = {'sdtype': 'numerical'}
 
     return constraints, data, metadata
 
@@ -463,8 +465,9 @@ def test_fit_and_sample_single_column_constraints(
 
     if (sdtype, constraint_name) in INCLUDED_CONSTRAINT_TESTS:
         metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype_dict)
+        table_name = metadata._get_single_table_name()
         synthesizer = GaussianCopulaSynthesizer(metadata)
-        sdtype = metadata.columns[dtype].get('sdtype')
+        sdtype = metadata.tables[table_name].columns[dtype].get('sdtype')
         previous_fit_result, _ = get_previous_dtype_result(
             dtype, sdtype, f'CONSTRAINT_{constraint_name}_FIT'
         )
@@ -558,7 +561,8 @@ def test_fit_and_sample_multi_column_constraints(
 
     if (sdtype, constraint_name) in INCLUDED_CONSTRAINT_TESTS:
         metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype_dict)
-        sdtype = metadata.columns[dtype].get('sdtype')
+        table_name = metadata._get_single_table_name()
+        sdtype = metadata.tables[table_name].columns[dtype].get('sdtype')
         previous_fit_result, _ = get_previous_dtype_result(
             dtype, sdtype, f'CONSTRAINT_{constraint_name}_FIT'
         )
