@@ -1,8 +1,10 @@
 import re
+from unittest.mock import patch
 
 import pandas as pd
 import pytest
 
+from sdv.datasets._utils import InvalidDataWarning
 from sdv.datasets.demo import download_demo, get_available_demos, get_source, save_resource
 from sdv.metadata import Metadata
 
@@ -110,6 +112,30 @@ def test_download_demo_sequential(output_path, tmp_path):
         csv_files = list((output_folder_name / 'data').glob('*.csv'))
         assert len(csv_files) == 1
         assert csv_files[0].name == 'ArticularyWordRecognition.csv'
+
+
+def test_download_demo_adventure_works():
+    """Test that the preprocessing functions are run on adventure works to fix the data."""
+    # Setup
+    data, metadata = download_demo(modality='multi_table', dataset_name='adventure-works')
+
+    # Run
+    metadata.validate_data(data)
+
+
+@patch('sdv.datasets._utils._process_adventure_works')
+def test_download_demo_adventure_works_raises_warning(preprocess_mock):
+    """If the adventure works demo can't be fixed, it should raise a warning."""
+    # Setup
+    preprocess_mock.side_effect = ValueError()
+
+    # Run
+    warning_msg = (
+        'This downloaded data and metadata are not compatible with each other. They '
+        'cannot be modeled using SDV without some modifications.'
+    )
+    with pytest.warns(InvalidDataWarning, match=warning_msg):
+        download_demo(modality='multi_table', dataset_name='adventure-works')
 
 
 def test_save_resource(tmp_path):
