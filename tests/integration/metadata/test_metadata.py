@@ -1299,7 +1299,7 @@ def test_validate_empty_metadata():
 
     # Run and Assert
     err_msg = re.escape(
-        "The metadata is not valid Table 'table' has 0 columns. "
+        "The metadata is not valid\nTable 'table' has 0 columns. "
         "Use 'add_column' to specify its columns."
     )
     with pytest.raises(InvalidMetadataError, match=err_msg):

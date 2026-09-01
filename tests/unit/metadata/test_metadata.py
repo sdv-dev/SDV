@@ -1357,7 +1357,7 @@ class TestMetadataClass:
 
         # Run
         error_msg = re.escape(
-            'The metadata is not valid \n'
+            'The metadata is not valid\n'
             '\nTable: payments'
             "\nInvalid regex format string '[A-z{' for id column 'date'."
             '\n\nRelationships:'
