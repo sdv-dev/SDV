@@ -308,7 +308,7 @@ class _SingleTableMetadata:
         return False
 
     def _get_unexpected_kwargs(self, sdtype, **kwargs):
-        expected_kwargs = self._SDTYPE_KWARGS.get(sdtype, ['pii'])
+        expected_kwargs = self._SDTYPE_KWARGS.get(sdtype, ['pii', 'range_is_nullable'])
         unexpected_kwargs = set(kwargs) - set(expected_kwargs)
         if unexpected_kwargs:
             unexpected_kwargs = sorted(unexpected_kwargs)
