@@ -224,37 +224,19 @@ class _SingleTableMetadata:
                 )
 
     @staticmethod
-    def _validate_categorical(column_name, **kwargs):
+    def _validate_categorical(column_name, sdtype, **kwargs):
         range_values = kwargs.get('range_values')
         if range_values is not None and (
             not isinstance(range_values, list) or len(range_values) == 0
         ):
             raise InvalidMetadataError(
-                f"Invalid `range_values` value provided for categorical column '{column_name}'. "
+                f"Invalid `range_values` value provided for {sdtype} column '{column_name}'. "
                 'The `range_values` must be a list with 1 or more elements.'
             )
 
         if range_values is not None and any(pd.isna(value) for value in range_values):
             raise InvalidMetadataError(
-                f"Invalid `range_values` value provided for categorical column '{column_name}'. "
-                'The `range_values` list must not contain null values, use the `range_is_nullable` '
-                'parameter instead.'
-            )
-
-    @staticmethod
-    def _validate_ordinal(column_name, **kwargs):
-        range_values = kwargs.get('range_values')
-        if range_values is not None and (
-            not isinstance(range_values, list) or len(range_values) == 0
-        ):
-            raise InvalidMetadataError(
-                f"Invalid `range_values` value provided for ordinal column '{column_name}'. "
-                'The `range_values` must be a list with 1 or more elements.'
-            )
-
-        if range_values is not None and any(pd.isna(value) for value in range_values):
-            raise InvalidMetadataError(
-                f"Invalid `range_values` value provided for ordinal column '{column_name}'. "
+                f"Invalid `range_values` value provided for {sdtype} column '{column_name}'. "
                 'The `range_values` list must not contain null values, use the `range_is_nullable` '
                 'parameter instead.'
             )
@@ -342,9 +324,9 @@ class _SingleTableMetadata:
         self._validate_unexpected_kwargs(column_name, sdtype, **kwargs)
         self._validate_null_range(column_name, **kwargs)
         if sdtype == 'categorical':
-            self._validate_categorical(column_name, **kwargs)
+            self._validate_categorical(column_name, sdtype='categorical', **kwargs)
         if sdtype == 'ordinal':
-            self._validate_ordinal(column_name, **kwargs)
+            self._validate_categorical(column_name, sdtype='ordinal', **kwargs)
         elif sdtype == 'numerical':
             self._validate_numerical(column_name, **kwargs)
         elif sdtype == 'datetime':

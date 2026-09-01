@@ -290,43 +290,25 @@ class Test_SingleTableMetadata:
         with pytest.raises(InvalidMetadataError, match=expected_error):
             instance._validate_datetime('start_date', **invalid_kwargs)
 
-    def test__validate_categorical(self):
+    @pytest.mark.parametrize('sdtype', ['ordinal', 'categorical'])
+    def test__validate_categorical(self, sdtype):
         """Test the ``_validate_categorical`` method."""
         # Setup
         instance = _SingleTableMetadata()
 
         # Run / Assert
-        instance._validate_categorical('name')
-        instance._validate_categorical('name', range_values=['a', 'b', 'c'])
+        instance._validate_categorical('name', sdtype=sdtype)
+        instance._validate_categorical('name', sdtype=sdtype, range_values=['a', 'b', 'c'])
 
         error_msg_range_values = re.escape(
-            "Invalid `range_values` value provided for categorical column 'name'. "
+            f"Invalid `range_values` value provided for {sdtype} column 'name'. "
             'The `range_values` must be a list with 1 or more elements.'
         )
         with pytest.raises(InvalidMetadataError, match=error_msg_range_values):
-            instance._validate_categorical('name', range_values='a')
+            instance._validate_categorical('name', sdtype=sdtype, range_values='a')
 
         with pytest.raises(InvalidMetadataError, match=error_msg_range_values):
-            instance._validate_categorical('name', range_values=[])
-
-    def test__validate_ordinal(self):
-        """Test the ``_validate_ordinal`` method."""
-        # Setup
-        instance = _SingleTableMetadata()
-
-        # Run / Assert
-        instance._validate_ordinal('name')
-        instance._validate_ordinal('name', range_values=['a', 'b', 'c'])
-
-        error_msg_range_values = re.escape(
-            "Invalid `range_values` value provided for ordinal column 'name'. "
-            'The `range_values` must be a list with 1 or more elements.'
-        )
-        with pytest.raises(InvalidMetadataError, match=error_msg_range_values):
-            instance._validate_ordinal('name', range_values='a')
-
-        with pytest.raises(InvalidMetadataError, match=error_msg_range_values):
-            instance._validate_ordinal('name', range_values=[])
+            instance._validate_categorical('name', sdtype=sdtype, range_values=[])
 
     def test__validate_id(self):
         """Test the ``_validate_id`` method.
@@ -530,7 +512,9 @@ class Test_SingleTableMetadata:
 
         # Assert
         mock__validate_kwargs.assert_called_once_with('name', 'categorical', order=['a', 'b', 'c'])
-        mock__validate_categorical.assert_called_once_with('name', order=['a', 'b', 'c'])
+        mock__validate_categorical.assert_called_once_with(
+            'name', sdtype='categorical', order=['a', 'b', 'c']
+        )
 
     @patch('sdv.metadata._single_table._SingleTableMetadata._validate_unexpected_kwargs')
     def test__validate_column_boolean(self, mock__validate_kwargs):
