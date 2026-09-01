@@ -59,16 +59,16 @@ class TestDataProcessor:
         dp = DataProcessor(metadata._convert_to_single_table())
 
         # Fit
-        dp.fit(data)
+        dp.fit(data['adult'])
 
         # Transform
-        transformed = dp.transform(data)
+        transformed = dp.transform(data['adult'])
 
         # Reverse Transform
         reverse_transformed = dp.reverse_transform(transformed)
 
         # Assert
-        assert reverse_transformed.occupation.isin(data.occupation).sum() == 0
+        assert reverse_transformed.occupation.isin(data['adult'].occupation).sum() == 0
         assert 'occupation' not in transformed.columns
 
     def test_with_anonymized_columns_and_primary_key(self):
@@ -99,6 +99,7 @@ class TestDataProcessor:
         """
         # Load metadata and data
         data, metadata = download_demo('single_table', 'adult')
+        data = data['adult']
 
         # Add anonymized field
         metadata.update_column('occupation', 'adult', sdtype='job', pii=True)
@@ -156,6 +157,7 @@ class TestDataProcessor:
         """
         # Load metadata and data
         data, _ = download_demo('single_table', 'adult')
+        data = data['adult']
         adult_metadata = Metadata.detect_from_dataframes({'adult': data})
 
         # Add primary key field
@@ -194,6 +196,7 @@ class TestDataProcessor:
         """
         # Load metadata and data
         data, _ = download_demo('single_table', 'adult')
+        data = data['adult']
         data['fnlwgt'] = data['fnlwgt'].astype(str)
         adult_metadata = Metadata.detect_from_dataframes({'adult': data})
 
@@ -245,6 +248,7 @@ class TestDataProcessor:
         data, metadata = download_demo(
             modality='single_table', dataset_name='student_placements_pii'
         )
+        data = data['student_placements_pii']
         dp = DataProcessor(metadata._convert_to_single_table())
 
         # Run
@@ -285,6 +289,7 @@ class TestDataProcessor:
         """End to end test using formatters."""
         # Setup
         data, metadata = download_demo(modality='single_table', dataset_name='student_placements')
+        data = data['student_placements']
         dp = DataProcessor(metadata._convert_to_single_table())
 
         # Run
@@ -324,6 +329,7 @@ class TestDataProcessor:
         """Test data processor re-fits _hyper_transformer."""
         # Setup
         data, metadata = download_demo(modality='single_table', dataset_name='student_placements')
+        data = data['student_placements']
         dp = DataProcessor(metadata._convert_to_single_table())
 
         # Run
@@ -343,6 +349,7 @@ class TestDataProcessor:
         """Test data processor uses the default locale for anonymized columns."""
         # Setup
         data, metadata = download_demo('single_table', 'adult')
+        data = data['adult']
         metadata.update_column('occupation', 'adult', sdtype='job', pii=True)
 
         dp = DataProcessor(metadata._convert_to_single_table(), locales=['en_CA', 'fr_CA'])

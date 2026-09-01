@@ -163,10 +163,11 @@ def test_get_random_sequence_subset():
     data, metadata = download_demo(modality='sequential', dataset_name='nasdaq100_2019')
 
     # Run
-    metadata = metadata._convert_to_single_table()
     subset = get_random_sequence_subset(data, metadata, num_sequences=3, max_sequence_length=5)
 
     # Assert
+    data = data['nasdaq100_2019']
+    metadata = metadata._convert_to_single_table()
     selected_sequences = subset[metadata.sequence_key].unique()
     assert len(selected_sequences) == 3
     for sequence_key in selected_sequences:
@@ -184,7 +185,6 @@ def test_get_random_sequence_subset_random_clipping():
     """
     # Setup
     data, metadata = download_demo(modality='sequential', dataset_name='nasdaq100_2019')
-    metadata = metadata._convert_to_single_table()
 
     # Run
     subset = get_random_sequence_subset(
@@ -196,6 +196,8 @@ def test_get_random_sequence_subset_random_clipping():
     )
 
     # Assert
+    data = data['nasdaq100_2019']
+    metadata = metadata._convert_to_single_table()
     selected_sequences = subset[metadata.sequence_key].unique()
     assert len(selected_sequences) == 3
     for sequence_key in selected_sequences:
@@ -220,11 +222,13 @@ def test_load_synthesizer(tmp_path):
 
     # Run
     loaded_synthesizer = load_synthesizer(tmp_path / 'GCSynthesizer.pkl')
-    synthetic_data = loaded_synthesizer.sample(num_rows=10)
+    synthetic_data = loaded_synthesizer.sample('fake_hotel_guests', num_rows=10)
 
     # Assert
     assert isinstance(loaded_synthesizer, GaussianCopulaSynthesizer)
-    assert set(synthetic_data.columns) == set(data.columns)
+    assert set(synthetic_data['fake_hotel_guests'].columns) == set(
+        data['fake_hotel_guests'].columns
+    )
 
 
 def test_load_constraints(tmp_path, constraint_object):

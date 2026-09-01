@@ -14,11 +14,12 @@ from tests.utils import run_constraint, run_copula, run_hma
 
 @pytest.fixture()
 def data():
-    return pd.DataFrame({
+    data = pd.DataFrame({
         'a': [1, 0, 0],
         'b': [0, 1, 0],
         'c': [0, 0, 1],
     })
+    return {'table': data}
 
 
 @pytest.fixture()
@@ -33,9 +34,13 @@ def metadata():
 
 
 @pytest.fixture()
-def data_multi(data):
+def data_multi():
     return {
-        'table1': data,
+        'table1': pd.DataFrame({
+            'a': [1, 0, 0],
+            'b': [0, 1, 0],
+            'c': [0, 0, 1],
+        }),
         'table2': pd.DataFrame({'id': range(5)}),
     }
 
@@ -64,15 +69,15 @@ def test_end_to_end(data, metadata):
     """Test end to end with OneHotEncoding."""
     # Setup
     synthesizer = run_copula(data, metadata, [OneHotEncoding(column_names=['a', 'b', 'c'])])
-    synthetic_data = synthesizer.sample(100)
+    synthetic_data = synthesizer.sample('table', 100)
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
-    assert (synthetic_data.sum(axis=1) == 1).all()
+    assert (synthetic_data['table'].sum(axis=1) == 1).all()
     for col in ['a', 'b', 'c']:
-        assert sorted(synthetic_data[col].unique().tolist()) == [0, 1]
+        assert sorted(synthetic_data['table'][col].unique().tolist()) == [0, 1]
 
 
 def test_end_to_end_raises(data, metadata):
@@ -83,6 +88,7 @@ def test_end_to_end_raises(data, metadata):
         'b': [0, 1, np.nan],
         'c': [0, 0, 3],
     })
+    invalid_data = {'table': invalid_data}
 
     # Run and Assert
     msg = re.escape(
@@ -103,7 +109,7 @@ def test_end_to_end_multi(data_multi, metadata_multi):
     # Setup
     constraint = OneHotEncoding(column_names=['a', 'b', 'c'], table_name='table1')
     synthesizer = run_hma(data_multi, metadata_multi, [constraint])
-    synthetic_data = synthesizer.sample(100)
+    synthetic_data = synthesizer.sample('table1', 100 * len(data_multi['table1']))
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
@@ -164,8 +170,8 @@ def test_end_to_end_numerical_and_categorical():
 
         # Run
         synthesizer.add_constraints([constraint])
-        synthesizer.fit(df)
-        samples = synthesizer.sample(100)
+        synthesizer.fit({'one_hot': df})
+        samples = synthesizer.sample('one_hot', 100)['one_hot']
 
         # Assert
         assert (samples.sum(axis=1) == 1).all()
@@ -194,8 +200,8 @@ def test_end_to_end_boolean():
 
     # Run
     synthesizer.add_constraints([constraint])
-    synthesizer.fit(df)
-    samples = synthesizer.sample(100)
+    synthesizer.fit({'one_hot': df})
+    samples = synthesizer.sample('one_hot', 100)['one_hot']
 
     # Assert
     assert samples.dtypes.tolist() == [bool, bool, bool]
@@ -211,7 +217,7 @@ def test_end_to_end_categorical_single(data, metadata):
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample(200)
+    synthetic_data = synthesizer.sample('table', 200)['table']
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
@@ -229,6 +235,7 @@ def test_end_to_end_categorical_single_raises(data, metadata):
         'b': [0, 1, np.nan],
         'c': [0, 0, 3],
     })
+    invalid_data = {'table': invalid_data}
     constraint = OneHotEncoding(column_names=['a', 'b', 'c'], learning_strategy='categorical')
 
     # Run and Assert
@@ -257,7 +264,7 @@ def test_end_to_end_categorical_multi(data_multi, metadata_multi):
 
     # Run
     synthesizer = run_hma(data_multi, metadata_multi, [constraint])
-    synthetic = synthesizer.sample(200)
+    synthetic = synthesizer.sample('table1', 200 * len(data_multi['table1']))
     synthesizer.validate_constraints(synthetic_data=synthetic)
 
     # Assert
@@ -309,14 +316,14 @@ def test_constraint_pipeline_categorical_single(data, metadata):
     assert updated_metadata.get_column_names() == ['a#b#c']
 
     # Assert transform
-    assert transformed.shape[1] == 1
-    assert not any(col in transformed.columns for col in ['a', 'b', 'c'])
-    assert set(transformed.columns) == {'a#b#c'}
+    assert transformed['table'].shape[1] == 1
+    assert not any(col in transformed['table'].columns for col in ['a', 'b', 'c'])
+    assert set(transformed['table'].columns) == {'a#b#c'}
 
     # Assert reverse_transform
-    assert set(reverse_transformed.columns) == {'a', 'b', 'c'}
-    assert (reverse_transformed[['a', 'b', 'c']].sum(axis=1) == 1).all()
-    assert set(reverse_transformed.columns) == {'a', 'b', 'c'}
+    assert set(reverse_transformed['table'].columns) == {'a', 'b', 'c'}
+    assert (reverse_transformed['table'][['a', 'b', 'c']].sum(axis=1) == 1).all()
+    assert set(reverse_transformed['table'].columns) == {'a', 'b', 'c'}
 
 
 def test_constraint_pipeline_categorical_multi(data_multi, metadata_multi):
@@ -350,7 +357,7 @@ def test_onehot_encoding_with_multi_table_diagnostic_report(data_multi, metadata
     # Setup
     constraint = OneHotEncoding(column_names=['a', 'b', 'c'], table_name='table1')
     synthesizer = run_hma(data_multi, metadata_multi, [constraint])
-    synthetic_data = synthesizer.sample(1)
+    synthetic_data = synthesizer.sample('table1', len(data_multi['table1']))
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)

@@ -14,14 +14,18 @@ from tests.utils import run_constraint, run_copula, run_hma
 
 @pytest.fixture()
 def data():
-    return pd.DataFrame({'A': [10, 20, 30, 40, 50]})
+    return {'table1': pd.DataFrame({'A': [10, 20, 30, 40, 50]})}
 
 
 @pytest.fixture()
 def metadata():
     return Metadata.load_from_dict({
-        'columns': {
-            'A': {'sdtype': 'numerical'},
+        'tables': {
+            'table1': {
+                'columns': {
+                    'A': {'sdtype': 'numerical'},
+                }
+            }
         }
     })
 
@@ -153,14 +157,14 @@ def test_validate_constraints(data, metadata, constraint):
     """Test validate_constraints works with synthetic data generated with FixedIncrements."""
     # Setup
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample(100)
+    synthetic_data = synthesizer.sample('table1', 100)
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
-    assert all(data['A'] % constraint.increment_value == 0)
-    assert all(synthetic_data['A'] % constraint.increment_value == 0)
+    assert all(data['table1']['A'] % constraint.increment_value == 0)
+    assert all(synthetic_data['table1']['A'] % constraint.increment_value == 0)
 
 
 def test_validate_constraints_raises(data, metadata, constraint):
@@ -179,7 +183,7 @@ def test_validate_constraints_multi(data_multi, metadata_multi, constraint_multi
     """Test validate_constraints works with multitable data generated with FixedIncrements."""
     # Setup
     synthesizer = run_hma(data_multi, metadata_multi, [constraint_multi])
-    synthetic_data = synthesizer.sample(100)
+    synthetic_data = synthesizer.sample('table1', 100 * len(data_multi['table1']))
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
@@ -229,29 +233,35 @@ def test_validate_constraints_multi_raises():
 def test_fixedincrements_with_nullable_pandas_dtypes():
     """Test that FixedIncrements constraint works with nullable pandas dtypes."""
     # Setup
-    data = pd.DataFrame({
-        'UInt8': pd.Series([1, pd.NA, 3], dtype='UInt8') * 10,
-        'UInt16': pd.Series([1, pd.NA, 4], dtype='UInt16') * 10,
-        'UInt32': pd.Series([1, pd.NA, 5], dtype='UInt32') * 10,
-        'UInt64': pd.Series([1, pd.NA, 6], dtype='UInt64') * 10,
-    })
+    data = {
+        'table1': pd.DataFrame({
+            'UInt8': pd.Series([1, pd.NA, 3], dtype='UInt8') * 10,
+            'UInt16': pd.Series([1, pd.NA, 4], dtype='UInt16') * 10,
+            'UInt32': pd.Series([1, pd.NA, 5], dtype='UInt32') * 10,
+            'UInt64': pd.Series([1, pd.NA, 6], dtype='UInt64') * 10,
+        })
+    }
     metadata = Metadata.load_from_dict({
-        'columns': {
-            'UInt8': {'sdtype': 'numerical'},
-            'UInt16': {'sdtype': 'numerical'},
-            'UInt32': {'sdtype': 'numerical'},
-            'UInt64': {'sdtype': 'numerical'},
+        'tables': {
+            'table1': {
+                'columns': {
+                    'UInt8': {'sdtype': 'numerical'},
+                    'UInt16': {'sdtype': 'numerical'},
+                    'UInt32': {'sdtype': 'numerical'},
+                    'UInt64': {'sdtype': 'numerical'},
+                }
+            }
         }
     })
     constraints = [
-        FixedIncrements(column_name=column, increment_value=10) for column in data.columns
+        FixedIncrements(column_name=column, increment_value=10) for column in data['table1'].columns
     ]
 
     # Run
     synthesizer = run_copula(data, metadata, constraints)
-    synthetic_data = synthesizer.sample(10)
+    synthetic_data = synthesizer.sample('table1', 10)
 
     # Assert
-    synthetic_data.dtypes.to_dict() == data.dtypes.to_dict()
-    for column in data.columns:
-        assert np.all(synthetic_data[column] % 10 == 0)
+    synthetic_data['table1'].dtypes.to_dict() == data['table1'].dtypes.to_dict()
+    for column in data['table1'].columns:
+        assert np.all(synthetic_data['table1'][column] % 10 == 0)

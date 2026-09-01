@@ -12,11 +12,13 @@ from pathlib import Path
 
 import cloudpickle
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 
 from sdv import version
 from sdv._utils import (
     _metadata_range_exceeds_real,
+    _validate_positive_integer,
     check_synthesizer_version,
     generate_synthesizer_id,
 )
@@ -461,7 +463,7 @@ class BaseMultiTableSynthesizer:
         errors = []
         for table_name, table_data in data.items():
             try:
-                self._table_synthesizers[table_name].validate(table_data)
+                self._table_synthesizers[table_name].validate({table_name: table_data})
 
             except InvalidDataError as error:
                 error_msg = f"Table: '{table_name}'"
@@ -478,7 +480,7 @@ class BaseMultiTableSynthesizer:
 
         return errors
 
-    def _check_ranges(self, data, metadata):
+    def _check_ranges(self, data):
         if _metadata_range_exceeds_real(data, self._original_metadata):
             warnings.warn(
                 'The training data does not cover the full range. Synthetic data will be '
@@ -496,18 +498,19 @@ class BaseMultiTableSynthesizer:
                 A dictionary of table names to pd.DataFrames.
         """
         errors = []
-        metadata = self._original_metadata
-        metadata.validate_data(data)
-        transformed = self._validate_transform_constraints(data, enforce_constraint_fitting=True)
-        for table_name in transformed:
+        self._original_metadata.validate_data(data)
+        self._check_ranges(data)
+
+        transformed_data = self._validate_transform_constraints(
+            data,
+            enforce_constraint_fitting=True,
+        )
+        for table_name, table_data in transformed_data.items():
             if table_name in self._table_synthesizers:
-                # Validate rules specific to each synthesizer
-                errors += self._table_synthesizers[table_name]._validate(transformed[table_name])
+                errors += self._table_synthesizers[table_name]._validate(table_data)
 
         if errors:
             raise InvalidDataError(errors)
-
-        self._check_ranges(data, metadata)
 
     def _validate_table_name(self, table_name):
         if table_name not in self._table_synthesizers:
@@ -523,7 +526,7 @@ class BaseMultiTableSynthesizer:
         if it is not the primary key in the table, then the transformer is set to None (
         meaning no transformer is assigned).
         """
-        synthesizer.auto_assign_transformers(table_data)
+        synthesizer.auto_assign_transformers({table_name: table_data})
         primary_key = self.metadata.tables[table_name].primary_key
         foreign_key_columns = self.metadata._get_all_foreign_keys(table_name)
         column_name_to_transformers = {
@@ -737,33 +740,108 @@ class BaseMultiTableSynthesizer:
         for synthesizer in self._table_synthesizers.values():
             synthesizer.reset_sampling()
 
-    def _sample(self, scale):
+    def _sample(
+        self,
+        scale,
+        batch_size=None,
+        max_tries_per_batch=100,
+    ):
         raise NotImplementedError()
 
-    def sample(self, scale=1.0):
-        """Generate synthetic data for the entire dataset.
+    def _resolve_scale(self, table_name, num_rows):
+        """Compute the scale based on the requested table size."""
+        return num_rows / self._table_sizes[table_name]
 
-        Args:
-            scale (float):
-                A float representing how much to scale the data by. If scale is set to ``1.0``,
-                this does not scale the sizes of the tables. If ``scale`` is greater than ``1.0``
-                create more rows than the original data by a factor of ``scale``.
-                If ``scale`` is lower than ``1.0`` create fewer rows by the factor of ``scale``
-                than the original tables. Defaults to ``1.0``.
-        """
+    def _validate_sample_input(
+        self,
+        table_name,
+        num_rows,
+        batch_size,
+        max_tries_per_batch,
+        output_folder_path,
+    ):
+        """Validate the inputs for sampling."""
         if not self._fitted:
             raise SamplingError(
                 'This synthesizer has not been fitted. Please fit your synthesizer first before '
                 'sampling synthetic data.'
             )
 
-        if type(scale) not in (float, int) or not scale > 0:
+        if table_name not in self.get_metadata().tables:
+            raise SynthesizerInputError(f"Table '{table_name}' does not exist in the metadata.")
+
+        _validate_positive_integer('num_rows', num_rows)
+        _validate_positive_integer('max_tries_per_batch', max_tries_per_batch)
+        if batch_size is not None:
+            _validate_positive_integer('batch_size', batch_size)
+
+        if output_folder_path is not None and (
+            not isinstance(output_folder_path, str) or not output_folder_path
+        ):
             raise SynthesizerInputError(
-                f"Invalid parameter for 'scale' ({scale}). Please provide a number that is >0.0."
+                f"Invalid parameter for 'output_folder_path' ({output_folder_path}). "
+                'Please provide a valid string path.'
             )
 
+    def _sample_in_batches(
+        self,
+        synthesizer,
+        num_rows,
+        batch_size,
+        max_tries_per_batch,
+    ):
+        if batch_size is None:
+            batch_size = num_rows
+
+        sampled = []
+        remaining_rows = num_rows
+        while remaining_rows:
+            current_batch_size = min(batch_size, remaining_rows)
+            batch = synthesizer._sample_batch(
+                current_batch_size,
+                max_tries=max_tries_per_batch,
+                keep_extra_columns=True,
+            )
+            sampled.append(batch)
+            remaining_rows -= len(batch)
+
+        return pd.concat(sampled, ignore_index=True)
+
+    def sample(
+        self,
+        table_name,
+        num_rows,
+        batch_size=None,
+        max_tries_per_batch=100,
+        output_folder_path=None,
+    ):
+        """Generate synthetic data for the entire dataset.
+
+        Args:
+            table_name (str):
+                The name of the main table to sample.
+            num_rows (int):
+                The number of rows to sample.
+            batch_size (int, optional):
+                The batch size for sampling. Defaults to None.
+            max_tries_per_batch (int, optional):
+                The maximum number of tries per batch. Defaults to 100.
+            output_folder_path (str, optional):
+                The folder path to save the sampled data. Defaults to None.
+
+        Returns:
+            dict: A dictionary containing the sampled data for each table.
+        """
+        self._validate_sample_input(
+            table_name, num_rows, batch_size, max_tries_per_batch, output_folder_path
+        )
+        scale = self._resolve_scale(table_name, num_rows)
         with self._set_temp_numpy_seed(), disable_single_table_logger():
-            sampled_data = self._sample(scale=scale)
+            sampled_data = self._sample(
+                scale=scale,
+                batch_size=batch_size,
+                max_tries_per_batch=max_tries_per_batch,
+            )
 
         total_rows = 0
         total_columns = 0
@@ -773,15 +851,21 @@ class BaseMultiTableSynthesizer:
 
         table_columns = getattr(self, '_original_table_columns', {})
 
-        for table in sampled_data:
-            table_data = sampled_data[table][self.get_metadata().get_column_names(table)]
-            if table in table_columns:
-                if isinstance(table_columns[table], dict):
-                    table_data = table_data.rename(columns=table_columns[table])
-                else:
-                    table_data.columns = table_columns[table]
+        for _table_name in sampled_data:
+            table_data = sampled_data[_table_name][
+                self.get_metadata().get_column_names(_table_name)
+            ]
 
-            sampled_data[table] = table_data
+            if _table_name in table_columns:
+                if isinstance(table_columns[_table_name], dict):
+                    table_data = table_data.rename(columns=table_columns[_table_name])
+                else:
+                    table_data.columns = table_columns[_table_name]
+
+            sampled_data[_table_name] = table_data
+
+        if output_folder_path is not None:
+            self._save_sampled_data(sampled_data, output_folder_path)
 
         SYNTHESIZER_LOGGER.info({
             'EVENT': 'Sample',
