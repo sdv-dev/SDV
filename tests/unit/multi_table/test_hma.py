@@ -354,9 +354,9 @@ class TestHMASynthesizer:
             input_data['upravna_enota'], 'upravna_enota'
         )
         instance._clear_nans.assert_called_once_with(input_data['upravna_enota'])
-        upravna_enota_model.fit_processed_data.assert_called_once_with(
-            augmented_data['upravna_enota']
-        )
+        upravna_enota_model.fit_processed_data.assert_called_once_with({
+            'upravna_enota': augmented_data['upravna_enota']
+        })
 
         upravna_enota_model._get_parameters.assert_called_once()
         assert instance._default_parameters['upravna_enota'] == {
@@ -989,7 +989,7 @@ class TestHMASynthesizer:
 
         # Run actual modeling
         synthesizer.fit(data)
-        synthesizer.sample()
+        synthesizer.sample(table_name='parent', num_rows=3)
 
         # Assert estimated number of columns is correct
         tables = synthesizer._finalize.call_args[0][0]
@@ -1136,7 +1136,7 @@ class TestHMASynthesizer:
 
         # Run actual modeling
         synthesizer.fit(data)
-        synthesizer.sample()
+        synthesizer.sample(table_name='parent', num_rows=3)
 
         # Assert estimated number of columns is correct
         tables = synthesizer._finalize.call_args[0][0]
@@ -1268,7 +1268,7 @@ class TestHMASynthesizer:
 
         # Run actual modeling
         synthesizer.fit(data)
-        synthesizer.sample(scale=1)
+        synthesizer.sample(table_name='root1', num_rows=3)
 
         # Assert estimated number of columns is correct
         tables = synthesizer._finalize.call_args[0][0]
@@ -1382,7 +1382,7 @@ class TestHMASynthesizer:
 
         # Run actual modeling
         synthesizer.fit(data)
-        synthesizer.sample()
+        synthesizer.sample(table_name='parent', num_rows=3)
 
         # Assert estimated number of columns is correct
         tables = synthesizer._finalize.call_args[0][0]
