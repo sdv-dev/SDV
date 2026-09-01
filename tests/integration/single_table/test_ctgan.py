@@ -11,8 +11,7 @@ from rdt.transformers import FloatFormatter, LabelEncoder
 from sdv.cag import FixedCombinations
 from sdv.datasets.demo import download_demo
 from sdv.errors import InvalidDataTypeError
-from sdv.evaluation import evaluate_quality
-from sdv.evaluation.single_table import get_column_pair_plot, get_column_plot
+from sdv.evaluation import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata.metadata import Metadata
 from sdv.single_table import CopulaGANSynthesizer, CTGANSynthesizer, TVAESynthesizer
 from sdv.utils import load_synthesizer
@@ -37,12 +36,13 @@ def test__estimate_num_columns():
         'categorical3': [float('nan'), np.nan, None],
         'boolean': [True, False, True],
     })
+    data = {'table': data}
     instance = CTGANSynthesizer(metadata)
 
     # Run
     instance.auto_assign_transformers(data)
     instance.update_transformers({'categorical2': LabelEncoder()})
-    result = instance._estimate_num_columns(data)
+    result = instance._estimate_num_columns(data['table'])
 
     # Assert
     assert result == {
@@ -84,7 +84,7 @@ def test_synthesize_table_ctgan(tmp_path):
 
     # Run - fit
     synthesizer.fit(real_data)
-    synthetic_data = synthesizer.sample(num_rows=500)
+    synthetic_data = synthesizer.sample('fake_hotel_guests', num_rows=500)
 
     # Run - evaluate
     quality_report = evaluate_quality(real_data, synthetic_data, metadata)
@@ -92,6 +92,7 @@ def test_synthesize_table_ctgan(tmp_path):
     column_plot = get_column_plot(
         real_data=real_data,
         synthetic_data=synthetic_data,
+        table_name='fake_hotel_guests',
         column_name='room_type',
         metadata=metadata,
     )
@@ -99,6 +100,7 @@ def test_synthesize_table_ctgan(tmp_path):
     pair_plot = get_column_pair_plot(
         real_data=real_data,
         synthetic_data=synthetic_data,
+        table_name='fake_hotel_guests',
         column_names=['room_rate', 'room_type'],
         metadata=metadata,
     )
@@ -108,10 +110,13 @@ def test_synthesize_table_ctgan(tmp_path):
 
     # Run - custom synthesizer
     custom_synthesizer.fit(real_data)
-    synthetic_data_customized = custom_synthesizer.sample(num_rows=500)
+    synthetic_data_customized = custom_synthesizer.sample('fake_hotel_guests', num_rows=500)
     custom_quality_report = evaluate_quality(real_data, synthetic_data_customized, metadata)
 
     # Assert - fit
+    real_data = real_data['fake_hotel_guests']
+    synthetic_data = synthetic_data['fake_hotel_guests']
+    synthetic_data_customized = synthetic_data_customized['fake_hotel_guests']
     assert set(real_data.columns) == set(synthetic_data.columns)
     assert real_data.shape[1] == synthetic_data.shape[1]
     assert len(synthetic_data) == 500
@@ -136,7 +141,7 @@ def test_synthesize_table_ctgan(tmp_path):
     assert isinstance(synthesizer, CTGANSynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
     assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
-    loaded_synthesizer.sample(20)
+    loaded_synthesizer.sample(loaded_synthesizer._table_name, 20)
 
     # Assert - custom synthesizer
     assert custom_quality_report.get_score() > 0
@@ -156,6 +161,7 @@ def test_categoricals_are_not_preprocessed():
             'alcohol': ['medium', 'medium', 'low', 'high', 'low'],
         }
     )
+    data = {'table': data}
     metadata = Metadata.load_from_dict({
         'columns': {
             'age': {'sdtype': 'numerical'},
@@ -208,13 +214,16 @@ def test_categorical_metadata_with_int_data():
         'B': list(range(50)),
         'C': [str(i) for i in range(50)],
     })
+    data = {'table': data}
 
     # Run
     synth = CTGANSynthesizer(metadata, epochs=10)
     synth.fit(data)
-    synthetic_data = synth.sample(1000)
+    synthetic_data = synth.sample('table', 1000)
 
     # Assert
+    data = data['table']
+    synthetic_data = synthetic_data['table']
     original_categories = set(data['A'].unique())
     synthetic_categories_for_a = set(synthetic_data['A'].unique())
     new_categories_for_a = synthetic_categories_for_a - original_categories
@@ -235,8 +244,10 @@ def test_category_dtype_errors():
     """Test CTGAN and TVAE error if data has 'category' dtype."""
     # Setup
     data, metadata = download_demo('single_table', 'fake_hotel_guests')
-    data['room_type'] = data['room_type'].astype('category')
-    data['has_rewards'] = data['has_rewards'].astype('category')
+    table_data = data['fake_hotel_guests']
+    table_data['room_type'] = table_data['room_type'].astype('category')
+    table_data['has_rewards'] = table_data['has_rewards'].astype('category')
+    data = {'fake_hotel_guests': table_data}
 
     ctgan = CTGANSynthesizer(metadata)
     tvae = TVAESynthesizer(metadata)
@@ -272,7 +283,7 @@ def test_ctgansynthesizer_with_constraints_generating_categorical_values():
     my_synthesizer.fit(data)
 
     # Assert
-    sampled_data = my_synthesizer.sample(10)
+    sampled_data = my_synthesizer.sample('student_placements', 10)['student_placements']
     assert len(sampled_data) == 10
 
 
@@ -285,7 +296,7 @@ def test_ctgan_with_dropped_columns():
             'user_ssn': ['111-11-1111', '222-22-2222', '333-33-3333', '444-44-4444', '555-55-5555'],
         }
     )
-
+    data = {'table': data}
     metadata_dict = {
         'primary_key': 'user_id',
         'columns': {'user_id': {'sdtype': 'id'}, 'user_ssn': {'sdtype': 'ssn'}},
@@ -296,9 +307,10 @@ def test_ctgan_with_dropped_columns():
     # Run
     synth = CTGANSynthesizer(metadata)
     synth.fit(data)
-    samples = synth.sample(10)
+    samples = synth.sample('table', 10)
 
     # Assert
+    samples = samples['table']
     assert len(samples) == 10
     assert samples.columns.tolist() == ['user_id', 'user_ssn']
     assert all(id_val.startswith('sdv-id-') for id_val in samples['user_id'])
@@ -350,11 +362,11 @@ def test_enable_gpu_parameter(synthesizer_class):
     synthesizer_2 = synthesizer_class(metadata, enable_gpu=False)
     synthesizer_1.fit(data)
     synthesizer_2.fit(data)
-    synthetic_data_1 = synthesizer_1.sample(10)
-    synthetic_data_2 = synthesizer_2.sample(10)
+    synthetic_data_1 = synthesizer_1.sample('fake_hotel_guests', 10)['fake_hotel_guests']
+    synthetic_data_2 = synthesizer_2.sample('fake_hotel_guests', 10)['fake_hotel_guests']
 
     # Assert
-    data_columns = data.columns.tolist()
+    data_columns = data['fake_hotel_guests'].columns.tolist()
     if (
         platform.machine() == 'arm64'
         and getattr(torch.backends, 'mps', None)

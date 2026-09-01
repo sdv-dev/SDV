@@ -231,10 +231,12 @@ class TestCTGANSynthesizer:
         metadata.add_table('table')
         metadata.add_column('name_longer_than_Original_Column_Name', 'table', sdtype='numerical')
         metadata.add_column('categorical', 'table', sdtype='categorical')
-        data = pd.DataFrame({
-            'name_longer_than_Original_Column_Name': np.random.rand(1_001),
-            'categorical': [f'cat_{i}' for i in range(1_001)],
-        })
+        data = {
+            'table': pd.DataFrame({
+                'name_longer_than_Original_Column_Name': np.random.rand(1_001),
+                'categorical': [f'cat_{i}' for i in range(1_001)],
+            })
+        }
         instance = CTGANSynthesizer(metadata)
 
         # Run
@@ -262,10 +264,12 @@ class TestCTGANSynthesizer:
         metadata.add_table('table')
         metadata.add_column('name_longer_than_Original_Column_Name', 'table', sdtype='numerical')
         metadata.add_column('categorical', 'table', sdtype='categorical')
-        data = pd.DataFrame({
-            'name_longer_than_Original_Column_Name': np.random.rand(10),
-            'categorical': [f'cat_{i}' for i in range(10)],
-        })
+        data = {
+            'table': pd.DataFrame({
+                'name_longer_than_Original_Column_Name': np.random.rand(10),
+                'categorical': [f'cat_{i}' for i in range(10)],
+            })
+        }
         instance = CTGANSynthesizer(metadata)
 
         # Run

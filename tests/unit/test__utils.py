@@ -23,6 +23,7 @@ from sdv._utils import (
     _get_chars_for_option,
     _get_datetime_format,
     _get_root_tables,
+    _get_single_table_data,
     _get_transformer_init_kwargs,
     _is_datetime_type,
     _is_numerical,
@@ -31,6 +32,7 @@ from sdv._utils import (
     _parse_datetime64_value,
     _validate_boolean_parameter,
     _validate_correct_synthesizer_loading,
+    _validate_data_single_table,
     _validate_datetime_format,
     _validate_foreign_keys_not_null,
     check_sdv_versions_and_warn,
@@ -38,7 +40,7 @@ from sdv._utils import (
     generate_synthesizer_id,
     get_possible_chars,
 )
-from sdv.errors import SDVVersionWarning, SynthesizerInputError, VersionError
+from sdv.errors import InvalidDataTypeError, SDVVersionWarning, SynthesizerInputError, VersionError
 from sdv.metadata import Metadata
 from sdv.single_table import CTGANSynthesizer, GaussianCopulaSynthesizer
 from sdv.single_table.base import BaseSingleTableSynthesizer
@@ -1487,3 +1489,37 @@ def test__metadata_range_exceeds_real(mock__column_range_exceeds_real):
         call(data['table1']['col1'], {'sdtype': 'numerical'}),
         call(data['table1']['col2'], {'sdtype': 'categorical'}),
     ])
+
+
+def test__validate_data_single_table():
+    """Test the `_validate_data_single_table` method."""
+    # Setup
+    data = {'table': pd.DataFrame({'col1': [1, 2, 3]})}
+    invalid_data = {
+        'table_1': pd.DataFrame({'col1': ['a', 'b', 'c']}),
+        'table_2': pd.DataFrame({'col1': [1, 2, 3]}),
+    }
+    expected_message = re.escape(
+        'The `data` parameter must be a dictionary containing exactly one table name '
+        'mapped to a pandas DataFrame.'
+    )
+
+    # Run and Assert
+    _validate_data_single_table(data)
+    with pytest.raises(InvalidDataTypeError, match=expected_message):
+        _validate_data_single_table(invalid_data)
+
+
+@patch('sdv._utils._validate_data_single_table')
+def test__get_single_table_data(mock_validate_data_single_table):
+    """Test the `_get_single_table_data` method."""
+    # Setup
+    table = pd.DataFrame({'col1': [1, 2, 3]})
+    data = {'table': table}
+
+    # Run
+    result = _get_single_table_data(data)
+
+    # Assert
+    mock_validate_data_single_table.assert_called_once_with(data)
+    assert result.equals(table)

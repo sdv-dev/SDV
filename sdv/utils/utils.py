@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 from sdv._utils import (
+    _get_single_table_data,
     _validate_foreign_keys_not_null,
     check_sdv_versions_and_warn,
     check_synthesizer_version,
@@ -110,8 +111,9 @@ def get_random_sequence_subset(
     """Subsample sequential data based on a number of sequences.
 
     Args:
-        data (pandas.DataFrame):
-            The sequential data.
+        data (dict[str, pd.DataFrame]):
+            Dictionary that maps each table name (string) to the data for that
+            table (pandas.DataFrame). Expects a single table dataset.
         metadata (Metadata):
             A Metadata object describing the data.
         num_sequences (int):
@@ -128,6 +130,7 @@ def get_random_sequence_subset(
             - random: Randomly choose n rows to keep within the sequence. It is important to keep
             the randomly chosen rows in the same order as they appear in the original data.
     """
+    data = _get_single_table_data(data)
     if isinstance(metadata, Metadata):
         metadata = metadata._convert_to_single_table()
 

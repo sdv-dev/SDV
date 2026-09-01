@@ -361,7 +361,9 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                         synthesizer, child_name, child_rows.columns
                     )
                     if not child_rows.empty:
-                        synthesizer.fit_processed_data(child_rows.reset_index(drop=True))
+                        synthesizer.fit_processed_data({
+                            child_name: child_rows.reset_index(drop=True)
+                        })
                         row = synthesizer._get_parameters()
                         row = pd.Series(row)
                         row.index = f'__{child_name}__{foreign_key}__' + row.index
@@ -538,7 +540,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 self._set_extended_columns_distributions(
                     self._table_synthesizers[table_name], table_name, table.columns
                 )
-                self._table_synthesizers[table_name].fit_processed_data(table)
+                self._table_synthesizers[table_name].fit_processed_data({table_name: table})
                 table_parameters = self._table_synthesizers[table_name]._get_parameters()
                 self._default_parameters[table_name] = {
                     parameter: value

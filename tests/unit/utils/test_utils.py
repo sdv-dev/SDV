@@ -382,7 +382,7 @@ def test_get_random_sequence_subset_no_sequence_key():
         ' the sequential data.'
     )
     with pytest.raises(ValueError, match=error_message):
-        get_random_sequence_subset(pd.DataFrame(), metadata, 3)
+        get_random_sequence_subset({'table': pd.DataFrame()}, metadata, 3)
 
 
 def test_get_random_sequence_subset_sequence_key_not_in_data():
@@ -396,7 +396,7 @@ def test_get_random_sequence_subset_sequence_key_not_in_data():
         'Your provided sequence key is not in the data. This is required to get a subset.'
     )
     with pytest.raises(ValueError, match=error_message):
-        get_random_sequence_subset(pd.DataFrame(), metadata, 3)
+        get_random_sequence_subset({'table': pd.DataFrame()}, metadata, 3)
 
 
 def test_get_random_sequence_subset_bad_long_sequence_subsampling_method():
@@ -410,7 +410,7 @@ def test_get_random_sequence_subset_bad_long_sequence_subsampling_method():
         'long_sequence_subsampling_method must be one of "first_rows", "last_rows" or "random"'
     )
     with pytest.raises(ValueError, match=error_message):
-        get_random_sequence_subset(pd.DataFrame(), metadata, 3, 10, 'blah')
+        get_random_sequence_subset({'table': pd.DataFrame()}, metadata, 3, 10, 'blah')
 
 
 @patch('sdv.utils.utils.np')
@@ -423,7 +423,7 @@ def test_get_random_sequence_subset_no_max_sequence_length(mock_np):
     mock_np.random.permutation.return_value = np.array(['a', 'd'])
 
     # Run
-    subset = get_random_sequence_subset(data, metadata, num_sequences=2)
+    subset = get_random_sequence_subset({'table': data}, metadata, num_sequences=2)
 
     # Assert
     expected = pd.DataFrame({
@@ -447,7 +447,9 @@ def test_get_random_sequence_subset_use_first_rows(mock_np):
     mock_np.random.permutation.return_value = np.array(['a', 'b', 'd'])
 
     # Run
-    subset = get_random_sequence_subset(data, metadata, num_sequences=3, max_sequence_length=6)
+    subset = get_random_sequence_subset(
+        {'table': data}, metadata, num_sequences=3, max_sequence_length=6
+    )
 
     # Assert
     expected = pd.DataFrame({
@@ -472,7 +474,7 @@ def test_get_random_sequence_subset_use_last_rows(mock_np):
 
     # Run
     subset = get_random_sequence_subset(
-        data,
+        {'table': data},
         metadata,
         num_sequences=3,
         max_sequence_length=6,
@@ -506,7 +508,7 @@ def test_get_random_sequence_subset_use_random_rows(mock_np):
 
     # Run
     subset = get_random_sequence_subset(
-        data,
+        {'table': data},
         metadata,
         num_sequences=3,
         max_sequence_length=6,

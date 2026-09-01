@@ -281,7 +281,7 @@ class TestPARSynthesizer:
             "sequence (['sk_col1']=2)."
         )
         with pytest.raises(InvalidDataError, match=err_msg):
-            instance.validate(data)
+            instance.validate({'table': data})
 
     @pytest.mark.filterwarnings('error::FutureWarning')
     def test__transform_sequence(self):
@@ -368,16 +368,18 @@ class TestPARSynthesizer:
         # Setup
         metadata = self.get_metadata()
         par = PARSynthesizer(metadata=metadata)
-        par.auto_assign_transformers = Mock()
+        par._data_processor.prepare_for_fitting = Mock()
+        par._disable_sequence_index_min_max = Mock()
         par.update_transformers = Mock()
         data = self.get_data()
 
         # Run
-        par.preprocess(data)
+        par.preprocess({'table': data})
 
         # Assert
         expected_transformers = {'name': None}
-        par.auto_assign_transformers.assert_called_once_with(data)
+        par._data_processor.prepare_for_fitting.assert_called_once()
+        par._disable_sequence_index_min_max.assert_called_once()
         par.update_transformers.assert_called_once_with(expected_transformers)
         base_preprocess_mock.assert_called_once_with(data)
 
@@ -400,7 +402,7 @@ class TestPARSynthesizer:
         data = self.get_data()
 
         # Run
-        par.preprocess(data)
+        par.preprocess({'table': data})
 
         # Assert
         expected_transformers = {'name': None}
@@ -419,7 +421,7 @@ class TestPARSynthesizer:
         column_name_to_transformer = {'time': transformer}
 
         # Run
-        instance.auto_assign_transformers(data)
+        instance.auto_assign_transformers({'table': data})
         instance.update_transformers(column_name_to_transformer)
 
         # Assert
@@ -433,7 +435,7 @@ class TestPARSynthesizer:
         instance = PARSynthesizer(metadata, context_columns=['time'])
 
         # Run and Assert
-        instance.auto_assign_transformers(data)
+        instance.auto_assign_transformers({'table': data})
         err_msg = 'Transformers for context columns are not allowed to be updated.'
         with pytest.raises(SynthesizerInputError, match=err_msg):
             instance.update_transformers({'time': FloatFormatter()})
@@ -445,6 +447,7 @@ class TestPARSynthesizer:
         data = self.get_data()
 
         data.insert(1, 'height', [160, 170, 180])
+        data = {'table': data}
         metadata.add_column('height', 'table', sdtype='numerical')
         instance = PARSynthesizer(metadata, context_columns=['gender', 'height'])
 
@@ -458,9 +461,10 @@ class TestPARSynthesizer:
         """Test that the context columns is still the same order."""
         # Setup
         metadata = self.get_metadata()
-        data = self.get_data()
+        table_data = self.get_data()
 
-        data.insert(2, 'height', [160, 170, 180])
+        table_data.insert(2, 'height', [160, 170, 180])
+        data = {'table': table_data}
         metadata.add_column('height', 'table', sdtype='numerical')
         instance = PARSynthesizer(metadata, context_columns=['gender', 'height'])
 
@@ -498,7 +502,7 @@ class TestPARSynthesizer:
             enforce_min_max_values=initial_synthesizer.enforce_min_max_values,
             enforce_rounding=initial_synthesizer.enforce_rounding,
         )
-        fitted_data = gaussian_copula_mock().fit.mock_calls[0][1][0]
+        fitted_data = gaussian_copula_mock().fit.mock_calls[0][1][0]['table']
         expected_fitted_data = pd.DataFrame({
             'name': ['Doe', 'Jane', 'John'],
             'gender': ['M', 'F', 'M'],
@@ -541,7 +545,7 @@ class TestPARSynthesizer:
             enforce_rounding=initial_synthesizer.enforce_rounding,
         )
         assert converted_context_metadata.columns == context_metadata.columns
-        fitted_data = gaussian_copula_mock().fit.mock_calls[0][1][0]
+        fitted_data = gaussian_copula_mock().fit.mock_calls[0][1][0]['table']
         expected_fitted_data = pd.DataFrame({
             'name': ['Doe', 'Jane', 'John'],
             'time': [1.578010e09, 1.577837e09, 1.577923e09],
@@ -570,7 +574,7 @@ class TestPARSynthesizer:
 
         # Run
         par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
-        par.auto_assign_transformers(data)
+        par.auto_assign_transformers({'table': data})
 
         # Assert
         assert (
@@ -596,7 +600,7 @@ class TestPARSynthesizer:
         par._fit_context_model(data)
 
         # Assert
-        fitted_data = par._context_synthesizer.fit.mock_calls[0][1][0]
+        fitted_data = par._context_synthesizer.fit.mock_calls[0][1][0]['table']
         expected_fitted_data = pd.DataFrame({'name': ['Doe', 'Jane', 'John'], 'abc': [0, 0, 0]})
         pd.testing.assert_frame_equal(fitted_data.sort_values(by='name'), expected_fitted_data)
 
@@ -649,7 +653,7 @@ class TestPARSynthesizer:
         metadata = self.get_metadata()
         metadata.update_column('measurement', 'table', sdtype='categorical')
         par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
-        par.auto_assign_transformers(data)
+        par.auto_assign_transformers({'table': data})
         sequences = [
             {'context': np.array(['M'], dtype=object), 'data': [['2020-01-03'], [65.0]]},
             {'context': np.array(['F'], dtype=object), 'data': [['2020-01-01'], [55.0]]},
@@ -923,28 +927,19 @@ class TestPARSynthesizer:
         par._sample_from_par.assert_called_once_with(context_columns, 5)
 
     def test_sample(self):
-        """Test that the method samples the context columns and uses them to sample from PAR."""
+        """Test that the method is not supported for sequential synthesizers."""
         # Setup
-        metadata = self.get_metadata()
-        par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
-        par._context_synthesizer = Mock()
-        context_columns = pd.DataFrame({
-            'name': ['John', 'John', 'Jane'],
-            'gender': ['M', 'M', 'F'],
-        })
-        par._context_synthesizer._sample_with_progress_bar.return_value = context_columns
-        par._sample = Mock()
+        par = PARSynthesizer(metadata=self.get_metadata())
 
-        # Run
-        par.sample(3, 2)
-
-        # Assert
-        par._context_synthesizer._sample_with_progress_bar.assert_called_once_with(
-            3, output_file_path='disable', show_progress_bar=False
+        # Run and Assert
+        error_message = re.escape(
+            "'sample' is not supported for sequential synthesizers. "
+            "Please use 'sample_sequences' instead."
         )
-        par._sample.assert_called_once_with(context_columns, 2)
+        with pytest.raises(NotImplementedError, match=error_message):
+            par.sample('table', 3)
 
-    def test_sample_sequence_key_needs_to_be_filled_in(self):
+    def test_sample_sequences_sequence_key_needs_to_be_filled_in(self):
         """Test that the method adds the sequence key to the context columns if necessary."""
         # Setup
         metadata = self.get_metadata()
@@ -955,7 +950,7 @@ class TestPARSynthesizer:
         par._sample = Mock()
 
         # Run
-        par.sample(3, 2)
+        par.sample_sequences(num_sequences=3, sequence_length=2)
 
         # Assert
         par._context_synthesizer._sample_with_progress_bar.assert_called_once_with(
@@ -1022,7 +1017,7 @@ class TestPARSynthesizer:
 
         # Run and Assert
         error_message = re.escape(
-            "This synthesizer does not have any context columns. Please use 'sample()' "
+            "This synthesizer does not have any context columns. Please use 'sample_sequences()' "
             'to sample new sequences.'
         )
         with pytest.raises(SamplingError, match=error_message):
@@ -1107,7 +1102,8 @@ class TestPARSynthesizer:
         """Test that the method converts datetime values to numerical space before sampling."""
         # Setup
         par = PARSynthesizer(metadata=self.get_metadata(), context_columns=['time'])
-        data = self.get_data()
+        table_data = self.get_data()
+        data = {'table': table_data}
         par.fit(data)
 
         par._context_synthesizer = Mock()
@@ -1194,7 +1190,7 @@ class TestPARSynthesizer:
         })
         pd.testing.assert_frame_equal(sampled, expected_output)
 
-    def test_sample_with_all_null_column_numerical(self):
+    def test_sample_sequences_with_all_null_column_numerical(self):
         """Test that sampling works correctly with all-null numerical columns."""
         # Setup
         data = pd.DataFrame({
@@ -1204,6 +1200,7 @@ class TestPARSynthesizer:
             'measurement': [55, 60, 65] * 3,
             'all_null_col': [np.nan] * 9,
         })
+        data = {'table': data}
 
         metadata = Metadata()
         metadata.add_table('table')
@@ -1217,14 +1214,14 @@ class TestPARSynthesizer:
         # Run
         synthesizer = PARSynthesizer(metadata=metadata, epochs=1)
         synthesizer.fit(data)
-        result = synthesizer.sample(num_sequences=2)
+        result = synthesizer.sample_sequences(num_sequences=2)['table']
 
         # Assert
         assert 'all_null_col' in result.columns
         assert result['all_null_col'].isna().all()
         assert len(result) > 0
 
-    def test_sample_with_all_null_column_categorical(self):
+    def test_sample_sequences_with_all_null_column_categorical(self):
         """Test that sampling works correctly with all-null categorical columns."""
         # Setup
         data = pd.DataFrame({
@@ -1234,6 +1231,7 @@ class TestPARSynthesizer:
             'measurement': [55, 60, 65] * 3,
             'all_null_cat_col': [np.nan] * 9,
         })
+        data = {'table': data}
 
         metadata = Metadata()
         metadata.add_table('table')
@@ -1247,7 +1245,7 @@ class TestPARSynthesizer:
         # Run
         synthesizer = PARSynthesizer(metadata=metadata, epochs=1)
         synthesizer.fit(data)
-        result = synthesizer.sample(num_sequences=2)
+        result = synthesizer.sample_sequences(num_sequences=2)['table']
 
         # Assert
         assert 'all_null_cat_col' in result.columns
@@ -1257,7 +1255,7 @@ class TestPARSynthesizer:
     @pytest.mark.filterwarnings(
         'error:Series.__getitem__ treating keys as positions is deprecated:FutureWarning'
     )
-    def test_sample_with_multiple_all_null_columns(self):
+    def test_sample_sequences_with_multiple_all_null_columns(self):
         """Test that sampling works correctly with multiple all-null columns."""
         # Setup
         data = pd.DataFrame({
@@ -1268,6 +1266,7 @@ class TestPARSynthesizer:
             'all_null_col1': [np.nan] * 9,
             'all_null_col2': [np.nan] * 9,
         })
+        data = {'table': data}
 
         metadata = Metadata().load_from_dict({
             'tables': {
@@ -1288,7 +1287,7 @@ class TestPARSynthesizer:
         # Run
         synthesizer = PARSynthesizer(metadata=metadata, epochs=1)
         synthesizer.fit(data)
-        result = synthesizer.sample(num_sequences=2)
+        result = synthesizer.sample_sequences(num_sequences=2)['table']
 
         # Assert
         assert 'all_null_col1' in result.columns
@@ -1296,3 +1295,31 @@ class TestPARSynthesizer:
         assert result['all_null_col1'].isna().all()
         assert result['all_null_col2'].isna().all()
         assert len(result) > 0
+
+    def test_sample_sequences(self):
+        """Test that ``sample_sequences`` method."""
+        # Setup
+        metadata = self.get_metadata()
+        par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
+        par._context_synthesizer = Mock()
+        context_columns = pd.DataFrame({
+            'name': ['John', 'John', 'Jane'],
+            'gender': ['M', 'M', 'F'],
+        })
+        par._context_synthesizer._sample_with_progress_bar.return_value = context_columns
+        sampled_table_data = pd.DataFrame({
+            'name': ['John', 'John', 'Jane'],
+            'measurement': [10, 20, 30],
+        })
+        par._sample = Mock(return_value=sampled_table_data)
+
+        # Run
+        result = par.sample_sequences(num_sequences=3, sequence_length=2)
+
+        # Assert
+        par._context_synthesizer._sample_with_progress_bar.assert_called_once_with(
+            3, output_file_path='disable', show_progress_bar=False
+        )
+        par._sample.assert_called_once_with(context_columns, 2)
+        assert list(result) == ['table']
+        pd.testing.assert_frame_equal(result['table'], sampled_table_data)
