@@ -677,12 +677,12 @@ class TestBaseMultiTableSynthesizer:
         instance.auto_assign_transformers(data)
 
         # Assert
-        instance._table_synthesizers['nesreca'].auto_assign_transformers.assert_called_once_with(
-            table1
-        )
-        instance._table_synthesizers['oseba'].auto_assign_transformers.assert_called_once_with(
-            table2
-        )
+        instance._table_synthesizers['nesreca'].auto_assign_transformers.assert_called_once_with({
+            'nesreca': table1
+        })
+        instance._table_synthesizers['oseba'].auto_assign_transformers.assert_called_once_with({
+            'oseba': table2
+        })
 
     def test_auto_assign_transformers_foreign_key_none(self):
         """Test that each table's foreign key transformers are set to None."""
@@ -861,7 +861,7 @@ class TestBaseMultiTableSynthesizer:
         instance._assign_table_transformers(synthesizer, 'oseba', table_data)
 
         # Assert
-        synthesizer.auto_assign_transformers.assert_called_once_with(table_data)
+        synthesizer.auto_assign_transformers.assert_called_once_with({'oseba': table_data})
         synthesizer.update_transformers.assert_called_once_with({'a': None, 'b': None})
 
     def test_preprocess(self):
@@ -919,7 +919,7 @@ class TestBaseMultiTableSynthesizer:
             call('upravna_enota'),
         ]
 
-        synth_nesreca.auto_assign_transformers.assert_called_once_with(data['nesreca'])
+        synth_nesreca.auto_assign_transformers.assert_called_once_with({'nesreca': data['nesreca']})
         synth_nesreca._preprocess.assert_called_once_with(data['nesreca'])
         synth_nesreca.update_transformers.assert_called_once_with({'a': None, 'b': None})
         synth_nesreca._validate_transform_constraints.assert_called_once_with(data['nesreca'])
@@ -1346,33 +1346,75 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(NotImplementedError, match=''):
             instance._sample(scale=1.0)
 
-    def test_sample_validate_input(self):
-        """Test that SynthesizerInputError is raised if 'scale' is not >0.0."""
+    @pytest.mark.parametrize(
+        ('parameter_name', 'parameter_value', 'expected_error'),
+        [
+            pytest.param(
+                'num_rows',
+                0,
+                "Invalid parameter for 'num_rows' (0). "
+                'Please provide an integer that is greater than 0.',
+                id='invalid_num_rows',
+            ),
+            pytest.param(
+                'max_tries_per_batch',
+                0,
+                "Invalid parameter for 'max_tries_per_batch' (0). "
+                'Please provide an integer that is greater than 0.',
+                id='invalid_max_tries_per_batch',
+            ),
+            pytest.param(
+                'batch_size',
+                0,
+                "Invalid parameter for 'batch_size' (0). "
+                'Please provide an integer that is greater than 0.',
+                id='invalid_batch_size',
+            ),
+            pytest.param(
+                'output_folder_path',
+                '',
+                "Invalid parameter for 'output_folder_path' (). Please provide a valid"
+                ' string path.',
+                id='empty_output_folder_path',
+            ),
+            pytest.param(
+                'output_folder_path',
+                10,
+                "Invalid parameter for 'output_folder_path' (10). Please provide a valid "
+                'string path.',
+                id='invalid_output_folder_path_type',
+            ),
+        ],
+    )
+    @patch('sdv.multi_table.base._validate_positive_integer')
+    def test__validate_sample_input_errors(
+        self,
+        mock_validate_positive_integer,
+        parameter_name,
+        parameter_value,
+        expected_error,
+    ):
+        """Test ``_validate_sample_input`` raises an error for invalid inputs."""
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
         instance._fitted = True
-        instance._sample = Mock()
-        scales = ['Test', True, -1.2, np.nan]
+        instance.get_metadata = Mock(return_value=Mock(tables={'table'}))
+
+        arguments = {
+            'table_name': 'table',
+            'num_rows': 10,
+            'batch_size': 5,
+            'max_tries_per_batch': 100,
+            'output_folder_path': None,
+        }
+        arguments[parameter_name] = parameter_value
+        if parameter_name in {'num_rows', 'batch_size', 'max_tries_per_batch'}:
+            mock_validate_positive_integer.side_effect = SynthesizerInputError(expected_error)
 
         # Run and Assert
-        msg_1 = re.escape(
-            "Invalid parameter for 'scale' (Test). Please provide a number that is >0.0."
-        )
-        msg_2 = re.escape(
-            "Invalid parameter for 'scale' (True). Please provide a number that is >0.0."
-        )
-        msg_3 = re.escape(
-            "Invalid parameter for 'scale' (-1.2). Please provide a number that is >0.0."
-        )
-        msg_4 = re.escape(
-            "Invalid parameter for 'scale' (nan). Please provide a number that is >0.0."
-        )
-        err_msg = [msg_1, msg_2, msg_3, msg_4]
-
-        for scale, msg in zip(scales, err_msg):
-            with pytest.raises(SynthesizerInputError, match=msg):
-                instance.sample(scale=scale)
+        with pytest.raises(SynthesizerInputError, match=re.escape(expected_error)):
+            instance._validate_sample_input(**arguments)
 
     def test_sample_raises_sampling_error(self):
         """Test that ``sample`` will raise ``SamplingError`` when not fitted."""
@@ -1386,7 +1428,55 @@ class TestBaseMultiTableSynthesizer:
             'sampling synthetic data.'
         )
         with pytest.raises(SamplingError, match=error_msg):
-            instance.sample(1)
+            instance.sample('table', 1)
+
+    def test__resolve_scale(self):
+        """Test that ``_resolve_scale`` method."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance._table_sizes = {'table': 10}
+
+        # Run
+        scale_1 = instance._resolve_scale('table', 10)
+        scale_2 = instance._resolve_scale('table', 20)
+        scale_3 = instance._resolve_scale('table', 5)
+
+        # Assert
+        assert scale_1 == 1
+        assert scale_2 == 2
+        assert scale_3 == 0.5
+
+    def test__sample_in_batches(self):
+        """Test that ``_sample_in_batches`` method."""
+        # Setup
+        instance = Mock()
+        synthesizer = Mock()
+        synthesizer._sample_batch.side_effect = [
+            pd.DataFrame({'col': [1, 2, 3, 4]}),
+            pd.DataFrame({'col': [5, 6, 7, 8]}),
+            pd.DataFrame({'col': [9, 10]}),
+        ]
+
+        expected = pd.DataFrame({'col': list(range(1, 11))})
+
+        # Run
+        result = BaseMultiTableSynthesizer._sample_in_batches(
+            instance,
+            synthesizer=synthesizer,
+            num_rows=10,
+            batch_size=4,
+            max_tries_per_batch=100,
+        )
+
+        # Assert
+        expected_calls = [
+            call(4, max_tries=100, keep_extra_columns=True),
+            call(4, max_tries=100, keep_extra_columns=True),
+            call(2, max_tries=100, keep_extra_columns=True),
+        ]
+        assert synthesizer._sample_batch.call_args_list == expected_calls
+        pd.testing.assert_frame_equal(result, expected)
 
     @patch('sdv.multi_table.base.datetime')
     def test_sample(self, mock_datetime, caplog):
@@ -1398,6 +1488,9 @@ class TestBaseMultiTableSynthesizer:
         instance._fitted = True
         data = get_multi_table_data()
         instance._sample = Mock(return_value=data)
+        instance._validate_sample_input = Mock()
+        instance._resolve_scale = Mock(return_value=1.5)
+        instance._save_sampled_data = Mock()
         instance._original_table_columns = {
             'nesreca': ['upravna_enota', 'id_nesreca', 'nesreca_val'],
         }
@@ -1407,10 +1500,13 @@ class TestBaseMultiTableSynthesizer:
 
         # Run
         with catch_sdv_logs(caplog, logging.INFO, logger='MultiTableSynthesizer'):
-            instance.sample(scale=1.5)
+            result = instance.sample(table_name='nesreca', num_rows=10, output_folder_path='output')
 
         # Assert
-        instance._sample.assert_called_once_with(scale=1.5)
+        instance._sample.assert_called_once_with(
+            scale=1.5, batch_size=None, max_tries_per_batch=100
+        )
+        instance._save_sampled_data.assert_called_once_with(result, 'output')
         assert caplog.messages[0] == str({
             'EVENT': 'Sample',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',

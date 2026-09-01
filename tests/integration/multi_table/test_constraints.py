@@ -43,7 +43,7 @@ def test_overlapping_single_table_constraints():
     # Run
     synthesizer.add_constraints(constraints=[constraint1, constraint2])
     synthesizer.fit(data)
-    sampled = synthesizer.sample(10)
+    sampled = synthesizer.sample('parent_table', 10 * len(parent_table))
 
     # Assert
     assert all(sampled['parent_table']['colA'] < sampled['parent_table']['colB'])
@@ -87,7 +87,7 @@ def test_add_constraint_iteratively():
     synthesizer.add_constraints([constraint1])
     synthesizer.add_constraints([constraint2])
     synthesizer.fit(data)
-    sampled = synthesizer.sample(10)
+    sampled = synthesizer.sample('parent_table', 10 * len(parent_table))
 
     # Assert
     assert all(sampled['parent_table']['colA'] < sampled['parent_table']['colB'])
@@ -124,7 +124,7 @@ def test_ohe_with_integer_dtypes(dtype):
 
     # Run
     synthesizer.fit(data)
-    synthetic_data = synthesizer.sample(scale=2.0)
+    synthetic_data = synthesizer.sample('table1', 2 * len(data['table1']))
 
     # Assert
     synthesizer.validate(synthetic_data)

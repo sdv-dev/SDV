@@ -68,6 +68,7 @@ def test_download_demo_single_table(mock_list, mock_get, tmpdir):
         {'Key': 'single_table/ring/metadata.json'},
     ]
     df = pd.DataFrame({'0': [0, 0], '1': [0, 0]})
+    table_name = 'ring'
     zip_bytes = _make_zip_with_csv('ring.csv', df)
     meta_bytes = json.dumps({
         'METADATA_SPEC_VERSION': 'V2',
@@ -93,9 +94,10 @@ def test_download_demo_single_table(mock_list, mock_get, tmpdir):
     mock_get.side_effect = side_effect
 
     # Run
-    table, metadata = download_demo('single_table', 'ring', tmpdir / 'test_folder')
+    data, metadata = download_demo('single_table', table_name, tmpdir / 'test_folder')
 
     # Assert
+    table = data[table_name]
     expected_table = pd.DataFrame({'0': [0, 0], '1': [0, 0]})
     pd.testing.assert_frame_equal(table.head(2), expected_table)
     expected_metadata_dict = {
@@ -183,11 +185,13 @@ def test_download_demo_single_table_no_output_folder(mock_list, mock_get):
     mock_get.side_effect = lambda key, bucket, client: (
         zip_bytes if key.endswith('data.zip') else meta_bytes
     )
+    table_name = 'ring'
 
     # Run
-    table, metadata = download_demo('single_table', 'ring')
+    data, metadata = download_demo('single_table', table_name)
 
     # Assert
+    table = data[table_name]
     expected_table = pd.DataFrame({'0': [0, 0], '1': [0, 0]})
     pd.testing.assert_frame_equal(table.head(2), expected_table)
     expected_metadata_dict = {
@@ -240,11 +244,13 @@ def test_download_demo_timeseries(mock_list, mock_get, tmpdir):
     mock_get.side_effect = lambda key, bucket, client: (
         zip_bytes if key.endswith('data.zip') else meta_bytes
     )
+    table_name = 'Libras'
 
     # Run
-    table, metadata = download_demo('sequential', 'Libras', tmpdir / 'test_folder')
+    data, metadata = download_demo('sequential', table_name, tmpdir / 'test_folder')
 
     # Assert
+    table = data[table_name]
     expected_table = pd.DataFrame({
         'ml_class': [1, 1],
         'e_id': [0, 0],
@@ -644,13 +650,15 @@ def test_download_demo_success_single_table(mock_list, mock_get):
         raise KeyError(key)
 
     mock_get.side_effect = side_effect
+    table_name = 'word'
 
     # Run
-    data, metadata = download_demo('single_table', 'word')
+    data, metadata = download_demo('single_table', table_name)
 
     # Assert
-    assert isinstance(data, pd.DataFrame)
-    assert set(data.columns) == {'id', 'name'}
+    table = data[table_name]
+    assert isinstance(table, pd.DataFrame)
+    assert set(table.columns) == {'id', 'name'}
     assert metadata.to_dict()['tables']['word']['primary_key'] == 'id'
 
 
@@ -774,7 +782,7 @@ def test_download_demo_writes_metadata_and_discovers_nested_csv(mock_list, mock_
     data, metadata = download_demo('single_table', 'nested', out)
 
     # Assert
-    pd.testing.assert_frame_equal(data, df)
+    pd.testing.assert_frame_equal(data['my_table'], df)
     assert metadata.to_dict() == meta_dict
 
     meta_path = out / 'metadata.json'
@@ -1298,7 +1306,7 @@ def test_download_demo_warns_for_non_csv_in_memory(mock_list, mock_get):
     assert any(warn_msg in str(warn_record) for warn_record in rec)
 
     expected = pd.DataFrame({'id': [1, 2], 'name': ['a', 'b']})
-    pd.testing.assert_frame_equal(data, expected)
+    pd.testing.assert_frame_equal(data['good'], expected)
 
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
@@ -1356,7 +1364,7 @@ def test_download_demo_on_disk_warns_failed_csv_only(mock_list, mock_get, tmp_pa
         data, _ = download_demo('single_table', 'mix', out_dir)
 
     assert any(warn_msg in str(warn_record) for warn_record in rec)
-    pd.testing.assert_frame_equal(data, good)
+    pd.testing.assert_frame_equal(data['good'], good)
 
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
@@ -1391,13 +1399,14 @@ def test_download_demo_handles_non_utf8_in_memory(mock_list, mock_get):
     mock_get.side_effect = lambda key, bucket, client: (
         zip_bytes if key.endswith('data.zip') else meta_bytes
     )
+    table_name = 'nonutf'
 
     # Run
-    data, _ = download_demo('single_table', 'nonutf')
+    data, _ = download_demo('single_table', table_name)
 
     # Assert
     expected = pd.DataFrame({'id': [1], 'name': ['café']})
-    pd.testing.assert_frame_equal(data, expected)
+    pd.testing.assert_frame_equal(data[table_name], expected)
 
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
@@ -1434,13 +1443,14 @@ def test_download_demo_handles_non_utf8_on_disk(mock_list, mock_get, tmp_path):
     )
 
     out_dir = tmp_path / 'latin_out'
+    table_name = 'nonutf'
 
     # Run
-    data, _ = download_demo('single_table', 'nonutf', out_dir)
+    data, _ = download_demo('single_table', table_name, out_dir)
 
     # Assert
     expected = pd.DataFrame({'id': [1], 'name': ['café']})
-    pd.testing.assert_frame_equal(data, expected)
+    pd.testing.assert_frame_equal(data[table_name], expected)
 
 
 def test_download_demo_private_bucket_raises_error():
@@ -1681,13 +1691,14 @@ def test_download_demo_with_output_folder_name_single_table(mock_list, mock_get,
     )
     output_folder_name = tmp_path / 'out'
     csv_path = output_folder_name / 'ring.csv'
+    table_name = 'ring'
 
     # Run
-    data, _ = download_demo('single_table', 'ring', output_folder_name)
+    data, _ = download_demo('single_table', table_name, output_folder_name)
 
     # Assert
     assert csv_path.is_file()
-    pd.testing.assert_frame_equal(pd.read_csv(csv_path), data)
+    pd.testing.assert_frame_equal(pd.read_csv(csv_path), data[table_name])
 
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
