@@ -960,3 +960,138 @@ def test_range_extrapolation_warns_to_install_bundle(synthesizer_class):
     # Assert
     sampled = sampled['fake_hotel_guests']
     assert min(sampled['room_rate']) >= min(data['fake_hotel_guests']['room_rate'])
+
+
+@pytest.mark.parametrize(
+    'method, method_kwargs, expected_num_rows',
+    [
+        pytest.param(
+            'sample',
+            {
+                'table_name': 'table',
+                'num_rows': 10,
+            },
+            10,
+            id='sample',
+        ),
+        pytest.param(
+            'sample_from_conditions',
+            {
+                'conditions': [
+                    Condition({'column1': 1, 'column2': 4}),
+                ],
+            },
+            1,
+            id='sample_from_conditions',
+        ),
+        pytest.param(
+            'sample_remaining_columns',
+            {
+                'known_columns': pd.DataFrame(
+                    {'column1': [1, 2, 3, 1, 2]},
+                ),
+            },
+            5,
+            id='sample_remaining_columns',
+        ),
+    ],
+)
+def test_sample_methods_with_output_folder_path(
+    tmp_path,
+    method,
+    method_kwargs,
+    expected_num_rows,
+):
+    """Test that the sample methods save the sampled data in the output folder."""
+    # Setup
+    data = {
+        'table': pd.DataFrame({
+            'column1': [1, 2, 3],
+            'column2': [4, 5, 6],
+        })
+    }
+    metadata = Metadata.detect_from_dataframes(data)
+    output_folder_path = tmp_path / 'output'
+    output_file_path = output_folder_path / 'table.csv'
+
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.fit(data)
+
+    # Run
+    sampled = getattr(synthesizer, method)(
+        output_folder_path=str(output_folder_path),
+        **method_kwargs,
+    )
+
+    # Assert
+    assert output_file_path.exists()
+    assert len(sampled['table']) == expected_num_rows
+
+    saved_data = pd.read_csv(output_file_path)
+    pd.testing.assert_frame_equal(
+        saved_data,
+        sampled['table'],
+        check_dtype=False,
+    )
+
+
+@pytest.mark.parametrize(
+    'method, method_kwargs',
+    [
+        pytest.param(
+            'sample',
+            {
+                'table_name': 'table',
+                'num_rows': 10,
+            },
+            id='sample',
+        ),
+        pytest.param(
+            'sample_from_conditions',
+            {
+                'conditions': [
+                    Condition({'column1': 1, 'column2': 4}),
+                ],
+            },
+            id='sample_from_conditions',
+        ),
+        pytest.param(
+            'sample_remaining_columns',
+            {
+                'known_columns': pd.DataFrame(
+                    {'column1': [1, 2, 3, 1, 2]},
+                ),
+            },
+            id='sample_remaining_columns',
+        ),
+    ],
+)
+def test_sample_methods_with_existing_output_file(
+    tmp_path,
+    method,
+    method_kwargs,
+):
+    """Test that the sample methods raise an error if the output file already exists."""
+    # Setup
+    data = {
+        'table': pd.DataFrame({
+            'column1': [1, 2, 3],
+            'column2': [4, 5, 6],
+        })
+    }
+    metadata = Metadata.detect_from_dataframes(data)
+    output_folder_path = tmp_path / 'output'
+    output_folder_path.mkdir()
+    output_file_path = output_folder_path / 'table.csv'
+    output_file_path.touch()
+
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.fit(data)
+
+    # Run and Assert
+    error_msg = f'The following output files already exist:\n{output_file_path}'
+    with pytest.raises(AssertionError, match=re.escape(error_msg)):
+        getattr(synthesizer, method)(
+            output_folder_path=str(output_folder_path),
+            **method_kwargs,
+        )

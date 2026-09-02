@@ -197,11 +197,11 @@ def validate_folder_path_with_table_names(output_folder_path, table_names):
     """
     if output_folder_path == DISABLE_TMP_FILE:
         # Temporary way of disabling the output file feature, used by HMA1.
-        return None
+        return [None]
 
     if not output_folder_path:
         # Do not save files if the user specified not to save them.
-        return None
+        return [None]
 
     output_folder_path = os.path.abspath(output_folder_path)
     output_paths = [

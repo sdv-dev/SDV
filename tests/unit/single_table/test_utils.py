@@ -1,11 +1,12 @@
 import os
+import re
 import warnings
 from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
 import pytest
-import re
+
 from sdv.metadata._single_table import _SingleTableMetadata
 from sdv.single_table.utils import (
     _key_order,
@@ -325,17 +326,17 @@ def test_check_num_rows_valid(warning_mock):
 
 
 @patch('builtins.open')
-def test_validate_file_path(mock_open):
+def test_validate_file_path(mock_open, tmp_path):
     """Test the validate_file_path function."""
     # Setup
-    output_path = '.sample.csv.temp'
+    output_path = str(tmp_path / 'sample.csv')
 
     # Run
     result = validate_file_path(output_path)
     none_result = validate_file_path(None)
 
     # Assert
-    assert output_path in result
+    assert result == output_path
     assert none_result is None
     mock_open.assert_called_once_with(result, 'w+')
 
@@ -376,7 +377,7 @@ def test_validate_folder_path_with_table_names(mock_makedirs):
     ]
 
     assert result == expected_output_paths
-    assert none_result is None
+    assert none_result == [None]
     mock_makedirs.assert_called_once_with(expected_folder_path, exist_ok=True)
 
 
@@ -397,6 +398,7 @@ def test_validate_folder_path_with_table_names_permission_error(mock_makedirs):
     assert mock_makedirs.called
     assert any('Permission denied' in str(warning.message) for warning in warned)
 
+
 @patch('os.path.exists')
 def test_validate_folder_path_with_table_names_existing_files(mock_exists):
     """Test the function raises an error listing all existing output files."""
@@ -408,8 +410,8 @@ def test_validate_folder_path_with_table_names_existing_files(mock_exists):
     expected_folder_path = os.path.abspath(output_folder_path)
     expected_error = (
         'The following output files already exist:\n'
-        f"{os.path.join(expected_folder_path, 'users.csv')}\n"
-        f"{os.path.join(expected_folder_path, 'payments.csv')}"
+        f'{os.path.join(expected_folder_path, "users.csv")}\n'
+        f'{os.path.join(expected_folder_path, "payments.csv")}'
     )
 
     # Run and Assert
