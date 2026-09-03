@@ -1688,6 +1688,106 @@ def test_detect_from_dataframes_verbose_updates_fk_sdtype(capsys):
     assert metadata.tables['transactions'].columns['account']['sdtype'] == 'id'
 
 
+def test_detect_from_dataframes_small_dataset():
+    """Test `detect_from_dataframes` by comparing with the expected metadata."""
+    # Setup
+    num_rows = 50
+    data = {
+        'users': pd.DataFrame({
+            'user_id': [f'user_{i}' for i in range(num_rows)],
+            'age': range(20, 20 + num_rows),
+            'signup_date': [str(d) for d in pd.date_range('2026-01-01', periods=num_rows)],
+            'is_active': [True, False] * 25,
+        }),
+        'transactions': pd.DataFrame({
+            'transaction_id': [f'transaction_{i}' for i in range(num_rows)],
+            'user_id': [f'user_{i}' for i in range(num_rows)],
+            'category': ['food', 'travel'] * 25,
+            'rating': [1, 2, 3, 4, 5] * 10,
+            'amount': [10.5 + i for i in range(num_rows)],
+        }),
+    }
+
+    expected_metadata = {
+        'tables': {
+            'users': {
+                'primary_key': 'user_id',
+                'columns': {
+                    'user_id': {
+                        'sdtype': 'id',
+                    },
+                    'age': {
+                        'sdtype': 'numerical',
+                        'range_is_nullable': False,
+                        'range_min': 20,
+                        'range_max': 69,
+                        'decimal_places': 0,
+                    },
+                    'signup_date': {
+                        'sdtype': 'datetime',
+                        'datetime_format': '%Y-%m-%d %H:%M:%S',
+                        'range_is_nullable': False,
+                        'range_min': '2026-01-01 00:00:00',
+                        'range_max': '2026-02-19 00:00:00',
+                    },
+                    'is_active': {
+                        'sdtype': 'categorical',
+                        'range_is_nullable': False,
+                        'range_values': [True, False],
+                    },
+                },
+            },
+            'transactions': {
+                'primary_key': 'transaction_id',
+                'columns': {
+                    'transaction_id': {
+                        'sdtype': 'id',
+                    },
+                    'user_id': {
+                        'sdtype': 'id',
+                        'range_is_nullable': False,
+                    },
+                    'category': {
+                        'sdtype': 'categorical',
+                        'range_is_nullable': False,
+                        'range_values': ['food', 'travel'],
+                    },
+                    'rating': {
+                        'sdtype': 'ordinal',
+                        'range_is_nullable': False,
+                        'range_values': [1, 2, 3, 4, 5],
+                    },
+                    'amount': {
+                        'sdtype': 'numerical',
+                        'range_is_nullable': False,
+                        'range_min': 10.5,
+                        'range_max': 59.5,
+                        'decimal_places': 1,
+                    },
+                },
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'transactions',
+                'parent_primary_key': 'user_id',
+                'child_foreign_key': 'user_id',
+            },
+        ],
+        'METADATA_SPEC_VERSION': 'V2',
+    }
+
+    # Run
+    metadata = Metadata.detect_from_dataframes(
+        data,
+        foreign_key_inference_algorithm='column_name_match',
+    )
+
+    # Assert
+    assert metadata.to_dict() == expected_metadata
+
+
 def test_detect_from_dataframes_verbose_no_pk_found(capsys):
     """Test 'detect_from_dataframes' verbose output when no PK found."""
     # Setup
