@@ -827,7 +827,7 @@ class _SingleTableMetadata:
 
             elif sdtype == 'datetime':
                 datetime_format = column_metadata.get('datetime_format')
-                clean_data = pd.to_datetime(clean_data, format=datetime_format)
+                clean_data = pd.to_datetime(clean_data, format=datetime_format, errors='coerce')
 
                 range_min = clean_data.min()
                 range_max = clean_data.max()
