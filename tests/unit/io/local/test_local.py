@@ -38,31 +38,37 @@ class TestBaseLocalHandler:
         # Assert
         assert isinstance(metadata, Metadata)
         assert metadata.to_dict() == {
-            'METADATA_SPEC_VERSION': 'V2',
-            'relationships': [
-                {
-                    'child_foreign_key': 'hotel_id',
-                    'child_table_name': 'guests',
-                    'parent_primary_key': 'hotel_id',
-                    'parent_table_name': 'hotel',
-                },
-            ],
             'tables': {
-                'guests': {
-                    'columns': {
-                        'guest_id': {'sdtype': 'id'},
-                        'hotel_id': {'sdtype': 'id'},
-                    },
-                    'primary_key': 'guest_id',
-                },
                 'hotel': {
                     'columns': {
                         'hotel_id': {'sdtype': 'id'},
-                        'stars': {'sdtype': 'numerical'},
+                        'stars': {
+                            'sdtype': 'numerical',
+                            'range_is_nullable': False,
+                            'range_min': 3,
+                            'range_max': 5,
+                            'decimal_places': 0,
+                        },
                     },
                     'primary_key': 'hotel_id',
                 },
+                'guests': {
+                    'columns': {
+                        'guest_id': {'sdtype': 'id'},
+                        'hotel_id': {'sdtype': 'id', 'range_is_nullable': False},
+                    },
+                    'primary_key': 'guest_id',
+                },
             },
+            'relationships': [
+                {
+                    'parent_table_name': 'hotel',
+                    'child_table_name': 'guests',
+                    'parent_primary_key': 'hotel_id',
+                    'child_foreign_key': 'hotel_id',
+                }
+            ],
+            'METADATA_SPEC_VERSION': 'V2',
         }
 
 

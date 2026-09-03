@@ -807,16 +807,36 @@ class TestMetadataClass:
                     'primary_key': 'pk',
                     'columns': {
                         'pk': {'sdtype': 'id'},
-                        'col1': {'sdtype': 'numerical'},
-                        'col2': {'sdtype': 'categorical'},
+                        'col1': {
+                            'sdtype': 'numerical',
+                            'range_is_nullable': False,
+                            'range_min': 0.1,
+                            'range_max': 0.2,
+                            'decimal_places': 1,
+                        },
+                        'col2': {
+                            'sdtype': 'categorical',
+                            'range_is_nullable': False,
+                            'range_values': ['a', 'b', 'c'],
+                        },
                     },
                 },
                 'table2': {
                     'primary_key': 'pk',
                     'columns': {
                         'pk': {'sdtype': 'id'},
-                        'col1': {'sdtype': 'numerical'},
-                        'col2': {'sdtype': 'categorical'},
+                        'col1': {
+                            'sdtype': 'numerical',
+                            'range_is_nullable': False,
+                            'range_min': 0.1,
+                            'range_max': 0.2,
+                            'decimal_places': 1,
+                        },
+                        'col2': {
+                            'sdtype': 'categorical',
+                            'range_is_nullable': False,
+                            'range_values': ['a', 'b', 'c'],
+                        },
                     },
                 },
             },
@@ -1428,16 +1448,36 @@ class TestMetadataClass:
                 'table': {
                     'columns': {
                         'pk': {'sdtype': 'id'},
-                        'col1': {'sdtype': 'numerical'},
-                        'col2': {'sdtype': 'categorical'},
+                        'col1': {
+                            'sdtype': 'numerical',
+                            'range_is_nullable': False,
+                            'range_min': 0.1,
+                            'range_max': 0.2,
+                            'decimal_places': 1,
+                        },
+                        'col2': {
+                            'sdtype': 'categorical',
+                            'range_is_nullable': False,
+                            'range_values': ['a', 'b', 'c'],
+                        },
                     },
                     'primary_key': 'pk',
                 },
                 'table2': {
                     'columns': {
                         'pk': {'sdtype': 'id'},
-                        'col1': {'sdtype': 'numerical'},
-                        'col2': {'sdtype': 'categorical'},
+                        'col1': {
+                            'sdtype': 'numerical',
+                            'range_is_nullable': False,
+                            'range_min': 0.1,
+                            'range_max': 0.2,
+                            'decimal_places': 1,
+                        },
+                        'col2': {
+                            'sdtype': 'categorical',
+                            'range_is_nullable': False,
+                            'range_values': ['a', 'b', 'c'],
+                        },
                     },
                     'primary_key': 'pk',
                 },
