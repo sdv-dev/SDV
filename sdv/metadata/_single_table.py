@@ -12,6 +12,7 @@ from datetime import datetime
 import pandas as pd
 from rdt.transformers._validators import AddressValidator, GPSValidator
 from rdt.transformers.pii.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
+from rdt.transformers.utils import learn_rounding_digits
 
 from sdv._utils import (
     _cast_to_datetime64,
@@ -50,6 +51,7 @@ INT_REGEX_ZERO_ERROR_MESSAGE = (
     'is stored as an int but the Regex allows it to start with "0". Please remove the Regex '
     'or update it to correspond to valid ints.'
 )
+MAX_RANGE_VALUES = 500
 
 
 class _SingleTableMetadata:
@@ -572,6 +574,36 @@ class _SingleTableMetadata:
 
         return None
 
+    def _detect_ordinal_sdtype(self, data):
+        """Detect whether a numerical column should have the ordinal sdtype.
+
+        A numerical column is considered ordinal when it contains whole numbers
+        and has low cardinality.
+
+        Args:
+            data (pandas.Series):
+                The data to be analyzed.
+
+        Returns:
+            str or None:
+                'ordinal' if the column is ordinal, otherwise ``None``.
+        """
+        if len(data) <= self._MIN_ROWS_FOR_PREDICTION:
+            return None
+
+        clean_data = data.dropna()
+        if clean_data.empty:
+            return None
+
+        whole_values = (clean_data == clean_data.round()).all()
+        unique_values = clean_data.nunique()
+        categorical_threshold = min(round(len(data) / 10), 10)
+        low_cardinality = unique_values <= categorical_threshold
+        if whole_values and low_cardinality:
+            return 'ordinal'
+
+        return None
+
     def _determine_sdtype_for_numbers(self, data, valid_potential_primary_key):
         """Determine the sdtype for a numerical column.
 
@@ -581,22 +613,16 @@ class _SingleTableMetadata:
             valid_potential_primary_key(bool):
                 If the column is unique and doesn't have NaNs.
         """
-        sdtype = 'numerical'
+        sdtype = self._detect_ordinal_sdtype(data) or 'numerical'
         pk_candidate = False
+
         if len(data) > self._MIN_ROWS_FOR_PREDICTION:
-            is_not_null = ~data.isna()
-            clean_data = (data == data.round()).loc[is_not_null]
+            clean_data = data.dropna()
             if clean_data.empty:
                 return sdtype, pk_candidate
 
-            whole_values = clean_data.all()
-            positive_values = (data >= 0).loc[is_not_null].all()
-
-            unique_values = data.nunique()
-            unique_lt_categorical_threshold = unique_values <= min(round(len(data) / 10), 10)
-
-            if whole_values and positive_values and unique_lt_categorical_threshold:
-                sdtype = 'categorical'
+            whole_values = (clean_data == clean_data.round()).all()
+            positive_values = (clean_data >= 0).all()
 
             pk_candidate = valid_potential_primary_key and whole_values and positive_values
 
@@ -732,15 +758,7 @@ class _SingleTableMetadata:
                 A list of primary key candidates that are pii.
             table_name (str):
                 The name of the table to be analyzed. Defaults to ``None``.
-            verbose (bool):
-                A boolean that determines if information should be printed regarding detection.
-                If True, it prints out information about what is detected.
-                If False, it does not print out any information about what is detected.
-                Defaults to False.
         """
-        if verbose:
-            table_str = f" for table '{table_name}'" if table_name else ''
-            sys.stdout.write(f'\nDetecting primary key{table_str}:\n')
         chosen_pk = None
         sdtype_updated = False
         pii_removed = False
@@ -766,7 +784,83 @@ class _SingleTableMetadata:
                 del self.columns[self.primary_key]['pii']
                 pii_removed = True
 
-        if verbose:
+        return chosen_pk, sdtype_updated, pii_removed
+
+    def _detect_range_values(self, data):
+        """Detect the range values for a column.
+
+        This method detects the unique values in a column if there are fewer than
+        `MAX_RANGE_VALUES` unique values.
+
+        Args:
+            data (pandas.Series):
+                The data to be analyzed.
+        """
+        range_values = data.dropna().unique()
+        if len(range_values) < MAX_RANGE_VALUES:
+            return range_values.tolist()
+
+        return None
+
+    def _detect_ranges(self, data):
+        """Detect the range information for all columns.
+
+        Args:
+            data (pandas.DataFrame):
+                The data to be analyzed.
+        """
+        for column_name, column_metadata in self.columns.items():
+            if column_name == self.primary_key:
+                continue
+
+            column_data = data[column_name]
+            sdtype = column_metadata['sdtype']
+
+            column_metadata['range_is_nullable'] = bool(column_data.isna().any())
+            if sdtype == 'numerical':
+                clean_data = column_data.dropna()
+                if not clean_data.empty:
+                    column_metadata['range_min'] = clean_data.min().item()
+                    column_metadata['range_max'] = clean_data.max().item()
+
+                column_metadata['decimal_places'] = learn_rounding_digits(column_data)
+
+            elif sdtype == 'datetime':
+                clean_data = column_data.dropna()
+                if not clean_data.empty:
+                    datetime_format = column_metadata.get('datetime_format')
+                    clean_data = pd.to_datetime(clean_data, format=datetime_format)
+
+                    range_min = clean_data.min()
+                    range_max = clean_data.max()
+                    if datetime_format:
+                        range_min = range_min.strftime(datetime_format)
+                        range_max = range_max.strftime(datetime_format)
+                    else:
+                        range_min = str(range_min)
+                        range_max = str(range_max)
+
+                    column_metadata['range_min'] = range_min
+                    column_metadata['range_max'] = range_max
+
+            elif sdtype in {'categorical', 'ordinal'}:
+                range_values = self._detect_range_values(column_data)
+                if range_values is not None:
+                    column_metadata['range_values'] = range_values
+
+    def _print_detection(
+        self, table_name, data, infer_sdtypes, infer_keys, chosen_pk, sdtype_updated, pii_removed
+    ):
+        if infer_sdtypes:
+            table_str = f"table '{table_name}'" if table_name else 'table'
+            sys.stdout.write(f'\nDetecting {table_str}:\n')
+            for field in data:
+                column_metadata = _format_column_metadata(self.columns[field])
+                sys.stdout.write(f"- Column '{field}': {column_metadata}\n")
+
+        if infer_keys == 'primary_only':
+            table_str = f" for table '{table_name}'" if table_name else ''
+            sys.stdout.write(f'\nDetecting primary key{table_str}:\n')
             _print_primary_key_detection(chosen_pk, sdtype_updated, pii_removed)
 
     def _detect_columns(
@@ -795,10 +889,6 @@ class _SingleTableMetadata:
                 If False, it does not print out any information about what is detected.
                 Defaults to False.
         """
-        if verbose and infer_sdtypes:
-            table_str = f"table '{table_name}'" if table_name else 'table'
-            sys.stdout.write(f'\nDetecting {table_str}:\n')
-
         old_columns = data.columns
         data.columns = data.columns.astype(str)
         pk_candidates = []
@@ -822,24 +912,29 @@ class _SingleTableMetadata:
                 if sdtype == 'datetime' and dtype == 'O':
                     datetime_format = _get_datetime_format(column_data.iloc[:100])
                     column_dict['datetime_format'] = datetime_format
+
             else:
                 sdtype = 'unknown'
                 column_dict['pii'] = True
 
             column_dict['sdtype'] = sdtype
-
-            if verbose and infer_sdtypes:
-                column_metadata = _format_column_metadata(column_dict)
-                sys.stdout.write(f"- Column '{field}': {column_metadata}\n")
-
             self.columns[field] = deepcopy(column_dict)
+
+        chosen_pk = None
+        sdtype_updated = False
+        pii_removed = False
         if infer_keys == 'primary_only':
-            self._select_primary_key(
+            chosen_pk, sdtype_updated, pii_removed = self._select_primary_key(
                 infer_sdtypes=infer_sdtypes,
                 pk_candidates=pk_candidates,
                 pii_pk_candidates=pii_pk_candidates,
                 table_name=table_name,
-                verbose=verbose,
+            )
+
+        self._detect_ranges(data)
+        if verbose:
+            self._print_detection(
+                table_name, data, infer_sdtypes, infer_keys, chosen_pk, sdtype_updated, pii_removed
             )
 
         self._updated = True
