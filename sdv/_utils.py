@@ -678,12 +678,16 @@ def _metadata_range_exceeds_real(data, metadata):
     return False
 
 
-def _validate_data_single_table(data):
+def _validate_data_single_table(data, table_name=None):
     """Validate that the data is a dictionary with a single table."""
     if len(data) != 1:
         raise InvalidDataTypeError(
             'The `data` parameter must be a dictionary containing exactly one table name '
             'mapped to a pandas DataFrame.'
+        )
+    if table_name is not None and table_name not in data:
+        raise InvalidDataTypeError(
+            f"The specified table name '{table_name}' is not present in the data."
         )
 
 
