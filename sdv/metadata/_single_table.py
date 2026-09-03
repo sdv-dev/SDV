@@ -12,7 +12,7 @@ from datetime import datetime
 import pandas as pd
 from rdt.transformers._validators import AddressValidator, GPSValidator
 from rdt.transformers.pii.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
-from rdt.transformers.utils import learn_rounding_digits
+from rdt.transformers.utils import MAX_DECIMALS, learn_rounding_digits
 
 from sdv._utils import (
     _cast_to_datetime64,
@@ -815,33 +815,35 @@ class _SingleTableMetadata:
 
             column_data = data[column_name]
             sdtype = column_metadata['sdtype']
+            if sdtype == 'unknown':
+                continue
 
             column_metadata['range_is_nullable'] = bool(column_data.isna().any())
-            if sdtype == 'numerical':
-                clean_data = column_data.dropna()
-                if not clean_data.empty:
-                    column_metadata['range_min'] = clean_data.min().item()
-                    column_metadata['range_max'] = clean_data.max().item()
+            clean_data = column_data.dropna()
+            if clean_data.empty:
+                continue
 
-                column_metadata['decimal_places'] = learn_rounding_digits(column_data)
+            if sdtype == 'numerical':
+                column_metadata['range_min'] = clean_data.min().item()
+                column_metadata['range_max'] = clean_data.max().item()
+                digits = learn_rounding_digits(column_data)
+                column_metadata['decimal_places'] = digits if digits is not None else MAX_DECIMALS
 
             elif sdtype == 'datetime':
-                clean_data = column_data.dropna()
-                if not clean_data.empty:
-                    datetime_format = column_metadata.get('datetime_format')
-                    clean_data = pd.to_datetime(clean_data, format=datetime_format)
+                datetime_format = column_metadata.get('datetime_format')
+                clean_data = pd.to_datetime(clean_data, format=datetime_format)
 
-                    range_min = clean_data.min()
-                    range_max = clean_data.max()
-                    if datetime_format:
-                        range_min = range_min.strftime(datetime_format)
-                        range_max = range_max.strftime(datetime_format)
-                    else:
-                        range_min = str(range_min)
-                        range_max = str(range_max)
+                range_min = clean_data.min()
+                range_max = clean_data.max()
+                if datetime_format:
+                    range_min = range_min.strftime(datetime_format)
+                    range_max = range_max.strftime(datetime_format)
+                else:
+                    range_min = str(range_min)
+                    range_max = str(range_max)
 
-                    column_metadata['range_min'] = range_min
-                    column_metadata['range_max'] = range_max
+                column_metadata['range_min'] = range_min
+                column_metadata['range_max'] = range_max
 
             elif sdtype in {'categorical', 'ordinal'}:
                 range_values = self._detect_range_values(column_data)

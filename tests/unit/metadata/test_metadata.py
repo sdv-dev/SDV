@@ -4900,22 +4900,24 @@ class TestMetadataClass:
             Metadata._detect_from_dataframe(data, infer_keys=infer_keys)
 
     @patch.object(Metadata, '_detect_from_dataframe')
-    def test_detect_from_dataframe(self, mock_detect):
+    @patch('sdv.metadata.metadata._validate_data_single_table')
+    def test_detect_from_dataframe(self, mock_validate, mock_detect):
         """Test the `detect_from_dataframe` method."""
         # Setup
-        data = pd.DataFrame()
+        data = {'table': pd.DataFrame()}
 
         # Run
-        metadata = Metadata.detect_from_dataframe(data)
+        metadata = Metadata.detect_from_dataframe(data, 'table')
 
         # Assert
         mock_detect.assert_called_once_with(
-            data=data,
+            data=data['table'],
             table_name='table',
             infer_sdtypes=True,
             infer_keys='primary_only',
             verbose=False,
         )
+        mock_validate.assert_called_once_with(data, 'table')
         assert metadata == mock_detect.return_value
 
     def test__handle_table_name(self):

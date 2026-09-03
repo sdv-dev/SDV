@@ -21,6 +21,7 @@ from sdv._utils import (
     _is_numerical,
     _load_data_from_csv,
     _validate_boolean_parameter,
+    _validate_data_single_table,
 )
 from sdv.errors import InvalidDataError
 from sdv.logging import get_sdv_logger
@@ -728,10 +729,16 @@ class Metadata:
                     try:
                         sdtype_updated = False
                         if pk_sdtype == 'id' and original_fk_sdtype != 'id':
+                            update_kwargs = {'sdtype': 'id'}
+                            if 'range_is_nullable' in original_fk_meta:
+                                update_kwargs['range_is_nullable'] = original_fk_meta[
+                                    'range_is_nullable'
+                                ]
+
                             self.update_column(
                                 table_name=child_candidate,
                                 column_name=primary_key,
-                                sdtype='id',
+                                **update_kwargs,
                             )
                             sdtype_updated = True
                         self.add_relationship(
@@ -955,7 +962,7 @@ class Metadata:
     def detect_from_dataframe(
         cls,
         data,
-        table_name=DEFAULT_SINGLE_TABLE_NAME,
+        table_name,
         infer_sdtypes=True,
         infer_keys='primary_only',
         verbose=False,
@@ -966,7 +973,7 @@ class Metadata:
         All data column names are converted to strings.
 
         Args:
-            data (pandas.DataFrame):
+            data (dict[str, pd.DataFrame]):
                 The data to detect metadata from.
             table_name (str):
                 The name of the table to detect. If None, a default name will be used.
@@ -991,8 +998,9 @@ class Metadata:
             Metadata:
                 A new metadata object with the sdtypes detected from the data.
         """
+        _validate_data_single_table(data, table_name)
         return cls._detect_from_dataframe(
-            data=data,
+            data=data[table_name],
             table_name=table_name,
             infer_sdtypes=infer_sdtypes,
             infer_keys=infer_keys,

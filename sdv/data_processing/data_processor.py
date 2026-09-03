@@ -218,7 +218,7 @@ class DataProcessor:
         """
         kwargs = {'locales': locales, 'cardinality_rule': cardinality_rule}
         for key, value in column_metadata.items():
-            if key not in ['pii', 'sdtype']:
+            if key not in ['pii', 'sdtype', 'range_is_nullable']:
                 kwargs[key] = value
 
         try:

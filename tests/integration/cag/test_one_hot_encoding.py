@@ -162,7 +162,8 @@ def test_end_to_end_numerical_and_categorical():
     df = pd.DataFrame(data, columns=columns)
 
     # Setup metadata
-    metadata = Metadata.detect_from_dataframe(df, table_name='one_hot')
+    data = {'one_hot': df}
+    metadata = Metadata.detect_from_dataframe(data, table_name='one_hot')
     for sdtype in ['numerical', 'categorical']:
         metadata.update_columns(columns, sdtype=sdtype)
         synthesizer = GaussianCopulaSynthesizer(metadata)
@@ -170,7 +171,7 @@ def test_end_to_end_numerical_and_categorical():
 
         # Run
         synthesizer.add_constraints([constraint])
-        synthesizer.fit({'one_hot': df})
+        synthesizer.fit(data)
         samples = synthesizer.sample('one_hot', 100)['one_hot']
 
         # Assert
@@ -193,14 +194,15 @@ def test_end_to_end_boolean():
     df = pd.DataFrame(data, columns=columns)
 
     # Setup metadata
-    metadata = Metadata.detect_from_dataframe(df, table_name='one_hot')
+    data = {'one_hot': df}
+    metadata = Metadata.detect_from_dataframe(data, table_name='one_hot')
     metadata.update_columns(columns, sdtype='boolean')
     synthesizer = GaussianCopulaSynthesizer(metadata)
     constraint = OneHotEncoding(column_names=columns)
 
     # Run
     synthesizer.add_constraints([constraint])
-    synthesizer.fit({'one_hot': df})
+    synthesizer.fit(data)
     samples = synthesizer.sample('one_hot', 100)['one_hot']
 
     # Assert
