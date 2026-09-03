@@ -1331,9 +1331,7 @@ class Test_SingleTableMetadata:
         }
         assert instance.columns['unknown'] == {
             'sdtype': 'unknown',
-            'range_is_nullable': True,
         }
-
         mock_learn_rounding_digits.assert_called_once_with(data['numerical'])
 
     def test__detect_ranges_does_not_add_range_values_with_500_unique_values(self):
