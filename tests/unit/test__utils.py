@@ -1491,23 +1491,43 @@ def test__metadata_range_exceeds_real(mock__column_range_exceeds_real):
     ])
 
 
+@pytest.mark.parametrize(
+    'data, table_name, expected_message',
+    [
+        pytest.param(
+            {
+                'table_1': pd.DataFrame({'col1': ['a', 'b', 'c']}),
+                'table_2': pd.DataFrame({'col1': [1, 2, 3]}),
+            },
+            None,
+            (
+                'The `data` parameter must be a dictionary containing exactly one table name '
+                'mapped to a pandas DataFrame.'
+            ),
+            id='multiple-tables',
+        ),
+        pytest.param(
+            {'table': pd.DataFrame({'col1': [1, 2, 3]})},
+            'missing_table',
+            "The specified table name 'missing_table' is not present in the data.",
+            id='missing-table-name',
+        ),
+    ],
+)
+def test__validate_data_single_table_invalid(data, table_name, expected_message):
+    """Test the `_validate_data_single_table` method with invalid inputs."""
+    # Run and Assert
+    with pytest.raises(InvalidDataTypeError, match=re.escape(expected_message)):
+        _validate_data_single_table(data, table_name=table_name)
+
+
 def test__validate_data_single_table():
-    """Test the `_validate_data_single_table` method."""
+    """Test the `_validate_data_single_table` method with valid input."""
     # Setup
     data = {'table': pd.DataFrame({'col1': [1, 2, 3]})}
-    invalid_data = {
-        'table_1': pd.DataFrame({'col1': ['a', 'b', 'c']}),
-        'table_2': pd.DataFrame({'col1': [1, 2, 3]}),
-    }
-    expected_message = re.escape(
-        'The `data` parameter must be a dictionary containing exactly one table name '
-        'mapped to a pandas DataFrame.'
-    )
 
     # Run and Assert
     _validate_data_single_table(data)
-    with pytest.raises(InvalidDataTypeError, match=expected_message):
-        _validate_data_single_table(invalid_data)
 
 
 @patch('sdv._utils._validate_data_single_table')

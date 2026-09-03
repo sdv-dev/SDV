@@ -583,10 +583,6 @@ class _SingleTableMetadata:
         Args:
             data (pandas.Series):
                 The data to be analyzed.
-
-        Returns:
-            str or None:
-                'ordinal' if the column is ordinal, otherwise ``None``.
         """
         if len(data) <= self._MIN_ROWS_FOR_PREDICTION:
             return None
