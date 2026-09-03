@@ -224,6 +224,12 @@ def _get_first_v2_metadata_bytes(contents, dataset_prefix, bucket, client):
                 raw = _get_data_from_bucket(key, bucket=bucket, client=client)
                 metadict = json.loads(raw)
                 if isinstance(metadict, dict) and metadict.get('METADATA_SPEC_VERSION') == version:
+                    if version != 'V2':
+                        warnings.warn(
+                            'An updated metadata V2 is not available for this dataset so the V1 '
+                            'metadata was returned.\nYou should be able to model and sample with'
+                            ' the V1 metadata, but please report this issue to the DataCebo.'
+                        )
                     return raw
 
             except Exception:
