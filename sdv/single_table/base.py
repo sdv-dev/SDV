@@ -995,8 +995,12 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             num_sampled = min(len(sampled), batch_size)
             if num_increase > 0:
                 if output_file_path:
-                    append_kwargs = {'mode': 'a', 'header': False}
-                    append_kwargs = append_kwargs if os.path.getsize(output_file_path) > 0 else {}
+                    append_kwargs = (
+                        {'mode': 'a', 'header': False}
+                        if os.path.exists(output_file_path)
+                        and os.path.getsize(output_file_path) > 0
+                        else {}
+                    )
                     sampled.head(num_sampled).tail(num_increase).to_csv(
                         output_file_path,
                         index=False,

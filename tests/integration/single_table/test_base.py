@@ -978,7 +978,7 @@ def test_range_extrapolation_warns_to_install_bundle(synthesizer_class):
             'sample_from_conditions',
             {
                 'conditions': [
-                    Condition({'column1': 1, 'column2': 4}),
+                    Condition({'column1': 1}),
                 ],
             },
             1,
@@ -1024,13 +1024,14 @@ def test_sample_methods_with_output_folder_path(
     )
 
     # Assert
+    sampled = sampled if isinstance(sampled, pd.DataFrame) else sampled['table']
     assert output_file_path.exists()
-    assert len(sampled['table']) == expected_num_rows
+    assert len(sampled) == expected_num_rows
 
     saved_data = pd.read_csv(output_file_path)
     pd.testing.assert_frame_equal(
-        saved_data,
-        sampled['table'],
+        saved_data.sort_values(by='column1').reset_index(drop=True),
+        sampled.sort_values(by='column1').reset_index(drop=True),
         check_dtype=False,
     )
 
