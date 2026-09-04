@@ -51,7 +51,12 @@ from sdv.metadata._single_table import _SingleTableMetadata
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
 from sdv.sampling import Condition, DataFrameCondition
-from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
+from sdv.single_table.utils import (
+    check_num_rows,
+    handle_sampling_error,
+    validate_file_path,
+    validate_folder_path_with_table_names,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -990,8 +995,12 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             num_sampled = min(len(sampled), batch_size)
             if num_increase > 0:
                 if output_file_path:
-                    append_kwargs = {'mode': 'a', 'header': False}
-                    append_kwargs = append_kwargs if os.path.getsize(output_file_path) > 0 else {}
+                    append_kwargs = (
+                        {'mode': 'a', 'header': False}
+                        if os.path.exists(output_file_path)
+                        and os.path.getsize(output_file_path) > 0
+                        else {}
+                    )
                     sampled.head(num_sampled).tail(num_increase).to_csv(
                         output_file_path,
                         index=False,
@@ -1209,12 +1218,9 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         has_batches = batch_size is not None and batch_size != num_rows
         show_progress_bar = has_constraints or has_batches
 
-        output_file_path = None
-        if output_folder_path is not None:
-            output_folder = Path(output_folder_path)
-            output_folder.mkdir(parents=True, exist_ok=True)
-            output_file_path = str(output_folder / f'{table_name}.csv')
-
+        output_file_path = validate_folder_path_with_table_names(
+            output_folder_path, [self._table_name]
+        )[0]
         sampled_table_data = self._sample_with_progress_bar(
             num_rows,
             max_tries_per_batch,
@@ -1396,7 +1402,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             self._validate_conditions_unseen_columns(condition_dataframe)
 
     def sample_from_conditions(
-        self, conditions, max_tries_per_batch=100, batch_size=None, output_file_path=None
+        self, conditions, max_tries_per_batch=100, batch_size=None, output_folder_path=None
     ):
         """Sample rows from this table with the given conditions.
 
@@ -1409,8 +1415,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 Number of times to retry sampling until the batch size is met. Defaults to 100.
             batch_size (int):
                 The batch size to use per sampling call.
-            output_file_path (str or None):
-                The file to periodically write sampled rows to. Defaults to None.
+            output_folder_path (str or None):
+                The folder to periodically write sampled rows to. Defaults to None.
 
         Returns:
             pandas.DataFrame:
@@ -1425,7 +1431,9 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     * no rows could be generated.
         """
         self._validate_fit_before_sample()
-        output_file_path = validate_file_path(output_file_path)
+        output_file_path = validate_folder_path_with_table_names(
+            output_folder_path, [self._table_name]
+        )[0]
         sample_timestamp = datetime.datetime.now()
 
         num_rows = functools.reduce(
@@ -1479,7 +1487,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         self._validate_conditions_unseen_columns(conditions)
 
     def sample_remaining_columns(
-        self, known_columns, max_tries_per_batch=100, batch_size=None, output_file_path=None
+        self, known_columns, max_tries_per_batch=100, batch_size=None, output_folder_path=None
     ):
         """Sample remaining rows from already known columns.
 
@@ -1492,8 +1500,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 Number of times to retry sampling until the batch size is met. Defaults to 100.
             batch_size (int):
                 The batch size to use per sampling call.
-            output_file_path (str or None):
-                The file to periodically write sampled rows to. Defaults to None.
+            output_folder_path (str or None):
+                The folder to periodically write sampled rows to. Defaults to None.
 
         Returns:
             pandas.DataFrame:
@@ -1507,7 +1515,9 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     * any of the conditions' columns are not valid.
                     * no rows could be generated.
         """
-        output_file_path = validate_file_path(output_file_path)
+        output_file_path = validate_folder_path_with_table_names(
+            output_folder_path, [self._table_name]
+        )[0]
 
         known_columns = known_columns.copy()
         self._validate_known_columns(known_columns)

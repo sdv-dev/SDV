@@ -38,6 +38,7 @@ from sdv.errors import (
 from sdv.logging import disable_single_table_logger, get_sdv_logger
 from sdv.metadata.metadata import Metadata
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
+from sdv.single_table.utils import validate_folder_path_with_table_names
 
 SYNTHESIZER_LOGGER = get_sdv_logger('MultiTableSynthesizer')
 
@@ -767,7 +768,8 @@ class BaseMultiTableSynthesizer:
                 'sampling synthetic data.'
             )
 
-        if table_name not in self.get_metadata().tables:
+        table_names = list(self.get_metadata().tables)
+        if table_name not in table_names:
             raise SynthesizerInputError(f"Table '{table_name}' does not exist in the metadata.")
 
         _validate_positive_integer('num_rows', num_rows)
@@ -782,6 +784,8 @@ class BaseMultiTableSynthesizer:
                 f"Invalid parameter for 'output_folder_path' ({output_folder_path}). "
                 'Please provide a valid string path.'
             )
+
+        validate_folder_path_with_table_names(output_folder_path, table_names)
 
     def _sample_in_batches(
         self,
