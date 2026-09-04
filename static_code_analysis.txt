@@ -1,4 +1,4 @@
-Run started:2026-08-28 12:34:04.317825+00:00
+Run started:2026-09-04 19:16:45.808857+00:00
 
 Test results:
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
@@ -36,33 +36,33 @@ Test results:
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b112_try_except_continue.html
-   Location: ./sdv/datasets/demo.py:160:8
-159	                matches.append(key)
-160	        except Exception:
-161	            continue
-162	
+   Location: ./sdv/datasets/demo.py:161:8
+160	                matches.append(key)
+161	        except Exception:
+162	            continue
+163	
 
 --------------------------------------------------
 >> Issue: [B112:try_except_continue] Try, Except, Continue detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b112_try_except_continue.html
-   Location: ./sdv/datasets/demo.py:225:8
-224	
-225	        except Exception:
-226	            continue
-227	
+   Location: ./sdv/datasets/demo.py:226:8
+225	
+226	        except Exception:
+227	            continue
+228	
 
 --------------------------------------------------
 >> Issue: [B112:try_except_continue] Try, Except, Continue detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b112_try_except_continue.html
-   Location: ./sdv/datasets/demo.py:611:8
-610	
-611	        except Exception:
-612	            continue
+   Location: ./sdv/datasets/demo.py:614:8
 613	
+614	        except Exception:
+615	            continue
+616	
 
 --------------------------------------------------
 >> Issue: [B306:blacklist] Use of insecure and deprecated function (mktemp).
@@ -121,7 +121,7 @@ Test results:
 --------------------------------------------------
 
 Code scanned:
-	Total lines of code: 18824
+	Total lines of code: 18932
 	Total lines skipped (#nosec): 0
 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
 
