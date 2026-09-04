@@ -227,8 +227,8 @@ def _get_first_v2_metadata_bytes(contents, dataset_prefix, bucket, client):
                     if version != 'V2':
                         warnings.warn(
                             'An updated metadata V2 is not available for this dataset so the V1 '
-                            'metadata was returned.\nYou should be able to model and sample with'
-                            ' the V1 metadata, but please report this issue to the DataCebo.'
+                            'metadata was returned.\nYou should be able to model and sample with '
+                            'the V1 metadata, but please report this issue to the DataCebo.'
                         )
                     return raw
 
