@@ -807,16 +807,36 @@ class TestMetadataClass:
                     'primary_key': 'pk',
                     'columns': {
                         'pk': {'sdtype': 'id'},
-                        'col1': {'sdtype': 'numerical'},
-                        'col2': {'sdtype': 'categorical'},
+                        'col1': {
+                            'sdtype': 'numerical',
+                            'range_is_nullable': False,
+                            'range_min': 0.1,
+                            'range_max': 0.2,
+                            'decimal_places': 1,
+                        },
+                        'col2': {
+                            'sdtype': 'categorical',
+                            'range_is_nullable': False,
+                            'range_values': ['a', 'b', 'c'],
+                        },
                     },
                 },
                 'table2': {
                     'primary_key': 'pk',
                     'columns': {
                         'pk': {'sdtype': 'id'},
-                        'col1': {'sdtype': 'numerical'},
-                        'col2': {'sdtype': 'categorical'},
+                        'col1': {
+                            'sdtype': 'numerical',
+                            'range_is_nullable': False,
+                            'range_min': 0.1,
+                            'range_max': 0.2,
+                            'decimal_places': 1,
+                        },
+                        'col2': {
+                            'sdtype': 'categorical',
+                            'range_is_nullable': False,
+                            'range_values': ['a', 'b', 'c'],
+                        },
                     },
                 },
             },
@@ -1428,16 +1448,36 @@ class TestMetadataClass:
                 'table': {
                     'columns': {
                         'pk': {'sdtype': 'id'},
-                        'col1': {'sdtype': 'numerical'},
-                        'col2': {'sdtype': 'categorical'},
+                        'col1': {
+                            'sdtype': 'numerical',
+                            'range_is_nullable': False,
+                            'range_min': 0.1,
+                            'range_max': 0.2,
+                            'decimal_places': 1,
+                        },
+                        'col2': {
+                            'sdtype': 'categorical',
+                            'range_is_nullable': False,
+                            'range_values': ['a', 'b', 'c'],
+                        },
                     },
                     'primary_key': 'pk',
                 },
                 'table2': {
                     'columns': {
                         'pk': {'sdtype': 'id'},
-                        'col1': {'sdtype': 'numerical'},
-                        'col2': {'sdtype': 'categorical'},
+                        'col1': {
+                            'sdtype': 'numerical',
+                            'range_is_nullable': False,
+                            'range_min': 0.1,
+                            'range_max': 0.2,
+                            'decimal_places': 1,
+                        },
+                        'col2': {
+                            'sdtype': 'categorical',
+                            'range_is_nullable': False,
+                            'range_values': ['a', 'b', 'c'],
+                        },
                     },
                     'primary_key': 'pk',
                 },
@@ -4860,22 +4900,24 @@ class TestMetadataClass:
             Metadata._detect_from_dataframe(data, infer_keys=infer_keys)
 
     @patch.object(Metadata, '_detect_from_dataframe')
-    def test_detect_from_dataframe(self, mock_detect):
+    @patch('sdv.metadata.metadata._validate_data_single_table')
+    def test_detect_from_dataframe(self, mock_validate, mock_detect):
         """Test the `detect_from_dataframe` method."""
         # Setup
-        data = pd.DataFrame()
+        data = {'table': pd.DataFrame()}
 
         # Run
-        metadata = Metadata.detect_from_dataframe(data)
+        metadata = Metadata.detect_from_dataframe(data, 'table')
 
         # Assert
         mock_detect.assert_called_once_with(
-            data=data,
+            data=data['table'],
             table_name='table',
             infer_sdtypes=True,
             infer_keys='primary_only',
             verbose=False,
         )
+        mock_validate.assert_called_once_with(data, 'table')
         assert metadata == mock_detect.return_value
 
     def test__handle_table_name(self):

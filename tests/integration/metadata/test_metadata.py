@@ -11,7 +11,12 @@ from sdv.metadata._single_table import _SingleTableMetadata
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
-from tests.utils import download_test_demo, get_multi_table_metadata
+from tests.utils import (
+    compare_metadata,
+    compare_ranges,
+    download_test_demo,
+    get_multi_table_metadata,
+)
 
 DEFAULT_TABLE_NAME = 'table'
 
@@ -74,12 +79,6 @@ def test_detect_from_dataframes_multi_table():
     metadata = Metadata.detect_from_dataframes(real_data)
 
     # Assert
-    metadata.update_column(
-        table_name='hotels',
-        column_name='classification',
-        sdtype='categorical',
-    )
-
     expected_metadata = {
         'tables': {
             'hotels': {
@@ -118,7 +117,8 @@ def test_detect_from_dataframes_multi_table():
         ],
         'METADATA_SPEC_VERSION': 'V2',
     }
-    assert metadata.to_dict() == expected_metadata
+    compare_metadata(metadata, expected_metadata)
+    compare_ranges(metadata, real_data)
 
 
 def test_detect_from_dataframes_multi_table_without_infer_sdtypes():
@@ -130,12 +130,6 @@ def test_detect_from_dataframes_multi_table_without_infer_sdtypes():
     metadata = Metadata.detect_from_dataframes(real_data, infer_sdtypes=False)
 
     # Assert
-    metadata.update_column(
-        table_name='hotels',
-        column_name='classification',
-        sdtype='categorical',
-    )
-
     expected_metadata = {
         'tables': {
             'hotels': {
@@ -144,7 +138,7 @@ def test_detect_from_dataframes_multi_table_without_infer_sdtypes():
                     'city': {'sdtype': 'unknown', 'pii': True},
                     'state': {'sdtype': 'unknown', 'pii': True},
                     'rating': {'sdtype': 'unknown', 'pii': True},
-                    'classification': {'sdtype': 'categorical'},
+                    'classification': {'sdtype': 'unknown', 'pii': True},
                 },
                 'primary_key': 'hotel_id',
             },
@@ -174,7 +168,8 @@ def test_detect_from_dataframes_multi_table_without_infer_sdtypes():
         ],
         'METADATA_SPEC_VERSION': 'V2',
     }
-    assert metadata.to_dict() == expected_metadata
+    compare_metadata(metadata, expected_metadata)
+    compare_ranges(metadata, real_data)
 
 
 def test_detect_from_dataframes_multi_table_with_infer_keys_primary_only():
@@ -186,12 +181,6 @@ def test_detect_from_dataframes_multi_table_with_infer_keys_primary_only():
     metadata = Metadata.detect_from_dataframes(real_data, infer_keys='primary_only')
 
     # Assert
-    metadata.update_column(
-        table_name='hotels',
-        column_name='classification',
-        sdtype='categorical',
-    )
-
     expected_metadata = {
         'tables': {
             'hotels': {
@@ -223,7 +212,8 @@ def test_detect_from_dataframes_multi_table_with_infer_keys_primary_only():
         'relationships': [],
         'METADATA_SPEC_VERSION': 'V2',
     }
-    assert metadata.to_dict() == expected_metadata
+    compare_metadata(metadata, expected_metadata)
+    compare_ranges(metadata, real_data)
 
 
 def test_detect_from_dataframes_multi_table_with_infer_keys_none():
@@ -235,12 +225,6 @@ def test_detect_from_dataframes_multi_table_with_infer_keys_none():
     metadata = Metadata.detect_from_dataframes(real_data, infer_keys=None)
 
     # Assert
-    metadata.update_column(
-        table_name='hotels',
-        column_name='classification',
-        sdtype='categorical',
-    )
-
     expected_metadata = {
         'tables': {
             'hotels': {
@@ -270,14 +254,16 @@ def test_detect_from_dataframes_multi_table_with_infer_keys_none():
         'relationships': [],
         'METADATA_SPEC_VERSION': 'V2',
     }
-    assert metadata.to_dict() == expected_metadata
+    compare_metadata(metadata, expected_metadata)
+    compare_ranges(metadata, real_data)
 
 
 def test_detect_from_dataframes_single_table():
     """Test the ``detect_from_dataframes`` method works with a single table."""
     # Setup
     data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
-    metadata = Metadata.detect_from_dataframes({'table_1': data['hotels']})
+    data = {'table_1': data['hotels']}
+    metadata = Metadata.detect_from_dataframes(data)
 
     # Run
     metadata.validate()
@@ -299,14 +285,16 @@ def test_detect_from_dataframes_single_table():
         },
         'relationships': [],
     }
-    assert metadata.to_dict() == expected_metadata
+    compare_ranges(metadata, data)
+    compare_metadata(metadata, expected_metadata)
 
 
 def test_detect_from_dataframes_single_table_infer_sdtypes_false():
     """Test it for a single table when infer_sdtypes is False."""
     # Setup
     data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
-    metadata = Metadata.detect_from_dataframes({'table_1': data['hotels']}, infer_sdtypes=False)
+    data = {'table_1': data['hotels']}
+    metadata = Metadata.detect_from_dataframes(data, infer_sdtypes=False)
 
     # Run
     metadata.validate()
@@ -328,16 +316,16 @@ def test_detect_from_dataframes_single_table_infer_sdtypes_false():
         },
         'relationships': [],
     }
-    assert metadata.to_dict() == expected_metadata
+    compare_metadata(metadata, expected_metadata)
+    compare_ranges(metadata, data)
 
 
 def test_detect_from_dataframes_single_table_infer_keys_primary_only():
     """Test it for a single table when infer_keys is 'primary_only'."""
     # Setup
     data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
-    metadata = Metadata.detect_from_dataframes(
-        {'table_1': data['hotels']}, infer_keys='primary_only'
-    )
+    data = {'table_1': data['hotels']}
+    metadata = Metadata.detect_from_dataframes(data, infer_keys='primary_only')
 
     # Run
     metadata.validate()
@@ -359,14 +347,16 @@ def test_detect_from_dataframes_single_table_infer_keys_primary_only():
         },
         'relationships': [],
     }
-    assert metadata.to_dict() == expected_metadata
+    compare_ranges(metadata, data)
+    compare_metadata(metadata, expected_metadata)
 
 
 def test_detect_from_dataframes_single_table_infer_keys_none():
     """Test it for a single table when infer_keys is None."""
     # Setup
     data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
-    metadata = Metadata.detect_from_dataframes({'table_1': data['hotels']}, infer_keys=None)
+    data = {'table_1': data['hotels']}
+    metadata = Metadata.detect_from_dataframes(data, infer_keys=None)
 
     # Run
     metadata.validate()
@@ -387,15 +377,17 @@ def test_detect_from_dataframes_single_table_infer_keys_none():
         },
         'relationships': [],
     }
-    assert metadata.to_dict() == expected_metadata
+    compare_ranges(metadata, data)
+    compare_metadata(metadata, expected_metadata)
 
 
 def test_detect_from_dataframe():
     """Test that a single table can be detected as a DataFrame."""
     # Setup
     data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
+    data = {'table': data['hotels']}
 
-    metadata = Metadata.detect_from_dataframe(data['hotels'])
+    metadata = Metadata.detect_from_dataframe(data, 'table')
 
     # Run
     metadata.validate()
@@ -417,14 +409,16 @@ def test_detect_from_dataframe():
         },
         'relationships': [],
     }
-    assert metadata.to_dict() == expected_metadata
+    compare_ranges(metadata, data)
+    compare_metadata(metadata, expected_metadata)
 
 
 def test_detect_from_dataframe_infer_sdtypes_false():
     """Test it when infer_sdtypes is False."""
     # Setup
     data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
-    metadata = Metadata.detect_from_dataframe(data['hotels'], infer_sdtypes=False)
+    data = {'table': data['hotels']}
+    metadata = Metadata.detect_from_dataframe(data, 'table', infer_sdtypes=False)
 
     # Run
     metadata.validate()
@@ -446,14 +440,16 @@ def test_detect_from_dataframe_infer_sdtypes_false():
         },
         'relationships': [],
     }
-    assert metadata.to_dict() == expected_metadata
+    compare_ranges(metadata, data)
+    compare_metadata(metadata, expected_metadata)
 
 
 def test_detect_from_dataframe_infer_keys_none():
     """Test it when infer_keys is None."""
     # Setup
     data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
-    metadata = Metadata.detect_from_dataframe(data['hotels'], infer_keys=None)
+    data = {'table': data['hotels']}
+    metadata = Metadata.detect_from_dataframe(data, 'table', infer_keys=None)
 
     # Run
     metadata.validate()
@@ -474,14 +470,16 @@ def test_detect_from_dataframe_infer_keys_none():
         },
         'relationships': [],
     }
-    assert metadata.to_dict() == expected_metadata
+    compare_ranges(metadata, data)
+    compare_metadata(metadata, expected_metadata)
 
 
 def test_detect_from_dataframe_infer_keys_none_infer_sdtypes_false():
     """Test it when infer_keys is None and infer_sdtypes is False."""
     # Setup
     data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
-    metadata = Metadata.detect_from_dataframe(data['hotels'], infer_keys=None, infer_sdtypes=False)
+    data = {'table': data['hotels']}
+    metadata = Metadata.detect_from_dataframe(data, 'table', infer_keys=None, infer_sdtypes=False)
 
     # Run
     metadata.validate()
@@ -502,7 +500,8 @@ def test_detect_from_dataframe_infer_keys_none_infer_sdtypes_false():
         },
         'relationships': [],
     }
-    assert metadata.to_dict() == expected_metadata
+    compare_ranges(metadata, data)
+    compare_metadata(metadata, expected_metadata)
 
 
 def test_detect_from_csvs(tmp_path):
@@ -520,12 +519,6 @@ def test_detect_from_csvs(tmp_path):
     metadata.detect_from_csvs(folder_name=tmp_path)
 
     # Assert
-    metadata.update_column(
-        table_name='hotels',
-        column_name='classification',
-        sdtype='categorical',
-    )
-
     expected_metadata = {
         'tables': {
             'hotels': {
@@ -565,7 +558,8 @@ def test_detect_from_csvs(tmp_path):
         'METADATA_SPEC_VERSION': 'V2',
     }
 
-    assert metadata.to_dict() == expected_metadata
+    compare_ranges(metadata, real_data)
+    compare_metadata(metadata, expected_metadata)
 
 
 params = [
@@ -1576,28 +1570,32 @@ def test_detect_from_dataframe_verbose_single(capsys):
     """Test 'detect_from_dataframe' with verbose True with single table."""
     # Setup
     data, _ = download_test_demo(modality='single_table', dataset_name='fake_hotel_guests')
-    data_table = data['fake_hotel_guests']
-    expected_print = (
-        "\nDetecting table 'table':\n"
-        "- Column 'guest_email': sdtype='email', pii=True\n"
-        "- Column 'has_rewards': sdtype='categorical'\n"
-        "- Column 'room_type': sdtype='categorical'\n"
-        "- Column 'amenities_fee': sdtype='numerical'\n"
-        "- Column 'checkin_date': sdtype='datetime', datetime_format='%d %b %Y'\n"
-        "- Column 'checkout_date': sdtype='datetime', datetime_format='%d %b %Y'\n"
-        "- Column 'room_rate': sdtype='numerical'\n"
-        "- Column 'billing_address': sdtype='categorical'\n"
-        "- Column 'credit_card_number': sdtype='credit_card_number', pii=True\n"
-        "\nDetecting primary key for table 'table':\n"
-        "- primary_key='guest_email'\n"
-    )
+    data = {'table': data['fake_hotel_guests']}
 
     # Run
-    metadata = Metadata.detect_from_dataframe(data_table, verbose=True)
+    metadata = Metadata.detect_from_dataframe(data, 'table', verbose=True)
 
     # Assert
     captured = capsys.readouterr().out
-    assert captured == expected_print
+    expected_output = [
+        "\nDetecting table 'table':\n",
+        "- Column 'guest_email': sdtype='email', pii=True\n",
+        "- Column 'has_rewards': sdtype='categorical', range_is_nullable=",
+        "- Column 'room_type': sdtype='categorical', range_is_nullable=",
+        "- Column 'amenities_fee': sdtype='numerical', range_is_nullable=",
+        "- Column 'checkin_date': sdtype='datetime', datetime_format='%d %b %Y', "
+        'range_is_nullable=',
+        "- Column 'checkout_date': sdtype='datetime', datetime_format='%d %b %Y', "
+        'range_is_nullable=',
+        "- Column 'room_rate': sdtype='numerical', range_is_nullable=",
+        "- Column 'billing_address': sdtype='categorical', range_is_nullable=",
+        "- Column 'credit_card_number': sdtype='credit_card_number', pii=True, range_is_nullable=",
+        "\nDetecting primary key for table 'table':\n",
+        "- primary_key='guest_email'\n",
+    ]
+    for line in expected_output:
+        assert line in captured
+
     assert list(metadata.tables.keys()) == ['table']
     assert list(metadata.tables['table'].columns.keys()) == [
         'guest_email',
@@ -1616,38 +1614,36 @@ def test_detect_from_dataframes_verbose(capsys):
     """Test 'detect_from_dataframe' with verbose True with multi table."""
     # Setup
     data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
-    expected_print = (
-        "\nDetecting table 'guests':\n"
-        "- Column 'guest_email': sdtype='email', pii=True\n"
-        "- Column 'hotel_id': sdtype='id'\n"
-        "- Column 'has_rewards': sdtype='categorical'\n"
-        "- Column 'room_type': sdtype='categorical'\n"
-        "- Column 'amenities_fee': sdtype='numerical'\n"
-        "- Column 'checkin_date': sdtype='datetime', datetime_format='%d %b %Y'\n"
-        "- Column 'checkout_date': sdtype='datetime', datetime_format='%d %b %Y'\n"
-        "- Column 'room_rate': sdtype='numerical'\n"
-        "- Column 'billing_address': sdtype='categorical'\n"
-        "- Column 'credit_card_number': sdtype='credit_card_number', pii=True\n"
-        "\nDetecting primary key for table 'guests':\n"
-        "- primary_key='guest_email'\n"
-        "\nDetecting table 'hotels':\n"
-        "- Column 'hotel_id': sdtype='id'\n"
-        "- Column 'city': sdtype='city', pii=True\n"
-        "- Column 'state': sdtype='administrative_unit', pii=True\n"
-        "- Column 'rating': sdtype='numerical'\n"
-        "- Column 'classification': sdtype='categorical'\n"
-        "\nDetecting primary key for table 'hotels':\n"
-        "- primary_key='hotel_id'\n"
-        '\nDetecting foreign keys:\n'
-        "- Column 'guests.hotel_id' refers to column 'hotels.hotel_id'\n"
-    )
 
     # Run
     metadata = Metadata.detect_from_dataframes(data, verbose=True)
 
     # Assert
     captured = capsys.readouterr().out
-    assert captured == expected_print
+    expected_output = [
+        "\nDetecting table 'guests':\n",
+        "- Column 'guest_email': sdtype='email', pii=True\n",
+        "- Column 'hotel_id': sdtype='id', range_is_nullable=",
+        "- Column 'has_rewards': sdtype='categorical', range_is_nullable=",
+        "- Column 'amenities_fee': sdtype='numerical', range_is_nullable=",
+        "- Column 'checkin_date': sdtype='datetime', datetime_format='%d %b %Y', "
+        'range_is_nullable=',
+        "\nDetecting primary key for table 'guests':\n",
+        "- primary_key='guest_email'\n",
+        "\nDetecting table 'hotels':\n",
+        "- Column 'hotel_id': sdtype='id'\n",
+        "- Column 'city': sdtype='city', pii=True, range_is_nullable=",
+        "- Column 'state': sdtype='administrative_unit', pii=True, range_is_nullable=",
+        "- Column 'rating': sdtype='numerical', range_is_nullable=",
+        "- Column 'classification': sdtype='categorical', range_is_nullable=",
+        "\nDetecting primary key for table 'hotels':\n",
+        "- primary_key='hotel_id'\n",
+        '\nDetecting foreign keys:\n',
+        "- Column 'guests.hotel_id' refers to column 'hotels.hotel_id'\n",
+    ]
+    for line in expected_output:
+        assert line in captured
+
     assert list(metadata.tables.keys()) == ['guests', 'hotels']
 
 
@@ -1665,12 +1661,14 @@ def test_detect_from_dataframes_verbose_updates_fk_sdtype(capsys):
     }
     expected_output = (
         "\nDetecting table 'users':\n"
-        "- Column 'account': sdtype='categorical'\n\n"
+        "- Column 'account': sdtype='id'\n\n"
         "Detecting primary key for table 'users':\n"
         "- primary_key='account' (updating sdtype to 'id')\n\n"
         "Detecting table 'transactions':\n"
         "- Column 'transaction_id': sdtype='id'\n"
-        "- Column 'account': sdtype='categorical'\n\n"
+        "- Column 'account': sdtype='categorical', range_is_nullable=False, "
+        "range_values=['acct_0', 'acct_1', 'acct_2', 'acct_3', 'acct_4', 'acct_5', "
+        "'acct_6', 'acct_7', 'acct_8', 'acct_9']\n\n"
         "Detecting primary key for table 'transactions':\n"
         "- primary_key='transaction_id'\n\n"
         'Detecting foreign keys:\n'
@@ -1690,6 +1688,106 @@ def test_detect_from_dataframes_verbose_updates_fk_sdtype(capsys):
     assert metadata.tables['transactions'].columns['account']['sdtype'] == 'id'
 
 
+def test_detect_from_dataframes_small_dataset():
+    """Test `detect_from_dataframes` by comparing with the expected metadata."""
+    # Setup
+    num_rows = 50
+    data = {
+        'users': pd.DataFrame({
+            'user_id': [f'user_{i}' for i in range(num_rows)],
+            'age': range(20, 20 + num_rows),
+            'signup_date': [str(d) for d in pd.date_range('2026-01-01', periods=num_rows)],
+            'is_active': [True, False] * 25,
+        }),
+        'transactions': pd.DataFrame({
+            'transaction_id': [f'transaction_{i}' for i in range(num_rows)],
+            'user_id': [f'user_{i}' for i in range(num_rows)],
+            'category': ['food', 'travel'] * 25,
+            'rating': [1, 2, 3, 4, 5] * 10,
+            'amount': [10.5 + i for i in range(num_rows)],
+        }),
+    }
+
+    expected_metadata = {
+        'tables': {
+            'users': {
+                'primary_key': 'user_id',
+                'columns': {
+                    'user_id': {
+                        'sdtype': 'id',
+                    },
+                    'age': {
+                        'sdtype': 'numerical',
+                        'range_is_nullable': False,
+                        'range_min': 20,
+                        'range_max': 69,
+                        'decimal_places': 0,
+                    },
+                    'signup_date': {
+                        'sdtype': 'datetime',
+                        'datetime_format': '%Y-%m-%d %H:%M:%S',
+                        'range_is_nullable': False,
+                        'range_min': '2026-01-01 00:00:00',
+                        'range_max': '2026-02-19 00:00:00',
+                    },
+                    'is_active': {
+                        'sdtype': 'categorical',
+                        'range_is_nullable': False,
+                        'range_values': [True, False],
+                    },
+                },
+            },
+            'transactions': {
+                'primary_key': 'transaction_id',
+                'columns': {
+                    'transaction_id': {
+                        'sdtype': 'id',
+                    },
+                    'user_id': {
+                        'sdtype': 'id',
+                        'range_is_nullable': False,
+                    },
+                    'category': {
+                        'sdtype': 'categorical',
+                        'range_is_nullable': False,
+                        'range_values': ['food', 'travel'],
+                    },
+                    'rating': {
+                        'sdtype': 'ordinal',
+                        'range_is_nullable': False,
+                        'range_values': [1, 2, 3, 4, 5],
+                    },
+                    'amount': {
+                        'sdtype': 'numerical',
+                        'range_is_nullable': False,
+                        'range_min': 10.5,
+                        'range_max': 59.5,
+                        'decimal_places': 1,
+                    },
+                },
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'transactions',
+                'parent_primary_key': 'user_id',
+                'child_foreign_key': 'user_id',
+            },
+        ],
+        'METADATA_SPEC_VERSION': 'V2',
+    }
+
+    # Run
+    metadata = Metadata.detect_from_dataframes(
+        data,
+        foreign_key_inference_algorithm='column_name_match',
+    )
+
+    # Assert
+    assert metadata.to_dict() == expected_metadata
+
+
 def test_detect_from_dataframes_verbose_no_pk_found(capsys):
     """Test 'detect_from_dataframes' verbose output when no PK found."""
     # Setup
@@ -1698,7 +1796,8 @@ def test_detect_from_dataframes_verbose_no_pk_found(capsys):
     }
     expected_output = (
         "\nDetecting table 'users':\n"
-        "- Column 'date': sdtype='datetime'\n"
+        "- Column 'date': sdtype='datetime', range_is_nullable=False, "
+        "range_min='2023-01-01 00:00:00', range_max='2023-01-10 00:00:00'\n"
         "\nDetecting primary key for table 'users':\n"
         '- No primary key found\n'
         '\nDetecting foreign keys:\n'
@@ -1924,12 +2023,6 @@ def test_detect_from_dataframes():
     metadata = Metadata.detect_from_dataframes(real_data)
 
     # Assert
-    metadata.update_column(
-        table_name='hotels',
-        column_name='classification',
-        sdtype='categorical',
-    )
-
     expected_metadata = {
         'tables': {
             'hotels': {
@@ -1968,7 +2061,8 @@ def test_detect_from_dataframes():
         ],
         'METADATA_SPEC_VERSION': 'V2',
     }
-    assert metadata.to_dict() == expected_metadata
+    compare_ranges(metadata, real_data)
+    compare_metadata(metadata, expected_metadata)
 
 
 def test_get_column_names():
