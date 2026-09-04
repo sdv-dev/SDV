@@ -1,5 +1,11 @@
 # Release Notes
 
+## v1.38.3 - 2026-09-04
+
+### New Features
+
+* Add the necessary formatting when downloading the `adventure-works` demo dataset - Issue [#2971](https://github.com/sdv-dev/SDV/issues/2971) by @amontanez24
+
 ## v1.38.2 - 2026-08-28
 
 ### New Features
