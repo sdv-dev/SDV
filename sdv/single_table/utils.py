@@ -186,6 +186,45 @@ def validate_file_path(output_file_path):
     return output_path
 
 
+def validate_folder_path_with_table_names(output_folder_path, table_names):
+    """Validate the output folder and return the output paths for each table.
+
+    Args:
+        output_folder_path (str):
+            The path to the output folder.
+        table_names (list[str]):
+            A list of table names for which to generate output file paths.
+    """
+    if output_folder_path == DISABLE_TMP_FILE:
+        # Temporary way of disabling the output file feature, used by HMA1.
+        return [None]
+
+    if not output_folder_path:
+        # Do not save files if the user specified not to save them.
+        return [None]
+
+    output_folder_path = os.path.abspath(output_folder_path)
+    output_paths = [
+        os.path.join(output_folder_path, f'{table_name}.csv') for table_name in table_names
+    ]
+
+    existing_paths = [output_path for output_path in output_paths if os.path.exists(output_path)]
+    if existing_paths:
+        formatted_paths = '\n'.join(existing_paths)
+        raise AssertionError(f'The following output files already exist:\n{formatted_paths}')
+
+    try:
+        os.makedirs(output_folder_path, exist_ok=True)
+
+    except PermissionError:
+        warnings.warn(
+            f"Permission denied: cannot write to '{output_folder_path}'. Skipping file creation."
+        )
+        return None
+
+    return output_paths
+
+
 def flatten_array(nested, prefix=''):
     """Flatten an array as a dict.
 

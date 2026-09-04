@@ -2121,7 +2121,8 @@ class TestBaseSingleTableSynthesizer:
         assert 'Mocked Error' in str(exception.value.__cause__)
 
     @patch('sdv.single_table.base.datetime')
-    def test_sample(self, mock_datetime, caplog):
+    @patch('sdv.single_table.base.validate_folder_path_with_table_names')
+    def test_sample(self, mock_validate_folder_path_with_table_names, mock_datetime, caplog):
         """Test that we use ``_sample_with_progress_bar`` in this method."""
         # Setup
         mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
@@ -2129,6 +2130,9 @@ class TestBaseSingleTableSynthesizer:
         max_tries_per_batch = 50
         batch_size = 5
         output_file_path = 'temp'
+        mock_validate_folder_path_with_table_names.return_value = [
+            os.path.join(output_file_path, 'table.csv')
+        ]
         instance = Mock(
             _synthesizer_id='BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         )
@@ -2474,9 +2478,9 @@ class TestBaseSingleTableSynthesizer:
 
     @patch('sdv.single_table.base.handle_sampling_error')
     @patch('sdv.single_table.base.tqdm')
-    @patch('sdv.single_table.base.validate_file_path')
+    @patch('sdv.single_table.base.validate_folder_path_with_table_names')
     def test_sample_from_conditions_handle_sampling_error(
-        self, mock_validate_file_path, mock_tqdm, mock_handle_sampling_error
+        self, mock_validate_folder_path, mock_tqdm, mock_handle_sampling_error
     ):
         """Test the error handling when we are using ``sample_from_conditions``."""
         # Setup
@@ -2487,7 +2491,7 @@ class TestBaseSingleTableSynthesizer:
         conditions = [Condition({'name': 'John Doe'})]
         keyboard_error = KeyboardInterrupt()
         instance._sample_with_conditions.side_effect = [keyboard_error]
-        mock_validate_file_path.return_value = 'temp_file'
+        mock_validate_folder_path.return_value = ['temp_file']
 
         # Run
         result = BaseSingleTableSynthesizer.sample_from_conditions(
@@ -2558,10 +2562,10 @@ class TestBaseSingleTableSynthesizer:
     @patch('sdv.single_table.base.check_num_rows')
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.tqdm')
-    @patch('sdv.single_table.base.validate_file_path')
+    @patch('sdv.single_table.base.validate_folder_path_with_table_names')
     def test_sample_remaining_columns_handles_sampling_error(
         self,
-        mock_validate_file_path,
+        mock_validate_folder_path,
         mock_tqdm,
         mock_data_processor,
         mock_check_num_rows,
@@ -2583,7 +2587,7 @@ class TestBaseSingleTableSynthesizer:
         instance._model = GaussianMultivariate()
         keyboard_error = KeyboardInterrupt()
         instance._sample_with_conditions.side_effect = [keyboard_error]
-        mock_validate_file_path.return_value = 'temp_file'
+        mock_validate_folder_path.return_value = ['temp_file']
 
         progress_bar = MagicMock()
         mock_tqdm.tqdm.return_value = progress_bar
@@ -2627,6 +2631,7 @@ class TestBaseSingleTableSynthesizer:
         instance._sample_with_progress_bar = Mock(return_value=pd.DataFrame())
         instance._original_columns = pd.Index([])
         instance._validate_fit_before_sample = Mock()
+        instance._table_name = 'table'
 
         # Run
         BaseSingleTableSynthesizer.sample(instance, 'table', 10)

@@ -1416,6 +1416,33 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(SynthesizerInputError, match=re.escape(expected_error)):
             instance._validate_sample_input(**arguments)
 
+    @patch('sdv.multi_table.base._validate_positive_integer')
+    @patch('sdv.multi_table.base.validate_folder_path_with_table_names')
+    def test__validate_sample_input_valid(self, mock_validate_folder_path, mock_validate_integer):
+        """Test ``_validate_sample_input`` does not raise an error for valid inputs."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance._fitted = True
+        instance.get_metadata = Mock(return_value=Mock(tables={'table'}))
+
+        arguments = {
+            'table_name': 'table',
+            'num_rows': 10,
+            'batch_size': 5,
+            'max_tries_per_batch': 100,
+            'output_folder_path': 'output',
+        }
+
+        # Run
+        instance._validate_sample_input(**arguments)
+
+        # Assert
+        mock_validate_integer.assert_any_call('num_rows', 10)
+        mock_validate_integer.assert_any_call('batch_size', 5)
+        mock_validate_integer.assert_any_call('max_tries_per_batch', 100)
+        mock_validate_folder_path.assert_called_once_with('output', ['table'])
+
     def test_sample_raises_sampling_error(self):
         """Test that ``sample`` will raise ``SamplingError`` when not fitted."""
         # Setup
