@@ -1,3 +1,5 @@
+import os
+import re
 import warnings
 from unittest.mock import Mock, patch
 
@@ -15,6 +17,7 @@ from sdv.single_table.utils import (
     handle_sampling_error,
     unflatten_dict,
     validate_file_path,
+    validate_folder_path_with_table_names,
     warn_missing_numerical_distributions,
 )
 
@@ -323,17 +326,17 @@ def test_check_num_rows_valid(warning_mock):
 
 
 @patch('builtins.open')
-def test_validate_file_path(mock_open):
+def test_validate_file_path(mock_open, tmp_path):
     """Test the validate_file_path function."""
     # Setup
-    output_path = '.sample.csv.temp'
+    output_path = str(tmp_path / 'sample.csv')
 
     # Run
     result = validate_file_path(output_path)
     none_result = validate_file_path(None)
 
     # Assert
-    assert output_path in result
+    assert result == output_path
     assert none_result is None
     mock_open.assert_called_once_with(result, 'w+')
 
@@ -353,6 +356,67 @@ def test_validate_file_path_permission_error(mock_open):
     assert result is None
     assert mock_open.called
     assert any('Permission denied' in str(warning.message) for warning in warned)
+
+
+@patch('os.makedirs')
+def test_validate_folder_path_with_table_names(mock_makedirs):
+    """Test the validate_folder_path_with_table_names function."""
+    # Setup
+    output_folder_path = '.sample.temp'
+    table_names = ['users', 'transactions']
+
+    # Run
+    result = validate_folder_path_with_table_names(output_folder_path, table_names)
+    none_result = validate_folder_path_with_table_names(None, table_names)
+
+    # Assert
+    expected_folder_path = os.path.abspath(output_folder_path)
+    expected_output_paths = [
+        os.path.join(expected_folder_path, 'users.csv'),
+        os.path.join(expected_folder_path, 'transactions.csv'),
+    ]
+
+    assert result == expected_output_paths
+    assert none_result == [None]
+    mock_makedirs.assert_called_once_with(expected_folder_path, exist_ok=True)
+
+
+@patch('os.makedirs', side_effect=PermissionError('No permission'))
+def test_validate_folder_path_with_table_names_permission_error(mock_makedirs):
+    """Test the function emits a warning and returns None on PermissionError."""
+    # Setup
+    output_folder_path = '.sample.temp'
+    table_names = ['users', 'transactions']
+
+    # Run
+    with warnings.catch_warnings(record=True) as warned:
+        warnings.simplefilter('always')
+        result = validate_folder_path_with_table_names(output_folder_path, table_names)
+
+    # Assert
+    assert result is None
+    assert mock_makedirs.called
+    assert any('Permission denied' in str(warning.message) for warning in warned)
+
+
+@patch('os.path.exists')
+def test_validate_folder_path_with_table_names_existing_files(mock_exists):
+    """Test the function raises an error listing all existing output files."""
+    # Setup
+    output_folder_path = '.sample.temp'
+    table_names = ['users', 'transactions', 'payments']
+    mock_exists.side_effect = [True, False, True]
+
+    expected_folder_path = os.path.abspath(output_folder_path)
+    expected_error = (
+        'The following output files already exist:\n'
+        f'{os.path.join(expected_folder_path, "users.csv")}\n'
+        f'{os.path.join(expected_folder_path, "payments.csv")}'
+    )
+
+    # Run and Assert
+    with pytest.raises(AssertionError, match=re.escape(expected_error)):
+        validate_folder_path_with_table_names(output_folder_path, table_names)
 
 
 def test_warn_missing_numerical_distributions():
