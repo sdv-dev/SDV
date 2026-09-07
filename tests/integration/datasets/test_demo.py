@@ -137,6 +137,20 @@ def test_download_demo_adventure_works_raises_warning(preprocess_mock):
         download_demo(modality='multi_table', dataset_name='adventure-works')
 
 
+def test_download_demo_raise_warning_v2_metadata():
+    """Test that a warning is raised if the V2 metadata is not available."""
+    # Setup
+    expected_warning = re.escape(
+        'An updated metadata V2 is not available for this dataset so the V1 '
+        'metadata was returned.\nYou should be able to model and sample with'
+        ' the V1 metadata, but please report this issue to the DataCebo.'
+    )
+
+    # Run and Assert
+    with pytest.warns(UserWarning, match=expected_warning):
+        download_demo(modality='single_table', dataset_name='fake_hotel_guests')
+
+
 def test_save_resource(tmp_path):
     """Test saving an arbitary demo resource."""
     # Setup
