@@ -9,13 +9,14 @@ from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from pandas.api.types import is_float, is_integer
 from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 from rdt.transformers.utils import _GENERATORS, strings_from_regex
 
 from sdv import version
-from sdv.errors import SDVVersionWarning, SynthesizerInputError, VersionError
+from sdv.errors import InvalidDataTypeError, SDVVersionWarning, SynthesizerInputError, VersionError
 
 try:
     from re import _parser as sre_parse
@@ -23,7 +24,7 @@ except ImportError:
     import sre_parse
 
 
-MODELABLE_SDTYPES = ['categorical', 'numerical', 'datetime', 'boolean']
+MODELABLE_SDTYPES = ['categorical', 'ordinal', 'numerical', 'datetime', 'boolean']
 
 
 def _cast_to_iterable(value, iterable_type=None):
@@ -161,6 +162,82 @@ def _datetime_string_matches_format(value, datetime_format):
         return False
 
 
+def _parse_datetime(value, datetime_format, ignore_timezone):
+    is_series = isinstance(value, pd.Series)
+    parsed_value = pd.to_datetime(value, format=datetime_format, errors='coerce')
+
+    if is_series and ignore_timezone and hasattr(parsed_value, 'dt'):
+        if hasattr(parsed_value.dt, 'tz_localize'):
+            parsed_value = parsed_value.dt.tz_localize(None)
+
+    elif ignore_timezone and hasattr(parsed_value, 'tz_localize'):
+        if isinstance(parsed_value, (list, tuple, pd.Series, np.ndarray)):
+            parsed_value = [
+                new_value.replace(tzinfo=None)
+                if isinstance(new_value, datetime)
+                else new_value.tz_localize(None)
+                for new_value in parsed_value
+            ]
+
+        else:
+            parsed_value = parsed_value.tz_localize(None)
+
+    if is_series and not isinstance(parsed_value, pd.Series):
+        return pd.Series(parsed_value)
+
+    return parsed_value
+
+
+def _parse_datetime64_value(value, datetime_format=None, ignore_timezone=True):
+    """Parse a single value into `datetime64`, optionally ignoring timezone."""
+    if pd.isna(value):
+        return pd.NaT.to_datetime64()
+
+    return _parse_datetime(value, datetime_format, ignore_timezone).to_datetime64()
+
+
+def _cast_to_datetime64(value, datetime_format=None, ignore_timezone=True):
+    """Cast a given value to a ``numpy.datetime64`` format.
+
+    Args:
+        value (pandas.Series, np.ndarray, list, or str):
+            Input data to convert.
+        datetime_format (str, optional):
+            Datetime format of the `value`.
+        ignore_timezone (bool):
+            If True, strips `%z` or `%Z` from the format and removes tzinfo.
+
+    Returns:
+        numpy.datetime64, pandas.Series, or numpy.ndarray of datetime64
+    """
+    if datetime_format:
+        datetime_format = datetime_format.replace('%#', '%').replace('%-', '%')
+
+    if isinstance(value, str):
+        return _parse_datetime64_value(value, datetime_format, ignore_timezone)
+
+    elif isinstance(value, pd.Series):
+        return pd.Series(
+            [
+                _parse_datetime64_value(
+                    val,
+                    datetime_format,
+                    ignore_timezone,
+                )
+                for val in value
+            ],
+            index=value.index,
+            dtype='datetime64[ns]',
+        )
+
+    elif isinstance(value, (np.ndarray, list)):
+        return np.array([
+            _parse_datetime64_value(val, datetime_format, ignore_timezone) for val in value
+        ])
+
+    return _parse_datetime64_value(value, datetime_format, ignore_timezone)
+
+
 def _convert_to_timedelta(column):
     """Convert a ``pandas.Series`` to one with dtype ``timedelta``.
 
@@ -266,7 +343,7 @@ def check_sdv_versions_and_warn(synthesizer):
     """Check if the current SDV and SDV Enterprise versions mismatch.
 
     Args:
-        synthesizer (BaseSynthesizer or BaseMultiTableSynthesizer):
+        synthesizer (BaseSynthesizer):
             An SDV model instance to check versions against.
 
     Raises:
@@ -359,7 +436,7 @@ def check_synthesizer_version(synthesizer, is_fit_method=False, compare_operator
     """Check if the current synthesizer version is greater than the package version.
 
     Args:
-        synthesizer (BaseSynthesizer or BaseMultiTableSynthesizer):
+        synthesizer (BaseSynthesizer):
             An SDV model instance to check versions against.
         is_fit_method (bool):
             Whether or not this function is being called by a ``fit`` function.
@@ -435,7 +512,7 @@ def generate_synthesizer_id(synthesizer):
     and the last part of a UUID4 composed by 36 random characters.
 
     Args:
-        synthesizer (BaseSynthesizer or BaseMultiTableSynthesizer):
+        synthesizer (BaseSynthesizer):
             An SDV model instance to check versions against.
 
     Returns:
@@ -489,11 +566,7 @@ def _is_numerical(value):
 def _get_transformer_init_kwargs(transformer):
     """Get the dict of arguments used to instantiate the given transformer."""
     args = inspect.getfullargspec(transformer.__init__).args[1:]
-    return {
-        key: getattr(transformer, key)
-        for key in args
-        if key != 'model_missing_values' and hasattr(transformer, key)
-    }
+    return {key: getattr(transformer, key) for key in args if hasattr(transformer, key)}
 
 
 def _check_regex_format(table_name, column_name, regex):
@@ -507,25 +580,6 @@ def _check_regex_format(table_name, column_name, regex):
                 f"{regex}', which you have provided for table '{table_name}', column '{column_name}"
                 "'. Please use a simplified format or update to a different sdtype."
             ) from e
-
-
-def warn_load_deprecated():
-    """Warn that the `load` function is deprecated."""
-    warnings.warn(
-        "The 'load' function will be deprecated in future versions of SDV. Please use"
-        " 'utils.load_synthesizer' instead.",
-        FutureWarning,
-    )
-
-
-def warn_set_constraints_deprecated():
-    """Warn that the `set_constraints` method on synthesizer is deprecated."""
-    deprecation_msg = (
-        'Warning: The `set_constraints` method is deprecated. '
-        'Please use the `load_constraints` utility function to load constraints from a file '
-        'and add them to the synthesizer with the `add_constraints` method.'
-    )
-    warnings.warn(deprecation_msg, FutureWarning)
 
 
 def _validate_correct_synthesizer_loading(synthesizer, cls):
@@ -574,3 +628,80 @@ def _check_is_dict_of_dataframes(data, arg_name='data'):
     for table_name, table in data.items():
         if not isinstance(table, pd.DataFrame):
             raise ValueError(error_message_data)
+
+
+def _column_range_exceeds_real(column, col_meta):
+    range_is_nullable = col_meta.get('range_is_nullable', False)
+    if not any(pd.isna(column)) and range_is_nullable:
+        return True
+
+    column = column.dropna()
+    if col_meta['sdtype'] in ['datetime', 'numerical']:
+        range_min = col_meta.get('range_min')
+        range_max = col_meta.get('range_max')
+        if range_min is None and range_max is None:
+            return False
+        elif column.empty:
+            return True
+
+        if col_meta['sdtype'] == 'datetime':
+            datetime_format = col_meta.get('datetime_format')
+            column = _cast_to_datetime64(column, datetime_format)
+            if range_min is not None:
+                range_min = _cast_to_datetime64(range_min, datetime_format)
+
+            if range_max is not None:
+                range_max = _cast_to_datetime64(range_max, datetime_format)
+
+        min_bound_met = any(column.dropna() <= range_min) if range_min is not None else True
+        max_bound_met = any(column.dropna() >= range_max) if range_max is not None else True
+        return not (min_bound_met and max_bound_met)
+
+    elif col_meta['sdtype'] in ['categorical', 'ordinal']:
+        if 'range_values' not in col_meta:
+            return False
+
+        if not set(col_meta['range_values']).issubset(set(column.unique())):
+            return True
+
+    return False
+
+
+def _metadata_range_exceeds_real(data, metadata):
+    """Returns whether the metadata range information exceeds the real data range."""
+    for table_name, table_data in data.items():
+        for column in table_data.columns:
+            col_meta = metadata.tables[table_name].columns[column]
+            if _column_range_exceeds_real(table_data[column], col_meta):
+                return True
+
+    return False
+
+
+def _validate_data_single_table(data):
+    """Validate that the data is a dictionary with a single table."""
+    if len(data) != 1:
+        raise InvalidDataTypeError(
+            'The `data` parameter must be a dictionary containing exactly one table name '
+            'mapped to a pandas DataFrame.'
+        )
+
+
+def _get_single_table_data(data):
+    """Return the single table DataFrame from the data dictionary."""
+    _validate_data_single_table(data)
+    return next(iter(data.values()))
+
+
+def _validate_positive_integer(parameter_name, value):
+    """Validate that a parameter is a positive integer."""
+    if (
+        not isinstance(value, (int, float))
+        or value <= 0
+        or not float(value).is_integer()
+        or isinstance(value, bool)
+    ):
+        raise SynthesizerInputError(
+            f"Invalid parameter for '{parameter_name}' ({value}). "
+            'Please provide an integer that is greater than 0.'
+        )

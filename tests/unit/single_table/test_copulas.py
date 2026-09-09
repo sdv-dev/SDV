@@ -555,8 +555,8 @@ class TestGaussianCopulaSynthesizer:
         distribution and it's parameters.
         """
         # Setup
-        data = pd.DataFrame({'zero': [0, 0, 0], 'one': [1, 1, 1]})
-        stm = Metadata.detect_from_dataframes({'table': data})
+        data = {'table': pd.DataFrame({'zero': [0, 0, 0], 'one': [1, 1, 1]})}
+        stm = Metadata.detect_from_dataframes(data)
         gcs = GaussianCopulaSynthesizer(stm, numerical_distributions={'one': 'uniform'})
         gcs.fit(data)
 
@@ -586,7 +586,7 @@ class TestGaussianCopulaSynthesizer:
                 }
             }
         })
-        data = pd.DataFrame({'col_1': range(100), 'col_2': range(100)})
+        data = {'table1': pd.DataFrame({'col_1': range(100), 'col_2': range(100)})}
         synthesizer = GaussianCopulaSynthesizer(metadata, default_distribution='beta')
         synthesizer.fit(data)
 
@@ -603,9 +603,9 @@ class TestGaussianCopulaSynthesizer:
         distribution and it's parameters.
         """
         # Setup
-        data = pd.DataFrame({'zero': [0, 0, 0], 'one': [1, 1, 1]})
+        data = {'table': pd.DataFrame({'zero': [0, 0, 0], 'one': [1, 1, 1]})}
         stm = Metadata()
-        stm.detect_from_dataframes({'table': data})
+        stm.detect_from_dataframes(data)
         gcs = GaussianCopulaSynthesizer(stm)
 
         # Run and Assert

@@ -51,7 +51,7 @@ class SeriesMatcher:
 
 
 def get_multi_table_metadata():
-    """Return a ``MultiTableMetadata`` object to be used with tests."""
+    """Return a multi-table ``Metadata`` object to be used with tests."""
     dict_metadata = {
         'tables': {
             'nesreca': {
@@ -97,14 +97,14 @@ def get_multi_table_metadata():
                 'child_foreign_key': 'id_nesreca',
             },
         ],
-        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'V1',
     }
 
     return Metadata.load_from_dict(dict_metadata)
 
 
 def get_simplified_multi_table_metadata():
-    """Return a simplified ``MultiTableMetadata`` object to be used with HMA tests."""
+    """Return a simplified ``Metadata`` object to be used with HMA tests."""
     dict_metadata = {
         'tables': {
             'nesreca': {
@@ -144,7 +144,7 @@ def get_simplified_multi_table_metadata():
                 'child_foreign_key': 'id_nesreca',
             },
         ],
-        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'V1',
     }
 
     return Metadata.load_from_dict(dict_metadata)

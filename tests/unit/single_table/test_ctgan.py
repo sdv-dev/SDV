@@ -231,10 +231,12 @@ class TestCTGANSynthesizer:
         metadata.add_table('table')
         metadata.add_column('name_longer_than_Original_Column_Name', 'table', sdtype='numerical')
         metadata.add_column('categorical', 'table', sdtype='categorical')
-        data = pd.DataFrame({
-            'name_longer_than_Original_Column_Name': np.random.rand(1_001),
-            'categorical': [f'cat_{i}' for i in range(1_001)],
-        })
+        data = {
+            'table': pd.DataFrame({
+                'name_longer_than_Original_Column_Name': np.random.rand(1_001),
+                'categorical': [f'cat_{i}' for i in range(1_001)],
+            })
+        }
         instance = CTGANSynthesizer(metadata)
 
         # Run
@@ -262,10 +264,12 @@ class TestCTGANSynthesizer:
         metadata.add_table('table')
         metadata.add_column('name_longer_than_Original_Column_Name', 'table', sdtype='numerical')
         metadata.add_column('categorical', 'table', sdtype='categorical')
-        data = pd.DataFrame({
-            'name_longer_than_Original_Column_Name': np.random.rand(10),
-            'categorical': [f'cat_{i}' for i in range(10)],
-        })
+        data = {
+            'table': pd.DataFrame({
+                'name_longer_than_Original_Column_Name': np.random.rand(10),
+                'categorical': [f'cat_{i}' for i in range(10)],
+            })
+        }
         instance = CTGANSynthesizer(metadata)
 
         # Run
@@ -289,8 +293,7 @@ class TestCTGANSynthesizer:
         metadata = Metadata()
         metadata.add_table('table')
         metadata.add_column('id', 'table', sdtype='numerical')
-        single_metadata = metadata._convert_to_single_table()
-        instance = CTGANSynthesizer(single_metadata)
+        instance = CTGANSynthesizer(metadata)
         processed_data = Mock()
 
         # Run
@@ -507,8 +510,7 @@ class TestTVAESynthesizer:
         metadata = Metadata()
         metadata.add_table('table')
         metadata.add_column('id', 'table', sdtype='numerical')
-        single_metadata = metadata._convert_to_single_table()
-        instance = TVAESynthesizer(single_metadata)
+        instance = TVAESynthesizer(metadata)
         processed_data = Mock()
 
         # Run

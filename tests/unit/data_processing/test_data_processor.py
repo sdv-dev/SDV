@@ -15,14 +15,12 @@ from rdt.transformers import (
     UnixTimestampEncoder,
 )
 
-from sdv.constraints.tabular import Positive, ScalarRange
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
-from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
+from sdv.data_processing.errors import NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.errors import SynthesizerInputError
-from sdv.metadata.single_table import SingleTableMetadata
-from tests.utils import DataFrameMatcher
+from sdv.metadata._single_table import _SingleTableMetadata
 
 
 class TestDataProcessor:
@@ -52,7 +50,7 @@ class TestDataProcessor:
     def test__detect_multi_column_transformers_address(self, transformers_mock):
         """Test the ``_detect_multi_column_transformers`` method with address relationship."""
         # Setup
-        metadata = SingleTableMetadata().load_from_dict({
+        metadata = _SingleTableMetadata().load_from_dict({
             'columns': {
                 'country_column': {'sdtype': 'country_code'},
                 'city_column': {'sdtype': 'city'},
@@ -62,7 +60,7 @@ class TestDataProcessor:
             ],
         })
         metadata._valid_column_relationships = metadata.column_relationships
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.metadata = metadata
         dp._locales = ['en_US', 'en_GB']
         randomlocationgenerator = Mock()
@@ -81,7 +79,7 @@ class TestDataProcessor:
     def test__detect_multi_column_transformers_gps(self, transformers_mock):
         """Test the ``_detect_multi_column_transformers`` method with gps relationship."""
         # Setup
-        metadata = SingleTableMetadata().load_from_dict({
+        metadata = _SingleTableMetadata().load_from_dict({
             'columns': {
                 'latitude_column': {'sdtype': 'latitude'},
                 'longitude_column': {'sdtype': 'longitude'},
@@ -91,7 +89,7 @@ class TestDataProcessor:
             ],
         })
         metadata._valid_column_relationships = metadata.column_relationships
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.metadata = metadata
         dp._locales = ['en_US', 'en_GB']
         gpsnoiser = Mock()
@@ -108,7 +106,7 @@ class TestDataProcessor:
     def test__detect_multi_column_transformers_gps_address(self, transformers_mock):
         """Test the ``_detect_multi_column_transformers`` method with different relationships."""
         # Setup
-        metadata = SingleTableMetadata().load_from_dict({
+        metadata = _SingleTableMetadata().load_from_dict({
             'columns': {
                 'latitude_column': {'sdtype': 'latitude'},
                 'longitude_column': {'sdtype': 'longitude'},
@@ -121,7 +119,7 @@ class TestDataProcessor:
             ],
         })
         metadata._valid_column_relationships = metadata.column_relationships
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.metadata = metadata
         dp._locales = ['en_US', 'en_GB']
         gpsnoiser = Mock()
@@ -163,7 +161,7 @@ class TestDataProcessor:
             - enforce_min_max_values set to False.
         """
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('col', sdtype='id')
         metadata.add_column('col_2', sdtype='id')
         metadata.add_alternate_keys(['col_2'])
@@ -190,9 +188,6 @@ class TestDataProcessor:
         assert data_processor._enforce_min_max_values is False
         assert data_processor._locales == 'en_US'
         assert data_processor._model_kwargs == {}
-        assert data_processor._constraints_list == []
-        assert data_processor._constraints == []
-        assert data_processor._constraints_to_reverse == []
         assert data_processor.table_name == ''
         assert data_processor.fitted is False
         assert data_processor._dtypes is None
@@ -221,7 +216,7 @@ class TestDataProcessor:
     def test___init___with_id_columns_use_old_behavior(self):
         """Test the ``__init__`` method with id_columns_use_old_behavior parameter."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('id_col_1', sdtype='id')
         metadata.add_column('id_col_2', sdtype='id')
         metadata.add_column('regular_col', sdtype='categorical')
@@ -239,26 +234,26 @@ class TestDataProcessor:
         """Test the ``__init__`` method without using mocks.
 
         Setup:
-            - Create ``SingleTableMetadata`` instance with one column and one constraint.
+            - Create ``_SingleTableMetadata`` instance with one column and one constraint.
 
         Input:
-            - The ``SingleTableMetadata``.
+            - The ``_SingleTableMetadata``.
         """
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('col', sdtype='numerical')
 
         # Run
         instance = DataProcessor(metadata=metadata)
 
         # Assert
-        assert isinstance(instance.metadata, SingleTableMetadata)
+        assert isinstance(instance.metadata, _SingleTableMetadata)
         assert instance.metadata.columns == {'col': {'sdtype': 'numerical'}}
 
     def test__get_grouped_columns(self):
         """Test the ``_get_grouped_columns`` method."""
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.grouped_columns_to_transformers = {
             ('col1', 'col2'): 'transformer_A',
             ('col3', 'col4'): 'transformer_B',
@@ -270,28 +265,6 @@ class TestDataProcessor:
         # Assert
         expected_list = ['col1', 'col2', 'col3', 'col4']
         assert column == expected_list
-
-    def test_filter_valid(self):
-        """Test that we are calling the ``filter_valid`` of each constraint over the data."""
-        # Setup
-        data = pd.DataFrame({
-            'numbers': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-            'range': [0, 10, 20, 30, 40, 50, 60, 70, 80, 90],
-        })
-        instance = Mock()
-        scalar_range = ScalarRange('range', low_value=0, high_value=90, strict_boundaries=True)
-        positive = Positive('numbers')
-        instance._constraints = [scalar_range, positive]
-
-        # Run
-        data = DataProcessor.filter_valid(instance, data)
-
-        # Assert
-        expected_data = pd.DataFrame(
-            {'numbers': [1, 2, 3, 4, 5, 6, 7, 8], 'range': [10, 20, 30, 40, 50, 60, 70, 80]},
-            index=[1, 2, 3, 4, 5, 6, 7, 8],
-        )
-        pd.testing.assert_frame_equal(expected_data, data)
 
     def test_to_dict_from_dict(self):
         """Test that ``to_dict`` and ``from_dict`` methods are inverse to each other.
@@ -309,10 +282,10 @@ class TestDataProcessor:
             - The original DataProcessor instance.
         """
         # Setup
-        metadata = SingleTableMetadata()
-        metadata.add_column('col', sdtype='numerical')
+        metadata = _SingleTableMetadata()
+        metadata.add_column('high', sdtype='numerical')
+        metadata.add_column('low', sdtype='numerical')
         instance = DataProcessor(metadata=metadata)
-        instance._constraints_to_reverse = [Positive('col')]
 
         # Run
         new_instance = instance.from_dict(instance.to_dict())
@@ -320,12 +293,6 @@ class TestDataProcessor:
         # Assert
         assert instance.metadata.to_dict() == new_instance.metadata.to_dict()
         assert instance._model_kwargs == new_instance._model_kwargs
-        assert len(new_instance._constraints_to_reverse) == 1
-        assert (
-            instance._constraints_to_reverse[0].to_dict()
-            == new_instance._constraints_to_reverse[0].to_dict()
-        )
-
         for sdtype, transformer in instance._transformers_by_sdtype.items():
             assert repr(transformer) == repr(new_instance._transformers_by_sdtype[sdtype])
 
@@ -346,10 +313,9 @@ class TestDataProcessor:
             - The original DataProcessor instance.
         """
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('col', sdtype='numerical')
         instance = DataProcessor(metadata=metadata)
-        instance._constraints_to_reverse = [Positive('col')]
 
         # Run
         file_name = tmp_path / 'temp.json'
@@ -359,11 +325,6 @@ class TestDataProcessor:
         # Assert
         assert instance.metadata.to_dict() == new_instance.metadata.to_dict()
         assert instance._model_kwargs == new_instance._model_kwargs
-        assert len(new_instance._constraints_to_reverse) == 1
-        assert (
-            instance._constraints_to_reverse[0].to_dict()
-            == new_instance._constraints_to_reverse[0].to_dict()
-        )
 
         for sdtype, transformer in instance._transformers_by_sdtype.items():
             assert repr(transformer) == repr(new_instance._transformers_by_sdtype[sdtype])
@@ -380,7 +341,7 @@ class TestDataProcessor:
             - model key word args.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp._model_kwargs = {'model': {'arg1': 10, 'arg2': True}}
 
         # Run
@@ -402,7 +363,7 @@ class TestDataProcessor:
             - ``_model_kwargs`` should be set.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
 
         # Run
         dp.set_model_kwargs('model', {'arg1': 10, 'arg2': True})
@@ -417,10 +378,10 @@ class TestDataProcessor:
         ``sdtype`` as value. When ``primary_keys`` is ``False`` this should not be included.
         """
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('col1', sdtype='categorical')
         metadata.add_column('col2', sdtype='id')
-        metadata.add_column('col3', sdtype='numerical', computer_representation='Int8')
+        metadata.add_column('col3', sdtype='numerical')
         metadata.set_primary_key('col2')
         dp = DataProcessor(metadata)
 
@@ -437,10 +398,10 @@ class TestDataProcessor:
         ``sdtype`` as value. When ``primary_keys`` is ``True`` this should be included.
         """
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('col1', sdtype='categorical')
         metadata.add_column('col2', sdtype='id')
-        metadata.add_column('col3', sdtype='numerical', computer_representation='Int8')
+        metadata.add_column('col3', sdtype='numerical')
         metadata.set_primary_key('col2')
         dp = DataProcessor(metadata)
 
@@ -449,143 +410,6 @@ class TestDataProcessor:
 
         # Assert
         assert sdtypes == {'col1': 'categorical', 'col2': 'id', 'col3': 'numerical'}
-
-    def test__validate_custom_constraints(self):
-        """Test that ``_validate_custom_constraints`` doesn't raise an error."""
-        # Setup
-        class_names = ['CustomCons', 'CustomCons2']
-        filepath = 'example/myfile.py'
-        instance = Mock()
-        module = Mock()
-
-        # Run and Assert
-        DataProcessor._validate_custom_constraints(instance, filepath, class_names, module)
-
-    def test__validate_custom_constraint_name_raises_error(self):
-        """Test the method's error case.
-
-        An error should be raised if the name of the custom constraint matches the name of
-        a predefined constraint.
-        """
-        # Setup
-        instance = Mock()
-
-        # Run and Assert
-        error_msg = re.escape(
-            'The provided constraint is invalid:'
-            "\nThe name 'Positive' is a reserved constraint name. Please use a different one for "
-            'the custom constraint.'
-        )
-        with pytest.raises(InvalidConstraintsError, match=error_msg):
-            DataProcessor._validate_custom_constraint_name(instance, 'Positive')
-
-    def test__validate_custom_constraints_raises_an_error(self):
-        """Test the ``_validate_custom_constraints``.
-
-        Ensure that the method will raise an error if the ``class_name`` is within the reserved
-        class names (the default ones provided by ``SDV``) and when the constraint class is not
-        found in the given ``filepath``.
-        """
-        # Setup
-        class_names = ['CustomCons', 'Positive', 'CustomCons2']
-        filepath = 'example/myfile.py'
-        instance = Mock()
-        module = Mock()
-        del module.CustomCons2
-        name_error = InvalidConstraintsError(
-            "The name 'Positive' is a reserved constraint name. Please use a different one for "
-            'the custom constraint.'
-        )
-        instance._validate_custom_constraint_name.side_effect = [None, name_error, None]
-
-        # Run and Assert
-        error_msg = re.escape(
-            'The provided constraint is invalid:'
-            "\nThe name 'Positive' is a reserved constraint name. Please use a different one for "
-            'the custom constraint.'
-            "\n\nThe constraint 'CustomCons2' is not defined in 'example/myfile.py'."
-        )
-        with pytest.raises(InvalidConstraintsError, match=error_msg):
-            DataProcessor._validate_custom_constraints(instance, filepath, class_names, module)
-
-    @patch('sdv.data_processing.data_processor.load_module_from_path')
-    def test_load_custom_constraint_classes(self, load_module_from_path_mock):
-        """Test ``load_custom_constraint_classes``.
-
-        Ensure that the method calls ``_validate_custom_constraints`` using the ``filepath`` and
-        the ``class_names``. If this are valid, update ``instance._custom_constraint_classes`` with
-        the ``class_name`` and the ``filepath`` from where this class can be loaded.
-        """
-        # Setup
-        instance = Mock()
-        instance._custom_constraint_classes = {}
-        module_mock = Mock()
-        custom_constraint_mock = Mock()
-        simple_constraint_mock = Mock()
-        module_mock.CustomCons = custom_constraint_mock
-        module_mock.SimpleCons = simple_constraint_mock
-        load_module_from_path_mock.return_value = module_mock
-
-        # Run
-        filepath = 'example/myfile.py'
-        class_names = ['CustomCons', 'SimpleCons']
-        DataProcessor.load_custom_constraint_classes(instance, filepath, class_names)
-
-        # Assert
-        instance._validate_custom_constraints.assert_called_once_with(
-            'example/myfile.py', ['CustomCons', 'SimpleCons'], module_mock
-        )
-        assert instance._custom_constraint_classes == {
-            'CustomCons': custom_constraint_mock,
-            'SimpleCons': simple_constraint_mock,
-        }
-
-    @patch('sdv.data_processing.data_processor.get_subclasses')
-    @patch('sdv.data_processing.data_processor.Constraint')
-    def test__load_constraints(self, constraint_mock, get_subclasses_mock):
-        """Test the ``_load_constraints`` method.
-
-        The method should take all the constraints in the passed metadata and
-        call the ``Constraint.from_dict`` method on them if the constraints are the
-        default provided by ``sdv``. If the constraints are custom constraints then
-        it will used the stored class object.
-        """
-        # Setup
-        get_subclasses_mock.return_value = {'Inequality', 'ScalarInequality'}
-        data_processor = Mock()
-        constraint1 = Mock()
-        constraint2 = Mock()
-        constraint1_dict = {
-            'constraint_class': 'Inequality',
-            'constraint_parameters': {'low_column_name': 'col1', 'high_column_name': 'col2'},
-        }
-        constraint2_dict = {
-            'constraint_class': 'ScalarInequality',
-            'constraint_parameters': {'column_name': 'col1', 'relation': '<', 'value': 10},
-        }
-        custom_constraint_dict = {
-            'constraint_class': 'CustomCons',
-            'constraint_parameters': {'column_names': ['a', 'b']},
-        }
-        custom_constraint = Mock()
-
-        data_processor._custom_constraint_classes = {'CustomCons': custom_constraint}
-        constraint_mock.from_dict.side_effect = [constraint1, constraint2]
-
-        data_processor._constraints_list = [
-            constraint1_dict,
-            constraint2_dict,
-            custom_constraint_dict,
-        ]
-
-        # Run
-        loaded_constraints = DataProcessor._load_constraints(data_processor)
-
-        # Assert
-        assert loaded_constraints == [constraint1, constraint2, custom_constraint.return_value]
-        custom_constraint.assert_called_once_with(column_names=['a', 'b'])
-
-        constraint_mock.from_dict.assert_has_calls([call(constraint1_dict), call(constraint2_dict)])
 
     def test__update_transformers_by_sdtypes(self):
         """Test that we update the ``_transformers_by_sdtype`` of the current instance."""
@@ -750,7 +574,7 @@ class TestDataProcessor:
         from the dictionary ``self._transformers_by_sdtype``.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp._get_transformer_with_parameters = Mock(return_value='FloatFormatter')
 
         # Run
@@ -766,14 +590,13 @@ class TestDataProcessor:
         of a transformer with those.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
 
         # Run
-        result = dp._get_transformer_instance('numerical', {'computer_representation': 'Int32'})
+        result = dp._get_transformer_instance('numerical', {'range_min': 0.0})
 
         # Assert
         assert isinstance(result, FloatFormatter)
-        assert result.computer_representation == 'Int32'
 
     def test__get_transformer_instance_passes_kwargs_from_default(self):
         """Test the ``_get_transformer_instance`` uses the default transformers kwargs.
@@ -782,21 +605,52 @@ class TestDataProcessor:
         when creating a new instance of a transformer.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
-        dp._transformers_by_sdtype['numerical'] = FloatFormatter(
+        dp = DataProcessor(_SingleTableMetadata())
+        dp._transformers_by_sdtype['datetime'] = UnixTimestampEncoder(
             missing_value_replacement='random',
             missing_value_generation='from_column',
-            learn_rounding_scheme=False,
         )
 
         # Run
-        result = dp._get_transformer_instance('numerical', {'computer_representation': 'Int32'})
+        result = dp._get_transformer_instance('datetime', {'datetime_format': '%Y-%m-%d'})
 
         # Assert
-        assert isinstance(result, FloatFormatter)
+        assert isinstance(result, UnixTimestampEncoder)
+        assert result.datetime_format == '%Y-%m-%d'
         assert result.missing_value_replacement == 'random'
         assert result.missing_value_generation == 'from_column'
-        assert result.learn_rounding_scheme is False
+
+    def test__get_categorical_transformer_handles_range_values(self):
+        """Test the ``_get_categorical_transformer`` removes 'range_values' parameter."""
+        # Setup
+        dp = DataProcessor(_SingleTableMetadata())
+        dp._get_transformer_with_parameters = Mock(return_value='UniformEncoder')
+        transformer = 'UniformEncoder'
+        parameters = {'range_values': ['a', 'b', 'c']}
+
+        # Run
+        result = dp._get_categorical_transformer(parameters, transformer)
+
+        # Assert
+        dp._get_transformer_with_parameters.assert_called_once_with({}, transformer)
+        assert result == 'UniformEncoder'
+
+    def test__get_ordinal_transformer_handles_range_values(self):
+        """Test the ``_get_ordinal_transformer`` renames 'range_values' parameter."""
+        # Setup
+        dp = DataProcessor(_SingleTableMetadata())
+        dp._get_transformer_with_parameters = Mock(return_value='UniformEncoder')
+        transformer = 'UniformEncoder'
+        parameters = {'range_values': ['a', 'b', 'c']}
+
+        # Run
+        result = dp._get_ordinal_transformer(parameters, transformer)
+
+        # Assert
+        dp._get_transformer_with_parameters.assert_called_once_with(
+            {'order': ['a', 'b', 'c']}, transformer
+        )
+        assert result == 'UniformEncoder'
 
     def test__create_config(self):
         """Test the ``_create_config`` method.
@@ -833,7 +687,7 @@ class TestDataProcessor:
             'unknown': ['a', 'b', 'c'],
             'address': ['123 Main St', '456 Main St', '789 Main St'],
         })
-        dp = DataProcessor(SingleTableMetadata(), locales=locales)
+        dp = DataProcessor(_SingleTableMetadata(), locales=locales)
         dp.metadata = Mock()
         dp._enforce_min_max_values = True
         dp.create_anonymized_transformer = Mock()
@@ -997,7 +851,7 @@ class TestDataProcessor:
             'unknown_pii_true': ['a', 'b', 'c'],
             'unknown_pii_false': ['a', 'b', 'c'],
         })
-        metadata = SingleTableMetadata().load_from_dict({
+        metadata = _SingleTableMetadata().load_from_dict({
             'columns': {
                 'name_pii': {'sdtype': 'name'},
                 'phone_pii': {'sdtype': 'phone_number', 'pii': True},
@@ -1055,7 +909,7 @@ class TestDataProcessor:
             'country_column': ['US', 'ES', 'US'],
             'city_column': ['New York', 'Madrid', 'New York'],
         })
-        metadata = SingleTableMetadata().load_from_dict({
+        metadata = _SingleTableMetadata().load_from_dict({
             'columns': {
                 'country_column': {'sdtype': 'country'},
                 'city_column': {'sdtype': 'city'},
@@ -1092,7 +946,7 @@ class TestDataProcessor:
             'phone_number': ['+1 (234) 535-2341', '+1 (334) 535-2341'],
             'email': ['test@gmail.com', 'test2@gmail.com.br'],
         })
-        metadata = SingleTableMetadata().load_from_dict({
+        metadata = _SingleTableMetadata().load_from_dict({
             'columns': {
                 'email': {'sdtype': 'email'},
                 'phone_number': {'sdtype': 'phone_number'},
@@ -1122,8 +976,8 @@ class TestDataProcessor:
         data = pd.DataFrame({
             'numerical_column': [12321, 198, 1958],
         })
-        metadata = SingleTableMetadata().load_from_dict({
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        metadata = _SingleTableMetadata().load_from_dict({
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
             'columns': {'numerical_column': {'sdtype': 'unknown', 'pii': True}},
         })
         dp = DataProcessor(metadata)
@@ -1140,8 +994,8 @@ class TestDataProcessor:
         data = pd.DataFrame({
             'id_column': ['id1', 'id2', 'id3'],
         })
-        metadata = SingleTableMetadata().load_from_dict({
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        metadata = _SingleTableMetadata().load_from_dict({
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
             'columns': {'id_column': {'sdtype': 'id'}},
         })
         dp = DataProcessor(metadata)
@@ -1157,7 +1011,7 @@ class TestDataProcessor:
     def test__get_id_column_config_with_old_behavior(self):
         """Test _get_id_column_config with a column in id_columns_use_old_behavior."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('id_col', sdtype='id')
         data = pd.DataFrame({'id_col': ['id1', 'id2', 'id3']})
 
@@ -1176,7 +1030,7 @@ class TestDataProcessor:
     def test_update_transformers_not_fitted(self):
         """Test when ``self._hyper_transformer`` is ``None`` raises a ``NotFittedError``."""
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
 
         # Run and Assert
         error_msg = (
@@ -1188,7 +1042,7 @@ class TestDataProcessor:
     def test_update_transformer_with_multi_column(self):
         """Test when a multi-column transformer is updated."""
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.grouped_columns_to_transformers = {
             ('col_3', 'col_4'): 'transformer_3',
         }
@@ -1218,7 +1072,7 @@ class TestDataProcessor:
 
     def test_update_transformers_ignores_rdt_refit_warning(self):
         """Test silencing hypertransformer refit warning (replaced by SDV warning elsewhere)"""
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('col1', sdtype='numerical')
         metadata.add_column('col2', sdtype='numerical')
 
@@ -1234,7 +1088,7 @@ class TestDataProcessor:
         ``RegexGenerator`` for keys.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp._keys = ['pk_column', 'b']
         dp._hyper_transformer = Mock()
 
@@ -1265,7 +1119,7 @@ class TestDataProcessor:
             - ``HyperTransformer`` should fit the data.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         ht_mock.return_value._fitted = False
         data = pd.DataFrame({'a': [1, 2, 3]})
 
@@ -1292,7 +1146,7 @@ class TestDataProcessor:
             - ``HyperTransformer`` should not fit the data.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         ht_mock.return_value._fitted = False
         ht_mock.return_value.field_transformers = {}
         data = pd.DataFrame()
@@ -1312,7 +1166,7 @@ class TestDataProcessor:
         This should not re-fit or re-create the ``self._hyper_transformer``.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp._hyper_transformer = Mock()
         dp._hyper_transformer.field_transformers = {'name': 'categorical'}
         dp._hyper_transformer._fitted = True
@@ -1336,7 +1190,7 @@ class TestDataProcessor:
         the ``self._hyper_transformer``.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         ht_mock.return_value._fitted = True
         ht_mock.return_value._modified_config = True
         data = pd.DataFrame({'a': [1, 2, 3]})
@@ -1352,25 +1206,25 @@ class TestDataProcessor:
         """Test the ``_fit_formatters`` method.
 
         Runs the methods through three columns: a non-numerical column, which should
-        be skipped by the method, and two numerical ones (with different values for
-        ``computer_representation``), which should create and learn a ``NumericalFormatter``.
+        be skipped by the method, and two numerical ones, which should create and learn
+        a ``NumericalFormatter``.
 
         Setup:
-            - ``SingleTableMetadata`` describing the three columns.
+            - ``_SingleTableMetadata`` describing the three columns.
             - A mock of ``NumericalFormatter.learn_format``.
         """
         # Setup
         data = pd.DataFrame({
             'col1': ['abc', 'def'],
-            'col2': [1, 2],
-            'col3': [3, 4],
+            'col2': pd.Series([1, 2], dtype='int8'),
+            'col3': pd.Series([3, 4], dtype='float'),
             'date_col1': ['16-05-2023', '14-04-2022'],
             'date_col2': pd.to_datetime(['2021-02-15', '2022-05-16']),
         })
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('col1', sdtype='categorical')
         metadata.add_column('col2', sdtype='numerical')
-        metadata.add_column('col3', sdtype='numerical', computer_representation='Int8')
+        metadata.add_column('col3', sdtype='numerical')
         metadata.add_column('date_col1', sdtype='datetime')
         metadata.add_column('date_col2', sdtype='datetime', datetime_format='%Y-%d-%M')
         dp = DataProcessor(metadata, enforce_rounding=False, enforce_min_max_values=False)
@@ -1384,12 +1238,10 @@ class TestDataProcessor:
         assert isinstance(dp.formatters['col2'], NumericalFormatter)
         assert dp.formatters['col2'].enforce_rounding is False
         assert dp.formatters['col2'].enforce_min_max_values is False
-        assert dp.formatters['col2'].computer_representation == 'Float'
 
         assert isinstance(dp.formatters['col3'], NumericalFormatter)
         assert dp.formatters['col3'].enforce_rounding is False
         assert dp.formatters['col3'].enforce_min_max_values is False
-        assert dp.formatters['col3'].computer_representation == 'Int8'
 
         learn_format_mock.assert_has_calls([call(data['col2']), call(data['col3'])])
 
@@ -1556,7 +1408,7 @@ class TestDataProcessor:
         """
         # Setup
         data = pd.DataFrame({'item 0': [0, 1, 2], 'item 1': [True, True, False]}, index=[0, 1, 2])
-        dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
+        dp = DataProcessor(_SingleTableMetadata(), table_name='table_name')
         dp._hyper_transformer = Mock()
         dp.get_sdtypes = Mock()
         dp.get_sdtypes.return_value = {'item 0': 'numerical', 'item 1': 'boolean'}
@@ -1638,7 +1490,7 @@ class TestDataProcessor:
             },
             index=[0, 1, 2],
         )
-        dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
+        dp = DataProcessor(_SingleTableMetadata(), table_name='table_name')
         dp._hyper_transformer = Mock()
         dp._hyper_transformer.transform_subset.return_value = data
         dp._hyper_transformer.field_transformers = {'id': object()}
@@ -1685,7 +1537,7 @@ class TestDataProcessor:
         """
         # Setup
         data = pd.DataFrame({'item 0': [0, 1, 2], 'item 1': [True, True, False]}, index=[0, 1, 2])
-        dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
+        dp = DataProcessor(_SingleTableMetadata(), table_name='table_name')
 
         # Run and Assert
         with pytest.raises(NotFittedError):
@@ -1705,7 +1557,7 @@ class TestDataProcessor:
         """
         # Setup
         data = pd.DataFrame({'item 0': [0, 1, 2], 'item 1': [True, True, False]}, index=[0, 1, 2])
-        dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
+        dp = DataProcessor(_SingleTableMetadata(), table_name='table_name')
         dp._hyper_transformer = Mock()
         dp._hyper_transformer.transform_subset.side_effect = ConfigNotSetError()
         dp.get_sdtypes = Mock()
@@ -1742,8 +1594,7 @@ class TestDataProcessor:
             - The reverse transformed data.
         """
         # Setup
-        constraint_mock = Mock()
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.fitted = True
         dp.metadata = Mock()
         dp.metadata.columns = {'a': None, 'b': None, 'c': None, 'key': None, 'd': None}
@@ -1758,36 +1609,18 @@ class TestDataProcessor:
             pd.DataFrame({'d': ['a@gmail.com', 'b@gmail.com', 'c@gmail.com']}),
             pd.DataFrame({'key': ['sdv_0', 'sdv_1', 'sdv_2']}),
         ]
-        dp._constraints_to_reverse = [constraint_mock]
         dp._hyper_transformer.reverse_transform_subset.return_value = data.copy()
         dp._hyper_transformer._output_columns = ['a', 'b', 'c']
         dp._dtypes = pd.Series(
             [np.float64, np.bool_, np.object_, np.object_, np.object_],
             index=['a', 'b', 'c', 'd', 'key'],
         )
-        constraint_mock.reverse_transform.return_value = pd.DataFrame({
-            'a': [1, 4, 3],
-            'b': [True, True, False],
-            'c': ['d', 'e', 'f'],
-            'd': ['a@gmail.com', 'b@gmail.com', 'c@gmail.com'],
-            'key': ['sdv_0', 'sdv_1', 'sdv_2'],
-        })
 
         # Run
         reverse_transformed = dp.reverse_transform(data)
 
         # Assert
         input_data = pd.DataFrame({'a': [1, 2, 3], 'b': [True, True, False], 'c': ['d', 'e', 'f']})
-        expected_constraint_input = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [True, True, False],
-            'c': ['d', 'e', 'f'],
-            'd': ['a@gmail.com', 'b@gmail.com', 'c@gmail.com'],
-            'key': ['sdv_0', 'sdv_1', 'sdv_2'],
-        })
-        constraint_mock.reverse_transform.assert_called_once_with(
-            DataFrameMatcher(expected_constraint_input)
-        )
         data_from_call = dp._hyper_transformer.reverse_transform_subset.mock_calls[0][1][0]
         pd.testing.assert_frame_equal(input_data, data_from_call)
         dp._hyper_transformer.reverse_transform_subset.assert_called_once()
@@ -1796,7 +1629,7 @@ class TestDataProcessor:
             call(num_rows=3, column_names=['key']),
         ])
         expected_output = pd.DataFrame({
-            'a': [1.0, 4.0, 3.0],
+            'a': [1.0, 2.0, 3.0],
             'b': [True, True, False],
             'c': ['d', 'e', 'f'],
             'key': ['sdv_0', 'sdv_1', 'sdv_2'],
@@ -1810,7 +1643,7 @@ class TestDataProcessor:
         data = pd.DataFrame({
             'col': [99999999999999999990, 99999999999999999991, 99999999999999999992]
         })
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp._dtypes = {'col': 'int64'}
         dp.metadata = Mock()
         dp.metadata.columns = {'col': None}
@@ -1849,25 +1682,21 @@ class TestDataProcessor:
             - The reverse transformed data.
         """
         # Setup
-        constraint_mock = Mock()
-        dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
+        dp = DataProcessor(_SingleTableMetadata(), table_name='table_name')
         dp.fitted = True
         dp.metadata = Mock()
         dp.metadata.columns = {'a': None, 'b': None, 'c': None}
         data = pd.DataFrame({'a': [1, 2, 3], 'b': [True, True, False], 'c': ['d', 'e', 'f']})
         dp._hyper_transformer = Mock()
-        dp._constraints_to_reverse = [constraint_mock]
         dp._hyper_transformer.reverse_transform_subset.side_effect = RDTNotFittedError
         dp._hyper_transformer._output_columns = ['a', 'b', 'c']
         dp._dtypes = pd.Series([np.float64, np.bool_, np.object_], index=['a', 'b', 'c'])
-        constraint_mock.reverse_transform.return_value = data
 
         # Run
         reverse_transformed = dp.reverse_transform(data)
 
         # Assert
         input_data = pd.DataFrame({'a': [1, 2, 3], 'b': [True, True, False], 'c': ['d', 'e', 'f']})
-        constraint_mock.reverse_transform.assert_called_once_with(data)
         data_from_call = dp._hyper_transformer.reverse_transform_subset.mock_calls[0][1][0]
         message = 'HyperTransformer has not been fitted for table table_name'
         log_mock.info.assert_called_with(message)
@@ -1895,7 +1724,7 @@ class TestDataProcessor:
         """
         # Setup
         data = pd.DataFrame({'item 0': [0, 1, 2], 'item 1': [True, True, False]}, index=[0, 1, 2])
-        dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
+        dp = DataProcessor(_SingleTableMetadata(), table_name='table_name')
 
         # Run and Assert
         with pytest.raises(NotFittedError):
@@ -1914,7 +1743,7 @@ class TestDataProcessor:
         """
         # Setup
         data = pd.DataFrame({'bar': [0.2, 1.7, 2]})
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.fitted = True
         dp._hyper_transformer = Mock()
         dp._hyper_transformer._output_columns = []
@@ -1941,7 +1770,7 @@ class TestDataProcessor:
         """
         # Setup
         data = pd.DataFrame({'bar': ['a', 'b', 'c']})
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.fitted = True
         dp._hyper_transformer = Mock()
         dp._hyper_transformer._output_columns = []
@@ -1975,7 +1804,7 @@ class TestDataProcessor:
         """
         # Setup
         data = pd.DataFrame({'bar': [1.0, 2.0, np.nan]})
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.fitted = True
         dp._hyper_transformer = Mock()
         dp._hyper_transformer._output_columns = []
@@ -2008,7 +1837,7 @@ class TestDataProcessor:
         """
         # Setup
         data = pd.DataFrame({'bar': ['a', 'b', 'c']})
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.fitted = True
         dp._hyper_transformer = Mock()
         dp._hyper_transformer._output_columns = []
@@ -2037,7 +1866,7 @@ class TestDataProcessor:
         unchanged.
 
         Setup:
-            - ``SingleTableMetadata`` describing the three columns.
+            - ``_SingleTableMetadata`` describing the three columns.
             - Two mocks of ``NumericalFormatter``, one for each numerical column,
             with the appropriate return value for the ``format_data`` method.
             - ``formatters`` attribute should have a dict of the two numerical columns
@@ -2045,7 +1874,7 @@ class TestDataProcessor:
         """
         # Setup
         data = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4], 'col3': ['abc', 'def']})
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('col1', sdtype='numerical')
         metadata.add_column('col2', sdtype='numerical')
         metadata.add_column('col3', sdtype='categorical')
@@ -2090,7 +1919,7 @@ class TestDataProcessor:
             'col2': ['16-05-2023', '14-04-2022'],
             'col3': pd.to_datetime(['2021-02-15', '2022-05-16']),
         })
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('col1', sdtype='categorical')
         metadata.add_column('col2', sdtype='datetime')
         metadata.add_column('col3', sdtype='datetime', datetime_format='%Y-%d-%M')
@@ -2121,7 +1950,7 @@ class TestDataProcessor:
         in the conditions dict should use the condition instead.
         """
         # Setup
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(_SingleTableMetadata())
         dp.fitted = True
         dp.metadata = Mock()
         dp.metadata.columns = {
@@ -2184,7 +2013,7 @@ class TestDataProcessor:
     def test__get_id_column_config_with_pii_behavior(self):
         """Test _get_id_column_config behavior with PII columns using a non-id sdtype."""
         # Setup - use a PII sdtype instead of 'id' with pii=True
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('ssn_col', sdtype='ssn')  # Use a PII sdtype
         data = pd.DataFrame({'ssn_col': ['123-45-6789', '987-65-4321', '555-55-5555']})
 

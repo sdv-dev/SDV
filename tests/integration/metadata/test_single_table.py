@@ -9,22 +9,22 @@ import pandas as pd
 import pytest
 
 from sdv.datasets.demo import download_demo
-from sdv.metadata import SingleTableMetadata
+from sdv.metadata._single_table import _SingleTableMetadata
 from sdv.metadata.errors import InvalidMetadataError
 
 
 def test_single_table_metadata():
-    """Test ``SingleTableMetadata``."""
+    """Test ``_SingleTableMetadata``."""
     # Create an instance
-    instance = SingleTableMetadata()
+    instance = _SingleTableMetadata()
 
     # To dict
     result = instance.to_dict()
 
     # Assert
-    assert result == {'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'}
+    assert result == {'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2'}
     assert instance.columns == {}
-    assert instance._version == 'SINGLE_TABLE_V1'
+    assert instance._version == 'SINGLE_TABLE_V2'
     assert instance.primary_key is None
     assert instance.sequence_key is None
     assert instance.alternate_keys == []
@@ -32,7 +32,7 @@ def test_single_table_metadata():
 
 
 def test_single_table_metadata_composite_primary_key():
-    """Test ``SingleTableMetadata`` with composite primary key."""
+    """Test ``_SingleTableMetadata`` with composite primary key."""
     # Create an instance
     expected_metadata_dict = {
         'columns': {
@@ -41,10 +41,10 @@ def test_single_table_metadata_composite_primary_key():
             'pk_col3': {'sdtype': 'categorical'},
         },
         'primary_key': ['pk_col1', 'pk_col2', 'pk_col3'],
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
     }
 
-    instance = SingleTableMetadata()
+    instance = _SingleTableMetadata()
     instance.add_column('pk_col1', sdtype='id')
     instance.add_column('pk_col2', sdtype='ssn')
     instance.add_column('pk_col3', sdtype='categorical')
@@ -56,7 +56,7 @@ def test_single_table_metadata_composite_primary_key():
     # Assert
     assert result == expected_metadata_dict
     assert instance.columns == expected_metadata_dict['columns']
-    assert instance._version == 'SINGLE_TABLE_V1'
+    assert instance._version == 'SINGLE_TABLE_V2'
     assert instance.primary_key == expected_metadata_dict['primary_key']
     assert instance.sequence_key is None
     assert instance.alternate_keys == []
@@ -74,7 +74,7 @@ def test_add_column_relationship(mock_rdt_transformers):
             pass
 
     mock_rdt_transformers.address.RandomLocationGenerator = RandomLocationGeneratorMock
-    instance = SingleTableMetadata()
+    instance = _SingleTableMetadata()
     instance.add_column('col1', sdtype='id')
     instance.add_column('col2', sdtype='street_address')
     instance.add_column('col3', sdtype='state_abbr')
@@ -91,7 +91,7 @@ def test_add_column_relationship(mock_rdt_transformers):
 def test_add_column_relationship_existing_column_in_relationship():
     """Test ``add_column_relationship`` when some colums are already in a column relationship."""
     # Setup
-    instance = SingleTableMetadata().load_from_dict({
+    instance = _SingleTableMetadata().load_from_dict({
         'columns': {
             'col1': {'sdtype': 'id'},
             'col2': {'sdtype': 'street_address'},
@@ -113,7 +113,7 @@ def test_add_column_relationship_existing_column_in_relationship():
 
 @patch('rdt.transformers')
 def test_validate(mock_rdt_transformers):
-    """Test ``SingleTableMetadata.validate``.
+    """Test ``_SingleTableMetadata.validate``.
 
     Ensure the method doesn't crash for a valid metadata.
     """
@@ -125,7 +125,7 @@ def test_validate(mock_rdt_transformers):
             pass
 
     mock_rdt_transformers.address.RandomLocationGenerator = RandomLocationGeneratorMock
-    instance = SingleTableMetadata()
+    instance = _SingleTableMetadata()
     instance.add_column('col1', sdtype='id')
     instance.add_column('col2', sdtype='id')
     instance.add_column('col3', sdtype='numerical')
@@ -143,7 +143,7 @@ def test_validate(mock_rdt_transformers):
 
 @patch('rdt.transformers')
 def test_validate_errors(mock_rdt_transformers):
-    """Test ``SingleTableMetadata.validate`` raises the correct errors."""
+    """Test ``_SingleTableMetadata.validate`` raises the correct errors."""
 
     # Setup
     class RandomLocationGeneratorMock:
@@ -171,7 +171,7 @@ def test_validate_errors(mock_rdt_transformers):
                 )
 
     mock_rdt_transformers.address.RandomLocationGenerator = RandomLocationGeneratorMock
-    instance = SingleTableMetadata()
+    instance = _SingleTableMetadata()
     instance.columns = {
         'col1': {'sdtype': 'id'},
         'col2': {'sdtype': 'numerical'},
@@ -203,13 +203,10 @@ def test_validate_errors(mock_rdt_transformers):
         ' These columns must be different.'
         "\n'alternate_keys' must be a list of strings."
         "\nInvalid values '(invalid1)' for categorical column 'col4'."
-        "\nInvalid order value provided for categorical column 'col5'."
-        " The 'order' must be a list with 1 or more elements."
-        "\nUnknown ordering method '' provided for categorical column 'col6'."
-        " Ordering method must be 'numerical_value' or 'alphabetical'."
-        "\nCategorical column 'col7' has both an 'order' and 'order_by' attribute."
-        ' Only 1 is allowed.'
-        "\nInvalid value for 'computer_representation' 'value' for column 'col8'."
+        "\nInvalid values '(order)' for categorical column 'col5'."
+        "\nInvalid values '(order_by)' for categorical column 'col6'."
+        "\nInvalid values '(order, order_by)' for categorical column 'col7'."
+        "\nInvalid values '(computer_representation)' for numerical column 'col8'."
         "\nInvalid datetime format string '%1-%Y-%m-%d-%' for datetime column 'col9'."
         "\nInvalid regex format string '[A-{6}' for id column 'col10'."
         '\nColumn relationships have following errors:\n'
@@ -218,7 +215,8 @@ def test_validate_errors(mock_rdt_transformers):
         'Please provide a column that is compatible with Address data.\n'
         "Unknown column relationship type 'fake_relationship'. Must be one of ['address', 'gps']."
     )
-    # Run / Assert
+
+    # Run and Assert
     with pytest.raises(InvalidMetadataError, match=err_msg):
         instance.validate()
 
@@ -246,24 +244,24 @@ def test_upgrade_metadata(tmp_path):
     old_metadata_file.close()
 
     # Run
-    new_metadata = SingleTableMetadata.upgrade_metadata(filepath=filepath).to_dict()
+    new_metadata = _SingleTableMetadata.upgrade_metadata(filepath=filepath).to_dict()
 
     # Assert
     expected_metadata = {
         'columns': {
             'start_date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
             'end_date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
-            'salary': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'salary': {'sdtype': 'numerical'},
             'duration': {'sdtype': 'categorical'},
             'student_id': {'sdtype': 'id', 'regex_format': r'\d{30}'},
-            'high_perc': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+            'high_perc': {'sdtype': 'numerical'},
             'placed': {'sdtype': 'boolean'},
             'ssn': {'sdtype': 'id', 'regex_format': r'\d{30}'},
             'drivers_license': {'sdtype': 'id', 'regex_format': 'regex'},
         },
         'primary_key': 'student_id',
         'alternate_keys': ['ssn', 'drivers_license'],
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
     }
     assert new_metadata == expected_metadata
 
@@ -273,7 +271,7 @@ def test_validate_unknown_sdtype():
     # Setup
     data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
 
-    metadata = SingleTableMetadata()
+    metadata = _SingleTableMetadata()
     metadata.detect_from_dataframe(data['hotels'])
 
     # Run
@@ -281,7 +279,7 @@ def test_validate_unknown_sdtype():
 
     # Assert
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         'columns': {
             'hotel_id': {'sdtype': 'id'},
             'city': {'sdtype': 'city', 'pii': True},
@@ -305,7 +303,7 @@ def test_detect_from_dataframe_with_none_nan_and_nat():
         'np_nan_data': [np.nan] * 100,
         'pd_nat_data': [pd.NaT] * 100,
     })
-    stm = SingleTableMetadata()
+    stm = _SingleTableMetadata()
 
     # Run
     stm.detect_from_dataframe(data)
@@ -326,14 +324,14 @@ def test_detect_from_dataframe_with_pii_names():
         'First Name': [1, 2, 3],
         'guest_email': [1, 2, 3],
     })
-    metadata = SingleTableMetadata()
+    metadata = _SingleTableMetadata()
 
     # Run
     metadata.detect_from_dataframe(data)
 
     # Assert
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         'primary_key': 'USER PHONE NUMBER',
         'columns': {
             'USER PHONE NUMBER': {'sdtype': 'phone_number', 'pii': True},
@@ -359,7 +357,7 @@ def test_detect_from_dataframe_with_pii_non_unique():
             'latitude': [round(i, 2) for i in np.random.uniform(low=-90, high=+90, size=50)] * 2,
         }
     )
-    metadata = SingleTableMetadata()
+    metadata = _SingleTableMetadata()
 
     # Run
     metadata.detect_from_dataframe(data)
@@ -372,7 +370,7 @@ def test_detect_from_dataframe_with_pii_non_unique():
 def test_update_columns():
     """Test ``update_columns`` method."""
     # Setup
-    metadata = SingleTableMetadata().load_from_dict({
+    metadata = _SingleTableMetadata().load_from_dict({
         'columns': {
             'col1': {'sdtype': 'id', 'regex_format': r'\d{30}'},
             'col2': {'sdtype': 'numerical'},
@@ -387,19 +385,18 @@ def test_update_columns():
     metadata.update_columns(
         ['col1', 'col3', 'col4', 'col5', 'col6'],
         sdtype='numerical',
-        computer_representation='Int64',
     )
 
     # Assert
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         'columns': {
-            'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'col1': {'sdtype': 'numerical'},
             'col2': {'sdtype': 'numerical'},
-            'col3': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-            'col4': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-            'col5': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-            'col6': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'col3': {'sdtype': 'numerical'},
+            'col4': {'sdtype': 'numerical'},
+            'col5': {'sdtype': 'numerical'},
+            'col6': {'sdtype': 'numerical'},
         },
     }
     assert metadata.to_dict() == expected_metadata
@@ -408,7 +405,7 @@ def test_update_columns():
 def test_update_columns_invalid_kwargs_combination():
     """Test ``update_columns`` method with invalid kwargs combination."""
     # Setup
-    metadata = SingleTableMetadata().load_from_dict({
+    metadata = _SingleTableMetadata().load_from_dict({
         'columns': {
             'col1': {'sdtype': 'id', 'regex_format': r'\d{30}'},
             'col2': {'sdtype': 'numerical'},
@@ -425,7 +422,6 @@ def test_update_columns_invalid_kwargs_combination():
         metadata.update_columns(
             ['col1', 'col3', 'col4', 'col5', 'col6'],
             sdtype='numerical',
-            computer_representation='Int64',
             pii=True,
         )
 
@@ -433,7 +429,7 @@ def test_update_columns_invalid_kwargs_combination():
 def test_update_columns_metadata():
     """Test ``update_columns_metadata`` method."""
     # Setup
-    metadata = SingleTableMetadata().load_from_dict({
+    metadata = _SingleTableMetadata().load_from_dict({
         'columns': {
             'col1': {'sdtype': 'id', 'regex_format': r'\d{30}'},
             'col2': {'sdtype': 'numerical'},
@@ -446,7 +442,7 @@ def test_update_columns_metadata():
 
     # Run
     metadata.update_columns_metadata({
-        'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+        'col1': {'sdtype': 'numerical'},
         'col3': {'sdtype': 'email', 'pii': True},
         'col4': {'sdtype': 'phone_number', 'pii': False},
         'col5': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
@@ -455,9 +451,9 @@ def test_update_columns_metadata():
 
     # Assert
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         'columns': {
-            'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'col1': {'sdtype': 'numerical'},
             'col2': {'sdtype': 'numerical'},
             'col3': {'sdtype': 'email', 'pii': True},
             'col4': {'sdtype': 'phone_number', 'pii': False},
@@ -471,7 +467,7 @@ def test_update_columns_metadata():
 def test_update_columns_metadata_invalid_kwargs_combination():
     """Test ``update_columns_metadata`` method with invalid kwargs combination."""
     # Setup
-    metadata = SingleTableMetadata().load_from_dict({
+    metadata = _SingleTableMetadata().load_from_dict({
         'columns': {
             'col1': {'sdtype': 'id', 'regex_format': r'\d{30}'},
             'col2': {'sdtype': 'numerical'},
@@ -490,7 +486,7 @@ def test_update_columns_metadata_invalid_kwargs_combination():
     )
     with pytest.raises(InvalidMetadataError, match=expected_message):
         metadata.update_columns_metadata({
-            'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64', 'pii': True},
+            'col1': {'sdtype': 'numerical', 'pii': True},
             'col2': {'pii': True},
         })
 
@@ -498,7 +494,7 @@ def test_update_columns_metadata_invalid_kwargs_combination():
 def test_column_relationship_validation():
     """Test that column relationships are validated correctly."""
     # Setup
-    metadata = SingleTableMetadata.load_from_dict({
+    metadata = _SingleTableMetadata.load_from_dict({
         'columns': {
             'user_city': {'sdtype': 'city'},
             'user_zip': {'sdtype': 'postcode'},
@@ -524,7 +520,7 @@ def test_column_relationship_validation():
 def test_metadata_validate_same_sequence_primary():
     """Test metadata validation when both primary and sequence keys are the same."""
     # Setup
-    metadata = SingleTableMetadata.load_from_dict({
+    metadata = _SingleTableMetadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'id'},
             'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
@@ -549,7 +545,7 @@ def test_metadata_validate_same_sequence_primary():
 def test_metadata_set_same_sequence_primary():
     """Test metadata throws error when setting the sequence and primary keys to be the same."""
     # Setup
-    metadata_sequence = SingleTableMetadata.load_from_dict({
+    metadata_sequence = _SingleTableMetadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'id'},
             'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
@@ -567,7 +563,7 @@ def test_metadata_set_same_sequence_primary():
         metadata_sequence.set_primary_key('A')
 
     # Setup primary first
-    metadata_primary = SingleTableMetadata.load_from_dict({
+    metadata_primary = _SingleTableMetadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'id'},
             'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
@@ -595,7 +591,7 @@ def test_anonymize():
             'sequence_key': {'sdtype': 'id'},
             'alternate_id1': {'sdtype': 'email', 'pii': True},
             'alternate_id2': {'sdtype': 'name', 'pii': True},
-            'numerical': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+            'numerical': {'sdtype': 'numerical'},
             'categorical': {'sdtype': 'categorical'},
         },
         'primary_key': 'primary_key',
@@ -603,7 +599,7 @@ def test_anonymize():
         'sequence_key': 'sequence_key',
         'alternate_keys': ['alternate_id1', 'alternate_id2'],
     }
-    metadata = SingleTableMetadata.load_from_dict(metadata_dict)
+    metadata = _SingleTableMetadata.load_from_dict(metadata_dict)
     metadata.validate()
 
     # Run
@@ -650,7 +646,7 @@ def test_metadata_detection_numerical_dtypes():
         'uint32': np.array([1, 2, 3, 4], dtype='uint32'),
         'uint64': np.array([1, 2, 3, 4], dtype='uint64'),
     })
-    metadata = SingleTableMetadata()
+    metadata = _SingleTableMetadata()
 
     # Run
     metadata.detect_from_dataframe(data)

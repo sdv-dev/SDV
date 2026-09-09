@@ -327,9 +327,9 @@ class TestCopulaGANSynthesizer:
         distribution and it's parameters.
         """
         # Setup
-        data = pd.DataFrame({'zero': [0, 0, 0], 'one': [1, 1, 1]})
+        data = {'table': pd.DataFrame({'zero': [0, 0, 0], 'one': [1, 1, 1]})}
         stm = Metadata()
-        stm.detect_from_dataframes({'table': data})
+        stm.detect_from_dataframes(data)
         cgs = CopulaGANSynthesizer(stm)
         zero_transformer_mock = Mock(spec_set=GaussianNormalizer)
         zero_transformer_mock._univariate.to_dict.return_value = {
@@ -383,7 +383,7 @@ class TestCopulaGANSynthesizer:
                 }
             }
         })
-        data = pd.DataFrame({'col_1': range(100), 'col_2': range(100)})
+        data = {'table1': pd.DataFrame({'col_1': range(100), 'col_2': range(100)})}
         synthesizer = CopulaGANSynthesizer(metadata, default_distribution='beta')
         synthesizer.fit(data)
 
@@ -396,9 +396,9 @@ class TestCopulaGANSynthesizer:
     def test_get_learned_distributions_raises_an_error(self):
         """Test that ``get_learned_distributions`` raises an error."""
         # Setup
-        data = pd.DataFrame({'zero': [0, 0, 0], 'one': [1, 1, 1]})
+        data = {'table': pd.DataFrame({'zero': [0, 0, 0], 'one': [1, 1, 1]})}
         stm = Metadata()
-        stm.detect_from_dataframes({'table': data})
+        stm.detect_from_dataframes(data)
         cgs = CopulaGANSynthesizer(stm)
 
         # Run and Assert

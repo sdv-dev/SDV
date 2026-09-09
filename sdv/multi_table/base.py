@@ -5,7 +5,6 @@ import datetime
 import inspect
 import json
 import operator
-import traceback
 import warnings
 from collections import defaultdict
 from copy import deepcopy
@@ -13,22 +12,20 @@ from pathlib import Path
 
 import cloudpickle
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 
 from sdv import version
 from sdv._utils import (
-    _validate_correct_synthesizer_loading,
-    check_sdv_versions_and_warn,
+    _metadata_range_exceeds_real,
+    _validate_positive_integer,
     check_synthesizer_version,
     generate_synthesizer_id,
-    warn_load_deprecated,
-    warn_set_constraints_deprecated,
 )
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _convert_to_snake_case,
     _get_invalid_rows,
-    _load_constraints_from_file,
     _validate_constraints,
 )
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
@@ -40,13 +37,10 @@ from sdv.errors import (
 )
 from sdv.logging import disable_single_table_logger, get_sdv_logger
 from sdv.metadata.metadata import Metadata
-from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
+from sdv.single_table.utils import validate_folder_path_with_table_names
 
 SYNTHESIZER_LOGGER = get_sdv_logger('MultiTableSynthesizer')
-DEPRECATION_MSG = (
-    "The 'MultiTableMetadata' is deprecated. Please use the new 'Metadata' class for synthesizers."
-)
 
 
 class BaseMultiTableSynthesizer:
@@ -56,7 +50,7 @@ class BaseMultiTableSynthesizer:
     multi table synthesizers need to implement, as well as common functionality.
 
     Args:
-        metadata (sdv.metadata.multi_table.MultiTableMetadata):
+        metadata (sdv.Metadata):
             Multi table metadata representing the data tables that this synthesizer will be used
             for.
         locales (list or str):
@@ -137,10 +131,8 @@ class BaseMultiTableSynthesizer:
         """Implement this function for slow synthesizers."""
         pass
 
-    def __init__(self, metadata, locales=['en_US'], synthesizer_kwargs=None):
+    def __init__(self, metadata, locales=['en_US']):
         self.metadata = metadata
-        if type(metadata) is MultiTableMetadata:
-            warnings.warn(DEPRECATION_MSG, FutureWarning)
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', message=r'.*column relationship.*')
             self.metadata.validate()
@@ -159,13 +151,6 @@ class BaseMultiTableSynthesizer:
         self._original_table_columns = {}
         self.constraints = []
         self._single_table_constraints = []
-        if synthesizer_kwargs is not None:
-            warn_message = (
-                'The `synthesizer_kwargs` parameter is deprecated as of SDV 1.2.0 and does not '
-                'affect the synthesizer. Please use the `set_table_parameters` method instead.'
-            )
-            warnings.warn(warn_message, FutureWarning)
-
         if self.DEFAULT_SYNTHESIZER_KWARGS:
             for table_name in self.metadata.tables:
                 self._table_parameters[table_name] = deepcopy(self.DEFAULT_SYNTHESIZER_KWARGS)
@@ -318,33 +303,6 @@ class BaseMultiTableSynthesizer:
         constraints_dict_list = [constraint.get_constraint_dict() for constraint in constraints]
         with open(path, 'w') as file:
             json.dump(constraints_dict_list, file, indent=4)
-
-    def set_constraints(self, filepath):
-        """Add all the constraints in the file to the synthesizer.
-
-        If any constraints have been added to the synthesizer, they will be removed before
-        the constraints from the file are set.
-
-        Args:
-            filepath (str):
-                The string path to the file containing the constraints to set on the synthesizer.
-        """
-        if self.get_constraints():
-            raise SynthesizerInputError(
-                'Cannot `set_constraints` since constraints have already been applied.'
-            )
-
-        warn_set_constraints_deprecated()
-        constraint_list = _load_constraints_from_file(filepath)
-
-        for constraint in constraint_list:
-            try:
-                self.add_constraints([constraint])
-            except Exception as e:
-                warnings.warn(
-                    f'Could not add constraint ({constraint}):\n'
-                    f'    {traceback.format_exception_only(type(e), e)[0]}'
-                )
 
     def validate_constraints(self, synthetic_data):
         """Validate synthetic_data against the constraints.
@@ -506,7 +464,7 @@ class BaseMultiTableSynthesizer:
         errors = []
         for table_name, table_data in data.items():
             try:
-                self._table_synthesizers[table_name].validate(table_data)
+                self._table_synthesizers[table_name].validate({table_name: table_data})
 
             except InvalidDataError as error:
                 error_msg = f"Table: '{table_name}'"
@@ -523,6 +481,14 @@ class BaseMultiTableSynthesizer:
 
         return errors
 
+    def _check_ranges(self, data):
+        if _metadata_range_exceeds_real(data, self._original_metadata):
+            warnings.warn(
+                'The training data does not cover the full range. Synthetic data will be '
+                'based on the training data. To extrapolate ranges for full coverage, '
+                'please use the Targeted Sampling bundle.'
+            )
+
     def validate(self, data):
         """Validate the data.
 
@@ -533,13 +499,16 @@ class BaseMultiTableSynthesizer:
                 A dictionary of table names to pd.DataFrames.
         """
         errors = []
-        metadata = self._original_metadata
-        metadata.validate_data(data)
-        data = self._validate_transform_constraints(data, enforce_constraint_fitting=True)
-        for table_name in data:
+        self._original_metadata.validate_data(data)
+        self._check_ranges(data)
+
+        transformed_data = self._validate_transform_constraints(
+            data,
+            enforce_constraint_fitting=True,
+        )
+        for table_name, table_data in transformed_data.items():
             if table_name in self._table_synthesizers:
-                # Validate rules specific to each synthesizer
-                errors += self._table_synthesizers[table_name]._validate(data[table_name])
+                errors += self._table_synthesizers[table_name]._validate(table_data)
 
         if errors:
             raise InvalidDataError(errors)
@@ -558,7 +527,7 @@ class BaseMultiTableSynthesizer:
         if it is not the primary key in the table, then the transformer is set to None (
         meaning no transformer is assigned).
         """
-        synthesizer.auto_assign_transformers(table_data)
+        synthesizer.auto_assign_transformers({table_name: table_data})
         primary_key = self.metadata.tables[table_name].primary_key
         foreign_key_columns = self.metadata._get_all_foreign_keys(table_name)
         column_name_to_transformers = {
@@ -772,33 +741,111 @@ class BaseMultiTableSynthesizer:
         for synthesizer in self._table_synthesizers.values():
             synthesizer.reset_sampling()
 
-    def _sample(self, scale):
+    def _sample(
+        self,
+        scale,
+        batch_size=None,
+        max_tries_per_batch=100,
+    ):
         raise NotImplementedError()
 
-    def sample(self, scale=1.0):
-        """Generate synthetic data for the entire dataset.
+    def _resolve_scale(self, table_name, num_rows):
+        """Compute the scale based on the requested table size."""
+        return num_rows / self._table_sizes[table_name]
 
-        Args:
-            scale (float):
-                A float representing how much to scale the data by. If scale is set to ``1.0``,
-                this does not scale the sizes of the tables. If ``scale`` is greater than ``1.0``
-                create more rows than the original data by a factor of ``scale``.
-                If ``scale`` is lower than ``1.0`` create fewer rows by the factor of ``scale``
-                than the original tables. Defaults to ``1.0``.
-        """
+    def _validate_sample_input(
+        self,
+        table_name,
+        num_rows,
+        batch_size,
+        max_tries_per_batch,
+        output_folder_path,
+    ):
+        """Validate the inputs for sampling."""
         if not self._fitted:
             raise SamplingError(
                 'This synthesizer has not been fitted. Please fit your synthesizer first before '
                 'sampling synthetic data.'
             )
 
-        if type(scale) not in (float, int) or not scale > 0:
+        table_names = list(self.get_metadata().tables)
+        if table_name not in table_names:
+            raise SynthesizerInputError(f"Table '{table_name}' does not exist in the metadata.")
+
+        _validate_positive_integer('num_rows', num_rows)
+        _validate_positive_integer('max_tries_per_batch', max_tries_per_batch)
+        if batch_size is not None:
+            _validate_positive_integer('batch_size', batch_size)
+
+        if output_folder_path is not None and (
+            not isinstance(output_folder_path, str) or not output_folder_path
+        ):
             raise SynthesizerInputError(
-                f"Invalid parameter for 'scale' ({scale}). Please provide a number that is >0.0."
+                f"Invalid parameter for 'output_folder_path' ({output_folder_path}). "
+                'Please provide a valid string path.'
             )
 
+        validate_folder_path_with_table_names(output_folder_path, table_names)
+
+    def _sample_in_batches(
+        self,
+        synthesizer,
+        num_rows,
+        batch_size,
+        max_tries_per_batch,
+    ):
+        if batch_size is None:
+            batch_size = num_rows
+
+        sampled = []
+        remaining_rows = num_rows
+        while remaining_rows:
+            current_batch_size = min(batch_size, remaining_rows)
+            batch = synthesizer._sample_batch(
+                current_batch_size,
+                max_tries=max_tries_per_batch,
+                keep_extra_columns=True,
+            )
+            sampled.append(batch)
+            remaining_rows -= len(batch)
+
+        return pd.concat(sampled, ignore_index=True)
+
+    def sample(
+        self,
+        table_name,
+        num_rows,
+        batch_size=None,
+        max_tries_per_batch=100,
+        output_folder_path=None,
+    ):
+        """Generate synthetic data for the entire dataset.
+
+        Args:
+            table_name (str):
+                The name of the main table to sample.
+            num_rows (int):
+                The number of rows to sample.
+            batch_size (int, optional):
+                The batch size for sampling. Defaults to None.
+            max_tries_per_batch (int, optional):
+                The maximum number of tries per batch. Defaults to 100.
+            output_folder_path (str, optional):
+                The folder path to save the sampled data. Defaults to None.
+
+        Returns:
+            dict: A dictionary containing the sampled data for each table.
+        """
+        self._validate_sample_input(
+            table_name, num_rows, batch_size, max_tries_per_batch, output_folder_path
+        )
+        scale = self._resolve_scale(table_name, num_rows)
         with self._set_temp_numpy_seed(), disable_single_table_logger():
-            sampled_data = self._sample(scale=scale)
+            sampled_data = self._sample(
+                scale=scale,
+                batch_size=batch_size,
+                max_tries_per_batch=max_tries_per_batch,
+            )
 
         total_rows = 0
         total_columns = 0
@@ -808,15 +855,21 @@ class BaseMultiTableSynthesizer:
 
         table_columns = getattr(self, '_original_table_columns', {})
 
-        for table in sampled_data:
-            table_data = sampled_data[table][self.get_metadata().get_column_names(table)]
-            if table in table_columns:
-                if isinstance(table_columns[table], dict):
-                    table_data = table_data.rename(columns=table_columns[table])
-                else:
-                    table_data.columns = table_columns[table]
+        for _table_name in sampled_data:
+            table_data = sampled_data[_table_name][
+                self.get_metadata().get_column_names(_table_name)
+            ]
 
-            sampled_data[table] = table_data
+            if _table_name in table_columns:
+                if isinstance(table_columns[_table_name], dict):
+                    table_data = table_data.rename(columns=table_columns[_table_name])
+                else:
+                    table_data.columns = table_columns[_table_name]
+
+            sampled_data[_table_name] = table_data
+
+        if output_folder_path is not None:
+            self._save_sampled_data(sampled_data, output_folder_path)
 
         SYNTHESIZER_LOGGER.info({
             'EVENT': 'Sample',
@@ -880,19 +933,6 @@ class BaseMultiTableSynthesizer:
             'because the table does not use a GAN-based model.'
         )
 
-    def load_custom_constraint_classes(self, filepath, class_names):
-        """Load a custom constraint class for each table's synthesizer.
-
-        Args:
-            filepath (str):
-                String representing the absolute or relative path to the python file where
-                the custom constraints are declared.
-            class_names (list):
-                A list of custom constraint classes to be imported.
-        """
-        for synthesizer in self._table_synthesizers.values():
-            synthesizer.load_custom_constraint_classes(filepath, class_names)
-
     def get_info(self):
         """Get dictionary with information regarding the synthesizer.
 
@@ -943,49 +983,3 @@ class BaseMultiTableSynthesizer:
 
         with open(filepath, 'wb') as output:
             cloudpickle.dump(self, output)
-
-    @classmethod
-    def load(cls, filepath):
-        """Load a multi-table synthesizer from a given path.
-
-        Args:
-            filepath (str):
-                A string describing the filepath of your saved synthesizer.
-
-        Returns:
-            MultiTableSynthesizer:
-                The loaded synthesizer.
-        """
-        warn_load_deprecated()
-        with open(filepath, 'rb') as f:
-            try:
-                synthesizer = cloudpickle.load(f)
-            except RuntimeError as e:
-                err_msg = (
-                    'Attempting to deserialize object on a CUDA device but '
-                    'torch.cuda.is_available() is False. If you are running on a CPU-only machine,'
-                    " please use torch.load with map_location=torch.device('cpu') "
-                    'to map your storages to the CPU.'
-                )
-                if str(e) == err_msg:
-                    raise SamplingError(
-                        'This synthesizer was created on a machine with GPU but the current '
-                        'machine is CPU-only. This feature is currently unsupported. We recommend'
-                        ' sampling on the same GPU-enabled machine.'
-                    )
-                raise e
-
-        _validate_correct_synthesizer_loading(synthesizer, cls)
-        check_synthesizer_version(synthesizer)
-        check_sdv_versions_and_warn(synthesizer)
-        if getattr(synthesizer, '_synthesizer_id', None) is None:
-            synthesizer._synthesizer_id = generate_synthesizer_id(synthesizer)
-
-        SYNTHESIZER_LOGGER.info({
-            'EVENT': 'Load',
-            'TIMESTAMP': datetime.datetime.now(),
-            'SYNTHESIZER CLASS NAME': synthesizer.__class__.__name__,
-            'SYNTHESIZER ID': synthesizer._synthesizer_id,
-        })
-
-        return synthesizer

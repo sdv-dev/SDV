@@ -193,15 +193,17 @@ def _find_data_zip_key(contents, dataset_prefix, bucket):
     )
 
 
-def _get_first_v1_metadata_bytes(contents, dataset_prefix, bucket, client):
-    """Find and return bytes of the first V1 metadata JSON under `dataset_prefix`.
+def _get_first_v2_metadata_bytes(contents, dataset_prefix, bucket, client):
+    """Find and return bytes of the first V2 metadata JSON under `dataset_prefix`.
 
     Scans S3 listing `contents` and, for any JSON file directly under the dataset prefix,
-    downloads and returns its bytes if it contains METADATA_SPEC_VERSION == 'V1'.
+    downloads and returns its bytes if it contains METADATA_SPEC_VERSION == 'V2'.
+
+    If no valid 'V2' metadata is found, returns the first 'V1' metadata found instead.
 
     Returns:
         bytes:
-            The bytes of the first V1 metadata JSON.
+            The bytes of the first V2 metadata JSON.
     """
     prefix_lower = dataset_prefix.lower()
 
@@ -216,15 +218,16 @@ def _get_first_v1_metadata_bytes(contents, dataset_prefix, bucket, client):
 
     candidate_keys = _search_contents_keys(contents, is_direct_json_under_prefix)
 
-    for key in candidate_keys:
-        try:
-            raw = _get_data_from_bucket(key, bucket=bucket, client=client)
-            metadict = json.loads(raw)
-            if isinstance(metadict, dict) and metadict.get('METADATA_SPEC_VERSION') == 'V1':
-                return raw
+    for version in ['V2', 'V1']:
+        for key in candidate_keys:
+            try:
+                raw = _get_data_from_bucket(key, bucket=bucket, client=client)
+                metadict = json.loads(raw)
+                if isinstance(metadict, dict) and metadict.get('METADATA_SPEC_VERSION') == version:
+                    return raw
 
-        except Exception:
-            continue
+            except Exception:
+                continue
 
     dataset_name = _get_dataset_name_from_prefix(dataset_prefix)
     raise DemoResourceNotFoundError(
@@ -343,7 +346,7 @@ def _download(modality, dataset_name, bucket, credentials=None):
     contents = _list_objects(dataset_prefix, bucket=bucket, client=client)
     zip_key = _find_data_zip_key(contents, dataset_prefix, bucket)
     data_bytes = io.BytesIO(_get_data_from_bucket(zip_key, bucket=bucket, client=client))
-    metadata_bytes = _get_first_v1_metadata_bytes(
+    metadata_bytes = _get_first_v2_metadata_bytes(
         contents, dataset_prefix, bucket=bucket, client=client
     )
 
@@ -430,7 +433,13 @@ def _get_metadata(metadata_bytes, dataset_name, output_folder_name=None):
     """
     try:
         metadict = json.loads(metadata_bytes)
-        metadata = Metadata().load_from_dict(metadict, dataset_name)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore',
+                category=FutureWarning,
+                module='sdv.metadata._single_table',
+            )
+            metadata = Metadata().load_from_dict(metadict, dataset_name)
     except Exception as e:
         raise DemoResourceNotFoundError(
             f"Could not parse the metadata for dataset '{dataset_name}'. "
@@ -482,9 +491,8 @@ def download_demo(
 
     Returns:
         tuple (data, metadata):
-            If ``data`` is single table or sequential, it is a DataFrame.
-            If ``data`` is multi table, it is a dictionary mapping table name to DataFrame.
-            ``metadata`` is of class ``Metadata`` which can represent single table or multi table.
+            ``data`` is a dictionary mapping table name to DataFrame
+            ``metadata`` is of class ``Metadata``
 
     Raises:
         Error:
@@ -502,10 +510,6 @@ def download_demo(
         credentials,
     )
     data = _load_data_from_zip(data, s3_bucket_name, dataset_name, output_folder_name)
-
-    if modality != 'multi_table':
-        data = data.popitem()[1]
-
     metadata = _get_metadata(metadata_bytes, dataset_name, output_folder_name)
     if dataset_name == 'adventure-works':
         data, metadata = process_adventure_works(data, metadata)
@@ -881,7 +885,6 @@ def save_resource(
     output_filepath=None,
     s3_bucket_name='sdv-datasets-public',
     credentials=None,
-    resource_filename=None,
 ):
     """Save the resource to disk.
 
@@ -906,30 +909,12 @@ def save_resource(
                 'license_key': '<MY_LICENSE_KEY>'
             }
             Defaults to None.
-        resource_filename (str, optional):
-            **Deprecated.**
-            The name of the file to download from S3. Use
-            ``resource_filepath`` instead. Defaults to None.
     """
-    if resource_filepath is None and resource_filename is None:
+    if resource_filepath is None:
         raise ValueError('Please provide a `resource_filepath`.')
 
     if output_filepath is None:
         raise ValueError('Please provide an `output_filepath`.')
-
-    if resource_filepath and resource_filename:
-        raise ValueError(
-            'Cannot use both `resource_filepath` and `resource_filename`. '
-            'Please use only `resource_filepath`.'
-        )
-
-    if resource_filename is not None:
-        deprecation_msg = (
-            'Warning: The `resource_filename` parameter is deprecated. '
-            'Please use the `resource_filepath` parameter instead.'
-        )
-        warnings.warn(deprecation_msg, FutureWarning)
-        resource_filepath = resource_filename
 
     _validate_resource_filepath(resource_filepath)
     _save_file_content(

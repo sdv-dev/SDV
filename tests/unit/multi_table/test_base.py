@@ -4,7 +4,7 @@ import re
 import warnings
 from collections import defaultdict
 from datetime import date, datetime
-from unittest.mock import ANY, Mock, call, mock_open, patch
+from unittest.mock import ANY, Mock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -22,9 +22,8 @@ from sdv.errors import (
     SynthesizerInputError,
     VersionError,
 )
+from sdv.metadata._single_table import INT_REGEX_ZERO_ERROR_MESSAGE, _SingleTableMetadata
 from sdv.metadata.metadata import Metadata
-from sdv.metadata.multi_table import MultiTableMetadata
-from sdv.metadata.single_table import INT_REGEX_ZERO_ERROR_MESSAGE, SingleTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
@@ -155,23 +154,7 @@ class TestBaseMultiTableSynthesizer:
             'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         })
 
-    def test___init___deprecated(self):
-        """Test that init with old MultiTableMetadata gives a future warnging."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        multi_metadata = MultiTableMetadata.load_from_dict(metadata.to_dict())
-        multi_metadata.validate = Mock()
-
-        deprecation_msg = re.escape(
-            "The 'MultiTableMetadata' is deprecated. Please use the new "
-            "'Metadata' class for synthesizers."
-        )
-
-        # Run
-        with pytest.warns(FutureWarning, match=deprecation_msg):
-            BaseMultiTableSynthesizer(multi_metadata)
-
-    @patch('sdv.metadata.single_table.is_faker_function')
+    @patch('sdv.metadata._single_table.is_faker_function')
     def test__init__column_relationship_warning(self, mock_is_faker_function):
         """Test that a warning is raised only once when the metadata has column relationships."""
         # Setup
@@ -202,20 +185,6 @@ class TestBaseMultiTableSynthesizer:
             call('latitude'),
             call('longitude'),
         ])
-
-    def test___init___synthesizer_kwargs_deprecated(self):
-        """Test that the ``synthesizer_kwargs`` method is deprecated."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        metadata.validate = Mock()
-
-        # Run and Assert
-        warn_message = (
-            'The `synthesizer_kwargs` parameter is deprecated as of SDV 1.2.0 and does not '
-            'affect the synthesizer. Please use the `set_table_parameters` method instead.'
-        )
-        with pytest.warns(FutureWarning, match=warn_message):
-            BaseMultiTableSynthesizer(metadata, synthesizer_kwargs={})
 
     def test__handle_composite_keys(self):
         """Test the synthesizer errors if composite primary keys exist in the metadata."""
@@ -303,7 +272,7 @@ class TestBaseMultiTableSynthesizer:
         })
         columns = ('country_column', 'city_column')
         metadata.validate = Mock()
-        SingleTableMetadata.validate = Mock()
+        _SingleTableMetadata.validate = Mock()
         instance = BaseMultiTableSynthesizer(metadata)
         instance._table_synthesizers['address_table'].set_address_columns = Mock()
 
@@ -321,7 +290,7 @@ class TestBaseMultiTableSynthesizer:
         metadata = Metadata()
         columns = ('country_column', 'city_column')
         metadata.validate = Mock()
-        SingleTableMetadata.validate = Mock()
+        _SingleTableMetadata.validate = Mock()
         instance = BaseMultiTableSynthesizer(metadata)
 
         # Run and Assert
@@ -384,7 +353,7 @@ class TestBaseMultiTableSynthesizer:
         result = instance.get_parameters()
 
         # Assert
-        assert result == {'locales': 'en_CA', 'synthesizer_kwargs': None}
+        assert result == {'locales': 'en_CA'}
 
     def test_set_table_parameters(self):
         """Test that the table's parameters are being updated.
@@ -708,12 +677,12 @@ class TestBaseMultiTableSynthesizer:
         instance.auto_assign_transformers(data)
 
         # Assert
-        instance._table_synthesizers['nesreca'].auto_assign_transformers.assert_called_once_with(
-            table1
-        )
-        instance._table_synthesizers['oseba'].auto_assign_transformers.assert_called_once_with(
-            table2
-        )
+        instance._table_synthesizers['nesreca'].auto_assign_transformers.assert_called_once_with({
+            'nesreca': table1
+        })
+        instance._table_synthesizers['oseba'].auto_assign_transformers.assert_called_once_with({
+            'oseba': table2
+        })
 
     def test_auto_assign_transformers_foreign_key_none(self):
         """Test that each table's foreign key transformers are set to None."""
@@ -892,7 +861,7 @@ class TestBaseMultiTableSynthesizer:
         instance._assign_table_transformers(synthesizer, 'oseba', table_data)
 
         # Assert
-        synthesizer.auto_assign_transformers.assert_called_once_with(table_data)
+        synthesizer.auto_assign_transformers.assert_called_once_with({'oseba': table_data})
         synthesizer.update_transformers.assert_called_once_with({'a': None, 'b': None})
 
     def test_preprocess(self):
@@ -950,7 +919,7 @@ class TestBaseMultiTableSynthesizer:
             call('upravna_enota'),
         ]
 
-        synth_nesreca.auto_assign_transformers.assert_called_once_with(data['nesreca'])
+        synth_nesreca.auto_assign_transformers.assert_called_once_with({'nesreca': data['nesreca']})
         synth_nesreca._preprocess.assert_called_once_with(data['nesreca'])
         synth_nesreca.update_transformers.assert_called_once_with({'a': None, 'b': None})
         synth_nesreca._validate_transform_constraints.assert_called_once_with(data['nesreca'])
@@ -1085,8 +1054,8 @@ class TestBaseMultiTableSynthesizer:
             RefitWarning,
         )
 
-    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_metadata_matches_data')
-    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_primary_key')
+    @patch('sdv.metadata._single_table._SingleTableMetadata._validate_metadata_matches_data')
+    @patch('sdv.metadata._single_table._SingleTableMetadata._validate_primary_key')
     def test_preprocess_single_table_preprocess_raises_error_0_int_regex(
         self, mock_validate_pk, mock_validate
     ):
@@ -1377,33 +1346,102 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(NotImplementedError, match=''):
             instance._sample(scale=1.0)
 
-    def test_sample_validate_input(self):
-        """Test that SynthesizerInputError is raised if 'scale' is not >0.0."""
+    @pytest.mark.parametrize(
+        ('parameter_name', 'parameter_value', 'expected_error'),
+        [
+            pytest.param(
+                'num_rows',
+                0,
+                "Invalid parameter for 'num_rows' (0). "
+                'Please provide an integer that is greater than 0.',
+                id='invalid_num_rows',
+            ),
+            pytest.param(
+                'max_tries_per_batch',
+                0,
+                "Invalid parameter for 'max_tries_per_batch' (0). "
+                'Please provide an integer that is greater than 0.',
+                id='invalid_max_tries_per_batch',
+            ),
+            pytest.param(
+                'batch_size',
+                0,
+                "Invalid parameter for 'batch_size' (0). "
+                'Please provide an integer that is greater than 0.',
+                id='invalid_batch_size',
+            ),
+            pytest.param(
+                'output_folder_path',
+                '',
+                "Invalid parameter for 'output_folder_path' (). Please provide a valid"
+                ' string path.',
+                id='empty_output_folder_path',
+            ),
+            pytest.param(
+                'output_folder_path',
+                10,
+                "Invalid parameter for 'output_folder_path' (10). Please provide a valid "
+                'string path.',
+                id='invalid_output_folder_path_type',
+            ),
+        ],
+    )
+    @patch('sdv.multi_table.base._validate_positive_integer')
+    def test__validate_sample_input_errors(
+        self,
+        mock_validate_positive_integer,
+        parameter_name,
+        parameter_value,
+        expected_error,
+    ):
+        """Test ``_validate_sample_input`` raises an error for invalid inputs."""
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
         instance._fitted = True
-        instance._sample = Mock()
-        scales = ['Test', True, -1.2, np.nan]
+        instance.get_metadata = Mock(return_value=Mock(tables={'table'}))
+
+        arguments = {
+            'table_name': 'table',
+            'num_rows': 10,
+            'batch_size': 5,
+            'max_tries_per_batch': 100,
+            'output_folder_path': None,
+        }
+        arguments[parameter_name] = parameter_value
+        if parameter_name in {'num_rows', 'batch_size', 'max_tries_per_batch'}:
+            mock_validate_positive_integer.side_effect = SynthesizerInputError(expected_error)
 
         # Run and Assert
-        msg_1 = re.escape(
-            "Invalid parameter for 'scale' (Test). Please provide a number that is >0.0."
-        )
-        msg_2 = re.escape(
-            "Invalid parameter for 'scale' (True). Please provide a number that is >0.0."
-        )
-        msg_3 = re.escape(
-            "Invalid parameter for 'scale' (-1.2). Please provide a number that is >0.0."
-        )
-        msg_4 = re.escape(
-            "Invalid parameter for 'scale' (nan). Please provide a number that is >0.0."
-        )
-        err_msg = [msg_1, msg_2, msg_3, msg_4]
+        with pytest.raises(SynthesizerInputError, match=re.escape(expected_error)):
+            instance._validate_sample_input(**arguments)
 
-        for scale, msg in zip(scales, err_msg):
-            with pytest.raises(SynthesizerInputError, match=msg):
-                instance.sample(scale=scale)
+    @patch('sdv.multi_table.base._validate_positive_integer')
+    @patch('sdv.multi_table.base.validate_folder_path_with_table_names')
+    def test__validate_sample_input_valid(self, mock_validate_folder_path, mock_validate_integer):
+        """Test ``_validate_sample_input`` does not raise an error for valid inputs."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance._fitted = True
+        instance.get_metadata = Mock(return_value=Mock(tables={'table'}))
+
+        arguments = {
+            'table_name': 'table',
+            'num_rows': 10,
+            'batch_size': 5,
+            'max_tries_per_batch': 100,
+            'output_folder_path': 'output',
+        }
+
+        # Run
+        instance._validate_sample_input(**arguments)
+
+        # Assert
+        mock_validate_integer.assert_any_call('num_rows', 10)
+        mock_validate_integer.assert_any_call('batch_size', 5)
+        mock_validate_integer.assert_any_call('max_tries_per_batch', 100)
+        mock_validate_folder_path.assert_called_once_with('output', ['table'])
 
     def test_sample_raises_sampling_error(self):
         """Test that ``sample`` will raise ``SamplingError`` when not fitted."""
@@ -1417,7 +1455,55 @@ class TestBaseMultiTableSynthesizer:
             'sampling synthetic data.'
         )
         with pytest.raises(SamplingError, match=error_msg):
-            instance.sample(1)
+            instance.sample('table', 1)
+
+    def test__resolve_scale(self):
+        """Test that ``_resolve_scale`` method."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance._table_sizes = {'table': 10}
+
+        # Run
+        scale_1 = instance._resolve_scale('table', 10)
+        scale_2 = instance._resolve_scale('table', 20)
+        scale_3 = instance._resolve_scale('table', 5)
+
+        # Assert
+        assert scale_1 == 1
+        assert scale_2 == 2
+        assert scale_3 == 0.5
+
+    def test__sample_in_batches(self):
+        """Test that ``_sample_in_batches`` method."""
+        # Setup
+        instance = Mock()
+        synthesizer = Mock()
+        synthesizer._sample_batch.side_effect = [
+            pd.DataFrame({'col': [1, 2, 3, 4]}),
+            pd.DataFrame({'col': [5, 6, 7, 8]}),
+            pd.DataFrame({'col': [9, 10]}),
+        ]
+
+        expected = pd.DataFrame({'col': list(range(1, 11))})
+
+        # Run
+        result = BaseMultiTableSynthesizer._sample_in_batches(
+            instance,
+            synthesizer=synthesizer,
+            num_rows=10,
+            batch_size=4,
+            max_tries_per_batch=100,
+        )
+
+        # Assert
+        expected_calls = [
+            call(4, max_tries=100, keep_extra_columns=True),
+            call(4, max_tries=100, keep_extra_columns=True),
+            call(2, max_tries=100, keep_extra_columns=True),
+        ]
+        assert synthesizer._sample_batch.call_args_list == expected_calls
+        pd.testing.assert_frame_equal(result, expected)
 
     @patch('sdv.multi_table.base.datetime')
     def test_sample(self, mock_datetime, caplog):
@@ -1429,6 +1515,9 @@ class TestBaseMultiTableSynthesizer:
         instance._fitted = True
         data = get_multi_table_data()
         instance._sample = Mock(return_value=data)
+        instance._validate_sample_input = Mock()
+        instance._resolve_scale = Mock(return_value=1.5)
+        instance._save_sampled_data = Mock()
         instance._original_table_columns = {
             'nesreca': ['upravna_enota', 'id_nesreca', 'nesreca_val'],
         }
@@ -1438,10 +1527,13 @@ class TestBaseMultiTableSynthesizer:
 
         # Run
         with catch_sdv_logs(caplog, logging.INFO, logger='MultiTableSynthesizer'):
-            instance.sample(scale=1.5)
+            result = instance.sample(table_name='nesreca', num_rows=10, output_folder_path='output')
 
         # Assert
-        instance._sample.assert_called_once_with(scale=1.5)
+        instance._sample.assert_called_once_with(
+            scale=1.5, batch_size=None, max_tries_per_batch=100
+        )
+        instance._save_sampled_data.assert_called_once_with(result, 'output')
         assert caplog.messages[0] == str({
             'EVENT': 'Sample',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',
@@ -1470,7 +1562,9 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
-        instance._table_synthesizers['nesreca'] = CTGANSynthesizer(metadata.tables['nesreca'])
+        instance._table_synthesizers['nesreca'] = CTGANSynthesizer(
+            metadata.get_table_metadata('nesreca')
+        )
 
         # Run and Assert
         msg = re.escape(
@@ -1496,7 +1590,9 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
-        instance._table_synthesizers['nesreca'] = CTGANSynthesizer(metadata.tables['nesreca'])
+        instance._table_synthesizers['nesreca'] = CTGANSynthesizer(
+            metadata.get_table_metadata('nesreca')
+        )
 
         # Run and Assert
         error_msg = 'Loss values are not available yet. Please fit your synthesizer first.'
@@ -1800,122 +1896,6 @@ class TestBaseMultiTableSynthesizer:
             indent=4,
         )
 
-    @patch('sdv.multi_table.base.warn_set_constraints_deprecated')
-    @patch('sdv.cag._utils.open')
-    @patch('sdv.cag._utils.json')
-    @patch('sdv.cag._utils.load_constraint_from_dict')
-    def test_set_constraints(
-        self,
-        mock_load_constraint_from_dict,
-        mock_json,
-        mock_open,
-        mock_warn_set_constraints_deprecated,
-    ):
-        """Test setting constraints from file."""
-        # Setup
-        mock_json.load.return_value = [
-            {'class_name': 'ConstraintClass1', 'parameters': {}},
-            {
-                'class_name': 'InvalidConstraint',
-                'parameters': {},
-            },
-            {
-                'class_name': 'UnknownConstraint',
-                'parameters': {},
-            },
-            {
-                'class_name': 'ConstraintClass2',
-                'parameters': {},
-            },
-        ]
-        mock_constraint1 = Mock()
-        mock_constraint2 = Mock()
-        mock_invalid_constraint = Mock(__repr__=lambda _: 'InvalidConstraint()')
-        mock_constraints = {
-            'ConstraintClass1': mock_constraint1,
-            'ConstraintClass2': mock_constraint2,
-            'InvalidConstraint': mock_invalid_constraint,
-        }
-
-        def load_constraint_from_dict_mock(mock_constraint):
-            if mock_constraint['class_name'] == 'UnknownConstraint':
-                raise ValueError("Unknown `constraint_class` 'UnknownConstraint'.")
-
-            return mock_constraints[mock_constraint['class_name']]
-
-        def add_constraints_mock(mock_constraint):
-            if mock_constraint[0] == mock_invalid_constraint:
-                raise ValueError('Cannot add constraint.')
-
-        mock_load_constraint_from_dict.side_effect = load_constraint_from_dict_mock
-
-        instance = Mock()
-        instance.get_constraints.return_value = []
-        instance.add_constraints.side_effect = add_constraints_mock
-
-        filepath = 'path/to/constraints.json'
-
-        # Run
-        expected_constraint_load_warning = re.escape(
-            "Could not load constraint ({'class_name': 'UnknownConstraint', 'parameters': {}}):\n"
-            "    ValueError: Unknown `constraint_class` 'UnknownConstraint'."
-        )
-        expected_constraint_add_warning = re.escape(
-            'Could not add constraint (InvalidConstraint()):\n    ValueError: Cannot add constraint'
-        )
-        with pytest.warns(UserWarning, match=expected_constraint_load_warning):
-            with pytest.warns(UserWarning, match=expected_constraint_add_warning):
-                BaseMultiTableSynthesizer.set_constraints(instance, filepath)
-
-        # Assert
-        mock_open.assert_called_once_with(filepath, 'r')
-        mock_load_constraint_from_dict.assert_has_calls([
-            call({'class_name': 'ConstraintClass1', 'parameters': {}}),
-            call({'class_name': 'InvalidConstraint', 'parameters': {}}),
-            call({'class_name': 'UnknownConstraint', 'parameters': {}}),
-            call({'class_name': 'ConstraintClass2', 'parameters': {}}),
-        ])
-        instance.add_constraints.assert_has_calls([
-            call([mock_constraint1]),
-            call([mock_invalid_constraint]),
-            call([mock_constraint2]),
-        ])
-        mock_warn_set_constraints_deprecated.assert_called_once()
-
-    @patch('sdv.multi_table.base._load_constraints_from_file')
-    def test_set_constraints_warns_deprecated(self, mock_load_constraints_from_file):
-        """Test ``set_constraints`` emits a deprecation warning."""
-        # Setup
-        filepath = 'path/to/constraints.json'
-        instance = Mock()
-        instance.get_constraints.return_value = []
-        mock_load_constraints_from_file.return_value = []
-        expected_message = re.escape(
-            'Warning: The `set_constraints` method is deprecated. '
-            'Please use the `load_constraints` utility function to load constraints from a file '
-            'and add them to the synthesizer with the `add_constraints` method.'
-        )
-
-        # Run
-        with pytest.warns(FutureWarning, match=expected_message):
-            BaseMultiTableSynthesizer.set_constraints(instance, filepath)
-
-        # Assert
-        mock_load_constraints_from_file.assert_called_once_with(filepath)
-
-    def test__set_constraints_errors_with_existing_constraints(self):
-        """Test ``set_constraints`` errors if constraints already applied."""
-        # Setup
-        instance = Mock()
-        instance.get_constraints.return_value = [Mock()]
-
-        # Run and Assert
-        expected_msg = re.escape(
-            'Cannot `set_constraints` since constraints have already been applied.'
-        )
-        with pytest.raises(SynthesizerInputError, match=expected_msg):
-            BaseMultiTableSynthesizer.set_constraints(instance, 'path/to/constraints.json')
-
     def test_get_metadata_original(self):
         """Test getting the original metadata from the synthesizer."""
         # Setup
@@ -2076,44 +2056,6 @@ class TestBaseMultiTableSynthesizer:
         )
         assert reverse_transformed == constraint1.reverse_transform.return_value
 
-    def test_load_custom_constraint_classes(self):
-        """Test that the method calls the single table synthesizer's version of the method."""
-        # Setup
-        instance = Mock()
-        table_synth_mock = Mock()
-        instance._table_synthesizers = {'table': table_synth_mock}
-
-        # Run
-        BaseMultiTableSynthesizer.load_custom_constraint_classes(
-            instance, 'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
-        )
-
-        # Assert
-        table_synth_mock.load_custom_constraint_classes.assert_called_once_with(
-            'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
-        )
-
-    def test_load_custom_constraint_classes_multi_tables(self):
-        """Check that ``load_custom_constraint_classes`` is called for every tables."""
-        # Setup
-        instance = Mock()
-        table_synth_mock = Mock()
-        table_synth_mock_2 = Mock()
-        instance._table_synthesizers = {'table': table_synth_mock, 'table_2': table_synth_mock_2}
-
-        # Run
-        BaseMultiTableSynthesizer.load_custom_constraint_classes(
-            instance, 'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
-        )
-
-        # Assert
-        table_synth_mock.load_custom_constraint_classes.assert_called_once_with(
-            'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
-        )
-        table_synth_mock_2.load_custom_constraint_classes.assert_called_once_with(
-            'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
-        )
-
     @patch('sdv.multi_table.base.version')
     def test_get_info(self, mock_version):
         """Test the correct dictionary is returned.
@@ -2249,88 +2191,3 @@ class TestBaseMultiTableSynthesizer:
         with pytest.warns(Warning, match=warn_msg):
             filepath = os.path.join(tmp_path, 'output.pkl')
             synthesizer.save(filepath)
-
-    @patch('sdv.multi_table.base.datetime')
-    @patch('sdv.multi_table.base.generate_synthesizer_id')
-    @patch('sdv.multi_table.base.check_synthesizer_version')
-    @patch('sdv.multi_table.base.check_sdv_versions_and_warn')
-    @patch('sdv.multi_table.base.cloudpickle')
-    @patch('builtins.open', new_callable=mock_open)
-    @patch('sdv.multi_table.base.warn_load_deprecated')
-    @patch('sdv.multi_table.base._validate_correct_synthesizer_loading')
-    def test_load(
-        self,
-        mock_validate_correct_synthesizer_loading,
-        warn_load_deprecated,
-        mock_file,
-        cloudpickle_mock,
-        mock_check_sdv_versions_and_warn,
-        mock_check_synthesizer_version,
-        mock_generate_synthesizer_id,
-        mock_datetime,
-        caplog,
-    ):
-        """Test that the ``load`` method loads a stored synthesizer."""
-        # Setup
-        synthesizer_id = 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
-        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
-        mock_generate_synthesizer_id.return_value = synthesizer_id
-        synthesizer_mock = Mock(_fitted=False, _synthesizer_id=None)
-        cloudpickle_mock.load.return_value = synthesizer_mock
-
-        # Run
-        with catch_sdv_logs(caplog, logging.INFO, 'MultiTableSynthesizer'):
-            loaded_instance = BaseMultiTableSynthesizer.load('synth.pkl')
-
-        # Assert
-        mock_validate_correct_synthesizer_loading.assert_called_once_with(
-            synthesizer_mock, BaseMultiTableSynthesizer
-        )
-        warn_load_deprecated.assert_called_once_with()
-        mock_file.assert_called_once_with('synth.pkl', 'rb')
-        mock_check_sdv_versions_and_warn.assert_called_once_with(loaded_instance)
-        cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
-        assert loaded_instance == synthesizer_mock
-        mock_check_synthesizer_version.assert_called_once_with(synthesizer_mock)
-        assert loaded_instance._synthesizer_id == synthesizer_id
-        mock_generate_synthesizer_id.assert_called_once_with(synthesizer_mock)
-        assert caplog.messages[0] == str({
-            'EVENT': 'Load',
-            'TIMESTAMP': '2024-04-19 16:20:10.037183',
-            'SYNTHESIZER CLASS NAME': 'Mock',
-            'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
-        })
-
-    @patch('builtins.open')
-    @patch('sdv.multi_table.base.cloudpickle')
-    def test_load_runtime_error(self, cloudpickle_mock, mock_open):
-        """Test that the synthesizer's load method errors with the correct message."""
-        # Setup
-        cloudpickle_mock.load.side_effect = RuntimeError(
-            (
-                'Attempting to deserialize object on a CUDA device but '
-                'torch.cuda.is_available() is False. If you are running on a CPU-only machine,'
-                " please use torch.load with map_location=torch.device('cpu') "
-                'to map your storages to the CPU.'
-            )
-        )
-
-        # Run and Assert
-        err_msg = re.escape(
-            'This synthesizer was created on a machine with GPU but the current machine is'
-            ' CPU-only. This feature is currently unsupported. We recommend sampling on '
-            'the same GPU-enabled machine.'
-        )
-        with pytest.raises(SamplingError, match=err_msg):
-            BaseMultiTableSynthesizer.load('synth.pkl')
-
-    @patch('builtins.open')
-    @patch('sdv.multi_table.base.cloudpickle')
-    def test_load_runtime_error_no_change(self, cloudpickle_mock, mock_open):
-        """Test that the synthesizer's load method errors with the correct message."""
-        # Setup
-        cloudpickle_mock.load.side_effect = RuntimeError('Error')
-
-        # Run and Assert
-        with pytest.raises(RuntimeError, match='Error'):
-            BaseMultiTableSynthesizer.load('synth.pkl')

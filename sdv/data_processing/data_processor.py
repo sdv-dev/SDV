@@ -4,7 +4,6 @@ import json
 import logging
 import warnings
 from copy import deepcopy
-from pathlib import Path
 
 import pandas as pd
 import rdt
@@ -14,14 +13,11 @@ from rdt.transformers import AnonymizedFaker, get_default_transformers
 from rdt.transformers.pii.anonymization import get_anonymized_transformer
 
 from sdv._utils import MODELABLE_SDTYPES, _get_transformer_init_kwargs
-from sdv.constraints import Constraint
-from sdv.constraints.base import get_subclasses
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
-from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
+from sdv.data_processing.errors import NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
-from sdv.data_processing.utils import load_module_from_path
 from sdv.errors import SynthesizerInputError
-from sdv.metadata.single_table import SingleTableMetadata
+from sdv.metadata._single_table import _SingleTableMetadata
 
 LOGGER = logging.getLogger(__name__)
 
@@ -30,12 +26,12 @@ class DataProcessor:
     """Single table data processor.
 
     This class handles all pre and post processing that is done to a single table to get it ready
-    for modeling and finalize sampling. These processes include formatting, transformations,
-    anonymization and constraint handling.
+    for modeling and finalize sampling. These processes include formatting, transformations, and
+    anonymization.
 
     Args:
-        metadata (metadata.SingleTableMetadata):
-            The single table metadata instance that will be used to apply constraints and
+        metadata (metadata._SingleTableMetadata):
+            The single table metadata instance that will be used to apply
             transformations to the data.
         enforce_rounding (bool):
             Define rounding scheme for FloatFormatter. If True, the data returned by
@@ -117,10 +113,6 @@ class DataProcessor:
         self._enforce_min_max_values = enforce_min_max_values
         self._model_kwargs = model_kwargs or {}
         self._locales = locales
-        self._constraints_list = []
-        self._constraints = []
-        self._constraints_to_reverse = []
-        self._custom_constraint_classes = {}
         self._COLUMN_RELATIONSHIP_TO_TRANSFORMER = {
             'address': 'RandomLocationGenerator',
             'gps': 'GPSNoiser',
@@ -197,61 +189,6 @@ class DataProcessor:
 
         return sdtypes
 
-    def _validate_custom_constraint_name(self, class_name):
-        reserved_class_names = list(get_subclasses(Constraint))
-        if class_name in reserved_class_names:
-            error_message = (
-                f"The name '{class_name}' is a reserved constraint name. "
-                'Please use a different one for the custom constraint.'
-            )
-            raise InvalidConstraintsError(error_message)
-
-    def _validate_custom_constraints(self, filepath, class_names, module):
-        errors = []
-        for class_name in class_names:
-            try:
-                self._validate_custom_constraint_name(class_name)
-            except InvalidConstraintsError as err:
-                errors += err.errors
-
-            if not hasattr(module, class_name):
-                errors.append(f"The constraint '{class_name}' is not defined in '{filepath}'.")
-
-        if errors:
-            raise InvalidConstraintsError(errors)
-
-    def load_custom_constraint_classes(self, filepath, class_names):
-        """Load a custom constraint class for the current synthesizer.
-
-        Args:
-            filepath (str):
-                String representing the absolute or relative path to the python file where
-                the custom constraints are declared.
-            class_names (list):
-                A list of custom constraint classes to be imported.
-        """
-        path = Path(filepath)
-        module = load_module_from_path(path)
-        self._validate_custom_constraints(filepath, class_names, module)
-        for class_name in class_names:
-            constraint_class = getattr(module, class_name)
-            self._custom_constraint_classes[class_name] = constraint_class
-
-    def _load_constraints(self):
-        loaded_constraints = []
-        default_constraints_classes = list(get_subclasses(Constraint))
-        for constraint in self._constraints_list:
-            if constraint['constraint_class'] in default_constraints_classes:
-                loaded_constraints.append(Constraint.from_dict(constraint))
-
-            else:
-                constraint_class = self._custom_constraint_classes[constraint['constraint_class']]
-                loaded_constraints.append(
-                    constraint_class(**constraint.get('constraint_parameters', {}))
-                )
-
-        return loaded_constraints
-
     def _update_transformers_by_sdtypes(self, sdtype, transformer):
         self._transformers_by_sdtype[sdtype] = transformer
 
@@ -316,8 +253,8 @@ class DataProcessor:
         Returns:
             transformer:
                 Instance of ``rdt.transformers.text.RegexGenerator`` or
-                ``rdt.transformers.pii.AnonymizedFaker`` with ``enforce_uniqueness`` set to
-                ``True``.
+                ``rdt.transformers.pii.AnonymizedFaker`` with ``cardinality_rule`` set to
+                ``unique``.
         """
         default_regex_format = r'\d{30}' if is_numeric else '[0-1a-z]{5}'
         regex_format = column_metadata.get('regex_format', default_regex_format)
@@ -379,6 +316,28 @@ class DataProcessor:
             rdt.transformers.BaseTransformer:
                 A categorical transformer.
         """
+        if 'range_values' in parameters:
+            parameters.pop('range_values')
+
+        return self._get_transformer_with_parameters(parameters, transformer)
+
+    def _get_ordinal_transformer(self, parameters, transformer):
+        """Get an ordinal transformer.
+
+        Args:
+            parameters (dict):
+                The parameters for the transformer.
+            transformer (rdt.transformers.BaseTransformer):
+                An ordinal transformer.
+
+        Returns:
+            rdt.transformers.BaseTransformer:
+                An ordinal transformer.
+        """
+        if 'range_values' in parameters:
+            order = parameters.pop('range_values')
+            parameters['order'] = order
+
         return self._get_transformer_with_parameters(parameters, transformer)
 
     def _get_numerical_transformer(self, parameters, transformer):
@@ -416,6 +375,7 @@ class DataProcessor:
             'datetime': self._get_datetime_transformer,
             'numerical': self._get_numerical_transformer,
             'categorical': self._get_categorical_transformer,
+            'ordinal': self._get_ordinal_transformer,
             'boolean': self._get_boolean_transformer,
         }
         transformer_fn = transformer_map.get(sdtype)
@@ -436,8 +396,17 @@ class DataProcessor:
         ):
             return self.create_anonymized_transformer(sdtype, column_metadata, None, self._locales)
 
+        non_param_keys = [
+            'decimal_places',
+            'range_min',
+            'range_max',
+            'range_is_nullable',
+            'pii',
+            'sdtype',
+            'range_values',
+        ]
         parameters = {
-            key: value for key, value in column_metadata.items() if key not in ['pii', 'sdtype']
+            key: value for key, value in column_metadata.items() if key not in non_param_keys
         }
         return self._get_sdtype_transformer(sdtype, parameters, transformer)
 
@@ -817,11 +786,11 @@ class DataProcessor:
             column_metadata = self.metadata.columns.get(column_name)
             sdtype = column_metadata.get('sdtype')
             if sdtype == 'numerical' and column_name != self._primary_key:
-                representation = column_metadata.get('computer_representation', 'Float')
+                decimal_places = column_metadata.get('decimal_places')
                 self.formatters[column_name] = NumericalFormatter(
                     enforce_rounding=self._enforce_rounding,
                     enforce_min_max_values=self._enforce_min_max_values,
-                    computer_representation=representation,
+                    decimal_places=decimal_places,
                 )
                 self.formatters[column_name].learn_format(data[column_name])
 
@@ -1008,9 +977,6 @@ class DataProcessor:
             sampled_columns.extend(self._keys)
             reversed_data[generated_keys.columns] = generated_keys[generated_keys.notna()]
 
-        for constraint in reversed(self._constraints_to_reverse):
-            reversed_data = constraint.reverse_transform(reversed_data)
-
         # Add new columns generated by the constraint
         new_columns = list(set(reversed_data.columns) - set(sampled_columns))
         sampled_columns.extend(new_columns)
@@ -1070,22 +1036,6 @@ class DataProcessor:
 
         return reversed_data[sampled_columns]
 
-    def filter_valid(self, data):
-        """Filter the data using the constraints and return only the valid rows.
-
-        Args:
-            data (pandas.DataFrame):
-                Table data.
-
-        Returns:
-            pandas.DataFrame:
-                Table containing only the valid rows.
-        """
-        for constraint in self._constraints:
-            data = constraint.filter_valid(data)
-
-        return data
-
     def to_dict(self):
         """Get a dict representation of this DataProcessor.
 
@@ -1093,11 +1043,8 @@ class DataProcessor:
             dict:
                 Dict representation of this DataProcessor.
         """
-        constraints_to_reverse = [cnt.to_dict() for cnt in self._constraints_to_reverse]
         return {
             'metadata': deepcopy(self.metadata.to_dict()),
-            'constraints_list': self._constraints,
-            'constraints_to_reverse': constraints_to_reverse,
             'model_kwargs': deepcopy(self._model_kwargs),
         }
 
@@ -1114,15 +1061,12 @@ class DataProcessor:
                 If passed, set the ``enforce_min_max_values`` on the new instance.
         """
         instance = cls(
-            metadata=SingleTableMetadata.load_from_dict(metadata_dict['metadata']),
+            metadata=_SingleTableMetadata.load_from_dict(metadata_dict['metadata']),
             enforce_rounding=enforce_rounding,
             enforce_min_max_values=enforce_min_max_values,
             model_kwargs=metadata_dict.get('model_kwargs'),
         )
 
-        instance._constraints_to_reverse = [
-            Constraint.from_dict(cnt) for cnt in metadata_dict.get('constraints_to_reverse', [])
-        ]
         instance._constraints_list = metadata_dict.get('constraints_list', [])
 
         return instance

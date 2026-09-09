@@ -8,7 +8,6 @@ import logging
 import math
 import operator
 import os
-import traceback
 import uuid
 import warnings
 from collections import defaultdict
@@ -26,19 +25,16 @@ from pandas.api.types import is_float_dtype
 from sdv import version
 from sdv._utils import (
     _check_regex_format,
+    _get_single_table_data,
     _groupby_list,
-    _validate_correct_synthesizer_loading,
-    check_sdv_versions_and_warn,
+    _metadata_range_exceeds_real,
     check_synthesizer_version,
     generate_synthesizer_id,
-    warn_load_deprecated,
-    warn_set_constraints_deprecated,
 )
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _convert_to_snake_case,
     _get_invalid_rows,
-    _load_constraints_from_file,
     _validate_constraints_single_table,
 )
 from sdv.cag.programmable_constraint import ProgrammableConstraint, ProgrammableConstraintHarness
@@ -51,11 +47,16 @@ from sdv.errors import (
     SynthesizerInputError,
 )
 from sdv.logging import get_sdv_logger
+from sdv.metadata._single_table import _SingleTableMetadata
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
-from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling import Condition, DataFrameCondition
-from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
+from sdv.single_table.utils import (
+    check_num_rows,
+    handle_sampling_error,
+    validate_file_path,
+    validate_folder_path_with_table_names,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -63,9 +64,6 @@ SYNTHESIZER_LOGGER = get_sdv_logger('SingleTableSynthesizer')
 
 COND_IDX = str(uuid.uuid4())
 FIXED_RNG_SEED = 73251
-DEPRECATION_MSG = (
-    "The 'SingleTableMetadata' is deprecated. Please use the new 'Metadata' class for synthesizers."
-)
 
 
 class BaseSynthesizer:
@@ -76,8 +74,7 @@ class BaseSynthesizer:
 
     Args:
         metadata (sdv.metadata.Metadata):
-            Single table metadata representing the data that this synthesizer will be used for.
-            * sdv.metadata.SingleTableMetadata can be used but will be deprecated.
+            Metadata representing the data that this synthesizer will be used for.
         enforce_min_max_values (bool):
             Specify whether or not to clip the data returned by ``reverse_transform`` of
             the numerical transformer, ``FloatFormatter``, to the min and max values seen
@@ -176,14 +173,7 @@ class BaseSynthesizer:
         # Points to a dynamic metadata object that could be modified by constraints
         self.metadata = metadata
 
-        self._table_name = Metadata.DEFAULT_SINGLE_TABLE_NAME
-        if isinstance(metadata, Metadata):
-            self._table_name = metadata._get_single_table_name()
-        else:
-            warnings.warn(DEPRECATION_MSG, FutureWarning)
-            self._table_name = Metadata.DEFAULT_SINGLE_TABLE_NAME
-            self.metadata = Metadata.load_from_dict(metadata.to_dict(), self._table_name)
-            self.metadata.tables[self._table_name]._updated = metadata._updated
+        self._table_name = metadata._get_single_table_name()
 
         self.metadata.validate()
         self._check_metadata_updated()
@@ -222,29 +212,21 @@ class BaseSynthesizer:
             'SYNTHESIZER ID': self._synthesizer_id,
         })
 
-    def set_address_columns(self, column_names, anonymization_level='full'):
-        """Set the address multi-column transformer."""
-        warnings.warn(
-            '`set_address_columns` is deprecated. Please add these columns directly to your'
-            ' metadata using `add_column_relationship`.',
-            FutureWarning,
-        )
-
-    def _validate_metadata(self, data):
-        """Validate that the data follows the metadata."""
+    def _validate_metadata(self, table_data):
+        """Validate that the table data follows the metadata."""
         errors = []
         try:
             if isinstance(self.metadata, Metadata):
-                self.metadata.validate_data({self._table_name: data})
+                self.metadata.validate_data({self._table_name: table_data})
             else:
-                self.metadata.validate_data(data)
+                self.metadata.validate_data(table_data)
         except InvalidDataError as error:
             errors += error.errors
 
         if errors:
             raise InvalidDataError(errors)
 
-    def _validate(self, data):
+    def _validate(self, table_data):
         """Validate any rules that only apply to specific synthesizers.
 
         This method should be overridden by subclasses.
@@ -253,7 +235,7 @@ class BaseSynthesizer:
 
     def _get_table_metadata(self):
         if isinstance(self.metadata, Metadata):
-            return self.metadata.tables.get(self._table_name, SingleTableMetadata())
+            return self.metadata.tables.get(self._table_name, _SingleTableMetadata())
 
         return self.metadata
 
@@ -287,7 +269,7 @@ class BaseSynthesizer:
         table_metadata = self._get_table_metadata()
         for column in column_name_to_transformer:
             sdtype = table_metadata.columns.get(column, {}).get('sdtype')
-            if sdtype in {'categorical', 'boolean'}:
+            if sdtype in {'categorical', 'boolean', 'ordinal'}:
                 warnings.warn(
                     f"Replacing the default transformer for column '{column}' "
                     'might impact the quality of your synthetic data.'
@@ -326,14 +308,6 @@ class BaseSynthesizer:
             msg = 'For this change to take effect, please refit the synthesizer using `fit`.'
             warnings.warn(msg, RefitWarning)
 
-    def _resolve_gpu_parameters(self, parameters):
-        if parameters.get('cuda') is not None and parameters.get('enable_gpu') is None:
-            parameters.pop('enable_gpu', None)  # Ensure backward-compatibility
-        elif 'cuda' in parameters:  # Removed because deprecated
-            del parameters['cuda']
-
-        return parameters
-
     def get_parameters(self):
         """Return the parameters used to instantiate the synthesizer."""
         parameters = inspect.signature(self.__init__).parameters
@@ -342,7 +316,7 @@ class BaseSynthesizer:
             if parameter_name not in ['metadata']:
                 instantiated_parameters[parameter_name] = self.__dict__.get(parameter_name)
 
-        return self._resolve_gpu_parameters(instantiated_parameters)
+        return instantiated_parameters
 
     def get_metadata(self, version='original'):
         """Get the metadata, either original or modified after applying constraints.
@@ -365,18 +339,6 @@ class BaseSynthesizer:
 
         return Metadata.load_from_dict(self.metadata.to_dict(), table_name)
 
-    def load_custom_constraint_classes(self, filepath, class_names):
-        """Load a custom constraint class for the current synthesizer.
-
-        Args:
-            filepath (str):
-                String representing the absolute or relative path to the python file where
-                the custom constraints are declared.
-            class_names (list):
-                A list of custom constraint classes to be imported.
-        """
-        self._data_processor.load_custom_constraint_classes(filepath, class_names)
-
     def auto_assign_transformers(self, data):
         """Automatically assign the required transformers for the given data and constraints.
 
@@ -384,12 +346,14 @@ class BaseSynthesizer:
         with the required transformers for the current data.
 
         Args:
-            data (pandas.DataFrame):
-                The raw data (before any transformations) that will be used to fit the model.
+            data (dict[str, pandas.DataFrame]):
+                Dictionary mapping the table name to the raw data that will be used
+                to fit the model.
         """
         self.validate(data)
-        data = self._validate_transform_constraints(data)
-        self._data_processor.prepare_for_fitting(data)
+        table_data = _get_single_table_data(data)
+        table_data = self._validate_transform_constraints(table_data)
+        self._data_processor.prepare_for_fitting(table_data)
 
     def get_transformers(self):
         """Get a dictionary mapping of ``column_name``  and ``rdt.transformers``.
@@ -445,21 +409,21 @@ class BaseSynthesizer:
 
         return info
 
-    def _preprocess(self, data):
+    def _preprocess(self, table_data):
         if not self.metadata.tables:
             raise InvalidMetadataError(
                 'The metadata is empty. Please add at least one table to the metadata.'
             )
 
-        self._data_processor.fit(data)
-        return self._data_processor.transform(data)
+        self._data_processor.fit(table_data)
+        return self._data_processor.transform(table_data)
 
-    def _store_and_convert_original_cols(self, data):
+    def _store_and_convert_original_cols(self, table_data):
         # Transform in place to avoid possible large copy of data
-        for column in data.columns:
+        for column in table_data.columns:
             if isinstance(column, int):
-                self._original_columns = data.columns
-                data.columns = data.columns.astype(str)
+                self._original_columns = table_data.columns
+                table_data.columns = table_data.columns.astype(str)
                 return True
 
         return False
@@ -538,33 +502,6 @@ class BaseSynthesizer:
         with open(path, 'w') as file:
             json.dump(constraints_dict_list, file, indent=4)
 
-    def set_constraints(self, filepath):
-        """Add all the constraints in the file to the synthesizer.
-
-        If any constraints have been added to the synthesizer, they will be removed before
-        the constraints from the file are set.
-
-        Args:
-            filepath (str):
-                The string path to the file containing the constraints to set on the synthesizer.
-        """
-        if self.get_constraints():
-            raise SynthesizerInputError(
-                'Cannot `set_constraints` since constraints have already been applied.'
-            )
-
-        warn_set_constraints_deprecated()
-        constraint_list = _load_constraints_from_file(filepath)
-
-        for constraint in constraint_list:
-            try:
-                self.add_constraints([constraint])
-            except Exception as e:
-                warnings.warn(
-                    f'Could not add constraint ({constraint}):\n'
-                    f'    {traceback.format_exception_only(type(e), e)[0]}'
-                )
-
     def validate_constraints(self, synthetic_data):
         """Validate synthetic_data against the constraints.
 
@@ -593,16 +530,16 @@ class BaseSynthesizer:
                 elif attribute == '_chained_constraints':
                     transformed_data = constraint.transform(data=transformed_data)
 
-    def _validate_transform_constraints(self, data, enforce_constraint_fitting=False):
-        """Validate the data against the constraints and transform it.
+    def _validate_transform_constraints(self, table_data, enforce_constraint_fitting=False):
+        """Validate the table data against the constraints and transform it.
 
         If the constraints are already fitted, it will only transform the data.
         If not, it will fit the constraints and then transform the data.
         The constraints validation is done during the fitting process.
 
         Args:
-            data (pandas.DataFrame):
-                The data to validate.
+            table_data (pandas.DataFrame):
+                The table data to validate.
             enforce_constraint_fitting (bool):
                 Whether to enforce fitting the constraints again. If set to ``True``, the
                 constraints will be fitted again even if they have already been fitted.
@@ -610,26 +547,34 @@ class BaseSynthesizer:
         """
         if self._constraints_fitted and not enforce_constraint_fitting:
             for constraint in self._chained_constraints:
-                data = constraint.transform(data)
+                table_data = constraint.transform(table_data)
 
-            return data
+            return table_data
 
         metadata = getattr(self, '_original_metadata', self.metadata)
         if hasattr(self, '_reject_sampling_constraints'):
             for constraint in self._reject_sampling_constraints:
-                constraint.fit(data=data, metadata=self._original_metadata)
+                constraint.fit(data=table_data, metadata=self._original_metadata)
 
         if hasattr(self, '_chained_constraints'):
             for constraint in self._chained_constraints:
-                constraint.fit(data=data, metadata=metadata)
+                constraint.fit(data=table_data, metadata=metadata)
                 metadata = constraint.get_updated_metadata(metadata)
-                data = constraint.transform(data)
+                table_data = constraint.transform(table_data)
 
         self._constraints_fitted = True
-        return data
+        return table_data
+
+    def _check_ranges(self, data):
+        if _metadata_range_exceeds_real(data, self._original_metadata):
+            warnings.warn(
+                'The training data does not cover the full range. Synthetic data will be '
+                'based on the training data. To extrapolate ranges for full coverage, '
+                'please use the Targeted Sampling bundle.'
+            )
 
     def validate(self, data):
-        """Validate data.
+        """Validate the data.
 
         This method will validate the data against:
         - The metadata
@@ -639,9 +584,11 @@ class BaseSynthesizer:
         and then restore it.
 
         Args:
-            data (pandas.DataFrame):
-                The data to validate.
+            data (dict[str, pandas.DataFrame]):
+                Dictionary mapping the table name to the data to validate.
         """
+        table_data = _get_single_table_data(data)
+
         # Suppress duplicate datetime_format warning only when this single-table synthesizer
         # is embedded inside a multi-table synthesizer
         if getattr(self, '_suppress_datetime_format_warning', False):
@@ -656,34 +603,36 @@ class BaseSynthesizer:
                     message=r'The datetime format for column .* could not be verified.*',
                     category=UserWarning,
                 )
-                self._original_metadata.validate_data({self._table_name: data})
+                self._original_metadata.validate_data(data)
         else:
-            self._original_metadata.validate_data({self._table_name: data})
-        self._validate_transform_constraints(data, enforce_constraint_fitting=True)
+            self._original_metadata.validate_data(data)
+        self._validate_transform_constraints(table_data, enforce_constraint_fitting=True)
 
         # Retaining the logic of returning errors and raising them here to maintain consistency
         # with the existing workflow with synthesizers
-        synthesizer_errors = self._validate(data)  # Validate rules specific to each synthesizer
+        synthesizer_errors = self._validate(
+            table_data
+        )  # Validate rules specific to each synthesizer
         if synthesizer_errors:
             raise InvalidDataError(synthesizer_errors)
 
-    def _preprocess_helper(self, data):
-        """This method is used to preprocess the data.
+        self._check_ranges(data)
+
+    def _preprocess_helper(self, table_data):
+        """Preprocess the table data.
 
         It will:
-        - Validate the data.
         - Warn if the model has already been fitted.
         - Validate the data against the constraints and transform it.
 
         Args:
-            data (pandas.DataFrame):
-                The data to preprocess.
+            table_data (pandas.DataFrame):
+                The table data to preprocess.
 
         Returns:
             pandas.DataFrame:
-                The data after constraint transformation.
+                The table data after constraint transformation.
         """
-        self.validate(data)
         if self._fitted:
             msg = (
                 'This model has already been fitted. To use the new preprocessed data, '
@@ -691,38 +640,41 @@ class BaseSynthesizer:
             )
             warnings.warn(msg, RefitWarning)
 
-        data = self._validate_transform_constraints(data)
+        table_data = self._validate_transform_constraints(table_data)
         if getattr(self, '_composite_keys', None):
-            self._composite_keys.fit(data, self._composite_keys_metadata)
-            data = self._composite_keys.transform(data)
+            self._composite_keys.fit(table_data, self._composite_keys_metadata)
+            table_data = self._composite_keys.transform(table_data)
 
-        return data
+        return table_data
 
     def preprocess(self, data):
         """Transform the raw data to numerical space.
 
         Args:
-            data (pandas.DataFrame):
-                The raw data to be transformed.
+            data (dict[str, pandas.DataFrame]):
+                Dictionary mapping the table name to the raw data to be transformed.
 
         Returns:
-            pandas.DataFrame:
-                The preprocessed data.
+            dict[str, pandas.DataFrame]:
+                Dictionary mapping the table name to the preprocessed data.
         """
-        is_converted = self._store_and_convert_original_cols(data)
-        data = self._preprocess_helper(data)
-        preprocess_data = self._preprocess(data)
+        table_data = _get_single_table_data(data)
+        table_name = self.metadata._get_single_table_name()
+        is_converted = self._store_and_convert_original_cols(table_data)
+        self.validate(data)
+        table_data = self._preprocess_helper(table_data)
+        processed_table_data = self._preprocess(table_data)
         if is_converted:
-            data.columns = self._original_columns
+            table_data.columns = self._original_columns
 
-        return preprocess_data
+        return {table_name: processed_table_data}
 
-    def _fit(self, processed_data):
+    def _fit(self, processed_table_data):
         """Fit the model to the table.
 
         Args:
-            processed_data (pandas.DataFrame):
-                Data to be learned.
+            processed_table_data (pandas.DataFrame):
+                Processed table data to be learned.
         """
         raise NotImplementedError()
 
@@ -730,22 +682,23 @@ class BaseSynthesizer:
         """Fit this model to the transformed data.
 
         Args:
-            processed_data (pandas.DataFrame):
-                The transformed data used to fit the model to.
+            processed_data (dict[str, pandas.DataFrame]):
+                Dictionary mapping the table name to the transformed data used to fit the model.
         """
+        processed_table_data = _get_single_table_data(processed_data)
         SYNTHESIZER_LOGGER.info({
             'EVENT': 'Fit processed data',
             'TIMESTAMP': datetime.datetime.now(),
             'SYNTHESIZER CLASS NAME': self.__class__.__name__,
             'SYNTHESIZER ID': self._synthesizer_id,
             'TOTAL NUMBER OF TABLES': 1,
-            'TOTAL NUMBER OF ROWS': len(processed_data),
-            'TOTAL NUMBER OF COLUMNS': len(processed_data.columns),
+            'TOTAL NUMBER OF ROWS': len(processed_table_data),
+            'TOTAL NUMBER OF COLUMNS': len(processed_table_data.columns),
         })
 
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
-        if not processed_data.empty:
-            self._fit(processed_data)
+        if not processed_table_data.empty:
+            self._fit(processed_table_data)
 
         self._fitted = True
         self._fitted_date = datetime.datetime.today().strftime('%Y-%m-%d')
@@ -756,17 +709,18 @@ class BaseSynthesizer:
         """Fit this model to the original data.
 
         Args:
-            data (pandas.DataFrame):
-                The raw data (before any transformations) to fit the model to.
+            data (dict[str, pandas.DataFrame]):
+                Dictionary mapping the table name to the raw data used to fit the model.
         """
+        table_data = _get_single_table_data(data)
         SYNTHESIZER_LOGGER.info({
             'EVENT': 'Fit',
             'TIMESTAMP': datetime.datetime.now(),
             'SYNTHESIZER CLASS NAME': self.__class__.__name__,
             'SYNTHESIZER ID': self._synthesizer_id,
             'TOTAL NUMBER OF TABLES': 1,
-            'TOTAL NUMBER OF ROWS': len(data),
-            'TOTAL NUMBER OF COLUMNS': len(data.columns),
+            'TOTAL NUMBER OF ROWS': len(table_data),
+            'TOTAL NUMBER OF COLUMNS': len(table_data.columns),
         })
 
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
@@ -774,11 +728,11 @@ class BaseSynthesizer:
         self._fitted = False
         self._data_processor.reset_sampling()
         self._random_state_set = False
-        is_converted = self._store_and_convert_original_cols(data)
+        is_converted = self._store_and_convert_original_cols(table_data)
         processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)
         if is_converted:
-            data.columns = self._original_columns
+            table_data.columns = self._original_columns
 
     def _validate_fit_before_save(self):
         """Validate that the synthesizer has been fitted before saving."""
@@ -807,52 +761,6 @@ class BaseSynthesizer:
 
         with open(filepath, 'wb') as output:
             cloudpickle.dump(self, output)
-
-    @classmethod
-    def load(cls, filepath):
-        """Load a single-table synthesizer from a given path.
-
-        Args:
-            filepath (str):
-                A string describing the filepath of your saved synthesizer.
-
-        Returns:
-            SingleTableSynthesizer:
-                The loaded synthesizer.
-        """
-        warn_load_deprecated()
-        with open(filepath, 'rb') as f:
-            try:
-                synthesizer = cloudpickle.load(f)
-            except RuntimeError as e:
-                err_msg = (
-                    'Attempting to deserialize object on a CUDA device but '
-                    'torch.cuda.is_available() is False. If you are running on a CPU-only machine,'
-                    " please use torch.load with map_location=torch.device('cpu') "
-                    'to map your storages to the CPU.'
-                )
-                if str(e) == err_msg:
-                    raise SamplingError(
-                        'This synthesizer was created on a machine with GPU but the current '
-                        'machine is CPU-only. This feature is currently unsupported. We recommend'
-                        ' sampling on the same GPU-enabled machine.'
-                    )
-                raise e
-
-        _validate_correct_synthesizer_loading(synthesizer, cls)
-        check_synthesizer_version(synthesizer)
-        check_sdv_versions_and_warn(synthesizer)
-        if getattr(synthesizer, '_synthesizer_id', None) is None:
-            synthesizer._synthesizer_id = generate_synthesizer_id(synthesizer)
-
-        SYNTHESIZER_LOGGER.info({
-            'EVENT': 'Load',
-            'TIMESTAMP': datetime.datetime.now(),
-            'SYNTHESIZER CLASS NAME': synthesizer.__class__.__name__,
-            'SYNTHESIZER ID': synthesizer._synthesizer_id,
-        })
-
-        return synthesizer
 
     def reverse_transform_constraints(self, sampled):
         """Reverse transform the constraints."""
@@ -994,7 +902,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
             if previous_rows is not None:
                 sampled = pd.concat([previous_rows, sampled], ignore_index=True)
-            sampled = self._data_processor.filter_valid(sampled)
 
             if conditions is not None:
                 sampled = self._filter_conditions(sampled, conditions, float_rtol)
@@ -1088,8 +995,12 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             num_sampled = min(len(sampled), batch_size)
             if num_increase > 0:
                 if output_file_path:
-                    append_kwargs = {'mode': 'a', 'header': False}
-                    append_kwargs = append_kwargs if os.path.getsize(output_file_path) > 0 else {}
+                    append_kwargs = (
+                        {'mode': 'a', 'header': False}
+                        if os.path.exists(output_file_path)
+                        and os.path.getsize(output_file_path) > 0
+                        else {}
+                    )
                     sampled.head(num_sampled).tail(num_increase).to_csv(
                         output_file_path,
                         index=False,
@@ -1265,32 +1176,52 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 ' sampling synthetic data.'
             )
 
-    def sample(self, num_rows, max_tries_per_batch=100, batch_size=None, output_file_path=None):
+    def _validate_table_name(self, table_name):
+        if table_name != self._table_name:
+            raise ValueError(
+                'The provided table name does not match the metadata:'
+                f"\nTable '{table_name}' is not present in the metadata."
+            )
+
+    def sample(
+        self,
+        table_name,
+        num_rows,
+        max_tries_per_batch=100,
+        batch_size=None,
+        output_folder_path=None,
+    ):
         """Sample rows from this table.
 
         Args:
+            table_name (str):
+                Name of the table to sample. This parameter is required.
             num_rows (int):
                 Number of rows to sample. This parameter is required.
             max_tries_per_batch (int):
                 Number of times to retry sampling until the batch size is met. Defaults to 100.
             batch_size (int or None):
                 The batch size to sample. Defaults to ``num_rows``, if None.
-            output_file_path (str or None):
-                The file to periodically write sampled rows to. If None, does not
-                write rows anywhere.
+            output_folder_path (str or None):
+                Folder where the sampled table should be periodically written as a CSV file.
+                If None, does not write the sampled data anywhere.
 
         Returns:
-            pandas.DataFrame:
-                Sampled data.
+            dict[str, pandas.DataFrame]:
+                Dictionary mapping the table name to the sampled data.
         """
+        self._validate_table_name(table_name)
         self._validate_fit_before_sample()
         self._check_input_metadata_updated()
         sample_timestamp = datetime.datetime.now()
-        has_constraints = bool(self._data_processor._constraints)
+        has_constraints = bool(self.get_constraints())
         has_batches = batch_size is not None and batch_size != num_rows
         show_progress_bar = has_constraints or has_batches
 
-        sampled_data = self._sample_with_progress_bar(
+        output_file_path = validate_folder_path_with_table_names(
+            output_folder_path, [self._table_name]
+        )[0]
+        sampled_table_data = self._sample_with_progress_bar(
             num_rows,
             max_tries_per_batch,
             batch_size,
@@ -1300,7 +1231,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         original_columns = getattr(self, '_original_columns', pd.Index([]))
         if not original_columns.empty:
-            sampled_data.columns = self._original_columns
+            sampled_table_data.columns = self._original_columns
 
         SYNTHESIZER_LOGGER.info({
             'EVENT': 'Sample',
@@ -1308,11 +1239,11 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             'SYNTHESIZER CLASS NAME': self.__class__.__name__,
             'SYNTHESIZER ID': self._synthesizer_id,
             'TOTAL NUMBER OF TABLES': 1,
-            'TOTAL NUMBER OF ROWS': len(sampled_data),
-            'TOTAL NUMBER OF COLUMNS': len(sampled_data.columns),
+            'TOTAL NUMBER OF ROWS': len(sampled_table_data),
+            'TOTAL NUMBER OF COLUMNS': len(sampled_table_data.columns),
         })
 
-        return sampled_data
+        return {table_name: sampled_table_data}
 
     def _transform_conditions(self, condition_df):
         return self._data_processor.transform(condition_df, is_condition=True)
@@ -1471,7 +1402,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             self._validate_conditions_unseen_columns(condition_dataframe)
 
     def sample_from_conditions(
-        self, conditions, max_tries_per_batch=100, batch_size=None, output_file_path=None
+        self, conditions, max_tries_per_batch=100, batch_size=None, output_folder_path=None
     ):
         """Sample rows from this table with the given conditions.
 
@@ -1484,8 +1415,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 Number of times to retry sampling until the batch size is met. Defaults to 100.
             batch_size (int):
                 The batch size to use per sampling call.
-            output_file_path (str or None):
-                The file to periodically write sampled rows to. Defaults to None.
+            output_folder_path (str or None):
+                The folder to periodically write sampled rows to. Defaults to None.
 
         Returns:
             pandas.DataFrame:
@@ -1500,7 +1431,9 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     * no rows could be generated.
         """
         self._validate_fit_before_sample()
-        output_file_path = validate_file_path(output_file_path)
+        output_file_path = validate_folder_path_with_table_names(
+            output_folder_path, [self._table_name]
+        )[0]
         sample_timestamp = datetime.datetime.now()
 
         num_rows = functools.reduce(
@@ -1554,7 +1487,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         self._validate_conditions_unseen_columns(conditions)
 
     def sample_remaining_columns(
-        self, known_columns, max_tries_per_batch=100, batch_size=None, output_file_path=None
+        self, known_columns, max_tries_per_batch=100, batch_size=None, output_folder_path=None
     ):
         """Sample remaining rows from already known columns.
 
@@ -1567,8 +1500,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 Number of times to retry sampling until the batch size is met. Defaults to 100.
             batch_size (int):
                 The batch size to use per sampling call.
-            output_file_path (str or None):
-                The file to periodically write sampled rows to. Defaults to None.
+            output_folder_path (str or None):
+                The folder to periodically write sampled rows to. Defaults to None.
 
         Returns:
             pandas.DataFrame:
@@ -1582,7 +1515,9 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     * any of the conditions' columns are not valid.
                     * no rows could be generated.
         """
-        output_file_path = validate_file_path(output_file_path)
+        output_file_path = validate_folder_path_with_table_names(
+            output_folder_path, [self._table_name]
+        )[0]
 
         known_columns = known_columns.copy()
         self._validate_known_columns(known_columns)

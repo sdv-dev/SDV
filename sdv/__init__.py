@@ -16,12 +16,10 @@ from operator import attrgetter
 from types import ModuleType
 
 from sdv import (
-    constraints,
     data_processing,
     datasets,
     evaluation,
     io,
-    lite,
     logging,
     metadata,
     metrics,
@@ -34,12 +32,10 @@ from sdv import (
 )
 
 __all__ = [
-    'constraints',
     'data_processing',
     'datasets',
     'evaluation',
     'io',
-    'lite',
     'logging',
     'metadata',
     'metrics',
