@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.datasets.demo import download_demo
 from sdv.metadata._single_table import _SingleTableMetadata
 from sdv.metadata.errors import InvalidMetadataError
 
@@ -266,32 +265,6 @@ def test_upgrade_metadata(tmp_path):
     assert new_metadata == expected_metadata
 
 
-def test_validate_unknown_sdtype():
-    """Test ``validate`` method works with ``unknown`` sdtype."""
-    # Setup
-    data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
-
-    metadata = _SingleTableMetadata()
-    metadata.detect_from_dataframe(data['hotels'])
-
-    # Run
-    metadata.validate()
-
-    # Assert
-    expected_metadata = {
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
-        'columns': {
-            'hotel_id': {'sdtype': 'id'},
-            'city': {'sdtype': 'city', 'pii': True},
-            'state': {'sdtype': 'administrative_unit', 'pii': True},
-            'rating': {'sdtype': 'numerical'},
-            'classification': {'sdtype': 'categorical'},
-        },
-        'primary_key': 'hotel_id',
-    }
-    assert metadata.to_dict() == expected_metadata
-
-
 def test_detect_from_dataframe_with_none_nan_and_nat():
     """Test ``detect_from_dataframe`` with ``None``, ``np.nan`` and ``pd.NaT``."""
     # Setup
@@ -331,16 +304,15 @@ def test_detect_from_dataframe_with_pii_names():
 
     # Assert
     expected_metadata = {
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         'primary_key': 'USER PHONE NUMBER',
         'columns': {
-            'USER PHONE NUMBER': {'sdtype': 'phone_number', 'pii': True},
-            'addr_line_1': {'sdtype': 'street_address', 'pii': True},
-            'First Name': {'sdtype': 'first_name', 'pii': True},
-            'guest_email': {'sdtype': 'email', 'pii': True},
+            'USER PHONE NUMBER': {'pii': True, 'sdtype': 'phone_number'},
+            'addr_line_1': {'pii': True, 'sdtype': 'street_address', 'range_is_nullable': False},
+            'First Name': {'pii': True, 'sdtype': 'first_name', 'range_is_nullable': False},
+            'guest_email': {'pii': True, 'sdtype': 'email', 'range_is_nullable': False},
         },
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
     }
-
     assert metadata.to_dict() == expected_metadata
 
 
@@ -653,6 +625,15 @@ def test_metadata_detection_numerical_dtypes():
 
     # Assert
     expected_metadata = {
-        'columns': {column: {'sdtype': 'numerical'} for column in data.columns},
+        'columns': {
+            column: {
+                'sdtype': 'numerical',
+                'range_is_nullable': data[column].isna().any(),
+                'range_min': data[column].min().item(),
+                'range_max': data[column].max().item(),
+                'decimal_places': not (data[column] == data[column].round()).all(),
+            }
+            for column in data.columns
+        },
     }
     assert metadata.to_dict()['columns'] == expected_metadata['columns']

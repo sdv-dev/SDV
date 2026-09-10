@@ -1067,6 +1067,36 @@ class Test_SingleTableMetadata:
         assert metadata._detect_pii_column('StateDepartment') == 'administrative_unit'
         assert metadata._detect_pii_column('STATEDEPARTMENT') is None
 
+    @pytest.mark.parametrize(
+        ('data', 'expected'),
+        [
+            # Not enough rows
+            (pd.Series([1, 2, 3]), None),
+            # Enough rows but all null
+            (pd.Series([None] * 20), None),
+            # Low-cardinality integers
+            (pd.Series([1, 2] * 10), 'ordinal'),
+            # Low-cardinality whole-number floats
+            (pd.Series([1.0, 2.0] * 10), 'ordinal'),
+            # Low-cardinality numerical values that are not whole numbers
+            (pd.Series([1.1, 2.2] * 10), None),
+            # Whole numbers with too many unique values
+            (pd.Series(range(20)), None),
+            # Null values should be ignored when checking whole values
+            (pd.Series([1.0, 2.0, None, 1.0, 2.0] * 4), 'ordinal'),
+        ],
+    )
+    def test__detect_ordinal_sdtype(self, data, expected):
+        """Test the ``_detect_ordinal_sdtype`` method."""
+        # Setup
+        metadata = _SingleTableMetadata()
+
+        # Run
+        result = metadata._detect_ordinal_sdtype(data)
+
+        # Assert
+        assert result == expected
+
     def test__determine_sdtype_for_numbers(self):
         """Test the ``determine_sdtype_for_numbers`` method.
 
@@ -1074,7 +1104,7 @@ class Test_SingleTableMetadata:
             - Instance of ``_SingleTableMetadata``.
             - A series of numbers with less than 5 rows. Should be detected as numerical sdtype
             - A series of numbers with less than 10% unique values. Should be detected as
-              categorical sdtype
+              ordinal sdtype
             - A series of numbers with all unique values. Should be detected as numerical sdtypes
             - A series of integers. Should be detected as numerical sdtype
         - A series of floats. Should be detected as numerical sdtype
@@ -1138,12 +1168,12 @@ class Test_SingleTableMetadata:
         # Assert
         assert sdtype_less_than_5_rows == 'numerical'
         assert candidate is False
-        assert sdtype_less_than_10_percent_unique_values == 'categorical'
+        assert sdtype_less_than_10_percent_unique_values == 'ordinal'
         assert sdtype_all_unique == 'numerical'
         assert sdtype_numerical_int == 'numerical'
         assert sdtype_numerical_float == 'numerical'
         assert sdtype_large_numerical_series == 'numerical'
-        assert sdtype_large_categorical_series == 'categorical'
+        assert sdtype_large_categorical_series == 'ordinal'
 
     def test__determine_sdtype_for_objects(self):
         """Test the ``_determine_sdtype_for_objects`` method."""
@@ -1216,10 +1246,119 @@ class Test_SingleTableMetadata:
         assert sdtype == 'categorical'
         assert candidate is False
 
+    @pytest.mark.parametrize(
+        ('data', 'expected'),
+        [
+            (pd.Series(['a', 'b', 'a', None]), ['a', 'b']),
+            (pd.Series(range(499)), list(range(499))),
+            (pd.Series(range(500)), None),
+        ],
+    )
+    def test__detect_range_values(self, data, expected):
+        """Test the ``_detect_range_values`` method."""
+        # Setup
+        instance = _SingleTableMetadata()
+
+        # Run
+        result = instance._detect_range_values(data)
+
+        # Assert
+        assert result == expected
+
+    @patch('sdv.metadata._single_table.learn_rounding_digits')
+    def test__detect_ranges(self, mock_learn_rounding_digits):
+        """Test the ``_detect_ranges`` method."""
+        # Setup
+        instance = _SingleTableMetadata()
+        instance.columns = {
+            'numerical': {'sdtype': 'numerical'},
+            'datetime': {
+                'sdtype': 'datetime',
+                'datetime_format': '%Y-%m-%d',
+            },
+            'categorical': {'sdtype': 'categorical'},
+            'ordinal': {'sdtype': 'ordinal'},
+            'boolean': {'sdtype': 'boolean'},
+            'id': {'sdtype': 'id'},
+            'unknown': {'sdtype': 'unknown'},
+        }
+        data = pd.DataFrame({
+            'numerical': [1.1, 2.2, np.nan],
+            'datetime': ['2024-01-01', None, '2024-01-03'],
+            'categorical': ['a', 'b', None],
+            'ordinal': [1, 2, None],
+            'boolean': [True, False, None],
+            'id': ['id_1', 'id_2', 'id_3'],
+            'unknown': ['a', None, 'c'],
+        })
+        mock_learn_rounding_digits.return_value = 1
+
+        # Run
+        instance._detect_ranges(data)
+
+        # Assert
+        assert instance.columns['numerical'] == {
+            'sdtype': 'numerical',
+            'range_min': 1.1,
+            'range_max': 2.2,
+            'range_is_nullable': True,
+            'decimal_places': 1,
+        }
+        assert instance.columns['datetime'] == {
+            'sdtype': 'datetime',
+            'datetime_format': '%Y-%m-%d',
+            'range_min': '2024-01-01',
+            'range_max': '2024-01-03',
+            'range_is_nullable': True,
+        }
+        assert instance.columns['categorical'] == {
+            'sdtype': 'categorical',
+            'range_values': ['a', 'b'],
+            'range_is_nullable': True,
+        }
+        assert instance.columns['ordinal'] == {
+            'sdtype': 'ordinal',
+            'range_values': [1, 2],
+            'range_is_nullable': True,
+        }
+        assert instance.columns['boolean'] == {
+            'sdtype': 'boolean',
+            'range_is_nullable': True,
+        }
+        assert instance.columns['id'] == {
+            'sdtype': 'id',
+            'range_is_nullable': False,
+        }
+        assert instance.columns['unknown'] == {
+            'sdtype': 'unknown',
+        }
+        mock_learn_rounding_digits.assert_called_once_with(data['numerical'])
+
+    def test__detect_ranges_does_not_add_range_values_with_500_unique_values(self):
+        """Test that ``range_values`` is not added when there are 500+ unique values."""
+        # Setup
+        instance = _SingleTableMetadata()
+        instance.columns = {
+            'categorical': {'sdtype': 'categorical'},
+        }
+        data = pd.DataFrame({
+            'categorical': [str(value) for value in range(500)],
+        })
+
+        # Run
+        instance._detect_ranges(data)
+
+        # Assert
+        assert instance.columns['categorical'] == {
+            'sdtype': 'categorical',
+            'range_is_nullable': False,
+        }
+
     def test__detect_columns(self, data):
         """Test the ``_detect_columns`` method."""
         # Setup
         instance = _SingleTableMetadata()
+        instance._detect_ranges = Mock()
         expected_datetime_format = '%Y-%m-%d'
         data['categorical_pk_candidate'] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k']
 
@@ -1227,6 +1366,7 @@ class Test_SingleTableMetadata:
         instance._detect_columns(data)
 
         # Assert
+        instance._detect_ranges.assert_called_once_with(data)
         assert instance.columns['id']['sdtype'] == 'id'
         assert instance.columns['numerical']['sdtype'] == 'numerical'
         assert instance.columns['datetime']['sdtype'] == 'datetime'
@@ -1340,8 +1480,9 @@ class Test_SingleTableMetadata:
             'numerical': [1, 2, 3],
         })
 
-        instance._determine_sdtype_for_numbers = Mock(return_value=('numerical', 'False'))
-        instance._determine_sdtype_for_objects = Mock(return_value=('datetime', 'False'))
+        instance._determine_sdtype_for_numbers = Mock(return_value=('numerical', False))
+        instance._determine_sdtype_for_objects = Mock(return_value=('datetime', False))
+        mock__get_datetime_format.return_value = '%Y-%m-%d'
 
         # Run
         instance._detect_columns(data)
@@ -1514,7 +1655,7 @@ class Test_SingleTableMetadata:
             'categorical': ['cat', 'dog', 'cat', np.nan],
             'date': pd.to_datetime(['2021-02-02', np.nan, '2021-03-05', '2022-12-09']),
             'int': [1, 2, 3, 4],
-            'float': [1.0, 2.0, 3.0, 4],
+            'float': [1.0, 2.0, 3.0, 4.2],
             'bool': [np.nan, True, False, True],
         })
 
@@ -1523,11 +1664,36 @@ class Test_SingleTableMetadata:
 
         # Assert
         assert instance.columns == {
-            'categorical': {'sdtype': 'categorical'},
-            'date': {'sdtype': 'datetime'},
-            'int': {'sdtype': 'numerical'},
-            'float': {'sdtype': 'numerical'},
-            'bool': {'sdtype': 'categorical'},
+            'categorical': {
+                'sdtype': 'categorical',
+                'range_is_nullable': True,
+                'range_values': ['cat', 'dog'],
+            },
+            'date': {
+                'sdtype': 'datetime',
+                'range_is_nullable': True,
+                'range_min': '2021-02-02 00:00:00',
+                'range_max': '2022-12-09 00:00:00',
+            },
+            'int': {
+                'sdtype': 'numerical',
+                'range_is_nullable': False,
+                'range_min': 1,
+                'range_max': 4,
+                'decimal_places': 0,
+            },
+            'float': {
+                'sdtype': 'numerical',
+                'range_is_nullable': False,
+                'range_min': 1.0,
+                'range_max': 4.2,
+                'decimal_places': 1,
+            },
+            'bool': {
+                'sdtype': 'categorical',
+                'range_is_nullable': True,
+                'range_values': [True, False],
+            },
         }
 
         expected_log_calls = [
@@ -1540,34 +1706,155 @@ class Test_SingleTableMetadata:
     def test_detect_from_dataframe_numerical_columns(self, mock_log):
         """Test the detect from dataframe with columns that are integers"""
         # Setup
+        np.random.seed(0)
         num_rows = 100
         num_cols = 20
         values = {i + 1: np.random.randint(0, 100, size=num_rows) for i in range(num_cols)}
         data = pd.DataFrame(values)
         correct_metadata = {
-            'columns': {
-                '1': {'sdtype': 'numerical'},
-                '2': {'sdtype': 'numerical'},
-                '3': {'sdtype': 'numerical'},
-                '4': {'sdtype': 'numerical'},
-                '5': {'sdtype': 'numerical'},
-                '6': {'sdtype': 'numerical'},
-                '7': {'sdtype': 'numerical'},
-                '8': {'sdtype': 'numerical'},
-                '9': {'sdtype': 'numerical'},
-                '10': {'sdtype': 'numerical'},
-                '11': {'sdtype': 'numerical'},
-                '12': {'sdtype': 'numerical'},
-                '13': {'sdtype': 'numerical'},
-                '14': {'sdtype': 'numerical'},
-                '15': {'sdtype': 'numerical'},
-                '16': {'sdtype': 'numerical'},
-                '17': {'sdtype': 'numerical'},
-                '18': {'sdtype': 'numerical'},
-                '19': {'sdtype': 'numerical'},
-                '20': {'sdtype': 'numerical'},
-            },
             'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
+            'columns': {
+                '1': {
+                    'sdtype': 'numerical',
+                    'range_is_nullable': False,
+                    'range_min': 0,
+                    'range_max': 99,
+                    'decimal_places': 0,
+                },
+                '2': {
+                    'sdtype': 'numerical',
+                    'range_is_nullable': False,
+                    'range_min': 0,
+                    'range_max': 99,
+                    'decimal_places': 0,
+                },
+                '3': {
+                    'sdtype': 'numerical',
+                    'range_is_nullable': False,
+                    'range_min': 0,
+                    'range_max': 97,
+                    'decimal_places': 0,
+                },
+                '4': {
+                    'sdtype': 'numerical',
+                    'range_is_nullable': False,
+                    'range_min': 0,
+                    'range_max': 99,
+                    'decimal_places': 0,
+                },
+                '5': {
+                    'sdtype': 'numerical',
+                    'range_is_nullable': False,
+                    'range_min': 0,
+                    'range_max': 99,
+                    'decimal_places': 0,
+                },
+                '6': {
+                    'sdtype': 'numerical',
+                    'range_is_nullable': False,
+                    'range_min': 0,
+                    'range_max': 99,
+                    'decimal_places': 0,
+                },
+                '7': {
+                    'sdtype': 'numerical',
+                    'range_is_nullable': False,
+                    'range_min': 1,
+                    'range_max': 96,
+                    'decimal_places': 0,
+                },
+                '8': {
+                    'sdtype': 'numerical',
+                    'range_is_nullable': False,
+                    'range_min': 0,
+                    'range_max': 99,
+                    'decimal_places': 0,
+                },
+                '9': {
+                    'sdtype': 'numerical',
+                    'range_is_nullable': False,
+                    'range_min': 0,
+                    'range_max': 99,
+                    'decimal_places': 0,
+                },
+                '10': {
+                    'sdtype': 'numerical',
+                    'range_is_nullable': False,
+                    'range_min': 0,
+                    'range_max': 99,
+                    'decimal_places': 0,
+                },
+                '11': {
+                    'sdtype': 'numerical',
+                    'range_is_nullable': False,
+                    'range_min': 2,
+                    'range_max': 98,
+                    'decimal_places': 0,
+                },
+                '12': {
+                    'sdtype': 'numerical',
+                    'range_is_nullable': False,
+                    'range_min': 1,
+                    'range_max': 96,
+                    'decimal_places': 0,
+                },
+                '13': {
+                    'sdtype': 'numerical',
+                    'range_is_nullable': False,
+                    'range_min': 0,
+                    'range_max': 99,
+                    'decimal_places': 0,
+                },
+                '14': {
+                    'sdtype': 'numerical',
+                    'range_is_nullable': False,
+                    'range_min': 0,
+                    'range_max': 99,
+                    'decimal_places': 0,
+                },
+                '15': {
+                    'sdtype': 'numerical',
+                    'range_is_nullable': False,
+                    'range_min': 1,
+                    'range_max': 99,
+                    'decimal_places': 0,
+                },
+                '16': {
+                    'sdtype': 'numerical',
+                    'range_is_nullable': False,
+                    'range_min': 2,
+                    'range_max': 98,
+                    'decimal_places': 0,
+                },
+                '17': {
+                    'sdtype': 'numerical',
+                    'range_is_nullable': False,
+                    'range_min': 0,
+                    'range_max': 99,
+                    'decimal_places': 0,
+                },
+                '18': {
+                    'sdtype': 'numerical',
+                    'range_is_nullable': False,
+                    'range_min': 0,
+                    'range_max': 98,
+                    'decimal_places': 0,
+                },
+                '19': {
+                    'sdtype': 'numerical',
+                    'range_is_nullable': False,
+                    'range_min': 1,
+                    'range_max': 99,
+                    'decimal_places': 0,
+                },
+                '20': {
+                    'sdtype': 'numerical',
+                    'range_is_nullable': False,
+                    'range_min': 0,
+                    'range_max': 98,
+                    'decimal_places': 0,
+                },
+            },
         }
 
         # Run
@@ -1628,7 +1915,7 @@ class Test_SingleTableMetadata:
             'categorical': ['cat', 'dog', 'tiger', np.nan],
             'date': pd.to_datetime(['2021-02-02', np.nan, '2021-03-05', '2022-12-09']),
             'int': [1, 2, 3, 4],
-            'float': [1.0, 2.0, 3.0, 4],
+            'float': [1.0, 2.0, 3.0, 4.333],
             'bool': [np.nan, True, False, True],
         })
 
@@ -1639,11 +1926,37 @@ class Test_SingleTableMetadata:
 
         # Assert
         assert instance.columns == {
-            'categorical': {'sdtype': 'categorical'},
-            'date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
-            'int': {'sdtype': 'numerical'},
-            'float': {'sdtype': 'numerical'},
-            'bool': {'sdtype': 'categorical'},
+            'categorical': {
+                'sdtype': 'categorical',
+                'range_is_nullable': True,
+                'range_values': ['cat', 'dog', 'tiger'],
+            },
+            'date': {
+                'datetime_format': '%Y-%m-%d',
+                'sdtype': 'datetime',
+                'range_is_nullable': True,
+                'range_min': '2021-02-02',
+                'range_max': '2022-12-09',
+            },
+            'int': {
+                'sdtype': 'numerical',
+                'range_is_nullable': False,
+                'range_min': 1,
+                'range_max': 4,
+                'decimal_places': 0,
+            },
+            'float': {
+                'sdtype': 'numerical',
+                'range_is_nullable': False,
+                'range_min': 1.0,
+                'range_max': 4.333,
+                'decimal_places': 3,
+            },
+            'bool': {
+                'sdtype': 'categorical',
+                'range_is_nullable': True,
+                'range_values': [True, False],
+            },
         }
 
         expected_log_calls = [
@@ -1689,11 +2002,36 @@ class Test_SingleTableMetadata:
 
         # Assert
         assert instance.columns == {
-            'categorical': {'sdtype': 'categorical'},
-            'date': {'sdtype': 'datetime'},
-            'int': {'sdtype': 'numerical'},
-            'float': {'sdtype': 'numerical'},
-            'bool': {'sdtype': 'categorical'},
+            'categorical': {
+                'sdtype': 'categorical',
+                'range_is_nullable': True,
+                'range_values': ['cat', 'dog', 'tiger'],
+            },
+            'date': {
+                'sdtype': 'datetime',
+                'range_is_nullable': True,
+                'range_min': '2021-02-02 00:00:00',
+                'range_max': '2022-12-09 00:00:00',
+            },
+            'int': {
+                'sdtype': 'numerical',
+                'range_is_nullable': False,
+                'range_min': 1,
+                'range_max': 4,
+                'decimal_places': 0,
+            },
+            'float': {
+                'sdtype': 'numerical',
+                'range_is_nullable': False,
+                'range_min': 1.0,
+                'range_max': 4.0,
+                'decimal_places': 0,
+            },
+            'bool': {
+                'sdtype': 'categorical',
+                'range_is_nullable': True,
+                'range_values': [True, False],
+            },
         }
 
         expected_log_calls = [
@@ -4039,14 +4377,19 @@ class Test_SingleTableMetadata:
         expected_output = (
             '\nDetecting table:\n'
             "- Column 'id': sdtype='id'\n"
-            "- Column 'numerical': sdtype='numerical'\n"
-            "- Column 'datetime': sdtype='datetime', datetime_format='%Y-%m-%d'\n"
-            "- Column 'alternate_id': sdtype='id'\n"
-            "- Column 'alternate_id_string': sdtype='id'\n"
-            "- Column 'categorical': sdtype='categorical'\n"
-            "- Column 'bool': sdtype='categorical'\n"
-            "- Column 'unknown': sdtype='categorical'\n"
-            "- Column 'first_name': sdtype='first_name', pii=True\n"
+            "- Column 'numerical': sdtype='numerical', range_is_nullable=False, range_min=1, "
+            'range_max=11, decimal_places=0\n'
+            "- Column 'datetime': sdtype='datetime', datetime_format='%Y-%m-%d', "
+            "range_is_nullable=False, range_min='2022-01-01', range_max='2022-11-01'\n"
+            "- Column 'alternate_id': sdtype='id', range_is_nullable=False\n"
+            "- Column 'alternate_id_string': sdtype='id', range_is_nullable=False\n"
+            "- Column 'categorical': sdtype='categorical', range_is_nullable=False, "
+            "range_values=['a', 'b']\n"
+            "- Column 'bool': sdtype='categorical', range_is_nullable=False, "
+            'range_values=[True, False]\n'
+            "- Column 'unknown': sdtype='categorical', range_is_nullable=True, range_values=["
+            "'a', 'b', 'c', 1, 2.2, 'd', 'e', 'f']\n"
+            "- Column 'first_name': sdtype='first_name', pii=True, range_is_nullable=False\n"
             '\nDetecting primary key:\n'
             "- primary_key='id'\n"
         )
@@ -4080,15 +4423,20 @@ class Test_SingleTableMetadata:
         instance = _SingleTableMetadata()
         expected_output = (
             '\nDetecting table:\n'
-            "- Column 'id': sdtype='id'\n"
-            "- Column 'numerical': sdtype='numerical'\n"
-            "- Column 'datetime': sdtype='datetime', datetime_format='%Y-%m-%d'\n"
-            "- Column 'alternate_id': sdtype='id'\n"
-            "- Column 'alternate_id_string': sdtype='id'\n"
-            "- Column 'categorical': sdtype='categorical'\n"
-            "- Column 'bool': sdtype='categorical'\n"
-            "- Column 'unknown': sdtype='categorical'\n"
-            "- Column 'first_name': sdtype='first_name', pii=True\n"
+            "- Column 'id': sdtype='id', range_is_nullable=False\n"
+            "- Column 'numerical': sdtype='numerical', range_is_nullable=False, "
+            'range_min=1, range_max=11, decimal_places=0\n'
+            "- Column 'datetime': sdtype='datetime', datetime_format='%Y-%m-%d', "
+            "range_is_nullable=False, range_min='2022-01-01', range_max='2022-11-01'\n"
+            "- Column 'alternate_id': sdtype='id', range_is_nullable=False\n"
+            "- Column 'alternate_id_string': sdtype='id', range_is_nullable=False\n"
+            "- Column 'categorical': sdtype='categorical', range_is_nullable=False, "
+            "range_values=['a', 'b']\n"
+            "- Column 'bool': sdtype='categorical', range_is_nullable=False, "
+            'range_values=[True, False]\n'
+            "- Column 'unknown': sdtype='categorical', range_is_nullable=True, "
+            "range_values=['a', 'b', 'c', 1, 2.2, 'd', 'e', 'f']\n"
+            "- Column 'first_name': sdtype='first_name', pii=True, range_is_nullable=False\n"
         )
 
         # Run
@@ -4099,109 +4447,124 @@ class Test_SingleTableMetadata:
         assert captured == expected_output
 
     @pytest.mark.parametrize(
-        'table_name,table_str',
-        [(None, ''), ('users', " for table 'users'")],
+        (
+            'columns',
+            'infer_sdtypes',
+            'pk_candidates',
+            'pii_pk_candidates',
+            'expected_primary_key',
+            'expected_sdtype_updated',
+            'expected_pii_removed',
+        ),
+        [
+            pytest.param(
+                {'email': {'sdtype': 'unknown', 'pii': True}},
+                False,
+                [],
+                ['email'],
+                'email',
+                True,
+                True,
+                id='updates-sdtype-and-removes-pii',
+            ),
+            pytest.param(
+                {'email': {'sdtype': 'id', 'pii': False}},
+                True,
+                ['email'],
+                [],
+                'email',
+                False,
+                True,
+                id='removes-pii-only',
+            ),
+            pytest.param(
+                {'email': {'sdtype': 'unknown'}},
+                False,
+                [],
+                ['email'],
+                'email',
+                True,
+                False,
+                id='updates-sdtype-only',
+            ),
+            pytest.param(
+                {'email': {'sdtype': 'unknown', 'pii': True}},
+                True,
+                [],
+                [],
+                None,
+                False,
+                False,
+                id='no-candidates',
+            ),
+        ],
     )
-    def test__select_primary_key_verbose(self, capsys, table_name, table_str):
-        """Test the ``_select_primary_key`` method with verbose ."""
+    def test__select_primary_key_returns_detection_info(
+        self,
+        columns,
+        infer_sdtypes,
+        pk_candidates,
+        pii_pk_candidates,
+        expected_primary_key,
+        expected_sdtype_updated,
+        expected_pii_removed,
+    ):
+        """Test that ``_select_primary_key`` returns information about the detected primary key."""
         # Setup
         instance = _SingleTableMetadata()
-        instance.columns = {
-            'email': {'sdtype': 'unknown', 'pii': True},
-        }
-        expected_output = (
-            f'\nDetecting primary key{table_str}:\n'
-            f"- primary_key='email' (updating sdtype to 'id', removing 'pii' field)\n"
-        )
+        instance.columns = columns
 
         # Run
-        instance._select_primary_key(
-            infer_sdtypes=False,
-            pk_candidates=[],
-            pii_pk_candidates=['email'],
-            table_name=table_name,
-            verbose=True,
+        primary_key, sdtype_updated, pii_removed = instance._select_primary_key(
+            infer_sdtypes=infer_sdtypes,
+            pk_candidates=pk_candidates,
+            pii_pk_candidates=pii_pk_candidates,
         )
 
         # Assert
-        captured = capsys.readouterr().out
-        assert captured == expected_output
-        assert instance.primary_key == 'email'
-        assert instance.columns['email']['sdtype'] == 'id'
-        assert 'pii' not in instance.columns['email']
+        assert primary_key == expected_primary_key
+        assert sdtype_updated == expected_sdtype_updated
+        assert pii_removed == expected_pii_removed
+        assert instance.primary_key == expected_primary_key
 
-    def test__select_primary_key_verbose_removes_pii_only(self, capsys):
-        """Test ``_select_primary_key`` verbose output when only the ``pii`` field is removed."""
+    def test__detect_columns_verbose_with_table_name(self, data, capsys):
+        """Test the ``_detect_columns`` verbose output when a table name is provided."""
         # Setup
         instance = _SingleTableMetadata()
-        instance.columns = {'email': {'sdtype': 'id', 'pii': False}}
-        expected_output = (
-            "\nDetecting primary key for table 'users':\n"
-            "- primary_key='email' (removing 'pii' field)\n"
-        )
 
         # Run
-        instance._select_primary_key(
+        instance._detect_columns(data, table_name='users', verbose=True)
+
+        # Assert
+        captured = capsys.readouterr().out
+        assert "\nDetecting table 'users':\n" in captured
+        assert "\nDetecting primary key for table 'users':\n" in captured
+        assert "- primary_key='id'\n" in captured
+
+    def test__print_detection(self, capsys):
+        """Test the ``_print_detection`` method."""
+        # Setup
+        instance = _SingleTableMetadata()
+        instance.columns = {'id': {'sdtype': 'id'}}
+        data = pd.DataFrame({'id': [1, 2, 3]})
+
+        # Run
+        instance._print_detection(
+            'users',
+            data,
             infer_sdtypes=True,
-            pk_candidates=['email'],
-            pii_pk_candidates=[],
-            table_name='users',
-            verbose=True,
+            infer_keys='primary_only',
+            chosen_pk='id',
+            sdtype_updated=False,
+            pii_removed=False,
         )
 
         # Assert
         captured = capsys.readouterr().out
-        assert captured == expected_output
-        assert instance.primary_key == 'email'
-        assert instance.columns['email']['sdtype'] == 'id'
-        assert 'pii' not in instance.columns['email']
-
-    def test__select_primary_key_verbose_updates_sdtype_only(self, capsys):
-        """Test ``_select_primary_key`` verbose output when only the sdtype is updated to 'id'."""
-        # Setup
-        instance = _SingleTableMetadata()
-        instance.columns = {'email': {'sdtype': 'unknown'}}
         expected_output = (
+            "\nDetecting table 'users':\n"
+            "- Column 'id': sdtype='id'\n"
             "\nDetecting primary key for table 'users':\n"
-            "- primary_key='email' (updating sdtype to 'id')\n"
+            "- primary_key='id'\n"
         )
-
-        # Run
-        instance._select_primary_key(
-            infer_sdtypes=False,
-            pk_candidates=[],
-            pii_pk_candidates=['email'],
-            table_name='users',
-            verbose=True,
-        )
-
-        # Assert
-        captured = capsys.readouterr().out
         assert captured == expected_output
-        assert instance.primary_key == 'email'
-        assert instance.columns['email']['sdtype'] == 'id'
-        assert 'pii' not in instance.columns['email']
-
-    def test__select_primary_key_verbose_no_candidates(self, capsys):
-        """Test the ``_select_primary_key`` method with verbose and no PK candidates."""
-        # Setup
-        instance = _SingleTableMetadata()
-        instance.columns = {
-            'email': {'sdtype': 'unknown', 'pii': True},
-        }
-        expected_output = "\nDetecting primary key for table 'table':\n- No primary key found\n"
-
-        # Run
-        instance._select_primary_key(
-            infer_sdtypes=True,
-            pk_candidates=[],
-            pii_pk_candidates=[],
-            table_name='table',
-            verbose=True,
-        )
-
-        # Assert
-        captured = capsys.readouterr().out
-        assert captured == expected_output
-        assert instance.primary_key is None
-        assert instance.columns['email'] == {'sdtype': 'unknown', 'pii': True}
