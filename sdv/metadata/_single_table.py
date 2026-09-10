@@ -820,8 +820,9 @@ class _SingleTableMetadata:
                 continue
 
             if sdtype == 'numerical':
-                column_metadata['range_min'] = clean_data.min().item()
-                column_metadata['range_max'] = clean_data.max().item()
+                ranges = clean_data.agg(['min', 'max']).to_dict()
+                column_metadata['range_min'] = ranges['min']
+                column_metadata['range_max'] = ranges['max']
                 digits = learn_rounding_digits(column_data)
                 column_metadata['decimal_places'] = digits if digits is not None else MAX_DECIMALS
 
