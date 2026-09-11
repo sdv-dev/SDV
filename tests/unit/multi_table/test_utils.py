@@ -1518,6 +1518,59 @@ def test__get_primary_keys_referenced():
     assert result == expected_result
 
 
+def test__get_primary_keys_referenced_composite_keys():
+    """Test ``_get_primary_keys_referenced`` when a relationship uses composite keys."""
+    data = {
+        'parent': pd.DataFrame({
+            'id_1': [0, 1, 2, 3],
+            'id_2': ['A', 'B', 'A', 'B'],
+            'col': [1, 2, 3, 4],
+        }),
+        'child': pd.DataFrame({
+            'fk_1': [0, 0, 1, 2, 1],
+            'fk_2': ['A', 'A', 'B', 'A', 'B'],
+            'pk_c': [10, 11, 12, 13, 14],
+        }),
+    }
+    metadata = Metadata().load_from_dict({
+        'tables': {
+            'parent': {
+                'columns': {
+                    'id_1': {'sdtype': 'id'},
+                    'id_2': {'sdtype': 'id'},
+                    'col': {'sdtype': 'numerical'},
+                },
+                'primary_key': ['id_1', 'id_2'],
+            },
+            'child': {
+                'columns': {
+                    'fk_1': {'sdtype': 'id'},
+                    'fk_2': {'sdtype': 'id'},
+                    'pk_c': {'sdtype': 'id'},
+                },
+                'primary_key': 'pk_c',
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'child',
+                'parent_primary_key': ['id_1', 'id_2'],
+                'child_foreign_key': ['fk_1', 'fk_2'],
+            }
+        ],
+    })
+
+    # Run
+    result = _get_primary_keys_referenced(data, metadata)
+
+    # Assert
+    expected_result = {
+        'parent': {(0, 'A'), (1, 'B'), (2, 'A')},
+    }
+    assert result == expected_result
+
+
 def test__subsample_parent_all_reeferenced_before():
     """Test the ``_subsample_parent`` when all primary key were referenced before.
 
@@ -1588,6 +1641,33 @@ def test__subsample_parent_not_all_referenced_before():
     # Assert
     assert len(data['parent']) == 6
     assert set(data['parent']['pk_p']).issubset({1, 2, 3, 4, 6, 7, 8})
+
+
+def test__subsample_parent_composite_keys():
+    """Test ``_subsample_parent`` when the parent primary key is composite.
+
+    All composite keys were referenced before. Keys ``(2, 'B')`` and ``(3, 'A')`` are no
+    longer referenced and should be dropped.
+    """
+    # Setup
+    parent_table = pd.DataFrame({
+        'id_1': [1, 1, 2, 2, 3],
+        'id_2': ['A', 'B', 'A', 'B', 'A'],
+        'col': [10, 11, 12, 13, 14],
+    })
+    referenced_before = {(1, 'A'), (1, 'B'), (2, 'A'), (2, 'B'), (3, 'A')}
+    dereferenced = {(2, 'B'), (3, 'A')}
+
+    # Run
+    result = _subsample_parent(parent_table, ['id_1', 'id_2'], referenced_before, dereferenced)
+
+    # Assert
+    expected = pd.DataFrame({
+        'id_1': [1, 1, 2],
+        'id_2': ['A', 'B', 'A'],
+        'col': [10, 11, 12],
+    })
+    pd.testing.assert_frame_equal(result.reset_index(drop=True), expected)
 
 
 def test__subsample_ancestors():
