@@ -417,6 +417,11 @@ def test__get_first_v2_metadata_bytes_falls_back_to_v1(mock_get):
     v2 = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
     bad = b'not-json'
     v1 = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
+    expected_warning = re.escape(
+        'An updated metadata V2 is not available for this dataset so the V1 '
+        'metadata was returned.\nYou should be able to model and sample with'
+        ' the V1 metadata, but please report this issue to the DataCebo.'
+    )
 
     def side_effect(key, bucket, client):
         return {
@@ -433,9 +438,10 @@ def test__get_first_v2_metadata_bytes_falls_back_to_v1(mock_get):
     ]
 
     # Run
-    got = _get_first_v2_metadata_bytes(
-        contents, 'single_table/dataset/', bucket='test_bucket', client=None
-    )
+    with pytest.warns(UserWarning, match=expected_warning):
+        got = _get_first_v2_metadata_bytes(
+            contents, 'single_table/dataset/', bucket='test_bucket', client=None
+        )
 
     # Assert
     assert got == v1
