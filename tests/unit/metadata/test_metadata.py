@@ -4899,26 +4899,14 @@ class TestMetadataClass:
         with pytest.raises(ValueError, match=expected_message):
             Metadata._detect_from_dataframe(data, infer_keys=infer_keys)
 
-    @patch.object(Metadata, '_detect_from_dataframe')
-    @patch('sdv.metadata.metadata._validate_data_single_table')
-    def test_detect_from_dataframe(self, mock_validate, mock_detect):
-        """Test the `detect_from_dataframe` method."""
+    def test_detect_from_dataframe_raise_error(self):
+        """Test the `detect_from_dataframe` method raises an AttributeError."""
         # Setup
-        data = {'table': pd.DataFrame()}
+        data = pd.DataFrame()
 
-        # Run
-        metadata = Metadata.detect_from_dataframe(data, 'table')
-
-        # Assert
-        mock_detect.assert_called_once_with(
-            data=data['table'],
-            table_name='table',
-            infer_sdtypes=True,
-            infer_keys='primary_only',
-            verbose=False,
-        )
-        mock_validate.assert_called_once_with(data, 'table')
-        assert metadata == mock_detect.return_value
+        # Run and Assert
+        with pytest.raises(AttributeError):
+            Metadata.detect_from_dataframe(data)
 
     def test__handle_table_name(self):
         """Test the ``_handle_table_name`` method."""

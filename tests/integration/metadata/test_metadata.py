@@ -387,7 +387,7 @@ def test_detect_from_dataframe():
     data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
     data = {'table': data['hotels']}
 
-    metadata = Metadata.detect_from_dataframe(data, 'table')
+    metadata = Metadata.detect_from_dataframes(data)
 
     # Run
     metadata.validate()
@@ -418,7 +418,7 @@ def test_detect_from_dataframe_infer_sdtypes_false():
     # Setup
     data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
     data = {'table': data['hotels']}
-    metadata = Metadata.detect_from_dataframe(data, 'table', infer_sdtypes=False)
+    metadata = Metadata.detect_from_dataframes(data, infer_sdtypes=False)
 
     # Run
     metadata.validate()
@@ -449,7 +449,7 @@ def test_detect_from_dataframe_infer_keys_none():
     # Setup
     data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
     data = {'table': data['hotels']}
-    metadata = Metadata.detect_from_dataframe(data, 'table', infer_keys=None)
+    metadata = Metadata.detect_from_dataframes(data, infer_keys=None)
 
     # Run
     metadata.validate()
@@ -479,7 +479,7 @@ def test_detect_from_dataframe_infer_keys_none_infer_sdtypes_false():
     # Setup
     data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
     data = {'table': data['hotels']}
-    metadata = Metadata.detect_from_dataframe(data, 'table', infer_keys=None, infer_sdtypes=False)
+    metadata = Metadata.detect_from_dataframes(data, infer_keys=None, infer_sdtypes=False)
 
     # Run
     metadata.validate()
@@ -1567,13 +1567,13 @@ def test_metadata_fails_with_proper_message_when_setting_primary_key():
 
 
 def test_detect_from_dataframe_verbose_single(capsys):
-    """Test 'detect_from_dataframe' with verbose True with single table."""
+    """Test 'detect_from_dataframes' with verbose True with single table."""
     # Setup
     data, _ = download_test_demo(modality='single_table', dataset_name='fake_hotel_guests')
     data = {'table': data['fake_hotel_guests']}
 
     # Run
-    metadata = Metadata.detect_from_dataframe(data, 'table', verbose=True)
+    metadata = Metadata.detect_from_dataframes(data, verbose=True)
 
     # Assert
     captured = capsys.readouterr().out
@@ -1611,7 +1611,7 @@ def test_detect_from_dataframe_verbose_single(capsys):
 
 
 def test_detect_from_dataframes_verbose(capsys):
-    """Test 'detect_from_dataframe' with verbose True with multi table."""
+    """Test 'detect_from_dataframes' with verbose True with multi table."""
     # Setup
     data, _ = download_test_demo(modality='multi_table', dataset_name='fake_hotels')
 

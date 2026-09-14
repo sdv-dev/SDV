@@ -562,7 +562,7 @@ class TestDayZSynthesizer:
         """Test create_parameters returns valid defaults."""
         # Setup
         data = {'table': pd.DataFrame({'col': [np.nan]})}
-        metadata = Metadata.detect_from_dataframe(data, 'table')
+        metadata = Metadata.detect_from_dataframes(data)
 
         # Run
         params = DayZSynthesizer.create_parameters(data, metadata)
@@ -584,7 +584,7 @@ class TestDayZSynthesizer:
         """Categorical column with all nulls should not have the category_values key parameter."""
         # Setup
         data = {'table': pd.DataFrame({'col': [None, None, np.nan, pd.NA]})}
-        metadata = Metadata.detect_from_dataframe(data, 'table')
+        metadata = Metadata.detect_from_dataframes(data)
 
         # Run
         params = DayZSynthesizer.create_parameters(data, metadata)
@@ -630,7 +630,7 @@ class TestDayZSynthesizer:
         """Datetime column with all nulls should omit start/end timestamps."""
         # Setup
         data = {'table': pd.DataFrame({'col': pd.to_datetime([None, None])})}
-        metadata = Metadata.detect_from_dataframe(data, 'table')
+        metadata = Metadata.detect_from_dataframes(data)
 
         # Run
         params = DayZSynthesizer.create_parameters(data, metadata)

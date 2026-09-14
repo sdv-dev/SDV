@@ -21,7 +21,6 @@ from sdv._utils import (
     _is_numerical,
     _load_data_from_csv,
     _validate_boolean_parameter,
-    _validate_data_single_table,
 )
 from sdv.errors import InvalidDataError
 from sdv.logging import get_sdv_logger
@@ -957,55 +956,6 @@ class Metadata:
         metadata = Metadata()
         metadata.detect_table_from_dataframe(table_name, data, infer_sdtypes, infer_keys, verbose)
         return metadata
-
-    @classmethod
-    def detect_from_dataframe(
-        cls,
-        data,
-        table_name,
-        infer_sdtypes=True,
-        infer_keys='primary_only',
-        verbose=False,
-    ):
-        """Detect the metadata for a DataFrame.
-
-        This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrame``.
-        All data column names are converted to strings.
-
-        Args:
-            data (dict[str, pd.DataFrame]):
-                The data to detect metadata from.
-            table_name (str):
-                The name of the table to detect. If None, a default name will be used.
-                Defaults to None.
-            infer_sdtypes (bool):
-                A boolean describing whether to infer the sdtypes of each column.
-                If True it infers the sdtypes based on the data.
-                If False it does not infer the sdtypes and all columns are marked as unknown.
-                Defaults to True.
-            infer_keys (str):
-                A string describing whether to infer the primary keys. Options are:
-                    - 'primary_only': Infer only the primary keys of each table
-                    - None: Do not infer any keys
-                Defaults to 'primary_only'.
-            verbose (bool):
-                A boolean that determines if information should be printed regarding detection.
-                If True, it prints out information about what is detected.
-                If False, it does not print out any information about what is detected.
-                Defaults to False.
-
-        Returns:
-            Metadata:
-                A new metadata object with the sdtypes detected from the data.
-        """
-        _validate_data_single_table(data, table_name)
-        return cls._detect_from_dataframe(
-            data=data[table_name],
-            table_name=table_name,
-            infer_sdtypes=infer_sdtypes,
-            infer_keys=infer_keys,
-            verbose=verbose,
-        )
 
     def set_primary_key(self, column_name, table_name=None):
         """Set the primary key of a table.

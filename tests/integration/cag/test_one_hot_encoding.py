@@ -163,7 +163,7 @@ def test_end_to_end_numerical_and_categorical():
 
     # Setup metadata
     data = {'one_hot': df}
-    metadata = Metadata.detect_from_dataframe(data, table_name='one_hot')
+    metadata = Metadata.detect_from_dataframes(data)
     for sdtype in ['numerical', 'categorical']:
         metadata.update_columns(columns, sdtype=sdtype)
         synthesizer = GaussianCopulaSynthesizer(metadata)
@@ -195,7 +195,7 @@ def test_end_to_end_boolean():
 
     # Setup metadata
     data = {'one_hot': df}
-    metadata = Metadata.detect_from_dataframe(data, table_name='one_hot')
+    metadata = Metadata.detect_from_dataframes(data)
     metadata.update_columns(columns, sdtype='boolean')
     synthesizer = GaussianCopulaSynthesizer(metadata)
     constraint = OneHotEncoding(column_names=columns)
