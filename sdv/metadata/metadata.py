@@ -785,7 +785,7 @@ class Metadata:
         if foreign_key_inference_algorithm == 'column_name_match':
             self._detect_foreign_keys_by_column_name(data, verbose)
 
-    def detect_table_from_dataframe(
+    def _detect_table_from_dataframe(
         self,
         table_name,
         data,
@@ -850,7 +850,7 @@ class Metadata:
 
         metadata = Metadata()
         for table_name, dataframe in data.items():
-            metadata.detect_table_from_dataframe(
+            metadata._detect_table_from_dataframe(
                 table_name,
                 dataframe,
                 infer_sdtypes,
@@ -937,7 +937,7 @@ class Metadata:
         for csv_file in csv_files:
             table_name = csv_file.stem
             data[table_name] = _load_data_from_csv(csv_file, read_csv_parameters)
-            self.detect_table_from_dataframe(table_name, data[table_name])
+            self._detect_table_from_dataframe(table_name, data[table_name])
 
         self._detect_relationships(data)
 
@@ -954,7 +954,7 @@ class Metadata:
 
         _validate_boolean_parameter(infer_sdtypes, 'infer_sdtypes')
         metadata = Metadata()
-        metadata.detect_table_from_dataframe(table_name, data, infer_sdtypes, infer_keys, verbose)
+        metadata._detect_table_from_dataframe(table_name, data, infer_sdtypes, infer_keys, verbose)
         return metadata
 
     def set_primary_key(self, column_name, table_name=None):

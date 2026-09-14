@@ -210,9 +210,9 @@ class TestHMASynthesizer:
         })
 
         metadata = Metadata()
-        metadata.detect_table_from_dataframe('parent', parent_data)
+        metadata._detect_table_from_dataframe('parent', parent_data)
         metadata.update_column('primary_key', 'parent', sdtype='id')
-        metadata.detect_table_from_dataframe('child', child_data)
+        metadata._detect_table_from_dataframe('child', child_data)
         metadata.update_column('user_id', 'child', sdtype='id')
         metadata.update_column('id', 'child', sdtype='id')
         metadata.set_primary_key('primary_key', 'parent')
@@ -304,9 +304,9 @@ class TestHMASynthesizer:
         data = {'parent_table': parent_table, 'child_table': child_table}
 
         metadata = Metadata()
-        metadata.detect_table_from_dataframe(table_name='parent_table', data=parent_table)
+        metadata._detect_table_from_dataframe(table_name='parent_table', data=parent_table)
         metadata.update_column('id', 'parent_table', sdtype='id')
-        metadata.detect_table_from_dataframe(table_name='child_table', data=child_table)
+        metadata._detect_table_from_dataframe(table_name='child_table', data=child_table)
         metadata.update_column('id', 'child_table', sdtype='id')
         metadata.update_column('parent_id', 'child_table', sdtype='id')
 
@@ -391,7 +391,7 @@ class TestHMASynthesizer:
 
         metadata = Metadata()
         for table_name, table in data.items():
-            metadata.detect_table_from_dataframe(table_name, table)
+            metadata._detect_table_from_dataframe(table_name, table)
 
         metadata.update_column('user_id', 'users', sdtype='id')
         metadata.update_column('session_id', 'sessions', sdtype='id')
@@ -527,8 +527,8 @@ class TestHMASynthesizer:
         # Metadata
         metadata = Metadata()
 
-        metadata.detect_table_from_dataframe(table_name='guests', data=datasets['guests'])
-        metadata.detect_table_from_dataframe(table_name='hotels', data=datasets['hotels'])
+        metadata._detect_table_from_dataframe(table_name='guests', data=datasets['guests'])
+        metadata._detect_table_from_dataframe(table_name='hotels', data=datasets['hotels'])
 
         # Assert - detected metadata correctly
         for table in metadata.tables:
@@ -2312,8 +2312,8 @@ def test_detect_from_dataframe_numerical_col():
         'child_data': child_data,
     }
     metadata = Metadata()
-    metadata.detect_table_from_dataframe('parent_data', parent_data)
-    metadata.detect_table_from_dataframe('child_data', child_data)
+    metadata._detect_table_from_dataframe('parent_data', parent_data)
+    metadata._detect_table_from_dataframe('child_data', child_data)
     metadata.update_column('1', 'parent_data', sdtype='id')
     metadata.update_column('3', 'child_data', sdtype='id')
     metadata.update_column('4', 'child_data', sdtype='id')
