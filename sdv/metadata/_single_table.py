@@ -1456,7 +1456,7 @@ class _SingleTableMetadata:
         if sdtype == 'boolean':
             invalid_values = self._get_invalid_column_values(column, _is_boolean_type)
 
-        if sdtype == 'categorical' and range_values is not None:
+        if sdtype in ('ordinal', 'categorical') and range_values is not None:
             out_of_range_values = set(column.dropna().unique()) - set(range_values)
 
         # numerical values must be int/float, None or missing values
