@@ -119,6 +119,7 @@ def test_detect_from_dataframes_multi_table():
     }
     compare_metadata(metadata, expected_metadata)
     compare_ranges(metadata, real_data)
+    metadata.validate_data(real_data)
 
 
 def test_detect_from_dataframes_multi_table_without_infer_sdtypes():
@@ -170,6 +171,7 @@ def test_detect_from_dataframes_multi_table_without_infer_sdtypes():
     }
     compare_metadata(metadata, expected_metadata)
     compare_ranges(metadata, real_data)
+    metadata.validate_data(real_data)
 
 
 def test_detect_from_dataframes_multi_table_with_infer_keys_primary_only():
@@ -214,6 +216,7 @@ def test_detect_from_dataframes_multi_table_with_infer_keys_primary_only():
     }
     compare_metadata(metadata, expected_metadata)
     compare_ranges(metadata, real_data)
+    metadata.validate_data(real_data)
 
 
 def test_detect_from_dataframes_multi_table_with_infer_keys_none():
@@ -256,6 +259,7 @@ def test_detect_from_dataframes_multi_table_with_infer_keys_none():
     }
     compare_metadata(metadata, expected_metadata)
     compare_ranges(metadata, real_data)
+    metadata.validate_data(real_data)
 
 
 def test_detect_from_dataframes_single_table():
@@ -287,6 +291,7 @@ def test_detect_from_dataframes_single_table():
     }
     compare_ranges(metadata, data)
     compare_metadata(metadata, expected_metadata)
+    metadata.validate_data(data)
 
 
 def test_detect_from_dataframes_single_table_infer_sdtypes_false():
@@ -318,6 +323,7 @@ def test_detect_from_dataframes_single_table_infer_sdtypes_false():
     }
     compare_metadata(metadata, expected_metadata)
     compare_ranges(metadata, data)
+    metadata.validate_data(data)
 
 
 def test_detect_from_dataframes_single_table_infer_keys_primary_only():
@@ -349,6 +355,7 @@ def test_detect_from_dataframes_single_table_infer_keys_primary_only():
     }
     compare_ranges(metadata, data)
     compare_metadata(metadata, expected_metadata)
+    metadata.validate_data(data)
 
 
 def test_detect_from_dataframes_single_table_infer_keys_none():
@@ -379,6 +386,7 @@ def test_detect_from_dataframes_single_table_infer_keys_none():
     }
     compare_ranges(metadata, data)
     compare_metadata(metadata, expected_metadata)
+    metadata.validate_data(data)
 
 
 def test_detect_from_dataframe():
@@ -411,6 +419,7 @@ def test_detect_from_dataframe():
     }
     compare_ranges(metadata, data)
     compare_metadata(metadata, expected_metadata)
+    metadata.validate_data(data)
 
 
 def test_detect_from_dataframe_infer_sdtypes_false():
@@ -442,6 +451,7 @@ def test_detect_from_dataframe_infer_sdtypes_false():
     }
     compare_ranges(metadata, data)
     compare_metadata(metadata, expected_metadata)
+    metadata.validate_data(data)
 
 
 def test_detect_from_dataframe_infer_keys_none():
@@ -472,6 +482,7 @@ def test_detect_from_dataframe_infer_keys_none():
     }
     compare_ranges(metadata, data)
     compare_metadata(metadata, expected_metadata)
+    metadata.validate_data(data)
 
 
 def test_detect_from_dataframe_infer_keys_none_infer_sdtypes_false():
@@ -502,6 +513,7 @@ def test_detect_from_dataframe_infer_keys_none_infer_sdtypes_false():
     }
     compare_ranges(metadata, data)
     compare_metadata(metadata, expected_metadata)
+    metadata.validate_data(data)
 
 
 def test_detect_from_csvs(tmp_path):
@@ -560,6 +572,7 @@ def test_detect_from_csvs(tmp_path):
 
     compare_ranges(metadata, real_data)
     compare_metadata(metadata, expected_metadata)
+    metadata.validate_data(real_data)
 
 
 params = [
@@ -2063,6 +2076,7 @@ def test_detect_from_dataframes():
     }
     compare_ranges(metadata, real_data)
     compare_metadata(metadata, expected_metadata)
+    metadata.validate_data(real_data)
 
 
 def test_get_column_names():
