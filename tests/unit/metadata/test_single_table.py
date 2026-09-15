@@ -2701,6 +2701,10 @@ class Test_SingleTableMetadata:
                 ],
             ),
             (
+                pd.Series(['LOW', 'LOW', 'HIGH', 'MEDIUM', 'LOW', 'MEDIUM'], name='ordinal'),
+                ["Out of range values found for ordinal column 'ordinal': ['HIGH']."],
+            ),
+            (
                 pd.Series(['01/2015', '05/2028', '03/2022'], name='datetime'),
                 ["Out of range values found for datetime column 'datetime': ['01/2015']."],
             ),
@@ -2714,6 +2718,7 @@ class Test_SingleTableMetadata:
                 'bool': {'sdtype': 'boolean'},
                 'num': {'sdtype': 'numerical', 'range_min': 0.0, 'range_max': 10.0},
                 'categorical': {'sdtype': 'categorical', 'range_values': ['a', 'b', 'c']},
+                'ordinal': {'sdtype': 'ordinal', 'range_values': ['LOW', 'MEDIUM']},
                 'datetime': {
                     'sdtype': 'datetime',
                     'datetime_format': '%m/%Y',
