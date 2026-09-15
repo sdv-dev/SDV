@@ -12,6 +12,7 @@ from datetime import datetime
 import pandas as pd
 from rdt.transformers._validators import AddressValidator, GPSValidator
 from rdt.transformers.pii.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
+from rdt.transformers.utils import learn_rounding_digits
 
 from sdv._utils import (
     _cast_to_datetime64,
