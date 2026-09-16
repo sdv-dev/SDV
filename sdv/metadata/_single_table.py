@@ -577,8 +577,10 @@ class _SingleTableMetadata:
     def _detect_ordinal_sdtype(self, data):
         """Detect whether a numerical column should have the ordinal sdtype.
 
-        A numerical column is considered ordinal when it contains whole numbers
-        and has low cardinality.
+        A numerical column is considered ordinal if:
+        - It contains only whole numbers
+        - It has low cardinality, defined as having at most 10% unique values relative
+          to the total number of rows, capped at 10 unique values.
 
         Args:
             data (pandas.Series):
@@ -593,8 +595,8 @@ class _SingleTableMetadata:
 
         whole_values = (clean_data == clean_data.round()).all()
         unique_values = clean_data.nunique()
-        categorical_threshold = min(round(len(data) / 10), 10)
-        low_cardinality = unique_values <= categorical_threshold
+        ordinal_threshold = min(round(len(data) / 10), 10)
+        low_cardinality = unique_values <= ordinal_threshold
         if whole_values and low_cardinality:
             return 'ordinal'
 
@@ -1565,7 +1567,7 @@ class _SingleTableMetadata:
             if decimal_places is not None:
                 column_values = column.dropna()
                 data_digits = learn_rounding_digits(column_values)
-                if data_digits > decimal_places:
+                if data_digits is not None and data_digits > decimal_places:
                     errors += [
                         f"Values found for numerical column '{column.name}' exceed the allowed "
                         f'decimal places ({decimal_places}).'
