@@ -787,6 +787,12 @@ class BaseMultiTableSynthesizer:
 
         validate_folder_path_with_table_names(output_folder_path, table_names)
 
+    def _save_sampled_data(self, sampled_data, output_folder_path):
+        output_folder = Path(output_folder_path)
+        for table_name, table_data in sampled_data.items():
+            output_file_path = str(output_folder / f'{table_name}.csv')
+            table_data.to_csv(output_file_path, index=False)
+
     def _sample_in_batches(
         self,
         synthesizer,
