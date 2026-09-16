@@ -370,3 +370,37 @@ def test_onehot_encoding_with_multi_table_diagnostic_report(data_multi, metadata
         assert synthetic_data['table1'][col].dtype == data_multi['table1'][col].dtype
 
     assert diagnostic_report.get_score() == 1.0
+
+
+def test_with_categorical_and_ranges_columns():
+    """Test the constraint with categorical columns that have range values in the metadata."""
+    # Setup
+    data = pd.DataFrame({
+        'a': [1, 0, 0],
+        'b': [0, 1, 0],
+        'c': [0, 0, 1],
+    })
+    data = {'table': data}
+    meta = Metadata.load_from_dict(
+        {
+            'tables': {
+                'table': {
+                    'columns': {
+                        'a': {'sdtype': 'categorical', 'range_values': [0, 1]},
+                        'b': {'sdtype': 'categorical', 'range_values': [0, 1]},
+                        'c': {'sdtype': 'categorical', 'range_values': [0, 1]},
+                    },
+                },
+            },
+        },
+    )
+    synth = GaussianCopulaSynthesizer(meta)
+    constraint = OneHotEncoding(table_name='table', column_names=['a', 'b', 'c'])
+
+    # Run
+    synth.add_constraints([constraint])
+    synth.fit(data)
+    synthetic_data = synth.sample('table', 2)
+
+    # Assert
+    assert (constraint.is_valid(synthetic_data)).all()
