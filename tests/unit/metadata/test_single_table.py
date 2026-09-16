@@ -2694,11 +2694,22 @@ class Test_SingleTableMetadata:
                 ],
             ),
             (
+                pd.Series([1.123, 2.345, 3.456], name='num_decimal'),
+                [
+                    "Values found for numerical column 'num_decimal' exceed the allowed"
+                    ' decimal places (2).'
+                ],
+            ),
+            (
                 pd.Series(['a', 'b', 'c', 'x', 'y', 'z'], name='categorical'),
                 [
                     "Out of range values found for categorical column 'categorical': "
                     "['x', 'y', 'z']."
                 ],
+            ),
+            (
+                pd.Series(['LOW', 'LOW', 'HIGH', 'MEDIUM', 'LOW', 'MEDIUM'], name='ordinal'),
+                ["Out of range values found for ordinal column 'ordinal': ['HIGH']."],
             ),
             (
                 pd.Series(['01/2015', '05/2028', '03/2022'], name='datetime'),
@@ -2713,7 +2724,9 @@ class Test_SingleTableMetadata:
             'columns': {
                 'bool': {'sdtype': 'boolean'},
                 'num': {'sdtype': 'numerical', 'range_min': 0.0, 'range_max': 10.0},
+                'num_decimal': {'sdtype': 'numerical', 'decimal_places': 2},
                 'categorical': {'sdtype': 'categorical', 'range_values': ['a', 'b', 'c']},
+                'ordinal': {'sdtype': 'ordinal', 'range_values': ['LOW', 'MEDIUM']},
                 'datetime': {
                     'sdtype': 'datetime',
                     'datetime_format': '%m/%Y',
