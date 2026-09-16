@@ -392,7 +392,7 @@ class TestOneHotEncoding:
         learning_strategy,
         expected_calls,
     ):
-        """Test `get_updated_metadata` calls the expected methods."""
+        """Test `get_updated_metadata` calls `add_column` with the expected arguments."""
         # Setup
         metadata = Metadata.load_from_dict({
             'columns': {
