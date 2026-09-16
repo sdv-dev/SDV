@@ -30,7 +30,7 @@ from tests.utils import catch_sdv_logs, get_multi_table_metadata
 
 
 class TestHMASynthesizer:
-    def test_hma(self):
+    def test_hma(self, tmpdir):
         """End to end integration tests with ``HMASynthesizer``.
 
         The test consist on loading the demo data, convert the old metadata to the new format
@@ -939,6 +939,27 @@ class TestHMASynthesizer:
         # Assert data values all exist in the original tables
         for table_name, table in samples.items():
             assert table['data'].isin(data[table_name]['data']).all()
+
+    def test_sample_save_to_output_folder(self, tmpdir):
+        """Test saving the sampled data to `output_folder_path`."""
+        # Setup
+        data, metadata = download_demo('multi_table', 'fake_hotels')
+        hmasynthesizer = HMASynthesizer(metadata)
+
+        # Run
+        hmasynthesizer.fit(data)
+        sample = hmasynthesizer.sample(
+            'guests', len(data['guests']), output_folder_path=str(tmpdir)
+        )
+
+        # Assert
+        assert set(sample) == set(data.keys())
+        for table_name, table in sample.items():
+            assert set(table.columns) == set(data[table_name])
+
+        for table_name in metadata.tables:
+            saved_table = pd.read_csv(tmpdir / f'{table_name}.csv')
+            pd.testing.assert_frame_equal(saved_table, sample[table_name])
 
     def test_hma_numerical_distributions(self):
         """Test it runs when 'numerical_distributions' is set (GH#1605)."""
