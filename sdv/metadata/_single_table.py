@@ -12,6 +12,7 @@ from datetime import datetime
 import pandas as pd
 from rdt.transformers._validators import AddressValidator, GPSValidator
 from rdt.transformers.pii.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
+from rdt.transformers.utils import learn_rounding_digits
 
 from sdv._utils import (
     _cast_to_datetime64,
@@ -1447,6 +1448,7 @@ class _SingleTableMetadata:
         range_min = column_metadata.get('range_min')
         range_max = column_metadata.get('range_max')
         range_values = column_metadata.get('range_values')
+        decimal_places = column_metadata.get('decimal_places')
         invalid_values = None
         out_of_range_values = None
         errors = []
@@ -1456,7 +1458,7 @@ class _SingleTableMetadata:
         if sdtype == 'boolean':
             invalid_values = self._get_invalid_column_values(column, _is_boolean_type)
 
-        if sdtype == 'categorical' and range_values is not None:
+        if sdtype in ('ordinal', 'categorical') and range_values is not None:
             out_of_range_values = set(column.dropna().unique()) - set(range_values)
 
         # numerical values must be int/float, None or missing values
@@ -1466,6 +1468,15 @@ class _SingleTableMetadata:
             if not invalid_values:
                 out_of_range_mask = self._get_out_of_range_values(column, range_min, range_max)
                 out_of_range_values = set(column[out_of_range_mask])
+
+            if decimal_places is not None:
+                column_values = column.dropna()
+                data_digits = learn_rounding_digits(column_values)
+                if data_digits > decimal_places:
+                    errors += [
+                        f"Values found for numerical column '{column.name}' exceed the allowed "
+                        f'decimal places ({decimal_places}).'
+                    ]
 
         # datetime values must be castable to datetime, None or missing values
         if sdtype == 'datetime':

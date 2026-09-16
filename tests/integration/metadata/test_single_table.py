@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 
 from sdv.datasets.demo import download_demo
+from sdv.errors import InvalidDataError
 from sdv.metadata._single_table import _SingleTableMetadata
 from sdv.metadata.errors import InvalidMetadataError
 
@@ -656,3 +657,31 @@ def test_metadata_detection_numerical_dtypes():
         'columns': {column: {'sdtype': 'numerical'} for column in data.columns},
     }
     assert metadata.to_dict()['columns'] == expected_metadata['columns']
+
+
+def test__validate_error_for_ordinal_data():
+    """Test the validation error for ordinal data."""
+    # Setup
+    data, metadata = download_demo('multi_table', 'fake_hotels')
+    metadata.update_column('room_type', 'guests', sdtype='ordinal', range_values=['BASIC', 'SUITE'])
+    expected_errors = re.escape(
+        "Error: Out of range values found for ordinal column 'room_type': ['DELUXE'].",
+    )
+
+    # Run and Assert
+    with pytest.raises(InvalidDataError, match=expected_errors):
+        metadata.validate_data(data)
+
+
+def test__validate_error_for_decimal_digits():
+    """Test the validation error for decimal digits."""
+    # Setup
+    data, metadata = download_demo('multi_table', 'fake_hotels')
+    metadata.update_column('amenities_fee', 'guests', decimal_places=0)
+    expected_errors = re.escape(
+        "Values found for numerical column 'amenities_fee' exceed the allowed decimal places (0)."
+    )
+
+    # Run and Assert
+    with pytest.raises(InvalidDataError, match=expected_errors):
+        metadata.validate_data(data)
