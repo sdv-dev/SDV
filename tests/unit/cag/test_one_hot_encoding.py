@@ -1,7 +1,7 @@
 """Unit tests for OneHotEncoding constraint."""
 
 import re
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 import numpy as np
 import pandas as pd
@@ -349,6 +349,68 @@ class TestOneHotEncoding:
         assert 'a' not in cols
         assert 'b' not in cols
         assert 'c' not in cols
+
+    @pytest.mark.parametrize(
+        ('learning_strategy', 'expected_calls'),
+        [
+            (
+                'categorical',
+                [
+                    call(
+                        table_name='table',
+                        column_name='a#b#c',
+                        sdtype='categorical',
+                    ),
+                ],
+            ),
+            (
+                'one_hot',
+                [
+                    call(
+                        table_name='table',
+                        column_name='OHE#a',
+                        sdtype='numerical',
+                    ),
+                    call(
+                        table_name='table',
+                        column_name='OHE#b',
+                        sdtype='numerical',
+                    ),
+                    call(
+                        table_name='table',
+                        column_name='OHE#c',
+                        sdtype='numerical',
+                    ),
+                ],
+            ),
+        ],
+    )
+    @patch.object(Metadata, 'add_column')
+    def test_get_updated_metadata_mock(
+        self,
+        mock_add_column,
+        learning_strategy,
+        expected_calls,
+    ):
+        """Test `get_updated_metadata` calls the expected methods."""
+        # Setup
+        metadata = Metadata.load_from_dict({
+            'columns': {
+                'a': {'sdtype': 'numerical'},
+                'b': {'sdtype': 'categorical'},
+                'c': {'sdtype': 'ordinal'},
+            }
+        })
+        instance = OneHotEncoding(
+            column_names=['a', 'b', 'c'],
+            learning_strategy=learning_strategy,
+        )
+
+        # Run
+        instance.get_updated_metadata(metadata)
+
+        # Assert
+        assert mock_add_column.call_args_list == expected_calls
 
     def test_transform_and_reverse_categorical_single(self):
         """Test transform collapses to categorical and reverse restores one-hot (single table)."""
