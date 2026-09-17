@@ -728,10 +728,16 @@ class Metadata:
                     try:
                         sdtype_updated = False
                         if pk_sdtype == 'id' and original_fk_sdtype != 'id':
+                            update_kwargs = {'sdtype': 'id'}
+                            if 'range_is_nullable' in original_fk_meta:
+                                update_kwargs['range_is_nullable'] = original_fk_meta[
+                                    'range_is_nullable'
+                                ]
+
                             self.update_column(
                                 table_name=child_candidate,
                                 column_name=primary_key,
-                                sdtype='id',
+                                **update_kwargs,
                             )
                             sdtype_updated = True
                         self.add_relationship(
@@ -779,7 +785,7 @@ class Metadata:
         if foreign_key_inference_algorithm == 'column_name_match':
             self._detect_foreign_keys_by_column_name(data, verbose)
 
-    def detect_table_from_dataframe(
+    def _detect_table_from_dataframe(
         self,
         table_name,
         data,
@@ -844,7 +850,7 @@ class Metadata:
 
         metadata = Metadata()
         for table_name, dataframe in data.items():
-            metadata.detect_table_from_dataframe(
+            metadata._detect_table_from_dataframe(
                 table_name,
                 dataframe,
                 infer_sdtypes,
@@ -931,7 +937,7 @@ class Metadata:
         for csv_file in csv_files:
             table_name = csv_file.stem
             data[table_name] = _load_data_from_csv(csv_file, read_csv_parameters)
-            self.detect_table_from_dataframe(table_name, data[table_name])
+            self._detect_table_from_dataframe(table_name, data[table_name])
 
         self._detect_relationships(data)
 
@@ -948,56 +954,8 @@ class Metadata:
 
         _validate_boolean_parameter(infer_sdtypes, 'infer_sdtypes')
         metadata = Metadata()
-        metadata.detect_table_from_dataframe(table_name, data, infer_sdtypes, infer_keys, verbose)
+        metadata._detect_table_from_dataframe(table_name, data, infer_sdtypes, infer_keys, verbose)
         return metadata
-
-    @classmethod
-    def detect_from_dataframe(
-        cls,
-        data,
-        table_name=DEFAULT_SINGLE_TABLE_NAME,
-        infer_sdtypes=True,
-        infer_keys='primary_only',
-        verbose=False,
-    ):
-        """Detect the metadata for a DataFrame.
-
-        This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrame``.
-        All data column names are converted to strings.
-
-        Args:
-            data (pandas.DataFrame):
-                The data to detect metadata from.
-            table_name (str):
-                The name of the table to detect. If None, a default name will be used.
-                Defaults to None.
-            infer_sdtypes (bool):
-                A boolean describing whether to infer the sdtypes of each column.
-                If True it infers the sdtypes based on the data.
-                If False it does not infer the sdtypes and all columns are marked as unknown.
-                Defaults to True.
-            infer_keys (str):
-                A string describing whether to infer the primary keys. Options are:
-                    - 'primary_only': Infer only the primary keys of each table
-                    - None: Do not infer any keys
-                Defaults to 'primary_only'.
-            verbose (bool):
-                A boolean that determines if information should be printed regarding detection.
-                If True, it prints out information about what is detected.
-                If False, it does not print out any information about what is detected.
-                Defaults to False.
-
-        Returns:
-            Metadata:
-                A new metadata object with the sdtypes detected from the data.
-        """
-        return cls._detect_from_dataframe(
-            data=data,
-            table_name=table_name,
-            infer_sdtypes=infer_sdtypes,
-            infer_keys=infer_keys,
-            verbose=verbose,
-        )
 
     def set_primary_key(self, column_name, table_name=None):
         """Set the primary key of a table.
