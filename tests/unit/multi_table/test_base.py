@@ -1634,7 +1634,7 @@ class TestBaseMultiTableSynthesizer:
             'col2': [4, 5, 6],
         })
         metadata = Metadata()
-        metadata.detect_table_from_dataframe('table', data)
+        metadata._detect_table_from_dataframe('table', data)
         constraint = Inequality(low_column_name='col1', high_column_name='col2')
         model = BaseMultiTableSynthesizer(metadata)
 

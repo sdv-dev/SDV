@@ -790,10 +790,10 @@ class TestMetadataClass:
         # Setup
         table = pd.DataFrame({'pk': [1, 2, 3], 'col1': [0.1, 0.1, 0.2], 'col2': ['a', 'b', 'c']})
         metadata = Metadata()
-        metadata.detect_table_from_dataframe('table', table)
+        metadata._detect_table_from_dataframe('table', table)
         metadata.update_column(column_name='pk', table_name='table', sdtype='id')
         metadata.set_primary_key(column_name='pk', table_name='table')
-        metadata.detect_table_from_dataframe('table2', table)
+        metadata._detect_table_from_dataframe('table2', table)
         metadata.update_column(column_name='pk', table_name='table2', sdtype='id')
         metadata.set_primary_key(column_name='pk', table_name='table2')
 
@@ -807,16 +807,36 @@ class TestMetadataClass:
                     'primary_key': 'pk',
                     'columns': {
                         'pk': {'sdtype': 'id'},
-                        'col1': {'sdtype': 'numerical'},
-                        'col2': {'sdtype': 'categorical'},
+                        'col1': {
+                            'sdtype': 'numerical',
+                            'range_is_nullable': False,
+                            'range_min': 0.1,
+                            'range_max': 0.2,
+                            'decimal_places': 1,
+                        },
+                        'col2': {
+                            'sdtype': 'categorical',
+                            'range_is_nullable': False,
+                            'range_values': ['a', 'b', 'c'],
+                        },
                     },
                 },
                 'table2': {
                     'primary_key': 'pk',
                     'columns': {
                         'pk': {'sdtype': 'id'},
-                        'col1': {'sdtype': 'numerical'},
-                        'col2': {'sdtype': 'categorical'},
+                        'col1': {
+                            'sdtype': 'numerical',
+                            'range_is_nullable': False,
+                            'range_min': 0.1,
+                            'range_max': 0.2,
+                            'decimal_places': 1,
+                        },
+                        'col2': {
+                            'sdtype': 'categorical',
+                            'range_is_nullable': False,
+                            'range_values': ['a', 'b', 'c'],
+                        },
                     },
                 },
             },
@@ -1404,10 +1424,10 @@ class TestMetadataClass:
         # Setup
         table = pd.DataFrame({'pk': [1, 2, 3], 'col1': [0.1, 0.1, 0.2], 'col2': ['a', 'b', 'c']})
         metadata = Metadata()
-        metadata.detect_table_from_dataframe('table', table)
+        metadata._detect_table_from_dataframe('table', table)
         metadata.update_column(column_name='pk', table_name='table', sdtype='id')
         metadata.set_primary_key(column_name='pk', table_name='table')
-        metadata.detect_table_from_dataframe('table2', table)
+        metadata._detect_table_from_dataframe('table2', table)
         metadata.update_column(column_name='pk', table_name='table2', sdtype='id')
         metadata.set_primary_key(column_name='pk', table_name='table2')
         metadata.relationships = [
@@ -1428,16 +1448,36 @@ class TestMetadataClass:
                 'table': {
                     'columns': {
                         'pk': {'sdtype': 'id'},
-                        'col1': {'sdtype': 'numerical'},
-                        'col2': {'sdtype': 'categorical'},
+                        'col1': {
+                            'sdtype': 'numerical',
+                            'range_is_nullable': False,
+                            'range_min': 0.1,
+                            'range_max': 0.2,
+                            'decimal_places': 1,
+                        },
+                        'col2': {
+                            'sdtype': 'categorical',
+                            'range_is_nullable': False,
+                            'range_values': ['a', 'b', 'c'],
+                        },
                     },
                     'primary_key': 'pk',
                 },
                 'table2': {
                     'columns': {
                         'pk': {'sdtype': 'id'},
-                        'col1': {'sdtype': 'numerical'},
-                        'col2': {'sdtype': 'categorical'},
+                        'col1': {
+                            'sdtype': 'numerical',
+                            'range_is_nullable': False,
+                            'range_min': 0.1,
+                            'range_max': 0.2,
+                            'decimal_places': 1,
+                        },
+                        'col2': {
+                            'sdtype': 'categorical',
+                            'range_is_nullable': False,
+                            'range_values': ['a', 'b', 'c'],
+                        },
                     },
                     'primary_key': 'pk',
                 },
@@ -2957,7 +2997,7 @@ class TestMetadataClass:
         """Test the ``detect_from_csvs`` method."""
         # Setup
         instance = Metadata()
-        instance.detect_table_from_dataframe = Mock()
+        instance._detect_table_from_dataframe = Mock()
         instance._detect_relationships = Mock()
 
         data1 = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
@@ -2994,8 +3034,10 @@ class TestMetadataClass:
             call('table1', data1),
             call('table2', data2),
         ]
-        instance.detect_table_from_dataframe.assert_has_calls(expected_detect_calls, any_order=True)
-        assert instance.detect_table_from_dataframe.call_count == 2
+        instance._detect_table_from_dataframe.assert_has_calls(
+            expected_detect_calls, any_order=True
+        )
+        assert instance._detect_table_from_dataframe.call_count == 2
 
         instance._detect_relationships.assert_called_once()
         table1 = instance._detect_relationships.call_args[0][0]['table1']
@@ -3024,7 +3066,7 @@ class TestMetadataClass:
     @patch('sdv.metadata.metadata.LOGGER')
     @patch('sdv.metadata.metadata._SingleTableMetadata')
     def test_detect_table_from_dataframe(self, single_table_mock, log_mock):
-        """Test the ``detect_table_from_dataframe`` method.
+        """Test the ``_detect_table_from_dataframe`` method.
 
         If the table does not already exist, a ``_SingleTableMetadata`` instance
         should be created and call the ``detect_from_dataframe`` method.
@@ -3043,7 +3085,7 @@ class TestMetadataClass:
         }
 
         # Run
-        metadata.detect_table_from_dataframe('table', data)
+        metadata._detect_table_from_dataframe('table', data)
 
         # Assert
         single_table_mock.return_value._detect_columns.assert_called_once_with(
@@ -3064,7 +3106,7 @@ class TestMetadataClass:
         log_mock.info.assert_has_calls([expected_log_calls])
 
     def test_detect_table_from_dataframe_table_already_exists(self):
-        """Test the ``detect_table_from_dataframe`` method.
+        """Test the ``_detect_table_from_dataframe`` method.
 
         If the table already exists, an error should be raised.
 
@@ -3088,17 +3130,17 @@ class TestMetadataClass:
             'create a new Metadata object for other data sources.'
         )
         with pytest.raises(InvalidMetadataError, match=error_message):
-            metadata.detect_table_from_dataframe('table', pd.DataFrame())
+            metadata._detect_table_from_dataframe('table', pd.DataFrame())
 
     @patch('sdv.metadata.metadata.Metadata')
     def test_detect_from_dataframes(self, mock_metadata):
         """Test ``detect_from_dataframes``.
 
-        Expected to call ``detect_table_from_dataframe`` for each table name and dataframe
+        Expected to call ``_detect_table_from_dataframe`` for each table name and dataframe
         in the input.
         """
         # Setup
-        mock_metadata.detect_table_from_dataframe = Mock()
+        mock_metadata._detect_table_from_dataframe = Mock()
         mock_metadata._detect_relationships = Mock()
         guests_table = pd.DataFrame()
         hotels_table = pd.DataFrame()
@@ -3108,10 +3150,10 @@ class TestMetadataClass:
         metadata = Metadata.detect_from_dataframes(data)
 
         # Assert
-        mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
+        mock_metadata.return_value._detect_table_from_dataframe.assert_any_call(
             'guests', guests_table, True, 'primary_only', False
         )
-        mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
+        mock_metadata.return_value._detect_table_from_dataframe.assert_any_call(
             'hotels', hotels_table, True, 'primary_only', False
         )
         mock_metadata.return_value._detect_relationships.assert_called_once_with(
@@ -4126,7 +4168,7 @@ class TestMetadataClass:
 
     @patch('sdv.metadata.metadata._SingleTableMetadata')
     def test_detect_table_from_dataframe_with_kwargs(self, single_table_mock):
-        """Test `detect_table_from_dataframe` fsets verbose on `_detect_columns`."""
+        """Test `_detect_table_from_dataframe` fsets verbose on `_detect_columns`."""
         # Setup
         metadata = Metadata()
         data = pd.DataFrame()
@@ -4135,7 +4177,7 @@ class TestMetadataClass:
         }
 
         # Run
-        metadata.detect_table_from_dataframe(
+        metadata._detect_table_from_dataframe(
             'table', data, infer_sdtypes=False, infer_keys=None, verbose=True
         )
 
@@ -4644,7 +4686,7 @@ class TestMetadataClass:
     def test_detect_from_dataframes_infer_keys_none(self, mock_metadata):
         """Test ``detect_from_dataframes`` with infer_keys set to None."""
         # Setup
-        mock_metadata.detect_table_from_dataframe = Mock()
+        mock_metadata._detect_table_from_dataframe = Mock()
         mock_metadata._detect_relationships = Mock()
         guests_table = pd.DataFrame()
         hotels_table = pd.DataFrame()
@@ -4654,10 +4696,10 @@ class TestMetadataClass:
         metadata = Metadata.detect_from_dataframes(data, infer_sdtypes=False, infer_keys=None)
 
         # Assert
-        mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
+        mock_metadata.return_value._detect_table_from_dataframe.assert_any_call(
             'guests', guests_table, False, None, False
         )
-        mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
+        mock_metadata.return_value._detect_table_from_dataframe.assert_any_call(
             'hotels', hotels_table, False, None, False
         )
         mock_metadata.return_value._detect_relationships.assert_not_called()
@@ -4684,7 +4726,7 @@ class TestMetadataClass:
     def test_detect_from_dataframes_infer_keys_primary_only(self, mock_metadata):
         """Test ``detect_from_dataframes`` with infer_keys set to 'primary_only'."""
         # Setup
-        mock_metadata.detect_table_from_dataframe = Mock()
+        mock_metadata._detect_table_from_dataframe = Mock()
         mock_metadata._detect_relationships = Mock()
         guests_table = pd.DataFrame()
         hotels_table = pd.DataFrame()
@@ -4696,10 +4738,10 @@ class TestMetadataClass:
         )
 
         # Assert
-        mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
+        mock_metadata.return_value._detect_table_from_dataframe.assert_any_call(
             'guests', guests_table, False, 'primary_only', False
         )
-        mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
+        mock_metadata.return_value._detect_table_from_dataframe.assert_any_call(
             'hotels', hotels_table, False, 'primary_only', False
         )
         mock_metadata.return_value._detect_relationships.assert_not_called()
@@ -4754,8 +4796,8 @@ class TestMetadataClass:
             }),
         }
         instance = Metadata()
-        instance.detect_table_from_dataframe('table1', data['table1'])
-        instance.detect_table_from_dataframe('table2', data['table2'])
+        instance._detect_table_from_dataframe('table1', data['table1'])
+        instance._detect_table_from_dataframe('table2', data['table2'])
 
         # Run
         instance._detect_foreign_keys_by_column_name(data)
@@ -4785,9 +4827,9 @@ class TestMetadataClass:
             }),
         }
         instance = Metadata()
-        instance.detect_table_from_dataframe('table1', data['table1'])
-        instance.detect_table_from_dataframe('table2', data['table2'])
-        instance.detect_table_from_dataframe('table3', data['table3'])
+        instance._detect_table_from_dataframe('table1', data['table1'])
+        instance._detect_table_from_dataframe('table2', data['table2'])
+        instance._detect_table_from_dataframe('table3', data['table3'])
 
         # Run
         instance._detect_foreign_keys_by_column_name(data)
@@ -4815,17 +4857,17 @@ class TestMetadataClass:
     def test__detect_from_dataframe(self, mock_metadata):
         """Test that the method calls the detection method and returns the metadata.
 
-        Expected to call ``detect_table_from_dataframe`` for the dataframe.
+        Expected to call ``_detect_table_from_dataframe`` for the dataframe.
         """
         # Setup
-        mock_metadata.detect_table_from_dataframe = Mock()
+        mock_metadata._detect_table_from_dataframe = Mock()
         data = pd.DataFrame()
 
         # Run
         metadata = Metadata._detect_from_dataframe(data)
 
         # Assert
-        mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
+        mock_metadata.return_value._detect_table_from_dataframe.assert_any_call(
             Metadata.DEFAULT_SINGLE_TABLE_NAME, DataFrameMatcher(data), True, 'primary_only', False
         )
         assert metadata == mock_metadata.return_value
@@ -4859,24 +4901,14 @@ class TestMetadataClass:
         with pytest.raises(ValueError, match=expected_message):
             Metadata._detect_from_dataframe(data, infer_keys=infer_keys)
 
-    @patch.object(Metadata, '_detect_from_dataframe')
-    def test_detect_from_dataframe(self, mock_detect):
-        """Test the `detect_from_dataframe` method."""
+    def test_detect_from_dataframe_raise_error(self):
+        """Test the `detect_from_dataframe` method raises an AttributeError."""
         # Setup
         data = pd.DataFrame()
 
-        # Run
-        metadata = Metadata.detect_from_dataframe(data)
-
-        # Assert
-        mock_detect.assert_called_once_with(
-            data=data,
-            table_name='table',
-            infer_sdtypes=True,
-            infer_keys='primary_only',
-            verbose=False,
-        )
-        assert metadata == mock_detect.return_value
+        # Run and Assert
+        with pytest.raises(AttributeError):
+            Metadata.detect_from_dataframe(data)
 
     def test__handle_table_name(self):
         """Test the ``_handle_table_name`` method."""
