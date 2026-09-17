@@ -60,8 +60,8 @@ class _SingleTableMetadata:
     _SDTYPE_KWARGS = {
         'numerical': frozenset(['range_min', 'range_max', 'range_is_nullable', 'decimal_places']),
         'datetime': frozenset(['datetime_format', 'range_min', 'range_max', 'range_is_nullable']),
-        'categorical': frozenset(['range_values', 'range_is_nullable']),
-        'ordinal': frozenset(['range_values', 'range_is_nullable']),
+        'categorical': frozenset(['range_values', 'range_is_nullable', 'high_cardinality']),
+        'ordinal': frozenset(['range_values', 'range_is_nullable', 'high_cardinality']),
         'boolean': frozenset(['range_is_nullable']),
         'id': frozenset(['regex_format', 'range_is_nullable']),
         'unknown': frozenset(['pii', 'range_is_nullable']),
@@ -226,7 +226,23 @@ class _SingleTableMetadata:
                 )
 
     @staticmethod
-    def _validate_categorical(column_name, sdtype, **kwargs):
+    def _validate_categorical_and_ordinal(column_name, sdtype, **kwargs):
+        high_cardinality = kwargs.get('high_cardinality')
+        range_values = kwargs.get('range_values')
+        if high_cardinality is not None:
+            if not isinstance(high_cardinality, bool):
+                raise InvalidMetadataError(
+                    f'Invalid `high_cardinality` value provided for {sdtype} column '
+                    f"'{column_name}'. The `high_cardinality` must be a boolean value."
+                )
+
+            if high_cardinality and range_values is not None:
+                raise InvalidMetadataError(
+                    f'Invalid combination of `high_cardinality` and `range_values` for {sdtype} '
+                    f"column '{column_name}'. If high_cardinality is set to True, then range_values"
+                    ' is not allowed to be set for the column.'
+                )
+
         range_values = kwargs.get('range_values')
         if range_values is not None and (
             not isinstance(range_values, list) or len(range_values) == 0
@@ -326,9 +342,9 @@ class _SingleTableMetadata:
         self._validate_unexpected_kwargs(column_name, sdtype, **kwargs)
         self._validate_null_range(column_name, **kwargs)
         if sdtype == 'categorical':
-            self._validate_categorical(column_name, sdtype='categorical', **kwargs)
+            self._validate_categorical_and_ordinal(column_name, sdtype='categorical', **kwargs)
         if sdtype == 'ordinal':
-            self._validate_categorical(column_name, sdtype='ordinal', **kwargs)
+            self._validate_categorical_and_ordinal(column_name, sdtype='ordinal', **kwargs)
         elif sdtype == 'numerical':
             self._validate_numerical(column_name, **kwargs)
         elif sdtype == 'datetime':
@@ -848,6 +864,9 @@ class _SingleTableMetadata:
                 range_values = self._detect_range_values(column_data)
                 if range_values is not None:
                     column_metadata['range_values'] = range_values
+                    column_metadata['high_cardinality'] = False
+                else:
+                    column_metadata['high_cardinality'] = True
 
     def _print_detection(
         self, table_name, data, infer_sdtypes, infer_keys, chosen_pk, sdtype_updated, pii_removed
