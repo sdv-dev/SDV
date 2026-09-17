@@ -881,7 +881,7 @@ class _SingleTableMetadata:
         if infer_keys == 'primary_only':
             table_str = f" for table '{table_name}'" if table_name else ''
             sys.stdout.write(f'\nDetecting primary key{table_str}:\n')
-            _print_primary_key_detection(chosen_pk, sdtype_updated, pii_removed)
+            _print_primary_key_detection(chosen_pk)
 
     def _detect_columns(
         self, data, table_name=None, infer_sdtypes=True, infer_keys='primary_only', verbose=False

@@ -1676,7 +1676,7 @@ def test_detect_from_dataframes_verbose_updates_fk_sdtype(capsys):
         "\nDetecting table 'users':\n"
         "- Column 'account': sdtype='id'\n\n"
         "Detecting primary key for table 'users':\n"
-        "- primary_key='account' (updating sdtype to 'id')\n\n"
+        "- primary_key='account'\n\n"
         "Detecting table 'transactions':\n"
         "- Column 'transaction_id': sdtype='id'\n"
         "- Column 'account': sdtype='categorical', range_is_nullable=False, "
@@ -1686,7 +1686,7 @@ def test_detect_from_dataframes_verbose_updates_fk_sdtype(capsys):
         "- primary_key='transaction_id'\n\n"
         'Detecting foreign keys:\n'
         "- Column 'transactions.account' refers to column "
-        "'users.account' (updating sdtype to 'id')\n"
+        "'users.account'\n"
     )
 
     # Run

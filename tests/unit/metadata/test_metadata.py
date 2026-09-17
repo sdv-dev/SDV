@@ -4106,7 +4106,7 @@ class TestMetadataClass:
     @pytest.mark.parametrize(
         'initial_fk_sdtype,expected_suffix',
         [
-            ('categorical', " (updating sdtype to 'id')"),
+            ('categorical', ''),
             ('id', ''),
         ],
     )

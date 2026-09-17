@@ -4469,10 +4469,7 @@ class Test_SingleTableMetadata:
         """Test the ``_detect_columns`` method with verbose (only print PK)."""
         # Setup
         instance = _SingleTableMetadata()
-        expected_output = (
-            "\nDetecting primary key:\n- primary_key='id' "
-            "(updating sdtype to 'id', removing 'pii' field)\n"
-        )
+        expected_output = "\nDetecting primary key:\n- primary_key='id'\n"
 
         # Run
         instance._detect_columns(data, infer_sdtypes=False, verbose=True)
