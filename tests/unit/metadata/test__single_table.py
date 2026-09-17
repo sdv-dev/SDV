@@ -349,7 +349,7 @@ class Test_SingleTableMetadata:
         # Setup
         instance = _SingleTableMetadata()
 
-        # Run / Assert
+        # Run and Assert
         instance._validate_categorical_and_ordinal('name', sdtype=sdtype, **kwargs)
 
     def test__validate_id(self):

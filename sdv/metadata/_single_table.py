@@ -227,6 +227,7 @@ class _SingleTableMetadata:
 
     @staticmethod
     def _validate_categorical_and_ordinal(column_name, sdtype, **kwargs):
+        """Validate the metadata keys for the categorical and ordinal sdtypes."""
         high_cardinality = kwargs.get('high_cardinality')
         range_values = kwargs.get('range_values')
         if high_cardinality is not None:
