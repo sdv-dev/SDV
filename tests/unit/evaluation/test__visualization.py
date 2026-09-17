@@ -712,7 +712,7 @@ def test_get_column_plot(mock_plot):
     data1 = {'table': table1}
     data2 = {'table': table2}
     metadata = Metadata()
-    metadata.detect_table_from_dataframe('table', table1)
+    metadata._detect_table_from_dataframe('table', table1)
     mock_plot.return_value = 'plot'
 
     # Run
@@ -731,7 +731,7 @@ def test_get_column_plot_only_real_or_synthetic(mock_plot):
     table1 = pd.DataFrame({'col': [1, 2, 3]})
     data1 = {'table': table1}
     metadata = Metadata()
-    metadata.detect_table_from_dataframe('table', table1)
+    metadata._detect_table_from_dataframe('table', table1)
     mock_plot.return_value = 'plot'
 
     # Run
@@ -755,7 +755,7 @@ def test_get_column_pair_plot(mock_plot):
     data1 = {'table': table1}
     data2 = {'table': table2}
     metadata = Metadata()
-    metadata.detect_table_from_dataframe('table', table1)
+    metadata._detect_table_from_dataframe('table', table1)
     mock_plot.return_value = 'plot'
 
     # Run
@@ -781,7 +781,7 @@ def test_get_column_pair_plot_only_real_or_synthetic(mock_plot):
     table1 = pd.DataFrame({'col1': [1, 2, 3], 'col2': [3, 2, 1]})
     data1 = {'table': table1}
     metadata = Metadata()
-    metadata.detect_table_from_dataframe('table', table1)
+    metadata._detect_table_from_dataframe('table', table1)
     mock_plot.return_value = 'plot'
 
     # Run
