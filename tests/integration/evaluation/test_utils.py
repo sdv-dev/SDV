@@ -166,7 +166,7 @@ def _get_demographic_data():
     metadata.add_column('zipcode', 'customer', sdtype='numerical')
     metadata.add_column('gender', 'customer', sdtype='categorical')
 
-    return real_data, metadata
+    return {'customer': real_data}, metadata
 
 
 def test_get_combination_overlap_end_to_end():
@@ -175,19 +175,21 @@ def test_get_combination_overlap_end_to_end():
     real_data, metadata = _get_demographic_data()
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.fit(real_data)
-    synthetic_data = synthesizer.sample(10)
+    synthetic_data = synthesizer.sample('customer', 10)
     column_names = ['date_of_birth', 'zipcode', 'gender']
 
     # Run
     result = get_combination_overlap(
-        real_data={'customer': real_data},
-        synthetic_data={'customer': synthetic_data},
+        real_data=real_data,
+        synthetic_data=synthetic_data,
         table_name='customer',
         column_names=column_names,
         verbose=False,
     )
 
     # Assert
+    real_data = real_data['customer']
+    synthetic_data = synthetic_data['customer']
     real_combinations = set(real_data[column_names].itertuples(index=False, name=None))
     synthetic_combinations = set(synthetic_data[column_names].itertuples(index=False, name=None))
     assert isinstance(result, int)
@@ -202,8 +204,8 @@ def test_get_combination_overlap_with_identical_data(capsys):
 
     # Run
     result = get_combination_overlap(
-        real_data={'customer': real_data},
-        synthetic_data={'customer': real_data.copy()},
+        real_data=real_data,
+        synthetic_data=real_data.copy(),
         table_name='customer',
         column_names=column_names,
     )
@@ -220,7 +222,7 @@ def test_get_combination_overlap_detects_a_single_shared_row():
     real_data, _ = _get_demographic_data()
     synthetic_data = pd.concat(
         [
-            real_data.iloc[[2]],
+            real_data['customer'].iloc[[2]],
             pd.DataFrame({
                 'date_of_birth': ['1993-04-04'],
                 'zipcode': [30301],
@@ -229,11 +231,12 @@ def test_get_combination_overlap_detects_a_single_shared_row():
         ],
         ignore_index=True,
     )
+    synthetic_data = {'customer': synthetic_data}
 
     # Run
     result = get_combination_overlap(
-        real_data={'customer': real_data},
-        synthetic_data={'customer': synthetic_data},
+        real_data=real_data,
+        synthetic_data=synthetic_data,
         table_name='customer',
         column_names=['date_of_birth', 'zipcode', 'gender'],
         verbose=False,

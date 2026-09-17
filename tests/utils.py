@@ -5,12 +5,21 @@ from copy import deepcopy
 from functools import lru_cache
 
 import pandas as pd
+from rdt.transformers.utils import learn_rounding_digits
 
 from sdv.datasets.demo import download_demo
 from sdv.logging import get_sdv_logger
 from sdv.metadata.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
 from sdv.single_table import GaussianCopulaSynthesizer
+
+RANGE_KEYS = {
+    'range_is_nullable',
+    'range_min',
+    'range_max',
+    'range_values',
+    'decimal_places',
+}
 
 
 class DataFrameMatcher:
@@ -51,7 +60,7 @@ class SeriesMatcher:
 
 
 def get_multi_table_metadata():
-    """Return a ``MultiTableMetadata`` object to be used with tests."""
+    """Return a multi-table ``Metadata`` object to be used with tests."""
     dict_metadata = {
         'tables': {
             'nesreca': {
@@ -97,14 +106,14 @@ def get_multi_table_metadata():
                 'child_foreign_key': 'id_nesreca',
             },
         ],
-        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'V1',
     }
 
     return Metadata.load_from_dict(dict_metadata)
 
 
 def get_simplified_multi_table_metadata():
-    """Return a simplified ``MultiTableMetadata`` object to be used with HMA tests."""
+    """Return a simplified ``Metadata`` object to be used with HMA tests."""
     dict_metadata = {
         'tables': {
             'nesreca': {
@@ -144,7 +153,7 @@ def get_simplified_multi_table_metadata():
                 'child_foreign_key': 'id_nesreca',
             },
         ],
-        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'V1',
     }
 
     return Metadata.load_from_dict(dict_metadata)
@@ -231,3 +240,56 @@ def download_test_demo(modality, dataset_name):
     """
     data, metadata = _download_demo(modality, dataset_name)
     return deepcopy(data), deepcopy(metadata)
+
+
+def compare_metadata(metadata, expected_metadata):
+    """Compare metadata, allowing detected range fields to be omitted from expected metadata."""
+    actual = metadata.to_dict() if isinstance(metadata, Metadata) else deepcopy(metadata)
+    expected = (
+        expected_metadata.to_dict()
+        if isinstance(expected_metadata, Metadata)
+        else deepcopy(expected_metadata)
+    )
+
+    for table_name, table in actual['tables'].items():
+        for column_name, column in table['columns'].items():
+            expected_column = expected['tables'][table_name]['columns'][column_name]
+            for key in RANGE_KEYS:
+                if key not in expected_column:
+                    column.pop(key, None)
+
+    assert actual == expected
+
+
+def compare_ranges(metadata, data):
+    """Check that detected ranges are consistent with the source data."""
+    metadata = metadata.to_dict() if isinstance(metadata, Metadata) else metadata
+    for table_name, table in metadata['tables'].items():
+        primary_key = table.get('primary_key')
+        primary_keys = {primary_key} if isinstance(primary_key, str) else set(primary_key or [])
+        for column_name, column in table['columns'].items():
+            sdtype = column.get('sdtype')
+            range_keys = set(column) & RANGE_KEYS
+            if column_name in primary_keys or sdtype == 'unknown':
+                assert not range_keys
+                continue
+
+            column_data = data[table_name][column_name]
+            clean_data = column_data.dropna()
+
+            if 'range_is_nullable' in column:
+                assert column['range_is_nullable'] == column_data.isna().any()
+
+            if 'range_values' in column:
+                assert set(column['range_values']) == set(clean_data)
+
+            if 'range_min' in column:
+                if column['sdtype'] == 'datetime':
+                    assert pd.to_datetime(column['range_min']) == pd.to_datetime(clean_data).min()
+                    assert pd.to_datetime(column['range_max']) == pd.to_datetime(clean_data).max()
+                else:
+                    assert column['range_min'] == clean_data.min()
+                    assert column['range_max'] == clean_data.max()
+
+            if 'decimal_places' in column:
+                assert column['decimal_places'] == learn_rounding_digits(column_data)

@@ -1,7 +1,6 @@
 """Hierarchical Modeling Algorithms."""
 
 import logging
-import warnings
 from collections import defaultdict
 from copy import deepcopy
 
@@ -362,7 +361,9 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                         synthesizer, child_name, child_rows.columns
                     )
                     if not child_rows.empty:
-                        synthesizer.fit_processed_data(child_rows.reset_index(drop=True))
+                        synthesizer.fit_processed_data({
+                            child_name: child_rows.reset_index(drop=True)
+                        })
                         row = synthesizer._get_parameters()
                         row = pd.Series(row)
                         row.index = f'__{child_name}__{foreign_key}__' + row.index
@@ -539,7 +540,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 self._set_extended_columns_distributions(
                     self._table_synthesizers[table_name], table_name, table.columns
                 )
-                self._table_synthesizers[table_name].fit_processed_data(table)
+                self._table_synthesizers[table_name].fit_processed_data({table_name: table})
                 table_parameters = self._table_synthesizers[table_name]._get_parameters()
                 self._default_parameters[table_name] = {
                     parameter: value
@@ -589,11 +590,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             parameters = self._extract_parameters(parent_row, child_name, foreign_key)
             default_parameters = getattr(self, '_default_parameters', {}).get(child_name, {})
             table_meta = self.metadata.get_table_metadata(child_name)
-            with warnings.catch_warnings():
-                warnings.filterwarnings(
-                    'ignore', message=".*The 'SingleTableMetadata' is deprecated.*"
-                )
-                synthesizer = self._synthesizer(table_meta, **self._table_parameters[child_name])
+            synthesizer = self._synthesizer(table_meta, **self._table_parameters[child_name])
 
             extended_columns = getattr(self, '_parent_extended_columns', {}).get(child_name, [])
             if extended_columns:

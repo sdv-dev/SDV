@@ -12,9 +12,12 @@ from datetime import datetime
 import pandas as pd
 from rdt.transformers._validators import AddressValidator, GPSValidator
 from rdt.transformers.pii.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
+from rdt.transformers.utils import MAX_DECIMALS, learn_rounding_digits
 
 from sdv._utils import (
+    _cast_to_datetime64,
     _cast_to_iterable,
+    _datetime_string_matches_format,
     _format_invalid_values_string,
     _get_datetime_format,
     _is_boolean_type,
@@ -48,18 +51,20 @@ INT_REGEX_ZERO_ERROR_MESSAGE = (
     'is stored as an int but the Regex allows it to start with "0". Please remove the Regex '
     'or update it to correspond to valid ints.'
 )
+MAX_RANGE_VALUES = 500
 
 
-class SingleTableMetadata:
+class _SingleTableMetadata:
     """Single Table Metadata class."""
 
     _SDTYPE_KWARGS = {
-        'numerical': frozenset(['computer_representation']),
-        'datetime': frozenset(['datetime_format']),
-        'categorical': frozenset(['order', 'order_by']),
-        'boolean': frozenset([]),
-        'id': frozenset(['regex_format']),
-        'unknown': frozenset(['pii']),
+        'numerical': frozenset(['range_min', 'range_max', 'range_is_nullable', 'decimal_places']),
+        'datetime': frozenset(['datetime_format', 'range_min', 'range_max', 'range_is_nullable']),
+        'categorical': frozenset(['range_values', 'range_is_nullable']),
+        'ordinal': frozenset(['range_values', 'range_is_nullable']),
+        'boolean': frozenset(['range_is_nullable']),
+        'id': frozenset(['regex_format', 'range_is_nullable']),
+        'unknown': frozenset(['pii', 'range_is_nullable']),
     }
 
     _DTYPES_TO_SDTYPES = {
@@ -67,19 +72,6 @@ class SingleTableMetadata:
         'M': 'datetime',
     }
 
-    _NUMERICAL_REPRESENTATIONS = frozenset([
-        'Float32',
-        'Float64',
-        'Float',
-        'Int64',
-        'Int32',
-        'Int16',
-        'Int8',
-        'UInt64',
-        'UInt32',
-        'UInt16',
-        'UInt8',
-    ])
     _KEYS = frozenset([
         'columns',
         'primary_key',
@@ -144,58 +136,111 @@ class SingleTableMetadata:
         'gps': GPSValidator.validate,
     }
 
-    METADATA_SPEC_VERSION = 'SINGLE_TABLE_V1'
+    METADATA_SPEC_VERSION = 'SINGLE_TABLE_V2'
     _DEFAULT_SDTYPES = list(_SDTYPE_KWARGS) + list(SDTYPE_ANONYMIZERS)
     _MIN_ROWS_FOR_PREDICTION = 5
     _NUMERICAL_DTYPES = frozenset(['i', 'f', 'u'])
 
-    def _validate_numerical(self, column_name, **kwargs):
-        representation = kwargs.get('computer_representation')
-        if representation and representation not in self._NUMERICAL_REPRESENTATIONS:
-            raise InvalidMetadataError(
-                f"Invalid value for 'computer_representation' '{representation}'"
-                f" for column '{column_name}'."
+    @staticmethod
+    def _validate_numerical(column_name, **kwargs):
+        errors = []
+
+        bad_range_info = []
+        for range_info in ['range_min', 'range_max']:
+            if range_info in kwargs:
+                range_value = kwargs[range_info]
+                if not pd.api.types.is_number(range_value):
+                    bad_range_info.append(range_info)
+
+        if 'decimal_places' in kwargs:
+            decimal_places = kwargs['decimal_places']
+            if not pd.api.types.is_integer(decimal_places) or decimal_places < 0:
+                errors.append(
+                    f"Invalid `decimal_places` for numerical column '{column_name}'. "
+                    'The `decimal_places` must be an integer greater than or equal to zero.'
+                )
+
+        if bad_range_info:
+            bad_keys = '` and `'.join(bad_range_info)
+            errors.append(
+                f"Invalid `{bad_keys}` for numerical column '{column_name}'. "
+                'Range values must be a float or int.'
             )
+        elif 'range_min' in kwargs and 'range_max' in kwargs:
+            if kwargs['range_max'] < kwargs['range_min']:
+                errors.append(
+                    f"Invalid `range_max` and `range_min` for numerical column '{column_name}'. "
+                    'The `range_max` cannot be less than `range_min`.'
+                )
+
+        if errors:
+            raise InvalidMetadataError('\n'.join(errors))
 
     @staticmethod
     def _validate_datetime(column_name, **kwargs):
         datetime_format = kwargs.get('datetime_format')
         if datetime_format is not None:
             try:
-                formated_date = datetime.now().strftime(datetime_format)
+                formatted_date = datetime.now().strftime(datetime_format)
             except Exception as exception:
                 raise InvalidMetadataError(
                     f"Invalid datetime format string '{datetime_format}' "
                     f"for datetime column '{column_name}'."
                 ) from exception
 
-            matches = re.findall('(%.)|(%)', formated_date)
+            matches = re.findall('(%.)|(%)', formatted_date)
             if matches:
                 raise InvalidMetadataError(
                     f"Invalid datetime format string '{datetime_format}' "
                     f"for datetime column '{column_name}'."
                 )
 
+        ranges = {key: kwargs[key] for key in ['range_min', 'range_max'] if key in kwargs}
+        invalid_ranges = []
+        for range_info, range_value in ranges.items():
+            if datetime_format is not None:
+                if not _datetime_string_matches_format(range_value, datetime_format):
+                    invalid_ranges.append(range_info)
+                    continue
+            else:
+                if not _is_datetime_type(range_value):
+                    invalid_ranges.append(range_info)
+                    continue
+
+            ranges[range_info] = _cast_to_datetime64(range_value, datetime_format)
+
+        if invalid_ranges:
+            bad_keys = '` and `'.join(invalid_ranges)
+            datetime_format_msg = ' that match the `datetime_format`'
+            raise InvalidMetadataError(
+                f"Invalid `{bad_keys}` for datetime column '{column_name}'. "
+                'Range values must be valid datetimes'
+                f'{datetime_format_msg if datetime_format is not None else ""}.'
+            )
+
+        if 'range_min' in ranges and 'range_max' in ranges:
+            if ranges['range_max'] < ranges['range_min']:
+                raise InvalidMetadataError(
+                    f"Invalid `range_max` and `range_min` datetime column '{column_name}'. "
+                    'The `range_max` cannot be less than `range_min`.'
+                )
+
     @staticmethod
-    def _validate_categorical(column_name, **kwargs):
-        order = kwargs.get('order')
-        order_by = kwargs.get('order_by')
-        if order is not None and order_by is not None:
-            raise InvalidMetadataError(
-                f"Categorical column '{column_name}' has both an 'order' and 'order_by' "
-                'attribute. Only 1 is allowed.'
-            )
-        if order_by is not None and order_by not in ('numerical_value', 'alphabetical'):
-            raise InvalidMetadataError(
-                f"Unknown ordering method '{order_by}' provided for categorical column "
-                f"'{column_name}'. Ordering method must be 'numerical_value' or 'alphabetical'."
-            )
-        if (isinstance(order, list) and not len(order)) or (
-            not isinstance(order, list) and order is not None
+    def _validate_categorical(column_name, sdtype, **kwargs):
+        range_values = kwargs.get('range_values')
+        if range_values is not None and (
+            not isinstance(range_values, list) or len(range_values) == 0
         ):
             raise InvalidMetadataError(
-                f"Invalid order value provided for categorical column '{column_name}'. "
-                "The 'order' must be a list with 1 or more elements."
+                f"Invalid `range_values` value provided for {sdtype} column '{column_name}'. "
+                'The `range_values` must be a list with 1 or more elements.'
+            )
+
+        if range_values is not None and any(pd.isna(value) for value in range_values):
+            raise InvalidMetadataError(
+                f"Invalid `range_values` value provided for {sdtype} column '{column_name}'. "
+                'The `range_values` list must not contain null values, use the `range_is_nullable` '
+                'parameter instead.'
             )
 
     @staticmethod
@@ -217,6 +262,15 @@ class SingleTableMetadata:
                 f"'{column_name}'. Expected a value of True or False."
             )
 
+    @staticmethod
+    def _validate_null_range(column_name, **kwargs):
+        if 'range_is_nullable' in kwargs:
+            if not isinstance(kwargs['range_is_nullable'], bool):
+                raise InvalidMetadataError(
+                    f"Invalid `range_is_nullable` value for column '{column_name}'. "
+                    'Expected a value of True or False.'
+                )
+
     def __init__(self):
         self.columns = {}
         self.primary_key = None
@@ -236,7 +290,7 @@ class SingleTableMetadata:
         return False
 
     def _get_unexpected_kwargs(self, sdtype, **kwargs):
-        expected_kwargs = self._SDTYPE_KWARGS.get(sdtype, ['pii'])
+        expected_kwargs = self._SDTYPE_KWARGS.get(sdtype, ['pii', 'range_is_nullable'])
         unexpected_kwargs = set(kwargs) - set(expected_kwargs)
         if unexpected_kwargs:
             unexpected_kwargs = sorted(unexpected_kwargs)
@@ -270,8 +324,11 @@ class SingleTableMetadata:
     def _validate_column_args(self, column_name, sdtype, **kwargs):
         self._validate_sdtype(sdtype)
         self._validate_unexpected_kwargs(column_name, sdtype, **kwargs)
+        self._validate_null_range(column_name, **kwargs)
         if sdtype == 'categorical':
-            self._validate_categorical(column_name, **kwargs)
+            self._validate_categorical(column_name, sdtype='categorical', **kwargs)
+        if sdtype == 'ordinal':
+            self._validate_categorical(column_name, sdtype='ordinal', **kwargs)
         elif sdtype == 'numerical':
             self._validate_numerical(column_name, **kwargs)
         elif sdtype == 'datetime':
@@ -282,7 +339,7 @@ class SingleTableMetadata:
             self._validate_pii(column_name, **kwargs)
 
     def add_column(self, column_name, **kwargs):
-        """Add a column to the ``SingleTableMetadata``.
+        """Add a column to the ``_SingleTableMetadata``.
 
         Args:
             column_name (str):
@@ -331,7 +388,7 @@ class SingleTableMetadata:
         self._validate_column_args(column_name, sdtype, **kwargs_without_sdtype)
 
     def update_column(self, column_name, **kwargs):
-        """Update an existing column in the ``SingleTableMetadata``.
+        """Update an existing column in the ``_SingleTableMetadata``.
 
         Args:
             column_name (str):
@@ -341,7 +398,7 @@ class SingleTableMetadata:
 
         Raises:
             - ``InvalidMetadataError`` if the column doesn't already exist in the
-              ``SingleTableMetadata``.
+              ``_SingleTableMetadata``.
             - ``InvalidMetadataError`` if the column has unexpected values or ``kwargs`` for the
               current
               ``sdtype``.
@@ -448,7 +505,7 @@ class SingleTableMetadata:
         return matches
 
     def to_dict(self):
-        """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
+        """Return a python ``dict`` representation of the ``_SingleTableMetadata``."""
         metadata = {}
         for key in self._KEYS:
             not_version = key != 'METADATA_SPEC_VERSION'
@@ -517,6 +574,34 @@ class SingleTableMetadata:
 
         return None
 
+    def _detect_ordinal_sdtype(self, data):
+        """Detect whether a numerical column should have the ordinal sdtype.
+
+        A numerical column is considered ordinal if:
+        - It contains only whole numbers
+        - It has low cardinality, defined as having at most 10% unique values relative
+          to the total number of rows, capped at 10 unique values.
+
+        Args:
+            data (pandas.Series):
+                The data to be analyzed.
+        """
+        if len(data) <= self._MIN_ROWS_FOR_PREDICTION:
+            return None
+
+        clean_data = data.dropna()
+        if clean_data.empty:
+            return None
+
+        whole_values = (clean_data == clean_data.round()).all()
+        unique_values = clean_data.nunique()
+        ordinal_threshold = min(round(len(data) / 10), 10)
+        low_cardinality = unique_values <= ordinal_threshold
+        if whole_values and low_cardinality:
+            return 'ordinal'
+
+        return None
+
     def _determine_sdtype_for_numbers(self, data, valid_potential_primary_key):
         """Determine the sdtype for a numerical column.
 
@@ -526,22 +611,16 @@ class SingleTableMetadata:
             valid_potential_primary_key(bool):
                 If the column is unique and doesn't have NaNs.
         """
-        sdtype = 'numerical'
+        sdtype = self._detect_ordinal_sdtype(data) or 'numerical'
         pk_candidate = False
+
         if len(data) > self._MIN_ROWS_FOR_PREDICTION:
-            is_not_null = ~data.isna()
-            clean_data = (data == data.round()).loc[is_not_null]
+            clean_data = data.dropna()
             if clean_data.empty:
                 return sdtype, pk_candidate
 
-            whole_values = clean_data.all()
-            positive_values = (data >= 0).loc[is_not_null].all()
-
-            unique_values = data.nunique()
-            unique_lt_categorical_threshold = unique_values <= min(round(len(data) / 10), 10)
-
-            if whole_values and positive_values and unique_lt_categorical_threshold:
-                sdtype = 'categorical'
+            whole_values = (clean_data == clean_data.round()).all()
+            positive_values = (clean_data >= 0).all()
 
             pk_candidate = valid_potential_primary_key and whole_values and positive_values
 
@@ -677,15 +756,7 @@ class SingleTableMetadata:
                 A list of primary key candidates that are pii.
             table_name (str):
                 The name of the table to be analyzed. Defaults to ``None``.
-            verbose (bool):
-                A boolean that determines if information should be printed regarding detection.
-                If True, it prints out information about what is detected.
-                If False, it does not print out any information about what is detected.
-                Defaults to False.
         """
-        if verbose:
-            table_str = f" for table '{table_name}'" if table_name else ''
-            sys.stdout.write(f'\nDetecting primary key{table_str}:\n')
         chosen_pk = None
         sdtype_updated = False
         pii_removed = False
@@ -711,7 +782,86 @@ class SingleTableMetadata:
                 del self.columns[self.primary_key]['pii']
                 pii_removed = True
 
-        if verbose:
+        return chosen_pk, sdtype_updated, pii_removed
+
+    def _detect_range_values(self, data):
+        """Detect the range values for a column.
+
+        This method detects the unique values in a column if there are fewer than
+        `MAX_RANGE_VALUES` unique values.
+
+        Args:
+            data (pandas.Series):
+                The data to be analyzed.
+        """
+        range_values = data.dropna().unique()
+        if len(range_values) < MAX_RANGE_VALUES:
+            return range_values.tolist()
+
+        return None
+
+    def _detect_ranges(self, data):
+        """Detect the range information for all columns.
+
+        Args:
+            data (pandas.DataFrame):
+                The data to be analyzed.
+        """
+        for column_name, column_metadata in self.columns.items():
+            if column_name == self.primary_key:
+                continue
+
+            column_data = data[column_name]
+            sdtype = column_metadata['sdtype']
+            if sdtype == 'unknown':
+                continue
+
+            column_metadata['range_is_nullable'] = bool(column_data.isna().any())
+            clean_data = column_data.dropna()
+            if clean_data.empty:
+                continue
+
+            if sdtype == 'numerical':
+                ranges = clean_data.agg(['min', 'max']).to_dict()
+                column_metadata['range_min'] = ranges['min']
+                column_metadata['range_max'] = ranges['max']
+                digits = learn_rounding_digits(column_data)
+                column_metadata['decimal_places'] = digits if digits is not None else MAX_DECIMALS
+
+            elif sdtype == 'datetime':
+                datetime_format = column_metadata.get('datetime_format')
+                clean_data = pd.to_datetime(clean_data, format=datetime_format, errors='coerce')
+
+                range_min = clean_data.min()
+                range_max = clean_data.max()
+                if datetime_format:
+                    range_min = range_min.strftime(datetime_format)
+                    range_max = range_max.strftime(datetime_format)
+                else:
+                    range_min = str(range_min)
+                    range_max = str(range_max)
+
+                column_metadata['range_min'] = range_min
+                column_metadata['range_max'] = range_max
+
+            elif sdtype in {'categorical', 'ordinal'}:
+                range_values = self._detect_range_values(column_data)
+                if range_values is not None:
+                    column_metadata['range_values'] = range_values
+
+    def _print_detection(
+        self, table_name, data, infer_sdtypes, infer_keys, chosen_pk, sdtype_updated, pii_removed
+    ):
+        if infer_sdtypes:
+            table_str = f"table '{table_name}'" if table_name else 'table'
+            sys.stdout.write(f'\nDetecting {table_str}:\n')
+            for field in data:
+                column_metadata = _format_column_metadata(self.columns[field])
+                sys.stdout.write(f"- Column '{field}': {column_metadata}\n")
+
+        if infer_keys == 'primary_only':
+            table_str = f" for table '{table_name}'" if table_name else ''
+            sys.stdout.write(f'\nDetecting primary key{table_str}:\n')
             _print_primary_key_detection(chosen_pk, sdtype_updated, pii_removed)
 
     def _detect_columns(
@@ -740,10 +890,6 @@ class SingleTableMetadata:
                 If False, it does not print out any information about what is detected.
                 Defaults to False.
         """
-        if verbose and infer_sdtypes:
-            table_str = f"table '{table_name}'" if table_name else 'table'
-            sys.stdout.write(f'\nDetecting {table_str}:\n')
-
         old_columns = data.columns
         data.columns = data.columns.astype(str)
         pk_candidates = []
@@ -767,24 +913,29 @@ class SingleTableMetadata:
                 if sdtype == 'datetime' and dtype == 'O':
                     datetime_format = _get_datetime_format(column_data.iloc[:100])
                     column_dict['datetime_format'] = datetime_format
+
             else:
                 sdtype = 'unknown'
                 column_dict['pii'] = True
 
             column_dict['sdtype'] = sdtype
-
-            if verbose and infer_sdtypes:
-                column_metadata = _format_column_metadata(column_dict)
-                sys.stdout.write(f"- Column '{field}': {column_metadata}\n")
-
             self.columns[field] = deepcopy(column_dict)
+
+        chosen_pk = None
+        sdtype_updated = False
+        pii_removed = False
         if infer_keys == 'primary_only':
-            self._select_primary_key(
+            chosen_pk, sdtype_updated, pii_removed = self._select_primary_key(
                 infer_sdtypes=infer_sdtypes,
                 pk_candidates=pk_candidates,
                 pii_pk_candidates=pii_pk_candidates,
                 table_name=table_name,
-                verbose=verbose,
+            )
+
+        self._detect_ranges(data)
+        if verbose:
+            self._print_detection(
+                table_name, data, infer_sdtypes, infer_keys, chosen_pk, sdtype_updated, pii_removed
             )
 
         self._updated = True
@@ -802,7 +953,7 @@ class SingleTableMetadata:
         """
         if self.columns:
             raise InvalidMetadataError(
-                'Metadata already exists. Create a new ``SingleTableMetadata`` '
+                'Metadata already exists. Create a new ``_SingleTableMetadata`` '
                 'object to detect from other data sources.'
             )
 
@@ -825,7 +976,7 @@ class SingleTableMetadata:
         """
         if self.columns:
             raise InvalidMetadataError(
-                'Metadata already exists. Create a new ``SingleTableMetadata`` '
+                'Metadata already exists. Create a new ``_SingleTableMetadata`` '
                 'object to detect from other data sources.'
             )
 
@@ -860,6 +1011,24 @@ class SingleTableMetadata:
             raise InvalidMetadataError(
                 f'The {key_type}_keys {bad_keys} must have a column of '
                 "type 'id' or another PII type."
+            )
+
+    def _validate_keys_nullable_range(self, keys, key_type):
+        bad_keys = []
+        for key in keys:
+            if any(
+                self.columns[key_col].get('range_is_nullable', False)
+                for key_col in _cast_to_iterable(key)
+            ):
+                bad_keys.append(key)
+
+        if bad_keys:
+            if isinstance(bad_keys[0], (list, tuple)):
+                bad_keys = bad_keys.pop(0)
+
+            bad_keys = _sort_keys(bad_keys)
+            raise InvalidMetadataError(
+                f'The {key_type}_keys {bad_keys} cannot have `range_is_nullable` set to `True`.'
             )
 
     def _validate_key(self, column_name, key_type):
@@ -899,6 +1068,7 @@ class SingleTableMetadata:
                 )
 
             self._validate_keys_sdtype([column_name], key_type)
+            self._validate_keys_nullable_range([column_name], key_type)
 
     def _validate_primary_key_not_in_column_relationship(self, primary_key_candidate):
         if isinstance(primary_key_candidate, list):
@@ -990,6 +1160,7 @@ class SingleTableMetadata:
             )
 
         self._validate_keys_sdtype(keys, 'alternate')
+        self._validate_keys_nullable_range(keys, 'alternate')
 
     def add_alternate_keys(self, column_names):
         """Set the metadata alternate keys.
@@ -1340,6 +1511,14 @@ class SingleTableMetadata:
 
         return set(column[~valid])
 
+    @staticmethod
+    def _get_out_of_range_values(column, min_value, max_value):
+        exceeds_min_value = False if min_value is None else (column < min_value)
+        exceeds_max_value = False if max_value is None else (column > max_value)
+        invalid = (~column.isna()) & (exceeds_min_value | exceeds_max_value)
+
+        return invalid
+
     def _validate_column_data(self, column, sdtype_warnings):
         """Validate the values of the given column against its specified sdtype properties.
 
@@ -1360,17 +1539,39 @@ class SingleTableMetadata:
         """
         column_metadata = self.columns[column.name]
         sdtype = column_metadata['sdtype']
+        missing_values_allowed = column_metadata.get('range_is_nullable', True)
+        range_min = column_metadata.get('range_min')
+        range_max = column_metadata.get('range_max')
+        range_values = column_metadata.get('range_values')
+        decimal_places = column_metadata.get('decimal_places')
         invalid_values = None
+        out_of_range_values = None
+        errors = []
 
         # boolean values must be True/False, None or missing values
         # int/str are not allowed
         if sdtype == 'boolean':
             invalid_values = self._get_invalid_column_values(column, _is_boolean_type)
 
+        if sdtype in ('ordinal', 'categorical') and range_values is not None:
+            out_of_range_values = set(column.dropna().unique()) - set(range_values)
+
         # numerical values must be int/float, None or missing values
         # str/bool are not allowed
         if sdtype == 'numerical':
             invalid_values = self._get_invalid_column_values(column, _is_numerical_type)
+            if not invalid_values:
+                out_of_range_mask = self._get_out_of_range_values(column, range_min, range_max)
+                out_of_range_values = set(column[out_of_range_mask])
+
+            if decimal_places is not None:
+                column_values = column.dropna()
+                data_digits = learn_rounding_digits(column_values)
+                if data_digits is not None and data_digits > decimal_places:
+                    errors += [
+                        f"Values found for numerical column '{column.name}' exceed the allowed "
+                        f'decimal places ({decimal_places}).'
+                    ]
 
         # datetime values must be castable to datetime, None or missing values
         if sdtype == 'datetime':
@@ -1386,6 +1587,19 @@ class SingleTableMetadata:
                     lambda x: pd.isna(x) | _is_datetime_type(x),
                 )
 
+            if not invalid_values:
+                if range_min is not None:
+                    range_min = _cast_to_datetime64(range_min, datetime_format=datetime_format)
+
+                if range_max is not None:
+                    range_max = _cast_to_datetime64(range_max, datetime_format=datetime_format)
+
+                column_values = _cast_to_datetime64(column, datetime_format=datetime_format)
+                out_of_range_mask = self._get_out_of_range_values(
+                    column_values, range_min, range_max
+                )
+                out_of_range_values = set(column[out_of_range_mask])
+
             if datetime_format is None and column.dtype == 'O':
                 sdtype_warnings['Column Name'].append(column.name)
                 sdtype_warnings['sdtype'].append(sdtype)
@@ -1393,9 +1607,22 @@ class SingleTableMetadata:
 
         if invalid_values:
             invalid_values = _format_invalid_values_string(invalid_values, 3)
-            return [f"Invalid values found for {sdtype} column '{column.name}': {invalid_values}."]
+            errors += [
+                f"Invalid values found for {sdtype} column '{column.name}': {invalid_values}."
+            ]
+        elif out_of_range_values:
+            invalid_values = _format_invalid_values_string(out_of_range_values, 3)
+            errors += [
+                f"Out of range values found for {sdtype} column '{column.name}': {invalid_values}."
+            ]
 
-        return []
+        if not missing_values_allowed and any(pd.isna(column)):
+            errors += [
+                f"Invalid null values found for {sdtype} column '{column.name}': "
+                '`range_is_nullable` is set to False.'
+            ]
+
+        return errors
 
     def _check_data_columns_order(self, data_columns):
         data_columns = [column for column in data_columns if column in self.columns]
@@ -1473,8 +1700,8 @@ class SingleTableMetadata:
         """Anonymize metadata by obfuscating column names.
 
         Returns:
-            SingleTableMetadata:
-                An anonymized SingleTableMetadata instance.
+            _SingleTableMetadata:
+                An anonymized _SingleTableMetadata instance.
         """
         anonymized_metadata = {'columns': {}}
 
@@ -1502,7 +1729,7 @@ class SingleTableMetadata:
         if self.sequence_index:
             anonymized_metadata['sequence_index'] = self._anonymized_column_map[self.sequence_index]
 
-        return SingleTableMetadata.load_from_dict(anonymized_metadata)
+        return _SingleTableMetadata.load_from_dict(anonymized_metadata)
 
     def visualize(self, show_table_details='full', output_filepath=None):
         """Create a visualization of the single-table dataset.
@@ -1550,7 +1777,7 @@ class SingleTableMetadata:
         return visualize_graph(node, [], output_filepath)
 
     def save_to_json(self, filepath, mode='write'):
-        """Save the current ``SingleTableMetadata`` in to a ``json`` file.
+        """Save the current ``_SingleTableMetadata`` in to a ``json`` file.
 
         Args:
             filepath (str):
@@ -1595,17 +1822,37 @@ class SingleTableMetadata:
             )
 
     @classmethod
-    def load_from_dict(cls, metadata_dict):
-        """Create a ``SingleTableMetadata`` instance from a python ``dict``.
+    def _load_col_from_dict(cls, column_name, column_dict, metadata_version):
+        """If the sdtype is numerical, skip the `computer_representation` parameter."""
+        if metadata_version == 'V2' or not isinstance(column_dict, dict):
+            return column_dict
 
-        Args:
-            metadata_dict (dict):
-                Python dictionary representing a ``SingleTableMetadata`` object.
+        sdtype = column_dict.get('sdtype')
+        if sdtype == 'categorical' and ('order' in column_dict or 'order_by' in column_dict):
+            warnings.warn(
+                '`order` and `order_by` parameters are deprecated for categorical '
+                f"column '{column_name}'. Ordinal sdtype will be used instead.",
+                category=FutureWarning,
+            )
+            column_dict['sdtype'] = 'ordinal'
+            if 'order' in column_dict:
+                column_dict['range_values'] = column_dict.pop('order')
 
-        Returns:
-            Instance of ``SingleTableMetadata``. Column names are converted to
-            string type.
-        """
+            if 'order_by' in column_dict:
+                del column_dict['order_by']
+
+        elif sdtype == 'numerical' and 'computer_representation' in column_dict:
+            warnings.warn(
+                f"`computer_representation` key for numerical column '{column_name}' "
+                'is deprecated and will be ignored.',
+                category=FutureWarning,
+            )
+            del column_dict['computer_representation']
+
+        return column_dict
+
+    @classmethod
+    def _load_from_dict(cls, metadata_dict, version='V2'):
         instance = cls()
         instance._valdiate_no_extra_keys_metadata_dict(metadata_dict)
         for key in instance._KEYS:
@@ -1613,7 +1860,7 @@ class SingleTableMetadata:
             if value:
                 if key == 'columns':
                     value = {
-                        str(key) if not isinstance(key, str) else key: col
+                        str(key): cls._load_col_from_dict(key, col, version)
                         for key, col in value.items()
                     }
                 elif key == 'primary_key':
@@ -1626,6 +1873,20 @@ class SingleTableMetadata:
         return instance
 
     @classmethod
+    def load_from_dict(cls, metadata_dict):
+        """Create a ``_SingleTableMetadata`` instance from a python ``dict``.
+
+        Args:
+            metadata_dict (dict):
+                Python dictionary representing a ``_SingleTableMetadata`` object.
+
+        Returns:
+            Instance of ``_SingleTableMetadata``. Column names are converted to
+            string type.
+        """
+        return cls._load_from_dict(metadata_dict)
+
+    @classmethod
     def load_from_json(cls, filepath):
         """Create an instance from a ``json`` file.
 
@@ -1634,7 +1895,7 @@ class SingleTableMetadata:
                 String that represents the ``path`` to the ``json`` file.
 
         Returns:
-            A ``SingleTableMetadata`` instance.
+            A ``_SingleTableMetadata`` instance.
 
         Raises:
             - An ``Error`` if the path does not exist.
@@ -1643,14 +1904,14 @@ class SingleTableMetadata:
         metadata = read_json(filepath)
         if 'METADATA_SPEC_VERSION' not in metadata:
             raise InvalidMetadataError(
-                'This metadata file is incompatible with the ``SingleTableMetadata`` '
+                'This metadata file is incompatible with the ``_SingleTableMetadata`` '
                 'class and version.'
             )
 
         return cls.load_from_dict(metadata)
 
     def __repr__(self):
-        """Pretty print the ``SingleTableMetadata``."""
+        """Pretty print the ``_SingleTableMetadata``."""
         printed = json.dumps(self.to_dict(), indent=4)
         return printed
 
@@ -1663,7 +1924,7 @@ class SingleTableMetadata:
                 String that represents the ``path`` to the old metadata ``json`` file.
 
         Returns:
-            A ``SingleTableMetadata`` instance.
+            A ``_SingleTableMetadata`` instance.
 
         Raises:
             Raises a ``ValueError`` if the filepath does not exist.
@@ -1674,7 +1935,7 @@ class SingleTableMetadata:
             if len(tables) > 1:
                 raise InvalidMetadataError(
                     'There are multiple tables specified in the JSON. '
-                    'Try using the MultiTableMetadata class to upgrade this file.'
+                    'Try using the Metadata class to upgrade this file.'
                 )
 
             else:

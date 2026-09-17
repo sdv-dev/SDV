@@ -2,6 +2,7 @@ from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
+import pytest
 from pandas.api.types import is_float_dtype
 
 from sdv.data_processing.numerical_formatter import NumericalFormatter
@@ -12,13 +13,13 @@ class TestNumericalFormatter:
         """Test ``__init__`` attributes properly set."""
         # Run
         formatter = NumericalFormatter(
-            enforce_rounding=True, enforce_min_max_values=True, computer_representation='Int8'
+            enforce_rounding=True, enforce_min_max_values=True, decimal_places=2
         )
 
         # Assert
         assert formatter.enforce_rounding is True
         assert formatter.enforce_min_max_values is True
-        assert formatter.computer_representation == 'Int8'
+        assert formatter.decimal_places == 2
 
     def test_learn_format(self):
         """Test that ``learn_format`` method.
@@ -94,6 +95,30 @@ class TestNumericalFormatter:
 
         # Asserts
         assert formatter._rounding_digits is None
+
+    @pytest.mark.parametrize('enforce_rounding', [True, False])
+    def test_learn_format_with_set_decimal_places(self, enforce_rounding):
+        """Test ``learn_format`` with ``enforce_rounding`` set to ``True``.
+
+        If ``enforce_rounding`` is set to ``True``, the ``learn_format`` method
+        should set its ``_rounding_digits`` instance variable to what is learned
+        in the data.
+
+        Input:
+            - a Series with floats up to 4 decimals and a None value
+
+        Side Effect:
+            - ``_rounding_digits`` is set to 4
+        """
+        # Setup
+        data = pd.Series([1, 2.1, 3.12, 4.123, 5.1234, 6.123, 7.12, 8.1, 9, None])
+        formatter = NumericalFormatter(enforce_rounding=enforce_rounding, decimal_places=2)
+
+        # Run
+        formatter.learn_format(data)
+
+        # Asserts
+        assert formatter._rounding_digits == 2
 
     def test_learn_format_enforce_rounding_true_inf(self):
         """Test ``learn_format`` with ``enforce_rounding`` set to ``True``.
@@ -339,26 +364,3 @@ class TestNumericalFormatter:
 
         # Asserts
         np.testing.assert_array_equal(result, np.array([-300, -300, -300, -250, 0, 125, 400, 400]))
-
-    def test_format_data_enforce_computer_representation(self):
-        """Test ``format_data`` with ``computer_representation`` set to ``Int8``.
-
-        The ``format_data`` method should clip any values out of bounds.
-
-        Input:
-            - Series with values above the max and below the min
-
-        Output:
-            - array with out of bound values clipped to min and max
-        """
-        # Setup
-        data = pd.Series([-np.inf, np.nan, -5000, -301, -100, 0, 125, 401, np.inf])
-        formatter = NumericalFormatter(computer_representation='Int8')
-
-        # Run
-        result = formatter.format_data(data)
-
-        # Asserts
-        np.testing.assert_array_equal(
-            result, np.array([-128, np.nan, -128, -128, -100, 0, 125, 127, 127])
-        )
