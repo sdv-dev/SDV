@@ -291,24 +291,66 @@ class Test_SingleTableMetadata:
             instance._validate_datetime('start_date', **invalid_kwargs)
 
     @pytest.mark.parametrize('sdtype', ['ordinal', 'categorical'])
-    def test__validate_categorical(self, sdtype):
-        """Test the ``_validate_categorical`` method."""
+    @pytest.mark.parametrize(
+        ('kwargs', 'expected_error'),
+        [
+            (
+                {'high_cardinality': 'True'},
+                "Invalid `high_cardinality` value provided for {sdtype} column 'name'. "
+                'The `high_cardinality` must be a boolean value.',
+            ),
+            (
+                {'high_cardinality': True, 'range_values': ['a', 'b', 'c']},
+                'Invalid combination of `high_cardinality` and `range_values` for {sdtype} '
+                "column 'name'. If high_cardinality is set to True, then range_values is not "
+                'allowed to be set for the column.',
+            ),
+            (
+                {'range_values': 'a'},
+                "Invalid `range_values` value provided for {sdtype} column 'name'. "
+                'The `range_values` must be a list with 1 or more elements.',
+            ),
+            (
+                {'range_values': []},
+                "Invalid `range_values` value provided for {sdtype} column 'name'. "
+                'The `range_values` must be a list with 1 or more elements.',
+            ),
+            (
+                {'range_values': ['a', None]},
+                "Invalid `range_values` value provided for {sdtype} column 'name'. "
+                'The `range_values` list must not contain null values, use the '
+                '`range_is_nullable` parameter instead.',
+            ),
+        ],
+    )
+    def test__validate_categorical_and_ordinal(self, sdtype, kwargs, expected_error):
+        """Test the ``_validate_categorical_and_ordinal`` method."""
+        # Setup
+        instance = _SingleTableMetadata()
+        expected_error = re.escape(expected_error.format(sdtype=sdtype))
+
+        # Run and Assert
+        with pytest.raises(InvalidMetadataError, match=expected_error):
+            instance._validate_categorical_and_ordinal('name', sdtype=sdtype, **kwargs)
+
+    @pytest.mark.parametrize('sdtype', ['ordinal', 'categorical'])
+    @pytest.mark.parametrize(
+        'kwargs',
+        [
+            {},
+            {'range_values': ['a', 'b', 'c']},
+            {'high_cardinality': False},
+            {'high_cardinality': True},
+            {'high_cardinality': False, 'range_values': ['a', 'b', 'c']},
+        ],
+    )
+    def test__validate_categorical_and_ordinal_valid(self, sdtype, kwargs):
+        """Test the ``_validate_categorical_and_ordinal`` method with valid arguments."""
         # Setup
         instance = _SingleTableMetadata()
 
         # Run / Assert
-        instance._validate_categorical('name', sdtype=sdtype)
-        instance._validate_categorical('name', sdtype=sdtype, range_values=['a', 'b', 'c'])
-
-        error_msg_range_values = re.escape(
-            f"Invalid `range_values` value provided for {sdtype} column 'name'. "
-            'The `range_values` must be a list with 1 or more elements.'
-        )
-        with pytest.raises(InvalidMetadataError, match=error_msg_range_values):
-            instance._validate_categorical('name', sdtype=sdtype, range_values='a')
-
-        with pytest.raises(InvalidMetadataError, match=error_msg_range_values):
-            instance._validate_categorical('name', sdtype=sdtype, range_values=[])
+        instance._validate_categorical_and_ordinal('name', sdtype=sdtype, **kwargs)
 
     def test__validate_id(self):
         """Test the ``_validate_id`` method.
@@ -483,7 +525,7 @@ class Test_SingleTableMetadata:
         mock__validate_numerical.assert_called_once_with('age', range_min=0.0)
 
     @patch('sdv.metadata._single_table._SingleTableMetadata._validate_unexpected_kwargs')
-    @patch('sdv.metadata._single_table._SingleTableMetadata._validate_categorical')
+    @patch('sdv.metadata._single_table._SingleTableMetadata._validate_categorical_and_ordinal')
     def test__validate_column_categorical(self, mock__validate_categorical, mock__validate_kwargs):
         """Test ``_validate_column`` method.
 
@@ -499,10 +541,10 @@ class Test_SingleTableMetadata:
 
         Mock:
             - ``_validate_unexpected_kwargs``
-            - ``_validate_categorical`` function from ``_SingleTableMetadata``.
+            - ``_validate_categorical_and_ordinal`` function from ``_SingleTableMetadata``.
 
         Side effects:
-            - ``_validate_categorical`` has been called once.
+            - ``_validate_categorical_and_ordinal`` has been called once.
         """
         # Setup
         instance = _SingleTableMetadata()
@@ -1315,11 +1357,13 @@ class Test_SingleTableMetadata:
             'sdtype': 'categorical',
             'range_values': ['a', 'b'],
             'range_is_nullable': True,
+            'high_cardinality': False,
         }
         assert instance.columns['ordinal'] == {
             'sdtype': 'ordinal',
             'range_values': [1, 2],
             'range_is_nullable': True,
+            'high_cardinality': False,
         }
         assert instance.columns['boolean'] == {
             'sdtype': 'boolean',
@@ -1352,6 +1396,7 @@ class Test_SingleTableMetadata:
         assert instance.columns['categorical'] == {
             'sdtype': 'categorical',
             'range_is_nullable': False,
+            'high_cardinality': True,
         }
 
     def test__detect_columns(self, data):
@@ -1668,6 +1713,7 @@ class Test_SingleTableMetadata:
                 'sdtype': 'categorical',
                 'range_is_nullable': True,
                 'range_values': ['cat', 'dog'],
+                'high_cardinality': False,
             },
             'date': {
                 'sdtype': 'datetime',
@@ -1693,6 +1739,7 @@ class Test_SingleTableMetadata:
                 'sdtype': 'categorical',
                 'range_is_nullable': True,
                 'range_values': [True, False],
+                'high_cardinality': False,
             },
         }
 
@@ -1930,6 +1977,7 @@ class Test_SingleTableMetadata:
                 'sdtype': 'categorical',
                 'range_is_nullable': True,
                 'range_values': ['cat', 'dog', 'tiger'],
+                'high_cardinality': False,
             },
             'date': {
                 'datetime_format': '%Y-%m-%d',
@@ -1956,6 +2004,7 @@ class Test_SingleTableMetadata:
                 'sdtype': 'categorical',
                 'range_is_nullable': True,
                 'range_values': [True, False],
+                'high_cardinality': False,
             },
         }
 
@@ -2006,6 +2055,7 @@ class Test_SingleTableMetadata:
                 'sdtype': 'categorical',
                 'range_is_nullable': True,
                 'range_values': ['cat', 'dog', 'tiger'],
+                'high_cardinality': False,
             },
             'date': {
                 'sdtype': 'datetime',
@@ -2031,6 +2081,7 @@ class Test_SingleTableMetadata:
                 'sdtype': 'categorical',
                 'range_is_nullable': True,
                 'range_values': [True, False],
+                'high_cardinality': False,
             },
         }
 
@@ -4397,11 +4448,11 @@ class Test_SingleTableMetadata:
             "- Column 'alternate_id': sdtype='id', range_is_nullable=False\n"
             "- Column 'alternate_id_string': sdtype='id', range_is_nullable=False\n"
             "- Column 'categorical': sdtype='categorical', range_is_nullable=False, "
-            "range_values=['a', 'b']\n"
+            "range_values=['a', 'b'], high_cardinality=False\n"
             "- Column 'bool': sdtype='categorical', range_is_nullable=False, "
-            'range_values=[True, False]\n'
+            'range_values=[True, False], high_cardinality=False\n'
             "- Column 'unknown': sdtype='categorical', range_is_nullable=True, range_values=["
-            "'a', 'b', 'c', 1, 2.2, 'd', 'e', 'f']\n"
+            "'a', 'b', 'c', 1, 2.2, 'd', 'e', 'f'], high_cardinality=False\n"
             "- Column 'first_name': sdtype='first_name', pii=True, range_is_nullable=False\n"
             '\nDetecting primary key:\n'
             "- primary_key='id'\n"
@@ -4444,11 +4495,11 @@ class Test_SingleTableMetadata:
             "- Column 'alternate_id': sdtype='id', range_is_nullable=False\n"
             "- Column 'alternate_id_string': sdtype='id', range_is_nullable=False\n"
             "- Column 'categorical': sdtype='categorical', range_is_nullable=False, "
-            "range_values=['a', 'b']\n"
+            "range_values=['a', 'b'], high_cardinality=False\n"
             "- Column 'bool': sdtype='categorical', range_is_nullable=False, "
-            'range_values=[True, False]\n'
+            'range_values=[True, False], high_cardinality=False\n'
             "- Column 'unknown': sdtype='categorical', range_is_nullable=True, "
-            "range_values=['a', 'b', 'c', 1, 2.2, 'd', 'e', 'f']\n"
+            "range_values=['a', 'b', 'c', 1, 2.2, 'd', 'e', 'f'], high_cardinality=False\n"
             "- Column 'first_name': sdtype='first_name', pii=True, range_is_nullable=False\n"
         )
 
