@@ -15,6 +15,7 @@ from pandas.api.types import is_float, is_integer
 from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 from rdt.transformers.utils import _GENERATORS, strings_from_regex
 
+from sdv import version
 from sdv.errors import InvalidDataTypeError, SDVVersionWarning, SynthesizerInputError, VersionError
 
 try:
@@ -350,8 +351,6 @@ def check_sdv_versions_and_warn(synthesizer):
             If the current SDV or SDV Enterprise version does not match the version used to fit
             the synthesizer.
     """
-    from sdv import version
-
     current_community_version = getattr(version, 'community', None)
     current_enterprise_version = getattr(version, 'enterprise', None)
     if getattr(synthesizer, '_fitted', False):
@@ -448,8 +447,6 @@ def check_synthesizer_version(synthesizer, is_fit_method=False, compare_operator
         VersionError:
             If the current version of the software is lower than the synthesizer's version.
     """
-    from sdv import version
-
     current_community_version = getattr(version, 'community', None)
     current_enterprise_version = getattr(version, 'enterprise', None)
     static_message = 'Downgrading your SDV version is not supported.'
@@ -522,8 +519,6 @@ def generate_synthesizer_id(synthesizer):
         ID:
             A unique identifier for this synthesizer.
     """
-    from sdv import version
-
     class_name = synthesizer.__class__.__name__
     synth_version = version.community
     unique_id = ''.join(str(uuid.uuid4()).split('-'))

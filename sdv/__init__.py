@@ -14,6 +14,7 @@ import warnings
 from importlib.metadata import entry_points
 from operator import attrgetter
 from types import ModuleType
+from sdv import _utils
 
 from sdv import (
     data_processing,

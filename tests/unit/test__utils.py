@@ -448,7 +448,7 @@ def test_check_sdv_versions_and_warn_community_mismatch():
         check_sdv_versions_and_warn(synthesizer)
 
 
-@patch('sdv.version')
+@patch('sdv._utils.version')
 def test_check_sdv_versions_and_warn_enterprise_mismatch(mock_version):
     """Test that warnings is raised when enterprise version is mismatched."""
     # Setup
@@ -470,7 +470,7 @@ def test_check_sdv_versions_and_warn_enterprise_mismatch(mock_version):
         check_sdv_versions_and_warn(synthesizer)
 
 
-@patch('sdv.version')
+@patch('sdv._utils.version')
 def test_check_sdv_versions_and_warn_community_and_enterprise_mismatch(mock_version):
     """Test that warnings is raised when both community and enterprise version mismatch."""
     # Setup
@@ -531,7 +531,7 @@ def test__compare_versions_lower():
     assert result is False
 
 
-@patch('sdv.version')
+@patch('sdv._utils.version')
 def test_check_synthesizer_version_community_and_enterprise_are_lower(mock_version):
     """Test that VersionError is raised when both community and enterprise version are higher."""
     # Setup
@@ -550,7 +550,7 @@ def test_check_synthesizer_version_community_and_enterprise_are_lower(mock_versi
         check_synthesizer_version(synthesizer)
 
 
-@patch('sdv.version')
+@patch('sdv._utils.version')
 def test_check_synthesizer_version_community_is_lower(mock_version):
     """Test that VersionError is raised when only community version is lower."""
     # Setup
@@ -568,7 +568,7 @@ def test_check_synthesizer_version_community_is_lower(mock_version):
         check_synthesizer_version(synthesizer)
 
 
-@patch('sdv.version')
+@patch('sdv._utils.version')
 def test_check_synthesizer_version_enterprise_is_lower(mock_version):
     """Test that VersionError is raised when only enterprise version is lower."""
     # Setup
@@ -586,7 +586,7 @@ def test_check_synthesizer_version_enterprise_is_lower(mock_version):
         check_synthesizer_version(synthesizer)
 
 
-@patch('sdv.version')
+@patch('sdv._utils.version')
 def test_check_synthesizer_version_enterprise_is_none(mock_version):
     """Test that no VersionError is raised enterprise is None on the synthesizer."""
     # Setup
@@ -615,7 +615,7 @@ def test__get_root_tables():
     assert result == {'parent'}
 
 
-@patch('sdv.version')
+@patch('sdv._utils.version')
 def test_check_synthesizer_version_check_synthesizer_is_greater(mock_version):
     """Test that ``VersionError`` is raised when checking if synthesizer is greater.
 
@@ -638,7 +638,7 @@ def test_check_synthesizer_version_check_synthesizer_is_greater(mock_version):
         check_synthesizer_version(synthesizer, is_fit_method=True, compare_operator=operator.lt)
 
 
-@patch('sdv.version')
+@patch('sdv._utils.version')
 def test_check_synthesizer_version_check_synthesizer_is_greater_equal(mock_version):
     """Test that no ``VersionError`` is raised when versions match."""
     # Setup
@@ -651,7 +651,7 @@ def test_check_synthesizer_version_check_synthesizer_is_greater_equal(mock_versi
     check_synthesizer_version(synthesizer, is_fit_method=True, compare_operator=operator.lt)
 
 
-@patch('sdv.version')
+@patch('sdv._utils.version')
 def test_check_synthesizer_version_check_synthesizer_is_greater_community_mismatch(mock_version):
     """Test that ``VersionError`` is raised when checking if synthesizer is greater.
 
@@ -674,7 +674,7 @@ def test_check_synthesizer_version_check_synthesizer_is_greater_community_mismat
         check_synthesizer_version(synthesizer, is_fit_method=True, compare_operator=operator.lt)
 
 
-@patch('sdv.version')
+@patch('sdv._utils.version')
 def test_check_synthesizer_version_check_synthesizer_is_greater_both_mismatch(mock_version):
     """Test that ``VersionError`` is raised when community and enterprise are greater.
 
@@ -698,7 +698,7 @@ def test_check_synthesizer_version_check_synthesizer_is_greater_both_mismatch(mo
 
 
 @patch('sdv._utils.uuid')
-@patch('sdv.version')
+@patch('sdv._utils.version')
 def test_generate_synthesizer_id(mock_version, mock_uuid):
     """Test that ``generate_synthesizer_id`` returns the expected id."""
     # Setup
