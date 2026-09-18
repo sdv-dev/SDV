@@ -24,10 +24,10 @@ from sdv import (
     logging,
     metadata,
     metrics,
+    single_table,
     multi_table,
     sampling,
     sequential,
-    single_table,
     version,
     utils,
 )
@@ -40,10 +40,10 @@ __all__ = [
     'logging',
     'metadata',
     'metrics',
+    'single_table',
     'multi_table',
     'sampling',
     'sequential',
-    'single_table',
     'version',
     'utils',
 ]
