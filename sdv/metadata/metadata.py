@@ -726,7 +726,6 @@ class Metadata:
                         continue
 
                     try:
-                        sdtype_updated = False
                         if pk_sdtype == 'id' and original_fk_sdtype != 'id':
                             update_kwargs = {'sdtype': 'id'}
                             if 'range_is_nullable' in original_fk_meta:
@@ -739,7 +738,6 @@ class Metadata:
                                 column_name=primary_key,
                                 **update_kwargs,
                             )
-                            sdtype_updated = True
                         self.add_relationship(
                             parent_candidate, child_candidate, primary_key, primary_key
                         )
@@ -747,9 +745,8 @@ class Metadata:
                         if verbose:
                             child_col = f"'{child_candidate}.{primary_key}'"
                             parent_col = f"'{parent_candidate}.{primary_key}'"
-                            suffix = " (updating sdtype to 'id')" if sdtype_updated else ''
                             sys.stdout.write(
-                                f'- Column {child_col} refers to column {parent_col}{suffix}\n'
+                                f'- Column {child_col} refers to column {parent_col}\n'
                             )
 
                     except InvalidMetadataError:

@@ -1676,17 +1676,17 @@ def test_detect_from_dataframes_verbose_updates_fk_sdtype(capsys):
         "\nDetecting table 'users':\n"
         "- Column 'account': sdtype='id'\n\n"
         "Detecting primary key for table 'users':\n"
-        "- primary_key='account' (updating sdtype to 'id')\n\n"
+        "- primary_key='account'\n\n"
         "Detecting table 'transactions':\n"
         "- Column 'transaction_id': sdtype='id'\n"
         "- Column 'account': sdtype='categorical', range_is_nullable=False, "
         "range_values=['acct_0', 'acct_1', 'acct_2', 'acct_3', 'acct_4', 'acct_5', "
-        "'acct_6', 'acct_7', 'acct_8', 'acct_9']\n\n"
+        "'acct_6', 'acct_7', 'acct_8', 'acct_9'], high_cardinality=False\n\n"
         "Detecting primary key for table 'transactions':\n"
         "- primary_key='transaction_id'\n\n"
         'Detecting foreign keys:\n'
         "- Column 'transactions.account' refers to column "
-        "'users.account' (updating sdtype to 'id')\n"
+        "'users.account'\n"
     )
 
     # Run
@@ -1747,6 +1747,7 @@ def test_detect_from_dataframes_small_dataset():
                         'sdtype': 'categorical',
                         'range_is_nullable': False,
                         'range_values': [True, False],
+                        'high_cardinality': False,
                     },
                 },
             },
@@ -1764,11 +1765,13 @@ def test_detect_from_dataframes_small_dataset():
                         'sdtype': 'categorical',
                         'range_is_nullable': False,
                         'range_values': ['food', 'travel'],
+                        'high_cardinality': False,
                     },
                     'rating': {
                         'sdtype': 'ordinal',
                         'range_is_nullable': False,
                         'range_values': [1, 2, 3, 4, 5],
+                        'high_cardinality': False,
                     },
                     'amount': {
                         'sdtype': 'numerical',
@@ -1796,6 +1799,42 @@ def test_detect_from_dataframes_small_dataset():
         data,
         foreign_key_inference_algorithm='column_name_match',
     )
+
+    # Assert
+    assert metadata.to_dict() == expected_metadata
+
+
+def test_detect_from_dataframes_high_cardinality():
+    """Test the detection of high cardinality columns."""
+    # Setup
+    data = {
+        'users': pd.DataFrame({
+            'user_id': range(3000),
+            'categorical': [f'user_{i}' for i in range(600)] * 5,
+        })
+    }
+    expected_metadata = {
+        'tables': {
+            'users': {
+                'primary_key': 'user_id',
+                'columns': {
+                    'user_id': {
+                        'sdtype': 'id',
+                    },
+                    'categorical': {
+                        'sdtype': 'categorical',
+                        'range_is_nullable': False,
+                        'high_cardinality': True,
+                    },
+                },
+            },
+        },
+        'relationships': [],
+        'METADATA_SPEC_VERSION': 'V2',
+    }
+
+    # Run
+    metadata = Metadata.detect_from_dataframes(data)
 
     # Assert
     assert metadata.to_dict() == expected_metadata

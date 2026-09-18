@@ -12,7 +12,6 @@ import pandas as pd
 from sdv._utils import _cast_to_datetime64, _cast_to_iterable
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.errors import RefitWarning, SynthesizerInputError, TableNameError
-from sdv.metadata import Metadata
 
 PRECISION_LEVELS = {
     '%Y': 1,  # Year
@@ -484,6 +483,8 @@ def _remove_columns_from_metadata(metadata, table_name, columns_to_drop):
     Returns:
         (sdv.metadata.Metadata): The new Metadata, with the columns removed.
     """
+    from sdv.metadata import Metadata
+
     if isinstance(metadata, Metadata):
         metadata = metadata.to_dict()
     column_set = set(columns_to_drop)

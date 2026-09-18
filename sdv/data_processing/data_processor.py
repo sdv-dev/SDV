@@ -316,8 +316,9 @@ class DataProcessor:
             rdt.transformers.BaseTransformer:
                 A categorical transformer.
         """
-        if 'range_values' in parameters:
-            parameters.pop('range_values')
+        for parameter in ['high_cardinality', 'range_values']:
+            if parameter in parameters:
+                parameters.pop(parameter)
 
         return self._get_transformer_with_parameters(parameters, transformer)
 
@@ -337,6 +338,9 @@ class DataProcessor:
         if 'range_values' in parameters:
             order = parameters.pop('range_values')
             parameters['order'] = order
+
+        if 'high_cardinality' in parameters:
+            parameters.pop('high_cardinality')
 
         return self._get_transformer_with_parameters(parameters, transformer)
 
@@ -404,6 +408,7 @@ class DataProcessor:
             'pii',
             'sdtype',
             'range_values',
+            'high_cardinality',
         ]
         parameters = {
             key: value for key, value in column_metadata.items() if key not in non_param_keys

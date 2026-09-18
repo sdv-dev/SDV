@@ -19,6 +19,7 @@ RANGE_KEYS = {
     'range_max',
     'range_values',
     'decimal_places',
+    'high_cardinality',
 }
 
 
