@@ -14,7 +14,6 @@ import warnings
 from importlib.metadata import entry_points
 from operator import attrgetter
 from types import ModuleType
-from sdv import _utils
 
 from sdv import (
     data_processing,
@@ -24,10 +23,10 @@ from sdv import (
     logging,
     metadata,
     metrics,
-    single_table,
     multi_table,
     sampling,
     sequential,
+    single_table,
     version,
     utils,
 )
@@ -40,10 +39,10 @@ __all__ = [
     'logging',
     'metadata',
     'metrics',
-    'single_table',
     'multi_table',
     'sampling',
     'sequential',
+    'single_table',
     'version',
     'utils',
 ]
