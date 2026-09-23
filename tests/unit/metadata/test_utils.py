@@ -83,23 +83,13 @@ def test__format_column_metadata_mixed_value_types():
     assert result == "sdtype='datetime', datetime_format=None, pii=True"
 
 
-@pytest.mark.parametrize(
-    'sdtype_updated,pii_removed,expected',
-    [
-        (False, False, "- primary_key='user_id'\n"),
-        (True, False, "- primary_key='user_id' (updating sdtype to 'id')\n"),
-        (False, True, "- primary_key='user_id' (removing 'pii' field)\n"),
-        (
-            True,
-            True,
-            "- primary_key='user_id' (updating sdtype to 'id', removing 'pii' field)\n",
-        ),
-    ],
-)
-def test__print_primary_key_detection(capsys, sdtype_updated, pii_removed, expected):
-    """Test ``_print_primary_key_detection`` prints the PK with and without notes."""
+def test__print_primary_key_detection(capsys):
+    """Test ``_print_primary_key_detection`` prints the PK."""
+    # Setup
+    expected = "- primary_key='user_id'\n"
+
     # Run
-    _print_primary_key_detection('user_id', sdtype_updated, pii_removed)
+    _print_primary_key_detection('user_id')
 
     # Assert
     assert capsys.readouterr().out == expected
@@ -108,7 +98,7 @@ def test__print_primary_key_detection(capsys, sdtype_updated, pii_removed, expec
 def test__print_primary_key_detection_no_pk(capsys):
     """Test ``_print_primary_key_detection`` prints a fallback message when no PK ."""
     # Run
-    _print_primary_key_detection(None, False, False)
+    _print_primary_key_detection(None)
 
     # Assert
     assert capsys.readouterr().out == '- No primary key found\n'

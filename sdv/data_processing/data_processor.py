@@ -403,7 +403,7 @@ class DataProcessor:
             'range_is_nullable',
             'pii',
             'sdtype',
-            'range_values',
+            'high_cardinality',
         ]
         parameters = {
             key: value for key, value in column_metadata.items() if key not in non_param_keys
