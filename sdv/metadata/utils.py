@@ -68,16 +68,9 @@ def _format_column_metadata(sdtype_info):
     return ', '.join(parts)
 
 
-def _print_primary_key_detection(chosen_pk, sdtype_updated, pii_removed):
+def _print_primary_key_detection(chosen_pk):
     if not chosen_pk:
         sys.stdout.write('- No primary key found\n')
         return
 
-    notes = []
-    if sdtype_updated:
-        notes.append("updating sdtype to 'id'")
-    if pii_removed:
-        notes.append("removing 'pii' field")
-
-    suffix = f' ({", ".join(notes)})' if notes else ''
-    sys.stdout.write(f"- primary_key='{chosen_pk}'{suffix}\n")
+    sys.stdout.write(f"- primary_key='{chosen_pk}'\n")
