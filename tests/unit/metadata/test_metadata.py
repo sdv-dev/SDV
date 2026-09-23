@@ -818,6 +818,7 @@ class TestMetadataClass:
                             'sdtype': 'categorical',
                             'range_is_nullable': False,
                             'range_values': ['a', 'b', 'c'],
+                            'high_cardinality': False,
                         },
                     },
                 },
@@ -836,6 +837,7 @@ class TestMetadataClass:
                             'sdtype': 'categorical',
                             'range_is_nullable': False,
                             'range_values': ['a', 'b', 'c'],
+                            'high_cardinality': False,
                         },
                     },
                 },
@@ -1459,6 +1461,7 @@ class TestMetadataClass:
                             'sdtype': 'categorical',
                             'range_is_nullable': False,
                             'range_values': ['a', 'b', 'c'],
+                            'high_cardinality': False,
                         },
                     },
                     'primary_key': 'pk',
@@ -1477,6 +1480,7 @@ class TestMetadataClass:
                             'sdtype': 'categorical',
                             'range_is_nullable': False,
                             'range_values': ['a', 'b', 'c'],
+                            'high_cardinality': False,
                         },
                     },
                     'primary_key': 'pk',
@@ -4102,7 +4106,7 @@ class TestMetadataClass:
     @pytest.mark.parametrize(
         'initial_fk_sdtype,expected_suffix',
         [
-            ('categorical', " (updating sdtype to 'id')"),
+            ('categorical', ''),
             ('id', ''),
         ],
     )
