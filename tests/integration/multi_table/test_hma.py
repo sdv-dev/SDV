@@ -2841,13 +2841,14 @@ def test_range_extrapolation_warns_to_install_bundle():
         'based on the training data. To extrapolate ranges for full coverage, '
         'please use the Targeted Sampling bundle.'
     )
-    with pytest.warns(UserWarning, match=expected_msg):
+    with pytest.warns(UserWarning, match=expected_msg) as caught_warnings:
         hmasynthesizer.fit(data)
 
     # Run
     sample = hmasynthesizer.sample('guests', len(data['guests']))
 
     # Assert
+    assert len(caught_warnings) == 1
     assert min(sample['guests']['room_rate']) >= min(data['guests']['room_rate'])
 
 
