@@ -529,7 +529,7 @@ class TestBaseSynthesizer:
         instance.validate(data)
 
     @patch('sdv.single_table.base._get_single_table_data')
-    def test_auto_assign_transformers(self, mock_get_single_table_data):
+    def test__auto_assign_transformers(self, mock_get_single_table_data):
         """Test that the ``DataProcessor.prepare_for_fitting`` is being called."""
         # Setup
         instance = Mock()
@@ -542,13 +542,29 @@ class TestBaseSynthesizer:
         instance._validate_transform_constraints = Mock(return_value=table_data)
 
         # Run
+        BaseSynthesizer._auto_assign_transformers(instance, data)
+
+        # Assert
+        mock_get_single_table_data.assert_called_once_with(data)
+        instance._validate_transform_constraints.assert_called_once_with(table_data)
+        instance._data_processor.prepare_for_fitting.assert_called_once_with(table_data)
+
+    def test_auto_assign_transformers(self):
+        """Test that the data is validated before `_auto_assign_transformers` is called."""
+        # Setup
+        instance = Mock()
+        table_data = pd.DataFrame({
+            'name': ['John', 'Doe', 'Johanna'],
+            'salary': [80.0, 90.0, 120.0],
+        })
+        data = {'table': table_data}
+
+        # Run
         BaseSynthesizer.auto_assign_transformers(instance, data)
 
         # Assert
         instance.validate.assert_called_once_with(data)
-        mock_get_single_table_data.assert_called_once_with(data)
-        instance._validate_transform_constraints.assert_called_once_with(table_data)
-        instance._data_processor.prepare_for_fitting.assert_called_once_with(table_data)
+        instance._auto_assign_transformers.assert_called_once_with(data)
 
     def test_auto_assign_transformers_with_invalid_data(self):
         """Test that auto_assign_transformer throws useful error about invalid data"""

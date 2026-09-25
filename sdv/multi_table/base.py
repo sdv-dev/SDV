@@ -527,7 +527,7 @@ class BaseMultiTableSynthesizer:
         if it is not the primary key in the table, then the transformer is set to None (
         meaning no transformer is assigned).
         """
-        synthesizer.auto_assign_transformers({table_name: table_data})
+        synthesizer._auto_assign_transformers({table_name: table_data})
         primary_key = self.metadata.tables[table_name].primary_key
         foreign_key_columns = self.metadata._get_all_foreign_keys(table_name)
         column_name_to_transformers = {
@@ -552,6 +552,7 @@ class BaseMultiTableSynthesizer:
         for table_name, table_data in data.items():
             self._validate_table_name(table_name)
             synthesizer = self._table_synthesizers[table_name]
+            synthesizer.validate({table_name: table_data})
             self._assign_table_transformers(synthesizer, table_name, table_data)
 
     def get_transformers(self, table_name):
