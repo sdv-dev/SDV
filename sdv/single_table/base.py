@@ -339,6 +339,11 @@ class BaseSynthesizer:
 
         return Metadata.load_from_dict(self.metadata.to_dict(), table_name)
 
+    def _auto_assign_transformers(self, data):
+        table_data = _get_single_table_data(data)
+        table_data = self._validate_transform_constraints(table_data)
+        self._data_processor.prepare_for_fitting(table_data)
+
     def auto_assign_transformers(self, data):
         """Automatically assign the required transformers for the given data and constraints.
 
@@ -351,9 +356,7 @@ class BaseSynthesizer:
                 to fit the model.
         """
         self.validate(data)
-        table_data = _get_single_table_data(data)
-        table_data = self._validate_transform_constraints(table_data)
-        self._data_processor.prepare_for_fitting(table_data)
+        self._auto_assign_transformers(data)
 
     def get_transformers(self):
         """Get a dictionary mapping of ``column_name``  and ``rdt.transformers``.
