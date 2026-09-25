@@ -69,7 +69,12 @@ def evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
         metadata=metadata,
     )
     quality_report = QualityReport()
-    quality_report.generate(real_data, synthetic_data, metadata.to_dict(), verbose)
+    quality_report.generate(
+        real_data=real_data,
+        synthetic_data=synthetic_data,
+        metadata=metadata.to_dict(),
+        verbose=verbose,
+    )
     return quality_report
 
 
@@ -98,5 +103,10 @@ def run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
         metadata=metadata,
     )
     diagnostic_report = DiagnosticReport()
-    diagnostic_report.generate(real_data, synthetic_data, metadata.to_dict(), verbose)
+    diagnostic_report.generate(
+        real_data=real_data,
+        synthetic_data=synthetic_data,
+        metadata=metadata.to_dict(),
+        verbose=verbose,
+    )
     return diagnostic_report

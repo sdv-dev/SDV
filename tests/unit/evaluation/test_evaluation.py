@@ -285,10 +285,10 @@ def test_evaluate_quality_calls_generate(data_format):
 
     # Assert
     quality_report.generate.assert_called_once_with(
-        expected_real_data,
-        expected_synthetic_data,
-        metadata.to_dict(),
-        True,
+        real_data=expected_real_data,
+        synthetic_data=expected_synthetic_data,
+        metadata=metadata.to_dict(),
+        verbose=True,
     )
     assert result is quality_report
 
@@ -336,9 +336,9 @@ def test__run_diagnostic_calls_generate(data_format):
 
     # Assert
     diagnostic_report.generate.assert_called_once_with(
-        expected_real_data,
-        expected_synthetic_data,
-        metadata.to_dict(),
-        True,
+        real_data=expected_real_data,
+        synthetic_data=expected_synthetic_data,
+        metadata=metadata.to_dict(),
+        verbose=True,
     )
     assert result is diagnostic_report

@@ -1,5 +1,11 @@
 # Release Notes
 
+## v1.38.4 - 2026-09-25
+
+### Bugs Fixed
+
+* Update `evaluate_quality` and `run_diagnostic` to be compatible with changes to reports API - Issue [#2997](https://github.com/sdv-dev/SDV/issues/2997) by @frances-h
+
 ## v1.38.3 - 2026-09-04
 
 ### New Features
