@@ -550,7 +550,7 @@ class TestBaseSynthesizer:
         instance._data_processor.prepare_for_fitting.assert_called_once_with(table_data)
 
     def test_auto_assign_transformers(self):
-        """Test that the ``DataProcessor.prepare_for_fitting`` is being called."""
+        """Test that the data is validated before `_auto_assign_transformers` is called."""
         # Setup
         instance = Mock()
         table_data = pd.DataFrame({
