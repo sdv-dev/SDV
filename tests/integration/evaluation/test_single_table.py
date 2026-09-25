@@ -44,8 +44,8 @@ def test_evaluation():
     pd.testing.assert_frame_equal(
         report.get_properties(),
         pd.DataFrame({
-            'Property': ['Data Validity', 'Data Structure'],
-            'Score': [1.0, 1.0],
+            'Property': ['Data Validity', 'Data Structure', 'Constraint Validity'],
+            'Score': [1.0, 1.0, None],
         }),
     )
 
@@ -69,8 +69,8 @@ def test_evaluation_metadata():
     pd.testing.assert_frame_equal(
         report.get_properties(),
         pd.DataFrame({
-            'Property': ['Data Validity', 'Data Structure'],
-            'Score': [1.0, 1.0],
+            'Property': ['Data Validity', 'Data Structure', 'Constraint Validity'],
+            'Score': [1.0, 1.0, None],
         }),
     )
 

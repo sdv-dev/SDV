@@ -28,7 +28,12 @@ def test_evaluate_quality():
     evaluate_quality(data1, data2, metadata)
 
     # Assert
-    QualityReport.generate.assert_called_once_with(data1, data2, metadata.to_dict(), True)
+    QualityReport.generate.assert_called_once_with(
+        real_data=data1,
+        synthetic_data=data2,
+        metadata=metadata.to_dict(),
+        verbose=True,
+    )
 
 
 def test_run_diagnostic():
@@ -45,7 +50,12 @@ def test_run_diagnostic():
     run_diagnostic(data1, data2, metadata)
 
     # Assert
-    DiagnosticReport.generate.assert_called_once_with(data1, data2, metadata.to_dict(), True)
+    DiagnosticReport.generate.assert_called_once_with(
+        real_data=data1,
+        synthetic_data=data2,
+        metadata=metadata.to_dict(),
+        verbose=True,
+    )
 
 
 @patch('sdv.evaluation.single_table.get_column_plot')

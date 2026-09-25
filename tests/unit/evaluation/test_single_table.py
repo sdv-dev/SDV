@@ -32,10 +32,10 @@ def test_evaluate_quality():
 
     # Assert
     QualityReport.generate.assert_called_once_with(
-        DataFrameDictMatcher({'table': data1}),
-        DataFrameDictMatcher({'table': data2}),
-        metadata.to_dict(),
-        True,
+        real_data=DataFrameDictMatcher({'table': data1}),
+        synthetic_data=DataFrameDictMatcher({'table': data2}),
+        metadata=metadata.to_dict(),
+        verbose=True,
     )
 
 
@@ -53,10 +53,10 @@ def test_evaluate_quality_metadata():
 
     # Assert
     QualityReport.generate.assert_called_once_with(
-        DataFrameDictMatcher({'table': data1}),
-        DataFrameDictMatcher({'table': data2}),
-        metadata.to_dict(),
-        True,
+        real_data=DataFrameDictMatcher({'table': data1}),
+        synthetic_data=DataFrameDictMatcher({'table': data2}),
+        metadata=metadata.to_dict(),
+        verbose=True,
     )
 
 
@@ -75,10 +75,10 @@ def test_run_diagnostic():
 
     # Assert
     DiagnosticReport.generate.assert_called_once_with(
-        DataFrameDictMatcher({'table': data1}),
-        DataFrameDictMatcher({'table': data2}),
-        metadata.to_dict(),
-        True,
+        real_data=DataFrameDictMatcher({'table': data1}),
+        synthetic_data=DataFrameDictMatcher({'table': data2}),
+        metadata=metadata.to_dict(),
+        verbose=True,
     )
 
 
@@ -96,10 +96,10 @@ def test_run_diagnostic_metadata():
 
     # Assert
     DiagnosticReport.generate.assert_called_once_with(
-        DataFrameDictMatcher({'table': data1}),
-        DataFrameDictMatcher({'table': data2}),
-        metadata.to_dict(),
-        True,
+        real_data=DataFrameDictMatcher({'table': data1}),
+        synthetic_data=DataFrameDictMatcher({'table': data2}),
+        metadata=metadata.to_dict(),
+        verbose=True,
     )
 
 
