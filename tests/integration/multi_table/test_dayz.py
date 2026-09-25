@@ -120,6 +120,7 @@ class TestDayZSynthesizer:
                         'numerical': {'sdtype': 'numerical'},
                         'datetime': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
                         'categorical': {'sdtype': 'categorical'},
+                        'ordinal': {'sdtype': 'ordinal'},
                         'pii': {'sdtype': 'ssn'},
                         'extra_column': {'sdtype': 'numerical'},
                     },

@@ -60,8 +60,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
 
     Args:
         metadata (sdv.metadata.Metadata):
-            Single table metadata representing the data that this synthesizer will be used for.
-            * sdv.metadata.SingleTableMetadata can be used but will be deprecated.
+            Metadata representing the data that this synthesizer will be used for.
         enforce_min_max_values (bool):
             Specify whether or not to clip the data returned by ``reverse_transform`` of
             the numerical transformer, ``FloatFormatter``, to the min and max values seen
@@ -92,10 +91,6 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
         enable_gpu (bool):
             Whether to attempt to use GPU for computation.
             Defaults to ``True``.
-        cuda (bool or str):
-            **Deprecated**
-            If ``True``, use CUDA. If an ``str``, use the indicated device.
-            If ``False``, do not use cuda at all.
         numerical_distributions (dict):
             Dictionary that maps field names from the table that is being modeled with
             the distribution that needs to be used. The distributions can be passed as either
@@ -146,7 +141,6 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
         enable_gpu=True,
         numerical_distributions=None,
         default_distribution=None,
-        cuda=None,
     ):
         super().__init__(
             metadata,
@@ -167,7 +161,6 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             epochs=epochs,
             pac=pac,
             enable_gpu=enable_gpu,
-            cuda=cuda,
         )
 
         validate_numerical_distributions(
@@ -191,7 +184,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
         sdtypes = {}
         for column in processed_data.columns:
             sdtype = columns.get(column, {}).get('sdtype')
-            if column in columns and sdtype not in ['categorical', 'boolean']:
+            if column in columns and sdtype not in ['categorical', 'boolean', 'ordinal']:
                 sdtypes[column] = 'numerical'
                 distribution = self._numerical_distributions.get(column, self._default_distribution)
 

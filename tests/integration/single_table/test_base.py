@@ -14,7 +14,6 @@ from sdv import version
 from sdv.cag import FixedCombinations, Inequality
 from sdv.datasets.demo import download_demo
 from sdv.errors import InvalidDataError, SamplingError, VersionError
-from sdv.metadata import SingleTableMetadata
 from sdv.metadata.metadata import Metadata
 from sdv.sampling import Condition
 from sdv.single_table import (
@@ -24,10 +23,10 @@ from sdv.single_table import (
     TVAESynthesizer,
 )
 from sdv.single_table.base import BaseSingleTableSynthesizer
-from sdv.utils import load_constraints
+from sdv.utils import load_constraints, load_synthesizer
 
 METADATA = Metadata.load_from_dict({
-    'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+    'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
     'columns': {
         'column1': {'sdtype': 'numerical'},
         'column2': {'sdtype': 'numerical'},
@@ -59,6 +58,7 @@ def test_conditional_sampling_graceful_reject_sampling_true_dict(synthesizer):
         'column2': list(range(100)),
         'column3': list(range(100)),
     })
+    data = {'table': data}
 
     synthesizer.fit(data)
     conditions = [Condition({'column1': 28, 'column2': 37, 'column3': 93})]
@@ -74,6 +74,7 @@ def test_conditional_sampling_graceful_reject_sampling_true_dataframe(synthesize
         'column2': list(range(100)),
         'column3': list(range(100)),
     })
+    data = {'table': data}
 
     synthesizer.fit(data)
     conditions = pd.DataFrame({'column1': [28], 'column2': [37], 'column3': [93]})
@@ -102,6 +103,7 @@ def test_sample_from_conditions_with_batch_size():
         'column2': list(range(100)),
         'column3': list(range(100)),
     })
+    data = {'table': data}
 
     metadata = Metadata()
     metadata.add_table('table')
@@ -129,6 +131,7 @@ def test_sample_from_conditions_negative_float():
         'column2': list(range(100)),
         'column3': list(range(100)),
     })
+    data = {'table': data}
 
     metadata = Metadata()
     metadata.add_table('table')
@@ -197,9 +200,10 @@ def test_sample_keys_are_scrambled():
     synthesizer.fit(data)
 
     # Run
-    sampled = synthesizer.sample(1000)
+    sampled = synthesizer.sample('fake_hotel_guests', 1000)
 
     # Assert
+    sampled = sampled['fake_hotel_guests']
     ids = sampled['guest_email'].head()
     expected_keys = pd.Series(['AQQ', 'BBI', 'AET', 'AZM', 'AHZ'], name='guest_email')
     pd.testing.assert_series_equal(ids, expected_keys)
@@ -221,6 +225,8 @@ def test_multiple_fits():
         'state': ['CA', 'CA', 'IL', 'CA', 'CA'],
         'measurement': [27.1, 28.7, 26.9, 21.2, 30.9],
     })
+    data_1 = {'table': data_1}
+    data_2 = {'table': data_2}
     metadata = Metadata()
     metadata.add_table('table')
     metadata.add_column('city', 'table', sdtype='categorical')
@@ -250,13 +256,16 @@ def test_sampling(synthesizer):
         'column2': list(range(100)),
         'column3': list(range(100)),
     })
+    data = {'table': data}
     synthesizer.fit(data)
 
     # Run
-    sample_1 = synthesizer.sample(10)
-    sample_2 = synthesizer.sample(10)
+    sample_1 = synthesizer.sample('table', 10)
+    sample_2 = synthesizer.sample('table', 10)
 
     # Assert
+    sample_1 = sample_1['table']
+    sample_2 = sample_2['table']
     with pytest.raises(AssertionError):
         pd.testing.assert_frame_equal(sample_1, sample_2)
 
@@ -265,7 +274,7 @@ def test_sampling(synthesizer):
 def test_sampling_reset_sampling(synthesizer):
     """Test ``sample`` method for each synthesizer using ``reset_sampling``."""
     metadata = Metadata.load_from_dict({
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V2',
         'columns': {
             'column1': {'sdtype': 'numerical'},
             'column2': {'sdtype': 'address'},
@@ -279,6 +288,7 @@ def test_sampling_reset_sampling(synthesizer):
         'column3': [str(i) for i in (range(100))],
         'column4': [str(i) for i in (range(100))],
     })
+    data = {'table': data}
 
     if isinstance(synthesizer, (CTGANSynthesizer, TVAESynthesizer)):
         synthesizer = synthesizer.__class__(metadata, enable_gpu=False)
@@ -287,10 +297,9 @@ def test_sampling_reset_sampling(synthesizer):
 
     synthesizer.fit(data)
 
-    sampled1 = synthesizer.sample(10)
+    sampled1 = synthesizer.sample('table', 10)['table']
     synthesizer.reset_sampling()
-    sampled2 = synthesizer.sample(10)
-
+    sampled2 = synthesizer.sample('table', 10)['table']
     pd.testing.assert_frame_equal(sampled1, sampled2)
 
 
@@ -301,9 +310,10 @@ def test_config_creation_doesnt_raise_error():
         'address_col': ['223 Williams Rd', '75 Waltham St', '77 Mass Ave'],
         'numerical_col': [1, 2, 3],
     })
+    test_data = {'table': test_data}
 
     # Run
-    test_metadata = Metadata.detect_from_dataframes({'table': test_data})
+    test_metadata = Metadata.detect_from_dataframes(test_data)
     test_metadata.update_column(
         table_name='table', column_name='address_col', sdtype='address', pii=False
     )
@@ -321,8 +331,8 @@ def test_transformers_correctly_auto_assigned():
         'numerical_col': [1, 2, 3],
         'categorical_col': ['a', 'b', 'a'],
     })
-
-    metadata = Metadata.detect_from_dataframes({'table': data})
+    data = {'table': data}
+    metadata = Metadata.detect_from_dataframes(data)
     metadata.update_column(
         table_name='table', column_name='primary_key', sdtype='id', regex_format='user-[0-9]{3}'
     )
@@ -375,6 +385,7 @@ def test_modeling_with_complex_datetimes():
             ],
         }
     )
+    data = {'table': data}
 
     test_metadata = {
         'columns': {
@@ -389,7 +400,7 @@ def test_modeling_with_complex_datetimes():
     synth = GaussianCopulaSynthesizer(metadata)
     synth.validate(data)
     synth.fit(data)
-    sampled = synth.sample(10)
+    sampled = synth.sample('table', 10)
 
     # Assert
     synth.validate(sampled)
@@ -410,8 +421,9 @@ def test_auto_assign_transformers_and_update_with_pii():
             'name': ['A', 'A', 'B', 'B', 'B'],
         }
     )
+    data = {'table': data}
 
-    metadata = Metadata.detect_from_dataframes({'table': data})
+    metadata = Metadata.detect_from_dataframes(data)
 
     # Run
     metadata.update_column(table_name='table', column_name='id', sdtype='first_name')
@@ -442,19 +454,20 @@ def test_refitting_a_model():
             'name': ['A', 'A', 'B', 'B', 'B'],
         }
     )
+    data = {'table': data}
 
-    metadata = Metadata.detect_from_dataframes({'table': data})
+    metadata = Metadata.detect_from_dataframes(data)
     metadata.update_column(table_name='table', column_name='name', sdtype='name')
     metadata.update_column('id', 'table', sdtype='id')
     metadata.set_primary_key('id', 'table')
 
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.fit(data)
-    first_sample = synthesizer.sample(10)
+    first_sample = synthesizer.sample('table', 10)['table']
 
     # Run
     synthesizer.fit(data)
-    second_sample = synthesizer.sample(10)
+    second_sample = synthesizer.sample('table', 10)['table']
 
     # Assert
     assert all(second_sample['name'] == first_sample['name'])
@@ -468,6 +481,7 @@ def test_get_info():
     """
     # Setup
     data = pd.DataFrame({'col': [1, 2, 3]})
+    data = {'table': data}
     today = datetime.datetime.today().strftime('%Y-%m-%d')
     metadata = Metadata()
     metadata.add_table('table')
@@ -515,16 +529,11 @@ def test_get_constraints_and_load_constraints(tmp_path, synthesizer_class):
     synthesizer = synthesizer_class(metadata)
     synthesizer.add_constraints([inequality_constraint, fixed_combinations_constraint])
     new_synthesizer = synthesizer_class(metadata)
-    expected_warning = re.escape(
-        'Warning: The `set_constraints` method is deprecated. '
-        'Please use the `load_constraints` utility function to load constraints from a file '
-        'and add them to the synthesizer with the `add_constraints` method.'
-    )
 
     # Run
     synthesizer.get_constraints(filepath=filepath)
-    with pytest.warns(FutureWarning, match=expected_warning):
-        new_synthesizer.set_constraints(filepath=filepath)
+    constraints = load_constraints(filepath=filepath)
+    new_synthesizer.add_constraints(constraints)
 
     # Assert
     assert [str(constraint) for constraint in synthesizer.get_constraints()] == [
@@ -602,7 +611,7 @@ def test_save_and_load(tmp_path):
     instance.save(synthesizer_path)
 
     # Run
-    loaded_instance = BaseSingleTableSynthesizer.load(synthesizer_path)
+    loaded_instance = load_synthesizer(synthesizer_path)
 
     # Assert
     assert isinstance(loaded_instance, BaseSingleTableSynthesizer)
@@ -621,7 +630,7 @@ def test_save_and_load_no_id(tmp_path):
     instance.save(synthesizer_path)
 
     # Run
-    loaded_instance = BaseSingleTableSynthesizer.load(synthesizer_path)
+    loaded_instance = load_synthesizer(synthesizer_path)
 
     # Assert
     assert isinstance(loaded_instance, BaseSingleTableSynthesizer)
@@ -649,7 +658,7 @@ def test_save_and_load_with_downgraded_version(tmp_path):
         'Downgrading your SDV version is not supported.'
     )
     with pytest.raises(VersionError, match=error_msg):
-        BaseSingleTableSynthesizer.load(synthesizer_path)
+        load_synthesizer(synthesizer_path)
 
 
 @patch('sdv.single_table.base.BaseSingleTableSynthesizer._fit')
@@ -675,6 +684,7 @@ def test_metadata_updated_no_warning(mock__fit, tmp_path):
         'col 2': [4, 5, 6],
         'col 3': ['a', 'b', 'c'],
     })
+    data = {'table': data}
 
     # Run 1
     with warnings.catch_warnings(record=True) as captured_warnings:
@@ -686,7 +696,7 @@ def test_metadata_updated_no_warning(mock__fit, tmp_path):
     assert len(captured_warnings) == 0
 
     # Run 2
-    metadata_detect = Metadata.detect_from_dataframes({'mock_table': data})
+    metadata_detect = Metadata.detect_from_dataframes(data)
     file_name = tmp_path / 'singletable.json'
     metadata_detect.save_to_json(file_name)
     with warnings.catch_warnings(record=True) as captured_warnings:
@@ -699,7 +709,7 @@ def test_metadata_updated_no_warning(mock__fit, tmp_path):
 
     # Run 3
     instance = BaseSingleTableSynthesizer(metadata_detect)
-    metadata_detect.update_column('col 1', 'mock_table', sdtype='categorical')
+    metadata_detect.update_column('col 1', 'table', sdtype='categorical')
     file_name = tmp_path / 'singletable_2.json'
     metadata_detect.save_to_json(file_name)
     with warnings.catch_warnings(record=True) as captured_warnings:
@@ -708,43 +718,6 @@ def test_metadata_updated_no_warning(mock__fit, tmp_path):
 
     # Assert
     assert len(captured_warnings) == 0
-
-
-@patch('sdv.single_table.base.BaseSingleTableSynthesizer._fit')
-def test_metadata_updated_warning_detect(mock__fit):
-    """Test that using ``detect_from_dataframe`` without saving the metadata raise a warning.
-
-    The warning is expected to be raised only once during synthesizer initialization. It should
-    not be raised again when calling ``fit``.
-    """
-    # Setup
-    data = pd.DataFrame({
-        'col 1': [1, 2, 3],
-        'col 2': [4, 5, 6],
-        'col 3': ['a', 'b', 'c'],
-    })
-    metadata = SingleTableMetadata()
-    metadata.detect_from_dataframe(data)
-    expected_user_message = (
-        "We strongly recommend saving the metadata using 'save_to_json' for replicability"
-        ' in future SDV versions.'
-    )
-    expected_deprecation_message = (
-        "The 'SingleTableMetadata' is deprecated. "
-        "Please use the new 'Metadata' class for synthesizers."
-    )
-
-    # Run
-    with warnings.catch_warnings(record=True) as record:
-        instance = BaseSingleTableSynthesizer(metadata)
-        instance.fit(data)
-
-    # Assert
-    assert len(record) == 2
-    assert record[0].category is FutureWarning
-    assert str(record[0].message) == expected_deprecation_message
-    assert record[1].category is UserWarning
-    assert str(record[1].message) == expected_user_message
 
 
 parametrization = [
@@ -786,10 +759,9 @@ def test_metadata_updated_warning(method, kwargs):
     )
 
     # Run
-    single_metadata = metadata._convert_to_single_table()
-    single_metadata.__getattribute__(method)(**kwargs)
+    metadata.__getattribute__(method)(**kwargs)
     with pytest.warns(UserWarning, match=expected_message):
-        instance = BaseSingleTableSynthesizer(single_metadata)
+        instance = BaseSingleTableSynthesizer(metadata)
 
     # Assert
     assert instance.metadata.tables['table']._updated is False
@@ -803,7 +775,8 @@ def test_fit_raises_version_error():
         'col 2': [4, 5, 6],
         'col 3': ['a', 'b', 'c'],
     })
-    metadata = Metadata.detect_from_dataframes({'table': data})
+    data = {'table': data}
+    metadata = Metadata.detect_from_dataframes(data)
     instance = BaseSingleTableSynthesizer(metadata)
     instance._fitted_sdv_version = '1.0.0'
 
@@ -824,7 +797,7 @@ def test_fit_and_sample_numerical_col_names(synthesizer_class):
     num_rows = 50
     num_cols = 10
     values = {i: np.random.randint(0, 100, size=num_rows) for i in range(num_cols)}
-    data = pd.DataFrame(values)
+    data = {'table': pd.DataFrame(values)}
     metadata = Metadata()
     metadata_dict = {'columns': {}}
     for i in range(num_cols):
@@ -834,11 +807,11 @@ def test_fit_and_sample_numerical_col_names(synthesizer_class):
     # Run
     synth = synthesizer_class(metadata)
     synth.fit(data)
-    sample_1 = synth.sample(10)
-    sample_2 = synth.sample(10)
+    sample_1 = synth.sample('table', 10)['table']
+    sample_2 = synth.sample('table', 10)['table']
 
-    assert sample_1.columns.tolist() == data.columns.tolist()
-    assert sample_2.columns.tolist() == data.columns.tolist()
+    assert sample_1.columns.tolist() == data['table'].columns.tolist()
+    assert sample_2.columns.tolist() == data['table'].columns.tolist()
 
     # Assert
     with pytest.raises(AssertionError):
@@ -849,7 +822,11 @@ def test_fit_and_sample_numerical_col_names(synthesizer_class):
 def test_sample_not_fitted(synthesizer):
     """Test that a synthesizer raises an error when trying to sample without fitting."""
     # Setup
-    metadata = Metadata()
+    metadata = Metadata.load_from_dict({
+        'columns': {
+            'column1': {'sdtype': 'numerical'},
+        }
+    })
     synthesizer = synthesizer.__class__(metadata)
     expected_message = re.escape(
         'This synthesizer has not been fitted. Please fit your synthesizer first before'
@@ -858,7 +835,7 @@ def test_sample_not_fitted(synthesizer):
 
     # Run and Assert
     with pytest.raises(SamplingError, match=expected_message):
-        synthesizer.sample(10)
+        synthesizer.sample('table', 10)
 
 
 @pytest.mark.parametrize('synthesizer_class', SYNTHESIZERS_CLASSES)
@@ -870,15 +847,16 @@ def test_detect_from_dataframe_numerical_col(synthesizer_class):
         2: [4, 5, 6],
         3: ['a', 'b', 'c'],
     })
+    data = {'table': data}
 
     # Run
-    metadata = Metadata.detect_from_dataframes({'table': data})
+    metadata = Metadata.detect_from_dataframes(data)
     instance = synthesizer_class(metadata)
     instance.fit(data)
-    sample = instance.sample(5)
+    sample = instance.sample('table', 5)['table']
 
     # Assert
-    assert sample.columns.tolist() == data.columns.tolist()
+    assert sample.columns.tolist() == data['table'].columns.tolist()
 
 
 REGEXES = ['[0-9]{3,4}', '0HQ-[a-z]', '0+', r'\d', r'\d{1,5}', r'\w']
@@ -894,8 +872,8 @@ def test_fit_int_primary_key_regex_includes_zero(synthesizer_class, regex):
         'b': [4, 5, 6],
         'c': ['a', 'b', 'c'],
     })
-    metadata = SingleTableMetadata()
-    metadata.detect_from_dataframe(data)
+    data = {'table': data}
+    metadata = Metadata.detect_from_dataframes(data)
     metadata.update_column('a', sdtype='id', regex_format=regex)
     metadata.set_primary_key('a')
 
@@ -938,7 +916,7 @@ def test_sample_not_fitted_raises_error():
 
     # Run and Assert
     with pytest.raises(SamplingError, match=expected_message):
-        GaussianCopulaSynthesizer(METADATA).sample(num_rows=10)
+        GaussianCopulaSynthesizer(METADATA).sample('table', num_rows=10)
 
 
 def test_sample_from_conditions_not_fitted_raises_error():
@@ -953,3 +931,168 @@ def test_sample_from_conditions_not_fitted_raises_error():
     # Run and Assert
     with pytest.raises(SamplingError, match=expected_message):
         GaussianCopulaSynthesizer(METADATA).sample_from_conditions(conditions=conditions)
+
+
+@pytest.mark.parametrize('synthesizer_class', SYNTHESIZERS_CLASSES)
+def test_range_extrapolation_warns_to_install_bundle(synthesizer_class):
+    """Test that range extrapolation warns the user."""
+    # Setup
+    data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
+    metadata.update_column(
+        table_name='fake_hotel_guests',
+        column_name='room_rate',
+        range_min=(min(data['fake_hotel_guests']['room_rate']) - 1),
+    )
+    synthesizer = synthesizer_class(metadata)
+
+    # Run and Assert
+    expected_msg = re.escape(
+        'The training data does not cover the full range. Synthetic data will be '
+        'based on the training data. To extrapolate ranges for full coverage, '
+        'please use the Targeted Sampling bundle.'
+    )
+    with pytest.warns(UserWarning, match=expected_msg):
+        synthesizer.fit(data)
+
+    # Run
+    sampled = synthesizer.sample('fake_hotel_guests', 1000)
+
+    # Assert
+    sampled = sampled['fake_hotel_guests']
+    assert min(sampled['room_rate']) >= min(data['fake_hotel_guests']['room_rate'])
+
+
+@pytest.mark.parametrize(
+    'method, method_kwargs, expected_num_rows',
+    [
+        pytest.param(
+            'sample',
+            {
+                'table_name': 'table',
+                'num_rows': 10,
+            },
+            10,
+            id='sample',
+        ),
+        pytest.param(
+            'sample_from_conditions',
+            {
+                'conditions': [
+                    Condition({'column1': 1}),
+                ],
+            },
+            1,
+            id='sample_from_conditions',
+        ),
+        pytest.param(
+            'sample_remaining_columns',
+            {
+                'known_columns': pd.DataFrame(
+                    {'column1': [1, 2, 3, 1, 2]},
+                ),
+            },
+            5,
+            id='sample_remaining_columns',
+        ),
+    ],
+)
+def test_sample_methods_with_output_folder_path(
+    tmp_path,
+    method,
+    method_kwargs,
+    expected_num_rows,
+):
+    """Test that the sample methods save the sampled data in the output folder."""
+    # Setup
+    data = {
+        'table': pd.DataFrame({
+            'column1': [1, 2, 3],
+            'column2': [4, 5, 6],
+        })
+    }
+    metadata = Metadata.detect_from_dataframes(data)
+    output_folder_path = tmp_path / 'output'
+    output_file_path = output_folder_path / 'table.csv'
+
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.fit(data)
+
+    # Run
+    sampled = getattr(synthesizer, method)(
+        output_folder_path=str(output_folder_path),
+        **method_kwargs,
+    )
+
+    # Assert
+    sampled = sampled if isinstance(sampled, pd.DataFrame) else sampled['table']
+    assert output_file_path.exists()
+    assert len(sampled) == expected_num_rows
+
+    saved_data = pd.read_csv(output_file_path)
+    pd.testing.assert_frame_equal(
+        saved_data.sort_values(by='column1').reset_index(drop=True),
+        sampled.sort_values(by='column1').reset_index(drop=True),
+        check_dtype=False,
+    )
+
+
+@pytest.mark.parametrize(
+    'method, method_kwargs',
+    [
+        pytest.param(
+            'sample',
+            {
+                'table_name': 'table',
+                'num_rows': 10,
+            },
+            id='sample',
+        ),
+        pytest.param(
+            'sample_from_conditions',
+            {
+                'conditions': [
+                    Condition({'column1': 1, 'column2': 4}),
+                ],
+            },
+            id='sample_from_conditions',
+        ),
+        pytest.param(
+            'sample_remaining_columns',
+            {
+                'known_columns': pd.DataFrame(
+                    {'column1': [1, 2, 3, 1, 2]},
+                ),
+            },
+            id='sample_remaining_columns',
+        ),
+    ],
+)
+def test_sample_methods_with_existing_output_file(
+    tmp_path,
+    method,
+    method_kwargs,
+):
+    """Test that the sample methods raise an error if the output file already exists."""
+    # Setup
+    data = {
+        'table': pd.DataFrame({
+            'column1': [1, 2, 3],
+            'column2': [4, 5, 6],
+        })
+    }
+    metadata = Metadata.detect_from_dataframes(data)
+    output_folder_path = tmp_path / 'output'
+    output_folder_path.mkdir()
+    output_file_path = output_folder_path / 'table.csv'
+    output_file_path.touch()
+
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.fit(data)
+
+    # Run and Assert
+    error_msg = f'The following output files already exist:\n{output_file_path}'
+    with pytest.raises(AssertionError, match=re.escape(error_msg)):
+        getattr(synthesizer, method)(
+            output_folder_path=str(output_folder_path),
+            **method_kwargs,
+        )

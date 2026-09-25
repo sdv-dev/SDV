@@ -12,6 +12,7 @@ from rdt.transformers import (
     BinaryEncoder,
     FloatFormatter,
     IndexGenerator,
+    OrderedUniformEncoder,
     UniformEncoder,
     UnixTimestampEncoder,
 )
@@ -22,8 +23,16 @@ from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError
-from sdv.metadata import SingleTableMetadata
+from sdv.metadata._single_table import _SingleTableMetadata
 from sdv.metadata.metadata import Metadata
+
+
+@pytest.fixture
+def data_metadata():
+    data, metadata = download_demo(modality='single_table', dataset_name='student_placements_pii')
+    metadata.update_column('duration', sdtype='ordinal')
+
+    return data['student_placements_pii'], metadata._convert_to_single_table()
 
 
 class TestDataProcessor:
@@ -59,16 +68,16 @@ class TestDataProcessor:
         dp = DataProcessor(metadata._convert_to_single_table())
 
         # Fit
-        dp.fit(data)
+        dp.fit(data['adult'])
 
         # Transform
-        transformed = dp.transform(data)
+        transformed = dp.transform(data['adult'])
 
         # Reverse Transform
         reverse_transformed = dp.reverse_transform(transformed)
 
         # Assert
-        assert reverse_transformed.occupation.isin(data.occupation).sum() == 0
+        assert reverse_transformed.occupation.isin(data['adult'].occupation).sum() == 0
         assert 'occupation' not in transformed.columns
 
     def test_with_anonymized_columns_and_primary_key(self):
@@ -99,6 +108,7 @@ class TestDataProcessor:
         """
         # Load metadata and data
         data, metadata = download_demo('single_table', 'adult')
+        data = data['adult']
 
         # Add anonymized field
         metadata.update_column('occupation', 'adult', sdtype='job', pii=True)
@@ -156,6 +166,7 @@ class TestDataProcessor:
         """
         # Load metadata and data
         data, _ = download_demo('single_table', 'adult')
+        data = data['adult']
         adult_metadata = Metadata.detect_from_dataframes({'adult': data})
 
         # Add primary key field
@@ -194,6 +205,7 @@ class TestDataProcessor:
         """
         # Load metadata and data
         data, _ = download_demo('single_table', 'adult')
+        data = data['adult']
         data['fnlwgt'] = data['fnlwgt'].astype(str)
         adult_metadata = Metadata.detect_from_dataframes({'adult': data})
 
@@ -233,20 +245,17 @@ class TestDataProcessor:
         assert len(reverse_transformed.secondary_id.unique()) == size
         assert len(reverse_transformed.fnlwgt.unique()) == size
 
-    def test_prepare_for_fitting(self):
+    def test_prepare_for_fitting(self, data_metadata):
         """Test the ``prepare_for_fitting`` method.
 
         Test that the method sets an expected list of transformers for the given
         data types of the ``metadata`` and also respects the extra parameters
         that those have. In this case the columns ``start_date`` and ``end_date`` have
-        a ``datetime_format`` which has to be set to the ``UnixTimestampEncoder`` and
-        the column ``salary`` has a ``computer_representation`` set to ``Int64``.
+        a ``datetime_format`` which has to be set to the ``UnixTimestampEncoder``.
         """
         # Setup
-        data, metadata = download_demo(
-            modality='single_table', dataset_name='student_placements_pii'
-        )
-        dp = DataProcessor(metadata._convert_to_single_table())
+        data, single_table_metadata = data_metadata
+        dp = DataProcessor(single_table_metadata)
 
         # Run
         dp.prepare_for_fitting(data)
@@ -259,7 +268,7 @@ class TestDataProcessor:
             'placed': UniformEncoder,
             'student_id': AnonymizedFaker,
             'experience_years': FloatFormatter,
-            'duration': UniformEncoder,
+            'duration': OrderedUniformEncoder,
             'salary': FloatFormatter,
             'second_perc': FloatFormatter,
             'start_date': UnixTimestampEncoder,
@@ -281,13 +290,12 @@ class TestDataProcessor:
 
         assert field_transformers['start_date'].datetime_format == '%Y-%m-%d'
         assert field_transformers['end_date'].datetime_format == '%Y-%m-%d'
-        assert field_transformers['salary'].computer_representation == 'Int64'
 
-    def test_reverse_transform_with_formatters(self):
+    def test_reverse_transform_with_formatters(self, data_metadata):
         """End to end test using formatters."""
         # Setup
-        data, metadata = download_demo(modality='single_table', dataset_name='student_placements')
-        dp = DataProcessor(metadata._convert_to_single_table())
+        data, single_table_metadata = data_metadata
+        dp = DataProcessor(single_table_metadata)
 
         # Run
         dp.fit(data)
@@ -322,11 +330,11 @@ class TestDataProcessor:
         reversed_end_date_format = _get_datetime_format(reversed_end_date.iloc[0])
         assert end_date_data_format == reversed_end_date_format
 
-    def test_refit_hypertransformer(self):
+    def test_refit_hypertransformer(self, data_metadata):
         """Test data processor re-fits _hyper_transformer."""
         # Setup
-        data, metadata = download_demo(modality='single_table', dataset_name='student_placements')
-        dp = DataProcessor(metadata._convert_to_single_table())
+        data, single_table_metadata = data_metadata
+        dp = DataProcessor(single_table_metadata)
 
         # Run
         dp.fit(data)
@@ -345,6 +353,7 @@ class TestDataProcessor:
         """Test data processor uses the default locale for anonymized columns."""
         # Setup
         data, metadata = download_demo('single_table', 'adult')
+        data = data['adult']
         metadata.update_column('occupation', 'adult', sdtype='job', pii=True)
 
         dp = DataProcessor(metadata._convert_to_single_table(), locales=['en_CA', 'fr_CA'])
@@ -363,7 +372,7 @@ class TestDataProcessor:
             'numerical_col': np.random.rand(20),
         })
 
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.detect_from_dataframe(data)
 
         dp = DataProcessor(metadata)
@@ -378,7 +387,7 @@ class TestDataProcessor:
         """Test that updating to transformer to id generator is valid"""
         # Setup
         data = pd.DataFrame({'user_id': list(range(4)), 'user_cat': ['a', 'b', 'c', 'd']})
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.detect_from_dataframe(data)
         metadata.update_column('user_id', sdtype='id')
         metadata.set_primary_key('user_id')
@@ -439,7 +448,7 @@ class TestDataProcessor:
         # Setup
         data = pd.DataFrame({column_name: data_series})
         data_with_nans = pd.DataFrame({column_name: [1.1, 2.2, 3.3, np.nan]})
-        metadata = SingleTableMetadata.load_from_dict({
+        metadata = _SingleTableMetadata.load_from_dict({
             'columns': {column_name: {'sdtype': 'numerical'}}
         })
         data_processor = DataProcessor(metadata)
@@ -465,7 +474,7 @@ class TestDataProcessor:
             'amount': [100.0, 250.5, 75.0, 300.0],
         })
 
-        metadata = SingleTableMetadata()
+        metadata = _SingleTableMetadata()
         metadata.add_column('user_id', sdtype='id')
         metadata.add_column('session_id', sdtype='id')
         metadata.add_column('transaction_id', sdtype='id')
