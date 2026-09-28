@@ -1,0 +1,31 @@
+log_registry: null
+version: 1
+loggers:
+  SingleTableSynthesizer:
+    level: INFO
+    propagate: false
+    formatter: sdv.logging.logger.CSVFormatter
+    handlers:
+      class: logging.FileHandler
+      filename: sdv_logs.csv
+  MultiTableSynthesizer:
+    level: INFO
+    propagate: false
+    formatter: sdv.logging.logger.CSVFormatter
+    handlers:
+      class: logging.FileHandler
+      filename: sdv_logs.csv
+    MultiTableMetadata:
+      level: INFO
+      propagate: false
+      formatter: sdv.logging.logger.CSVFormatter
+      handlers:
+        class: logging.FileHandler
+        filename: sdv_logs.csv
+    SingleTableMetadata:
+      level: INFO
+      propagate: false
+      formatter: sdv.logging.logger.CSVFormatter
+      handlers:
+        class: logging.FileHandler
+        filename: sdv_logs.csv

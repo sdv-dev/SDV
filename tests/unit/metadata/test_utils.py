@@ -1,32 +1,114 @@
-from sdv.metadata.utils import strings_from_regex
+import pytest
+
+from sdv.metadata.utils import (
+    _format_column_metadata,
+    _format_metadata_value,
+    _print_primary_key_detection,
+)
 
 
-def test_strings_from_regex_literal():
-    generator, size = strings_from_regex('abcd')
+@pytest.mark.parametrize(
+    'value,expected',
+    [
+        (True, 'True'),
+        (False, 'False'),
+        (None, 'None'),
+        ('id', "'id'"),
+        ('categorical', "'categorical'"),
+        ('', "''"),
+    ],
+)
+def test__format_metadata_value(value, expected):
+    """Test ``_format_metadata_value`` formats bools/None with no quotes and strings with quotes."""
+    # Run
+    result = _format_metadata_value(value)
 
-    assert size == 1
-    assert list(generator) == ['abcd']
+    # Assert
+    assert result == expected
 
 
-def test_strings_from_regex_digit():
-    generator, size = strings_from_regex('[0-9]')
+def test__format_column_metadata_sdtype_only():
+    """Test ``_format_column_metadata`` formats a dict with only sdtype."""
+    # Setup
+    sdtype_info = {'sdtype': 'categorical'}
 
-    assert size == 10
-    assert list(generator) == ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    # Run
+    result = _format_column_metadata(sdtype_info)
 
-
-def test_strings_from_regex_repeat_literal():
-    generator, size = strings_from_regex('a{1,3}')
-
-    assert size == 3
-    assert list(generator) == ['a', 'aa', 'aaa']
+    # Assert
+    assert result == "sdtype='categorical'"
 
 
-def test_strings_from_regex_repeat_digit():
-    generator, size = strings_from_regex(r'\d{1,3}')
+def test__format_column_metadata_with_kwargs():
+    """Test ``_format_column_metadata`` formats a dict with sdtype and additional kwargs."""
+    # Setup
+    sdtype_info = {'sdtype': 'numerical', 'computer_representation': 'Float'}
 
-    assert size == 1110
+    # Run
+    result = _format_column_metadata(sdtype_info)
 
-    strings = list(generator)
-    assert strings[0] == '0'
-    assert strings[-1] == '999'
+    # Assert
+    assert result == "sdtype='numerical', computer_representation='Float'"
+
+
+def test__format_column_metadata_sdtype_reordered_to_front():
+    """Test ``_format_column_metadata`` moves sdtype to the front regardless of insertion order."""
+    # Setup
+    sdtype_info = {
+        'datetime_format': '%Y-%m-%d',
+        'pii': False,
+        'sdtype': 'datetime',
+    }
+
+    # Run
+    result = _format_column_metadata(sdtype_info)
+
+    # Assert
+    assert result == "sdtype='datetime', datetime_format='%Y-%m-%d', pii=False"
+
+
+def test__format_column_metadata_mixed_value_types():
+    """Test ``_format_column_metadata`` quotes strings and leaves bools/None unquoted."""
+    # Setup
+    sdtype_info = {
+        'sdtype': 'datetime',
+        'datetime_format': None,
+        'pii': True,
+    }
+
+    # Run
+    result = _format_column_metadata(sdtype_info)
+
+    # Assert
+    assert result == "sdtype='datetime', datetime_format=None, pii=True"
+
+
+@pytest.mark.parametrize(
+    'sdtype_updated,pii_removed,expected',
+    [
+        (False, False, "- primary_key='user_id'\n"),
+        (True, False, "- primary_key='user_id' (updating sdtype to 'id')\n"),
+        (False, True, "- primary_key='user_id' (removing 'pii' field)\n"),
+        (
+            True,
+            True,
+            "- primary_key='user_id' (updating sdtype to 'id', removing 'pii' field)\n",
+        ),
+    ],
+)
+def test__print_primary_key_detection(capsys, sdtype_updated, pii_removed, expected):
+    """Test ``_print_primary_key_detection`` prints the PK with and without notes."""
+    # Run
+    _print_primary_key_detection('user_id', sdtype_updated, pii_removed)
+
+    # Assert
+    assert capsys.readouterr().out == expected
+
+
+def test__print_primary_key_detection_no_pk(capsys):
+    """Test ``_print_primary_key_detection`` prints a fallback message when no PK ."""
+    # Run
+    _print_primary_key_detection(None, False, False)
+
+    # Assert
+    assert capsys.readouterr().out == '- No primary key found\n'

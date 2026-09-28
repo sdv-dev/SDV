@@ -1,6 +1,6 @@
 <nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
     <div class="bd-toc-item active">
-    {% set nav = get_nav_object(maxdepth=4, collapse=True) %}
+        {{ toctree(maxdepth=1, collapse=True, includehidden=True, titles_only=True) }}
     <ul class="nav bd-sidenav">
         {% for main_nav_item in nav %}
         {% if main_nav_item.active %}

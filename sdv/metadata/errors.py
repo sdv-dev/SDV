@@ -1,9 +1,9 @@
 """Metadata Exceptions."""
 
 
-class MetadataError(Exception):
+class InvalidMetadataError(Exception):
     """Error to raise when Metadata is not valid."""
 
 
-class MetadataNotFittedError(MetadataError):
+class MetadataNotFittedError(InvalidMetadataError):
     """Error to raise when Metadata is used before fitting."""

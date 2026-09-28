@@ -1,0 +1,253 @@
+[project]
+name = 'sdv'
+description = 'Generate synthetic data for single table, multi table and sequential data'
+authors = [{ name = 'DataCebo, Inc.', email = 'info@sdv.dev' }]
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'Intended Audience :: Developers',
+    'Natural Language :: English',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: 3.13',
+    'Programming Language :: Python :: 3.14',
+    'Topic :: Scientific/Engineering :: Artificial Intelligence',
+]
+keywords = ['sdv', 'synthetic-data', 'synthetic-data-generation', 'timeseries', 'single-table', 'multi-table']
+dynamic = ['version']
+license = 'BUSL-1.1'
+license-files = ['LICENSE']
+requires-python = '>=3.9,<3.15'
+readme = 'README.md'
+dependencies = [
+    'boto3>=1.28,<2.0.0',
+    'botocore>=1.31,<2.0.0',
+    "cloudpickle>=2.1.0;python_version<'3.14'",
+    "cloudpickle>=3.1.1;python_version>='3.14'",
+    'graphviz>=0.13.2',
+    "numpy>=1.22.2;python_version<'3.10'",
+    "numpy>=1.24.0;python_version>='3.10' and python_version<'3.12'",
+    "numpy>=1.26.0;python_version>='3.12' and python_version<'3.13'",
+    "numpy>=2.1.0;python_version>='3.13' and python_version<'3.14'",
+    "numpy>=2.3.2;python_version>='3.14'",
+    "pandas>=1.4.0,<3;python_version<'3.11'",
+    "pandas>=1.5.0,<3;python_version>='3.11' and python_version<'3.12'",
+    "pandas>=2.1.1,<3;python_version>='3.12' and python_version<'3.13'",
+    "pandas>=2.2.3,<3;python_version>='3.13' and python_version<'3.14'",
+    "pandas>=2.3.3,<3;python_version>='3.14'",
+    'tqdm>=4.29',
+    "copulas>=0.12.1;python_version<'3.14'",
+    "copulas>=0.14.0;python_version>='3.14'",
+    "ctgan>=0.11.1;python_version<'3.14'",
+    "ctgan>=0.12.0;python_version>='3.14'",
+    "deepecho>=0.7.0;python_version<'3.14'",
+    "deepecho>=0.8.0;python_version>='3.14'",
+    "rdt>=1.18.2,<2;python_version<'3.14'",
+    "rdt>=1.20.0,<2;python_version>='3.14'",
+    "sdmetrics>=0.32.0",
+    'platformdirs>=4.0',
+    'pyyaml>=6.0.1',
+]
+
+[project.urls]
+"Source Code"= "https://github.com/sdv-dev/SDV/"
+"Issue Tracker" = "https://github.com/sdv-dev/SDV/issues"
+"Changes" = "https://github.com/sdv-dev/SDV/blob/main/HISTORY.md"
+"Twitter" = "https://twitter.com/sdv_dev"
+"Chat" = "https://forum.datacebo.com"
+
+[project.entry-points]
+sdv = { main = 'sdv.cli.__main__:main' }
+
+[project.optional-dependencies]
+excel = ['pandas[excel]']
+test = [
+    'sdv[excel]',
+    'pytest>=3.4.2',
+    'pytest-cov>=2.6.0',
+    'pytest-rerunfailures>=10.3,<17',
+    'jupyter>=1.0.0,<2',
+    'pytest-runner>=2.11.1',
+    'tomli>=2.0.0,<3',
+    'google-api-python-client',
+    'google-auth',
+    'google-auth-oauthlib',
+    'requests',
+    'pyarrow',
+    'gitpython',
+    'slack-sdk>=3.23,<4.0',
+]
+pomegranate = ['pomegranate>=0.15,<1']
+dev = [
+    'sdv[test]',
+
+    # general
+    'build>=1.0.0,<2',
+    'bump-my-version>=0.18.3',
+    'pip>=9.0.1',
+    'watchdog>=1.0.1,<5',
+
+    # docs
+    'docutils>=0.12,<1',
+    'nbsphinx>=0.5.0,<1',
+    'sphinx_toolbox>=2.5,<4',
+    'Sphinx>=3,<8',
+    'pydata-sphinx-theme<1',
+    'markupsafe<3',
+    'lxml_html_clean<0.5',
+    'sphinx-reredirects',
+
+    # Jinja2>=3 makes the sphinx theme fail
+    'Jinja2>=2,<4',
+
+    # style check
+    'ruff>=0.4.5,<1',
+
+    # distribute on PyPI
+    'twine>=1.10.0',
+    'wheel>=0.30.0',
+
+    # Advanced testing
+    'coverage>=4.5.12,<8',
+    'invoke'
+]
+readme = ['rundoc>=0.4.3,<0.5',]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ['sdv', 'sdv.*']
+namespaces = false
+
+[tool.setuptools.package-data]
+'*' = [
+    'CONTRIBUTING.rst',
+    'HISTORY.md',
+    'README.md',
+    '*.md',
+    '*.rst',
+    'conf.py',
+    'Makefile',
+    'make.bat',
+    '*.jpg',
+    '*.png',
+    '*.gif',
+    'sdv_logger_config.yml'
+]
+
+[tool.setuptools.exclude-package-data]
+'*' = [
+    '* __pycache__',
+    '*.py[co]',
+    'static_code_analysis.txt',
+]
+
+[tool.setuptools.dynamic]
+version = {attr = 'sdv.__version__'}
+
+[tool.bumpversion]
+current_version = "1.38.5.dev2"
+parse = '(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(\.(?P<release>[a-z]+)(?P<candidate>\d+))?'
+serialize = [
+    '{major}.{minor}.{patch}.{release}{candidate}',
+	'{major}.{minor}.{patch}'
+]
+search = '{current_version}'
+replace = '{new_version}'
+regex = false
+ignore_missing_version = false
+tag = true
+sign_tags = false
+tag_name = 'v{new_version}'
+tag_message = 'Bump version: {current_version} → {new_version}'
+allow_dirty = false
+commit = true
+message = 'Bump version: {current_version} → {new_version}'
+commit_args = ''
+
+[tool.bumpversion.parts.release]
+first_value = 'dev'
+optional_value = 'release'
+values = [
+    'dev',
+    'release'
+]
+
+[[tool.bumpversion.files]]
+filename = "sdv/__init__.py"
+search = "__version__ = '{current_version}'"
+replace = "__version__ = '{new_version}'"
+
+[tool.pytest.ini_options]
+addopts = "--ignore=pyproject.toml"
+
+[build-system]
+requires = ['setuptools', 'wheel']
+build-backend = 'setuptools.build_meta'
+
+[tool.ruff]
+preview = true
+line-length = 100
+indent-width = 4
+src = ["sdv"]
+exclude = [
+    "docs",
+    ".tox",
+    ".git",
+    "__pycache__",
+    "*.ipynb",
+    ".ipynb_checkpoints",
+    "tasks.py",
+]
+
+[tool.ruff.lint]
+select = [
+    # Pyflakes
+    "F",
+    # Pycodestyle
+    "E",
+    "W",
+    # pydocstyle
+    "D",
+    # isort
+    "I001",
+    # print statements
+    "T201",
+    # pandas-vet
+    "PD",
+    # numpy 2.0
+    "NPY201"
+
+]
+ignore = [
+    # pydocstyle
+    "D107",  # Missing docstring in __init__
+    "D417",   # Missing argument descriptions in the docstring, this is a bug from pydocstyle: https://github.com/PyCQA/pydocstyle/issues/449
+    "PD101",
+]
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+preview = true
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
+
+[tool.ruff.lint.isort]
+known-first-party = ["sdv"]
+lines-between-types = 0
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "E402", "F403", "F405", "E501", "I001"]
+"errors.py" = ["D105"]
+"tests/**.py" = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 100
+max-line-length = 100

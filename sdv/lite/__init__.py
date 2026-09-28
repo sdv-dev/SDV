@@ -1,7 +1,5 @@
 """SDV lite package that contains model presets."""
 
-from sdv.lite.tabular import TabularPreset
+from sdv.lite.single_table import SingleTablePreset
 
-__all__ = (
-    'TabularPreset',
-)
+__all__ = ('SingleTablePreset',)

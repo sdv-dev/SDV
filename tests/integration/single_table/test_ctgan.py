@@ -1,0 +1,393 @@
+import platform
+import re
+from unittest.mock import patch
+
+import numpy as np
+import pandas as pd
+import pytest
+import torch
+from rdt.transformers import FloatFormatter, LabelEncoder
+
+from sdv.cag import FixedCombinations
+from sdv.datasets.demo import download_demo
+from sdv.errors import InvalidDataTypeError
+from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
+from sdv.metadata.metadata import Metadata
+from sdv.single_table import CopulaGANSynthesizer, CTGANSynthesizer, TVAESynthesizer
+
+
+def test__estimate_num_columns():
+    """Test the number of columns is estimated correctly."""
+    # Setup
+    metadata = Metadata()
+    metadata.add_table('table')
+    metadata.add_column('numerical', 'table', sdtype='numerical')
+    metadata.add_column('categorical', 'table', sdtype='categorical')
+    metadata.add_column('categorical2', 'table', sdtype='categorical')
+    metadata.add_column('categorical3', 'table', sdtype='categorical')
+    metadata.add_column('datetime', 'table', sdtype='datetime')
+    metadata.add_column('boolean', 'table', sdtype='boolean')
+    data = pd.DataFrame({
+        'numerical': [0.1, 0.2, 0.3],
+        'datetime': ['2020-01-01', '2020-01-02', '2020-01-03'],
+        'categorical': ['a', 'b', 'b'],
+        'categorical2': ['a', 'b', 'b'],
+        'categorical3': [float('nan'), np.nan, None],
+        'boolean': [True, False, True],
+    })
+    instance = CTGANSynthesizer(metadata)
+
+    # Run
+    instance.auto_assign_transformers(data)
+    instance.update_transformers({'categorical2': LabelEncoder()})
+    result = instance._estimate_num_columns(data)
+
+    # Assert
+    assert result == {
+        'numerical': 11,
+        'datetime': 11,
+        'categorical': 2,
+        'categorical2': 11,
+        'categorical3': 1,
+        'boolean': 2,
+    }
+
+
+@patch('sdv.single_table.ctgan.CTGAN', None)
+@patch('sdv.single_table.ctgan.import_error')
+def test_ctgan___init___without_torch(mock_import_error):
+    """Test CTGAN raises a custom error when initialized with torch not installed."""
+    # Setup
+    metadata = Metadata()
+    mock_import_error.name = 'torch'
+    mock_import_error.msg = "No module named 'torch'"
+    msg = "No module named 'torch'. Please install torch in order to use the 'CTGANSynthesizer'."
+
+    # Run and Assert
+    with pytest.raises(ModuleNotFoundError, match=msg):
+        CTGANSynthesizer(metadata)
+
+
+def test_synthesize_table_ctgan(tmp_path):
+    """End to end test for the CTGAN synthesizer.
+
+    Tests quality reports, anonymization, and customizing the synthesizer.
+    """
+    # Setup
+    real_data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
+    synthesizer = CTGANSynthesizer(metadata)
+    custom_synthesizer = CTGANSynthesizer(metadata, epochs=100)
+    sensitive_columns = ['guest_email', 'billing_address', 'credit_card_number']
+    model_path = tmp_path / 'synthesizer.pkl'
+
+    # Run - fit
+    synthesizer.fit(real_data)
+    synthetic_data = synthesizer.sample(num_rows=500)
+
+    # Run - evaluate
+    quality_report = evaluate_quality(real_data, synthetic_data, metadata)
+
+    column_plot = get_column_plot(
+        real_data=real_data,
+        synthetic_data=synthetic_data,
+        column_name='room_type',
+        metadata=metadata,
+    )
+
+    pair_plot = get_column_pair_plot(
+        real_data=real_data,
+        synthetic_data=synthetic_data,
+        column_names=['room_rate', 'room_type'],
+        metadata=metadata,
+    )
+
+    # Run - save model
+    synthesizer.save(model_path)
+
+    # Run - custom synthesizer
+    custom_synthesizer.fit(real_data)
+    synthetic_data_customized = custom_synthesizer.sample(num_rows=500)
+    custom_quality_report = evaluate_quality(real_data, synthetic_data_customized, metadata)
+
+    # Assert - fit
+    assert set(real_data.columns) == set(synthetic_data.columns)
+    assert real_data.shape[1] == synthetic_data.shape[1]
+    assert len(synthetic_data) == 500
+    for column in sensitive_columns:
+        assert synthetic_data[column].isin(real_data[column]).sum() == 0
+    loss_values = synthesizer.get_loss_values()
+    assert list(loss_values.columns) == ['Epoch', 'Generator Loss', 'Discriminator Loss']
+    assert len(loss_values) == 300
+    custom_loss_values = custom_synthesizer.get_loss_values()
+    assert list(custom_loss_values.columns) == ['Epoch', 'Generator Loss', 'Discriminator Loss']
+    assert len(custom_loss_values) == 100
+
+    # Assert - evaluate
+    assert quality_report.get_score() > 0
+    assert column_plot
+    assert pair_plot
+
+    # Assert - save/load model
+    assert model_path.exists()
+    assert model_path.is_file()
+    loaded_synthesizer = CTGANSynthesizer.load(model_path)
+    assert isinstance(synthesizer, CTGANSynthesizer)
+    assert loaded_synthesizer.get_info() == synthesizer.get_info()
+    assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
+    loaded_synthesizer.sample(20)
+
+    # Assert - custom synthesizer
+    assert custom_quality_report.get_score() > 0
+
+
+def test_categoricals_are_not_preprocessed():
+    """Test that ensures categorical data is not preprocessed by the CTGANSynthesizer.
+
+    It verifies that the transformer assignments and data transformations are handled correctly
+    for different data types.
+    """
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'age': [56, 61, 36, 52, 42],
+            'therapy': [True, False, True, False, True],
+            'alcohol': ['medium', 'medium', 'low', 'high', 'low'],
+        }
+    )
+    metadata = Metadata.load_from_dict({
+        'columns': {
+            'age': {'sdtype': 'numerical'},
+            'therapy': {'sdtype': 'boolean'},
+            'alcohol': {'sdtype': 'categorical'},
+        }
+    })
+
+    # Run auto_assign_transformers
+    synth1 = CTGANSynthesizer(metadata)
+    synth1.auto_assign_transformers(data)
+    transformers1 = synth1.get_transformers()
+
+    # Assert
+    assert isinstance(transformers1['age'], FloatFormatter)
+    assert transformers1['therapy'] == transformers1['alcohol'] is None
+
+    # Run fit
+    synth2 = CTGANSynthesizer(metadata, epochs=1)
+    synth2.fit(data)
+    transformers2 = synth2.get_transformers()
+
+    # Assert
+    assert isinstance(transformers2['age'], FloatFormatter)
+    assert transformers2['therapy'] == transformers2['alcohol'] is None
+
+
+def test_categorical_metadata_with_int_data():
+    """Test ``CTGANSynthesizer`` with categorical values.
+
+    Based on the issues [#1647](https://github.com/sdv-dev/SDV/issues/1647) and
+    [#1648](https://github.com/sdv-dev/SDV/issues/1648), it sets up the metadata for the dataset,
+    creates a sample data frame, and then runs the ``CTGANSynthesizer`` to generate synthetic data.
+    Finally, it checks if the categorical variables in the synthetic data retain the same
+    categories as the original data.
+    """
+    # Setup
+    metadata_dict = {
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'columns': {
+            'A': {'sdtype': 'categorical'},
+            'B': {'sdtype': 'numerical'},
+            'C': {'sdtype': 'categorical'},
+        },
+    }
+
+    metadata = Metadata.load_from_dict(metadata_dict)
+    data = pd.DataFrame({
+        'A': list(range(50)),
+        'B': list(range(50)),
+        'C': [str(i) for i in range(50)],
+    })
+
+    # Run
+    synth = CTGANSynthesizer(metadata, epochs=10)
+    synth.fit(data)
+    synthetic_data = synth.sample(1000)
+
+    # Assert
+    original_categories = set(data['A'].unique())
+    synthetic_categories_for_a = set(synthetic_data['A'].unique())
+    new_categories_for_a = synthetic_categories_for_a - original_categories
+    recycled_categories_for_a = original_categories & synthetic_categories_for_a
+
+    original_categories = set(data['C'].unique())
+    synthetic_categories_for_c = set(synthetic_data['C'].unique())
+    new_categories_for_c = synthetic_categories_for_c - original_categories
+    recycled_categories_for_c = original_categories & synthetic_categories_for_c
+
+    assert len(new_categories_for_a) == 0
+    assert len(recycled_categories_for_a) == 50
+    assert len(new_categories_for_c) == 0
+    assert len(recycled_categories_for_c) == 50
+
+
+def test_category_dtype_errors():
+    """Test CTGAN and TVAE error if data has 'category' dtype."""
+    # Setup
+    data, metadata = download_demo('single_table', 'fake_hotel_guests')
+    data['room_type'] = data['room_type'].astype('category')
+    data['has_rewards'] = data['has_rewards'].astype('category')
+
+    ctgan = CTGANSynthesizer(metadata)
+    tvae = TVAESynthesizer(metadata)
+
+    # Run and Assert
+    expected_msg = re.escape(
+        "Columns ['has_rewards', 'room_type'] are stored as a 'category' type, which is not "
+        "supported. Please cast these columns to an 'object' to continue."
+    )
+    with pytest.raises(InvalidDataTypeError, match=expected_msg):
+        ctgan.fit(data)
+
+    with pytest.raises(InvalidDataTypeError, match=expected_msg):
+        tvae.fit(data)
+
+
+def test_ctgansynthesizer_with_constraints_generating_categorical_values():
+    """Test that ``CTGANSynthesizer`` does not crash when using constraints.
+
+    Based on the issue [#1717](https://github.com/sdv-dev/SDV/issues/1717) this test
+    ensures that the synthesizer does not crash with a constraint that generates ``categorical``
+    data.
+    """
+    # Setup
+    data, metadata = download_demo('single_table', 'student_placements')
+    my_synthesizer = CTGANSynthesizer(metadata)
+    constraint = FixedCombinations(
+        column_names=['high_spec', 'degree_type'],
+    )
+    my_synthesizer.add_constraints(constraints=[constraint])
+
+    # Run
+    my_synthesizer.fit(data)
+
+    # Assert
+    sampled_data = my_synthesizer.sample(10)
+    assert len(sampled_data) == 10
+
+
+def test_ctgan_with_dropped_columns():
+    """Test CTGANSynthesizer doesn't crash when applied to columns that will be dropped. GH#1741"""
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'user_id': ['100', '101', '102', '103', '104'],
+            'user_ssn': ['111-11-1111', '222-22-2222', '333-33-3333', '444-44-4444', '555-55-5555'],
+        }
+    )
+
+    metadata_dict = {
+        'primary_key': 'user_id',
+        'columns': {'user_id': {'sdtype': 'id'}, 'user_ssn': {'sdtype': 'ssn'}},
+    }
+
+    metadata = Metadata.load_from_dict(metadata_dict)
+
+    # Run
+    synth = CTGANSynthesizer(metadata)
+    synth.fit(data)
+    samples = synth.sample(10)
+
+    # Assert
+    assert len(samples) == 10
+    assert samples.columns.tolist() == ['user_id', 'user_ssn']
+    assert all(id_val.startswith('sdv-id-') for id_val in samples['user_id'])
+    pd.testing.assert_series_equal(
+        samples['user_id'],
+        pd.Series(
+            [
+                'sdv-id-IOsBJZ',
+                'sdv-id-CFcIuA',
+                'sdv-id-prYgtc',
+                'sdv-id-yrTTYM',
+                'sdv-id-kLtfIW',
+                'sdv-id-nCFkOi',
+                'sdv-id-kKQXYV',
+                'sdv-id-aPRybP',
+                'sdv-id-RHPiGX',
+                'sdv-id-SJNtGY',
+            ],
+            name='user_id',
+        ),
+    )
+
+
+@patch('sdv.single_table.ctgan.TVAE', None)
+@patch('sdv.single_table.ctgan.import_error')
+def test_tvae___init___without_torch(mock_import_error):
+    """Test TVAE raises a custom error when initialized with torch not installed."""
+    # Setup
+    metadata = Metadata()
+    mock_import_error.name = 'torch'
+    mock_import_error.msg = "No module named 'torch'"
+    msg = "No module named 'torch'. Please install torch in order to use the 'TVAESynthesizer'."
+
+    # Run and Assert
+    with pytest.raises(ModuleNotFoundError, match=msg):
+        TVAESynthesizer(metadata)
+
+
+@pytest.mark.parametrize(
+    'synthesizer_class', [CTGANSynthesizer, TVAESynthesizer, CopulaGANSynthesizer]
+)
+def test_enable_gpu_parameter(synthesizer_class):
+    """Test that the `enable_gpu` parameter is correctly passed to the underlying model."""
+    # Setup
+    data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
+    expected_warning = re.escape(
+        '`cuda` parameter is deprecated and will be removed in a future release. '
+        'Please use `enable_gpu` instead.'
+    )
+    expected_error = re.escape(
+        'Cannot resolve the provided values of `cuda` and `enable_gpu` parameters. '
+        'Please use only `enable_gpu`.'
+    )
+
+    # Run
+    synthesizer_1 = synthesizer_class(metadata)
+    synthesizer_2 = synthesizer_class(metadata, enable_gpu=False)
+    with pytest.warns(FutureWarning, match=expected_warning):
+        synthesizer_3 = synthesizer_class(metadata, cuda=True)
+
+    with pytest.raises(ValueError, match=expected_error):
+        synthesizer_class(metadata, enable_gpu=False, cuda=True)
+
+    synthesizer_1.fit(data)
+    synthesizer_2.fit(data)
+    synthesizer_3.fit(data)
+    synthetic_data_1 = synthesizer_1.sample(10)
+    synthetic_data_2 = synthesizer_2.sample(10)
+    synthetic_data_3 = synthesizer_3.sample(10)
+
+    # Assert
+    data_columns = data.columns.tolist()
+    if (
+        platform.machine() == 'arm64'
+        and getattr(torch.backends, 'mps', None)
+        and torch.backends.mps.is_available()
+    ):
+        expected_device = torch.device('mps')
+    elif torch.cuda.is_available():
+        expected_device = torch.device('cuda')
+    else:
+        expected_device = torch.device('cpu')
+
+    assert synthesizer_1._model._enable_gpu is True
+    assert synthesizer_1._model._device == expected_device
+    assert synthesizer_2._model._enable_gpu is False
+    assert synthesizer_2._model._device == torch.device('cpu')
+    assert synthesizer_3._model._enable_gpu is True
+    assert synthesizer_3._model._device == expected_device
+    assert synthetic_data_1.columns.tolist() == data_columns
+    assert synthetic_data_2.columns.tolist() == data_columns
+    assert synthetic_data_3.columns.tolist() == data_columns
+    assert len(synthetic_data_1) == 10
+    assert len(synthetic_data_2) == len(synthetic_data_3) == 10

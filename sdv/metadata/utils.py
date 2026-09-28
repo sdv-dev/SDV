@@ -1,152 +1,82 @@
 """Tools to generate strings from regular expressions."""
 
-import re
-import string
-
-import numpy as np
-
-import sre_parse  # isort:skip
+import json
+import sys
+from pathlib import Path
 
 
-def _literal(character, max_repeat):
-    del max_repeat
-    return iter([chr(character)]), 1
+def read_json(filepath):
+    """Validate and open a file path."""
+    filepath = Path(filepath)
+    if not filepath.exists():
+        raise ValueError(
+            f"A file named '{filepath.name}' does not exist. Please specify a different filename."
+        )
+
+    with open(filepath, 'r', encoding='utf-8') as metadata_file:
+        return json.load(metadata_file)
 
 
-def _in(options, max_repeat):
-    generators = []
-    sizes = []
-    for op, args in options:
-        generator, size = _GENERATORS[op](args, max_repeat)
-        generators.append(generator)
-        sizes.append(size)
-
-    return (value for generator in generators for value in generator), np.sum(sizes)
-
-
-def _range(options, max_repeat):
-    del max_repeat
-    min_value, max_value = options
-    max_value += 1
-    return (chr(value) for value in range(min_value, max_value)), max_value - min_value
+def validate_file_does_not_exist(filepath):
+    """Validate a file path doesn't exist."""
+    filepath = Path(filepath)
+    if filepath.exists():
+        raise ValueError(
+            f"A file named '{filepath.name}' already exists in this folder. Please specify "
+            'a different filename.'
+        )
 
 
-def _any(options, max_repeat):
-    del options
-    del max_repeat
-    return iter(string.printable), len(string.printable)
+def _validate_file_mode(mode):
+    possible_modes = ['write', 'overwrite']
+    if mode not in possible_modes:
+        raise ValueError(f"Mode '{mode}' must be in {possible_modes}.")
 
 
-def _max_repeat(options, max_repeat):
-    min_, max_, options = options
-    if max_ == sre_parse.MAXREPEAT:
-        max_ = max_repeat
-
-    op, args = options[0]
-    generator, size = _GENERATORS[op](args, max_repeat)
-
-    generators = []
-    sizes = []
-    for repeat in range(min_, max_ + 1):
-        if repeat:
-            sizes.append(size ** repeat)
-            repeat_generators = [
-                (_GENERATORS[op](args, max_repeat)[0], op, args)
-                for _ in range(repeat)
-            ]
-            generators.append(_from_generators(repeat_generators, max_repeat))
-
-    return (
-        value
-        for generator in generators
-        for value in generator
-    ), np.sum(sizes) + int(min_ == 0)
-
-
-def _category_chars(regex):
-    return [char for char in string.printable if regex.match(char)]
-
-
-_CATEGORIES = {
-    sre_parse.CATEGORY_SPACE: _category_chars(re.compile(r'\s')),
-    sre_parse.CATEGORY_NOT_SPACE: _category_chars(re.compile(r'\S')),
-    sre_parse.CATEGORY_DIGIT: _category_chars(re.compile(r'\d')),
-    sre_parse.CATEGORY_NOT_DIGIT: _category_chars(re.compile(r'\D')),
-    sre_parse.CATEGORY_WORD: _category_chars(re.compile(r'\w')),
-    sre_parse.CATEGORY_NOT_WORD: _category_chars(re.compile(r'\W')),
-}
-
-
-def _category(category, max_repeat):
-    del max_repeat
-    characters = _CATEGORIES[category]
-    return iter(characters), len(characters)
-
-
-_GENERATORS = {
-    sre_parse.LITERAL: _literal,
-    sre_parse.IN: _in,
-    sre_parse.RANGE: _range,
-    sre_parse.ANY: _any,
-    sre_parse.MAX_REPEAT: _max_repeat,
-    sre_parse.CATEGORY: _category,
-}
-
-
-def _from_generators(generators, max_repeat):
-    previous = [None] + [next(generator) for generator, _, _ in generators[1:]]
-
-    remaining = True
-    while remaining:
-        string = []
-        for index, (generator, op, args) in enumerate(generators):
-            remaining = True
-            try:
-                value = next(generator)
-                string.append(value)
-                previous[index] = value
-                string.extend(previous[index + 1:])
-                break
-            except StopIteration:
-                generator = _GENERATORS[op](args, max_repeat)[0]
-                generators[index] = generator, op, args
-                value = next(generator)
-                previous[index] = value
-                string.append(value)
-                remaining = False
-
-        if remaining:
-            yield ''.join(reversed(string))
-
-
-def strings_from_regex(regex, max_repeat=16):
-    """Generate strings that match the given regular expression.
-
-    The output is a generator that produces regular expressions that match
-    the indicated regular expressions alongside an integer indicating the
-    total length of the generator.
-
-    WARNING: Subpatterns are currently not supported.
+def _format_metadata_value(value):
+    """Format a value for display, quoting only strings.
 
     Args:
-        regex (str):
-            String representing a valid python regular expression.
-        max_repeat (int):
-            Maximum number of repetitions to produce when the regular
-            expression allows an infinte amount. Defaults to 16.
+        value:
+            The value to format. Boolean and None are returned as their
+            string representation; all other values are wrapped in single quotes.
 
     Returns:
-        tuple:
-            * Generator that produces strings that match the given regex.
-            * Total length of the generator.
+        str:
+            The formatted value as a string.
     """
-    parsed = sre_parse.parse(regex, flags=sre_parse.SRE_FLAG_UNICODE)
-    generators = []
-    sizes = []
-    for op, args in reversed(parsed):
-        if op != sre_parse.AT:
-            generator, size = _GENERATORS[op](args, max_repeat)
-            generators.append((generator, op, args))
-            sizes.append(size)
+    if isinstance(value, bool) or value is None:
+        return str(value)
+    return f"'{value}'"
 
-    return _from_generators(generators, max_repeat), np.prod(sizes)
+
+def _format_column_metadata(sdtype_info):
+    """Format a column's metadata dictionary as a display string, with sdtype first.
+
+    Args:
+        sdtype_info (dict):
+            A dictionary of column metadata (`{'sdtype': 'ssn', 'pii': False}`).
+
+    Returns:
+        str:
+            A comma-separated `key=value` string with 'sdtype' first.
+            (`sdtype='numerical', computer_representation='Float'`)
+    """
+    parts = [f'{k}={_format_metadata_value(v)}' for k, v in sdtype_info.items()]
+    parts.sort(key=lambda p: not p.startswith('sdtype='))
+    return ', '.join(parts)
+
+
+def _print_primary_key_detection(chosen_pk, sdtype_updated, pii_removed):
+    if not chosen_pk:
+        sys.stdout.write('- No primary key found\n')
+        return
+
+    notes = []
+    if sdtype_updated:
+        notes.append("updating sdtype to 'id'")
+    if pii_removed:
+        notes.append("removing 'pii' field")
+
+    suffix = f' ({", ".join(notes)})' if notes else ''
+    sys.stdout.write(f"- primary_key='{chosen_pk}'{suffix}\n")

@@ -59,7 +59,6 @@ clean-coverage: ## remove coverage artifacts
 
 .PHONY: clean-test
 clean-test: ## remove test artifacts
-	rm -fr .tox/
 	rm -fr .pytest_cache
 
 .PHONY: clean
@@ -80,39 +79,33 @@ install-test: clean-build clean-pyc ## install the package and test dependencies
 install-develop: clean-build clean-pyc ## install the package in editable mode and dependencies for development
 	pip install -e .[dev]
 
-MINIMUM := $(shell sed -n '/install_requires = \[/,/]/p' setup.py | grep -v -e '[][]' | sed 's/ *\(.*\),$?$$/\1/g' | tr '>' '=')
-
-.PHONY: install-minimum
-install-minimum: ## install the minimum supported versions of the package dependencies
-	pip install $(MINIMUM)
-
+.PHONY: install-readme
+install-readme: clean-build clean-pyc ## install the package in editable mode and readme dependencies for developement
+	pip install -e .[readme]
 
 # LINT TARGETS
 
 .PHONY: lint-sdv
 lint-sdv: ## check style with flake8 and isort
-	flake8 sdv
-	isort -c --recursive sdv
-	pydocstyle sdv
+	ruff check sdv/
+	ruff format --check --diff sdv/
 
 .PHONY: lint-tests
 lint-tests: ## check style with flake8 and isort
-	flake8 --ignore=D,SFS2 tests
-	isort -c --recursive tests
+	ruff check tests/
+	ruff format --check --diff tests/
 
 .PHONY: check-dependencies
 check-dependencies: ## test if there are any broken dependencies
 	pip check
 
 .PHONY: lint
-lint: ## check style with flake8 and isort
+lint:
 	invoke lint
 
 .PHONY: fix-lint
-fix-lint: ## fix lint issues using autoflake, autopep8, and isort
-	find sdv tests -name '*.py' | xargs autoflake --in-place --remove-all-unused-imports --remove-unused-variables
-	autopep8 --in-place --recursive --aggressive sdv tests
-	isort --apply --atomic --recursive sdv tests
+fix-lint:
+	invoke fix-lint
 
 
 # TEST TARGETS
@@ -129,16 +122,8 @@ test-integration: ## run tests quickly with the default Python
 test-readme: ## run the readme snippets
 	invoke readme
 
-.PHONY: test-tutorials
-test-tutorials: ## run the tutorial notebooks
-	invoke tutorials
-
 .PHONY: test
-test: test-unit test-integration test-readme test-tutorials ## test everything that needs test dependencies
-
-.PHONY: test-all
-test-all: ## run tests on every Python version with tox
-	tox -r
+test: test-unit test-integration test-readme ## test everything that needs test dependencies
 
 .PHONY: coverage
 coverage: ## check code coverage quickly with the default Python
@@ -167,8 +152,7 @@ serve-docs: ## compile the docs watching for changes
 
 .PHONY: dist
 dist: clean ## builds source and wheel package
-	python setup.py sdist
-	python setup.py bdist_wheel
+	python -m build --wheel --sdist
 	ls -l dist
 
 .PHONY: publish-confirm
@@ -186,42 +170,48 @@ publish-test: dist publish-confirm ## package and upload a release on TestPyPI
 publish: dist publish-confirm ## package and upload a release
 	twine upload dist/*
 
-.PHONY: bumpversion-release
-bumpversion-release: ## Merge master to stable and bumpversion release
+.PHONY: git-merge-main-stable
+git-merge-main-stable: ## Merge main into stable
 	git checkout stable || git checkout -b stable
-	git merge --no-ff master -m"make release-tag: Merge branch 'master' into stable"
-	bumpversion release
+	git merge --no-ff main -m"make release-tag: Merge branch 'main' into stable"
+
+.PHONY: git-merge-stable-main
+git-merge-stable-main: ## Merge stable into main
+	git checkout main
+	git merge stable
+
+.PHONY: git-push
+git-push: ## Simply push the repository to github
+	git push
+
+.PHONY: git-push-tags-stable
+git-push-tags-stable: ## Push tags and stable to github
 	git push --tags origin stable
 
-.PHONY: bumpversion-release-test
-bumpversion-release-test: ## Merge master to stable and bumpversion release
-	git checkout stable || git checkout -b stable
-	git merge --no-ff master -m"make release-tag: Merge branch 'master' into stable"
-	bumpversion release --no-tag
-	@echo git push --tags origin stable
+.PHONY: bumpversion-release
+bumpversion-release: ## Bump the version to the next release
+	bump-my-version bump release --no-tag
 
 .PHONY: bumpversion-patch
-bumpversion-patch: ## Merge stable to master and bumpversion patch
-	git checkout master
-	git merge stable
-	bumpversion --no-tag patch
-	git push
+bumpversion-patch: ## Bump the version to the next patch
+	bump-my-version bump patch --no-tag
 
 .PHONY: bumpversion-candidate
 bumpversion-candidate: ## Bump the version to the next candidate
-	bumpversion candidate --no-tag
+	bump-my-version bump candidate --no-tag
 
 .PHONY: bumpversion-minor
 bumpversion-minor: ## Bump the version the next minor skipping the release
-	bumpversion --no-tag minor
+	bump-my-version bump minor --no-tag
 
 .PHONY: bumpversion-major
 bumpversion-major: ## Bump the version the next major skipping the release
-	bumpversion --no-tag major
+	bump-my-version bump major --no-tag
 
 .PHONY: bumpversion-revert
 bumpversion-revert: ## Undo a previous bumpversion-release
-	git checkout master
+	git tag --delete $(shell git tag --points-at HEAD)
+	git checkout main
 	git branch -D stable
 
 CLEAN_DIR := $(shell git status --short | grep -v ??)
@@ -234,10 +224,10 @@ ifneq ($(CLEAN_DIR),)
 	$(error There are uncommitted changes)
 endif
 
-.PHONY: check-master
-check-master: ## Check if we are in master branch
-ifneq ($(CURRENT_BRANCH),master)
-	$(error Please make the release from master branch\n)
+.PHONY: check-main
+check-main: ## Check if we are in main branch
+ifneq ($(CURRENT_BRANCH),main)
+	$(error Please make the release from main branch\n)
 endif
 
 .PHONY: check-history
@@ -247,23 +237,50 @@ ifeq ($(CHANGELOG_LINES),0)
 endif
 
 .PHONY: check-release
-check-release: check-clean check-master check-history ## Check if the release can be made
+check-release: check-clean check-main check-history ## Check if the release can be made
 	@echo "A new release can be made"
 
 .PHONY: release
-release: check-release bumpversion-release publish bumpversion-patch
+release: check-release git-merge-main-stable bumpversion-release git-push-tags-stable \
+	git-merge-stable-main bumpversion-patch git-push
 
 .PHONY: release-test
-release-test: check-release bumpversion-release-test publish-test bumpversion-revert
+release-test: check-release git-merge-main-stable bumpversion-release bumpversion-revert
 
 .PHONY: release-candidate
-release-candidate: check-master publish bumpversion-candidate
+release-candidate: check-main publish bumpversion-candidate git-push
 
 .PHONY: release-candidate-test
-release-candidate-test: check-clean check-master publish-test
+release-candidate-test: check-clean check-main publish-test
 
 .PHONY: release-minor
 release-minor: check-release bumpversion-minor release
 
 .PHONY: release-major
 release-major: check-release bumpversion-major release
+
+# Dependency targets
+
+.PHONY: check-deps
+check-deps:
+	$(eval allow_list='cloudpickle=|graphviz=|numpy=|pandas=|tqdm=|copulas=|ctgan=|deepecho=|rdt=|sdmetrics=|platformdirs=|pyyaml=')
+	pip freeze | grep -v "SDV.git" | grep -E $(allow_list) | sort > $(OUTPUT_FILEPATH)
+
+.PHONY: upgradepip
+upgradepip:
+	python -m pip install --upgrade pip
+
+.PHONY: upgradebuild
+upgradebuild:
+	python -m pip install --upgrade build
+
+.PHONY: upgradesetuptools
+upgradesetuptools:
+	python -m pip install --upgrade setuptools
+
+.PHONY: package
+package: upgradepip upgradebuild upgradesetuptools
+	python -m build ; \
+	$(eval VERSION=$(shell python -c 'import setuptools; setuptools.setup()' --version))
+	tar -zxvf "dist/sdv-${VERSION}.tar.gz"
+	mv "sdv-${VERSION}" unpacked_sdist

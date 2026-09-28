@@ -1,0 +1,1858 @@
+import io
+import json
+import logging
+import re
+import warnings
+import zipfile
+from unittest.mock import Mock, patch
+
+import numpy as np
+import pandas as pd
+import pytest
+from botocore.exceptions import ClientError
+
+from sdv.datasets.demo import (
+    _download,
+    _find_data_zip_key,
+    _find_text_key,
+    _get_data_from_bucket,
+    _get_first_v1_metadata_bytes,
+    _get_metadata,
+    _get_text_file_content,
+    _iter_metainfo_yaml_entries,
+    _list_objects,
+    _load_data_from_zip,
+    _save_file_content,
+    download_demo,
+    get_available_demos,
+    get_readme,
+    get_source,
+    save_resource,
+)
+from sdv.errors import DemoResourceNotFoundError, DemoResourceNotFoundWarning
+
+
+def _make_zip_with_csv(csv_name: str, df: pd.DataFrame) -> bytes:
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr(csv_name, df.to_csv(index=False))
+
+    return buf.getvalue()
+
+
+def test_download_demo_invalid_modality():
+    """Test it crashes when an invalid modality is passed."""
+    # Run and Assert
+    err_msg = re.escape("'modality' must be in ['single_table', 'multi_table', 'sequential'].")
+    with pytest.raises(ValueError, match=err_msg):
+        download_demo('invalid_modality', 'dataset_name')
+
+
+def test_download_demo_folder_already_exists(tmpdir):
+    """Test it crashes when folder ``output_folder_name`` already exist."""
+    # Run and Assert
+    err_msg = re.escape(
+        f"Folder '{tmpdir}' already exists. Please specify a different name "
+        "or use 'load_csvs' to load from an existing folder."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        download_demo('single_table', 'dataset_name', tmpdir)
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_single_table(mock_list, mock_get, tmpdir):
+    """Test it can download a single table dataset using the new structure."""
+    mock_list.return_value = [
+        {'Key': 'single_table/ring/data.zip'},
+        {'Key': 'single_table/ring/metadata.json'},
+    ]
+    df = pd.DataFrame({'0': [0, 0], '1': [0, 0]})
+    zip_bytes = _make_zip_with_csv('ring.csv', df)
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'ring': {
+                'columns': {
+                    '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                }
+            }
+        },
+        'relationships': [],
+    }).encode()
+
+    def side_effect(key, bucket='test_bucket', client=None):
+        if key.endswith('data.zip'):
+            return zip_bytes
+        if key.endswith('metadata.json'):
+            return meta_bytes
+
+        raise KeyError(key)
+
+    mock_get.side_effect = side_effect
+
+    # Run
+    table, metadata = download_demo('single_table', 'ring', tmpdir / 'test_folder')
+
+    # Assert
+    expected_table = pd.DataFrame({'0': [0, 0], '1': [0, 0]})
+    pd.testing.assert_frame_equal(table.head(2), expected_table)
+    expected_metadata_dict = {
+        'tables': {
+            'ring': {
+                'columns': {
+                    '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                },
+            }
+        },
+        'METADATA_SPEC_VERSION': 'V1',
+        'relationships': [],
+    }
+    assert metadata.to_dict() == expected_metadata_dict
+
+
+def test__get_data_from_bucket():
+    """Test the ``_get_data_from_bucket`` method."""
+    # Setup
+    mock_s3_client = Mock()
+    mock_s3_client.get_object.return_value = {'Body': Mock(read=lambda: b'data')}
+    bucket = 'sdv-datasets-public'
+
+    # Run
+    result = _get_data_from_bucket('object_key', bucket, mock_s3_client)
+
+    # Assert
+    assert result == b'data'
+    mock_s3_client.get_object.assert_called_once_with(Bucket=bucket, Key='object_key')
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test__download(mock_list, mock_get_data_from_bucket):
+    """Test the ``_download`` method with new structure."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/ring/data.zip'},
+        {'Key': 'single_table/ring/metadata.json'},
+    ]
+    df = pd.DataFrame({'a': [1, 2]})
+    zip_bytes = _make_zip_with_csv('ring.csv', df)
+    meta_bytes = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
+    mock_get_data_from_bucket.side_effect = lambda key, bucket, client: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
+
+    # Run
+    data_io, metadata_bytes = _download(
+        'single_table',
+        'ring',
+        bucket='sdv-datasets-public',
+        credentials=None,
+    )
+
+    # Assert
+    assert isinstance(data_io, io.BytesIO)
+    assert isinstance(metadata_bytes, (bytes, bytearray))
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_single_table_no_output_folder(mock_list, mock_get):
+    """Test it can download a single table dataset when no output folder is passed."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/ring/data.zip'},
+        {'Key': 'single_table/ring/metadata.json'},
+    ]
+    df = pd.DataFrame({'0': [0, 0], '1': [0, 0]})
+    zip_bytes = _make_zip_with_csv('ring.csv', df)
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'ring': {
+                'columns': {
+                    '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                }
+            }
+        },
+        'relationships': [],
+    }).encode()
+    mock_get.side_effect = lambda key, bucket, client: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
+
+    # Run
+    table, metadata = download_demo('single_table', 'ring')
+
+    # Assert
+    expected_table = pd.DataFrame({'0': [0, 0], '1': [0, 0]})
+    pd.testing.assert_frame_equal(table.head(2), expected_table)
+    expected_metadata_dict = {
+        'tables': {
+            'ring': {
+                'columns': {
+                    '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                },
+            }
+        },
+        'METADATA_SPEC_VERSION': 'V1',
+        'relationships': [],
+    }
+    assert metadata.to_dict() == expected_metadata_dict
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_timeseries(mock_list, mock_get, tmpdir):
+    """Test it can download a timeseries dataset using new structure."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'sequential/Libras/data.zip'},
+        {'Key': 'sequential/Libras/metadata.json'},
+    ]
+    df = pd.DataFrame({
+        'ml_class': [1, 1],
+        'e_id': [0, 0],
+        's_index': [0, 1],
+        'tt_split': [1, 1],
+        'dim_0': [0.67892, 0.68085],
+        'dim_1': [0.27315, 0.27315],
+    })
+    zip_bytes = _make_zip_with_csv('Libras.csv', df)
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'relationships': [],
+        'tables': {
+            'Libras': {
+                'columns': {
+                    'e_id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'dim_0': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'dim_1': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'ml_class': {'sdtype': 'categorical'},
+                }
+            }
+        },
+    }).encode()
+    mock_get.side_effect = lambda key, bucket, client: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
+
+    # Run
+    table, metadata = download_demo('sequential', 'Libras', tmpdir / 'test_folder')
+
+    # Assert
+    expected_table = pd.DataFrame({
+        'ml_class': [1, 1],
+        'e_id': [0, 0],
+        's_index': [0, 1],
+        'tt_split': [1, 1],
+        'dim_0': [0.67892, 0.68085],
+        'dim_1': [0.27315, 0.27315],
+    })
+    pd.testing.assert_frame_equal(table.head(2), expected_table)
+    expected_metadata_dict = {
+        'METADATA_SPEC_VERSION': 'V1',
+        'relationships': [],
+        'tables': {
+            'Libras': {
+                'columns': {
+                    'e_id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'dim_0': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'dim_1': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'ml_class': {'sdtype': 'categorical'},
+                }
+            }
+        },
+    }
+    assert metadata.to_dict() == expected_metadata_dict
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_multi_table(mock_list, mock_get, tmpdir):
+    """Test it can download a multi table dataset using the new structure."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'multi_table/got_families/data.zip'},
+        {'Key': 'multi_table/got_families/metadata.json'},
+    ]
+    families = pd.DataFrame({'family_id': [1, 2], 'name': ['Stark', 'Tully']})
+    character_families = pd.DataFrame({
+        'character_id': [1, 1],
+        'family_id': [1, 4],
+        'generation': [8, 5],
+        'type': ['father', 'mother'],
+    })
+    characters = pd.DataFrame({'age': [20, 16], 'character_id': [1, 2], 'name': ['Jon', 'Arya']})
+
+    zip_buf = io.BytesIO()
+    with zipfile.ZipFile(zip_buf, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('families.csv', families.to_csv(index=False))
+        zf.writestr('character_families.csv', character_families.to_csv(index=False))
+        zf.writestr('characters.csv', characters.to_csv(index=False))
+    zip_bytes = zip_buf.getvalue()
+    meta_bytes = json.dumps({
+        'tables': {
+            'characters': {
+                'columns': {
+                    'character_id': {'sdtype': 'id', 'regex_format': '^[1-9]{1,2}$'},
+                    'name': {'sdtype': 'categorical'},
+                    'age': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                },
+                'primary_key': 'character_id',
+            },
+            'families': {
+                'columns': {
+                    'family_id': {'sdtype': 'id', 'regex_format': '^[1-9]$'},
+                    'name': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'family_id',
+            },
+            'character_families': {
+                'columns': {
+                    'character_id': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
+                    'family_id': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
+                    'type': {'sdtype': 'categorical'},
+                    'generation': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                },
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'families',
+                'parent_primary_key': 'family_id',
+                'child_table_name': 'character_families',
+                'child_foreign_key': 'family_id',
+            },
+            {
+                'parent_table_name': 'characters',
+                'parent_primary_key': 'character_id',
+                'child_table_name': 'character_families',
+                'child_foreign_key': 'character_id',
+            },
+        ],
+        'METADATA_SPEC_VERSION': 'V1',
+    }).encode()
+    mock_get.side_effect = lambda key, bucket, client: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
+
+    # Run
+    tables, metadata = download_demo('multi_table', 'got_families', tmpdir / 'test_folder')
+
+    # Assert
+    pd.testing.assert_frame_equal(tables['families'].head(2), families.head(2))
+    pd.testing.assert_frame_equal(tables['character_families'].head(2), character_families.head(2))
+    pd.testing.assert_frame_equal(tables['characters'].head(2), characters.head(2))
+    expected_metadata_dict = json.loads(meta_bytes.decode())
+    assert metadata.to_dict() == expected_metadata_dict
+
+
+def test_get_available_demos_invalid_modality():
+    """Test it crashes when an invalid modality is passed."""
+    # Run and Assert
+    err_msg = re.escape("'modality' must be in ['single_table', 'multi_table', 'sequential'].")
+    with pytest.raises(ValueError, match=err_msg):
+        get_available_demos('invalid_modality')
+
+
+def test__find_data_zip_key():
+    # Setup
+    contents = [
+        {'Key': 'single_table/fake_hotel_guests/data.ZIP'},
+        {'Key': 'single_table/fake_hotel_guests/metadata.json'},
+    ]
+    dataset_prefix = 'single_table/fake_hotel_guests/'
+
+    # Run
+    zip_key = _find_data_zip_key(contents, dataset_prefix, 'bucket')
+
+    # Assert
+    assert zip_key == 'single_table/fake_hotel_guests/data.ZIP'
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+def test__get_first_v1_metadata_bytes(mock_get):
+    # Setup
+    v2 = json.dumps({'METADATA_SPEC_VERSION': 'V2'}).encode()
+    bad = b'not-json'
+    v1 = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
+
+    def side_effect(key, bucket, client):
+        return {
+            'single_table/dataset/k1.json': v2,
+            'single_table/dataset/k2.json': bad,
+            'single_table/dataset/k_metadata_k.json': v1,
+        }[key]
+
+    mock_get.side_effect = side_effect
+    contents = [
+        {'Key': 'single_table/dataset/k1.json'},
+        {'Key': 'single_table/dataset/k2.json'},
+        {'Key': 'single_table/dataset/k_metadata_k.json'},
+    ]
+
+    # Run
+    got = _get_first_v1_metadata_bytes(
+        contents, 'single_table/dataset/', bucket='test_bucket', client=None
+    )
+
+    # Assert
+    assert got == v1
+
+
+def test__iter_metainfo_yaml_entries_filters():
+    # Setup
+    contents = [
+        {'Key': 'single_table/d1/metainfo.yaml'},
+        {'Key': 'single_table/d1/METAINFO.YAML'},
+        {'Key': 'single_table/d2/not.yaml'},
+        {'Key': 'multi_table/d3/metainfo.yaml'},
+        {'Key': 'single_table/metainfo.yaml'},
+    ]
+
+    # Run
+    got = list(_iter_metainfo_yaml_entries(contents, 'single_table'))
+
+    # Assert
+    assert ('d1', 'single_table/d1/metainfo.yaml') in got
+    assert ('d1', 'single_table/d1/METAINFO.YAML') in got
+    assert all(name != 'd3' for name, _ in got)
+    assert all(key != 'single_table/metainfo.yaml' for _, key in got)
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_get_available_demos_robust_parsing(mock_list, mock_get):
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/d1/metainfo.yaml'},
+        {'Key': 'single_table/d2/metainfo.yaml'},
+        {'Key': 'single_table/bad/metainfo.yaml'},
+        {'Key': 'single_table/ignore.txt'},
+    ]
+
+    def side_effect(key, bucket, client):
+        if key.endswith('d1/metainfo.yaml'):
+            return b'dataset-name: d1\nnum-tables: 2\ndataset-size-mb: 10.5\nsource: EXTERNAL\n'
+        if key.endswith('d2/metainfo.yaml'):
+            return b'dataset-name: d2\nnum-tables: not_a_number\ndataset-size-mb: NaN\n'
+        raise ValueError('invalid yaml')
+
+    mock_get.side_effect = side_effect
+
+    # Run
+    df = get_available_demos('single_table')
+    assert set(df['dataset_name']) == {'d1', 'd2'}
+
+    # Assert
+    # d1 parsed correctly
+    row1 = df[df['dataset_name'] == 'd1'].iloc[0]
+    assert row1['num_tables'] == 2
+    assert row1['size_MB'] == 10.5
+    # d2 falls back to NaN
+    row2 = df[df['dataset_name'] == 'd2'].iloc[0]
+    assert np.isnan(row2['num_tables']) or row2['num_tables'] is None
+    assert np.isnan(row2['size_MB']) or row2['size_MB'] is None
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_get_available_demos_logs_invalid_size_mb(mock_list, mock_get, caplog):
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dsize/metainfo.yaml'},
+    ]
+
+    def side_effect(key, bucket, client):
+        return b'dataset-name: dsize\nnum-tables: 2\ndataset-size-mb: invalid\n'
+
+    mock_get.side_effect = side_effect
+
+    # Run
+    caplog.set_level(logging.INFO, logger='sdv.datasets.demo')
+    df = get_available_demos('single_table')
+
+    # Assert
+    expected = 'Invalid dataset-size-mb invalid for dataset dsize; defaulting to NaN.'
+    assert expected in caplog.messages
+    row = df[df['dataset_name'] == 'dsize'].iloc[0]
+    assert row['num_tables'] == 2
+    assert np.isnan(row['size_MB']) or row['size_MB'] is None
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_get_available_demos_logs_num_tables_str_cast_fail_exact(mock_list, mock_get, caplog):
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dnum/metainfo.yaml'},
+    ]
+
+    def side_effect(key, bucket, client):
+        return b'dataset-name: dnum\nnum-tables: not_a_number\ndataset-size-mb: 1.1\n'
+
+    mock_get.side_effect = side_effect
+
+    # Run
+    caplog.set_level(logging.INFO, logger='sdv.datasets.demo')
+    df = get_available_demos('single_table')
+
+    # Assert
+    expected = (
+        'Could not cast num_tables_val not_a_number to float for dataset dnum; defaulting to NaN.'
+    )
+    assert expected in caplog.messages
+    row = df[df['dataset_name'] == 'dnum'].iloc[0]
+    assert np.isnan(row['num_tables']) or row['num_tables'] is None
+    assert row['size_MB'] == 1.1
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_get_available_demos_logs_num_tables_int_parse_fail_exact(mock_list, mock_get, caplog):
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dnum/metainfo.yaml'},
+    ]
+
+    def side_effect(key, bucket, client):
+        return b'dataset-name: dnum\nnum-tables: [1, 2]\ndataset-size-mb: 1.1\n'
+
+    mock_get.side_effect = side_effect
+
+    # Run
+    caplog.set_level(logging.INFO, logger='sdv.datasets.demo')
+    df = get_available_demos('single_table')
+
+    # Assert
+    expected = 'Invalid num-tables [1, 2] for dataset dnum when parsing as int.'
+    assert expected in caplog.messages
+    row = df[df['dataset_name'] == 'dnum'].iloc[0]
+    assert np.isnan(row['num_tables']) or row['num_tables'] is None
+    assert row['size_MB'] == 1.1
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_get_available_demos_ignores_yaml_dataset_name_mismatch(mock_list, mock_get):
+    """When YAML dataset-name mismatches folder, use folder name from S3 path."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/folder_name/metainfo.yaml'},
+    ]
+
+    # YAML uses a different name; should be ignored for dataset_name field
+    def side_effect(key, bucket, client):
+        return b'dataset-name: DIFFERENT\nnum-tables: 3\ndataset-size-mb: 2.5\n'
+
+    mock_get.side_effect = side_effect
+
+    # Run
+    df = get_available_demos('single_table')
+
+    # Assert
+    assert set(df['dataset_name']) == {'folder_name'}
+    row = df[df['dataset_name'] == 'folder_name'].iloc[0]
+    assert row['num_tables'] == 3
+    assert row['size_MB'] == 2.5
+
+
+def test_get_available_demos_private_bucket_raises_error():
+    """Test that an error is raised if a private bucket is given."""
+    # Run and Assert
+    error_message = 'Private buckets are only supported in SDV Enterprise.'
+    with pytest.raises(ValueError, match=error_message):
+        get_available_demos('single_table', 'private-bucket')
+
+
+def test_get_available_demos_credentials_raises_error():
+    """Test that an error is raised if credentials are given."""
+    # Run and Assert
+    error_message = 'DataCebo credentials for private buckets are only supported in SDV Enterprise.'
+    with pytest.raises(ValueError, match=error_message):
+        get_available_demos(
+            'single_table',
+            s3_bucket_name='sdv-datasets-public',
+            credentials={'username': 'test@gmail.com', 'license_key': 'FakeKey123'},
+        )
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_success_single_table(mock_list, mock_get):
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/word/data.ZIP'},
+        {'Key': 'single_table/word/metadata.json'},
+    ]
+    df = pd.DataFrame({'id': [1, 2], 'name': ['a', 'b']})
+    zip_bytes = _make_zip_with_csv('word.csv', df)
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'word': {
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'name': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'id',
+            }
+        },
+        'relationships': [],
+    }).encode()
+
+    def side_effect(key, bucket, client):
+        if key.endswith('data.ZIP'):
+            return zip_bytes
+        if key.endswith('metadata.json'):
+            return meta_bytes
+        raise KeyError(key)
+
+    mock_get.side_effect = side_effect
+
+    # Run
+    data, metadata = download_demo('single_table', 'word')
+
+    # Assert
+    assert isinstance(data, pd.DataFrame)
+    assert set(data.columns) == {'id', 'name'}
+    assert metadata.to_dict()['tables']['word']['primary_key'] == 'id'
+
+
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_missing_zip_raises(mock_list):
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/word/metadata.json'},
+    ]
+
+    # Run and Assert
+    expected_msg = (
+        "Could not download dataset 'word' from bucket 'sdv-datasets-public'. "
+        "The dataset is missing 'data.zip' file."
+    )
+    with pytest.raises(DemoResourceNotFoundError, match=expected_msg):
+        download_demo('single_table', 'word')
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_no_v1_metadata_raises(mock_list, mock_get):
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/word/data.zip'},
+        {'Key': 'single_table/word/metadata.json'},
+    ]
+    mock_get.side_effect = lambda key, bucket, client: json.dumps({
+        'METADATA_SPEC_VERSION': 'V2'
+    }).encode()
+
+    # Run and Assert
+    error_msg = (
+        "Could not download dataset 'word' from bucket 'sdv-datasets-public'. "
+        'The dataset is missing a valid metadata.'
+    )
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
+        download_demo('single_table', 'word')
+
+
+@patch('builtins.open', side_effect=OSError('fail-open'))
+def test__get_metadata_warns_on_save_error(_mock_open, tmp_path):
+    """_get_metadata should emit a warning if writing metadata.json fails."""
+    # Setup
+    meta = {
+        'METADATA_SPEC_VERSION': 'V1',
+        'relationships': [],
+        'tables': {
+            't': {
+                'columns': {
+                    'a': {'sdtype': 'numerical'},
+                }
+            }
+        },
+    }
+    meta_bytes = json.dumps(meta).encode()
+    out_dir = tmp_path / 'out'
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Run and Assert
+    warn_msg = 'Error saving metadata.json'
+    with pytest.warns(DemoResourceNotFoundWarning, match=warn_msg):
+        md = _get_metadata(meta_bytes, 'dataset1', str(out_dir))
+
+    assert md.to_dict() == meta
+
+
+def test__get_metadata_raises_on_invalid_json():
+    """_get_metadata should raise a helpful error when JSON is invalid."""
+    # Run / Assert
+    error_msg = (
+        "Could not parse the metadata for dataset 'dataset1'. "
+        'The dataset is missing a valid metadata file.'
+    )
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
+        _get_metadata(b'not-json', 'dataset1')
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_writes_metadata_and_discovers_nested_csv(mock_list, mock_get, tmp_path):
+    """When output folder is set, it writes metadata.json and finds nested CSVs."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/nested/data.zip'},
+        {'Key': 'single_table/nested/metadata.json'},
+    ]
+
+    df = pd.DataFrame({'a': [1, 2], 'b': ['x', 'y']})
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('level1/level2/my_table.csv', df.to_csv(index=False))
+
+    zip_bytes = buf.getvalue()
+    meta_dict = {
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'my_table': {
+                'columns': {
+                    'a': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'b': {'sdtype': 'categorical'},
+                }
+            }
+        },
+        'relationships': [],
+    }
+    meta_bytes = json.dumps(meta_dict).encode()
+
+    def side_effect(key, bucket, client):
+        if key.endswith('data.zip'):
+            return zip_bytes
+        if key.endswith('metadata.json'):
+            return meta_bytes
+        raise KeyError(key)
+
+    mock_get.side_effect = side_effect
+
+    out = tmp_path / 'outdir'
+
+    # Run
+    data, metadata = download_demo('single_table', 'nested', out)
+
+    # Assert
+    pd.testing.assert_frame_equal(data, df)
+    assert metadata.to_dict() == meta_dict
+
+    meta_path = out / 'metadata.json'
+    assert meta_path.is_file()
+
+    with open(meta_path, 'rb') as f:
+        on_disk = f.read()
+    assert on_disk == meta_bytes
+
+
+def test__find_text_key_returns_none_when_missing():
+    """Test it returns None when the key is missing."""
+    # Setup
+    contents = [
+        {'Key': 'single_table/dataset/metadata.json'},
+        {'Key': 'single_table/dataset/data.zip'},
+    ]
+    dataset_prefix = 'single_table/dataset/'
+
+    # Run
+    key = _find_text_key(contents, dataset_prefix, 'README.txt')
+
+    # Assert
+    assert key is None
+
+
+def test__find_text_key_ignores_nested_paths():
+    """Test it ignores files in nested folders under the dataset prefix."""
+    # Setup
+    contents = [
+        {'Key': 'single_table/dataset1/bad_folder/SOURCE.txt'},
+    ]
+    dataset_prefix = 'single_table/dataset1/'
+
+    # Run
+    key = _find_text_key(contents, dataset_prefix, 'SOURCE.txt')
+
+    # Assert
+    assert key is None
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test__get_text_file_content_happy_path(mock_list, mock_get, tmpdir):
+    """Test it gets the text file content when it exists."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/README.txt'},
+    ]
+    mock_get.return_value = 'Hello README'.encode()
+
+    # Run
+    text = _get_text_file_content('single_table', 'dataset1', 'README.txt')
+
+    # Assert
+    assert text == 'Hello README'
+
+
+@patch('sdv.datasets.demo._list_objects')
+def test__get_text_file_content_missing_key_returns_none(mock_list):
+    """Test it returns None when the key is missing."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/metadata.json'},
+    ]
+
+    # Run
+    text = _get_text_file_content('single_table', 'dataset1', 'README.txt')
+
+    # Assert
+    assert text is None
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test__get_text_file_content_fetch_error_returns_none(mock_list, mock_get):
+    """Test it returns None when the fetch error occurs."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/SOURCE.txt'},
+    ]
+    mock_get.side_effect = Exception('boom')
+
+    # Run
+    text = _get_text_file_content('single_table', 'dataset1', 'SOURCE.txt')
+
+    # Assert
+    assert text is None
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test__get_text_file_content_logs_on_fetch_error(mock_list, mock_get, caplog):
+    """It logs an info when fetching the key raises an error."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/SOURCE.txt'},
+    ]
+    mock_get.side_effect = Exception('boom')
+
+    # Run
+    caplog.set_level(logging.INFO, logger='sdv.datasets.demo')
+    text = _get_text_file_content('single_table', 'dataset1', 'SOURCE.txt')
+
+    # Assert
+    assert text is None
+    assert 'Error fetching SOURCE.txt for dataset dataset1.' in caplog.text
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test__get_text_file_content_writes_file_when_output_filepath_given(
+    mock_list, mock_get, tmp_path
+):
+    """Test it writes the file when the output filepath is given."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/README.txt'},
+    ]
+    mock_get.return_value = 'Write me'.encode()
+    out = tmp_path / 'subdir' / 'readme.txt'
+
+    # Run
+    text = _get_text_file_content('single_table', 'dataset1', 'README.txt', str(out))
+
+    # Assert
+    assert text == 'Write me'
+    with open(out, 'r', encoding='utf-8') as f:
+        assert f.read() == 'Write me'
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test__get_text_file_content_logs_on_save_error(
+    mock_list, mock_get, tmp_path, caplog, monkeypatch
+):
+    """It logs an info when saving to disk fails."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/README.txt'},
+    ]
+    mock_get.return_value = 'Write me'.encode()
+    out = tmp_path / 'subdir' / 'readme.txt'
+
+    def _fail_open(*args, **kwargs):
+        raise OSError('fail-open')
+
+    monkeypatch.setattr('builtins.open', _fail_open)
+
+    # Run
+    caplog.set_level(logging.INFO, logger='sdv.datasets.demo')
+    text = _get_text_file_content('single_table', 'dataset1', 'README.txt', str(out))
+
+    # Assert
+    assert text == 'Write me'
+    assert 'Error saving README.txt for dataset dataset1.' in caplog.text
+
+
+def test__save_file_content_errors_if_file_exists(tmp_path):
+    """Test ValueError raised if output_filepath already exists."""
+    # Setup
+    output_path = tmp_path / 'output.txt'
+    output_path.write_text('hello!')
+    error_msg = re.escape(
+        f"A file named '{output_path}' already exists. Please specify a different filepath."
+    )
+
+    # Run and Assert
+    with pytest.raises(ValueError, match=error_msg):
+        _save_file_content(
+            modality='single_table',
+            dataset_name='fake_hotel_guests',
+            filename='README.txt',
+            output_filepath=output_path,
+        )
+
+    # Assert
+    assert output_path.read_text() == 'hello!'
+
+
+@patch('sdv.datasets.demo._create_s3_client')
+def test__save_file_content_with_client_error(mock__create_s3_client):
+    """Raise `DemoResourceNotFoundError` when an AWS ClientError occurs while fetching README."""
+    # Setup
+    client = Mock()
+    client.get_paginator.side_effect = ClientError(
+        error_response={
+            'Error': {
+                'Code': 'AccessDenied',
+                'Message': 'Access Denied',
+            },
+            'ResponseMetadata': {
+                'HTTPStatusCode': 403,
+            },
+        },
+        operation_name='ListObjectsV2',
+    )
+    mock__create_s3_client.return_value = client
+
+    error_msg = (
+        "Could not retrieve 'test.txt' for dataset 'fake_hotels' "
+        "from bucket 'private_bucket'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+
+    # Run and Assert
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
+        _save_file_content(
+            modality='single_table',
+            dataset_name='fake_hotels',
+            filename='test.txt',
+            output_filepath='output/test.txt',
+            bucket='private_bucket',
+        )
+
+
+@patch('sdv.datasets.demo._list_objects')
+def test__save_file_content_missing_key_does_not_create_file(mock_list, tmp_path):
+    """Test it does not create the output file if the key is missing."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/metadata.json'},
+    ]
+    output_filename = tmp_path / 'output.txt'
+
+    # Run
+    _save_file_content('single_table', 'dataset1', 'README.txt', output_filename)
+
+    # Assert
+    assert not output_filename.exists()
+
+
+@patch('sdv.datasets.demo._save_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test__save_file_content_logs_on_download_error(mock_list, mock_save, caplog):
+    """It logs an info when downloading the key raises an error."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/test.zip'},
+    ]
+    mock_save.side_effect = Exception('Failed to download')
+
+    # Run
+    caplog.set_level(logging.INFO, logger='sdv.datasets.demo')
+    _save_file_content('single_table', 'dataset1', 'test.zip', 'output.zip')
+
+    # Assert
+    assert 'Error saving test.zip for dataset dataset1.' in caplog.text
+
+
+def test_get_readme_and_get_source_call_wrapper(monkeypatch):
+    """Test it calls the wrapper function when the output filepath is given."""
+    # Setup
+    calls = []
+
+    def fake(
+        modality,
+        dataset_name,
+        filename,
+        output_filepath=None,
+        bucket='test_bucket',
+        credentials=None,
+    ):
+        calls.append((modality, dataset_name, filename, output_filepath))
+        return 'X'
+
+    monkeypatch.setattr('sdv.datasets.demo._get_text_file_content', fake)
+
+    # Run
+    readme = get_readme('single_table', 'dataset1', '/tmp/readme.txt')
+    source = get_source('single_table', 'dataset1', '/tmp/source.txt')
+
+    # Assert
+    assert readme == 'X' and source == 'X'
+    assert calls[0] == ('single_table', 'dataset1', 'README.txt', '/tmp/readme.txt')
+    assert calls[1] == ('single_table', 'dataset1', 'SOURCE.txt', '/tmp/source.txt')
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_get_readme_raises_if_output_file_exists(mock_list, mock_get, tmp_path):
+    """get_readme should raise ValueError if output file already exists."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/README.txt'},
+    ]
+    mock_get.return_value = b'Readme contents'
+    out = tmp_path / 'subdir' / 'readme.txt'
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text('already here', encoding='utf-8')
+
+    # Run / Assert
+    err = f"A file named '{out}' already exists. Please specify a different filepath."
+    with pytest.raises(ValueError, match=re.escape(err)):
+        get_readme('single_table', 'dataset1', str(out))
+
+
+def test_get_readme_private_bucket_raises_error():
+    """Test that an error is raised if a private bucket is given."""
+    # Run and Assert
+    error_message = 'Private buckets are only supported in SDV Enterprise.'
+    with pytest.raises(ValueError, match=error_message):
+        get_readme('single_table', 'dataset', None, 'private-bucket')
+
+
+def test_get_readme_credentials_raises_error():
+    """Test that an error is raised if credentials are given."""
+    # Run and Assert
+    error_message = 'DataCebo credentials for private buckets are only supported in SDV Enterprise.'
+    with pytest.raises(ValueError, match=error_message):
+        get_readme(
+            'single_table',
+            'dataset',
+            None,
+            'sdv-datasets-public',
+            {'username': 'test@gmail.com', 'license_key': 'FakeKey123'},
+        )
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_get_source_raises_if_output_file_exists(mock_list, mock_get, tmp_path):
+    """get_source should raise ValueError if output file already exists."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/SOURCE.txt'},
+    ]
+    mock_get.return_value = b'Source contents'
+    out = tmp_path / 'subdir' / 'source.txt'
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text('already here', encoding='utf-8')
+
+    # Run / Assert
+    err = f"A file named '{out}' already exists. Please specify a different filepath."
+    with pytest.raises(ValueError, match=re.escape(err)):
+        get_source('single_table', 'dataset1', str(out))
+
+
+def test_get_source_private_bucket_raises_error():
+    """Test that an error is raised if a private bucket is given."""
+    # Run and Assert
+    error_message = 'Private buckets are only supported in SDV Enterprise.'
+    with pytest.raises(ValueError, match=error_message):
+        get_source('single_table', 'dataset', None, 'private-bucket')
+
+
+def test_get_source_credentials_raises_error():
+    """Test that an error is raised if credentials are given."""
+    # Run and Assert
+    error_message = 'DataCebo credentials for private buckets are only supported in SDV Enterprise.'
+    with pytest.raises(ValueError, match=error_message):
+        get_source(
+            'single_table',
+            'dataset',
+            None,
+            'sdv-datasets-public',
+            {'username': 'test@gmail.com', 'license_key': 'FakeKey123'},
+        )
+
+
+def test_get_readme_raises_for_non_txt_output():
+    """get_readme should raise ValueError if output path is not .txt."""
+    err = "The README can only be saved as a txt file. Please provide a filepath ending in '.txt'"
+    with pytest.raises(ValueError, match=re.escape(err)):
+        get_readme('single_table', 'dataset1', '/tmp/readme.md')
+
+
+def test_get_source_raises_for_non_txt_output():
+    """get_source should raise ValueError if output path is not .txt."""
+    err = "The source can only be saved as a txt file. Please provide a filepath ending in '.txt'"
+    with pytest.raises(ValueError, match=re.escape(err)):
+        get_source('single_table', 'dataset1', '/tmp/source.pdf')
+
+
+@patch('sdv.datasets.demo._list_objects')
+def test_get_readme_missing_emits_warning(mock_list):
+    """When README is missing, warn the user with DemoResourceNotFoundWarning."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/metadata.json'},
+    ]
+
+    # Run / Assert
+    warn_msg = 'No README information is available for this dataset.'
+    with pytest.warns(DemoResourceNotFoundWarning, match=warn_msg):
+        result = get_readme('single_table', 'dataset1')
+
+    assert result is None
+
+
+@patch('sdv.datasets.demo._list_objects')
+def test_get_source_missing_emits_warning(mock_list):
+    """When SOURCE is missing, warn the user with DemoResourceNotFoundWarning."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/metadata.json'},
+    ]
+
+    # Run / Assert
+    warn_msg = 'No source information is available for this dataset.'
+    with pytest.warns(DemoResourceNotFoundWarning, match=warn_msg):
+        result = get_source('single_table', 'dataset1')
+
+    assert result is None
+
+
+@patch('sdv.datasets.demo._list_objects')
+def test_get_source_missing_emits_warning_and_does_not_create_file(mock_list, tmp_path):
+    """When source is missing and output path provided, warn and do not create a file."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/metadata.json'},
+    ]
+    out = tmp_path / 'subdir' / 'source.txt'
+
+    # Run / Assert
+    warn_msg = re.escape(
+        'No source information is available for this dataset.'
+        f' The requested file ({str(out)}) will not be created.'
+    )
+    with pytest.warns(DemoResourceNotFoundWarning, match=warn_msg):
+        result = get_source('single_table', 'dataset1', str(out))
+
+    assert result is None
+
+
+@patch('sdv.datasets.demo._list_objects')
+def test_get_readmemissing_emits_warning_and_does_not_create_file(mock_list, tmp_path):
+    """When README is missing and output path provided, warn and do not create a file."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/metadata.json'},
+    ]
+    out = tmp_path / 'subdir' / 'source.txt'
+
+    # Run / Assert
+    warn_msg = re.escape(
+        'No README information is available for this dataset.'
+        f' The requested file ({str(out)}) will not be created.'
+    )
+    with pytest.warns(DemoResourceNotFoundWarning, match=warn_msg):
+        result = get_readme('single_table', 'dataset1', str(out))
+
+    assert result is None
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_raises_when_no_csv_in_zip_single_table(mock_list, mock_get):
+    """It should raise a helpful error if the zip contains no CSVs (single_table)."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/word/data.zip'},
+        {'Key': 'single_table/word/metadata.json'},
+    ]
+
+    # Create a zip with a non-CSV file only
+    zip_buf = io.BytesIO()
+    with zipfile.ZipFile(zip_buf, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('README.txt', 'no tables here')
+
+    zip_bytes = zip_buf.getvalue()
+    meta_bytes = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
+
+    mock_get.side_effect = lambda key, client, bucket: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
+
+    # Run and Assert
+    error_msg = (
+        "Could not download dataset 'word' from bucket 'sdv-datasets-public'. "
+        'The dataset is missing `csv` file/s.'
+    )
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
+        download_demo('single_table', 'word')
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_warns_for_non_csv_in_memory(mock_list, mock_get):
+    """In-memory path: warn for non-CSV files and load valid CSVs."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/mix/data.zip'},
+        {'Key': 'single_table/mix/metadata.json'},
+    ]
+
+    df = pd.DataFrame({'id': [1, 2], 'name': ['a', 'b']})
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('good.csv', df.to_csv(index=False))
+        zf.writestr('note.txt', 'hello world')
+        zf.writestr('nested/readme.md', '# readme')
+        # Add a directory entry explicitly
+        zf.writestr('empty_dir/', '')
+    zip_bytes = buf.getvalue()
+
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'good': {
+                'columns': {
+                    'id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'name': {'sdtype': 'categorical'},
+                }
+            }
+        },
+        'relationships': [],
+    }).encode()
+
+    mock_get.side_effect = lambda key, bucket, client: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
+
+    # Run and Assert
+    warn_msg = 'Skipped files: empty_dir/, nested/readme.md, note.txt'
+    with pytest.warns(UserWarning, match=warn_msg) as rec:
+        data, _ = download_demo('single_table', 'mix')
+
+    assert any(warn_msg in str(warn_record) for warn_record in rec)
+
+    expected = pd.DataFrame({'id': [1, 2], 'name': ['a', 'b']})
+    pd.testing.assert_frame_equal(data, expected)
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_on_disk_warns_failed_csv_only(mock_list, mock_get, tmp_path, monkeypatch):
+    """On-disk path: warn for failed CSVs; non-CSV are skipped in the same warning."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/mix/data.zip'},
+        {'Key': 'single_table/mix/metadata.json'},
+    ]
+
+    good = pd.DataFrame({'x': [1, 2]})
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('good.csv', good.to_csv(index=False))
+        zf.writestr('bad.csv', 'will_fail')
+        zf.writestr('info.txt', 'ignore me')
+    zip_bytes = buf.getvalue()
+
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'good': {
+                'columns': {
+                    'x': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                }
+            }
+        },
+        'relationships': [],
+    }).encode()
+
+    mock_get.side_effect = lambda key, bucket, client: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
+
+    # Force read_csv to fail on bad.csv only
+    orig_read_csv = pd.read_csv
+
+    def fake_read_csv(path_or_buf, *args, **kwargs):
+        filename = path_or_buf if isinstance(path_or_buf, str) else getattr(path_or_buf, 'name', '')
+        if filename.endswith('bad.csv'):
+            raise ValueError('bad-parse')
+
+        return orig_read_csv(path_or_buf, *args, **kwargs)
+
+    monkeypatch.setattr('pandas.read_csv', fake_read_csv)
+
+    out_dir = tmp_path / 'mix_out'
+
+    # Run and Assert
+    warn_msg = 'Skipped files: bad.csv: bad-parse, info.txt'
+    match_ = re.escape(warn_msg)
+    with pytest.warns(UserWarning, match=match_) as rec:
+        data, _ = download_demo('single_table', 'mix', out_dir)
+
+    assert any(warn_msg in str(warn_record) for warn_record in rec)
+    pd.testing.assert_frame_equal(data, good)
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_handles_non_utf8_in_memory(mock_list, mock_get):
+    """It should successfully read Latin-1 encoded CSVs from in-memory extraction."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/nonutf/data.zip'},
+        {'Key': 'single_table/nonutf/metadata.json'},
+    ]
+
+    df = pd.DataFrame({'id': [1], 'name': ['café']})
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('nonutf.csv', df.to_csv(index=False).encode('latin-1'))
+    zip_bytes = buf.getvalue()
+
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'nonutf': {
+                'columns': {
+                    'id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'name': {'sdtype': 'categorical'},
+                }
+            }
+        },
+        'relationships': [],
+    }).encode()
+
+    mock_get.side_effect = lambda key, bucket, client: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
+
+    # Run
+    data, _ = download_demo('single_table', 'nonutf')
+
+    # Assert
+    expected = pd.DataFrame({'id': [1], 'name': ['café']})
+    pd.testing.assert_frame_equal(data, expected)
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_handles_non_utf8_on_disk(mock_list, mock_get, tmp_path):
+    """It should successfully read Latin-1 encoded CSVs when extracted to disk."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/nonutf/data.zip'},
+        {'Key': 'single_table/nonutf/metadata.json'},
+    ]
+
+    df = pd.DataFrame({'id': [1], 'name': ['café']})
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('nonutf.csv', df.to_csv(index=False).encode('latin-1'))
+    zip_bytes = buf.getvalue()
+
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'nonutf': {
+                'columns': {
+                    'id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'name': {'sdtype': 'categorical'},
+                }
+            }
+        },
+        'relationships': [],
+    }).encode()
+
+    mock_get.side_effect = lambda key, client, bucket: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
+
+    out_dir = tmp_path / 'latin_out'
+
+    # Run
+    data, _ = download_demo('single_table', 'nonutf', out_dir)
+
+    # Assert
+    expected = pd.DataFrame({'id': [1], 'name': ['café']})
+    pd.testing.assert_frame_equal(data, expected)
+
+
+def test_download_demo_private_bucket_raises_error():
+    """Test that an error is raised if a private bucket is given."""
+    # Run and Assert
+    error_message = 'Private buckets are only supported in SDV Enterprise.'
+    with pytest.raises(ValueError, match=error_message):
+        download_demo('single_table', 'dataset', None, 'private-bucket')
+
+
+def test_download_demo_credentials_raises_error():
+    """Test that an error is raised if credentials are given."""
+    # Run and Assert
+    error_message = 'DataCebo credentials for private buckets are only supported in SDV Enterprise.'
+    with pytest.raises(ValueError, match=error_message):
+        download_demo(
+            'single_table',
+            'dataset',
+            None,
+            'sdv-datasets-public',
+            {'username': 'test@gmail.com', 'license_key': 'FakeKey123'},
+        )
+
+
+def test__list_objects_returns_all_contents():
+    """Test that `_list_objects` returns all object summaries across paginator pages."""
+    # Setup
+    mock_client = Mock()
+    paginator = mock_client.get_paginator.return_value
+    paginator.paginate.return_value = [
+        {'Contents': [{'Key': 'path/file1.txt'}]},
+        {'Contents': [{'Key': 'path/file2.txt'}]},
+    ]
+
+    # Run
+    result = _list_objects(prefix='single_table/', bucket='mybucket', client=mock_client)
+
+    # Assert
+    assert result == [
+        {'Key': 'path/file1.txt'},
+        {'Key': 'path/file2.txt'},
+    ]
+    mock_client.get_paginator.assert_called_once_with('list_objects_v2')
+    paginator.paginate.assert_called_once_with(Bucket='mybucket', Prefix='single_table/')
+
+
+def test__list_objects_raises_when_no_contents_and_dataset_found():
+    """Test that `_list_objects` raise a dataset-specific error when dataset name is known."""
+    # Setup
+    mock_client = Mock()
+    paginator = mock_client.get_paginator.return_value
+    paginator.paginate.return_value = [{'Contents': []}]  # no objects found
+
+    # Run / Assert
+    error_msg = (
+        "Could not download dataset 'mydataset' from bucket 'bucket'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
+        _list_objects(prefix='single_table/mydataset/', bucket='bucket', client=mock_client)
+
+
+def test__list_objects_raises_when_no_contents_and_no_dataset():
+    """Test that `_list_objects` raise a modality-specific error when dataset name is unknown."""
+    # Setup
+    mock_client = Mock()
+    paginator = mock_client.get_paginator.return_value
+    paginator.paginate.return_value = [{'Contents': []}]
+
+    # Run / Assert
+    error_msg = (
+        "Could not list datasets in modality 'single_table' from bucket 'bucket'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
+        _list_objects(prefix='single_table/', bucket='bucket', client=mock_client)
+
+
+@patch('sdv.datasets.demo._create_s3_client')
+def test_download_with_client_error(mock__create_s3_client):
+    """Raise DemoResourceNotFoundError when an AWS ClientError occurs during dataset download."""
+    # Setup
+    client = Mock()
+    client.get_paginator.side_effect = ClientError(
+        error_response={
+            'Error': {'Code': 'AccessDenied', 'Message': 'Access Denied'},
+            'ResponseMetadata': {'HTTPStatusCode': 403},
+        },
+        operation_name='ListObjectsV2',
+    )
+    mock__create_s3_client.return_value = client
+
+    # Run and Assert
+    error_msg = (
+        "Could not download dataset 'fake_hotels' from bucket 'private_bucket'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
+        download_demo(
+            'single_table',
+            'fake_hotels',
+            None,
+            'private_bucket',
+        )
+
+
+@patch('sdv.datasets.demo._create_s3_client')
+def test_get_available_demos_with_client_error(mock__create_s3_client):
+    """Raise `DemoResourceNotFoundError` when an AWS `ClientError` occurs while listing demos."""
+    # Setup
+    client = Mock()
+    client.get_paginator.side_effect = ClientError(
+        error_response={
+            'Error': {
+                'Code': 'AccessDenied',
+                'Message': 'Access Denied',
+            },
+            'ResponseMetadata': {
+                'HTTPStatusCode': 403,
+            },
+        },
+        operation_name='ListObjectsV2',
+    )
+    mock__create_s3_client.return_value = client
+
+    # Run and Assert
+    error_msg = (
+        "Could not list datasets in modality 'single_table' from bucket 'private_bucket'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
+        get_available_demos(
+            modality='single_table',
+            s3_bucket_name='private_bucket',
+        )
+
+
+@patch('sdv.datasets.demo._create_s3_client')
+def test_get_source_with_client_error(mock__create_s3_client):
+    """Raise DemoResourceNotFoundError when an AWS ClientError occurs while fetching SOURCE."""
+    # Setup
+    client = Mock()
+    client.get_paginator.side_effect = ClientError(
+        error_response={
+            'Error': {
+                'Code': 'AccessDenied',
+                'Message': 'Access Denied',
+            },
+            'ResponseMetadata': {
+                'HTTPStatusCode': 403,
+            },
+        },
+        operation_name='ListObjectsV2',
+    )
+    mock__create_s3_client.return_value = client
+
+    error_msg = (
+        "Could not retrieve 'SOURCE.txt' for dataset 'fake_hotels' "
+        "from bucket 'private_bucket'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+
+    # Run and Assert
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
+        get_source(
+            modality='single_table',
+            dataset_name='fake_hotels',
+            s3_bucket_name='private_bucket',
+        )
+
+
+@patch('sdv.datasets.demo._create_s3_client')
+def test_get_readme_with_client_error(mock__create_s3_client):
+    """Raise `DemoResourceNotFoundError` when an AWS ClientError occurs while fetching README."""
+    # Setup
+    client = Mock()
+    client.get_paginator.side_effect = ClientError(
+        error_response={
+            'Error': {
+                'Code': 'AccessDenied',
+                'Message': 'Access Denied',
+            },
+            'ResponseMetadata': {
+                'HTTPStatusCode': 403,
+            },
+        },
+        operation_name='ListObjectsV2',
+    )
+    mock__create_s3_client.return_value = client
+
+    error_msg = (
+        "Could not retrieve 'README.txt' for dataset 'fake_hotels' "
+        "from bucket 'private_bucket'. "
+        'Make sure the bucket name is correct. If the bucket is private '
+        'make sure to provide your credentials.'
+    )
+
+    # Run and Assert
+    with pytest.raises(DemoResourceNotFoundError, match=error_msg):
+        get_readme(
+            modality='single_table',
+            dataset_name='fake_hotels',
+            s3_bucket_name='private_bucket',
+        )
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_with_output_folder_name_single_table(mock_list, mock_get, tmp_path):
+    """Test `download_demo` with output_folder_name and single-table dataset."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'single_table/ring/data.zip'},
+        {'Key': 'single_table/ring/metadata.json'},
+    ]
+    df = pd.DataFrame({'0': [0, 0], '1': [0, 0]})
+    zip_bytes = _make_zip_with_csv('ring.csv', df)
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'ring': {
+                'columns': {
+                    '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                }
+            }
+        },
+        'relationships': [],
+    }).encode()
+    mock_get.side_effect = lambda key, bucket, client: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
+    output_folder_name = tmp_path / 'out'
+    csv_path = output_folder_name / 'ring.csv'
+
+    # Run
+    data, _ = download_demo('single_table', 'ring', output_folder_name)
+
+    # Assert
+    assert csv_path.is_file()
+    pd.testing.assert_frame_equal(pd.read_csv(csv_path), data)
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_download_demo_writes_csvs_to_disk_multi_table(mock_list, mock_get, tmp_path):
+    """Test `download_demo` with output_folder_name and multi-table dataset."""
+    # Setup
+    mock_list.return_value = [
+        {'Key': 'multi_table/got_families/data.zip'},
+        {'Key': 'multi_table/got_families/metadata.json'},
+    ]
+    families = pd.DataFrame({'family_id': [1, 2], 'name': ['Stark', 'Tully']})
+    characters = pd.DataFrame({
+        'age': [20, 16],
+        'character_id': [1, 2],
+        'name': ['Jon', 'Arya'],
+    })
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('families.csv', families.to_csv(index=False))
+        zf.writestr('characters.csv', characters.to_csv(index=False))
+    zip_bytes = buf.getvalue()
+    meta_bytes = json.dumps({
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'families': {
+                'columns': {
+                    'family_id': {'sdtype': 'id'},
+                    'name': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'family_id',
+            },
+            'characters': {
+                'columns': {
+                    'character_id': {'sdtype': 'id'},
+                    'age': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'name': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'character_id',
+            },
+        },
+        'relationships': [],
+    }).encode()
+    mock_get.side_effect = lambda key, bucket, client: (
+        zip_bytes if key.endswith('data.zip') else meta_bytes
+    )
+    output_folder_name = tmp_path / 'out'
+
+    # Run
+    data, _ = download_demo('multi_table', 'got_families', output_folder_name)
+
+    # Assert
+    for table_name in ['families', 'characters']:
+        csv_path = output_folder_name / f'{table_name}.csv'
+        assert csv_path.is_file(), f'{csv_path} should exist'
+        pd.testing.assert_frame_equal(pd.read_csv(csv_path), data[table_name])
+
+
+@pytest.mark.parametrize('encoding', ['utf-8', 'latin-1'])
+def test__load_data_from_zip_with_encoding(encoding):
+    """Test `_load_data_from_zip` reads UTF-8 and reopens the zip entry for Latin-1."""
+    # Setup
+    df = pd.DataFrame({'id': [1], 'name': ['café']})
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('users.csv', df.to_csv(index=False).encode(encoding))
+    zip_bytes = io.BytesIO(buf.getvalue())
+
+    # Run
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', UserWarning)
+        data = _load_data_from_zip(zip_bytes, 'bucket', 'dataset')
+
+    # Assert
+    assert list(data) == ['users']
+    pd.testing.assert_frame_equal(data['users'], df)
+
+
+@patch('sdv.datasets.demo._save_data_from_bucket')
+@patch('sdv.datasets.demo._list_objects')
+def test_save_resource(mock_list, mock_save, tmp_path):
+    """Test it saves the file when it exists."""
+
+    # Setup
+    def mock_save_effect(key, bucket, client, output_filepath):
+        output_filepath.write_text('saved to disk')
+
+    mock_save.side_effect = mock_save_effect
+    mock_list.return_value = [
+        {'Key': 'single_table/dataset1/README.txt'},
+    ]
+    output_filepath = tmp_path / 'file.txt'
+
+    # Run
+    save_resource('single_table', 'dataset1', 'README.txt', output_filepath)
+
+    # Assert
+    assert output_filepath.exists()
+    assert output_filepath.read_text() == 'saved to disk'
+
+
+@patch('sdv.datasets.demo._save_file_content')
+def test_save_resource_with_deprecated_resource_filename(mock_save):
+    """Test it supports and warns for the deprecated ``resource_filename`` parameter."""
+    # Setup
+    warning_msg = re.escape(
+        'Warning: The `resource_filename` parameter is deprecated. '
+        'Please use the `resource_filepath` parameter instead.'
+    )
+
+    # Run and Assert
+    with pytest.warns(FutureWarning, match=warning_msg):
+        save_resource(
+            modality='single_table',
+            dataset_name='dataset1',
+            resource_filename='README.txt',
+            output_filepath='output.txt',
+        )
+    mock_save.assert_called_once_with(
+        modality='single_table',
+        dataset_name='dataset1',
+        filename='README.txt',
+        output_filepath='output.txt',
+        bucket='sdv-datasets-public',
+        credentials=None,
+    )
+
+
+@patch('sdv.datasets.demo._save_file_content')
+def test_save_resource_with_both_resource_parameters(mock_save):
+    """Test it errors if both ``resource_filepath`` and ``resource_filename`` are provided."""
+    # Setup
+    error_msg = re.escape(
+        'Cannot use both `resource_filepath` and `resource_filename`. '
+        'Please use only `resource_filepath`.'
+    )
+
+    # Run and Assert
+    with pytest.raises(ValueError, match=error_msg):
+        save_resource(
+            modality='single_table',
+            dataset_name='dataset1',
+            resource_filepath='README.txt',
+            resource_filename='SOURCE.txt',
+            output_filepath='output.txt',
+        )
+    mock_save.assert_not_called()
+
+
+@patch('sdv.datasets.demo._save_file_content')
+def test_save_resource_without_resource_filepath(mock_save):
+    """Test it errors if ``resource_filepath`` is not provided."""
+    # Run and Assert
+    with pytest.raises(ValueError, match='Please provide a `resource_filepath`.'):
+        save_resource(
+            modality='single_table',
+            dataset_name='dataset1',
+            output_filepath='output.txt',
+        )
+    mock_save.assert_not_called()
+
+
+@patch('sdv.datasets.demo._save_file_content')
+def test_save_resource_without_output_filepath(mock_save):
+    """Test it errors if ``output_filepath`` is not provided."""
+    # Run and Assert
+    with pytest.raises(ValueError, match='Please provide an `output_filepath`.'):
+        save_resource(
+            modality='single_table',
+            dataset_name='dataset1',
+            resource_filepath='README.txt',
+        )
+
+    mock_save.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ('resource_filepath', 'error_type', 'error_message'),
+    [
+        (1, TypeError, '`resource_filepath` must be a string.'),
+        ('', ValueError, '`resource_filepath` cannot be empty.'),
+        (
+            '/schemas/postgre.sql',
+            ValueError,
+            "`resource_filepath` must be relative to the dataset and cannot begin with '/'.",
+        ),
+    ],
+)
+def test_save_resource_with_invalid_resource_filepath(resource_filepath, error_type, error_message):
+    """Test it errors for an invalid resource filepath."""
+    # Run and Assert
+    with pytest.raises(error_type, match=re.escape(error_message)):
+        save_resource(
+            modality='single_table',
+            dataset_name='dataset1',
+            resource_filepath=resource_filepath,
+            output_filepath='output.txt',
+        )

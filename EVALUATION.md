@@ -73,11 +73,7 @@ For example, the following command will run the SDV benchmark on all the given d
 using `dask` and a timeout of 60 seconds:
 
 ```python
-scores = run_benchmark(
-    datasets=['DCG_v1', 'trains_v1', 'UTube_v1'],
-    distributed=True,
-    timeout=60
-)
+scores = run_benchmark(datasets=['DCG_v1', 'trains_v1', 'UTube_v1'], distributed=True, timeout=60)
 ```
 
 And the result will be a DataFrame containing a table with the columns `dataset`, `score`:

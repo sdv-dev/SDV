@@ -1,0 +1,35 @@
+name: Check Milestone
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checkmilestone:
+    runs-on: ubuntu-latest
+    if: ${{ !startsWith(github.head_ref, 'latest-dependency-update-') }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up latest Python
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: 'pyproject.toml'
+
+      - name: Install dependencies
+        run: |
+            python -m pip install --upgrade pip
+            python -m pip install requests
+            python -m pip install .[dev]
+
+      - name: Check milestone
+        env:
+            GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+        run: >
+            python -m scripts.check_milestone -p ${{ github.event.number }}
