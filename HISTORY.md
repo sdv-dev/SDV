@@ -1,5 +1,11 @@
 # Release Notes
 
+## v1.38.5 - 2026-09-28
+
+### Bugs Fixed
+
+* Pin RDT requirement to below 2.0 - Issue [#3005](https://github.com/sdv-dev/SDV/issues/3005) by @frances-h
+
 ## v1.38.4 - 2026-09-25
 
 ### Bugs Fixed
