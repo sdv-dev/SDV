@@ -310,6 +310,13 @@ def test__run_diagnostic_calls_generate(data_format):
     metadata.add_table('table')
     metadata.add_column('col', 'table', sdtype='numerical')
 
+    constraints = [
+        {
+            'class_name': 'Inequality',
+            'parameters': {'low_column_name': 'col', 'high_column_name': 'col'},
+        }
+    ]
+
     if data_format == 'dataframe':
         real_data = real_table
         synthetic_data = synthetic_table
@@ -332,6 +339,7 @@ def test__run_diagnostic_calls_generate(data_format):
             real_data,
             synthetic_data,
             metadata,
+            constraints,
         )
 
     # Assert
@@ -339,6 +347,7 @@ def test__run_diagnostic_calls_generate(data_format):
         real_data=expected_real_data,
         synthetic_data=expected_synthetic_data,
         metadata=metadata.to_dict(),
+        constraints=constraints,
         verbose=True,
     )
     assert result is diagnostic_report

@@ -78,7 +78,7 @@ def evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
     return quality_report
 
 
-def run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
+def run_diagnostic(real_data, synthetic_data, metadata, constraints=None, verbose=True):
     """Run diagnostic report for the synthetic data.
 
     Args:
@@ -88,6 +88,9 @@ def run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
             The table containing the synthetic data.
         metadata (Metadata):
             The metadata object describing the real/synthetic data.
+        constraints (list[dict] or None):
+            A list of constraints to evaluate their adherence, each represented as a
+            dictionary with a ``class_name`` and a ``parameters`` key. Defaults to None.
         verbose (bool):
             Whether or not to print report summary and progress.
             Defaults to True.
@@ -107,6 +110,7 @@ def run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
         real_data=real_data,
         synthetic_data=synthetic_data,
         metadata=metadata.to_dict(),
+        constraints=constraints,
         verbose=verbose,
     )
     return diagnostic_report
