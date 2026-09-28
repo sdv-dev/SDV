@@ -1,5 +1,15 @@
 # Release Notes
 
+## v1.38.5 - 2026-09-28
+
+### New Features
+
+* Allow me to input constraints when running the diagnostic - Issue [#3009](https://github.com/sdv-dev/SDV/issues/3009)
+
+### Bugs Fixed
+
+* Pin RDT requirement to below 2.0 - Issue [#3005](https://github.com/sdv-dev/SDV/issues/3005) by @frances-h
+
 ## v1.38.4 - 2026-09-25
 
 ### Bugs Fixed
