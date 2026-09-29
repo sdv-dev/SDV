@@ -13,6 +13,7 @@ from rdt.transformers import (
     FloatFormatter,
     IndexGenerator,
     OrderedUniformEncoder,
+    RegexGenerator,
     UniformEncoder,
     UnixTimestampEncoder,
 )
@@ -266,7 +267,7 @@ class TestDataProcessor:
             'mba_spec': UniformEncoder,
             'employability_perc': FloatFormatter,
             'placed': UniformEncoder,
-            'student_id': AnonymizedFaker,
+            'student_id': RegexGenerator,
             'experience_years': FloatFormatter,
             'duration': OrderedUniformEncoder,
             'salary': FloatFormatter,
