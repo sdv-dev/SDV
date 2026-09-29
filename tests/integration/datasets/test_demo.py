@@ -153,18 +153,14 @@ def test_download_demo_raise_warning_v2_metadata(mock_get_data_from_bucket):
     # Setup
     expected_warning = re.escape(
         'An updated metadata V2 is not available for this dataset so the V1 '
-        'metadata was returned.\nYou should be able to model and sample with '
-        'the V1 metadata, but please report this issue to the DataCebo.'
+        'metadata was returned.\nYou should be able to model and sample with'
+        ' the V1 metadata, but please report this issue to DataCebo.'
     )
 
-    invalid_metadata = json.dumps({'METADATA_SPEC_VERSION': 'invalid'}).encode()
     v1_metadata = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
-    mock_get_data_from_bucket.side_effect = [
-        DEFAULT,  # Download the real ZIP
-        invalid_metadata,  # Look for V2 version, version=invalid
-        v1_metadata,  # Look for V2 version, version=V1
-        v1_metadata,  # Look for V1 version, version=V1, should raise the warning
-    ]
+    mock_get_data_from_bucket.side_effect = lambda key, **kwargs: (
+        v1_metadata if key.endswith('.json') else DEFAULT
+    )
 
     # Run and Assert
     with pytest.warns(UserWarning, match=expected_warning):

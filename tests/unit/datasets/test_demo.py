@@ -420,7 +420,7 @@ def test__get_first_v2_metadata_bytes_falls_back_to_v1(mock_get):
     expected_warning = re.escape(
         'An updated metadata V2 is not available for this dataset so the V1 '
         'metadata was returned.\nYou should be able to model and sample with'
-        ' the V1 metadata, but please report this issue to the DataCebo.'
+        ' the V1 metadata, but please report this issue to DataCebo.'
     )
 
     def side_effect(key, bucket, client):
