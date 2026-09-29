@@ -295,3 +295,72 @@ def test_get_random_subset_with_missing_values(metadata, data):
     # Assert
     assert len(result['child']) == 3
     assert result['child']['parent_id'].isna().sum() > 0
+
+
+def test_get_random_subset_composite_keys():
+    """Test ``get_random_subset`` when a relationship uses composite keys."""
+    # Setup
+    parent = pd.DataFrame({
+        'id_1': list(range(10)),
+        'id_2': list('ABCDEFGHIJ'),
+        'col': range(10),
+    })
+    child = pd.DataFrame({
+        'child_id': list(range(20)),
+        'fk_1': [i % 10 for i in range(20)],
+        'fk_2': list('ABCDEFGHIJ' * 2),
+        'col': range(20),
+    })
+    data = {'parent': parent, 'child': child}
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'parent': {
+                'columns': {
+                    'id_1': {'sdtype': 'id'},
+                    'id_2': {'sdtype': 'id'},
+                    'col': {'sdtype': 'numerical'},
+                },
+                'primary_key': ['id_1', 'id_2'],
+            },
+            'child': {
+                'columns': {
+                    'child_id': {'sdtype': 'id'},
+                    'fk_1': {'sdtype': 'id'},
+                    'fk_2': {'sdtype': 'id'},
+                    'col': {'sdtype': 'numerical'},
+                },
+                'primary_key': 'child_id',
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'parent',
+                'parent_primary_key': ['id_1', 'id_2'],
+                'child_table_name': 'child',
+                'child_foreign_key': ['fk_1', 'fk_2'],
+            }
+        ],
+    })
+
+    # Run
+    result_from_child = get_random_subset(data, metadata, 'child', 8, verbose=False)
+    result_from_parent = get_random_subset(data, metadata, 'parent', 5, verbose=False)
+
+    # Assert
+    assert len(result_from_child['child']) == 8
+    parent_keys = set(
+        result_from_child['parent'][['id_1', 'id_2']].itertuples(index=False, name=None)
+    )
+    child_keys = set(
+        result_from_child['child'][['fk_1', 'fk_2']].itertuples(index=False, name=None)
+    )
+    assert child_keys.issubset(parent_keys)
+
+    assert len(result_from_parent['parent']) == 5
+    parent_keys = set(
+        result_from_parent['parent'][['id_1', 'id_2']].itertuples(index=False, name=None)
+    )
+    child_keys = set(
+        result_from_parent['child'][['fk_1', 'fk_2']].itertuples(index=False, name=None)
+    )
+    assert child_keys.issubset(parent_keys)
