@@ -443,7 +443,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
             ValueError:
                 Raise when the transformer of a context column is passed.
         """
-        if table_name:
+        if table_name is not None:
             self._validate_table_name(table_name)
         else:
             table_name = self._table_name

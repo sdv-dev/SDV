@@ -310,7 +310,7 @@ class BaseSynthesizer:
                 The name of the table for which to update the transformers. If not provided,
                 will use the default table name associated with the synthesizer.
         """
-        if table_name:
+        if table_name is not None:
             self._validate_table_name(table_name)
         else:
             table_name = self._table_name
@@ -388,7 +388,7 @@ class BaseSynthesizer:
             dict:
                 A dictionary mapping with column names and transformers.
         """
-        if table_name:
+        if table_name is not None:
             self._validate_table_name(table_name)
         else:
             table_name = self._table_name

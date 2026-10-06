@@ -346,6 +346,20 @@ class TestBaseSynthesizer:
         with pytest.raises(SynthesizerInputError, match=expected_error):
             BaseSingleTableSynthesizer(metadata)
 
+    def test__validate_table_name(self):
+        """Test the ``_validate_table_name`` method."""
+        # Setup
+        metadata = Metadata()
+        instance = BaseSynthesizer(metadata)
+        expected_error = re.escape(
+            'The provided table name does not match the metadata:'
+            "\nTable 'invalid_table' is not present in the metadata."
+        )
+
+        # Run and Assert
+        with pytest.raises(ValueError, match=expected_error):
+            instance._validate_table_name('invalid_table')
+
     def test_get_parameters(self):
         """Test that it returns every ``init`` parameter without the ``metadata``."""
         # Setup
@@ -596,6 +610,7 @@ class TestBaseSynthesizer:
         """Test that this returns the field transformers from the ``HyperTransformer``."""
         # Setup
         instance = Mock()
+        instance._validate_table_name = Mock()
         instance._data_processor._hyper_transformer.field_transformers = {
             'name': 'LabelEncoder',
             'salary': 'FloatFormatter',
@@ -612,6 +627,7 @@ class TestBaseSynthesizer:
         result = BaseSynthesizer.get_transformers(instance, table_name='table_name')
 
         # Assert
+        instance._validate_table_name.assert_called_once_with('table_name')
         assert result == {
             'table_name': {
                 'salary': 'FloatFormatter',
@@ -1046,8 +1062,9 @@ class TestBaseSynthesizer:
         metadata.add_column('col2', 'table', sdtype='numerical')
         instance = GaussianCopulaSynthesizer(metadata)
         instance._data_processor.fit(pd.DataFrame({'col1': [1, 2], 'col2': [1, 2]}))
+        instance._validate_table_name = Mock()
 
-        # Run and Assert
+        # Run
         warning = re.escape(
             "Using a OneHotEncoder transformer for column 'col1' "
             'may slow down the preprocessing and modeling times.'
@@ -1055,6 +1072,8 @@ class TestBaseSynthesizer:
         with pytest.warns(UserWarning, match=warning):
             instance.update_transformers(column_name_to_transformer)
 
+        # Assert
+        instance._validate_table_name.assert_not_called()
         field_transformers = instance._data_processor._hyper_transformer.field_transformers
         assert len(field_transformers) == 2
         assert isinstance(field_transformers['col1'], OneHotEncoder)
@@ -1119,11 +1138,13 @@ class TestBaseSynthesizer:
         metadata.add_column('col2', 'table', sdtype='numerical')
         instance = BaseSynthesizer(metadata)
         instance._data_processor.fit(pd.DataFrame({'col1': [1, 2], 'col2': [1, 2]}))
+        instance._validate_table_name = Mock()
 
         # Run
-        instance.update_transformers(column_name_to_transformer)
+        instance.update_transformers(column_name_to_transformer, 'table')
 
         # Assert
+        instance._validate_table_name.assert_called_once_with('table')
         field_transformers = instance._data_processor._hyper_transformer.field_transformers
         assert len(field_transformers) == 2
         assert isinstance(field_transformers['col1'], GaussianNormalizer)
