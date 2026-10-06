@@ -173,7 +173,7 @@ def test_categoricals_are_not_preprocessed():
     # Run auto_assign_transformers
     synth1 = CTGANSynthesizer(metadata)
     synth1.auto_assign_transformers(data)
-    transformers1 = synth1.get_transformers()
+    transformers1 = synth1.get_transformers()['table']
 
     # Assert
     assert isinstance(transformers1['age'], FloatFormatter)
@@ -182,7 +182,7 @@ def test_categoricals_are_not_preprocessed():
     # Run fit
     synth2 = CTGANSynthesizer(metadata, epochs=1)
     synth2.fit(data)
-    transformers2 = synth2.get_transformers()
+    transformers2 = synth2.get_transformers()['table']
 
     # Assert
     assert isinstance(transformers2['age'], FloatFormatter)

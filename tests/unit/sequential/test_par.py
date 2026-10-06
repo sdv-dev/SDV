@@ -425,7 +425,7 @@ class TestPARSynthesizer:
         instance.update_transformers(column_name_to_transformer)
 
         # Assert
-        assert instance.get_transformers()['time'] == transformer
+        assert instance.get_transformers()['table']['time'] == transformer
 
     def test_update_transformers_context_column(self):
         """Test it errors out when a column name is a context column."""
@@ -570,7 +570,7 @@ class TestPARSynthesizer:
         metadata = self.get_metadata()
         metadata.set_sequence_index('time', 'table')
 
-        mock_get_transfomers.return_value = {'time': FloatFormatter}
+        mock_get_transfomers.return_value = {'table': {'time': FloatFormatter}}
 
         # Run
         par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
@@ -578,7 +578,8 @@ class TestPARSynthesizer:
 
         # Assert
         assert (
-            hasattr(par.get_transformers()[par._sequence_index], 'enforce_min_max_values') is False
+            hasattr(par.get_transformers()['table'][par._sequence_index], 'enforce_min_max_values')
+            is False
         )
 
     @patch('sdv.sequential.par.GaussianCopulaSynthesizer')

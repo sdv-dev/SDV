@@ -643,7 +643,7 @@ def test_par_unique_sequence_key_with_regex():
 
     # Assert
     assert sample['table']['sequence_key'].nunique() == 20
-    transformer = synthesizer._context_synthesizer.get_transformers()['sequence_key']
+    transformer = synthesizer._context_synthesizer.get_transformers()['table']['sequence_key']
     transformer.cardinality_rule == 'unique'
 
 

@@ -346,7 +346,7 @@ def test_transformers_correctly_auto_assigned():
 
     # Run
     synthesizer.auto_assign_transformers(data)
-    transformers = synthesizer.get_transformers()
+    transformers = synthesizer.get_transformers()['table']
 
     # Assert
     assert isinstance(transformers['numerical_col'], FloatFormatter)
@@ -435,8 +435,8 @@ def test_auto_assign_transformers_and_update_with_pii():
     synthesizer.auto_assign_transformers(data)
 
     # Assert
-    id_transformer = synthesizer.get_transformers()['id']
-    name_transformer = synthesizer.get_transformers()['name']
+    id_transformer = synthesizer.get_transformers()['table']['id']
+    name_transformer = synthesizer.get_transformers()['table']['name']
     assert id_transformer.provider_name == 'person'
     assert id_transformer.function_name == 'first_name'
     assert id_transformer.cardinality_rule == 'unique'
