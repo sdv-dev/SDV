@@ -609,14 +609,16 @@ class TestBaseSynthesizer:
         }
 
         # Run
-        result = BaseSynthesizer.get_transformers(instance)
+        result = BaseSynthesizer.get_transformers(instance, table_name='table_name')
 
         # Assert
         assert result == {
-            'salary': 'FloatFormatter',
-            'name': 'LabelEncoder',
-            'address': None,
-            'salary#name': 'LabelEncoder',
+            'table_name': {
+                'salary': 'FloatFormatter',
+                'name': 'LabelEncoder',
+                'address': None,
+                'salary#name': 'LabelEncoder',
+            }
         }
 
     def test_get_transformers_with_columns_dropped_by_constraint(self):
@@ -632,12 +634,13 @@ class TestBaseSynthesizer:
             'name': {'sdtype': 'categorical'},
             'address': {'sdtype': 'address'},
         }
+        instance._table_name = 'table_name'
 
         # Run
         result = BaseSynthesizer.get_transformers(instance)
 
         # Assert
-        assert result == {'address': None, 'salary#name': 'LabelEncoder'}
+        assert result == {'table_name': {'address': None, 'salary#name': 'LabelEncoder'}}
 
     def test_get_transformers_raises_an_error(self):
         """Test that this raises an error when there are no field transformers."""
