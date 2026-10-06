@@ -1059,12 +1059,30 @@ def test_datetime_values_are_clipped_to_min_max_in_constraint():
     # Run
     synthesizer = run_copula(data, metadata, constraints=[constraint])
     synthetic_data = synthesizer.sample('fake_hotel_guests', len(data))
-    diagnostic_report = run_diagnostic(data, synthetic_data, metadata)
+    diagnostic_report = run_diagnostic(data, synthetic_data, metadata, [constraint.to_dict()])
 
     # Assert
+    expected_properties = pd.DataFrame({
+        'Property': [
+            'Data Validity',
+            'Data Structure',
+            'Constraint Validity',
+        ],
+        'Score': [1.0, 1.0, 1.0],
+    })
     metadata.validate_data(synthetic_data)
     synthesizer.validate(synthetic_data)
     assert diagnostic_report.get_score() == 1.0
+    pd.testing.assert_frame_equal(diagnostic_report.get_properties(), expected_properties)
+    assert constraint.to_dict() == {
+        'class_name': 'Inequality',
+        'parameters': {
+            'low_column_name': 'checkin_date',
+            'high_column_name': 'checkout_date',
+            'table_name': 'fake_hotel_guests',
+            'strict_boundaries': False,
+        },
+    }
     data = data['fake_hotel_guests']
     synthetic_data = synthetic_data['fake_hotel_guests']
     for col in ['checkin_date', 'checkout_date']:
