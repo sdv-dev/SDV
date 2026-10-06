@@ -590,7 +590,9 @@ class BaseMultiTableSynthesizer:
                 If ``table_name`` is not present in the metadata.
         """
         self._validate_table_name(table_name)
-        self._table_synthesizers[table_name].update_transformers(column_name_to_transformer)
+        self._table_synthesizers[table_name].update_transformers(
+            column_name_to_transformer, table_name=table_name
+        )
 
     def _store_and_convert_original_cols(self, data):
         list_of_changed_tables = []
