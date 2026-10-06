@@ -1422,8 +1422,9 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 The folder to periodically write sampled rows to. Defaults to None.
 
         Returns:
-            pandas.DataFrame:
-                Sampled data.
+            dict[str, pandas.DataFrame]:
+                Dictionary mapping the table name to the sampled data.
+
 
         Raises:
             ConstraintsNotMetError:
@@ -1483,7 +1484,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             'TOTAL NUMBER OF COLUMNS': len(sampled.columns),
         })
 
-        return sampled
+        return {self._table_name: sampled}
 
     def _validate_known_columns(self, conditions):
         """Validate the user-passed conditions."""
@@ -1507,8 +1508,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 The folder to periodically write sampled rows to. Defaults to None.
 
         Returns:
-            pandas.DataFrame:
-                Sampled data.
+            dict[str, pandas.DataFrame]:
+                Dictionary mapping the table name to the sampled data.
 
         Raises:
             ConstraintsNotMetError:
@@ -1557,4 +1558,4 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             'TOTAL NUMBER OF COLUMNS': len(sampled.columns),
         })
 
-        return sampled
+        return {self._table_name: sampled}

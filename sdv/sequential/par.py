@@ -725,8 +725,8 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         condition_columns = context_columns[condition_columns].to_dict('records')
         synthesizer_conditions = [Condition(conditions) for conditions in condition_columns]
         context = self._context_synthesizer.sample_from_conditions(synthesizer_conditions)
-        context.update(context_columns)
-        return self._sample(context, sequence_length)
+        context[self._table_name].update(context_columns)
+        return {self._table_name: self._sample(context[self._table_name], sequence_length)}
 
     def _process_context_columns(self, context_columns):
         """Process context columns by applying appropriate transformations.
