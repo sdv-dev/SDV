@@ -2481,7 +2481,7 @@ class TestBaseSingleTableSynthesizer:
             result = instance.sample_from_conditions(conditions, 10, 10, '.sample.csv.temp')
 
         # Assert
-        pd.testing.assert_frame_equal(result, pd.DataFrame({'name': ['John Doe']}))
+        pd.testing.assert_frame_equal(result['table'], pd.DataFrame({'name': ['John Doe']}))
         assert caplog.messages[0] == str({
             'EVENT': 'Sample',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',
@@ -2508,6 +2508,7 @@ class TestBaseSingleTableSynthesizer:
         keyboard_error = KeyboardInterrupt()
         instance._sample_with_conditions.side_effect = [keyboard_error]
         mock_validate_folder_path.return_value = ['temp_file']
+        instance._table_name = 'table'
 
         # Run
         result = BaseSingleTableSynthesizer.sample_from_conditions(
@@ -2516,7 +2517,7 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         expected_result = pd.DataFrame()
-        pd.testing.assert_frame_equal(result, expected_result)
+        pd.testing.assert_frame_equal(result['table'], expected_result)
         mock_tqdm.tqdm.assert_called_once_with(total=1)
         progress_bar.__enter__.return_value.set_description.assert_called_once_with(
             'Sampling conditions'
@@ -2563,7 +2564,7 @@ class TestBaseSingleTableSynthesizer:
             result = instance.sample_remaining_columns(known_columns, 10, 10, '.sample.csv.temp')
 
         # Assert
-        pd.testing.assert_frame_equal(result, pd.DataFrame({'name': ['John Doe']}))
+        pd.testing.assert_frame_equal(result['table'], pd.DataFrame({'name': ['John Doe']}))
         assert caplog.messages[0] == str({
             'EVENT': 'Sample',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',
@@ -2612,7 +2613,7 @@ class TestBaseSingleTableSynthesizer:
         result = instance.sample_remaining_columns(known_columns, 10, 10, 'temp_file')
 
         # Assert
-        pd.testing.assert_frame_equal(result, pd.DataFrame())
+        pd.testing.assert_frame_equal(result['table'], pd.DataFrame())
         mock_handle_sampling_error.assert_called_once_with('temp_file', keyboard_error)
 
     def test__validate_fit_before_sample_fitted(self):

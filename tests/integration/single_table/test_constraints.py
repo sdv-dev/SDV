@@ -109,6 +109,7 @@ def test_conditional_sampling_with_constraints(demo_data, demo_metadata):
     samples = synth.sample_from_conditions([my_condition])
 
     # Assert
+    samples = samples['fake_hotel_guests']
     assert samples.columns.tolist() == demo_data['fake_hotel_guests'].columns.to_list()
     assert all(samples['checkin_date'] == '04 Feb 2020')
     valid_dates = samples[['checkin_date', 'checkout_date']].dropna()
@@ -135,6 +136,7 @@ def test_conditional_sampling_with_constraints_transforms_if_possible(demo_data,
     samples = synth.sample_from_conditions([my_condition])
 
     # Assert
+    samples = samples['fake_hotel_guests']
     assert samples.columns.tolist() == demo_data['fake_hotel_guests'].columns.to_list()
     assert all(samples['checkin_date'] == '04 Feb 2020')
     assert all(samples['checkout_date'] == '10 Feb 2020')
@@ -192,6 +194,7 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
     sampled_data = model.sample_from_conditions(conditions=conditions)
 
     # Assert
+    sampled_data = sampled_data['table']
     expected_transformed_conditions = {'age': 30}
     expected_data = pd.DataFrame({
         'city': ['LA', 'SF', 'LA', 'LA', 'SF'],

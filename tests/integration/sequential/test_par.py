@@ -115,6 +115,7 @@ def test_column_after_date_complex():
     # Assert
     sampled = sampled['table']
     table_data = data['table']
+    sample_with_conditions = sample_with_conditions['table']
     assert sampled.shape == table_data.shape
     assert (sampled.dtypes == table_data.dtypes).all()
     assert (sampled.notna().sum(axis=1) != 0).all()
@@ -191,6 +192,7 @@ def test_synthesize_sequences(tmp_path):
     loaded_sample = loaded_synthesizer.sample_sequences(100)
 
     # Assert
+    custom_synthetic_data_conditional = custom_synthetic_data_conditional[table_name]
     assert all(custom_synthetic_data_conditional['Symbol'].value_counts() == 2)
     companies = ['COMPANY-A', 'COMPANY-B', 'COMPANY-C', 'COMPANY-D', 'COMPANY-E']
     assert companies in custom_synthetic_data_conditional['Symbol'].unique()
@@ -887,6 +889,7 @@ def test_par_sample_sequential_columns_with_id_context():
     sampled = synthesizer.sample_sequential_columns(context_columns=context_df, sequence_length=3)
 
     # Assert
+    sampled = sampled['table']
     assert len(sampled) == 6  # 2 sequences * 3 length
     assert set(sampled.columns) == set(data['table'].columns)
 
