@@ -36,10 +36,17 @@ class ProgrammableConstraint:
                 f'{missing_attrs} are not saved as attributes on the constraint.'
             )
 
+        if self._is_single_table and getattr(self, '_table_name', None) is not None:
+            instanced['table_name'] = self._table_name
+
         return {
             'class_name': self.__class__.__name__,
             'parameters': instanced,
         }
+
+    def to_dict(self):
+        """Return the constraint as a serializable dictionary."""
+        return self.get_constraint_dict()
 
     @classmethod
     def load_constraint_from_dict(cls, parameters):
