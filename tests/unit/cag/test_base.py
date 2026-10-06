@@ -797,6 +797,7 @@ class TestBaseConstraint:
                 self.param1 = param1
                 self.param2 = param2
                 self.param3 = param3
+                self._table_name = 'dummy_table'
 
         instance = Dummy(param0='required', param2='value', param3=True)
 
@@ -811,5 +812,19 @@ class TestBaseConstraint:
                 'param1': None,
                 'param2': 'value',
                 'param3': True,
+                'table_name': 'dummy_table',
             },
         }
+
+    def test_to_dict(self):
+        """Test the ``to_dict`` method returns the same as ``get_constraint_dict``."""
+        # Setup
+        instance = Mock()
+        instance.get_constraint_dict.return_value = {'class_name': 'Mock', 'parameters': {}}
+
+        # Run
+        constraint_dict = BaseConstraint.to_dict(instance)
+
+        # Assert
+        assert constraint_dict == {'class_name': 'Mock', 'parameters': {}}
+        instance.get_constraint_dict.assert_called_once()
