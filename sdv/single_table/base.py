@@ -308,7 +308,7 @@ class BaseSynthesizer:
                 Dict mapping column names to transformers to be used for that column.
             table_name (str, optional):
                 The name of the table for which to update the transformers. If not provided,
-                will use the default table name associated with the synthesizer.
+                will use the default table name associated with the synthesizer. Defaults to None.
         """
         if table_name is not None:
             self._validate_table_name(table_name)
@@ -382,7 +382,7 @@ class BaseSynthesizer:
         Args:
             table_name (str, optional):
                 The name of the table for which to get the transformers. If not provided,
-                the default table name will be used.
+                the default table name will be used. Defaults to None.
 
         Returns:
             dict:
