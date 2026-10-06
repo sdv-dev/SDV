@@ -236,7 +236,7 @@ class CTGANSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynth
                 Number of estimate columns.
         """
         sdtypes = self._data_processor.get_sdtypes()
-        transformers = self.get_transformers()
+        transformers = self.get_transformers()[self._table_name]
         num_generated_columns = {}
         for column in data.columns:
             if column not in sdtypes:

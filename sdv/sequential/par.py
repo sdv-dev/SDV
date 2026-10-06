@@ -524,7 +524,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                 )
                 if sdtype in ['categorical', 'ordinal']:
                     # Check if metadata overrides this data type
-                    transformer = self.get_transformers().get(field)
+                    transformer = self.get_transformers()[self._table_name].get(field)
                     if not transformer or transformer.get_output_sdtypes().get(field) != 'float':
                         data_type = 'categorical'
 

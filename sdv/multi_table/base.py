@@ -574,7 +574,7 @@ class BaseMultiTableSynthesizer:
                 If ``table_name`` is not present in the metadata.
         """
         self._validate_table_name(table_name)
-        return self._table_synthesizers[table_name].get_transformers()
+        return self._table_synthesizers[table_name].get_transformers(table_name=table_name)
 
     def update_transformers(self, table_name, column_name_to_transformer):
         """Update any of the transformers assigned to each of the column names.
