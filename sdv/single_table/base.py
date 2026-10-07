@@ -411,7 +411,7 @@ class BaseSynthesizer:
         # Add missing columns created by the constraints
         ordered_field_transformers.update(field_transformers)
 
-        return {table_name: ordered_field_transformers}
+        return ordered_field_transformers
 
     def get_info(self):
         """Get dictionary with information regarding the synthesizer.

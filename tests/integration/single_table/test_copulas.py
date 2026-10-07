@@ -194,10 +194,7 @@ def test_adding_constraints(tmp_path, programmable_constraint):
     validation = synthetic_data_custom_constraint[synthetic_data_custom_constraint['has_rewards']]
     assert validation['amenities_fee'].sum() == 0.0
     assert isinstance(
-        synthesizer.get_transformers()['fake_hotel_guests'][
-            'checkin_date#checkout_date.nan_component'
-        ],
-        LabelEncoder,
+        synthesizer.get_transformers()['checkin_date#checkout_date.nan_component'], LabelEncoder
     )
 
     # Save and Load
@@ -279,12 +276,12 @@ def test_custom_processing_anonymization():
         assert all(default_sample[column].value_counts() == 1)
 
     # Assert - Update transformers
-    transformers = transformers_synthesizer.get_transformers()['fake_hotel_guests']
+    transformers = transformers_synthesizer.get_transformers()
     assert transformers['room_type'] == room_type_transformer
     assert transformers['amenities_fee'] == amenities_fee_transformer
 
     # Assert - Anonymization
-    anonymized_transformers = anonymization_synthesizer.get_transformers()['fake_hotel_guests']
+    anonymized_transformers = anonymization_synthesizer.get_transformers()
     assert anonymized_transformers['guest_email'] == guest_email_transformer
     assert anonymized_transformers['billing_address'] == billing_address_transformer
     assert [UUID(uuid) for uuid in anonymized_sample['fake_hotel_guests']['guest_email']]
@@ -311,7 +308,7 @@ def test_update_transformers_with_id_generator():
     gc.update_transformers({'user_id': custom_id})
     gc.fit(data)
     samples = gc.sample('table', sample_num)
-    transformers = gc.get_transformers()['table']
+    transformers = gc.get_transformers()
 
     # Assert
     samples = samples['table']
@@ -343,7 +340,7 @@ def test_regex_transformer_various_cardinality_rules(cardinality_rule, expected_
     gc.update_transformers({'guest_email': transformer})
     gc.fit(real_data)
     samples = gc.sample('fake_hotel_guests', 10)
-    transformers = gc.get_transformers()['fake_hotel_guests']
+    transformers = gc.get_transformers()
 
     # Assert
     samples = samples['fake_hotel_guests']

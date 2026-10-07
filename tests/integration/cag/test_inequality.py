@@ -1009,7 +1009,7 @@ def test_auto_assign_transformer():
 
     # Assert
     expected_transformers = (
-        "{'fake_hotel_guests': {'guest_email': AnonymizedFaker(provider_name='internet',"
+        "{'guest_email': AnonymizedFaker(provider_name='internet',"
         " function_name='email', locales=['en_US'], cardinality_rule='unique'),"
         " 'has_rewards': UniformEncoder(),"
         " 'room_type': UniformEncoder(),"
@@ -1025,7 +1025,7 @@ def test_auto_assign_transformer():
         ' enforce_min_max_values=True),'
         " 'checkin_date#checkout_date': FloatFormatter(learn_rounding_scheme=True,"
         ' enforce_min_max_values=True),'
-        " 'checkin_date#checkout_date.nan_component': UniformEncoder()}}"
+        " 'checkin_date#checkout_date.nan_component': UniformEncoder()}"
     )
     assert str(synthesizer.get_transformers()) == expected_transformers
 

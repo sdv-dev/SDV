@@ -361,9 +361,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
     def _disable_sequence_index_min_max(self):
         """Disable min/max enforcement for the sequence index transformer."""
         if self._sequence_index:
-            sequence_index_transformer = self.get_transformers()[self._table_name][
-                self._sequence_index
-            ]
+            sequence_index_transformer = self.get_transformers()[self._sequence_index]
             if sequence_index_transformer and getattr(
                 sequence_index_transformer, 'enforce_min_max_values', False
             ):
@@ -524,7 +522,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                 )
                 if sdtype in ['categorical', 'ordinal']:
                     # Check if metadata overrides this data type
-                    transformer = self.get_transformers()[self._table_name].get(field)
+                    transformer = self.get_transformers().get(field)
                     if not transformer or transformer.get_output_sdtypes().get(field) != 'float':
                         data_type = 'categorical'
 
