@@ -41,6 +41,10 @@ class ProgrammableConstraint:
             'parameters': instanced,
         }
 
+    def to_dict(self):
+        """Return the constraint as a serializable dictionary."""
+        return self.get_constraint_dict()
+
     @classmethod
     def load_constraint_from_dict(cls, parameters):
         """Uses the given parameters to recreate an instance of the constraint."""
