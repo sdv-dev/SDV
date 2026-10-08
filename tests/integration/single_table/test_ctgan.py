@@ -84,7 +84,7 @@ def test_synthesize_table_ctgan(tmp_path):
 
     # Run - fit
     synthesizer.fit(real_data)
-    synthetic_data = synthesizer.sample('fake_hotel_guests', num_rows=500)
+    synthetic_data = synthesizer.sample(num_rows=500)
 
     # Run - evaluate
     quality_report = evaluate_quality(real_data, synthetic_data, metadata)
@@ -110,7 +110,7 @@ def test_synthesize_table_ctgan(tmp_path):
 
     # Run - custom synthesizer
     custom_synthesizer.fit(real_data)
-    synthetic_data_customized = custom_synthesizer.sample('fake_hotel_guests', num_rows=500)
+    synthetic_data_customized = custom_synthesizer.sample(num_rows=500)
     custom_quality_report = evaluate_quality(real_data, synthetic_data_customized, metadata)
 
     # Assert - fit
@@ -141,7 +141,7 @@ def test_synthesize_table_ctgan(tmp_path):
     assert isinstance(synthesizer, CTGANSynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
     assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
-    loaded_synthesizer.sample(loaded_synthesizer._table_name, 20)
+    loaded_synthesizer.sample(20)
 
     # Assert - custom synthesizer
     assert custom_quality_report.get_score() > 0
@@ -219,7 +219,7 @@ def test_categorical_metadata_with_int_data():
     # Run
     synth = CTGANSynthesizer(metadata, epochs=10)
     synth.fit(data)
-    synthetic_data = synth.sample('table', 1000)
+    synthetic_data = synth.sample(1000)
 
     # Assert
     data = data['table']
@@ -283,7 +283,7 @@ def test_ctgansynthesizer_with_constraints_generating_categorical_values():
     my_synthesizer.fit(data)
 
     # Assert
-    sampled_data = my_synthesizer.sample('student_placements', 10)['student_placements']
+    sampled_data = my_synthesizer.sample(10)['student_placements']
     assert len(sampled_data) == 10
 
 
@@ -307,7 +307,7 @@ def test_ctgan_with_dropped_columns():
     # Run
     synth = CTGANSynthesizer(metadata)
     synth.fit(data)
-    samples = synth.sample('table', 10)
+    samples = synth.sample(10)
 
     # Assert
     samples = samples['table']
@@ -362,8 +362,8 @@ def test_enable_gpu_parameter(synthesizer_class):
     synthesizer_2 = synthesizer_class(metadata, enable_gpu=False)
     synthesizer_1.fit(data)
     synthesizer_2.fit(data)
-    synthetic_data_1 = synthesizer_1.sample('fake_hotel_guests', 10)['fake_hotel_guests']
-    synthetic_data_2 = synthesizer_2.sample('fake_hotel_guests', 10)['fake_hotel_guests']
+    synthetic_data_1 = synthesizer_1.sample(10)['fake_hotel_guests']
+    synthetic_data_2 = synthesizer_2.sample(10)['fake_hotel_guests']
 
     # Assert
     data_columns = data['fake_hotel_guests'].columns.tolist()

@@ -225,7 +225,7 @@ def test_all_possible_nans_configurations(constraint, metadata):
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample('table', 10000)['table']
+    synthetic_data = synthesizer.sample(10000)['table']
 
     # Assert
     synt_data_not_nan_low_middle = synthetic_data[
@@ -418,7 +418,7 @@ def test_range_multiple_constraints():
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint1, constraint2])
-    samples = synthesizer.sample('table', 100)
+    samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
 
@@ -475,7 +475,7 @@ def test_range_multiple_constraints_different_mid_columns():
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint1, constraint2])
-    samples = synthesizer.sample('table', 100)
+    samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
 
@@ -506,7 +506,7 @@ def test_validate_constraints(data, metadata, constraint):
     """Test validate_constraints works with synthetic data generated with Range."""
     # Setup
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample('table', 100)['table']
+    synthetic_data = synthesizer.sample(100)['table']
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)

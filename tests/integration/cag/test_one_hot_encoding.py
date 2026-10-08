@@ -69,7 +69,7 @@ def test_end_to_end(data, metadata):
     """Test end to end with OneHotEncoding."""
     # Setup
     synthesizer = run_copula(data, metadata, [OneHotEncoding(column_names=['a', 'b', 'c'])])
-    synthetic_data = synthesizer.sample('table', 100)
+    synthetic_data = synthesizer.sample(100)
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
@@ -172,7 +172,7 @@ def test_end_to_end_numerical_and_categorical():
         # Run
         synthesizer.add_constraints([constraint])
         synthesizer.fit(data)
-        samples = synthesizer.sample('one_hot', 100)['one_hot']
+        samples = synthesizer.sample(100)['one_hot']
 
         # Assert
         assert (samples.sum(axis=1) == 1).all()
@@ -203,7 +203,7 @@ def test_end_to_end_boolean():
     # Run
     synthesizer.add_constraints([constraint])
     synthesizer.fit(data)
-    samples = synthesizer.sample('one_hot', 100)['one_hot']
+    samples = synthesizer.sample(100)['one_hot']
 
     # Assert
     assert samples.dtypes.tolist() == [bool, bool, bool]
@@ -219,7 +219,7 @@ def test_end_to_end_categorical_single(data, metadata):
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample('table', 200)['table']
+    synthetic_data = synthesizer.sample(200)['table']
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert
@@ -402,7 +402,7 @@ def test_with_categorical_and_ranges_columns():
     # Run
     synth.add_constraints([constraint])
     synth.fit(data)
-    synthetic_data = synth.sample('table', 2)
+    synthetic_data = synth.sample(2)
 
     # Assert
     assert (constraint.is_valid(synthetic_data)).all()

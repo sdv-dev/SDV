@@ -202,7 +202,7 @@ def test_sample_keys_are_scrambled():
     synthesizer.fit(data)
 
     # Run
-    sampled = synthesizer.sample('fake_hotel_guests', 1000)
+    sampled = synthesizer.sample(1000)
 
     # Assert
     sampled = sampled['fake_hotel_guests']
@@ -262,8 +262,8 @@ def test_sampling(synthesizer):
     synthesizer.fit(data)
 
     # Run
-    sample_1 = synthesizer.sample('table', 10)
-    sample_2 = synthesizer.sample('table', 10)
+    sample_1 = synthesizer.sample(10)
+    sample_2 = synthesizer.sample(10)
 
     # Assert
     sample_1 = sample_1['table']
@@ -299,9 +299,9 @@ def test_sampling_reset_sampling(synthesizer):
 
     synthesizer.fit(data)
 
-    sampled1 = synthesizer.sample('table', 10)['table']
+    sampled1 = synthesizer.sample(10)['table']
     synthesizer.reset_sampling()
-    sampled2 = synthesizer.sample('table', 10)['table']
+    sampled2 = synthesizer.sample(10)['table']
     pd.testing.assert_frame_equal(sampled1, sampled2)
 
 
@@ -402,7 +402,7 @@ def test_modeling_with_complex_datetimes():
     synth = GaussianCopulaSynthesizer(metadata)
     synth.validate(data)
     synth.fit(data)
-    sampled = synth.sample('table', 10)
+    sampled = synth.sample(10)
 
     # Assert
     synth.validate(sampled)
@@ -465,11 +465,11 @@ def test_refitting_a_model():
 
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.fit(data)
-    first_sample = synthesizer.sample('table', 10)['table']
+    first_sample = synthesizer.sample(10)['table']
 
     # Run
     synthesizer.fit(data)
-    second_sample = synthesizer.sample('table', 10)['table']
+    second_sample = synthesizer.sample(10)['table']
 
     # Assert
     assert all(second_sample['name'] == first_sample['name'])
@@ -809,8 +809,8 @@ def test_fit_and_sample_numerical_col_names(synthesizer_class):
     # Run
     synth = synthesizer_class(metadata)
     synth.fit(data)
-    sample_1 = synth.sample('table', 10)['table']
-    sample_2 = synth.sample('table', 10)['table']
+    sample_1 = synth.sample(10)['table']
+    sample_2 = synth.sample(10)['table']
 
     assert sample_1.columns.tolist() == data['table'].columns.tolist()
     assert sample_2.columns.tolist() == data['table'].columns.tolist()
@@ -837,7 +837,7 @@ def test_sample_not_fitted(synthesizer):
 
     # Run and Assert
     with pytest.raises(SamplingError, match=expected_message):
-        synthesizer.sample('table', 10)
+        synthesizer.sample(10)
 
 
 @pytest.mark.parametrize('synthesizer_class', SYNTHESIZERS_CLASSES)
@@ -855,7 +855,7 @@ def test_detect_from_dataframe_numerical_col(synthesizer_class):
     metadata = Metadata.detect_from_dataframes(data)
     instance = synthesizer_class(metadata)
     instance.fit(data)
-    sample = instance.sample('table', 5)['table']
+    sample = instance.sample(5)['table']
 
     # Assert
     assert sample.columns.tolist() == data['table'].columns.tolist()
@@ -918,7 +918,7 @@ def test_sample_not_fitted_raises_error():
 
     # Run and Assert
     with pytest.raises(SamplingError, match=expected_message):
-        GaussianCopulaSynthesizer(METADATA).sample('table', num_rows=10)
+        GaussianCopulaSynthesizer(METADATA).sample(num_rows=10)
 
 
 def test_sample_from_conditions_not_fitted_raises_error():
@@ -957,7 +957,7 @@ def test_range_extrapolation_warns_to_install_bundle(synthesizer_class):
         synthesizer.fit(data)
 
     # Run
-    sampled = synthesizer.sample('fake_hotel_guests', 1000)
+    sampled = synthesizer.sample(1000)
 
     # Assert
     sampled = sampled['fake_hotel_guests']

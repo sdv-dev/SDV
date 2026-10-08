@@ -34,7 +34,7 @@ def test_visualize_graph_for_single_table():
     metadata.visualize()
     metadata.validate()
     model.fit(data)
-    model.sample('table', 10)
+    model.sample(10)
 
 
 def test_visualize_graph_for_multi_table():
