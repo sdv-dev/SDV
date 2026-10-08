@@ -647,8 +647,8 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
 
     def sample(
         self,
-        table_name,
         num_rows,
+        table_name=None,
         max_tries_per_batch=100,
         batch_size=None,
         output_folder_path=None,
@@ -659,10 +659,11 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         ``sample_sequences`` instead.
 
         Args:
-            table_name (str):
-                Name of the table to sample.
             num_rows (int):
                 Number of rows to sample.
+            table_name (str):
+                Name of the table to sample. If ``None``, the default table will be used.
+                Defaults to ``None``.
             max_tries_per_batch (int):
                 Number of times to retry sampling discarded rows. Defaults to 100.
             batch_size (int or None):
