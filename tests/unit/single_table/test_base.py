@@ -2134,7 +2134,7 @@ class TestBaseSingleTableSynthesizer:
 
         # Run and Assert
         with pytest.raises(SamplingError, match=expected_message):
-            BaseSingleTableSynthesizer.sample(instance, 'table', 10)
+            BaseSingleTableSynthesizer.sample(instance, 10, 'table')
 
     def test__sample_with_progress_bar_without_output_filepath(self):
         """Test that ``_sample_with_progress_bar`` raises an error
@@ -2181,8 +2181,8 @@ class TestBaseSingleTableSynthesizer:
         with catch_sdv_logs(caplog, logging.INFO, logger='SingleTableSynthesizer'):
             result = BaseSingleTableSynthesizer.sample(
                 instance,
-                'table',
                 num_rows,
+                'table',
                 max_tries_per_batch,
                 batch_size,
                 output_file_path,
@@ -2226,7 +2226,7 @@ class TestBaseSingleTableSynthesizer:
             'existing synthesizer. Please create a new synthesizer with the modified metadata.'
         )
         with pytest.warns(UserWarning, match=warn_msg):
-            instance.sample('table', 5)
+            instance.sample(5, 'table')
 
     def test__validate_conditions_unseen_columns(self):
         """Test that conditions are within the original metadata columns."""
@@ -2672,7 +2672,7 @@ class TestBaseSingleTableSynthesizer:
         instance._table_name = 'table'
 
         # Run
-        BaseSingleTableSynthesizer.sample(instance, 'table', 10)
+        BaseSingleTableSynthesizer.sample(instance, 10, 'table')
 
         # Assert
         instance._validate_fit_before_sample.assert_called_once_with()

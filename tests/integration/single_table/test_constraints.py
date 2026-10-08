@@ -77,7 +77,7 @@ def test_column_relationships_with_constraints():
     # Run
     synth.add_constraints([constraint])
     synth.fit(data)
-    samples = synth.sample(synth._table_name, 100)
+    samples = synth.sample(100, main_table_name=synth._table_name)
 
     # Assert
     data = data['table']
@@ -238,13 +238,13 @@ def test_custom_constraints_from_object(tmpdir):
     synthesizer.fit_processed_data(processed_data)
 
     # Run - sample
-    sampled = synthesizer.sample('table', 10 * len(data['table']))
+    sampled = synthesizer.sample(10 * len(data['table']), main_table_name='table')
     assert all(sampled['table']['numerical_col'] > 1)
 
     # Run - Save and Sample
     synthesizer.save(tmpdir / 'test.pkl')
     loaded_instance = load_synthesizer(tmpdir / 'test.pkl')
-    loaded_sampled = loaded_instance.sample('table', 10 * len(data['table']))
+    loaded_sampled = loaded_instance.sample(10 * len(data['table']), main_table_name='table')
     assert all(loaded_sampled['table']['numerical_col'] > 1)
 
 
@@ -276,13 +276,13 @@ def test_single_table_custom_constraints_from_object(tmpdir):
     synthesizer.fit_processed_data(processed_data)
 
     # Run - sample
-    sampled = synthesizer.sample('table', 10)['table']
+    sampled = synthesizer.sample(10, main_table_name='table')['table']
     assert all(sampled['numerical_col'] > 1)
 
     # Run - Save and Sample
     synthesizer.save(tmpdir / 'test.pkl')
     loaded_instance = load_synthesizer(tmpdir / 'test.pkl')
-    loaded_sampled = loaded_instance.sample('table', 10)['table']
+    loaded_sampled = loaded_instance.sample(10, main_table_name='table')['table']
     assert all(loaded_sampled['numerical_col'] > 1)
 
 
@@ -299,7 +299,7 @@ def test_synthesizer_with_inequality_constraint(demo_data, demo_metadata):
     synthesizer.fit(demo_data)
 
     # Run and Assert
-    sampled = synthesizer.sample('fake_hotel_guests', num_rows=500)
+    sampled = synthesizer.sample(num_rows=500, main_table_name='fake_hotel_guests')
     synthesizer.validate(sampled)
     sampled = sampled['fake_hotel_guests']
     _sampled = sampled[~sampled['checkout_date'].isna()]
@@ -333,7 +333,7 @@ def test_inequality_constraint_with_datetimes_and_nones():
 
     # Run
     synth.fit(data)
-    sampled = synth.sample('table', 10)
+    sampled = synth.sample(10, main_table_name='table')
 
     # Assert
     synth.validate(sampled)
@@ -401,7 +401,7 @@ def test_range_constraint_with_datetimes_and_nones():
 
     # Run
     synth.fit(data)
-    sampled = synth.sample('table', 10)
+    sampled = synth.sample(10, main_table_name='table')
 
     # Assert
     sampled = sampled['table']
@@ -465,7 +465,7 @@ def test_inequality_constraint_all_possible_nans_configurations():
 
     # Run
     synthesizer.fit(data)
-    synthetic_data = synthesizer.sample('table', 10000)
+    synthetic_data = synthesizer.sample(10000, table_name='table')
 
     # Assert
     synthetic_data = synthetic_data['table']
@@ -506,7 +506,7 @@ def test_range_constraint_all_possible_nans_configurations():
     synthesizer.add_constraints([my_constraint])
     synthesizer.fit(data)
 
-    s_data = synthesizer.sample('table', 2000)
+    s_data = synthesizer.sample(2000, main_table_name='table')
 
     # Assert
     s_data = s_data['table']
@@ -555,7 +555,7 @@ def test_timezone_aware_constraints():
     synth = GaussianCopulaSynthesizer(metadata)
     synth.add_constraints([my_constraint])
     synth.fit(data)
-    samples = synth.sample('table', 100)['table']
+    samples = synth.sample(100, main_table_name='table')['table']
 
     # Assert
     assert all(samples['col1'] < samples['col2'])
@@ -632,7 +632,7 @@ def test_constraint_datetime_check():
     synth = GaussianCopulaSynthesizer(metadata)
     synth.add_constraints([my_constraint])
     synth.fit(data)
-    samples = synth.sample('table', 3)
+    samples = synth.sample(3, main_table_name='table')
 
     # Assert
     samples = samples['table']

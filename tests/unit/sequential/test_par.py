@@ -937,7 +937,7 @@ class TestPARSynthesizer:
             "Please use 'sample_sequences' instead."
         )
         with pytest.raises(NotImplementedError, match=error_message):
-            par.sample('table', 3)
+            par.sample(3, main_table_name='table')
 
     def test_sample_sequences_sequence_key_needs_to_be_filled_in(self):
         """Test that the method adds the sequence key to the context columns if necessary."""

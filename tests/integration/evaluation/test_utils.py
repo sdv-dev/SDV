@@ -175,7 +175,7 @@ def test_get_combination_overlap_end_to_end():
     real_data, metadata = _get_demographic_data()
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.fit(real_data)
-    synthetic_data = synthesizer.sample('customer', 10)
+    synthetic_data = synthesizer.sample(10)
     column_names = ['date_of_birth', 'zipcode', 'gender']
 
     # Run

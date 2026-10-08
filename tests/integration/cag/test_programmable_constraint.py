@@ -117,7 +117,7 @@ def test_end_to_end_programmable_constraint_multi_table(programmable_constraint)
 
     # Run
     synthesizer.fit(data)
-    sampled_data = synthesizer.sample('guests', len(data['guests']))
+    sampled_data = synthesizer.sample(len(data['guests']), main_table_name='guests')
     constraints = synthesizer.get_constraints()
 
     # Assert
@@ -140,7 +140,7 @@ def test_end_to_end_programmable_constraint_single_table(programmable_constraint
 
     # Run
     synthesizer.fit(data)
-    sampled_data = synthesizer.sample('fake_hotel_guests', 1000)
+    sampled_data = synthesizer.sample(1000)
     constraints = synthesizer.get_constraints()
 
     # Assert
@@ -226,7 +226,7 @@ def test_end_to_end_simple_constraint_with_no_fit():
     # Run
     synthesizer.add_constraints([custom_constraint])
     synthesizer.fit(data)
-    sampled_data = synthesizer.sample('fake_hotel_guests', 100)
+    sampled_data = synthesizer.sample(100)
 
     # Assert
     sampled_data = sampled_data['fake_hotel_guests']
