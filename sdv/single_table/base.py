@@ -1206,8 +1206,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
     def sample(
         self,
-        table_name,
         num_rows,
+        table_name=None,
         max_tries_per_batch=100,
         batch_size=None,
         output_folder_path=None,
@@ -1215,10 +1215,11 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         """Sample rows from this table.
 
         Args:
-            table_name (str):
-                Name of the table to sample. This parameter is required.
             num_rows (int):
                 Number of rows to sample. This parameter is required.
+            table_name (str):
+                Name of the table to sample. If None, defaults to the table name of the synthesizer.
+                Defaults to None.
             max_tries_per_batch (int):
                 Number of times to retry sampling until the batch size is met. Defaults to 100.
             batch_size (int or None):
@@ -1231,6 +1232,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             dict[str, pandas.DataFrame]:
                 Dictionary mapping the table name to the sampled data.
         """
+        table_name = self._table_name if table_name is None else table_name
         self._validate_table_name(table_name)
         self._validate_fit_before_sample()
         self._check_input_metadata_updated()
