@@ -145,7 +145,7 @@ def test_all_possible_nans_configurations(constraint, metadata):
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample('table', 10000)['table']
+    synthetic_data = synthesizer.sample(10000)['table']
 
     # Assert
     assert (~(pd.isna(synthetic_data['A'])) & ~(pd.isna(synthetic_data['B']))).any()
@@ -327,7 +327,7 @@ def test_inequality_with_numerical(data, metadata, constraint):
     """Test it works with numerical columns."""
     # Run
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample('table', num_rows=10)['table']
+    synthetic_data = synthesizer.sample(num_rows=10)['table']
 
     # Assert
     assert (synthetic_data['A'] < synthetic_data['B']).all()
@@ -380,7 +380,7 @@ def test_inequality_with_timestamp_and_date():
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample('table', num_rows=10)['table']
+    synthetic_data = synthesizer.sample(num_rows=10)['table']
 
     # Assert
     assert is_object_dtype(synthetic_data['SUBMISSION_TIMESTAMP'].dtype)
@@ -595,7 +595,7 @@ def test_inequality_constraint_date_less_than_timestamp_no_strict_boundaries():
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample('table', 10)['table']
+    synthetic_data = synthesizer.sample(10)['table']
 
     # Assert
     assert is_object_dtype(synthetic_data['SUBMISSION_TIMESTAMP'].dtype)
@@ -656,7 +656,7 @@ def test_inequality_constraint_timestamp_less_than_date_no_strict_boundaries():
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample('table', 10)['table']
+    synthetic_data = synthesizer.sample(10)['table']
 
     # Assert
     assert is_object_dtype(synthetic_data['SUBMISSION_TIMESTAMP'].dtype)
@@ -698,7 +698,7 @@ def test_inequality_multiple_patterns():
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint1, constraint2])
-    samples = synthesizer.sample('table', 100)['table']
+    samples = synthesizer.sample(100)['table']
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
 
@@ -726,7 +726,7 @@ def test_inequality_multiple_constraints_reject_sampling(
     """Test that Inequality constraint works with multiple constraints using reject sampling."""
     # Run
     synthesizer = run_copula(data_reject, metadata_reject, constraints_reject)
-    samples = synthesizer.sample('table', 10)['table']
+    samples = synthesizer.sample(10)['table']
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
 
@@ -774,7 +774,7 @@ def test_inequality_multiple_constraints_one_constraint_invalid_column():
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint1, constraint2])
-    samples = synthesizer.sample('table', 1000000)['table']
+    samples = synthesizer.sample(1000000)['table']
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
 
@@ -809,7 +809,7 @@ def test_inequality_many_constraints():
 
     # Run
     synthesizer = run_copula(data, metadata, constraints)
-    samples = synthesizer.sample('table', 100)['table']
+    samples = synthesizer.sample(100)['table']
 
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
@@ -853,7 +853,7 @@ def test_inequality_with_nan():
 
     # Run
     synthesizer = run_copula(data, metadata, [inequality_cag])
-    sampled_data = synthesizer.sample('fake_hotel_guests', 100)['fake_hotel_guests']
+    sampled_data = synthesizer.sample(100)['fake_hotel_guests']
     synthesizer.validate({'fake_hotel_guests': sampled_data})
 
     # Assert
@@ -869,7 +869,7 @@ def test_validate_constraints(data, metadata, constraint):
     """Test validate_constraints works with synthetic data generated with Inequality."""
     # Setup
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample('table', 100)['table']
+    synthetic_data = synthesizer.sample(100)['table']
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
@@ -900,7 +900,7 @@ def test_validate_constraints_multi(data_multi, metadata_multi, constraint_multi
     """Test validate_constraints works with multitable synthetic data generated with Inequality."""
     # Setup
     synthesizer = run_hma(data_multi, metadata_multi, [constraint_multi])
-    synthetic_data = synthesizer.sample('table1', 100 * len(data_multi['table1']))
+    synthetic_data = synthesizer.sample(100 * len(data_multi['table1']), main_table_name='table1')
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
@@ -913,7 +913,7 @@ def test_validate_constraints_multi_with_reject(data_reject, metadata_reject, co
     """Test validate_constraints works with reject sampling."""
     # Setup
     synthesizer = run_copula(data_reject, metadata_reject, constraints_reject)
-    synthetic_data = synthesizer.sample('table', 100)
+    synthetic_data = synthesizer.sample(100)
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
@@ -1041,7 +1041,7 @@ def test_low_column_formatting_maintained():
     synthesizer = run_copula(data, metadata, constraints=[inequality_cag])
 
     # Run
-    sampled_data = synthesizer.sample('fake_hotel_guests', 100)['fake_hotel_guests']
+    sampled_data = synthesizer.sample(100)['fake_hotel_guests']
 
     # Assert
     assert all(sampled_data['room_rate'].round(2) == sampled_data['room_rate'])
@@ -1058,7 +1058,7 @@ def test_datetime_values_are_clipped_to_min_max_in_constraint():
 
     # Run
     synthesizer = run_copula(data, metadata, constraints=[constraint])
-    synthetic_data = synthesizer.sample('fake_hotel_guests', len(data))
+    synthetic_data = synthesizer.sample(len(data))
     diagnostic_report = run_diagnostic(data, synthetic_data, metadata, [constraint.to_dict()])
 
     # Assert

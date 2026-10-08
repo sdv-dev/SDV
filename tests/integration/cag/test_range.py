@@ -225,7 +225,7 @@ def test_all_possible_nans_configurations(constraint, metadata):
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample('table', 10000)['table']
+    synthetic_data = synthesizer.sample(10000)['table']
 
     # Assert
     synt_data_not_nan_low_middle = synthetic_data[
@@ -418,7 +418,7 @@ def test_range_multiple_constraints():
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint1, constraint2])
-    samples = synthesizer.sample('table', 100)
+    samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
 
@@ -475,7 +475,7 @@ def test_range_multiple_constraints_different_mid_columns():
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint1, constraint2])
-    samples = synthesizer.sample('table', 100)
+    samples = synthesizer.sample(100)
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
 
@@ -506,7 +506,7 @@ def test_validate_constraints(data, metadata, constraint):
     """Test validate_constraints works with synthetic data generated with Range."""
     # Setup
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample('table', 100)['table']
+    synthetic_data = synthesizer.sample(100)['table']
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
@@ -557,7 +557,7 @@ def test_invalid_data(data, metadata, constraint):
 def test_validate_constraints_multi(data_multi, metadata_multi, constraint_multi):
     """Test validate_constraints with data generated with Range with multitable numerical data."""
     synthesizer = run_hma(data_multi, metadata_multi, [constraint_multi])
-    synthetic_data = synthesizer.sample('table1', 100 * len(data_multi['table1']))
+    synthetic_data = synthesizer.sample(100 * len(data_multi['table1']), main_table_name='table1')
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
@@ -573,7 +573,9 @@ def test_validate_constraints_multi_datetime(
     """Test validate_constraints with data generated with Range with multitable datetime data."""
     # Setup
     synthesizer = run_hma(data_multi_datetime, metadata_multi_datetime, [constraint_multi])
-    synthetic_data = synthesizer.sample('table1', 100 * len(data_multi_datetime['table1']))
+    synthetic_data = synthesizer.sample(
+        num_rows=100 * len(data_multi_datetime['table1']), main_table_name='table1'
+    )
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)

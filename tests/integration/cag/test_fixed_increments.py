@@ -157,7 +157,7 @@ def test_validate_constraints(data, metadata, constraint):
     """Test validate_constraints works with synthetic data generated with FixedIncrements."""
     # Setup
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample('table1', 100)
+    synthetic_data = synthesizer.sample(100)
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
@@ -183,7 +183,7 @@ def test_validate_constraints_multi(data_multi, metadata_multi, constraint_multi
     """Test validate_constraints works with multitable data generated with FixedIncrements."""
     # Setup
     synthesizer = run_hma(data_multi, metadata_multi, [constraint_multi])
-    synthetic_data = synthesizer.sample('table1', 100 * len(data_multi['table1']))
+    synthetic_data = synthesizer.sample(100 * len(data_multi['table1']), main_table_name='table1')
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
@@ -259,7 +259,7 @@ def test_fixedincrements_with_nullable_pandas_dtypes():
 
     # Run
     synthesizer = run_copula(data, metadata, constraints)
-    synthetic_data = synthesizer.sample('table1', 10)
+    synthetic_data = synthesizer.sample(10)
 
     # Assert
     synthetic_data['table1'].dtypes.to_dict() == data['table1'].dtypes.to_dict()
