@@ -1361,6 +1361,12 @@ class TestBaseMultiTableSynthesizer:
                 id='invalid_main_table_name',
             ),
             pytest.param(
+                'main_table_name',
+                'bad_table_name',
+                "Table 'bad_table_name' does not exist in the metadata.",
+                id='invalid_main_table_name',
+            ),
+            pytest.param(
                 'num_rows',
                 0,
                 "Invalid parameter for 'num_rows' (0). "

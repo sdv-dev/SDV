@@ -465,7 +465,7 @@ def test_inequality_constraint_all_possible_nans_configurations():
 
     # Run
     synthesizer.fit(data)
-    synthetic_data = synthesizer.sample(10000, table_name='table')
+    synthetic_data = synthesizer.sample(10000, main_table_name='table')
 
     # Assert
     synthetic_data = synthetic_data['table']
