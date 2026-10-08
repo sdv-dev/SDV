@@ -970,7 +970,7 @@ def test_range_extrapolation_warns_to_install_bundle(synthesizer_class):
         pytest.param(
             'sample',
             {
-                'table_name': 'table',
+                'main_table_name': 'table',
                 'num_rows': 10,
             },
             10,
@@ -1044,7 +1044,7 @@ def test_sample_methods_with_output_folder_path(
         pytest.param(
             'sample',
             {
-                'table_name': 'table',
+                'main_table_name': 'table',
                 'num_rows': 10,
             },
             id='sample',
