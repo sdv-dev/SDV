@@ -120,7 +120,7 @@ def test_sample_from_conditions_with_batch_size():
 
     # Assert
     expected = pd.Series([10] * 100 + [50] * 10, name='column1')
-    pd.testing.assert_series_equal(sampled_data['column1'], expected)
+    pd.testing.assert_series_equal(sampled_data['table']['column1'], expected)
 
 
 def test_sample_from_conditions_negative_float():
@@ -151,7 +151,7 @@ def test_sample_from_conditions_negative_float():
 
     # Assert
     expected = pd.Series([-10.0] * 100 + [-50.0] * 10, name='column1')
-    pd.testing.assert_series_equal(sampled_data['column1'], expected)
+    pd.testing.assert_series_equal(sampled_data['table']['column1'], expected)
 
 
 def test_sample_from_conditions_with_nans():
@@ -166,8 +166,8 @@ def test_sample_from_conditions_with_nans():
     sample = synthesizer.sample_from_conditions(conditions=[my_condition])
 
     # Assert
-    assert all(sample['room_type'].isna())
-    assert all(~sample['has_rewards'])
+    assert all(sample['fake_hotel_guests']['room_type'].isna())
+    assert all(~sample['fake_hotel_guests']['has_rewards'])
 
 
 def test_sample_remaining_columns_with_nans():
@@ -188,7 +188,9 @@ def test_sample_remaining_columns_with_nans():
         'checkout_date': [None, '29 Dec 2020', None],
         'amenities_fee': [5.00, np.nan, None],
     })
-    pd.testing.assert_frame_equal(sample[['checkout_date', 'amenities_fee']], expected_columns)
+    pd.testing.assert_frame_equal(
+        sample['fake_hotel_guests'][['checkout_date', 'amenities_fee']], expected_columns
+    )
 
 
 def test_sample_keys_are_scrambled():

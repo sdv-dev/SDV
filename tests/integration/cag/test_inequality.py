@@ -1009,8 +1009,8 @@ def test_auto_assign_transformer():
 
     # Assert
     expected_transformers = (
-        "{'guest_email': AnonymizedFaker(provider_name='internet', function_name='email',"
-        " locales=['en_US'], cardinality_rule='unique'),"
+        "{'guest_email': AnonymizedFaker(provider_name='internet',"
+        " function_name='email', locales=['en_US'], cardinality_rule='unique'),"
         " 'has_rewards': UniformEncoder(),"
         " 'room_type': UniformEncoder(),"
         " 'amenities_fee': FloatFormatter(learn_rounding_scheme=True, "

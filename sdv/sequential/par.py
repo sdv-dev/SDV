@@ -427,17 +427,25 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
 
         return processed_table_data
 
-    def update_transformers(self, column_name_to_transformer):
+    def update_transformers(self, column_name_to_transformer, table_name=None):
         """Update any of the transformers assigned to each of the column names.
 
         Args:
             column_name_to_transformer (dict):
                 Dict mapping column names to transformers to be used for that column.
+            table_name (str, optional):
+                The name of the table for which to update the transformers. If not provided,
+                will use the default table name associated with the synthesizer.
 
         Raises:
             ValueError:
                 Raise when the transformer of a context column is passed.
         """
+        if table_name is not None:
+            self._validate_table_name(table_name)
+        else:
+            table_name = self._table_name
+
         forbidden_updates = []
         for column in set(column_name_to_transformer).intersection(set(self.context_columns)):
             if self._get_table_metadata().columns[column]['sdtype'] in MODELABLE_SDTYPES:
@@ -448,7 +456,7 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
                 'Transformers for context columns are not allowed to be updated.'
             )
 
-        super().update_transformers(column_name_to_transformer)
+        super().update_transformers(column_name_to_transformer, table_name=table_name)
 
     def _fit_context_model(self, processed_table_data):
         LOGGER.debug(f'Fitting context synthesizer {self._context_synthesizer.__class__.__name__}')
@@ -725,8 +733,8 @@ class PARSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSynthesizer):
         condition_columns = context_columns[condition_columns].to_dict('records')
         synthesizer_conditions = [Condition(conditions) for conditions in condition_columns]
         context = self._context_synthesizer.sample_from_conditions(synthesizer_conditions)
-        context.update(context_columns)
-        return self._sample(context, sequence_length)
+        context[self._table_name].update(context_columns)
+        return {self._table_name: self._sample(context[self._table_name], sequence_length)}
 
     def _process_context_columns(self, context_columns):
         """Process context columns by applying appropriate transformations.

@@ -803,7 +803,9 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         instance._table_synthesizers['nesreca'].update_transformers.assert_not_called()
-        instance._table_synthesizers['oseba'].update_transformers.assert_called_once_with({})
+        instance._table_synthesizers['oseba'].update_transformers.assert_called_once_with(
+            {}, table_name='oseba'
+        )
 
     def test_update_transformers_missing_table(self):
         """Test it errors out when the passed table name was not seen in the metadata."""

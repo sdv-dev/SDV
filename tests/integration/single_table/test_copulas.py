@@ -103,6 +103,7 @@ def test_synthesize_table_gaussian_copula(tmp_path):
     # Assert - fit
     real_data = real_data['fake_hotel_guests']
     synthetic_data = synthetic_data['fake_hotel_guests']
+    simulated_synthetic_data = simulated_synthetic_data['fake_hotel_guests']
     assert set(real_data.columns) == set(synthetic_data.columns)
     assert real_data.shape[1] == synthetic_data.shape[1]
     assert len(synthetic_data) == 500

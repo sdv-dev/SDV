@@ -212,6 +212,13 @@ class BaseSynthesizer:
             'SYNTHESIZER ID': self._synthesizer_id,
         })
 
+    def _validate_table_name(self, table_name):
+        if table_name != self._table_name:
+            raise ValueError(
+                'The provided table name does not match the metadata:'
+                f"\nTable '{table_name}' is not present in the metadata."
+            )
+
     def _validate_metadata(self, table_data):
         """Validate that the table data follows the metadata."""
         errors = []
@@ -293,13 +300,21 @@ class BaseSynthesizer:
                     'parameter to False.'
                 )
 
-    def update_transformers(self, column_name_to_transformer):
+    def update_transformers(self, column_name_to_transformer, table_name=None):
         """Update any of the transformers assigned to each of the column names.
 
         Args:
             column_name_to_transformer (dict):
                 Dict mapping column names to transformers to be used for that column.
+            table_name (str, optional):
+                The name of the table for which to update the transformers. If not provided,
+                will use the default table name associated with the synthesizer. Defaults to None.
         """
+        if table_name is not None:
+            self._validate_table_name(table_name)
+        else:
+            table_name = self._table_name
+
         self._validate_transformers(column_name_to_transformer)
         self._warn_quality_and_performance(column_name_to_transformer)
         self._warn_unable_to_enforce_rounding(column_name_to_transformer)
@@ -358,16 +373,26 @@ class BaseSynthesizer:
         self.validate(data)
         self._auto_assign_transformers(data)
 
-    def get_transformers(self):
+    def get_transformers(self, table_name=None):
         """Get a dictionary mapping of ``column_name``  and ``rdt.transformers``.
 
         A dictionary representing the column names and the transformers that will be used
         to transform the data.
 
+        Args:
+            table_name (str, optional):
+                The name of the table for which to get the transformers. If not provided,
+                the default table name will be used. Defaults to None.
+
         Returns:
             dict:
                 A dictionary mapping with column names and transformers.
         """
+        if table_name is not None:
+            self._validate_table_name(table_name)
+        else:
+            table_name = self._table_name
+
         field_transformers = self._data_processor._hyper_transformer.field_transformers
         if field_transformers == {}:
             raise ValueError(
@@ -1179,13 +1204,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 ' sampling synthetic data.'
             )
 
-    def _validate_table_name(self, table_name):
-        if table_name != self._table_name:
-            raise ValueError(
-                'The provided table name does not match the metadata:'
-                f"\nTable '{table_name}' is not present in the metadata."
-            )
-
     def sample(
         self,
         table_name,
@@ -1422,8 +1440,9 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 The folder to periodically write sampled rows to. Defaults to None.
 
         Returns:
-            pandas.DataFrame:
-                Sampled data.
+            dict[str, pandas.DataFrame]:
+                Dictionary mapping the table name to the sampled data.
+
 
         Raises:
             ConstraintsNotMetError:
@@ -1483,7 +1502,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             'TOTAL NUMBER OF COLUMNS': len(sampled.columns),
         })
 
-        return sampled
+        return {self._table_name: sampled}
 
     def _validate_known_columns(self, conditions):
         """Validate the user-passed conditions."""
@@ -1507,8 +1526,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 The folder to periodically write sampled rows to. Defaults to None.
 
         Returns:
-            pandas.DataFrame:
-                Sampled data.
+            dict[str, pandas.DataFrame]:
+                Dictionary mapping the table name to the sampled data.
 
         Raises:
             ConstraintsNotMetError:
@@ -1557,4 +1576,4 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             'TOTAL NUMBER OF COLUMNS': len(sampled.columns),
         })
 
-        return sampled
+        return {self._table_name: sampled}

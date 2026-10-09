@@ -968,21 +968,30 @@ class TestPARSynthesizer:
         par._process_context_columns.side_effect = lambda value: value
         par._context_synthesizer = Mock()
         par._context_synthesizer._model.columns = ['gender', 'extra_col']
-        par._context_synthesizer.sample_from_conditions.return_value = pd.DataFrame({
+        par._context_synthesizer.sample_from_conditions.return_value = {
+            'table': pd.DataFrame({
+                'id_col': ['A', 'A', 'A'],
+                'gender': ['M', 'M', 'F'],
+                'extra_col': [0, 1, 1],
+            })
+        }
+        expected_results = pd.DataFrame({
             'id_col': ['A', 'A', 'A'],
             'gender': ['M', 'M', 'F'],
             'extra_col': [0, 1, 1],
         })
-        par._sample = Mock()
+        par._sample = Mock(return_value=expected_results)
         context_columns = pd.DataFrame({
             'id_col': ['ID-1', 'ID-2', 'ID-3'],
             'gender': ['M', 'M', 'F'],
         })
 
         # Run
-        par.sample_sequential_columns(context_columns, 5)
+        result = par.sample_sequential_columns(context_columns, 5)
 
         # Assert
+        pd.testing.assert_frame_equal(result[par._table_name], expected_results)
+        assert result.keys() == {par._table_name}
         call_args, _ = par._context_synthesizer.sample_from_conditions.call_args
         expected_conditions = [
             Condition({'gender': 'M'}),
@@ -1108,11 +1117,13 @@ class TestPARSynthesizer:
 
         par._context_synthesizer = Mock()
         par._context_synthesizer._model.columns = ['time', 'extra_col']
-        par._context_synthesizer.sample_from_conditions.return_value = pd.DataFrame({
-            'id_col': ['A', 'A', 'A'],
-            'time': ['2020-01-01', '2020-01-02', '2020-01-03'],
-            'extra_col': [0, 1, 1],
-        })
+        par._context_synthesizer.sample_from_conditions.return_value = {
+            'table': pd.DataFrame({
+                'id_col': ['A', 'A', 'A'],
+                'time': ['2020-01-01', '2020-01-02', '2020-01-03'],
+                'extra_col': [0, 1, 1],
+            })
+        }
         par._sample = Mock()
         context_columns = pd.DataFrame({
             'id_col': ['ID-1', 'ID-2', 'ID-3'],
