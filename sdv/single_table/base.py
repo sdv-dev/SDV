@@ -1218,7 +1218,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             num_rows (int):
                 Number of rows to sample. This parameter is required.
             main_table_name (str):
-                Name of the table to sample. This parameter is required.
+                Name of the table to sample.
             max_tries_per_batch (int):
                 Number of times to retry sampling until the batch size is met. Defaults to 100.
             batch_size (int or None):
