@@ -101,7 +101,7 @@ def test_fixed_combinations_integers_copula(data, metadata, constraint):
     """Test that FixedCombinations constraint works with integer columns using Copula."""
     # Run
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample('table1', 1000)['table1']
+    synthetic_data = synthesizer.sample(1000)['table1']
 
     # Assert
     assert len(synthetic_data) == 1000
@@ -152,7 +152,7 @@ def test_fixed_combinations_with_nans_copula(metadata, constraint):
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample('table1', 1000)['table1']
+    synthetic_data = synthesizer.sample(1000)['table1']
 
     # Assert
     expected_out = pd.DataFrame({
@@ -224,7 +224,7 @@ def test_fixed_combinations_multiple_constraints():
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.add_constraints(constraints=[constraint1, constraint2])
     synthesizer.fit(data)
-    samples = synthesizer.sample('table', 101)['table']
+    samples = synthesizer.sample(101)['table']
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
 
@@ -276,7 +276,7 @@ def test_fixed_combinations_multiple_constraints_reject_sampling():
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.add_constraints(constraints=[constraint1, constraint2])
     synthesizer.fit(data)
-    samples = synthesizer.sample('table', 100)['table']
+    samples = synthesizer.sample(100)['table']
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
 
@@ -331,7 +331,7 @@ def test_fixed_combinations_multiple_constraints_three_constraints():
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.add_constraints(constraints=[constraint1, constraint2, constraint3])
     synthesizer.fit(data)
-    samples = synthesizer.sample('table', 100)['table']
+    samples = synthesizer.sample(100)['table']
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
 
@@ -395,7 +395,7 @@ def test_fixed_combinations_multiple_constraints_three_constraints_reject_sampli
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint1, constraint3, constraint2])
-    samples = synthesizer.sample('table1', 100)['table1']
+    samples = synthesizer.sample(100)['table1']
     updated_metadata = synthesizer.get_metadata('modified')
     original_metadata = synthesizer.get_metadata('original')
 
@@ -435,7 +435,7 @@ def test_validate_constraints(data, metadata, constraint):
     """Test validate_constraints works with synthetic data generated with FixedCombinations."""
     # Setup
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample('table1', 100)
+    synthetic_data = synthesizer.sample(100)
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
@@ -466,7 +466,7 @@ def test_validate_constraints_multi(data_multi, metadata_multi, constraint_multi
     """Test validate_constraints works with multitable data generated with FixedCombinations."""
     # Setup
     synthesizer = run_hma(data_multi, metadata_multi, [constraint_multi])
-    synthetic_data = synthesizer.sample('table1', 100 * len(data_multi['table1']))
+    synthetic_data = synthesizer.sample(100 * len(data_multi['table1']), main_table_name='table1')
 
     # Run
     synthesizer.validate_constraints(synthetic_data=synthetic_data)

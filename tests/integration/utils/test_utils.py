@@ -222,7 +222,7 @@ def test_load_synthesizer(tmp_path):
 
     # Run
     loaded_synthesizer = load_synthesizer(tmp_path / 'GCSynthesizer.pkl')
-    synthetic_data = loaded_synthesizer.sample('fake_hotel_guests', num_rows=10)
+    synthetic_data = loaded_synthesizer.sample(num_rows=10, main_table_name='fake_hotel_guests')
 
     # Assert
     assert isinstance(loaded_synthesizer, GaussianCopulaSynthesizer)
