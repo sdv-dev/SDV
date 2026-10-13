@@ -828,6 +828,61 @@ class BaseMultiTableSynthesizer:
 
         return pd.concat(sampled, ignore_index=True)
 
+    def sample_scale(self, scale=1.0):
+        """Generate synthetic data for the entire dataset.
+
+        Args:
+            scale (float):
+                A float representing how much to scale the data by. If scale is set to ``1.0``,
+                this does not scale the sizes of the tables. If ``scale`` is greater than ``1.0``
+                create more rows than the original data by a factor of ``scale``.
+                If ``scale`` is lower than ``1.0`` create fewer rows by the factor of ``scale``
+                than the original tables. Defaults to ``1.0``.
+        """
+        if not self._fitted:
+            raise SamplingError(
+                'This synthesizer has not been fitted. Please fit your synthesizer first before '
+                'sampling synthetic data.'
+            )
+
+        if type(scale) not in (float, int) or not scale > 0:
+            raise SynthesizerInputError(
+                f"Invalid parameter for 'scale' ({scale}). Please provide a number that is >0.0."
+            )
+
+        with self._set_temp_numpy_seed(), disable_single_table_logger():
+            sampled_data = self._sample(scale=scale)
+
+        total_rows = 0
+        total_columns = 0
+        for table in sampled_data.values():
+            total_rows += len(table)
+            total_columns += len(table.columns)
+
+        table_columns = getattr(self, '_original_table_columns', {})
+
+        for table in sampled_data:
+            table_data = sampled_data[table][self.get_metadata().get_column_names(table)]
+            if table in table_columns:
+                if isinstance(table_columns[table], dict):
+                    table_data = table_data.rename(columns=table_columns[table])
+                else:
+                    table_data.columns = table_columns[table]
+
+            sampled_data[table] = table_data
+
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Sample',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': self._synthesizer_id,
+            'TOTAL NUMBER OF TABLES': len(sampled_data),
+            'TOTAL NUMBER OF ROWS': total_rows,
+            'TOTAL NUMBER OF COLUMNS': total_columns,
+        })
+
+        return sampled_data
+
     def sample(
         self,
         num_rows,

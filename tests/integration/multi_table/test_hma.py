@@ -860,6 +860,25 @@ class TestHMASynthesizer:
         for table_name, table in samples.items():
             assert table['data'].isin(data[table_name]['data']).all()
 
+    def test_sample_scale(self):
+        """Test `sample_scale` scales the original table sizes."""
+        # Setup
+        data, metadata = download_demo('multi_table', 'fake_hotels')
+        hmasynthesizer = HMASynthesizer(metadata)
+
+        # Run
+        hmasynthesizer.fit(data)
+        normal_sample = hmasynthesizer.sample_scale(0.5)
+        default_sample = hmasynthesizer.sample_scale()
+        increased_sample = hmasynthesizer.sample_scale(1.5)
+
+        # Assert
+        for sample, scale in [(normal_sample, 0.5), (default_sample, 1.0), (increased_sample, 1.5)]:
+            assert set(sample) == set(data.keys())
+            for table_name, table in sample.items():
+                assert set(table.columns) == set(data[table_name])
+                assert len(table) == len(data[table_name]) * scale
+
     def test_sample_in_batches(self):
         """Test sampling in batches on a simple 'parent-child-parent' dataset."""
         # Setup
