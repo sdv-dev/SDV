@@ -14,6 +14,7 @@ from packaging.requirements import Requirement
 from packaging.version import Version
 
 COMPARISONS = {'>=': operator.ge, '>': operator.gt, '<': operator.lt, '<=': operator.le}
+EXTERNAL_DEPENDENCY_CAPS = {'pyarrow': '26.0.0'}
 EXTERNAL_DEPENDENCY_CAPS_FOR_WINDOWS = {'torch': '2.9.0', 'pipx': '1.15.1'}
 
 if not hasattr(inspect, 'getargspec'):
@@ -89,6 +90,10 @@ def install_minimum(c):
     if minimum_versions:
         install_deps = ' '.join(minimum_versions)
         c.run(f'python -m pip install {install_deps}')
+
+        for dep, cap in EXTERNAL_DEPENDENCY_CAPS.items():
+            c.run(f'python -m pip install "{dep}<{cap}"')
+
         if platform.system() == 'Windows' and sys.version_info < (3,14):
             for dep, cap in EXTERNAL_DEPENDENCY_CAPS_FOR_WINDOWS.items():
                 c.run(f'python -m pip install "{dep}<{cap}"')
