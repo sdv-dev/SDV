@@ -74,7 +74,6 @@ test = [
     'google-auth',
     'google-auth-oauthlib',
     'requests',
-    'pyarrow',
     'gitpython',
     'slack-sdk>=3.23,<4.0',
 ]
@@ -113,6 +112,7 @@ dev = [
     'invoke'
 ]
 readme = ['rundoc>=0.4.3,<0.5',]
+benchmark = ['pyarrow']
 
 [tool.setuptools]
 include-package-data = true
