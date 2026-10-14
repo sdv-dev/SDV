@@ -1544,7 +1544,9 @@ class TestBaseMultiTableSynthesizer:
             instance.sample_scale(scale=1.5)
 
         # Assert
-        instance._sample.assert_called_once_with(scale=1.5)
+        instance._sample.assert_called_once_with(
+            scale=1.5, batch_size=None, max_tries_per_batch=100
+        )
         assert caplog.messages[0] == str({
             'EVENT': 'Sample',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',

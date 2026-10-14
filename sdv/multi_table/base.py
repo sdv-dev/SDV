@@ -828,7 +828,56 @@ class BaseMultiTableSynthesizer:
 
         return pd.concat(sampled, ignore_index=True)
 
-    def sample_scale(self, scale=1.0):
+    def _get_num_sampled_rows_cols(sampled_data):
+        total_rows = 0
+        total_columns = 0
+        for table in sampled_data.values():
+            total_rows += len(table)
+            total_columns += len(table.columns)
+
+        return total_rows, total_columns
+
+    def _sample_from_scale(self, scale, batch_size, max_tries_per_batch, output_folder_path):
+        with self._set_temp_numpy_seed(), disable_single_table_logger():
+            sampled_data = self._sample(
+                scale=scale,
+                batch_size=batch_size,
+                max_tries_per_batch=max_tries_per_batch,
+            )
+
+        total_rows = 0
+        total_columns = 0
+        for table in sampled_data.values():
+            total_rows += len(table)
+            total_columns += len(table.columns)
+
+        table_columns = getattr(self, '_original_table_columns', {})
+
+        for _table_name in sampled_data:
+            table_data = sampled_data[_table_name][
+                self.get_metadata().get_column_names(_table_name)
+            ]
+
+            if _table_name in table_columns:
+                if isinstance(table_columns[_table_name], dict):
+                    table_data = table_data.rename(columns=table_columns[_table_name])
+                else:
+                    table_data.columns = table_columns[_table_name]
+
+            sampled_data[_table_name] = table_data
+
+        if output_folder_path is not None:
+            self._save_sampled_data(sampled_data, output_folder_path)
+
+        return sampled_data, total_rows, total_columns
+
+    def sample_scale(
+        self,
+        scale=1.0,
+        batch_size=None,
+        max_tries_per_batch=100,
+        output_folder_path=None,
+    ):
         """Generate synthetic data for the entire dataset.
 
         Args:
@@ -838,6 +887,15 @@ class BaseMultiTableSynthesizer:
                 create more rows than the original data by a factor of ``scale``.
                 If ``scale`` is lower than ``1.0`` create fewer rows by the factor of ``scale``
                 than the original tables. Defaults to ``1.0``.
+            batch_size (int, optional):
+                The batch size for sampling. Defaults to None.
+            max_tries_per_batch (int, optional):
+                The maximum number of tries per batch. Defaults to 100.
+            output_folder_path (str, optional):
+                The folder path to save the sampled data. Defaults to None.
+
+        Returns:
+            dict: A dictionary containing the sampled data for each table.
         """
         if not self._fitted:
             raise SamplingError(
@@ -849,27 +907,13 @@ class BaseMultiTableSynthesizer:
             raise SynthesizerInputError(
                 f"Invalid parameter for 'scale' ({scale}). Please provide a number that is >0.0."
             )
+        self._validate_sample_input(
+            list(self.metadata.tables)[0], 1, batch_size, max_tries_per_batch, output_folder_path
+        )
 
-        with self._set_temp_numpy_seed(), disable_single_table_logger():
-            sampled_data = self._sample(scale=scale)
-
-        total_rows = 0
-        total_columns = 0
-        for table in sampled_data.values():
-            total_rows += len(table)
-            total_columns += len(table.columns)
-
-        table_columns = getattr(self, '_original_table_columns', {})
-
-        for table in sampled_data:
-            table_data = sampled_data[table][self.get_metadata().get_column_names(table)]
-            if table in table_columns:
-                if isinstance(table_columns[table], dict):
-                    table_data = table_data.rename(columns=table_columns[table])
-                else:
-                    table_data.columns = table_columns[table]
-
-            sampled_data[table] = table_data
+        sampled_data, total_rows, total_columns = self._sample_from_scale(
+            scale, batch_size, max_tries_per_batch, output_folder_path
+        )
 
         SYNTHESIZER_LOGGER.info({
             'EVENT': 'Sample',
@@ -912,36 +956,10 @@ class BaseMultiTableSynthesizer:
             num_rows, main_table_name, batch_size, max_tries_per_batch, output_folder_path
         )
         scale = self._resolve_scale(main_table_name, num_rows)
-        with self._set_temp_numpy_seed(), disable_single_table_logger():
-            sampled_data = self._sample(
-                scale=scale,
-                batch_size=batch_size,
-                max_tries_per_batch=max_tries_per_batch,
-            )
 
-        total_rows = 0
-        total_columns = 0
-        for table in sampled_data.values():
-            total_rows += len(table)
-            total_columns += len(table.columns)
-
-        table_columns = getattr(self, '_original_table_columns', {})
-
-        for _table_name in sampled_data:
-            table_data = sampled_data[_table_name][
-                self.get_metadata().get_column_names(_table_name)
-            ]
-
-            if _table_name in table_columns:
-                if isinstance(table_columns[_table_name], dict):
-                    table_data = table_data.rename(columns=table_columns[_table_name])
-                else:
-                    table_data.columns = table_columns[_table_name]
-
-            sampled_data[_table_name] = table_data
-
-        if output_folder_path is not None:
-            self._save_sampled_data(sampled_data, output_folder_path)
+        sampled_data, total_rows, total_columns = self._sample_from_scale(
+            scale, batch_size, max_tries_per_batch, output_folder_path
+        )
 
         SYNTHESIZER_LOGGER.info({
             'EVENT': 'Sample',
