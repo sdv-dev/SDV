@@ -758,8 +758,8 @@ class BaseMultiTableSynthesizer:
 
     def _validate_sample_input(
         self,
-        table_name,
         num_rows,
+        main_table_name,
         batch_size,
         max_tries_per_batch,
         output_folder_path,
@@ -771,9 +771,17 @@ class BaseMultiTableSynthesizer:
                 'sampling synthetic data.'
             )
 
+        if main_table_name is None:
+            raise SynthesizerInputError(
+                '`main_table_name` cannot be None for multi-table sampling. '
+                'Please provide a table name.'
+            )
+
         table_names = list(self.get_metadata().tables)
-        if table_name not in table_names:
-            raise SynthesizerInputError(f"Table '{table_name}' does not exist in the metadata.")
+        if main_table_name not in table_names:
+            raise SynthesizerInputError(
+                f"Table '{main_table_name}' does not exist in the metadata."
+            )
 
         _validate_positive_integer('num_rows', num_rows)
         _validate_positive_integer('max_tries_per_batch', max_tries_per_batch)
@@ -822,8 +830,8 @@ class BaseMultiTableSynthesizer:
 
     def sample(
         self,
-        table_name,
         num_rows,
+        main_table_name=None,
         batch_size=None,
         max_tries_per_batch=100,
         output_folder_path=None,
@@ -831,10 +839,10 @@ class BaseMultiTableSynthesizer:
         """Generate synthetic data for the entire dataset.
 
         Args:
-            table_name (str):
-                The name of the main table to sample.
             num_rows (int):
                 The number of rows to sample.
+            main_table_name (str):
+                The name of the main table to sample.
             batch_size (int, optional):
                 The batch size for sampling. Defaults to None.
             max_tries_per_batch (int, optional):
@@ -846,9 +854,9 @@ class BaseMultiTableSynthesizer:
             dict: A dictionary containing the sampled data for each table.
         """
         self._validate_sample_input(
-            table_name, num_rows, batch_size, max_tries_per_batch, output_folder_path
+            num_rows, main_table_name, batch_size, max_tries_per_batch, output_folder_path
         )
-        scale = self._resolve_scale(table_name, num_rows)
+        scale = self._resolve_scale(main_table_name, num_rows)
         with self._set_temp_numpy_seed(), disable_single_table_logger():
             sampled_data = self._sample(
                 scale=scale,

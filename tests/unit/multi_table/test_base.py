@@ -1354,6 +1354,19 @@ class TestBaseMultiTableSynthesizer:
         ('parameter_name', 'parameter_value', 'expected_error'),
         [
             pytest.param(
+                'main_table_name',
+                None,
+                '`main_table_name` cannot be None for multi-table sampling. '
+                'Please provide a table name.',
+                id='invalid_main_table_name',
+            ),
+            pytest.param(
+                'main_table_name',
+                'bad_table_name',
+                "Table 'bad_table_name' does not exist in the metadata.",
+                id='invalid_main_table_name',
+            ),
+            pytest.param(
                 'num_rows',
                 0,
                 "Invalid parameter for 'num_rows' (0). "
@@ -1406,8 +1419,8 @@ class TestBaseMultiTableSynthesizer:
         instance.get_metadata = Mock(return_value=Mock(tables={'table'}))
 
         arguments = {
-            'table_name': 'table',
             'num_rows': 10,
+            'main_table_name': 'table',
             'batch_size': 5,
             'max_tries_per_batch': 100,
             'output_folder_path': None,
@@ -1431,8 +1444,8 @@ class TestBaseMultiTableSynthesizer:
         instance.get_metadata = Mock(return_value=Mock(tables={'table'}))
 
         arguments = {
-            'table_name': 'table',
             'num_rows': 10,
+            'main_table_name': 'table',
             'batch_size': 5,
             'max_tries_per_batch': 100,
             'output_folder_path': 'output',
@@ -1459,7 +1472,7 @@ class TestBaseMultiTableSynthesizer:
             'sampling synthetic data.'
         )
         with pytest.raises(SamplingError, match=error_msg):
-            instance.sample('table', 1)
+            instance.sample(1)
 
     def test__resolve_scale(self):
         """Test that ``_resolve_scale`` method."""
@@ -1531,7 +1544,9 @@ class TestBaseMultiTableSynthesizer:
 
         # Run
         with catch_sdv_logs(caplog, logging.INFO, logger='MultiTableSynthesizer'):
-            result = instance.sample(table_name='nesreca', num_rows=10, output_folder_path='output')
+            result = instance.sample(
+                main_table_name='nesreca', num_rows=10, output_folder_path='output'
+            )
 
         # Assert
         instance._sample.assert_called_once_with(

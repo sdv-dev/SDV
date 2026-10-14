@@ -21,7 +21,7 @@ def _get_single_table_data():
         default_distribution='truncnorm',
     )
     synthesizer.fit(real_data)
-    synthetic_data = {'table': synthesizer.sample('table', 10)}
+    synthetic_data = {'table': synthesizer.sample(10)}
 
     return real_data, synthetic_data, metadata
 
