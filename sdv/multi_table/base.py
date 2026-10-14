@@ -899,7 +899,11 @@ class BaseMultiTableSynthesizer:
                 f"Invalid parameter for 'scale' ({scale}). Please provide a number that is >0.0."
             )
         self._validate_sample_input(
-            list(self.metadata.tables)[0], 1, batch_size, max_tries_per_batch, output_folder_path
+            num_rows=1,
+            main_table_name=list(self.metadata.tables)[0],
+            batch_size=batch_size,
+            max_tries_per_batch=max_tries_per_batch,
+            output_folder_path=output_folder_path,
         )
 
         sampled_data, total_rows, total_columns = self._sample_from_scale(
