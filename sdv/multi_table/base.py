@@ -828,15 +828,6 @@ class BaseMultiTableSynthesizer:
 
         return pd.concat(sampled, ignore_index=True)
 
-    def _get_num_sampled_rows_cols(sampled_data):
-        total_rows = 0
-        total_columns = 0
-        for table in sampled_data.values():
-            total_rows += len(table)
-            total_columns += len(table.columns)
-
-        return total_rows, total_columns
-
     def _sample_from_scale(self, scale, batch_size, max_tries_per_batch, output_folder_path):
         with self._set_temp_numpy_seed(), disable_single_table_logger():
             sampled_data = self._sample(

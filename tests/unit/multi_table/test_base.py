@@ -1524,7 +1524,7 @@ class TestBaseMultiTableSynthesizer:
 
     @patch('sdv.multi_table.base.datetime')
     def test_sample_scale(self, mock_datetime, caplog):
-        """Test that ``sample`` calls the ``_sample`` with the given arguments."""
+        """Test that ``sample_scale`` calls the ``_sample`` with the given arguments."""
         # Setup
         mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
         metadata = get_multi_table_metadata()
