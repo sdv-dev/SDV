@@ -1,5 +1,39 @@
 # Release Notes
 
+## v2.0.0 - 2026-10-15
+
+### New Features
+
+* [SDV 2.0] Add multi table `sample_scale` method - Issue [#3023](https://github.com/sdv-dev/SDV/issues/3023) by @frances-h
+* [SDV 2.0] Rename `table_name` sampling parameter to `main_table_name` and make it optional for single-table - Issue [#3021](https://github.com/sdv-dev/SDV/issues/3021) by @frances-h
+* [SDV 2.0] Add `to_dict` method for all constraints - Issue [#3017](https://github.com/sdv-dev/SDV/issues/3017) by @R-Palazzo
+* Support RDT 2.0 - Issue [#2992](https://github.com/sdv-dev/SDV/issues/2992) by @R-Palazzo
+* [SDV 2.0] Add `high_cardinality` flag to ordinal and categorical column metadata - Issue [#2990](https://github.com/sdv-dev/SDV/issues/2990) by @R-Palazzo
+* SDV 2.0: Update metadata auto-detection to the new V2 format - Issue [#2957](https://github.com/sdv-dev/SDV/issues/2957) by @R-Palazzo
+* SDV 2.0: The `download_demo` function should return the right metadata - Issue [#2956](https://github.com/sdv-dev/SDV/issues/2956) by @R-Palazzo
+* SDV 2.0: Remove deprecated Metadata classes - Issue [#2955](https://github.com/sdv-dev/SDV/issues/2955) by @frances-h
+* SDV 2.0: Remove deprecated Constraints - Issue [#2954](https://github.com/sdv-dev/SDV/issues/2954) by @amontanez24
+* SDV 2.0: Introduce the `ordinal` sdtype - Issue [#2953](https://github.com/sdv-dev/SDV/issues/2953) by @frances-h
+* SDV 2.0: Update metadata to include range and null info - Issue [#2952](https://github.com/sdv-dev/SDV/issues/2952) by @frances-h
+* SDV 2.0: Make the I/O consistent for all modalities - Issue [#2950](https://github.com/sdv-dev/SDV/issues/2950) by @R-Palazzo
+
+### Bugs Fixed
+
+* Minimum tests failing due to import error - Issue [#3026](https://github.com/sdv-dev/SDV/issues/3026) by @frances-h
+* [SDV 2.0] Unify input/output for remaining synthesizer methods - Issue [#3016](https://github.com/sdv-dev/SDV/issues/3016) by @R-Palazzo
+* Fix tests for demo datasets using Metadata V2 - Issue [#3003](https://github.com/sdv-dev/SDV/issues/3003) by @R-Palazzo
+* [SDV 2.0] Multi-table `fit` warns twice for out of range values - Issue [#2995](https://github.com/sdv-dev/SDV/issues/2995) by @frances-h
+* Rename output_file_path to output_folder_path for sample_from_conditions() and sample_remaining_columns() - Issue [#2994](https://github.com/sdv-dev/SDV/issues/2994) by @R-Palazzo
+* The DataProcessor  crashes when assigning transformers with Metadata V2 - Issue [#2993](https://github.com/sdv-dev/SDV/issues/2993) by @R-Palazzo
+* [SDV 2.0] Metadata validation does not error if out of range ordinal values in data - Issue [#2986](https://github.com/sdv-dev/SDV/issues/2986) by @R-Palazzo
+* [SDV 2.0] `OneHotEncoding` constraint errors for categorical columns with range values - Issue [#2985](https://github.com/sdv-dev/SDV/issues/2985) by @R-Palazzo
+* [SDV 2.0] Multi-table sample with `output_folder_path` crashes - Issue [#2984](https://github.com/sdv-dev/SDV/issues/2984) by @frances-h
+
+### Maintenance
+
+* SDV 2.0: Remove all deprecated functionality - Issue [#2948](https://github.com/sdv-dev/SDV/issues/2948) by @amontanez24
+* SDV 2.0: Remove POC Module - Issue [#2944](https://github.com/sdv-dev/SDV/issues/2944) by @amontanez24
+
 ## v1.38.5 - 2026-09-28
 
 ### New Features
