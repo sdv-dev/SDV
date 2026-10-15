@@ -1,25 +1,15 @@
-Run started:2026-09-28 19:40:41.815992+00:00
+Run started:2026-10-15 19:42:55.759779+00:00
 
 Test results:
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b110_try_except_pass.html
-   Location: ./sdv/_utils.py:352:8
-351	
-352	        except Exception:
-353	            pass
-354	
-
---------------------------------------------------
->> Issue: [B105:hardcoded_password_string] Possible hardcoded password: '#'
-   Severity: Low   Confidence: Medium
-   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
-   More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b105_hardcoded_password_string.html
-   Location: ./sdv/constraints/tabular.py:1160:16
-1159	    def _get_diff_column_name(self, table_data):
-1160	        token = '#'
-1161	        columns = [self._column_name, self._low_value, self._high_value]
+   Location: ./sdv/_utils.py:429:8
+428	
+429	        except Exception:
+430	            pass
+431	
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -47,22 +37,22 @@ Test results:
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b112_try_except_continue.html
-   Location: ./sdv/datasets/demo.py:226:8
-225	
-226	        except Exception:
-227	            continue
-228	
+   Location: ./sdv/datasets/demo.py:235:12
+234	
+235	            except Exception:
+236	                continue
+237	
 
 --------------------------------------------------
 >> Issue: [B112:try_except_continue] Try, Except, Continue detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b112_try_except_continue.html
-   Location: ./sdv/datasets/demo.py:614:8
-613	
-614	        except Exception:
-615	            continue
-616	
+   Location: ./sdv/datasets/demo.py:624:8
+623	
+624	        except Exception:
+625	            continue
+626	
 
 --------------------------------------------------
 >> Issue: [B306:blacklist] Use of insecure and deprecated function (mktemp).
@@ -79,33 +69,33 @@ Test results:
    Severity: Low   Confidence: Medium
    CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b105_hardcoded_password_string.html
-   Location: ./sdv/metadata/single_table.py:515:24
-514	        for token in tokens:
-515	            if token == 'id':
-516	                return 'id'
+   Location: ./sdv/metadata/_single_table.py:589:24
+588	        for token in tokens:
+589	            if token == 'id':
+590	                return 'id'
 
 --------------------------------------------------
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b110_try_except_pass.html
-   Location: ./sdv/metadata/single_table.py:571:12
-570	
-571	            except Exception:
-572	                pass
-573	
+   Location: ./sdv/metadata/_single_table.py:667:12
+666	
+667	            except Exception:
+668	                pass
+669	
 
 --------------------------------------------------
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b110_try_except_pass.html
-   Location: ./sdv/multi_table/hma.py:384:12
-383	                    index.append(foreign_key_value)
-384	            except Exception:
-385	                # Skip children rows subsets that fail
-386	                pass
-387	
+   Location: ./sdv/multi_table/hma.py:385:12
+384	                    index.append(foreign_key_value)
+385	            except Exception:
+386	                # Skip children rows subsets that fail
+387	                pass
+388	
 
 --------------------------------------------------
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
@@ -121,19 +111,19 @@ Test results:
 --------------------------------------------------
 
 Code scanned:
-	Total lines of code: 18966
+	Total lines of code: 16958
 	Total lines skipped (#nosec): 0
 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
 
 Run metrics:
 	Total issues (by severity):
 		Undefined: 0
-		Low: 10
+		Low: 9
 		Medium: 1
 		High: 0
 	Total issues (by confidence):
 		Undefined: 0
 		Low: 0
-		Medium: 2
+		Medium: 1
 		High: 9
 Files skipped (0):

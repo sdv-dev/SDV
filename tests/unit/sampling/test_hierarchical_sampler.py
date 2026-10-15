@@ -19,7 +19,6 @@ class TestBaseHierarchicalSampler:
         # Assert
         assert instance.metadata == metadata
         assert instance._table_synthesizers == {}
-        assert instance._table_sizes == {}
 
     def test__recreate_child_synthesizer(self):
         """Test that ``_recreate_child_synthesizer`` raises a ``NotImplementedError``."""
@@ -47,19 +46,48 @@ class TestBaseHierarchicalSampler:
             )
 
     def test__sample_rows(self):
-        """Test that ``_sample_rows`` samples ``num_rows`` from the synthesizer."""
+        """Test that ``_sample_rows`` samples ``num_rows`` in batches."""
+        # Setup
         synthesizer = Mock()
         instance = Mock()
 
         # Run
-        result = BaseHierarchicalSampler._sample_rows(instance, synthesizer, 10)
+        result = BaseHierarchicalSampler._sample_rows(
+            instance,
+            synthesizer,
+            num_rows=10,
+            batch_size=5,
+            max_tries_per_batch=50,
+        )
 
         # Assert
-        assert result == synthesizer._sample_batch.return_value
-        synthesizer._sample_batch.assert_called_once_with(10, keep_extra_columns=True)
+        assert result == instance._sample_in_batches.return_value
+        instance._sample_in_batches.assert_called_once_with(
+            synthesizer, num_rows=10, batch_size=5, max_tries_per_batch=50
+        )
+
+    def test__sample_rows_zero_rows(self):
+        """Test that ``_sample_rows`` supports sampling zero rows."""
+        # Setup
+        synthesizer = Mock()
+        instance = Mock()
+
+        # Run
+        result = BaseHierarchicalSampler._sample_rows(
+            instance,
+            synthesizer,
+            num_rows=0,
+            batch_size=2,
+            max_tries_per_batch=50,
+        )
+
+        # Assert
+        pd.testing.assert_frame_equal(result, pd.DataFrame())
+        instance._sample_in_batches.assert_not_called()
 
     def test__sample_rows_missing_num_rows(self):
         """Test that ``_sample_rows`` falls back to ``synthesizer._num_rows``."""
+        # Setup
         synthesizer = Mock()
         synthesizer._num_rows = 10
         instance = Mock()
@@ -68,8 +96,10 @@ class TestBaseHierarchicalSampler:
         result = BaseHierarchicalSampler._sample_rows(instance, synthesizer)
 
         # Assert
-        assert result == synthesizer._sample_batch.return_value
-        synthesizer._sample_batch.assert_called_once_with(10, keep_extra_columns=True)
+        assert result == instance._sample_in_batches.return_value
+        instance._sample_in_batches.assert_called_once_with(
+            synthesizer, num_rows=10, batch_size=None, max_tries_per_batch=100
+        )
 
     def test__add_child_rows(self):
         """Test adding child rows when sampled data is empty."""
@@ -100,10 +130,21 @@ class TestBaseHierarchicalSampler:
 
         # Run
         BaseHierarchicalSampler._add_child_rows(
-            instance, 'sessions', 'users', parent_row, sampled_data
+            instance,
+            'sessions',
+            'users',
+            parent_row,
+            sampled_data,
+            batch_size=2,
+            max_tries_per_batch=50,
         )
 
         # Assert
+        sample_args, sample_kwargs = instance._sample_rows.call_args
+        assert sample_args[0] == child_synthesizer_mock
+        pd.testing.assert_series_equal(sample_args[1], parent_row['__sessions__user_id__num_rows'])
+        assert sample_kwargs == {'batch_size': 2, 'max_tries_per_batch': 50}
+
         expected_result = pd.DataFrame({
             'session_id': ['a', 'b', 'c'],
             'os': ['linux', 'mac', 'win'],
@@ -171,13 +212,23 @@ class TestBaseHierarchicalSampler:
         """
 
         # Setup
-        def sample_children(table_name, sampled_data, scale):
+        def sample_children(
+            table_name, sampled_data, scale, batch_size=None, max_tries_per_batch=100
+        ):
             sampled_data['transactions'] = pd.DataFrame({
                 'transaction_id': [1, 2, 3],
                 'session_id': ['a', 'a', 'b'],
             })
 
-        def _add_child_rows(child_name, parent_name, parent_row, sampled_data, num_rows=None):
+        def _add_child_rows(
+            child_name,
+            parent_name,
+            parent_row,
+            sampled_data,
+            num_rows=None,
+            batch_size=None,
+            max_tries_per_batch=100,
+        ):
             if parent_name == 'users':
                 if parent_row['user_id'] == 1:
                     sampled_data[child_name] = pd.DataFrame({
@@ -213,7 +264,11 @@ class TestBaseHierarchicalSampler:
         # Run
         result = {'users': pd.DataFrame({'user_id': [1, 3]})}
         BaseHierarchicalSampler._sample_children(
-            self=instance, table_name='users', sampled_data=result
+            self=instance,
+            table_name='users',
+            sampled_data=result,
+            batch_size=2,
+            max_tries_per_batch=50,
         )
 
         # Assert
@@ -223,12 +278,16 @@ class TestBaseHierarchicalSampler:
                 parent_name='users',
                 parent_row=SeriesMatcher(pd.Series({'user_id': 1}, name=0, dtype=object)),
                 sampled_data=result,
+                batch_size=2,
+                max_tries_per_batch=50,
             ),
             call(
                 child_name='sessions',
                 parent_name='users',
                 parent_row=SeriesMatcher(pd.Series({'user_id': 3}, name=1, dtype=object)),
                 sampled_data=result,
+                batch_size=2,
+                max_tries_per_batch=50,
             ),
         ]
         expected_result = {
@@ -256,13 +315,23 @@ class TestBaseHierarchicalSampler:
         """
 
         # Setup
-        def sample_children(table_name, sampled_data, scale):
+        def sample_children(
+            table_name, sampled_data, scale, batch_size=None, max_tries_per_batch=100
+        ):
             sampled_data['transactions'] = pd.DataFrame({
                 'transaction_id': [1, 2],
                 'session_id': ['a', 'a'],
             })
 
-        def _add_child_rows(child_name, parent_name, parent_row, sampled_data, num_rows=None):
+        def _add_child_rows(
+            child_name,
+            parent_name,
+            parent_row,
+            sampled_data,
+            num_rows=None,
+            batch_size=None,
+            max_tries_per_batch=100,
+        ):
             if num_rows is not None:
                 sampled_data['sessions'] = pd.DataFrame({'user_id': [1], 'session_id': ['a']})
 
@@ -284,7 +353,11 @@ class TestBaseHierarchicalSampler:
             })
         }
         BaseHierarchicalSampler._sample_children(
-            self=instance, table_name='users', sampled_data=result
+            self=instance,
+            table_name='users',
+            sampled_data=result,
+            batch_size=2,
+            max_tries_per_batch=50,
         )
 
         # Assert
@@ -297,6 +370,8 @@ class TestBaseHierarchicalSampler:
                 parent_name='users',
                 parent_row=SeriesMatcher(expected_parent_row),
                 sampled_data=result,
+                batch_size=2,
+                max_tries_per_batch=50,
             ),
             call(
                 child_name='sessions',
@@ -304,6 +379,8 @@ class TestBaseHierarchicalSampler:
                 parent_row=SeriesMatcher(expected_parent_row),
                 sampled_data=result,
                 num_rows=1,
+                batch_size=2,
+                max_tries_per_batch=50,
             ),
         ]
         expected_result = {
@@ -503,7 +580,9 @@ class TestBaseHierarchicalSampler:
             'transaction_amount': [100, 1000, 200],
         })
 
-        def _sample_children_dummy(table_name, sampled_data, scale):
+        def _sample_children_dummy(
+            table_name, sampled_data, scale, batch_size=None, max_tries_per_batch=100
+        ):
             sampled_data['sessions'] = sessions
             sampled_data['transactions'] = transactions
 
@@ -539,7 +618,7 @@ class TestBaseHierarchicalSampler:
         instance._reverse_transform_constraints = Mock(side_effect=lambda x: x)
 
         # Run
-        result = BaseHierarchicalSampler._sample(instance)
+        result = BaseHierarchicalSampler._sample(instance, batch_size=2, max_tries_per_batch=50)
 
         # Assert
         expected_sample = {
@@ -563,8 +642,18 @@ class TestBaseHierarchicalSampler:
             ),
         }
         assert result == instance._finalize.return_value
+        instance._sample_rows.assert_called_once_with(
+            users_synthesizer,
+            3,
+            batch_size=2,
+            max_tries_per_batch=50,
+        )
         instance._sample_children.assert_called_once_with(
-            table_name='users', sampled_data=expected_sample, scale=1.0
+            table_name='users',
+            sampled_data=expected_sample,
+            scale=1.0,
+            batch_size=2,
+            max_tries_per_batch=50,
         )
         instance._add_foreign_key_columns.assert_has_calls([
             call(expected_sample['sessions'], expected_sample['users'], 'sessions', 'users'),

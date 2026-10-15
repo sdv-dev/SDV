@@ -9,12 +9,11 @@ from sdmetrics import visualization
 
 from sdv.errors import InvalidDataTypeError, NotFittedError
 from sdv.single_table.base import BaseSingleTableSynthesizer
+from sdv.single_table.mixins import MissingModuleMixin
 from sdv.single_table.utils import detect_discrete_columns
-from sdv.utils.mixins import MissingModuleMixin
 
 try:
     from ctgan import CTGAN, TVAE
-    from ctgan.synthesizers._utils import get_enable_gpu_value
 
     import_error = None
 except ModuleNotFoundError as e:
@@ -111,8 +110,7 @@ class CTGANSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynth
 
     Args:
         metadata (sdv.metadata.Metadata):
-            Single table metadata representing the data that this synthesizer will be used for.
-            * sdv.metadata.SingleTableMetadata can be used but will be deprecated.
+            Metadata representing the data that this synthesizer will be used for.
         enforce_min_max_values (bool):
             Specify whether or not to clip the data returned by ``reverse_transform`` of
             the numerical transformer, ``FloatFormatter``, to the min and max values seen
@@ -158,13 +156,9 @@ class CTGANSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynth
         enable_gpu (bool):
             Whether to attempt to use GPU for computation.
             Defaults to ``True``.
-        cuda (bool or str):
-            **Deprecated**
-            If ``True``, use CUDA. If a ``str``, use the indicated device.
-            If ``False``, do not use cuda at all.
     """
 
-    _model_sdtype_transformers = {'categorical': None, 'boolean': None}
+    _model_sdtype_transformers = {'categorical': None, 'boolean': None, 'ordinal': None}
 
     def __init__(
         self,
@@ -186,7 +180,6 @@ class CTGANSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynth
         epochs=300,
         pac=10,
         enable_gpu=True,
-        cuda=None,
     ):
         if CTGAN is None:
             self.raise_module_not_found_error(import_error)
@@ -210,7 +203,7 @@ class CTGANSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynth
         self.verbose = verbose
         self.epochs = epochs
         self.pac = pac
-        self.enable_gpu = get_enable_gpu_value(enable_gpu, cuda)
+        self.enable_gpu = enable_gpu
         self._model_kwargs = {
             'embedding_dim': embedding_dim,
             'generator_dim': generator_dim,
@@ -252,7 +245,7 @@ class CTGANSynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynth
             if sdtypes[column] in {'numerical', 'datetime'}:
                 num_generated_columns[column] = 11
 
-            elif sdtypes[column] in {'categorical', 'boolean'}:
+            elif sdtypes[column] in {'categorical', 'boolean', 'ordinal'}:
                 if transformers.get(column) is None:
                     num_categories = data[column].fillna(np.nan).nunique(dropna=False)
                     num_generated_columns[column] = num_categories
@@ -333,8 +326,7 @@ class TVAESynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynthe
 
     Args:
         metadata (sdv.metadata.Metadata):
-            Single table metadata representing the data that this synthesizer will be used for.
-            * sdv.metadata.SingleTableMetadata can be used but will be deprecated.
+            Metadata representing the data that this synthesizer will be used for.
         enforce_min_max_values (bool):
             Specify whether or not to clip the data returned by ``reverse_transform`` of
             the numerical transformer, ``FloatFormatter``, to the min and max values seen
@@ -361,13 +353,9 @@ class TVAESynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynthe
         enable_gpu (bool):
             Whether to attempt to use GPU for computation.
             Defaults to ``True``.
-        cuda (bool or str):
-            **Deprecated**
-            If ``True``, use CUDA. If a ``str``, use the indicated device.
-            If ``False``, do not use cuda at all.
     """
 
-    _model_sdtype_transformers = {'categorical': None, 'boolean': None}
+    _model_sdtype_transformers = {'categorical': None, 'boolean': None, 'ordinal': None}
 
     def __init__(
         self,
@@ -383,7 +371,6 @@ class TVAESynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynthe
         epochs=300,
         loss_factor=2,
         enable_gpu=True,
-        cuda=None,
     ):
         if TVAE is None:
             self.raise_module_not_found_error(import_error)
@@ -400,7 +387,7 @@ class TVAESynthesizer(LossValuesMixin, MissingModuleMixin, BaseSingleTableSynthe
         self.verbose = verbose
         self.epochs = epochs
         self.loss_factor = loss_factor
-        self.enable_gpu = get_enable_gpu_value(enable_gpu, cuda)
+        self.enable_gpu = enable_gpu
         self._model_kwargs = {
             'embedding_dim': embedding_dim,
             'compress_dims': compress_dims,

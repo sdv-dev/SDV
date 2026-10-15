@@ -7,15 +7,22 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype
 
-from sdv._utils import _format_invalid_values_string
-from sdv.constraints.utils import (
-    cast_to_datetime64,
-)
+from sdv._utils import _cast_to_datetime64, _format_invalid_values_string
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.errors import NotFittedError
 
 LOGGER = logging.getLogger(__name__)
+
+
+def get_subclasses(cls):
+    """Recursively find subclasses for the current class object."""
+    subclasses = {}
+    for subclass in cls.__subclasses__():
+        subclasses[subclass.__name__] = subclass
+        subclasses.update(get_subclasses(subclass))
+
+    return subclasses
 
 
 class BaseConstraint:
@@ -83,7 +90,14 @@ class BaseConstraint:
                 f'{missing_attrs} are not saved as attributes on the constraint.'
             )
 
+        if self._is_single_table and getattr(self, '_table_name', None) is not None:
+            instanced['table_name'] = self._table_name
+
         return {'class_name': self.__class__.__name__, 'parameters': instanced}
+
+    def to_dict(self):
+        """Return the constraint as a serializable dictionary."""
+        return self.get_constraint_dict()
 
     @classmethod
     def load_constraint_from_dict(cls, parameters):
@@ -201,9 +215,7 @@ class BaseConstraint:
                 sdtype = column_metadata.get('sdtype')
 
                 if sdtype == 'numerical' and column_name != primary_key:
-                    representation = column_metadata.get('computer_representation', 'Float')
                     self._formatters[table_name][column_name] = NumericalFormatter(
-                        computer_representation=representation,
                         enforce_rounding=True,
                         enforce_min_max_values=True,
                     )
@@ -222,7 +234,7 @@ class BaseConstraint:
 
                     values = data[table_name][column_name]
                     if not is_datetime64_any_dtype(values.dtype):
-                        values = cast_to_datetime64(data[table_name][column_name], datetime_format)
+                        values = _cast_to_datetime64(data[table_name][column_name], datetime_format)
 
                     self._datetime_min_max_value[table_name][column_name] = (
                         values.min(),
@@ -254,7 +266,7 @@ class BaseConstraint:
 
                     dt_values = table_data[column_name]
                     if not is_datetime64_any_dtype(dt_values.dtype):
-                        dt_values = cast_to_datetime64(dt_values, formatter.datetime_format)
+                        dt_values = _cast_to_datetime64(dt_values, formatter.datetime_format)
 
                     column_data = dt_values.clip(lower=min_value, upper=max_value)
                     table_data[column_name] = formatter.format_data(column_data)

@@ -6,10 +6,10 @@ import pandas as pd
 import pytest
 from rdt.transformers import (
     AnonymizedFaker,
-    CustomLabelEncoder,
     FloatFormatter,
     IndexGenerator,
     LabelEncoder,
+    OrderedLabelEncoder,
     PseudoAnonymizedFaker,
     RegexGenerator,
 )
@@ -18,10 +18,11 @@ from sdv.cag import Inequality
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError
-from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
+from sdv.evaluation import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata.metadata import Metadata
 from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
+from sdv.utils import load_synthesizer
 from tests.integration.single_table.custom_constraints import (
     IfTrueThenZero,
     SingleTableIfTrueThenZero,
@@ -59,7 +60,7 @@ def test_synthesize_table_gaussian_copula(tmp_path):
 
     # Run - fit
     synthesizer.fit(real_data)
-    synthetic_data = synthesizer.sample(num_rows=500)
+    synthetic_data = synthesizer.sample(num_rows=500, main_table_name='fake_hotel_guests')
 
     # Run - evaluate
     quality_report = evaluate_quality(real_data, synthetic_data, metadata)
@@ -67,6 +68,7 @@ def test_synthesize_table_gaussian_copula(tmp_path):
     column_plot = get_column_plot(
         real_data=real_data,
         synthetic_data=synthetic_data,
+        table_name='fake_hotel_guests',
         column_name='room_rate',
         metadata=metadata,
     )
@@ -74,6 +76,7 @@ def test_synthesize_table_gaussian_copula(tmp_path):
     pair_plot = get_column_pair_plot(
         real_data=real_data,
         synthetic_data=synthetic_data,
+        table_name='fake_hotel_guests',
         column_names=['room_rate', 'room_type'],
         metadata=metadata,
     )
@@ -89,6 +92,7 @@ def test_synthesize_table_gaussian_copula(tmp_path):
     custom_column_plot = get_column_plot(
         real_data=real_data,
         synthetic_data=synthetic_data_customized,
+        table_name='fake_hotel_guests',
         column_name='room_rate',
         metadata=metadata,
     )
@@ -97,6 +101,9 @@ def test_synthesize_table_gaussian_copula(tmp_path):
     )
 
     # Assert - fit
+    real_data = real_data['fake_hotel_guests']
+    synthetic_data = synthetic_data['fake_hotel_guests']
+    simulated_synthetic_data = simulated_synthetic_data['fake_hotel_guests']
     assert set(real_data.columns) == set(synthetic_data.columns)
     assert real_data.shape[1] == synthetic_data.shape[1]
     assert len(synthetic_data) == 500
@@ -111,11 +118,11 @@ def test_synthesize_table_gaussian_copula(tmp_path):
     # Assert - save/load model
     assert model_path.exists()
     assert model_path.is_file()
-    loaded_synthesizer = GaussianCopulaSynthesizer.load(model_path)
+    loaded_synthesizer = load_synthesizer(model_path)
     assert isinstance(synthesizer, GaussianCopulaSynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
     assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
-    loaded_synthesizer.sample(20)
+    loaded_synthesizer.sample(20, main_table_name='fake_hotel_guests')
 
     # Assert - custom synthesizer
     assert custom_quality_report.get_score() > 0
@@ -163,7 +170,7 @@ def test_adding_constraints(tmp_path, programmable_constraint):
     # Run
     synthesizer.add_constraints([checkin_lessthan_checkout])
     synthesizer.fit(real_data)
-    synthetic_data_constrained = synthesizer.sample(500)
+    synthetic_data_constrained = synthesizer.sample(500)['fake_hotel_guests']
 
     # Assert
     synthetic_dates = synthetic_data_constrained[['checkin_date', 'checkout_date']].dropna()
@@ -179,7 +186,7 @@ def test_adding_constraints(tmp_path, programmable_constraint):
     synthesizer.preprocess(real_data)
     synthesizer.update_transformers({'checkin_date#checkout_date.nan_component': LabelEncoder()})
     synthesizer.fit(real_data)
-    synthetic_data_custom_constraint = synthesizer.sample(500)
+    synthetic_data_custom_constraint = synthesizer.sample(500)['fake_hotel_guests']
 
     # Assert
     validation = synthetic_data_custom_constraint[synthetic_data_custom_constraint['has_rewards']]
@@ -195,16 +202,16 @@ def test_adding_constraints(tmp_path, programmable_constraint):
     # Assert
     assert model_path.exists()
     assert model_path.is_file()
-    loaded_synthesizer = GaussianCopulaSynthesizer.load(model_path)
+    loaded_synthesizer = load_synthesizer(model_path)
 
     assert isinstance(loaded_synthesizer, GaussianCopulaSynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
     assert loaded_synthesizer._original_metadata.to_dict() == metadata.to_dict()
-    sampled_data = loaded_synthesizer.sample(100)
+    sampled_data = loaded_synthesizer.sample(100)['fake_hotel_guests']
     validation = sampled_data[sampled_data['has_rewards']]
     assert validation['amenities_fee'].sum() == 0.0
-    synthesizer.validate(sampled_data)
-    loaded_synthesizer.validate(sampled_data)
+    synthesizer.validate({'fake_hotel_guests': sampled_data})
+    loaded_synthesizer.validate({'fake_hotel_guests': sampled_data})
 
 
 def test_custom_processing_anonymization():
@@ -222,14 +229,14 @@ def test_custom_processing_anonymization():
     transformers_synthesizer = GaussianCopulaSynthesizer(metadata)
     anonymization_synthesizer = GaussianCopulaSynthesizer(metadata)
 
-    room_type_transformer = CustomLabelEncoder(order=['BASIC', 'DELUXE', 'SUITE'], add_noise=True)
+    room_type_transformer = OrderedLabelEncoder(order=['BASIC', 'DELUXE', 'SUITE'], add_noise=True)
     amenities_fee_transformer = FloatFormatter(
         learn_rounding_scheme=True, enforce_min_max_values=True, missing_value_replacement=0.00
     )
 
     sensitive_columns = ['guest_email', 'billing_address', 'credit_card_number']
     guest_email_transformer = AnonymizedFaker(
-        provider_name='misc', function_name='uuid4', enforce_uniqueness=True
+        provider_name='misc', function_name='uuid4', cardinality_rule='unique'
     )
     billing_address_transformer = PseudoAnonymizedFaker(
         provider_name='address', function_name='address'
@@ -258,10 +265,12 @@ def test_custom_processing_anonymization():
     anonymized_sample = anonymization_synthesizer.sample(num_rows=100)
 
     # Assert - Pre-process data
-    assert pre_processed_data.index.name == metadata.tables['fake_hotel_guests'].primary_key
-    assert all(pre_processed_data.dtypes == 'float64')
+    default_sample = default_sample['fake_hotel_guests']
+    processed_table_data = pre_processed_data['fake_hotel_guests']
+    assert processed_table_data.index.name == metadata.tables['fake_hotel_guests'].primary_key
+    assert all(processed_table_data.dtypes == 'float64')
     for column in sensitive_columns:
-        assert default_sample[column].isin(real_data[column]).sum() == 0
+        assert default_sample[column].isin(real_data['fake_hotel_guests'][column]).sum() == 0
         assert all(default_sample[column].value_counts() == 1)
 
     # Assert - Update transformers
@@ -273,8 +282,8 @@ def test_custom_processing_anonymization():
     anonymized_transformers = anonymization_synthesizer.get_transformers()
     assert anonymized_transformers['guest_email'] == guest_email_transformer
     assert anonymized_transformers['billing_address'] == billing_address_transformer
-    assert [UUID(uuid) for uuid in anonymized_sample['guest_email']]
-    assert any(anonymized_sample['billing_address'].value_counts() > 1)
+    assert [UUID(uuid) for uuid in anonymized_sample['fake_hotel_guests']['guest_email']]
+    assert any(anonymized_sample['fake_hotel_guests']['billing_address'].value_counts() > 1)
 
 
 def test_update_transformers_with_id_generator():
@@ -283,8 +292,9 @@ def test_update_transformers_with_id_generator():
     min_value_id = 5
     sample_num = 20
     data = pd.DataFrame({'user_id': list(range(4)), 'user_cat': ['a', 'b', 'c', 'd']})
+    data = {'table': data}
 
-    stm = Metadata.detect_from_dataframes({'table': data})
+    stm = Metadata.detect_from_dataframes(data)
     stm.update_column('user_id', 'table', sdtype='id')
     stm.set_primary_key('user_id', 'table')
 
@@ -299,6 +309,7 @@ def test_update_transformers_with_id_generator():
     transformers = gc.get_transformers()
 
     # Assert
+    samples = samples['table']
     assert transformers['user_id'] == custom_id
     assert type(transformers['user_cat']).__name__ == 'UniformEncoder'
     assert len(samples) == sample_num
@@ -330,6 +341,7 @@ def test_regex_transformer_various_cardinality_rules(cardinality_rule, expected_
     transformers = gc.get_transformers()
 
     # Assert
+    samples = samples['fake_hotel_guests']
     assert transformers['guest_email'] == transformer
     assert len(samples) == 10
     assert samples['guest_email'].head(3).tolist() == expected_samples
@@ -339,7 +351,9 @@ def test_validate_with_failing_constraint():
     """Validate that the ``constraint`` are raising errors if there is an error during validate."""
     # Setup
     real_data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
-    real_data.loc[0, 'checkin_date'] = real_data['checkout_date'][1]
+    real_data_table = real_data['fake_hotel_guests']
+    real_data_table.loc[0, 'checkin_date'] = real_data_table['checkout_date'][1]
+    real_data['fake_hotel_guests'] = real_data_table
     gc = GaussianCopulaSynthesizer(metadata)
 
     checkin_lessthan_checkout = Inequality(
@@ -362,6 +376,7 @@ def test_numerical_columns_gets_pii():
     data = pd.DataFrame(
         data={'id': [0, 1, 2, 3, 4], 'city': [0, 0, 0, 0, 0], 'numerical': [21, 22, 23, 24, 25]}
     )
+    data = {'table': data}
     metadata = Metadata.load_from_dict({
         'primary_key': 'id',
         'columns': {
@@ -377,6 +392,7 @@ def test_numerical_columns_gets_pii():
     sampled = synth.sample(10)
 
     # Assert
+    sampled = sampled['table']
     expected_sampled = pd.DataFrame({
         'id': [
             1982005,
@@ -435,14 +451,14 @@ def test_categorical_column_with_numbers():
         ],
         'numerical_col': np.random.rand(20),
     })
-
-    metadata = Metadata.detect_from_dataframes({'table': data})
+    data = {'table': data}
+    metadata = Metadata.detect_from_dataframes(data)
 
     synthesizer = GaussianCopulaSynthesizer(metadata)
 
     # Run
     synthesizer.fit(data)
-    synthetic_data = synthesizer.sample(20)
+    synthetic_data = synthesizer.sample(20)['table']
 
     # Assert
     expected_dtypes = pd.Series({
@@ -463,8 +479,9 @@ def test_unknown_sdtype():
         'unknown': ['a', 'b', 'c'],
         'numerical_col': np.random.rand(3),
     })
+    data = {'table': data}
 
-    metadata = Metadata.detect_from_dataframes({'table': data})
+    metadata = Metadata.detect_from_dataframes(data)
     metadata.update_column('unknown', 'table', sdtype='unknown')
 
     synthesizer = GaussianCopulaSynthesizer(metadata)
@@ -474,6 +491,7 @@ def test_unknown_sdtype():
     synthetic_data = synthesizer.sample(5)
 
     # Assert
+    synthetic_data = synthetic_data['table']
     assert synthetic_data['unknown'].str.startswith('sdv-pii-').all()
 
 
@@ -486,9 +504,10 @@ def test_datetime_values_inside_real_data_range():
 
     # Run
     synthesizer.fit(real_data)
-    synthetic_data = synthesizer.sample(len(real_data))
+    synthetic_data = synthesizer.sample(len(real_data))['fake_hotel_guests']
 
     # Assert
+    real_data = real_data['fake_hotel_guests']
     check_in_synthetic = pd.to_datetime(synthetic_data['checkin_date'])
     check_out_synthetic = pd.to_datetime(synthetic_data['checkout_date'])
     check_in_real = pd.to_datetime(real_data['checkin_date'])
@@ -510,14 +529,15 @@ def test_support_nullable_pandas_dtypes():
         'Float32': pd.Series([1.1, 2.2, 3.3, pd.NA], dtype='Float32'),
         'Float64': pd.Series([1.113, 2.22, 3.3, pd.NA], dtype='Float64'),
     })
+    data = {'table': data}
     metadata = Metadata().load_from_dict({
         'columns': {
-            'Int8': {'sdtype': 'numerical', 'computer_representation': 'Int8'},
-            'Int16': {'sdtype': 'numerical', 'computer_representation': 'Int16'},
-            'Int32': {'sdtype': 'numerical', 'computer_representation': 'Int32'},
-            'Int64': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-            'Float32': {'sdtype': 'numerical', 'computer_representation': 'Float32'},
-            'Float64': {'sdtype': 'numerical', 'computer_representation': 'Float64'},
+            'Int8': {'sdtype': 'numerical'},
+            'Int16': {'sdtype': 'numerical'},
+            'Int32': {'sdtype': 'numerical'},
+            'Int64': {'sdtype': 'numerical'},
+            'Float32': {'sdtype': 'numerical'},
+            'Float64': {'sdtype': 'numerical'},
         }
     })
 
@@ -528,7 +548,8 @@ def test_support_nullable_pandas_dtypes():
     synthetic_data = synthesizer.sample(10)
 
     # Assert
-    assert (synthetic_data.dtypes == data.dtypes).all()
+    synthetic_data = synthetic_data['table']
+    assert (synthetic_data.dtypes == data['table'].dtypes).all()
     assert (synthetic_data['Float32'] == synthetic_data['Float32'].round(1)).all(skipna=True)
     assert (synthetic_data['Float64'] == synthetic_data['Float64'].round(3)).all(skipna=True)
 
@@ -559,6 +580,7 @@ def test_get_learned_distributions_fallback_distribution():
     """Test it when the fallback distribution is used GH#2394."""
     # Setup
     data = pd.DataFrame(data={'A': np.concatenate([np.zeros(29), np.ones(21)])})
+    data = {'table': data}
     metadata = Metadata.load_from_dict({
         'tables': {
             'table': {
@@ -633,6 +655,7 @@ def test_datetime_column_mixed_timezones():
             dtype='object',
         ),
     })
+    data = {'table': data}
     metadata = Metadata.load_from_dict({
         'tables': {
             'table': {

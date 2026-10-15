@@ -45,9 +45,10 @@ def _format_metadata_value(value):
         str:
             The formatted value as a string.
     """
-    if isinstance(value, bool) or value is None:
+    if isinstance(value, str):
+        return f"'{value}'"
+    else:
         return str(value)
-    return f"'{value}'"
 
 
 def _format_column_metadata(sdtype_info):
@@ -60,23 +61,16 @@ def _format_column_metadata(sdtype_info):
     Returns:
         str:
             A comma-separated `key=value` string with 'sdtype' first.
-            (`sdtype='numerical', computer_representation='Float'`)
+            (`sdtype='numerical', range_min=0.0`)
     """
     parts = [f'{k}={_format_metadata_value(v)}' for k, v in sdtype_info.items()]
     parts.sort(key=lambda p: not p.startswith('sdtype='))
     return ', '.join(parts)
 
 
-def _print_primary_key_detection(chosen_pk, sdtype_updated, pii_removed):
+def _print_primary_key_detection(chosen_pk):
     if not chosen_pk:
         sys.stdout.write('- No primary key found\n')
         return
 
-    notes = []
-    if sdtype_updated:
-        notes.append("updating sdtype to 'id'")
-    if pii_removed:
-        notes.append("removing 'pii' field")
-
-    suffix = f' ({", ".join(notes)})' if notes else ''
-    sys.stdout.write(f"- primary_key='{chosen_pk}'{suffix}\n")
+    sys.stdout.write(f"- primary_key='{chosen_pk}'\n")

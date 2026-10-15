@@ -114,6 +114,19 @@ class TestProgrammableConstraint:
             },
         }
 
+    def test_to_dict(self):
+        """Test the ``to_dict`` method returns the same as ``get_constraint_dict``."""
+        # Setup
+        instance = Mock()
+        instance.get_constraint_dict.return_value = {'class_name': 'Mock', 'parameters': {}}
+
+        # Run
+        constraint_dict = ProgrammableConstraint.to_dict(instance)
+
+        # Assert
+        assert constraint_dict == {'class_name': 'Mock', 'parameters': {}}
+        instance.get_constraint_dict.assert_called_once()
+
 
 class TestProgrammableConstraintHarness:
     def test___init__(self):

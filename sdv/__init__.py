@@ -6,7 +6,7 @@
 
 __author__ = 'DataCebo, Inc.'
 __email__ = 'info@sdv.dev'
-__version__ = '1.38.5'
+__version__ = '2.0.0.dev2'
 
 
 import sys
@@ -16,12 +16,10 @@ from operator import attrgetter
 from types import ModuleType
 
 from sdv import (
-    constraints,
     data_processing,
     datasets,
     evaluation,
     io,
-    lite,
     logging,
     metadata,
     metrics,
@@ -34,12 +32,10 @@ from sdv import (
 )
 
 __all__ = [
-    'constraints',
     'data_processing',
     'datasets',
     'evaluation',
     'io',
-    'lite',
     'logging',
     'metadata',
     'metrics',

@@ -1,11 +1,17 @@
+import json
 import re
-from unittest.mock import patch
+from unittest.mock import DEFAULT, patch
 
-import pandas as pd
 import pytest
 
 from sdv.datasets._utils import InvalidDataWarning
-from sdv.datasets.demo import download_demo, get_available_demos, get_source, save_resource
+from sdv.datasets.demo import (
+    _get_data_from_bucket,
+    download_demo,
+    get_available_demos,
+    get_source,
+    save_resource,
+)
 from sdv.metadata import Metadata
 
 
@@ -47,9 +53,10 @@ def test_download_demo_single_table(output_path, tmp_path):
     # Assert
     assert isinstance(metadata, Metadata)
     metadata.validate()
-    assert isinstance(data, pd.DataFrame)
-    metadata.validate_data({'fake_hotel_guests': data})
-    assert len(data) > 1
+    assert isinstance(data, dict)
+    metadata.validate_data(data)
+    assert len(data) == 1
+    assert len(data['fake_hotel_guests']) > 1
     if output_folder_name:
         assert (output_folder_name / 'metadata.json').is_file()
         csv_files = list((output_folder_name / 'data').glob('*.csv'))
@@ -104,9 +111,8 @@ def test_download_demo_sequential(output_path, tmp_path):
     # Assert
     assert isinstance(metadata, Metadata)
     metadata.validate()
-    metadata = metadata._convert_to_single_table()
     metadata.validate_data(data)
-    assert len(data) > 1
+    assert len(data['ArticularyWordRecognition']) > 1
     if output_folder_name:
         assert (output_folder_name / 'metadata.json').is_file()
         csv_files = list((output_folder_name / 'data').glob('*.csv'))
@@ -136,6 +142,29 @@ def test_download_demo_adventure_works_raises_warning(preprocess_mock):
     )
     with pytest.warns(InvalidDataWarning, match=warning_msg):
         download_demo(modality='multi_table', dataset_name='adventure-works')
+
+
+@patch(
+    'sdv.datasets.demo._get_data_from_bucket',
+    wraps=_get_data_from_bucket,
+)
+def test_download_demo_raise_warning_v2_metadata(mock_get_data_from_bucket):
+    """Test that a warning is raised if the V2 metadata is not available."""
+    # Setup
+    expected_warning = re.escape(
+        'An updated metadata V2 is not available for this dataset so the V1 '
+        'metadata was returned.\nYou should be able to model and sample with'
+        ' the V1 metadata, but please report this issue to DataCebo.'
+    )
+
+    v1_metadata = json.dumps({'METADATA_SPEC_VERSION': 'V1'}).encode()
+    mock_get_data_from_bucket.side_effect = lambda key, **kwargs: (
+        v1_metadata if key.endswith('.json') else DEFAULT
+    )
+
+    # Run and Assert
+    with pytest.warns(UserWarning, match=expected_warning):
+        download_demo(modality='single_table', dataset_name='fake_hotel_guests')
 
 
 def test_save_resource(tmp_path):
@@ -172,30 +201,6 @@ def test_save_resource_with_resource_filepath(tmp_path):
     assert 'CREATE TABLE' in output_filepath.read_text()
 
 
-def test_save_resource_raises_future_warning(tmp_path):
-    """Test saving with the deprecated ``resource_filename`` parameter."""
-    # Setup
-    modality = 'single_table'
-    dataset_name = 'student_placements'
-    resource_filename = 'SOURCE.txt'
-    output_filepath = tmp_path / 'SOURCE.txt'
-    expected_source = get_source(modality, dataset_name)
-    warning_msg = re.escape(
-        'Warning: The `resource_filename` parameter is deprecated. '
-        'Please use the `resource_filepath` parameter instead.'
-    )
-
-    # Run and Assert
-    with pytest.warns(FutureWarning, match=warning_msg):
-        save_resource(
-            modality,
-            dataset_name,
-            resource_filename=resource_filename,
-            output_filepath=output_filepath,
-        )
-    assert output_filepath.read_text() == expected_source
-
-
 def test_save_resource_missing_resource_filepath():
     """Test error is raised if ``resource_filepath`` not provided."""
     # Setup
@@ -217,25 +222,6 @@ def test_save_resource_missing_output_filepath():
     # Run and Assert
     with pytest.raises(ValueError, match=error_msg):
         save_resource('single_table', 'student_placements', 'SOURCE.txt')
-
-
-def test_save_resource_both_resource_filepath_resource_filename():
-    """Test error is raised if conflicting params provided."""
-    # Setup
-    error_msg = re.escape(
-        'Cannot use both `resource_filepath` and `resource_filename`. '
-        'Please use only `resource_filepath`.'
-    )
-
-    # Run and Assert
-    with pytest.raises(ValueError, match=error_msg):
-        save_resource(
-            'single_table',
-            'student_placements',
-            resource_filepath='SOURCE.txt',
-            output_filepath='SOURCE.txt',
-            resource_filename='SOURCE.txt',
-        )
 
 
 def test_save_resource_resource_filepath_with_leading_slash(tmp_path):

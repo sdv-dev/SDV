@@ -111,31 +111,30 @@ class OneHotEncoding(BaseConstraint):
 
     def _get_updated_metadata(self, metadata):
         table_name = self._get_single_table_name(metadata)
+        metadata = deepcopy(metadata)
         if self.learning_strategy == 'categorical':
             self._categorical_column = _create_unique_name(
                 self._categorical_column, metadata.tables[table_name].columns
             )
-            md = metadata.to_dict()
-            md['tables'][table_name]['columns'][self._categorical_column] = {
-                'sdtype': 'categorical'
-            }
+            metadata.add_column(
+                table_name=table_name, column_name=self._categorical_column, sdtype='categorical'
+            )
 
         else:
             # one-hot learning strategy
-            metadata = deepcopy(metadata)
             metadata_columns = list(metadata.tables[table_name].columns)
             for column in self._column_names:
                 new_col_name = _create_unique_name(f'OHE#{column}', metadata_columns)
-                col_meta = metadata.tables[table_name].columns[column]
-                col_meta.pop('computer_representation', None)
-                if col_meta['sdtype'] in ['categorical', 'boolean']:
-                    col_meta['sdtype'] = 'numerical'
+                col_sdtype = metadata.tables[table_name].columns[column]['sdtype']
+                if col_sdtype in ['categorical', 'boolean', 'ordinal']:
+                    col_sdtype = 'numerical'
 
-                metadata.tables[table_name].columns[new_col_name] = col_meta
+                metadata.add_column(
+                    table_name=table_name, column_name=new_col_name, sdtype=col_sdtype
+                )
                 metadata_columns.append(new_col_name)
 
-            md = metadata.to_dict()
-
+        md = metadata.to_dict()
         return _remove_columns_from_metadata(md, table_name, columns_to_drop=self._column_names)
 
     def _transform(self, data):

@@ -21,17 +21,16 @@ from sdv.cag._errors import ConstraintNotMetError
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
 from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError, VersionError
-from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, get_column_plot
-from sdv.metadata import MultiTableMetadata
+from sdv.evaluation import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
-from sdv.utils import load_constraints
+from sdv.utils import load_constraints, load_synthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint
 from tests.utils import catch_sdv_logs, get_multi_table_metadata
 
 
 class TestHMASynthesizer:
-    def test_hma(self):
+    def test_hma(self, tmpdir):
         """End to end integration tests with ``HMASynthesizer``.
 
         The test consist on loading the demo data, convert the old metadata to the new format
@@ -41,11 +40,12 @@ class TestHMASynthesizer:
         # Setup
         data, metadata = download_demo('multi_table', 'fake_hotels')
         hmasynthesizer = HMASynthesizer(metadata)
+        num_rows_guests = len(data['guests'])
 
         # Run
         hmasynthesizer.fit(data)
-        normal_sample = hmasynthesizer.sample(0.5)
-        increased_sample = hmasynthesizer.sample(1.5)
+        normal_sample = hmasynthesizer.sample(0.5 * num_rows_guests, main_table_name='guests')
+        increased_sample = hmasynthesizer.sample(1.5 * num_rows_guests, main_table_name='guests')
 
         # Assert
         assert set(normal_sample) == set(data.keys())
@@ -67,11 +67,12 @@ class TestHMASynthesizer:
         data, multi_metadata = download_demo('multi_table', 'fake_hotels')
         metadata = Metadata.load_from_dict(multi_metadata.to_dict())
         hmasynthesizer = HMASynthesizer(metadata)
+        num_rows_guests = len(data['guests'])
 
         # Run
         hmasynthesizer.fit(data)
-        normal_sample = hmasynthesizer.sample(0.5)
-        increased_sample = hmasynthesizer.sample(1.5)
+        normal_sample = hmasynthesizer.sample(0.5 * num_rows_guests, main_table_name='guests')
+        increased_sample = hmasynthesizer.sample(1.5 * num_rows_guests, main_table_name='guests')
 
         # Assert
         assert set(normal_sample) == set(data.keys())
@@ -100,15 +101,17 @@ class TestHMASynthesizer:
         for table in metadata.tables.values():
             table.alternate_keys = []
 
+        num_rows_guests = len(data['guests'])
+
         hmasynthesizer = HMASynthesizer(metadata)
 
         # Run
         hmasynthesizer.fit(data)
-        first_sample = hmasynthesizer.sample()
-        second_sample = hmasynthesizer.sample()
+        first_sample = hmasynthesizer.sample(num_rows_guests, main_table_name='guests')
+        second_sample = hmasynthesizer.sample(num_rows_guests, main_table_name='guests')
         hmasynthesizer.reset_sampling()
-        reset_first_sample = hmasynthesizer.sample()
-        reset_second_sample = hmasynthesizer.sample()
+        reset_first_sample = hmasynthesizer.sample(num_rows_guests, main_table_name='guests')
+        reset_second_sample = hmasynthesizer.sample(num_rows_guests, main_table_name='guests')
 
         # Assert
         for table, reset_table in zip(first_sample.values(), reset_first_sample.values()):
@@ -211,9 +214,9 @@ class TestHMASynthesizer:
         })
 
         metadata = Metadata()
-        metadata.detect_table_from_dataframe('parent', parent_data)
+        metadata._detect_table_from_dataframe('parent', parent_data)
         metadata.update_column('primary_key', 'parent', sdtype='id')
-        metadata.detect_table_from_dataframe('child', child_data)
+        metadata._detect_table_from_dataframe('child', child_data)
         metadata.update_column('user_id', 'child', sdtype='id')
         metadata.update_column('id', 'child', sdtype='id')
         metadata.set_primary_key('primary_key', 'parent')
@@ -248,7 +251,7 @@ class TestHMASynthesizer:
         synthesizer.fit_processed_data(processed_data)
 
         # Run - sample
-        sampled = synthesizer.sample(10)
+        sampled = synthesizer.sample(10 * len(parent_data), main_table_name='parent')
         assert all(sampled['parent']['numerical_col'] > 1)
 
     def test_hma_custom_constraint_2_tables(self):
@@ -281,7 +284,7 @@ class TestHMASynthesizer:
         synthesizer.fit_processed_data(processed_data)
 
         # Run - sample
-        sampled = synthesizer.sample(10)
+        sampled = synthesizer.sample(10 * len(parent_data), main_table_name='parent')
         assert all(sampled['parent']['numerical_col'] > 1)
         assert all(sampled['child']['numerical_col_2'] > 1)
         assert not all(sampled['child']['numerical_col'] > 1)
@@ -305,9 +308,9 @@ class TestHMASynthesizer:
         data = {'parent_table': parent_table, 'child_table': child_table}
 
         metadata = Metadata()
-        metadata.detect_table_from_dataframe(table_name='parent_table', data=parent_table)
+        metadata._detect_table_from_dataframe(table_name='parent_table', data=parent_table)
         metadata.update_column('id', 'parent_table', sdtype='id')
-        metadata.detect_table_from_dataframe(table_name='child_table', data=child_table)
+        metadata._detect_table_from_dataframe(table_name='child_table', data=child_table)
         metadata.update_column('id', 'child_table', sdtype='id')
         metadata.update_column('parent_id', 'child_table', sdtype='id')
 
@@ -331,7 +334,7 @@ class TestHMASynthesizer:
         # Run
         synthesizer.add_constraints(constraints=[constraint])
         synthesizer.fit(data)
-        sampled = synthesizer.sample(10)
+        sampled = synthesizer.sample(10 * len(child_table), main_table_name='child_table')
 
         # Assert
         assert all(sampled['child_table']['low_column'] < sampled['child_table']['high_column'])
@@ -370,7 +373,7 @@ class TestHMASynthesizer:
         # Assert
         assert model_path.exists()
         assert model_path.is_file()
-        loaded_synthesizer = HMASynthesizer.load(model_path)
+        loaded_synthesizer = load_synthesizer(model_path)
 
         assert isinstance(synthesizer, HMASynthesizer)
         assert loaded_synthesizer.get_info() == synthesizer.get_info()
@@ -392,7 +395,7 @@ class TestHMASynthesizer:
 
         metadata = Metadata()
         for table_name, table in data.items():
-            metadata.detect_table_from_dataframe(table_name, table)
+            metadata._detect_table_from_dataframe(table_name, table)
 
         metadata.update_column('user_id', 'users', sdtype='id')
         metadata.update_column('session_id', 'sessions', sdtype='id')
@@ -411,7 +414,7 @@ class TestHMASynthesizer:
         hmasynthesizer.fit(data)
 
         # Sample
-        sample = hmasynthesizer.sample()
+        sample = hmasynthesizer.sample(len(data['games']), main_table_name='games')
 
         # Assert
         assert all(sample['games']['user_id'].isin(sample['users']['user_id']))
@@ -435,7 +438,7 @@ class TestHMASynthesizer:
         synthesizer.fit(real_data)
 
         # Generating Synthetic Data
-        synthetic_data = synthesizer.sample(scale=2)
+        synthetic_data = synthesizer.sample(2 * len(real_data['guests']), main_table_name='guests')
 
         # Assert new data is bigger than real_data
         for table_name in metadata.tables:
@@ -478,12 +481,12 @@ class TestHMASynthesizer:
         # Assert
         assert model_path.exists()
         assert model_path.is_file()
-        loaded_synthesizer = HMASynthesizer.load(model_path)
+        loaded_synthesizer = load_synthesizer(model_path)
 
         assert isinstance(synthesizer, HMASynthesizer)
         assert loaded_synthesizer.get_info() == synthesizer.get_info()
         assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
-        loaded_synthesizer.sample()
+        loaded_synthesizer.sample(2 * len(real_data['guests']), main_table_name='guests')
 
         # HMA Customization
         custom_synthesizer = HMASynthesizer(metadata)
@@ -528,8 +531,8 @@ class TestHMASynthesizer:
         # Metadata
         metadata = Metadata()
 
-        metadata.detect_table_from_dataframe(table_name='guests', data=datasets['guests'])
-        metadata.detect_table_from_dataframe(table_name='hotels', data=datasets['hotels'])
+        metadata._detect_table_from_dataframe(table_name='guests', data=datasets['guests'])
+        metadata._detect_table_from_dataframe(table_name='hotels', data=datasets['hotels'])
 
         # Assert - detected metadata correctly
         for table in metadata.tables:
@@ -626,7 +629,7 @@ class TestHMASynthesizer:
         synthesizer = HMASynthesizer(metadata)
         synthesizer.validate(datasets)
         synthesizer.fit(datasets)
-        synthetic_data = synthesizer.sample(scale=1)
+        synthetic_data = synthesizer.sample(len(datasets['guests']), main_table_name='guests')
         synthesizer.validate(synthetic_data)
 
         for table in metadata.tables:
@@ -646,7 +649,7 @@ class TestHMASynthesizer:
 
         # Run
         hmasynthesizer.fit(data)
-        hmasynthesizer.sample(0.5)
+        hmasynthesizer.sample(int(0.5 * len(data['hotels'])), main_table_name='hotels')
 
         captured = capsys.readouterr()
 
@@ -695,6 +698,9 @@ class TestHMASynthesizer:
         """Test that given a complex schema, that error shows before checking composite keys."""
         # Setup
         _, metadata = download_demo(modality='multi_table', dataset_name='adventure-works')
+
+        # The metadata contains the `order_by` key for categorical which we don't support for 2.0
+        metadata.tables['WorkOrderRouting'].columns['OperationSequence'] = {'sdtype': 'categorical'}
 
         # Run and Assert
         error_msg = (
@@ -771,7 +777,7 @@ class TestHMASynthesizer:
 
         # Run
         synthesizer.fit(data)
-        samples = synthesizer.sample(scale=1)
+        samples = synthesizer.sample(5, main_table_name='parent')
 
         # Assert tables are the same
         assert set(samples) == set(data)
@@ -841,7 +847,7 @@ class TestHMASynthesizer:
 
         # Run
         synthesizer.fit(data)
-        samples = synthesizer.sample(scale=1)
+        samples = synthesizer.sample(5, main_table_name='parent1')
 
         # Assert tables are the same
         assert set(samples) == set(data)
@@ -853,6 +859,132 @@ class TestHMASynthesizer:
         # Assert data values all exist in the original tables
         for table_name, table in samples.items():
             assert table['data'].isin(data[table_name]['data']).all()
+
+    def test_sample_scale(self):
+        """Test `sample_scale` scales the original table sizes."""
+        # Setup
+        data, metadata = download_demo('multi_table', 'fake_hotels')
+        hmasynthesizer = HMASynthesizer(metadata)
+
+        # Run
+        hmasynthesizer.fit(data)
+        normal_sample = hmasynthesizer.sample_scale(0.5)
+        default_sample = hmasynthesizer.sample_scale()
+        increased_sample = hmasynthesizer.sample_scale(1.5)
+
+        # Assert
+        for sample, scale in [(normal_sample, 0.5), (default_sample, 1.0), (increased_sample, 1.5)]:
+            assert set(sample) == set(data.keys())
+            for table_name, table in sample.items():
+                assert set(table.columns) == set(data[table_name])
+                assert len(table) == len(data[table_name]) * scale
+
+    def test_sample_in_batches(self):
+        """Test sampling in batches on a simple 'parent-child-parent' dataset."""
+        # Setup
+        child = pd.DataFrame(
+            data={
+                'child_ID': ['a', 'b', 'c', 'd', 'e'],
+                'parent_ID1': [0, 1, 2, 3, 3],
+                'parent_ID2': [0, 1, 2, 3, 4],
+                'data': ['0', '1', '2', '3', '4'],
+            }
+        )
+        parent1 = pd.DataFrame(
+            data={'parent_ID1': [0, 1, 2, 3, 4], 'data': [True, False, False, False, True]}
+        )
+        parent2 = pd.DataFrame(
+            data={'parent_ID2': [0, 1, 2, 3, 4], 'data': ['Yes', 'Yes', 'Maybe', 'No', 'No']}
+        )
+        data = {'parent1': parent1, 'child': child, 'parent2': parent2}
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'parent1': {
+                    'primary_key': 'parent_ID1',
+                    'columns': {
+                        'parent_ID1': {'sdtype': 'id'},
+                        'data': {'sdtype': 'categorical'},
+                    },
+                },
+                'parent2': {
+                    'primary_key': 'parent_ID2',
+                    'columns': {
+                        'parent_ID2': {'sdtype': 'id'},
+                        'data': {'sdtype': 'categorical'},
+                    },
+                },
+                'child': {
+                    'primary_key': 'child_ID',
+                    'columns': {
+                        'child_ID': {'sdtype': 'id'},
+                        'parent_ID1': {'sdtype': 'id'},
+                        'parent_ID2': {'sdtype': 'id'},
+                        'data': {'sdtype': 'categorical'},
+                    },
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'parent1',
+                    'parent_primary_key': 'parent_ID1',
+                    'child_table_name': 'child',
+                    'child_foreign_key': 'parent_ID1',
+                },
+                {
+                    'parent_table_name': 'parent2',
+                    'parent_primary_key': 'parent_ID2',
+                    'child_table_name': 'child',
+                    'child_foreign_key': 'parent_ID2',
+                },
+            ],
+        })
+        synthesizer = HMASynthesizer(metadata)
+
+        # Run
+        synthesizer.fit(data)
+        samples = synthesizer.sample(
+            num_rows=5,
+            main_table_name='parent1',
+            batch_size=2,
+            max_tries_per_batch=50,
+        )
+
+        # Assert tables are the same
+        assert set(samples) == set(data)
+
+        # Assert the requested table has the requested number of rows
+        assert len(samples['parent1']) == 5
+
+        # Assert columns are the same
+        for table_name, table in samples.items():
+            assert set(table.columns) == set(data[table_name].columns)
+
+        # Assert data values all exist in the original tables
+        for table_name, table in samples.items():
+            assert table['data'].isin(data[table_name]['data']).all()
+
+    def test_sample_save_to_output_folder(self, tmpdir):
+        """Test saving the sampled data to `output_folder_path`."""
+        # Setup
+        data, metadata = download_demo('multi_table', 'fake_hotels')
+        hmasynthesizer = HMASynthesizer(metadata)
+
+        # Run
+        hmasynthesizer.fit(data)
+        sample = hmasynthesizer.sample(
+            len(data['guests']),
+            main_table_name='guests',
+            output_folder_path=str(tmpdir),
+        )
+
+        # Assert
+        assert set(sample) == set(data.keys())
+        for table_name, table in sample.items():
+            assert set(table.columns) == set(data[table_name])
+
+        for table_name in metadata.tables:
+            saved_table = pd.read_csv(tmpdir / f'{table_name}.csv')
+            pd.testing.assert_frame_equal(saved_table, sample[table_name])
 
     def test_hma_numerical_distributions(self):
         """Test it runs when 'numerical_distributions' is set (GH#1605)."""
@@ -866,7 +998,7 @@ class TestHMASynthesizer:
             table_parameters={'numerical_distributions': {'amenities_fee': 'beta'}},
         )
         synthesizer.fit(data)
-        samples = synthesizer.sample(scale=1)
+        samples = synthesizer.sample(len(data['guests']), main_table_name='guests')
 
         # Assert - check the data was actually generated
         assert data.keys() == samples.keys()
@@ -1072,11 +1204,6 @@ class TestHMASynthesizer:
 
         # Run 1
         with warnings.catch_warnings(record=True) as captured_warnings:
-            warnings.filterwarnings(
-                'ignore',
-                message=".*The 'SingleTableMetadata' is deprecated.*",
-                category=DeprecationWarning,
-            )
             warnings.simplefilter('always')
             instance = HMASynthesizer(metadata)
             instance.fit(data)
@@ -1221,7 +1348,7 @@ class TestHMASynthesizer:
 
         # Run
         synthesizer.fit(data)
-        sampled = synthesizer.sample()
+        sampled = synthesizer.sample(3, 'parent_table1')
 
         # Assert
         assert len(sampled['parent_table1']) == 3
@@ -1257,7 +1384,7 @@ class TestHMASynthesizer:
         # Run
         synth = HMASynthesizer(metadata)
         synth.fit(tables_dict)
-        sample_data = synth.sample(1)
+        sample_data = synth.sample(20, 'people')
 
         # Assert
         people_sample = sample_data['people']
@@ -1327,7 +1454,7 @@ class TestHMASynthesizer:
         # Run
         synthesizer = HMASynthesizer(metadata, verbose=False)
         synthesizer.fit(data)
-        synthetic_data = synthesizer.sample()
+        synthetic_data = synthesizer.sample(3, main_table_name='table_1')
 
         # Assert
         # Check that IDs match the regex constraint
@@ -1406,7 +1533,7 @@ class TestHMASynthesizer:
         synthesizer = HMASynthesizer(metadata)
         synthesizer.fit(data)
         with warnings.catch_warnings(record=True) as captured_warnings:
-            synthetic_data = synthesizer.sample()
+            synthetic_data = synthesizer.sample(3, main_table_name='table_1')
 
         # Assert
         # Check that IDs match the regex constraint
@@ -1510,7 +1637,7 @@ class TestHMASynthesizer:
         synthesizer = HMASynthesizer(metadata)
         synthesizer.fit(data)
         with warnings.catch_warnings(record=True) as captured_warnings:
-            synthetic_data = synthesizer.sample()
+            synthetic_data = synthesizer.sample(3, main_table_name='table_0')
 
         # Assert
         # Check that IDs match the regex constraint
@@ -1597,7 +1724,7 @@ class TestHMASynthesizer:
         synthesizer = HMASynthesizer(metadata)
         synthesizer.fit(data)
         with warnings.catch_warnings(record=True) as captured_warnings:
-            synthetic_data = synthesizer.sample()
+            synthetic_data = synthesizer.sample(3, main_table_name='table_1')
 
         # Assert
         # Check that IDs match the regex constraint
@@ -1672,7 +1799,7 @@ class TestHMASynthesizer:
         synthesizer = HMASynthesizer(metadata)
         synthesizer.fit(data)
         with warnings.catch_warnings(record=True) as captured_warnings:
-            synthetic_data = synthesizer.sample()
+            synthetic_data = synthesizer.sample(3, main_table_name='table_1')
 
         # Assert
         # Check that IDs match the regex constraint
@@ -1749,7 +1876,7 @@ def test_hma_0_1_child(num_rows):
     })
     synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
     synthesizer.fit(data)
-    synthetic_data = synthesizer.sample(scale=1)
+    synthetic_data = synthesizer.sample(num_rows, main_table_name='child')
     synthetic_child_df = synthetic_data['child']
     data_col_max = synthetic_child_df['col_B'].max()
     expected_constant_length = math.floor(len(synthetic_child_df) * 0.70)
@@ -1862,14 +1989,14 @@ def test_parent_default_distribution_non_beta():
                 'child_foreign_key': 'parent_id',
             },
         ],
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'V2',
     })
     synthesizer = HMASynthesizer(metadata)
     synthesizer.set_table_parameters('parent', {'default_distribution': 'norm'})
     synthesizer.fit(data)
 
     # Run
-    synthesizer.sample(1)
+    synthesizer.sample(10, main_table_name='child')
 
 
 parametrization = [
@@ -1960,16 +2087,11 @@ def test_get_constraints_and_load_constraints(tmp_path):
     synthesizer = HMASynthesizer(metadata)
     synthesizer.add_constraints([inequality_constraint, fixed_combinations_constraint])
     new_synthesizer = HMASynthesizer(metadata)
-    expected_warning = re.escape(
-        'Warning: The `set_constraints` method is deprecated. '
-        'Please use the `load_constraints` utility function to load constraints from a file '
-        'and add them to the synthesizer with the `add_constraints` method.'
-    )
 
     # Run
     synthesizer.get_constraints(filepath=filepath)
-    with pytest.warns(FutureWarning, match=expected_warning):
-        new_synthesizer.set_constraints(filepath=filepath)
+    constraints = load_constraints(filepath=filepath)
+    new_synthesizer.add_constraints(constraints)
 
     # Assert
     assert [str(constraint) for constraint in synthesizer.get_constraints()] == [
@@ -2091,7 +2213,7 @@ def test_save_and_load_with_downgraded_version(tmp_path):
         'Downgrading your SDV version is not supported.'
     )
     with pytest.raises(VersionError, match=error_msg):
-        HMASynthesizer.load(synthesizer_path)
+        load_synthesizer(synthesizer_path)
 
 
 def test_fit_raises_version_error():
@@ -2150,7 +2272,7 @@ def test_hma_relationship_validity():
 
     # Run
     synthesizer.fit(data)
-    sample = synthesizer.sample()
+    sample = synthesizer.sample(len(data['guests']), main_table_name='guests')
     report.generate(data, sample, metadata.to_dict(), verbose=False)
 
     # Assert
@@ -2169,7 +2291,7 @@ def test_hma_not_fit_raises_sampling_error():
         'sampling synthetic data.'
     )
     with pytest.raises(SamplingError, match=error_msg):
-        synthesizer.sample(1)
+        synthesizer.sample(len(_data['guests']), main_table_name='guests')
 
 
 def test_fit_and_sample_numerical_col_names():
@@ -2210,8 +2332,8 @@ def test_fit_and_sample_numerical_col_names():
     # Run
     synth = HMASynthesizer(metadata)
     synth.fit(data)
-    first_sample = synth.sample()
-    second_sample = synth.sample()
+    first_sample = synth.sample(len(data['0']), main_table_name='0')
+    second_sample = synth.sample(len(data['0']), main_table_name='0')
     assert first_sample['0'].columns.tolist() == data['0'].columns.tolist()
     assert first_sample['1'].columns.tolist() == data['1'].columns.tolist()
     assert second_sample['0'].columns.tolist() == data['0'].columns.tolist()
@@ -2236,8 +2358,8 @@ def test_detect_from_dataframe_numerical_col():
         'child_data': child_data,
     }
     metadata = Metadata()
-    metadata.detect_table_from_dataframe('parent_data', parent_data)
-    metadata.detect_table_from_dataframe('child_data', child_data)
+    metadata._detect_table_from_dataframe('parent_data', parent_data)
+    metadata._detect_table_from_dataframe('child_data', child_data)
     metadata.update_column('1', 'parent_data', sdtype='id')
     metadata.update_column('3', 'child_data', sdtype='id')
     metadata.update_column('4', 'child_data', sdtype='id')
@@ -2266,7 +2388,7 @@ def test_detect_from_dataframe_numerical_col():
     # Run
     instance = HMASynthesizer(metadata)
     instance.fit(data)
-    sample = instance.sample(5)
+    sample = instance.sample(3 * len(data['parent_data']), main_table_name='parent_data')
 
     # Assert
     assert test_metadata.to_dict() == metadata.to_dict()
@@ -2314,7 +2436,7 @@ def test_disjointed_tables():
     # Run
     disjoin_synthesizer = HMASynthesizer(disjoined_metadata)
     disjoin_synthesizer.fit(real_data)
-    disjoin_synthetic_data = disjoin_synthesizer.sample(1.0)
+    disjoin_synthetic_data = disjoin_synthesizer.sample(len(real_data['hotels']), 'hotels')
 
     # Assert
     for table in real_data:
@@ -2330,11 +2452,11 @@ def test_small_sample():
 
     # Run and Assert
     warn_msg = re.escape(
-        "The 'scale' parameter is too small. Some tables may have 1 row."
-        ' For better quality data, please choose a larger scale.'
+        "The 'num_rows' parameter is too small. Some tables may have 1 row."
+        ' For better quality data, please choose a larger num_rows.'
     )
     with pytest.warns(Warning, match=warn_msg):
-        synthetic_data = synthesizer.sample(scale=0.01)
+        synthetic_data = synthesizer.sample(round(len(data['guests']) * 0.01), 'guests')
 
     assert len(synthetic_data['hotels']) == 1
     assert len(synthetic_data['guests']) >= len(data['guests']) * 0.01
@@ -2385,7 +2507,7 @@ def test_hma_synthesizer_with_fixed_combinations():
     synthesizer.add_constraints(constraints=[constraint])
 
     synthesizer.fit(data)
-    sampled = synthesizer.sample(1)
+    sampled = synthesizer.sample(len(data['records']), main_table_name='records')
 
     # Assert
     assert len(sampled['users']) > 1
@@ -2519,7 +2641,7 @@ def test__estimate_num_columns_to_be_modeled_various_sdtypes():
 
     # Run actual modeling
     synthesizer.fit(data)
-    synthesizer.sample()
+    synthesizer.sample(len(data['parent']), main_table_name='parent')
 
     # Assert estimated number of columns is correct
     tables = synthesizer._finalize.call_args[0][0]
@@ -2576,7 +2698,7 @@ def test_column_order():
     synthesizer.fit(data)
 
     # Run
-    synthetic_data = synthesizer.sample()
+    synthetic_data = synthesizer.sample(len(data['table_1']), main_table_name='table_1')
 
     # Assert
     table_1_column = list(synthetic_data['table_1'].columns)
@@ -2586,17 +2708,16 @@ def test_column_order():
 
 
 def test_no_deprecation_warning_single_table_metadata_sampling():
-    """Test that no single-table metadata deprecation warning raises with `MultiTableMetadata`."""
+    """Test that no single-table metadata deprecation warning raises with `Metadata`."""
     # Setup
     data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
-    multi_metadata = MultiTableMetadata()
-    multi_metadata.detect_from_dataframes(data)
+    multi_metadata = Metadata.detect_from_dataframes(data)
     synthesizer = HMASynthesizer(multi_metadata)
     synthesizer.fit(data)
 
     # Run
     with warnings.catch_warnings(record=True) as captured_warnings:
-        synthesizer.sample()
+        synthesizer.sample(len(data['guests']), main_table_name='guests')
 
     # Assert
     assert len(captured_warnings) == 0
@@ -2669,7 +2790,7 @@ def test_end_to_end_with_constraints():
 
     # Run
     synthesizer.fit(data)
-    synthetic_data = synthesizer.sample(scale=1.0)
+    synthetic_data = synthesizer.sample(len(data['guests']), main_table_name='guests')
 
     with pytest.raises(ConstraintNotMetError, match=expected_error_msg):
         synthesizer.fit(invalid_data)
@@ -2718,7 +2839,7 @@ def test_datetime_warning_doesnt_repeat():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter('always')
         comp_synth.fit(composite_data)
-        comp_synth.sample(1)
+        comp_synth.sample(len(composite_data['main']), main_table_name='main')
 
     # Assert
     msg = (
@@ -2732,6 +2853,30 @@ def test_datetime_warning_doesnt_repeat():
     assert len(matching_warnings) == 1
 
 
+def test_range_extrapolation_warns_to_install_bundle():
+    """Test fit warns the user that ranges will be extrapolated without the bundle."""
+    # Setup
+    data, metadata = download_demo('multi_table', 'fake_hotels')
+    metadata.update_column('room_rate', 'guests', range_min=(min(data['guests']['room_rate']) - 1))
+    hmasynthesizer = HMASynthesizer(metadata)
+
+    # Run and Assert
+    expected_msg = re.escape(
+        'The training data does not cover the full range. Synthetic data will be '
+        'based on the training data. To extrapolate ranges for full coverage, '
+        'please use the Targeted Sampling bundle.'
+    )
+    with pytest.warns(UserWarning, match=expected_msg) as caught_warnings:
+        hmasynthesizer.fit(data)
+
+    # Run
+    sample = hmasynthesizer.sample(len(data['guests']), main_table_name='guests')
+
+    # Assert
+    assert len(caught_warnings) == 1
+    assert min(sample['guests']['room_rate']) >= min(data['guests']['room_rate'])
+
+
 class TestPrimaryKeyToPrimaryKey:
     def test_1_to_1(self, data_metadata_1_to_1):
         """Test HMA handles PK to PK (1 to 1) and synthetic data matches cardinality."""
@@ -2742,7 +2887,7 @@ class TestPrimaryKeyToPrimaryKey:
         synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
         with warnings.catch_warnings(record=True) as caught_warnings:
             synthesizer.fit(data)
-            synthetic_data = synthesizer.sample(scale=1)
+            synthetic_data = synthesizer.sample(len(data['guests']), main_table_name='guests')
 
         # Assert
         assert synthetic_data['guests']['guest_email'].equals(
@@ -2760,7 +2905,7 @@ class TestPrimaryKeyToPrimaryKey:
         # Run
         synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
         synthesizer.fit(data)
-        synthetic_data = synthesizer.sample(scale=1)
+        synthetic_data = synthesizer.sample(len(data['users']), main_table_name='users')
 
         # Assert
         assert set(synthetic_data['users']['user_id']).issuperset(
@@ -2798,7 +2943,7 @@ class TestPrimaryKeyToPrimaryKey:
         # Run
         synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
         synthesizer.fit(data)
-        synthetic_data = synthesizer.sample(scale=1.0)
+        synthetic_data = synthesizer.sample(len(data['guests']), main_table_name='guests')
 
         # Assert
         assert set(synthetic_data['guests']['guest_email']).issuperset(
@@ -2817,7 +2962,7 @@ class TestPrimaryKeyToPrimaryKey:
         # Run
         synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
         synthesizer.fit(data)
-        synthetic_data = synthesizer.sample(scale=1.0)
+        synthetic_data = synthesizer.sample(len(data['child']), main_table_name='child')
 
         # Assert
         assert set(synthetic_data['child']['parent_1_id']).issubset(
@@ -2836,7 +2981,7 @@ class TestPrimaryKeyToPrimaryKey:
         # Run
         synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
         synthesizer.fit(data)
-        synthetic_data = synthesizer.sample(scale=1.0)
+        synthetic_data = synthesizer.sample(len(data['child']), main_table_name='child')
 
         # Assert
         assert set(synthetic_data['child']['parent_1_id']).issubset(
