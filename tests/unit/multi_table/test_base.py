@@ -1523,6 +1523,41 @@ class TestBaseMultiTableSynthesizer:
         pd.testing.assert_frame_equal(result, expected)
 
     @patch('sdv.multi_table.base.datetime')
+    def test_sample_scale(self, mock_datetime, caplog):
+        """Test that ``sample_scale`` calls the ``_sample`` with the given arguments."""
+        # Setup
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance._fitted = True
+        data = get_multi_table_data()
+        instance._sample = Mock(return_value=data)
+        instance._original_table_columns = {
+            'nesreca': ['upravna_enota', 'id_nesreca', 'nesreca_val'],
+        }
+
+        synth_id = 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+        instance._synthesizer_id = synth_id
+
+        # Run
+        with catch_sdv_logs(caplog, logging.INFO, logger='MultiTableSynthesizer'):
+            instance.sample_scale(scale=1.5)
+
+        # Assert
+        instance._sample.assert_called_once_with(
+            scale=1.5, batch_size=None, max_tries_per_batch=100
+        )
+        assert caplog.messages[0] == str({
+            'EVENT': 'Sample',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'BaseMultiTableSynthesizer',
+            'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            'TOTAL NUMBER OF TABLES': 3,
+            'TOTAL NUMBER OF ROWS': 12,
+            'TOTAL NUMBER OF COLUMNS': 8,
+        })
+
+    @patch('sdv.multi_table.base.datetime')
     def test_sample(self, mock_datetime, caplog):
         """Test that ``sample`` calls the ``_sample`` with the given arguments."""
         # Setup

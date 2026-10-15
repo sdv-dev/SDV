@@ -828,35 +828,7 @@ class BaseMultiTableSynthesizer:
 
         return pd.concat(sampled, ignore_index=True)
 
-    def sample(
-        self,
-        num_rows,
-        main_table_name=None,
-        batch_size=None,
-        max_tries_per_batch=100,
-        output_folder_path=None,
-    ):
-        """Generate synthetic data for the entire dataset.
-
-        Args:
-            num_rows (int):
-                The number of rows to sample.
-            main_table_name (str):
-                The name of the main table to sample.
-            batch_size (int, optional):
-                The batch size for sampling. Defaults to None.
-            max_tries_per_batch (int, optional):
-                The maximum number of tries per batch. Defaults to 100.
-            output_folder_path (str, optional):
-                The folder path to save the sampled data. Defaults to None.
-
-        Returns:
-            dict: A dictionary containing the sampled data for each table.
-        """
-        self._validate_sample_input(
-            num_rows, main_table_name, batch_size, max_tries_per_batch, output_folder_path
-        )
-        scale = self._resolve_scale(main_table_name, num_rows)
+    def _sample_from_scale(self, scale, batch_size, max_tries_per_batch, output_folder_path):
         with self._set_temp_numpy_seed(), disable_single_table_logger():
             sampled_data = self._sample(
                 scale=scale,
@@ -887,6 +859,102 @@ class BaseMultiTableSynthesizer:
 
         if output_folder_path is not None:
             self._save_sampled_data(sampled_data, output_folder_path)
+
+        return sampled_data, total_rows, total_columns
+
+    def sample_scale(
+        self,
+        scale=1.0,
+        batch_size=None,
+        max_tries_per_batch=100,
+        output_folder_path=None,
+    ):
+        """Generate synthetic data for the entire dataset.
+
+        Args:
+            scale (float):
+                A float representing how much to scale the data by. If scale is set to ``1.0``,
+                this does not scale the sizes of the tables. If ``scale`` is greater than ``1.0``
+                create more rows than the original data by a factor of ``scale``.
+                If ``scale`` is lower than ``1.0`` create fewer rows by the factor of ``scale``
+                than the original tables. Defaults to ``1.0``.
+            batch_size (int, optional):
+                The batch size for sampling. Defaults to None.
+            max_tries_per_batch (int, optional):
+                The maximum number of tries per batch. Defaults to 100.
+            output_folder_path (str, optional):
+                The folder path to save the sampled data. Defaults to None.
+
+        Returns:
+            dict: A dictionary containing the sampled data for each table.
+        """
+        if not self._fitted:
+            raise SamplingError(
+                'This synthesizer has not been fitted. Please fit your synthesizer first before '
+                'sampling synthetic data.'
+            )
+
+        if type(scale) not in (float, int) or not scale > 0:
+            raise SynthesizerInputError(
+                f"Invalid parameter for 'scale' ({scale}). Please provide a number that is >0.0."
+            )
+        self._validate_sample_input(
+            num_rows=1,
+            main_table_name=list(self.metadata.tables)[0],
+            batch_size=batch_size,
+            max_tries_per_batch=max_tries_per_batch,
+            output_folder_path=output_folder_path,
+        )
+
+        sampled_data, total_rows, total_columns = self._sample_from_scale(
+            scale, batch_size, max_tries_per_batch, output_folder_path
+        )
+
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Sample',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': self._synthesizer_id,
+            'TOTAL NUMBER OF TABLES': len(sampled_data),
+            'TOTAL NUMBER OF ROWS': total_rows,
+            'TOTAL NUMBER OF COLUMNS': total_columns,
+        })
+
+        return sampled_data
+
+    def sample(
+        self,
+        num_rows,
+        main_table_name=None,
+        batch_size=None,
+        max_tries_per_batch=100,
+        output_folder_path=None,
+    ):
+        """Generate synthetic data for the entire dataset.
+
+        Args:
+            num_rows (int):
+                The number of rows to sample.
+            main_table_name (str):
+                The name of the main table to sample.
+            batch_size (int, optional):
+                The batch size for sampling. Defaults to None.
+            max_tries_per_batch (int, optional):
+                The maximum number of tries per batch. Defaults to 100.
+            output_folder_path (str, optional):
+                The folder path to save the sampled data. Defaults to None.
+
+        Returns:
+            dict: A dictionary containing the sampled data for each table.
+        """
+        self._validate_sample_input(
+            num_rows, main_table_name, batch_size, max_tries_per_batch, output_folder_path
+        )
+        scale = self._resolve_scale(main_table_name, num_rows)
+
+        sampled_data, total_rows, total_columns = self._sample_from_scale(
+            scale, batch_size, max_tries_per_batch, output_folder_path
+        )
 
         SYNTHESIZER_LOGGER.info({
             'EVENT': 'Sample',
