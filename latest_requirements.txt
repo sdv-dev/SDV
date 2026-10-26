@@ -5,7 +5,7 @@ deepecho==0.8.1
 graphviz==0.21
 numpy==2.5.4
 pandas==2.3.3
-platformdirs==4.13.4
+platformdirs==4.13.5
 rdt==2.0.0
 sdmetrics==0.32.0
 tqdm==4.70.1
