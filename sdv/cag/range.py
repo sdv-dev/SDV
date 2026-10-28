@@ -18,6 +18,7 @@ from sdv.cag._utils import (
     _warn_if_timezone_aware_formats,
     compute_nans_column,
     get_datetime_diff,
+    match_chained_datetime_precision,
     revert_nans_columns,
 )
 from sdv.cag.base import BaseConstraint
@@ -269,19 +270,25 @@ class Range(BaseConstraint):
         high = table_data[self._high_column_name].to_numpy()
 
         if self._is_datetime:
+            low, mid, high = match_chained_datetime_precision(
+                [low, mid, high],
+                [
+                    self._low_datetime_format,
+                    self._middle_datetime_format,
+                    self._high_datetime_format,
+                ],
+                strict_boundaries=self.strict_boundaries,
+            )
+
             low_diff_column = get_datetime_diff(
-                mid,
-                low,
-                high_datetime_format=self._middle_datetime_format,
-                low_datetime_format=self._low_datetime_format,
-                dtype=self._dtype,
+                high=mid,
+                low=low,
+                dtype=np.dtype('datetime64[ns]'),
             )
             high_diff_column = get_datetime_diff(
-                high,
-                mid,
-                high_datetime_format=self._high_datetime_format,
-                low_datetime_format=self._middle_datetime_format,
-                dtype=self._dtype,
+                high=high,
+                low=mid,
+                dtype=np.dtype('datetime64[ns]'),
             )
         else:
             low_diff_column = mid - low

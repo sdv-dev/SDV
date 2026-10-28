@@ -179,7 +179,14 @@ def revert_nans_columns(table_data, nan_column_name):
     return table_data.drop(columns=nan_column_name)
 
 
-def get_datetime_diff(high, low, high_datetime_format=None, low_datetime_format=None, dtype='O'):
+def get_datetime_diff(
+    high,
+    low,
+    high_datetime_format=None,
+    low_datetime_format=None,
+    strict_boundaries=True,
+    dtype='O',
+):
     """Calculate the difference between two datetime columns.
 
     When casting datetimes to float using ``astype``, NaT values are not automatically
@@ -195,6 +202,11 @@ def get_datetime_diff(high, low, high_datetime_format=None, low_datetime_format=
             Datetime format of the `high` column.
         low_datetime_format (str):
             Datetime format of the `low` column.
+        strict_boundaries (bool):
+            Whether to enforce strict boundaries when matching datetime precision.
+            Defaults to True.
+        dtype (str):
+            The data type of the datetime columns. Defaults to 'O'.
 
     Returns:
         numpy.ndarray:
@@ -210,6 +222,7 @@ def get_datetime_diff(high, low, high_datetime_format=None, low_datetime_format=
                 high=high,
                 low_datetime_format=low_datetime_format,
                 high_datetime_format=high_datetime_format,
+                strict_boundaries=strict_boundaries,
             )
 
     diff_column = high - low
@@ -236,8 +249,71 @@ def get_mappable_combination(combination):
     return tuple(None if pd.isna(x) else x for x in combination)
 
 
-def match_datetime_precision(low, high, low_datetime_format, high_datetime_format):
-    """Match `low` or `high` datetime array to the lower precision format.
+def _get_datetime_unit(datetime_format):
+    """Get the smallest datetime unit represented by a format."""
+    for directive, unit in [
+        ('%f', 'us'),
+        ('%S', 's'),
+        ('%M', 'm'),
+        ('%H', 'h'),
+        ('%d', 'D'),
+        ('%j', 'D'),
+        ('%m', 'M'),
+        ('%b', 'M'),
+        ('%B', 'M'),
+        ('%Y', 'Y'),
+        ('%y', 'Y'),
+    ]:
+        if directive in datetime_format:
+            return unit
+
+    raise ValueError(f'Unsupported datetime format: {datetime_format}')
+
+
+def upcast_datetime_to_higher_precision(data, source_format, target_format, use_highest=False):
+    """Upcast datetime values to a higher precision.
+
+    Fill missing datetime components with their lowest or highest
+    possible values.
+
+    Args:
+        data (np.array):
+            The datetime values to upcast.
+        source_format (str):
+            The original datetime format.
+        target_format (str):
+            The higher-precision datetime format.
+        use_highest (bool):
+            Whether to use the highest possible values.
+            Otherwise use the lowest possible values.
+            Defaults to False, meaning the lowest possible values will be used.
+
+    Returns:
+        np.array:
+            The upcasted datetime values.
+    """
+    source_unit = _get_datetime_unit(source_format)
+    target_unit = _get_datetime_unit(target_format)
+
+    values = np.asarray(data)
+    if values.dtype.kind != 'M':
+        values = np.asarray(_cast_to_datetime64(values, source_format))
+
+    values = values.astype(f'datetime64[{source_unit}]')
+    if use_highest:
+        values = values + np.timedelta64(1, source_unit)
+        values = values.astype(f'datetime64[{target_unit}]')
+        values = values - np.timedelta64(1, target_unit)
+    else:
+        values = values.astype(f'datetime64[{target_unit}]')
+
+    return values
+
+
+def match_datetime_precision(
+    low, high, low_datetime_format, high_datetime_format, strict_boundaries=True
+):
+    """Match datetime precision by upcasting the lower-precision column.
 
     Args:
         low (np.ndarray):
@@ -248,19 +324,79 @@ def match_datetime_precision(low, high, low_datetime_format, high_datetime_forma
             The datetime format of the `low` column.
         high_datetime_format (str):
             The datetime format of the `high` column.
+        strict_boundaries (bool):
+            Whether to strictly enforce the boundaries when upcasting datetime precision.
 
     Returns:
         Tuple[np.ndarray, np.ndarray]:
-            Adjusted `low` and `high` arrays where the higher precision format is
-            downcasted to the lower precision format.
+            Adjusted `low` and `high` arrays where the lower-precision
+            column is upcasted to match the higher-precision format.
     """
+    low_unit = _get_datetime_unit(low_datetime_format)
+    high_unit = _get_datetime_unit(high_datetime_format)
+    if low_unit == high_unit:
+        return low, high
+
     lower_precision_format = get_lower_precision_format(low_datetime_format, high_datetime_format)
-    if lower_precision_format == high_datetime_format:
-        low = downcast_datetime_to_lower_precision(low, lower_precision_format)
+    if lower_precision_format == low_datetime_format:
+        low = upcast_datetime_to_higher_precision(
+            low,
+            low_datetime_format,
+            high_datetime_format,
+            use_highest=strict_boundaries,
+        )
     else:
-        high = downcast_datetime_to_lower_precision(high, lower_precision_format)
+        high = upcast_datetime_to_higher_precision(
+            high,
+            high_datetime_format,
+            low_datetime_format,
+            use_highest=not strict_boundaries,
+        )
 
     return low, high
+
+
+def match_chained_datetime_precision(values, datetime_formats, strict_boundaries=True):
+    """Match datetime precision across a chain of inequalities.
+
+    Each lower-precision column is upcasted once, using its position
+    in the chain to determine the boundary. The same datetime value
+    is then used in all comparisons involving that column.
+
+    Args:
+        values (list[np.ndarray]):
+            Datetime arrays ordered from lowest to highest.
+        datetime_formats (list[str]):
+            Datetime formats corresponding to each array.
+        strict_boundaries (bool):
+            Whether the inequalities have strict boundaries.
+
+    Returns:
+        list[np.ndarray]:
+            Datetime arrays with matching precision.
+    """
+    precisions = [
+        get_datetime_format_precision(datetime_format) if datetime_format is not None else 0
+        for datetime_format in datetime_formats
+    ]
+    target_index = np.argmax(precisions)
+    target_format = datetime_formats[target_index]
+    target_precision = precisions[target_index]
+
+    matched_values = []
+    for index, (value, datetime_format) in enumerate(zip(values, datetime_formats)):
+        value = _cast_to_datetime64(value, datetime_format)
+        if precisions[index] < target_precision:
+            value = upcast_datetime_to_higher_precision(
+                value,
+                datetime_format,
+                target_format,
+                use_highest=strict_boundaries if index == 0 else not strict_boundaries,
+            )
+
+        matched_values.append(np.asarray(value).astype('datetime64[ns]'))
+
+    return matched_values
 
 
 def get_datetime_format_precision(format_str):
@@ -295,22 +431,6 @@ def get_lower_precision_format(primary_format, secondary_format):
         return secondary_format
 
     return primary_format
-
-
-def downcast_datetime_to_lower_precision(data, target_format):
-    """Convert a datetime string from a higher-precision format to a lower-precision format.
-
-    Args:
-        data (np.array):
-            The data to cast to the `target_format`.
-        target_format (str):
-            The datetime string to downcast.
-
-    Returns:
-        str: The datetime string in the lower precision format.
-    """
-    downcasted_data = format_datetime_array(data, target_format)
-    return _cast_to_datetime64(downcasted_data, target_format)
 
 
 def format_datetime_array(datetime_array, target_format):
