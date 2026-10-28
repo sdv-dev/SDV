@@ -12,6 +12,452 @@ from sdv.cag._errors import ConstraintNotMetError
 from sdv.errors import RefitWarning, SynthesizerInputError, TableNameError
 from sdv.metadata import Metadata
 
+PRECISION_LEVELS = {
+    '%Y': 1,  # Year
+    '%y': 1,  # Year without century (same precision as %Y)
+    '%B': 2,  # Full month name
+    '%b': 2,  # Abbreviated month name
+    '%m': 2,  # Month as a number
+    '%d': 3,  # Day of the month
+    '%j': 3,  # Day of the year
+    '%U': 3,  # Week number (Sunday-starting)
+    '%W': 3,  # Week number (Monday-starting)
+    '%A': 3,  # Full weekday name
+    '%a': 3,  # Abbreviated weekday name
+    '%w': 3,  # Weekday as a decimal
+    '%H': 4,  # Hour (24-hour clock)
+    '%I': 4,  # Hour (12-hour clock)
+    '%M': 5,  # Minute
+    '%S': 6,  # Second
+    '%f': 7,  # Microsecond
+    # Formats that don't add precision
+    '%p': 0,  # AM/PM
+    '%z': 0,  # UTC offset
+    '%Z': 0,  # Time zone name
+    '%c': 0,  # Locale-based date/time
+    '%x': 0,  # Locale-based date
+    '%X': 0,  # Locale-based time
+}
+
+
+def matches_datetime_format(value, datetime_format):
+    """Check if datetime value matches the provided format.
+
+    Args:
+        value (str):
+            The datetime value.
+        datetime_format (str):
+            The datetime format to check for.
+
+    Return:
+        True if the value matches the format. Otherwise False.
+    """
+    try:
+        datetime.strptime(value, datetime_format)
+    except Exception:
+        return False
+
+    return True
+
+
+def _cast_to_type(data, dtype):
+    if isinstance(data, pd.Series):
+        data = data.apply(dtype)
+    elif isinstance(data, (np.ndarray, list)):
+        data = np.array([dtype(value) for value in data])
+    else:
+        data = dtype(data)
+
+    return data
+
+
+def logit(data, low, high):
+    """Apply a logit function to the data using ``low`` and ``high``.
+
+    Args:
+        data (pd.Series, pd.DataFrame, np.array, int, float or datetime):
+            Data to apply the logit function to.
+        low (pd.Series, np.array, int, float or datetime):
+            Low value/s to use when scaling.
+        high (pd.Series, np.array, int, float or datetime):
+            High value/s to use when scaling.
+
+    Returns:
+        Logit scaled version of the input data.
+    """
+    data = (data - low) / (high - low)
+    data = _cast_to_type(data, Decimal)
+    data = data * Decimal(0.95) + Decimal(0.025)
+    data = _cast_to_type(data, float)
+    return np.log(data / (1.0 - data))
+
+
+def sigmoid(data, low, high):
+    """Apply a sigmoid function to the data using ``low`` and ``high``.
+
+    Args:
+        data (pd.Series, pd.DataFrame, np.array, int, float or datetime):
+            Data to apply the logit function to.
+        low (pd.Series, np.array, int, float or datetime):
+            Low value/s to use when scaling.
+        high (pd.Series, np.array, int, float or datetime):
+            High value/s to use when scaling.
+
+    Returns:
+        Sigmoid transform of the input data.
+    """
+    data = 1 / (1 + np.exp(-data))
+    data = _cast_to_type(data, Decimal)
+    data = (data - Decimal(0.025)) / Decimal(0.95)
+    data = _cast_to_type(data, float)
+    data = data * (high - low) + low
+
+    return data
+
+
+def get_nan_component_value(row):
+    """Check for NaNs in a pandas row.
+
+    Outputs a concatenated string of the column names with NaNs.
+
+    Args:
+        row (pandas.Series):
+            A pandas row.
+
+    Returns:
+        A concatenated string of the column names with NaNs.
+    """
+    columns_with_nans = []
+    for column, value in row.items():
+        if pd.isna(value):
+            columns_with_nans.append(column)
+
+    if columns_with_nans:
+        return ', '.join(columns_with_nans)
+
+    return 'None'
+
+
+def compute_nans_column(table_data, list_column_names):
+    """Compute a categorical column to the table_data indicating where NaNs are.
+
+    Args:
+        table_data (pandas.DataFrame):
+            The table data.
+        list_column_names (list):
+            The list of column names to check for NaNs.
+
+    Returns:
+        A dict with the column name as key and the column indicating where NaNs are as value.
+        Empty dict if there are no NaNs.
+    """
+    nan_column_name = '#'.join(list_column_names) + '.nan_component'
+    column = table_data[list_column_names].apply(get_nan_component_value, axis=1)
+    if not (column == 'None').all():
+        return pd.Series(column, name=nan_column_name)
+
+    return None
+
+
+def revert_nans_columns(table_data, nan_column_name):
+    """Reverts the NaNs in the table_data based on the categorical column.
+
+    Args:
+        table_data (pandas.DataFrame):
+            The table data.
+        nan_column (pandas.Series):
+            The categorical columns indicating where the NaNs are.
+    """
+    combinations = table_data[nan_column_name].unique()
+    for combination in combinations:
+        if not pd.isna(combination) and combination != 'None':
+            column_names = [column_name.strip() for column_name in combination.split(',')]
+            table_data.loc[table_data[nan_column_name] == combination, column_names] = np.nan
+
+    return table_data.drop(columns=nan_column_name)
+
+
+def get_datetime_diff(
+    high,
+    low,
+    high_datetime_format=None,
+    low_datetime_format=None,
+    strict_boundaries=True,
+    dtype='O',
+):
+    """Calculate the difference between two datetime columns.
+
+    When casting datetimes to float using ``astype``, NaT values are not automatically
+    converted to NaN values. This method calculates the difference between the high
+    and low column values, preserving missing values as NaNs.
+
+    Args:
+        high (numpy.ndarray):
+            The high column values.
+        low (numpy.ndarray):
+            The low column values.
+        high_datetime_format (str):
+            Datetime format of the `high` column.
+        low_datetime_format (str):
+            Datetime format of the `low` column.
+        strict_boundaries (bool):
+            Whether to enforce strict boundaries when matching datetime precision.
+            Defaults to True.
+        dtype (str):
+            The data type of the datetime columns. Defaults to 'O'.
+
+    Returns:
+        numpy.ndarray:
+            The difference between the high and low column values.
+    """
+    if dtype == 'O':
+        low = _cast_to_datetime64(low, low_datetime_format)
+        high = _cast_to_datetime64(high, high_datetime_format)
+
+        if low_datetime_format != high_datetime_format:
+            low, high = match_datetime_precision(
+                low=low,
+                high=high,
+                low_datetime_format=low_datetime_format,
+                high_datetime_format=high_datetime_format,
+                strict_boundaries=strict_boundaries,
+            )
+
+    diff_column = high - low
+    nan_mask = pd.isna(diff_column)
+    diff_column = diff_column.astype(np.float64)
+    diff_column[nan_mask] = np.nan
+    return diff_column
+
+
+def get_mappable_combination(combination):
+    """Get a mappable combination of values.
+
+    This function replaces NaN values with None inside the tuple
+    to ensure consistent comparisons when using mapping.
+
+    Args:
+        combination (tuple):
+            A combination of values.
+
+    Returns:
+        tuple:
+            A mappable combination of values.
+    """
+    return tuple(None if pd.isna(x) else x for x in combination)
+
+
+def _get_datetime_unit(datetime_format):
+    """Get the smallest datetime unit represented by a format."""
+    for directive, unit in [
+        ('%f', 'us'),
+        ('%S', 's'),
+        ('%M', 'm'),
+        ('%H', 'h'),
+        ('%d', 'D'),
+        ('%j', 'D'),
+        ('%m', 'M'),
+        ('%b', 'M'),
+        ('%B', 'M'),
+        ('%Y', 'Y'),
+        ('%y', 'Y'),
+    ]:
+        if directive in datetime_format:
+            return unit
+
+    raise ValueError(f'Unsupported datetime format: {datetime_format}')
+
+
+def upcast_datetime_to_higher_precision(data, source_format, target_format, use_highest=False):
+    """Upcast datetime values to a higher precision.
+
+    Fill missing datetime components with their lowest or highest
+    possible values.
+
+    Args:
+        data (np.array):
+            The datetime values to upcast.
+        source_format (str):
+            The original datetime format.
+        target_format (str):
+            The higher-precision datetime format.
+        use_highest (bool):
+            Whether to use the highest possible values.
+            Otherwise use the lowest possible values.
+            Defaults to False, meaning the lowest possible values will be used.
+
+    Returns:
+        np.array:
+            The upcasted datetime values.
+    """
+    source_unit = _get_datetime_unit(source_format)
+    target_unit = _get_datetime_unit(target_format)
+
+    values = np.asarray(data)
+    if values.dtype.kind != 'M':
+        values = np.asarray(_cast_to_datetime64(values, source_format))
+
+    values = values.astype(f'datetime64[{source_unit}]')
+    if use_highest:
+        values = values + np.timedelta64(1, source_unit)
+        values = values.astype(f'datetime64[{target_unit}]')
+        values = values - np.timedelta64(1, target_unit)
+    else:
+        values = values.astype(f'datetime64[{target_unit}]')
+
+    return values
+
+
+def match_datetime_precision(
+    low, high, low_datetime_format, high_datetime_format, strict_boundaries=True
+):
+    """Match datetime precision by upcasting the lower-precision column.
+
+    Args:
+        low (np.ndarray):
+            Array of datetime values for the low column.
+        high (np.ndarray):
+            Array of datetime values for the high column.
+        low_datetime_format (str):
+            The datetime format of the `low` column.
+        high_datetime_format (str):
+            The datetime format of the `high` column.
+        strict_boundaries (bool):
+            Whether to strictly enforce the boundaries when upcasting datetime precision.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]:
+            Adjusted `low` and `high` arrays where the lower-precision
+            column is upcasted to match the higher-precision format.
+    """
+    low_unit = _get_datetime_unit(low_datetime_format)
+    high_unit = _get_datetime_unit(high_datetime_format)
+    if low_unit == high_unit:
+        return low, high
+
+    lower_precision_format = get_lower_precision_format(low_datetime_format, high_datetime_format)
+    if lower_precision_format == low_datetime_format:
+        low = upcast_datetime_to_higher_precision(
+            low,
+            low_datetime_format,
+            high_datetime_format,
+            use_highest=strict_boundaries,
+        )
+    else:
+        high = upcast_datetime_to_higher_precision(
+            high,
+            high_datetime_format,
+            low_datetime_format,
+            use_highest=not strict_boundaries,
+        )
+
+    return low, high
+
+
+def match_chained_datetime_precision(values, datetime_formats, strict_boundaries=True):
+    """Match datetime precision across a chain of inequalities.
+
+    Each lower-precision column is upcasted once, using its position
+    in the chain to determine the boundary. The same datetime value
+    is then used in all comparisons involving that column.
+
+    Args:
+        values (list[np.ndarray]):
+            Datetime arrays ordered from lowest to highest.
+        datetime_formats (list[str]):
+            Datetime formats corresponding to each array.
+        strict_boundaries (bool):
+            Whether the inequalities have strict boundaries.
+
+    Returns:
+        list[np.ndarray]:
+            Datetime arrays with matching precision.
+    """
+    precisions = [
+        get_datetime_format_precision(datetime_format) if datetime_format is not None else 0
+        for datetime_format in datetime_formats
+    ]
+    target_index = np.argmax(precisions)
+    target_format = datetime_formats[target_index]
+    target_precision = precisions[target_index]
+
+    matched_values = []
+    for index, (value, datetime_format) in enumerate(zip(values, datetime_formats)):
+        value = _cast_to_datetime64(value, datetime_format)
+        if precisions[index] < target_precision:
+            value = upcast_datetime_to_higher_precision(
+                value,
+                datetime_format,
+                target_format,
+                use_highest=strict_boundaries if index == 0 else not strict_boundaries,
+            )
+
+        matched_values.append(np.asarray(value).astype('datetime64[ns]'))
+
+    return matched_values
+
+
+def get_datetime_format_precision(format_str):
+    """Return the precision level of a datetime format string."""
+    # Find all format codes in the format string
+    found_formats = re.findall(r'%[A-Za-z]', format_str)
+    found_levels = (
+        PRECISION_LEVELS.get(found_format)
+        for found_format in found_formats
+        if found_format in PRECISION_LEVELS
+    )
+
+    return max(found_levels, default=0)
+
+
+def get_lower_precision_format(primary_format, secondary_format):
+    """Compare two datetime format strings and return the one with lower precision.
+
+    Args:
+        primary_format (str):
+            The first datetime format string to compare.
+        low_precision_format (str):
+            The second datetime format string to compare.
+
+    Returns:
+        str:
+            The datetime format string with the lower precision level.
+    """
+    primary_level = get_datetime_format_precision(primary_format)
+    secondary_level = get_datetime_format_precision(secondary_format)
+    if primary_level >= secondary_level:
+        return secondary_format
+
+    return primary_format
+
+
+def format_datetime_array(datetime_array, target_format):
+    """Format each element in a numpy datetime64 array to a specified string format.
+
+    Args:
+        datetime_array (np.ndarray):
+            Array of datetime64[ns] elements.
+        target_format (str):
+            The datetime format to cast each element to.
+
+    Returns:
+        np.ndarray: Array of formatted datetime strings.
+    """
+    return np.array([
+        pd.to_datetime(date).strftime(target_format) if not pd.isna(date) else pd.NaT
+        for date in datetime_array
+    ])
+
+
+def _warn_if_timezone_aware_formats(formats):
+    if any(dt_format and ('%z' in dt_format or '%Z' in dt_format) for dt_format in formats):
+        warnings.warn(
+            'Timezone information in datetime formats will be ignored when evaluating '
+            'constraints. All datetime values will be treated as naive (timezone-unaware). '
+            'Support for timezone-aware constraints will be added in a future release.',
+            UserWarning,
+        )
+
 
 def _validate_columns_not_primary_key(table_name, columns, metadata):
     """Validate that none of the columns are in the primary key for the table."""
