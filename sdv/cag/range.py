@@ -144,15 +144,26 @@ class Range(BaseConstraint):
                 f", '{mid_column_sdtype}' and '{high_column_sdtype}'."
             )
 
-    def _get_valid_table_data(self, table_data):
-        low = table_data[self._low_column_name]
-        mid = table_data[self._middle_column_name]
-        high = table_data[self._high_column_name]
-
-        if self._is_datetime and is_object_dtype(self._dtype):
-            low = _cast_to_datetime64(low, self._low_datetime_format)
-            mid = _cast_to_datetime64(mid, self._middle_datetime_format)
-            high = _cast_to_datetime64(high, self._high_datetime_format)
+    def _get_valid_table_data(self, table_data, metadata):
+        """Check whether the middle column falls between the bounds."""
+        column_names = [
+            self._low_column_name,
+            self._middle_column_name,
+            self._high_column_name,
+        ]
+        low, mid, high = [table_data[column] for column in column_names]
+        table_name = self._get_single_table_name(metadata)
+        is_datetime = self._get_is_datetime(metadata, table_name)
+        datetime_formats = [
+            self._get_datetime_format(metadata, table_name, column) for column in column_names
+        ]
+        if is_datetime:
+            values = [low.to_numpy(), mid.to_numpy(), high.to_numpy()]
+            low, mid, high = match_chained_datetime_precision(
+                values,
+                datetime_formats,
+                strict_boundaries=self.strict_boundaries,
+            )
 
         low_is_nan = pd.isna(low)
         mid_is_nan = pd.isna(mid)
@@ -162,12 +173,13 @@ class Range(BaseConstraint):
         mid_lt_high = mid_is_nan | high_is_nan | self._operator(mid, high)
         low_lt_high = low_is_nan | high_is_nan | self._operator(low, high)
 
-        return low_lt_middle & mid_lt_high & low_lt_high
+        valid = low_lt_middle & mid_lt_high & low_lt_high
+        return pd.Series(valid, index=table_data.index)
 
     def _validate_constraint_with_data(self, data, metadata):
         """Validate the data is compatible with the constraint."""
         table_name = self._get_single_table_name(metadata)
-        valid = self._get_valid_table_data(data[table_name])
+        valid = self._get_valid_table_data(data[table_name], metadata)
 
         if not valid.all():
             invalid_rows = data[table_name].loc[
@@ -385,6 +397,6 @@ class Range(BaseConstraint):
         """
         table_name = self._get_single_table_name(metadata)
         is_valid = _get_is_valid_dict(data, table_name)
-        is_valid[table_name] = self._get_valid_table_data(data[table_name])
+        is_valid[table_name] = self._get_valid_table_data(data[table_name], metadata)
 
         return is_valid
