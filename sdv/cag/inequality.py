@@ -136,6 +136,7 @@ class Inequality(BaseConstraint):
                     high=high,
                     low_datetime_format=low_format,
                     high_datetime_format=high_format,
+                    strict_boundaries=self.strict_boundaries,
                 )
 
         return pd.isna(low) | pd.isna(high) | self._operator(high, low)
@@ -240,6 +241,7 @@ class Inequality(BaseConstraint):
                 low=low,
                 high_datetime_format=self._high_datetime_format,
                 low_datetime_format=self._low_datetime_format,
+                strict_boundaries=self.strict_boundaries,
             )
         else:
             diff_column = high - low
