@@ -395,6 +395,116 @@ def test_inequality_with_timestamp_and_date():
     assert invalid_rows.empty
 
 
+@pytest.mark.parametrize(
+    'low_format, high_format, strict_boundaries, low_values, high_values, expected_diff',
+    [
+        pytest.param(
+            '%Y-%m-%d',
+            '%Y-%m-%d %H:%M:%S',
+            True,
+            ['2024-11-13', '2024-11-14'],
+            ['2024-11-14 12:00:00', '2024-11-15 06:30:00'],
+            [43_201_000_000_000.0, 23_401_000_000_000.0],
+            id='low-lower-precision-strict',
+        ),
+        pytest.param(
+            '%Y-%m-%d',
+            '%Y-%m-%d %H:%M:%S',
+            False,
+            ['2024-11-13', '2024-11-14'],
+            ['2024-11-13 12:00:00', '2024-11-14 00:00:00'],
+            [43_200_000_000_000.0, 0.0],
+            id='low-lower-precision-non-strict',
+        ),
+        pytest.param(
+            '%Y-%m-%d %H:%M:%S',
+            '%Y-%m-%d',
+            True,
+            ['2024-11-13 12:00:00', '2024-11-14 06:30:00'],
+            ['2024-11-14', '2024-11-15'],
+            [43_200_000_000_000.0, 63_000_000_000_000.0],
+            id='high-lower-precision-strict',
+        ),
+        pytest.param(
+            '%Y-%m-%d %H:%M:%S',
+            '%Y-%m-%d',
+            False,
+            ['2024-11-13 12:00:00', '2024-11-14 23:59:59'],
+            ['2024-11-13', '2024-11-14'],
+            [43_199_000_000_000.0, 0.0],
+            id='high-lower-precision-non-strict',
+        ),
+    ],
+)
+def test_inequality_with_different_datetime_precisions(
+    low_format, high_format, strict_boundaries, low_values, high_values, expected_diff
+):
+    """Test Inequality with different datetime precisions.
+
+    The test verifies that the lower-precision column is upcasted using
+    the correct boundary, that the transformed difference is accurate,
+    and that sampled data satisfies the inequality constraint.
+    """
+    # Setup
+    data = {
+        'table': pd.DataFrame({
+            'LOW': low_values,
+            'HIGH': high_values,
+        })
+    }
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'columns': {
+                    'LOW': {'sdtype': 'datetime', 'datetime_format': low_format},
+                    'HIGH': {'sdtype': 'datetime', 'datetime_format': high_format},
+                }
+            }
+        }
+    })
+    constraint = Inequality(
+        low_column_name='LOW',
+        high_column_name='HIGH',
+        strict_boundaries=strict_boundaries,
+    )
+
+    # Run
+    constraint.fit(data, metadata)
+    transformed_data = constraint.transform(data)['table']
+    synthesizer = run_copula(
+        data,
+        metadata,
+        [
+            Inequality(
+                low_column_name='LOW',
+                high_column_name='HIGH',
+                strict_boundaries=strict_boundaries,
+            )
+        ],
+    )
+    synthetic_data = synthesizer.sample(num_rows=10)['table']
+
+    # Assert
+    expected_diff = np.array(expected_diff, dtype=np.float64)
+    np.testing.assert_allclose(
+        transformed_data[constraint._diff_column_name].to_numpy(),
+        np.log1p(expected_diff),
+        rtol=0,
+        atol=1e-10,
+    )
+    assert is_object_dtype(synthetic_data['LOW'].dtype)
+    assert is_object_dtype(synthetic_data['HIGH'].dtype)
+    low = pd.to_datetime(synthetic_data['LOW'], format=low_format)
+    high = pd.to_datetime(synthetic_data['HIGH'], format=high_format)
+
+    if strict_boundaries:
+        valid_rows = high.dt.normalize() > low.dt.normalize()
+    else:
+        valid_rows = high.dt.normalize() >= low.dt.normalize()
+
+    assert valid_rows.all()
+
+
 def test_inequality_with_timestamp_and_date_strict_boundaries():
     """Test that the inequality constraint fails with strict boundaries.
 

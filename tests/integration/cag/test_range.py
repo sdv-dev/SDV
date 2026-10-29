@@ -604,3 +604,84 @@ def test_validate_constraints_multi_raises(data_multi, metadata_multi, constrain
     # Run and Assert
     with pytest.raises(ConstraintNotMetError, match=msg):
         synthesizer.validate_constraints(synthetic_data=synthetic_data)
+
+
+@pytest.mark.parametrize(
+    'strict_boundaries, expected_low_diff, expected_high_diff',
+    [
+        pytest.param(
+            True,
+            43_200_000_000_000.0,
+            129_600_000_000_000.0,
+            id='strict-boundaries',
+        ),
+        pytest.param(
+            False,
+            129_599_000_000_000.0,
+            43_201_000_000_000.0,
+            id='non-strict-boundaries',
+        ),
+    ],
+)
+def test_range_with_lower_precision_middle_column(
+    strict_boundaries, expected_low_diff, expected_high_diff
+):
+    """Test that both differences use the same upcasted middle datetime."""
+    # Setup
+    data = {
+        'table': pd.DataFrame({
+            'LOW': ['2024-11-12 12:00:00'],
+            'MIDDLE': ['2024-11-13'],
+            'HIGH': ['2024-11-14 12:00:00'],
+        })
+    }
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'columns': {
+                    'LOW': {
+                        'sdtype': 'datetime',
+                        'datetime_format': '%Y-%m-%d %H:%M:%S',
+                    },
+                    'MIDDLE': {
+                        'sdtype': 'datetime',
+                        'datetime_format': '%Y-%m-%d',
+                    },
+                    'HIGH': {
+                        'sdtype': 'datetime',
+                        'datetime_format': '%Y-%m-%d %H:%M:%S',
+                    },
+                }
+            }
+        }
+    })
+    constraint = Range(
+        low_column_name='LOW',
+        middle_column_name='MIDDLE',
+        high_column_name='HIGH',
+        strict_boundaries=strict_boundaries,
+    )
+
+    # Run
+    constraint.fit(data, metadata)
+    transformed = constraint.transform(data)['table']
+
+    # Assert
+    np.testing.assert_allclose(
+        transformed[constraint._low_diff_column_name].to_numpy(),
+        np.log1p([expected_low_diff]),
+        rtol=0,
+        atol=1e-10,
+    )
+    np.testing.assert_allclose(
+        transformed[constraint._high_diff_column_name].to_numpy(),
+        np.log1p([expected_high_diff]),
+        rtol=0,
+        atol=1e-10,
+    )
+
+    # Both differences must sum to HIGH - LOW.
+    np.testing.assert_allclose(
+        expected_low_diff + expected_high_diff,
+        172_800_000_000_000.0,
+    )
