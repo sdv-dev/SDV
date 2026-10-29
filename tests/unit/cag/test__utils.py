@@ -4,12 +4,14 @@ import re
 import warnings
 from unittest.mock import Mock, call, patch
 
+import numpy as np
 import pytest
 
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _convert_to_snake_case,
     _filter_old_style_constraints,
+    _get_datetime_unit,
     _is_list_of_type,
     _load_constraints_from_file,
     _remove_columns_from_metadata,
@@ -19,6 +21,8 @@ from sdv.cag._utils import (
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
     load_constraint_from_dict,
+    match_chained_datetime_precision,
+    upcast_datetime_to_higher_precision,
 )
 from sdv.cag.base import BaseConstraint
 from sdv.errors import SynthesizerInputError
@@ -475,3 +479,322 @@ def test__load_constraints_from_file(
         call(invalid_constraint_dict),
         call(constraint_dict2),
     ])
+
+
+@pytest.mark.parametrize(
+    'datetime_format, expected_unit',
+    [
+        ('%Y', 'Y'),
+        ('%Y-%m', 'M'),
+        ('%Y-%m-%d', 'D'),
+        ('%Y-%m-%d %H', 'h'),
+        ('%Y-%m-%d %H:%M', 'm'),
+        ('%Y-%m-%d %H:%M:%S', 's'),
+        ('%Y-%m-%d %H:%M:%S.%f', 'us'),
+        ('%Y-%j', 'D'),
+        ('%d/%b/%Y', 'D'),
+        ('%B %Y', 'M'),
+        ('%y', 'Y'),
+    ],
+)
+def test_get_datetime_unit(datetime_format, expected_unit):
+    """Test the `_get_datetime_unit` method."""
+    # Run
+    result = _get_datetime_unit(datetime_format)
+
+    # Assert
+    assert result == expected_unit
+
+
+def test_get_datetime_unit_unsupported_format():
+    """Test `_get_datetime_unit` raises an error for unsupported formats."""
+    # Setup
+    expected_error = re.escape('Unsupported datetime format')
+
+    # Run and Assert
+    with pytest.raises(ValueError, match=expected_error):
+        _get_datetime_unit('unsupported')
+
+
+@pytest.mark.parametrize(
+    'source_format, target_format, data, use_highest, expected',
+    [
+        pytest.param(
+            '%Y-%m-%d',
+            '%Y-%m-%d %H:%M:%S',
+            ['2024-11-13', '2024-11-14'],
+            False,
+            ['2024-11-13 00:00:00', '2024-11-14 00:00:00'],
+            id='day-to-seconds-lowest',
+        ),
+        pytest.param(
+            '%Y-%m-%d',
+            '%Y-%m-%d %H:%M:%S',
+            ['2024-11-13', '2024-11-14'],
+            True,
+            ['2024-11-13 23:59:59', '2024-11-14 23:59:59'],
+            id='day-to-seconds-highest',
+        ),
+        pytest.param(
+            '%Y-%m-%d %H:%M:%S',
+            '%Y-%m-%d %H:%M:%S.%f',
+            ['2024-11-13 12:00:00', '2024-11-14 13:30:00'],
+            False,
+            ['2024-11-13 12:00:00.000000', '2024-11-14 13:30:00.000000'],
+            id='seconds-to-microseconds-lowest',
+        ),
+        pytest.param(
+            '%Y-%m-%d %H:%M:%S',
+            '%Y-%m-%d %H:%M:%S.%f',
+            ['2024-11-13 12:00:00', '2024-11-14 13:30:00'],
+            True,
+            ['2024-11-13 12:00:00.999999', '2024-11-14 13:30:00.999999'],
+            id='seconds-to-microseconds-highest',
+        ),
+        pytest.param(
+            '%Y-%m',
+            '%Y-%m-%d %H:%M:%S',
+            ['2024-02', '2023-02'],
+            True,
+            ['2024-02-29 23:59:59', '2023-02-28 23:59:59'],
+            id='month-to-seconds-leap-year',
+        ),
+        pytest.param(
+            '%Y-%m',
+            '%Y-%m-%d %H:%M:%S',
+            ['2024-02', '2023-02'],
+            False,
+            ['2024-02-01 00:00:00', '2023-02-01 00:00:00'],
+            id='month-to-seconds-lowest',
+        ),
+        pytest.param(
+            '%Y',
+            '%Y-%m-%d',
+            ['2024', '2023'],
+            True,
+            ['2024-12-31', '2023-12-31'],
+            id='year-to-day-highest',
+        ),
+        pytest.param(
+            '%Y',
+            '%Y-%m-%d',
+            ['2024', '2023'],
+            False,
+            ['2024-01-01', '2023-01-01'],
+            id='year-to-day-lowest',
+        ),
+    ],
+)
+def test_upcast_datetime_to_higher_precision(
+    source_format, target_format, data, use_highest, expected
+):
+    """Test the `upcast_datetime_to_higher_precision` method."""
+    # Setup
+    data = np.array(data, dtype='O')
+    target_unit = _get_datetime_unit(target_format)
+    expected = np.array(expected, dtype=f'datetime64[{target_unit}]')
+
+    # Run
+    result = upcast_datetime_to_higher_precision(
+        data, source_format, target_format, use_highest=use_highest
+    )
+
+    # Assert
+    np.testing.assert_array_equal(result, expected)
+    assert result.dtype == expected.dtype
+
+
+@pytest.mark.parametrize('use_highest', [True, False])
+def test_upcast_datetime_to_higher_precision_with_nat(use_highest):
+    """Test that upcasting preserves missing datetime values."""
+    # Setup
+    data = np.array(['2024-11-13', 'NaT'], dtype='datetime64[D]')
+
+    # Run
+    result = upcast_datetime_to_higher_precision(
+        data,
+        '%Y-%m-%d',
+        '%Y-%m-%d %H:%M:%S',
+        use_highest=use_highest,
+    )
+
+    # Assert
+    expected_datetime = '2024-11-13 23:59:59' if use_highest else '2024-11-13 00:00:00'
+    expected = np.array([expected_datetime, 'NaT'], dtype='datetime64[s]')
+    np.testing.assert_array_equal(result, expected)
+
+
+@pytest.mark.parametrize(
+    'strict_boundaries, expected_middle',
+    [
+        (True, '2024-11-13 00:00:00'),
+        (False, '2024-11-13 23:59:59'),
+    ],
+)
+@patch(
+    'sdv.cag._utils.upcast_datetime_to_higher_precision',
+    wraps=upcast_datetime_to_higher_precision,
+)
+def test_match_chained_datetime_precision_with_lower_precision_middle(
+    mock_upcast, strict_boundaries, expected_middle
+):
+    """Test `match_chained_datetime_precision` with a lower-precision middle column.
+
+    Verify that the middle column is upcasted only once for both comparisons.
+    """
+    # Setup
+    values = [
+        np.array(['2024-11-12 12:00:00'], dtype='O'),
+        np.array(['2024-11-13'], dtype='O'),
+        np.array(['2024-11-14 12:00:00'], dtype='O'),
+    ]
+    datetime_formats = [
+        '%Y-%m-%d %H:%M:%S',
+        '%Y-%m-%d',
+        '%Y-%m-%d %H:%M:%S',
+    ]
+    expected = [
+        np.array(['2024-11-12 12:00:00'], dtype='datetime64[ns]'),
+        np.array([expected_middle], dtype='datetime64[ns]'),
+        np.array(['2024-11-14 12:00:00'], dtype='datetime64[ns]'),
+    ]
+
+    # Run
+    result = match_chained_datetime_precision(
+        values, datetime_formats, strict_boundaries=strict_boundaries
+    )
+
+    # Assert
+    for actual, expected_value in zip(result, expected):
+        np.testing.assert_array_equal(actual, expected_value)
+
+    mock_upcast.assert_called_once()
+    args, kwargs = mock_upcast.call_args
+    assert args[1:] == (datetime_formats[1], datetime_formats[0])
+    assert kwargs == {'use_highest': not strict_boundaries}
+    low_diff = result[1] - result[0]
+    high_diff = result[2] - result[1]
+    np.testing.assert_array_equal(low_diff + high_diff, result[2] - result[0])
+
+
+@pytest.mark.parametrize(
+    'strict_boundaries, expected_low, expected_high',
+    [
+        (
+            True,
+            '2024-11-12 23:59:59',
+            '2024-11-14 00:00:00',
+        ),
+        (
+            False,
+            '2024-11-12 00:00:00',
+            '2024-11-14 23:59:59',
+        ),
+    ],
+)
+def test_match_chained_datetime_precision_with_lower_precision_boundaries(
+    strict_boundaries, expected_low, expected_high
+):
+    """Test `match_chained_datetime_precision` with the middle column having higher precision.
+
+    Verify that the low and high columns are upcasted to match the middle column's precision.
+    """
+    # Setup
+    values = [
+        np.array(['2024-11-12'], dtype='O'),
+        np.array(['2024-11-13 12:00:00'], dtype='O'),
+        np.array(['2024-11-14'], dtype='O'),
+    ]
+    datetime_formats = [
+        '%Y-%m-%d',
+        '%Y-%m-%d %H:%M:%S',
+        '%Y-%m-%d',
+    ]
+    expected = [
+        np.array([expected_low], dtype='datetime64[ns]'),
+        np.array(['2024-11-13 12:00:00'], dtype='datetime64[ns]'),
+        np.array([expected_high], dtype='datetime64[ns]'),
+    ]
+
+    # Run
+    result = match_chained_datetime_precision(
+        values, datetime_formats, strict_boundaries=strict_boundaries
+    )
+
+    # Assert
+    for actual, expected_value in zip(result, expected):
+        np.testing.assert_array_equal(actual, expected_value)
+
+
+@pytest.mark.parametrize(
+    'strict_boundaries, expected_low, expected_middle',
+    [
+        (
+            True,
+            '2024-11-12 23:59:59.999999',
+            '2024-11-13 12:00:00.000000',
+        ),
+        (
+            False,
+            '2024-11-12 00:00:00.000000',
+            '2024-11-13 12:00:00.999999',
+        ),
+    ],
+)
+def test_match_chained_datetime_precision_with_three_precisions(
+    strict_boundaries, expected_low, expected_middle
+):
+    """Test `match_chained_datetime_precision` with three different precisions.
+
+    Verify that all columns are upcasted to the highest precision.
+    """
+    # Setup
+    values = [
+        np.array(['2024-11-12'], dtype='O'),
+        np.array(['2024-11-13 12:00:00'], dtype='O'),
+        np.array(['2024-11-14 12:00:00.123456'], dtype='O'),
+    ]
+    datetime_formats = [
+        '%Y-%m-%d',
+        '%Y-%m-%d %H:%M:%S',
+        '%Y-%m-%d %H:%M:%S.%f',
+    ]
+    expected = [
+        np.array([expected_low], dtype='datetime64[ns]'),
+        np.array([expected_middle], dtype='datetime64[ns]'),
+        np.array(['2024-11-14 12:00:00.123456'], dtype='datetime64[ns]'),
+    ]
+
+    # Run
+    result = match_chained_datetime_precision(
+        values, datetime_formats, strict_boundaries=strict_boundaries
+    )
+
+    # Assert
+    for actual, expected_value in zip(result, expected):
+        np.testing.assert_array_equal(actual, expected_value)
+        assert actual.dtype == np.dtype('datetime64[ns]')
+
+
+@patch('sdv.cag._utils.upcast_datetime_to_higher_precision')
+def test_match_chained_datetime_precision_with_same_precision(mock_upcast):
+    """Test `match_chained_datetime_precision` with matching precisions.
+
+    Verify that no unnecessary upcasting occurs.
+    """
+    # Setup
+    values = [
+        np.array(['2024-11-12 12:00:00'], dtype='O'),
+        np.array(['2024-11-13 12:00:00'], dtype='O'),
+        np.array(['2024-11-14 12:00:00'], dtype='O'),
+    ]
+    datetime_formats = ['%Y-%m-%d %H:%M:%S'] * 3
+    expected = [np.array(value, dtype='datetime64[ns]') for value in values]
+
+    # Run
+    result = match_chained_datetime_precision(values, datetime_formats)
+
+    # Assert
+    mock_upcast.assert_not_called()
+    for actual, expected_value in zip(result, expected):
+        np.testing.assert_array_equal(actual, expected_value)

@@ -3,11 +3,13 @@ import json
 import re
 import traceback
 import warnings
+from datetime import datetime
+from decimal import Decimal
 
 import numpy as np
 import pandas as pd
 
-from sdv._utils import _cast_to_iterable
+from sdv._utils import _cast_to_datetime64, _cast_to_iterable
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.errors import RefitWarning, SynthesizerInputError, TableNameError
 from sdv.metadata import Metadata

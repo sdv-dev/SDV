@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_object_dtype
 
-from sdv._utils import _convert_to_timedelta, _create_unique_name
+from sdv._utils import _cast_to_datetime64, _convert_to_timedelta, _create_unique_name
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _get_is_valid_dict,

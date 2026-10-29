@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_object_dtype
 
-from sdv._utils import _convert_to_timedelta, _create_unique_name
+from sdv._utils import _cast_to_datetime64, _convert_to_timedelta, _create_unique_name
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _get_is_valid_dict,
@@ -19,7 +19,6 @@ from sdv.cag._utils import (
 from sdv.cag.base import BaseConstraint
 from sdv.constraints.utils import (
     _warn_if_timezone_aware_formats,
-    cast_to_datetime64,
     chained_reverse_transform,
     compute_nans_column,
     get_datetime_diff,
