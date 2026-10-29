@@ -14,6 +14,7 @@ from sdv.cag._utils import (
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
     _warn_if_timezone_aware_formats,
+    chained_reverse_transform,
     compute_nans_column,
     get_datetime_diff,
     match_datetime_precision,
@@ -291,10 +292,23 @@ class Inequality(BaseConstraint):
             diff_column = _convert_to_timedelta(diff_column)
 
         low = table_data[self._low_column_name].to_numpy()
-        if self._is_datetime and is_object_dtype(self._dtype):
-            table_data[self._low_column_name] = low = _cast_to_datetime64(low)
+        if self._is_datetime:
+            (high,) = chained_reverse_transform(
+                low,
+                [diff_column],
+                [self._low_datetime_format, self._high_datetime_format],
+                dtype=self._dtype,
+                strict_boundaries=self.strict_boundaries,
+                index=table_data.index,
+            )
+            if is_object_dtype(self._dtype):
+                table_data[self._low_column_name] = _cast_to_datetime64(
+                    low, self._low_datetime_format
+                )
+        else:
+            high = pd.Series(diff_column + low, index=table_data.index).astype(self._dtype)
 
-        table_data[self._high_column_name] = pd.Series(diff_column + low).astype(self._dtype)
+        table_data[self._high_column_name] = high
         table_data = revert_nans_columns(table_data, self._nan_column_name)
 
         data[table_name] = table_data.drop(self._diff_column_name, axis=1)
