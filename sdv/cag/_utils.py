@@ -377,7 +377,7 @@ def match_chained_datetime_precision(values, datetime_formats, strict_boundaries
 
 
 def chained_reverse_transform(
-    low, diff_columns, datetime_formats, dtype, strict_boundaries=True, index=None
+    low, diff_columns, datetime_formats, dtypes, strict_boundaries=True, index=None
 ):
     """Reverse a chain of datetime differences with consistent precision.
 
@@ -388,8 +388,8 @@ def chained_reverse_transform(
             Ordered timedelta columns between consecutive datetime values.
         datetime_formats (list):
             Datetime formats of all columns, including the low column.
-        dtype (np.dtype):
-            The dtype of the reconstructed columns.
+        dtype (list):
+            The dtypes of the reconstructed columns.
         strict_boundaries (bool):
             Whether to enforce strict boundaries.
         index (pd.Index):
@@ -421,7 +421,7 @@ def chained_reverse_transform(
 
     current = low.astype('datetime64[ns]')
     reconstructed_columns = []
-    for diff_column in diff_columns:
+    for diff_column, dtype in zip(diff_columns, dtypes):
         current = current + np.asarray(diff_column).astype('timedelta64[ns]')
         column = pd.Series(current, index=index)
         if isinstance(dtype, pd.DatetimeTZDtype):
