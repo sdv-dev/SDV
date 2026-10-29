@@ -14,6 +14,7 @@ jobs:
         python-version-file: 'pyproject.toml'
     - name: Install dependencies
       run: |
+        make upgradepip
         python -m pip install .[dev]
         make check-deps OUTPUT_FILEPATH=latest_requirements.txt
         make fix-lint
