@@ -355,12 +355,10 @@ class Range(BaseConstraint):
             low_diff_column = low_diff_column.round()
             high_diff_column = high_diff_column.round()
 
+        low = table_data[self._low_column_name].to_numpy()
         if self._is_datetime:
             low_diff_column = _convert_to_timedelta(low_diff_column)
             high_diff_column = _convert_to_timedelta(high_diff_column)
-
-        low = table_data[self._low_column_name].to_numpy()
-        if self._is_datetime:
             middle, high = chained_reverse_transform(
                 low,
                 [low_diff_column, high_diff_column],
@@ -369,7 +367,7 @@ class Range(BaseConstraint):
                     self._middle_datetime_format,
                     self._high_datetime_format,
                 ],
-                dtype=self._dtype,
+                dtypes=[self._dtype, self._dtype],
                 strict_boundaries=self.strict_boundaries,
                 index=table_data.index,
             )

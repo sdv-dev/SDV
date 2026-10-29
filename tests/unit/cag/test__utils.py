@@ -1095,7 +1095,7 @@ def test_chained_reverse_transform_with_lower_precision_middle(
         low,
         diff_columns,
         formats,
-        dtype=np.dtype('O'),
+        dtypes=[np.dtype('O'), np.dtype('O')],
         strict_boundaries=strict_boundaries,
         index=index,
     )
