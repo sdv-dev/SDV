@@ -685,3 +685,145 @@ def test_range_with_lower_precision_middle_column(
         expected_low_diff + expected_high_diff,
         172_800_000_000_000.0,
     )
+
+
+@pytest.mark.parametrize(
+    'middle_is_date, strict_boundaries, expected_low_diff, expected_high_diff',
+    [
+        pytest.param(
+            True,
+            True,
+            43_200_000_000_000,
+            129_600_000_000_000,
+            id='middle-date-strict',
+        ),
+        pytest.param(
+            True,
+            False,
+            129_599_000_000_000,
+            43_201_000_000_000,
+            id='middle-date-non-strict',
+        ),
+        pytest.param(
+            False,
+            True,
+            43_201_000_000_000,
+            43_200_000_000_000,
+            id='outer-dates-strict',
+        ),
+        pytest.param(
+            False,
+            False,
+            129_600_000_000_000,
+            129_599_000_000_000,
+            id='outer-dates-non-strict',
+        ),
+    ],
+)
+def test_range_mixed_datetime_precision_sampling(
+    middle_is_date, strict_boundaries, expected_low_diff, expected_high_diff
+):
+    """Test `Range` sampling with mixed datetime precisions.
+
+    Verify that both transformed differences use consistent boundaries
+    and that sampled data respects the complete range.
+    """
+    # Setup
+    dates = pd.date_range('2024-11-05', periods=16)
+    date_format = '%Y-%m-%d'
+    timestamp_format = '%Y-%m-%d %H:%M:%S'
+
+    if middle_is_date:
+        low_values = (dates - pd.Timedelta(hours=12)).strftime(timestamp_format)
+        middle_values = dates.strftime(date_format)
+        high_values = (dates + pd.Timedelta(hours=36)).strftime(timestamp_format)
+        formats = [timestamp_format, date_format, timestamp_format]
+    else:
+        low_values = (dates - pd.Timedelta(days=1)).strftime(date_format)
+        middle_values = (dates + pd.Timedelta(hours=12)).strftime(timestamp_format)
+        high_values = (dates + pd.Timedelta(days=1)).strftime(date_format)
+        formats = [date_format, timestamp_format, date_format]
+
+    data = {
+        'table': pd.DataFrame({
+            'LOW': low_values,
+            'MIDDLE': middle_values,
+            'HIGH': high_values,
+        })
+    }
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'columns': {
+                    column: {'sdtype': 'datetime', 'datetime_format': fmt}
+                    for column, fmt in zip(['LOW', 'MIDDLE', 'HIGH'], formats)
+                }
+            }
+        }
+    })
+    constraint = Range(
+        low_column_name='LOW',
+        middle_column_name='MIDDLE',
+        high_column_name='HIGH',
+        strict_boundaries=strict_boundaries,
+    )
+
+    # Run
+    constraint.fit(data, metadata)
+    transformed = constraint.transform({'table': data['table'].copy()})['table']
+    synthesizer = run_copula(
+        data,
+        metadata,
+        [
+            Range(
+                low_column_name='LOW',
+                middle_column_name='MIDDLE',
+                high_column_name='HIGH',
+                strict_boundaries=strict_boundaries,
+            )
+        ],
+    )
+    synthetic_data = synthesizer.sample(num_rows=40)['table']
+    synthesizer.validate_constraints(synthetic_data=synthetic_data)
+
+    # Assert
+    np.testing.assert_allclose(
+        transformed[constraint._low_diff_column_name].to_numpy(),
+        np.log1p(expected_low_diff),
+        rtol=0,
+        atol=1e-10,
+    )
+    np.testing.assert_allclose(
+        transformed[constraint._high_diff_column_name].to_numpy(),
+        np.log1p(expected_high_diff),
+        rtol=0,
+        atol=1e-10,
+    )
+
+    assert len(synthetic_data) == 40
+    low = pd.to_datetime(synthetic_data['LOW'], format=formats[0])
+    middle = pd.to_datetime(synthetic_data['MIDDLE'], format=formats[1])
+    high = pd.to_datetime(synthetic_data['HIGH'], format=formats[2])
+
+    end_of_day = pd.Timedelta(days=1) - pd.Timedelta(seconds=1)
+    if middle_is_date:
+        aligned_low = low
+        aligned_middle = middle.dt.normalize()
+        aligned_high = high
+        if not strict_boundaries:
+            aligned_middle = aligned_middle + end_of_day
+    else:
+        aligned_low = low.dt.normalize()
+        aligned_middle = middle
+        aligned_high = high.dt.normalize()
+        if strict_boundaries:
+            aligned_low = aligned_low + end_of_day
+        else:
+            aligned_high = aligned_high + end_of_day
+
+    if strict_boundaries:
+        assert (aligned_low < aligned_middle).all()
+        assert (aligned_middle < aligned_high).all()
+    else:
+        assert (aligned_low <= aligned_middle).all()
+        assert (aligned_middle <= aligned_high).all()
