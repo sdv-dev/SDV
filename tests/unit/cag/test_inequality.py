@@ -421,6 +421,50 @@ class TestInequality:
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
+    @pytest.mark.parametrize(
+        'strict_boundaries, expected_valid',
+        [
+            (True, False),
+            (False, True),
+        ],
+    )
+    def test__get_valid_table_data_datetime_dtype_precision(
+        self, strict_boundaries, expected_valid
+    ):
+        """Test `_get_valid_table_data` with native datetime columns."""
+        # Setup
+        table_data = pd.DataFrame({
+            'low': pd.to_datetime(['2024-11-13']),
+            'high': pd.to_datetime(['2024-11-13 12:00:00']),
+        })
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table': {
+                    'columns': {
+                        'low': {
+                            'sdtype': 'datetime',
+                            'datetime_format': '%Y-%m-%d',
+                        },
+                        'high': {
+                            'sdtype': 'datetime',
+                            'datetime_format': '%Y-%m-%d %H:%M:%S',
+                        },
+                    }
+                }
+            }
+        })
+        instance = Inequality(
+            low_column_name='low',
+            high_column_name='high',
+            strict_boundaries=strict_boundaries,
+        )
+
+        # Run
+        result = instance._get_valid_table_data(table_data, metadata, 'table')
+
+        # Assert
+        assert result[0] == expected_valid
+
     def test__get_updated_metadata(self):
         """Test the ``_get_updated_metadata`` method."""
         # Setup
@@ -1155,38 +1199,19 @@ class TestInequality:
         expected_out = [False, True, False, True, True]
         np.testing.assert_array_equal(expected_out, out)
 
-        expected_low = np.array(
-            [
-                '2016-07-10T17:04:00.000000000',
-                '2016-07-11T13:23:00.000000000',
-                '2016-07-12T08:45:30.000000000',
-                '2016-07-11T12:00:00.000000000',
-                '2016-07-12T10:30:00.000000000',
-            ],
-            dtype='datetime64[ns]',
-        )
-
-        expected_high = np.array(
-            [
-                '2016-07-10T00:00:00.000000000',
-                '2016-07-11T00:00:00.000000000',
-                '2016-07-12T00:00:00.000000000',
-                '2016-07-13T00:00:00.000000000',
-                '2016-07-14T00:00:00.000000000',
-            ],
-            dtype='datetime64[ns]',
-        )
+        expected_low = table_data['table']['SUBMISSION_TIMESTAMP'].to_numpy()
+        expected_high = table_data['table']['DUE_DATE'].to_numpy()
 
         call_low = mock_match_datetime_precision.call_args_list[0][1].pop('low')
         call_high = mock_match_datetime_precision.call_args_list[0][1].pop('high')
         np.testing.assert_array_equal(expected_low, call_low)
         np.testing.assert_array_equal(expected_high, call_high)
-        expected_formats = {
+        expected_inputs = {
             'low_datetime_format': '%Y-%m-%d %H:%M:%S',
             'high_datetime_format': '%Y-%m-%d',
             'strict_boundaries': False,
         }
-        assert expected_formats == mock_match_datetime_precision.call_args_list[0][1]
+        assert expected_inputs == mock_match_datetime_precision.call_args_list[0][1]
 
     def test___repr__(self):
         """Test the representation of the instance that was created for this class."""

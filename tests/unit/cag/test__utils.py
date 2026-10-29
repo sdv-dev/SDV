@@ -22,6 +22,7 @@ from sdv.cag._utils import (
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
     _warn_if_timezone_aware_formats,
+    chained_reverse_transform,
     compute_nans_column,
     format_datetime_array,
     get_datetime_diff,
@@ -983,6 +984,128 @@ def test_match_chained_datetime_precision_with_same_precision(mock_upcast):
     mock_upcast.assert_not_called()
     for actual, expected_value in zip(result, expected):
         np.testing.assert_array_equal(actual, expected_value)
+
+
+@pytest.mark.parametrize(
+    'strict_boundaries, expected_low, expected_high',
+    [
+        (
+            True,
+            '2024-11-12 23:59:59.999999999',
+            '2024-11-14 12:00:00.000000000',
+        ),
+        (
+            False,
+            '2024-11-12 00:00:00.000000000',
+            '2024-11-14 12:00:00.999999999',
+        ),
+    ],
+)
+def test_match_chained_datetime_precision_with_missing_format(
+    strict_boundaries, expected_low, expected_high
+):
+    """Test `match_chained_datetime_precision` with a missing format."""
+    # Setup
+    values = [
+        np.array(['2024-11-12'], dtype='O'),
+        np.array(['2024-11-13 12:00:00.123456'], dtype='O'),
+        np.array(['2024-11-14 12:00:00'], dtype='O'),
+    ]
+    formats = [
+        '%Y-%m-%d',
+        None,
+        '%Y-%m-%d %H:%M:%S',
+    ]
+    expected = [
+        np.array([expected_low], dtype='datetime64[ns]'),
+        np.array(['2024-11-13 12:00:00.123456'], dtype='datetime64[ns]'),
+        np.array([expected_high], dtype='datetime64[ns]'),
+    ]
+
+    # Run
+    result = match_chained_datetime_precision(values, formats, strict_boundaries=strict_boundaries)
+
+    # Assert
+    for actual, expected_value in zip(result, expected):
+        np.testing.assert_array_equal(actual, expected_value)
+
+
+def test_match_chained_datetime_precision_without_formats():
+    """Test `match_chained_datetime_precision` without datetime formats."""
+    # Setup
+    values = [
+        np.array(['2024-11-12 12:30:00.123456'], dtype='O'),
+        np.array(['2024-11-13 13:45:00.654321'], dtype='O'),
+    ]
+    expected = [np.asarray(value, dtype='datetime64[ns]') for value in values]
+
+    # Run
+    result = match_chained_datetime_precision(values, [None, None])
+
+    # Assert
+    for actual, expected_value in zip(result, expected):
+        np.testing.assert_array_equal(actual, expected_value)
+
+
+@pytest.mark.parametrize(
+    'strict_boundaries, low_diff, high_diff, expected_middle',
+    [
+        (
+            True,
+            43_200,
+            129_600,
+            '2024-11-13 00:00:00',
+        ),
+        (
+            False,
+            129_599,
+            43_201,
+            '2024-11-13 23:59:59',
+        ),
+    ],
+)
+def test_chained_reverse_transform_with_lower_precision_middle(
+    strict_boundaries, low_diff, high_diff, expected_middle
+):
+    """Test `chained_reverse_transform` with a lower-precision middle column.
+
+    Verify that the same reconstructed middle value is used throughout the chain.
+    """
+    # Setup
+    index = pd.Index([10, 20])
+    low = np.array(
+        [
+            '2024-11-12 12:00:00',
+            '2024-11-12 12:00:00',
+        ],
+        dtype='O',
+    )
+    diff_columns = [
+        pd.to_timedelta([low_diff, low_diff], unit='s'),
+        pd.to_timedelta([high_diff, high_diff], unit='s'),
+    ]
+    formats = [
+        '%Y-%m-%d %H:%M:%S',
+        '%Y-%m-%d',
+        '%Y-%m-%d %H:%M:%S',
+    ]
+
+    # Run
+    middle, high = chained_reverse_transform(
+        low,
+        diff_columns,
+        formats,
+        dtype=np.dtype('O'),
+        strict_boundaries=strict_boundaries,
+        index=index,
+    )
+
+    # Assert
+    expected_middle = pd.Series(pd.to_datetime([expected_middle] * 2), index=index)
+    expected_high = pd.Series(pd.to_datetime(['2024-11-14 12:00:00'] * 2), index=index)
+
+    pd.testing.assert_series_equal(pd.to_datetime(middle), expected_middle)
+    pd.testing.assert_series_equal(pd.to_datetime(high), expected_high)
 
 
 def test_get_datetime_diff():

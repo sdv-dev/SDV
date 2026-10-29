@@ -1205,3 +1205,77 @@ def test_datetime_values_are_clipped_to_min_max_in_constraint():
     for col in ['checkin_date', 'checkout_date']:
         assert data[col].min() <= synthetic_data[col].min()
         assert synthetic_data[col].max() <= data[col].max()
+
+
+@pytest.mark.parametrize(
+    'low_is_date, strict_boundaries',
+    [
+        pytest.param(True, False, id='date-low-same-day'),
+        pytest.param(True, True, id='date-low-strict'),
+        pytest.param(False, False, id='date-high-same-day'),
+        pytest.param(False, True, id='date-high-strict'),
+    ],
+)
+def test_inequality_mixed_datetime_precision_sampling(low_is_date, strict_boundaries):
+    """Test `Inequality` sampling with mixed datetime precisions.
+
+    Verify that sampled values preserve the inequality without
+    collapsing timestamp values to dates.
+    """
+    # Setup
+    dates = pd.date_range('2024-11-01', periods=16)
+    offsets = pd.to_timedelta(9 + np.arange(16) % 9, unit='h')
+    date_format = '%Y-%m-%d'
+    timestamp_format = '%Y-%m-%d %H:%M:%S'
+    next_dates = dates + pd.Timedelta(days=int(strict_boundaries))
+
+    if low_is_date:
+        low_values = dates.strftime(date_format)
+        high_values = (next_dates + offsets).strftime(timestamp_format)
+        low_format, high_format = date_format, timestamp_format
+    else:
+        low_values = (dates + offsets).strftime(timestamp_format)
+        high_values = next_dates.strftime(date_format)
+        low_format, high_format = timestamp_format, date_format
+
+    data = {
+        'table': pd.DataFrame({
+            'LOW': low_values,
+            'HIGH': high_values,
+        })
+    }
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'columns': {
+                    'LOW': {'sdtype': 'datetime', 'datetime_format': low_format},
+                    'HIGH': {'sdtype': 'datetime', 'datetime_format': high_format},
+                }
+            }
+        }
+    })
+    constraint = Inequality(
+        low_column_name='LOW',
+        high_column_name='HIGH',
+        strict_boundaries=strict_boundaries,
+    )
+
+    # Run
+    synthesizer = run_copula(data, metadata, [constraint])
+    synthetic_data = synthesizer.sample(num_rows=40)['table']
+    synthesizer.validate_constraints(synthetic_data=synthetic_data)
+
+    # Assert
+    assert len(synthetic_data) == 40
+    assert synthetic_data[['LOW', 'HIGH']].notna().all().all()
+
+    low = pd.to_datetime(synthetic_data['LOW'], format=low_format)
+    high = pd.to_datetime(synthetic_data['HIGH'], format=high_format)
+    if strict_boundaries:
+        assert (high.dt.normalize() > low.dt.normalize()).all()
+    else:
+        assert (high.dt.normalize() >= low.dt.normalize()).all()
+
+    if low_is_date and not strict_boundaries:
+        assert (high > low).any()
+        assert (high != high.dt.normalize()).any()
