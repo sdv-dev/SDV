@@ -1184,6 +1184,7 @@ class TestInequality:
         expected_formats = {
             'low_datetime_format': '%Y-%m-%d %H:%M:%S',
             'high_datetime_format': '%Y-%m-%d',
+            'strict_boundaries': False,
         }
         assert expected_formats == mock_match_datetime_precision.call_args_list[0][1]
 

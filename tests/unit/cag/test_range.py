@@ -459,6 +459,77 @@ class TestRange:
         with pytest.raises(ConstraintNotMetError, match=err_msg):
             instance._validate_constraint_with_data(data, metadata)
 
+    @pytest.mark.parametrize(
+        'strict_boundaries, expected_valid',
+        [
+            pytest.param(
+                True,
+                [False, True, True, True, True, True],
+                id='strict-boundaries',
+            ),
+            pytest.param(
+                False,
+                [True, False, True, True, True, True],
+                id='non-strict-boundaries',
+            ),
+        ],
+    )
+    def test__get_valid_table_data_datetime_with_different_precisions(
+        self, strict_boundaries, expected_valid
+    ):
+        """Test `_get_valid_table_data` with different datetime precisions.
+
+        Verify the boundaries are consistent and missing values are allowed.
+        """
+        # Setup
+        table_data = pd.DataFrame(
+            {
+                'a': [
+                    '2024-11-13 12:00:00',
+                    '2024-11-12 12:00:00',
+                    '2024-11-12 12:00:00',
+                    None,
+                    '2024-11-12 12:00:00',
+                    '2024-11-12 12:00:00',
+                ],
+                'b': [
+                    '2024-11-13',
+                    '2024-11-13',
+                    '2024-11-13',
+                    '2024-11-13',
+                    '2024-11-13',
+                    None,
+                ],
+                'c': [
+                    '2024-11-14 12:00:00',
+                    '2024-11-13 12:00:00',
+                    '2024-11-14 12:00:00',
+                    '2024-11-14 12:00:00',
+                    None,
+                    '2024-11-14 12:00:00',
+                ],
+            },
+            index=[10, 20, 30, 40, 50, 60],
+        )
+        instance = Range(
+            low_column_name='a',
+            middle_column_name='b',
+            high_column_name='c',
+            strict_boundaries=strict_boundaries,
+            table_name='table',
+        )
+        expected = pd.Series(expected_valid, index=table_data.index)
+        instance._is_datetime = True
+        instance._low_datetime_format = '%Y-%m-%d %H:%M:%S'
+        instance._middle_datetime_format = '%Y-%m-%d'
+        instance._high_datetime_format = '%Y-%m-%d %H:%M:%S'
+
+        # Run
+        result = instance._get_valid_table_data(table_data)
+
+        # Assert
+        pd.testing.assert_series_equal(result, expected)
+
     def test__get_updated_metadata(self):
         """Test the ``_get_updated_metadata`` method."""
         # Setup
