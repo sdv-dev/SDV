@@ -17,7 +17,6 @@ from sdv.cag._utils import (
 from sdv.cag.base import BaseConstraint
 from sdv.constraints.utils import (
     _warn_if_timezone_aware_formats,
-    cast_to_datetime64,
     chained_reverse_transform,
     compute_nans_column,
     get_datetime_diff,
@@ -127,21 +126,16 @@ class Inequality(BaseConstraint):
     def _get_valid_table_data(self, table_data, metadata, table_name):
         low, high = self._get_data(table_data)
         is_datetime = self._get_is_datetime(metadata, table_name)
-        if is_datetime and is_object_dtype(table_data[self._low_column_name]):
+        if is_datetime:
             low_format = self._get_datetime_format(metadata, table_name, self._low_column_name)
             high_format = self._get_datetime_format(metadata, table_name, self._high_column_name)
-            low = cast_to_datetime64(low, low_format)
-            high = cast_to_datetime64(high, high_format)
-
-            format_matches = bool(low_format == high_format)
-            if not format_matches:
-                low, high = match_datetime_precision(
-                    low=low,
-                    high=high,
-                    low_datetime_format=low_format,
-                    high_datetime_format=high_format,
-                    strict_boundaries=self.strict_boundaries,
-                )
+            low, high = match_datetime_precision(
+                low=low,
+                high=high,
+                low_datetime_format=low_format,
+                high_datetime_format=high_format,
+                strict_boundaries=self.strict_boundaries,
+            )
 
         return pd.isna(low) | pd.isna(high) | self._operator(high, low)
 
