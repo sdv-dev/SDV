@@ -40,6 +40,7 @@ PRECISION_LEVELS = {
     '%x': 0,  # Locale-based date
     '%X': 0,  # Locale-based time
 }
+_DATETIME_UNITS = ('Y', 'M', 'D', 'h', 'm', 's', 'us')
 
 
 def matches_datetime_format(value, datetime_format):
@@ -251,23 +252,11 @@ def get_mappable_combination(combination):
 
 def _get_datetime_unit(datetime_format):
     """Get the smallest datetime unit represented by a format."""
-    for directive, unit in [
-        ('%f', 'us'),
-        ('%S', 's'),
-        ('%M', 'm'),
-        ('%H', 'h'),
-        ('%d', 'D'),
-        ('%j', 'D'),
-        ('%m', 'M'),
-        ('%b', 'M'),
-        ('%B', 'M'),
-        ('%Y', 'Y'),
-        ('%y', 'Y'),
-    ]:
-        if directive in datetime_format:
-            return unit
+    precision = get_datetime_format_precision(datetime_format)
+    if precision == 0:
+        raise ValueError(f'Unsupported datetime format: {datetime_format}')
 
-    raise ValueError(f'Unsupported datetime format: {datetime_format}')
+    return _DATETIME_UNITS[precision - 1]
 
 
 def upcast_datetime_to_higher_precision(data, source_format, target_format, use_highest=False):
@@ -293,7 +282,7 @@ def upcast_datetime_to_higher_precision(data, source_format, target_format, use_
             The upcasted datetime values.
     """
     source_unit = _get_datetime_unit(source_format)
-    target_unit = _get_datetime_unit(target_format)
+    target_unit = _get_datetime_unit(target_format) if target_format is not None else 'ns'
 
     values = np.asarray(data)
     if values.dtype.kind != 'M':
@@ -332,28 +321,13 @@ def match_datetime_precision(
             Adjusted `low` and `high` arrays where the lower-precision
             column is upcasted to match the higher-precision format.
     """
-    low_unit = _get_datetime_unit(low_datetime_format)
-    high_unit = _get_datetime_unit(high_datetime_format)
-    if low_unit == high_unit:
-        return low, high
-
-    lower_precision_format = get_lower_precision_format(low_datetime_format, high_datetime_format)
-    if lower_precision_format == low_datetime_format:
-        low = upcast_datetime_to_higher_precision(
-            low,
-            low_datetime_format,
-            high_datetime_format,
-            use_highest=strict_boundaries,
+    return tuple(
+        match_chained_datetime_precision(
+            [low, high],
+            [low_datetime_format, high_datetime_format],
+            strict_boundaries=strict_boundaries,
         )
-    else:
-        high = upcast_datetime_to_higher_precision(
-            high,
-            high_datetime_format,
-            low_datetime_format,
-            use_highest=not strict_boundaries,
-        )
-
-    return low, high
+    )
 
 
 def match_chained_datetime_precision(values, datetime_formats, strict_boundaries=True):
@@ -376,16 +350,19 @@ def match_chained_datetime_precision(values, datetime_formats, strict_boundaries
             Datetime arrays with matching precision.
     """
     precisions = [
-        get_datetime_format_precision(datetime_format) if datetime_format is not None else 0
+        get_datetime_format_precision(datetime_format) if datetime_format is not None else 8
         for datetime_format in datetime_formats
-    ]
+    ]  # If datetime_format is None, assume maximum precision (8)
     target_index = np.argmax(precisions)
     target_format = datetime_formats[target_index]
     target_precision = precisions[target_index]
 
     matched_values = []
     for index, (value, datetime_format) in enumerate(zip(values, datetime_formats)):
-        value = _cast_to_datetime64(value, datetime_format)
+        value = np.asarray(value)
+        if value.dtype.kind != 'M':
+            value = np.asarray(_cast_to_datetime64(value, datetime_format))
+
         if precisions[index] < target_precision:
             value = upcast_datetime_to_higher_precision(
                 value,
@@ -397,6 +374,64 @@ def match_chained_datetime_precision(values, datetime_formats, strict_boundaries
         matched_values.append(np.asarray(value).astype('datetime64[ns]'))
 
     return matched_values
+
+
+def chained_reverse_transform(
+    low, diff_columns, datetime_formats, dtype, strict_boundaries=True, index=None
+):
+    """Reverse a chain of datetime differences with consistent precision.
+
+    Args:
+        low (np.ndarray):
+            The starting datetime values.
+        diff_columns (list):
+            Ordered timedelta columns between consecutive datetime values.
+        datetime_formats (list):
+            Datetime formats of all columns, including the low column.
+        dtype (np.dtype):
+            The dtype of the reconstructed columns.
+        strict_boundaries (bool):
+            Whether to enforce strict boundaries.
+        index (pd.Index):
+            Index to use for the reconstructed columns.
+
+    Returns:
+        list[pd.Series]:
+            The reconstructed datetime columns.
+    """
+    if len(datetime_formats) != len(diff_columns) + 1:
+        raise ValueError('Expected one more datetime format than difference columns.')
+
+    precisions = [
+        get_datetime_format_precision(fmt) if fmt is not None else 8 for fmt in datetime_formats
+    ]
+    target_index = np.argmax(precisions)
+
+    low = np.asarray(low)
+    if low.dtype.kind != 'M':
+        low = np.asarray(_cast_to_datetime64(low, datetime_formats[0]))
+
+    if precisions[0] < precisions[target_index]:
+        low = upcast_datetime_to_higher_precision(
+            low,
+            datetime_formats[0],
+            datetime_formats[target_index],
+            use_highest=strict_boundaries,
+        )
+
+    current = low.astype('datetime64[ns]')
+    reconstructed_columns = []
+    for diff_column in diff_columns:
+        current = current + np.asarray(diff_column).astype('timedelta64[ns]')
+        column = pd.Series(current, index=index)
+        if isinstance(dtype, pd.DatetimeTZDtype):
+            column = column.dt.tz_localize(dtype.tz)
+        else:
+            column = column.astype(dtype)
+
+        reconstructed_columns.append(column)
+
+    return reconstructed_columns
 
 
 def get_datetime_format_precision(format_str):
