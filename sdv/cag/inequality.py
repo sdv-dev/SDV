@@ -292,7 +292,7 @@ class Inequality(BaseConstraint):
                 low,
                 [diff_column],
                 [self._low_datetime_format, self._high_datetime_format],
-                dtype=self._dtype,
+                dtypes=[self._dtype],
                 strict_boundaries=self.strict_boundaries,
                 index=table_data.index,
             )
