@@ -20,7 +20,7 @@ jobs:
         python-version-file: 'pyproject.toml'
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
+        make upgradepip
         python -m pip install invoke .[dev]
     - name: Run lint checks
       run: invoke lint
