@@ -1,5 +1,11 @@
 # Release Notes
 
+## v2.1.0 - 2026-10-30
+
+### Maintenance
+
+* Remove Python 3.9 support - Issue [#3034](https://github.com/sdv-dev/SDV/issues/3034) by @rwedge
+
 ## v2.0.0 - 2026-10-15
 
 ### New Features
