@@ -499,6 +499,32 @@ def _subsample_table_and_descendants(data, metadata, table, num_rows, drop_missi
     _drop_rows(data, metadata, drop_missing_values)
 
 
+def _get_key_values(table, columns):
+    """Get a Series of key values for the given columns.
+
+    A single-column key is returned as-is. A composite key is returned as a Series of
+    tuples so it can be compared with ``isin`` and ``unique``.
+
+    Args:
+        table (pandas.DataFrame):
+            Table containing the key columns.
+        columns (str or list[str] or tuple[str]):
+            Name of the key column, or list/tuple of names for a composite key.
+
+    Returns:
+        pandas.Series:
+            Key values aligned to ``table.index``.
+    """
+    columns = _cast_to_iterable(columns)
+    if len(columns) == 1:
+        return table[columns[0]]
+
+    return pd.Series(
+        list(table[list(columns)].itertuples(index=False, name=None)),
+        index=table.index,
+    )
+
+
 def _get_primary_keys_referenced(data, metadata):
     """Get the primary keys referenced by the relationships.
 
@@ -519,7 +545,9 @@ def _get_primary_keys_referenced(data, metadata):
         parent_table = relationship['parent_table_name']
         child_table = relationship['child_table_name']
         foreign_key = relationship['child_foreign_key']
-        primary_keys_referenced[parent_table].update(set(data[child_table][foreign_key].unique()))
+        primary_keys_referenced[parent_table].update(
+            set(_get_key_values(data[child_table], foreign_key).unique())
+        )
 
     return primary_keys_referenced
 
@@ -536,7 +564,7 @@ def _subsample_parent(
     Args:
         parent_table (pandas.DataFrame):
             Parent table to subsample.
-        parent_primary_key (str):
+        parent_primary_key (str or list[str]):
             Name of the primary key of the parent table.
         parent_pk_referenced_before (set):
             Set of the primary keys referenced before any subsampling.
@@ -551,9 +579,10 @@ def _subsample_parent(
     total_dropped = len(dereferenced_pk_parent)
     drop_proportion = total_dropped / total_referenced
 
-    parent_table = parent_table[~parent_table[parent_primary_key].isin(dereferenced_pk_parent)]
+    parent_keys = _get_key_values(parent_table, parent_primary_key)
+    parent_table = parent_table[~parent_keys.isin(dereferenced_pk_parent)]
     unreferenced_data = parent_table[
-        ~parent_table[parent_primary_key].isin(parent_pk_referenced_before)
+        ~_get_key_values(parent_table, parent_primary_key).isin(parent_pk_referenced_before)
     ]
 
     # Randomly drop a proportional amount of never-referenced rows
