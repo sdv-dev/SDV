@@ -371,19 +371,16 @@ class Range(BaseConstraint):
                 ],
                 dtypes=[self._dtype, self._dtype],
                 strict_boundaries=self.strict_boundaries,
-                index=table_data.index,
             )
             if is_object_dtype(self._dtype):
                 middle = _cast_to_datetime64(middle, self._middle_datetime_format)
                 high = _cast_to_datetime64(high, self._high_datetime_format)
         else:
-            middle = pd.Series(low_diff_column + low, index=table_data.index).astype(self._dtype)
-            high = pd.Series(high_diff_column + middle.to_numpy(), index=table_data.index).astype(
-                self._dtype
-            )
+            middle = pd.Series(low_diff_column + low).astype(self._dtype)
+            high = pd.Series(high_diff_column + middle.to_numpy()).astype(self._dtype)
 
-        table_data[self._middle_column_name] = middle
-        table_data[self._high_column_name] = high
+        table_data[self._middle_column_name] = middle.to_numpy()
+        table_data[self._high_column_name] = high.to_numpy()
 
         table_data = revert_nans_columns(table_data, self._nan_column_name)
 

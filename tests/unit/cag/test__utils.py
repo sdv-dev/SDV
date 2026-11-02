@@ -888,7 +888,6 @@ def test_chained_reverse_transform_with_lower_precision_middle(
     Verify that the same reconstructed middle value is used throughout the chain.
     """
     # Setup
-    index = pd.Index([10, 20])
     low = np.array(
         [
             '2024-11-12 12:00:00',
@@ -913,12 +912,36 @@ def test_chained_reverse_transform_with_lower_precision_middle(
         formats,
         dtypes=[np.dtype('O'), np.dtype('O')],
         strict_boundaries=strict_boundaries,
-        index=index,
     )
 
     # Assert
-    expected_middle = pd.Series(pd.to_datetime([expected_middle] * 2), index=index)
-    expected_high = pd.Series(pd.to_datetime(['2024-11-14 12:00:00'] * 2), index=index)
+    expected_middle = pd.Series(pd.to_datetime([expected_middle] * 2))
+    expected_high = pd.Series(pd.to_datetime(['2024-11-14 12:00:00'] * 2))
 
     pd.testing.assert_series_equal(pd.to_datetime(middle), expected_middle)
     pd.testing.assert_series_equal(pd.to_datetime(high), expected_high)
+
+
+def test_chained_reverse_transform_error():
+    """Test `chained_reverse_transform` raises an error with invalid input."""
+    # Setup
+    low = np.array(['2024-11-12 12:00:00'], dtype='O')
+    diff_columns = [
+        pd.to_timedelta([43_200], unit='s'),
+        pd.to_timedelta([129_600], unit='s'),
+    ]
+    formats = [
+        '%Y-%m-%d',
+        '%Y-%m-%d %H:%M:%S',
+    ]
+    expected_error = re.escape('Expected one more datetime format than difference columns.')
+
+    # Run and Assert
+    with pytest.raises(ValueError, match=expected_error):
+        chained_reverse_transform(
+            low,
+            diff_columns,
+            formats,
+            dtypes=[np.dtype('O'), np.dtype('O')],
+            strict_boundaries=True,
+        )

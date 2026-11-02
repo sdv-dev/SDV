@@ -296,16 +296,15 @@ class Inequality(BaseConstraint):
                 [self._low_datetime_format, self._high_datetime_format],
                 dtypes=[self._dtype],
                 strict_boundaries=self.strict_boundaries,
-                index=table_data.index,
             )
             if is_object_dtype(self._dtype):
                 table_data[self._low_column_name] = _cast_to_datetime64(
                     low, self._low_datetime_format
                 )
         else:
-            high = pd.Series(diff_column + low, index=table_data.index).astype(self._dtype)
+            high = pd.Series(diff_column + low).astype(self._dtype)
 
-        table_data[self._high_column_name] = high
+        table_data[self._high_column_name] = high.to_numpy()
         table_data = revert_nans_columns(table_data, self._nan_column_name)
 
         data[table_name] = table_data.drop(self._diff_column_name, axis=1)
