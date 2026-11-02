@@ -376,9 +376,7 @@ def match_chained_datetime_precision(values, datetime_formats, strict_boundaries
     return matched_values
 
 
-def chained_reverse_transform(
-    low, diff_columns, datetime_formats, dtypes, strict_boundaries=True, index=None
-):
+def chained_reverse_transform(low, diff_columns, datetime_formats, dtypes, strict_boundaries=True):
     """Reverse a chain of datetime differences with consistent precision.
 
     Args:
@@ -392,8 +390,6 @@ def chained_reverse_transform(
             The dtypes of the reconstructed columns.
         strict_boundaries (bool):
             Whether to enforce strict boundaries.
-        index (pd.Index):
-            Index to use for the reconstructed columns.
 
     Returns:
         list[pd.Series]:
@@ -423,7 +419,7 @@ def chained_reverse_transform(
     reconstructed_columns = []
     for diff_column, dtype in zip(diff_columns, dtypes):
         current = current + np.asarray(diff_column).astype('timedelta64[ns]')
-        column = pd.Series(current, index=index)
+        column = pd.Series(current)
         if isinstance(dtype, pd.DatetimeTZDtype):
             column = column.dt.tz_localize(dtype.tz)
         else:
