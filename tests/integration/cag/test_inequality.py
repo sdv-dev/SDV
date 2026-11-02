@@ -430,12 +430,10 @@ def test_inequality_with_different_datetime_precisions(
     and that sampled data satisfies the inequality constraint.
     """
     # Setup
-    data = {
-        'table': pd.DataFrame({
-            'LOW': low_values,
-            'HIGH': high_values,
-        })
-    }
+    data = pd.DataFrame({
+        'LOW': low_values,
+        'HIGH': high_values,
+    })
     metadata = Metadata.load_from_dict({
         'tables': {
             'table': {
@@ -454,7 +452,7 @@ def test_inequality_with_different_datetime_precisions(
 
     # Run
     constraint.fit(data, metadata)
-    transformed_data = constraint.transform(data)['table']
+    transformed_data = constraint.transform(data)
     synthesizer = run_copula(
         data,
         metadata,
@@ -466,7 +464,7 @@ def test_inequality_with_different_datetime_precisions(
             )
         ],
     )
-    synthetic_data = synthesizer.sample(num_rows=10)['table']
+    synthetic_data = synthesizer.sample(num_rows=10)
 
     # Assert
     expected_diff = np.array(expected_diff, dtype=np.float64)
@@ -1191,12 +1189,10 @@ def test_inequality_mixed_datetime_precision_sampling(low_is_date, strict_bounda
         high_values = next_dates.strftime(date_format)
         low_format, high_format = timestamp_format, date_format
 
-    data = {
-        'table': pd.DataFrame({
-            'LOW': low_values,
-            'HIGH': high_values,
-        })
-    }
+    data = pd.DataFrame({
+        'LOW': low_values,
+        'HIGH': high_values,
+    })
     metadata = Metadata.load_from_dict({
         'tables': {
             'table': {
@@ -1215,7 +1211,7 @@ def test_inequality_mixed_datetime_precision_sampling(low_is_date, strict_bounda
 
     # Run
     synthesizer = run_copula(data, metadata, [constraint])
-    synthetic_data = synthesizer.sample(num_rows=40)['table']
+    synthetic_data = synthesizer.sample(num_rows=40)
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert

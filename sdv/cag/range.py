@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_object_dtype
 
-from sdv._utils import _cast_to_datetime64, _convert_to_timedelta, _create_unique_name
+from sdv._utils import _convert_to_timedelta, _create_unique_name
 from sdv.cag._errors import ConstraintNotMetError
 from sdv.cag._utils import (
     _get_is_valid_dict,
@@ -15,14 +15,15 @@ from sdv.cag._utils import (
     _validate_columns_not_primary_key,
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
+    chained_reverse_transform,
+    match_chained_datetime_precision,
 )
 from sdv.cag.base import BaseConstraint
 from sdv.constraints.utils import (
     _warn_if_timezone_aware_formats,
-    chained_reverse_transform,
+    cast_to_datetime64,
     compute_nans_column,
     get_datetime_diff,
-    match_chained_datetime_precision,
     revert_nans_columns,
 )
 
@@ -373,8 +374,8 @@ class Range(BaseConstraint):
                 strict_boundaries=self.strict_boundaries,
             )
             if is_object_dtype(self._dtype):
-                middle = _cast_to_datetime64(middle, self._middle_datetime_format)
-                high = _cast_to_datetime64(high, self._high_datetime_format)
+                middle = cast_to_datetime64(middle, self._middle_datetime_format)
+                high = cast_to_datetime64(high, self._high_datetime_format)
         else:
             middle = pd.Series(low_diff_column + low).astype(self._dtype)
             high = pd.Series(high_diff_column + middle.to_numpy()).astype(self._dtype)

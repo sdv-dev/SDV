@@ -716,13 +716,11 @@ def test_range_mixed_datetime_precision_sampling(
         high_values = (dates + pd.Timedelta(days=1)).strftime(date_format)
         formats = [date_format, timestamp_format, date_format]
 
-    data = {
-        'table': pd.DataFrame({
-            'LOW': low_values,
-            'MIDDLE': middle_values,
-            'HIGH': high_values,
-        })
-    }
+    data = pd.DataFrame({
+        'LOW': low_values,
+        'MIDDLE': middle_values,
+        'HIGH': high_values,
+    })
     metadata = Metadata.load_from_dict({
         'tables': {
             'table': {
@@ -742,7 +740,7 @@ def test_range_mixed_datetime_precision_sampling(
 
     # Run
     constraint.fit(data, metadata)
-    transformed = constraint.transform({'table': data['table'].copy()})['table']
+    transformed = constraint.transform(data.copy())
     synthesizer = run_copula(
         data,
         metadata,
@@ -755,7 +753,7 @@ def test_range_mixed_datetime_precision_sampling(
             )
         ],
     )
-    synthetic_data = synthesizer.sample(num_rows=40)['table']
+    synthetic_data = synthesizer.sample(num_rows=40)
     synthesizer.validate_constraints(synthetic_data=synthetic_data)
 
     # Assert

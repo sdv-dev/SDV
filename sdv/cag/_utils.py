@@ -9,8 +9,9 @@ from decimal import Decimal
 import numpy as np
 import pandas as pd
 
-from sdv._utils import _cast_to_datetime64, _cast_to_iterable
+from sdv._utils import _cast_to_iterable
 from sdv.cag._errors import ConstraintNotMetError
+from sdv.constraints.utils import cast_to_datetime64
 from sdv.errors import RefitWarning, SynthesizerInputError, TableNameError
 from sdv.metadata import Metadata
 
@@ -214,8 +215,8 @@ def get_datetime_diff(
             The difference between the high and low column values.
     """
     if dtype == 'O':
-        low = _cast_to_datetime64(low, low_datetime_format)
-        high = _cast_to_datetime64(high, high_datetime_format)
+        low = cast_to_datetime64(low, low_datetime_format)
+        high = cast_to_datetime64(high, high_datetime_format)
 
         if low_datetime_format != high_datetime_format:
             low, high = match_datetime_precision(
@@ -286,7 +287,7 @@ def upcast_datetime_to_higher_precision(data, source_format, target_format, use_
 
     values = np.asarray(data)
     if values.dtype.kind != 'M':
-        values = np.asarray(_cast_to_datetime64(values, source_format))
+        values = np.asarray(cast_to_datetime64(values, source_format))
 
     values = values.astype(f'datetime64[{source_unit}]')
     if use_highest:
@@ -361,7 +362,7 @@ def match_chained_datetime_precision(values, datetime_formats, strict_boundaries
     for index, (value, datetime_format) in enumerate(zip(values, datetime_formats)):
         value = np.asarray(value)
         if value.dtype.kind != 'M':
-            value = np.asarray(_cast_to_datetime64(value, datetime_format))
+            value = np.asarray(cast_to_datetime64(value, datetime_format))
 
         if precisions[index] < target_precision:
             value = upcast_datetime_to_higher_precision(
@@ -405,7 +406,7 @@ def chained_reverse_transform(low, diff_columns, datetime_formats, dtypes, stric
 
     low = np.asarray(low)
     if low.dtype.kind != 'M':
-        low = np.asarray(_cast_to_datetime64(low, datetime_formats[0]))
+        low = np.asarray(cast_to_datetime64(low, datetime_formats[0]))
 
     if precisions[0] < precisions[target_index]:
         low = upcast_datetime_to_higher_precision(
