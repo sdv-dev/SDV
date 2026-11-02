@@ -28,7 +28,7 @@ from sdv._utils import (
     _validate_datetime_format,
     get_possible_chars,
 )
-from sdv.errors import InvalidDataError
+from sdv.errors import InvalidDataError, RegexFormatWarning
 from sdv.logging import get_sdv_logger
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
@@ -1539,6 +1539,22 @@ class _SingleTableMetadata:
 
         return invalid
 
+    def _validate_regex_format(self, column, regex_format):
+        extracted = column.str.extract(regex_format)
+        regex_matches = pd.isna(column) | ~extracted.isna().any(axis=1)
+        if not all(regex_matches):
+            invalid_rows = column[~regex_matches]
+            examples = invalid_rows.iloc[:5].tolist()
+            formatted_examples = ', '.join(repr(value) for value in examples)
+            remaining = len(invalid_rows) - len(examples)
+            suffix = f' (+{remaining} more)' if remaining else ''
+            warnings.warn(
+                f"Some IDs in column '{column.name}' "
+                f'do not match the specified regex format ({regex_format}):\n'
+                f'{formatted_examples}{suffix}',
+                RegexFormatWarning,
+            )
+
     def _validate_column_data(self, column, sdtype_warnings):
         """Validate the values of the given column against its specified sdtype properties.
 
@@ -1575,6 +1591,13 @@ class _SingleTableMetadata:
 
         if sdtype in ('ordinal', 'categorical') and range_values is not None:
             out_of_range_values = set(column.dropna().unique()) - set(range_values)
+
+        if sdtype == 'id':
+            regex_format = column_metadata.get('regex_format')
+            if regex_format:
+                regex_error = self._validate_regex_format(column, regex_format)
+                if regex_error:
+                    errors.append(regex_error)
 
         # numerical values must be int/float, None or missing values
         # str/bool are not allowed

@@ -22,7 +22,7 @@ from sdv._utils import (
     _load_data_from_csv,
     _validate_boolean_parameter,
 )
-from sdv.errors import InvalidDataError
+from sdv.errors import InvalidDataError, RegexFormatWarning
 from sdv.logging import get_sdv_logger
 from sdv.metadata._single_table import INT_REGEX_ZERO_ERROR_MESSAGE, _SingleTableMetadata
 from sdv.metadata.errors import InvalidMetadataError
@@ -1173,10 +1173,14 @@ class Metadata:
         for table_name, table_data in data.items():
             table_sdtype_warnings = defaultdict(list)
             try:
-                with warnings.catch_warnings(record=True):
+                with warnings.catch_warnings(record=True) as captured_warnings:
                     self.tables[table_name].validate_data(table_data, table_sdtype_warnings)
                     if not self.tables[table_name]._check_data_columns_order(table_data.columns):
                         tables_with_mismatching_columns_order.append(table_name)
+
+                    for warning in captured_warnings:
+                        if issubclass(warning.category, RegexFormatWarning):
+                            warnings.warn(warning.message, stacklevel=2)
 
             except InvalidDataError as error:
                 if INT_REGEX_ZERO_ERROR_MESSAGE in str(error) and len(self.tables) > 1:

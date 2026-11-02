@@ -74,6 +74,10 @@ class SDVVersionWarning(UserWarning):
     """
 
 
+class RegexFormatWarning(UserWarning):
+    """Values do not match the specified regex format."""
+
+
 class VersionError(ValueError):
     """Raised when loading a synthesizer from a newer version into an older one."""
 
