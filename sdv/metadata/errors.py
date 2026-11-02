@@ -7,3 +7,7 @@ class InvalidMetadataError(Exception):
 
 class MetadataNotFittedError(InvalidMetadataError):
     """Error to raise when Metadata is used before fitting."""
+
+
+class RegexFormatWarning(UserWarning):
+    """Values do not match the specified regex format."""

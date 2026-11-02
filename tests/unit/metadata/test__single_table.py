@@ -13,7 +13,7 @@ import pytest
 
 from sdv.errors import InvalidDataError
 from sdv.metadata._single_table import _SingleTableMetadata
-from sdv.metadata.errors import InvalidMetadataError
+from sdv.metadata.errors import InvalidMetadataError, RegexFormatWarning
 from tests.utils import catch_sdv_logs
 
 
@@ -680,6 +680,89 @@ class Test_SingleTableMetadata:
 
         # Assert
         assert instance.columns == {'a': {'sdtype': 'ordinal'}}
+
+    def test__handle_regex_format_mismatch(self):
+        """Test that _handle_regex_format_mismatch issues a warning."""
+        # Setup
+        instance = _SingleTableMetadata()
+        message = 'Test message'
+        regex_format = '[A-Z]{2}-[0-9A-Z]{5}'
+
+        # Run and Assert
+        with pytest.warns(RegexFormatWarning, match=re.escape(message)):
+            instance._handle_regex_format_mismatch(message, regex_format)
+
+    def test__validate_regex_format_mock(self):
+        """Test `_validate_regex_format` calls `_handle_regex_format_mismatch`."""
+        # Setup
+        instance = _SingleTableMetadata()
+        instance._handle_regex_format_mismatch = Mock()
+        column = pd.Series(['AB-12345', '123', None, '134'], name='id')
+        regex_format = '[A-Z]{2}-[0-9A-Z]{5}'
+        message = (
+            "Some IDs in column 'id' "
+            f'do not match the specified regex format ({regex_format}):\n'
+            "'123', '134'"
+        )
+
+        # Run
+        instance._validate_regex_format(column, regex_format)
+
+        # Assert
+        instance._handle_regex_format_mismatch.assert_called_once_with(message, regex_format)
+
+    @pytest.mark.parametrize(
+        'values, regex_format, expected_examples',
+        [
+            pytest.param(
+                ['AB-12345', 'CD-67890', None],
+                '(?P<group1>[A-Z]{2})-[0-9A-Z]{5}',
+                None,
+                id='valid',
+            ),
+            pytest.param(
+                ['AB-12345', '123', None, '134'],
+                '[A-Z]{2}-[0-9A-Z]{5}',
+                "'123', '134'",
+                id='invalid',
+            ),
+            pytest.param(
+                ['123', '134', '145', '100', '199', '203', '405'],
+                '[A-Z]{5}',
+                "'123', '134', '145', '100', '199' (+2 more)",
+                id='truncated',
+            ),
+            pytest.param(
+                [1, 123, 2],
+                '[0-9]{3}',
+                '1, 2',
+                id='integers',
+            ),
+        ],
+    )
+    @patch('sdv.metadata._single_table.warnings.warn')
+    def test__validate_regex_format(self, mock_warn, values, regex_format, expected_examples):
+        """Test ``_validate_regex_format`` warns once with invalid non-null IDs."""
+        # Setup
+        instance = _SingleTableMetadata()
+        column = pd.Series(values, name='id')
+
+        # Run
+        instance._validate_regex_format(column, regex_format)
+
+        # Assert
+        if expected_examples is None:
+            mock_warn.assert_not_called()
+        else:
+            expected_warning = (
+                "Some IDs in column 'id' do not match the specified "
+                f'regex format ({regex_format}):\n'
+                f'{expected_examples}'
+            )
+            mock_warn.assert_called_once_with(
+                expected_warning,
+                category=RegexFormatWarning,
+            )
 
     def test_update_column_add_extra_value(self):
         """Test that ``update_column`` updates only the keyword args for the given column."""
@@ -3104,6 +3187,10 @@ class Test_SingleTableMetadata:
                 pd.Series(['01/2015', '05/2028', '03/2022'], name='datetime'),
                 ["Out of range values found for datetime column 'datetime': ['01/2015']."],
             ),
+            (
+                pd.Series(['12345', '67890', 'EF-ABCDE'], name='id'),
+                [],
+            ),
         ],
     )
     def test__validate_column_data(self, column, expected_errors):
@@ -3116,6 +3203,7 @@ class Test_SingleTableMetadata:
                 'num_decimal': {'sdtype': 'numerical', 'decimal_places': 2},
                 'categorical': {'sdtype': 'categorical', 'range_values': ['a', 'b', 'c']},
                 'ordinal': {'sdtype': 'ordinal', 'range_values': ['LOW', 'MEDIUM']},
+                'id': {'sdtype': 'id', 'regex_format': '[A-Z]{2}-[0-9A-Z]{5}'},
                 'datetime': {
                     'sdtype': 'datetime',
                     'datetime_format': '%m/%Y',
@@ -3123,6 +3211,7 @@ class Test_SingleTableMetadata:
                 },
             }
         })
+        instance._validate_regex_format = Mock(return_value=None)
 
         # Run
         sdtype_warnings = {}
@@ -3131,6 +3220,10 @@ class Test_SingleTableMetadata:
         # Assert
         assert sdtype_warnings == {}
         assert errors == expected_errors
+        if column.name == 'id':
+            instance._validate_regex_format.assert_called_once_with(column, '[A-Z]{2}-[0-9A-Z]{5}')
+        else:
+            instance._validate_regex_format.assert_not_called()
 
     def test_validate_data_wrong_type(self):
         """Test error is raised if data is not ``pd.DataFrame``."""
