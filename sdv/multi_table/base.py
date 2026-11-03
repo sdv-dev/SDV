@@ -382,6 +382,8 @@ class BaseMultiTableSynthesizer:
 
     def _reverse_transform_constraints(self, sampled_data):
         """Reverse transform constraints after sampling."""
+        sample_sizes = {table: len(table_data) for table, table_data in sampled_data.items()}
+
         if getattr(self, '_composite_keys', None):
             sampled_data = self._composite_keys.reverse_transform(sampled_data)
 
@@ -390,6 +392,10 @@ class BaseMultiTableSynthesizer:
 
         for constraint in reversed(self.constraints):
             sampled_data = constraint.reverse_transform(sampled_data)
+            sampled_data = {
+                table: sampled_data[table][is_valid]
+                for table, is_valid in constraint.is_valid(sampled_data).items()
+            }
 
         from sdv.utils.utils import (
             drop_unknown_references,  # noqa: F401 Lazy import to fix circular dependency
@@ -397,6 +403,13 @@ class BaseMultiTableSynthesizer:
 
         # issue
         sampled_data = drop_unknown_references(sampled_data, self._original_metadata, verbose=False)
+
+        if any(len(sampled_data[table]) < sample_sizes[table] for table in sampled_data):
+            warnings.warn(
+                'Could not sample the requested number of rows. Rows were dropped due to '
+                'invalid constraints.'
+            )
+
         return sampled_data
 
     def get_table_parameters(self, table_name):
