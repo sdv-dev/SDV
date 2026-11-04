@@ -404,10 +404,15 @@ class BaseMultiTableSynthesizer:
         # issue
         sampled_data = drop_unknown_references(sampled_data, self._original_metadata, verbose=False)
 
-        if any(len(sampled_data[table]) < sample_sizes[table] for table in sampled_data):
+        sized_tables = set(sampled_data.keys()).intersection(sample_sizes.keys())
+        tables_with_dropped_rows = sorted(
+            table for table in sized_tables if len(sampled_data[table]) < sample_sizes[table]
+        )
+        if any(len(sampled_data[table]) < sample_sizes[table] for table in sized_tables):
+            tables_with_dropped_rows = "', '".join(tables_with_dropped_rows)
             warnings.warn(
-                'Could not sample the requested number of rows. Rows were dropped due to '
-                'invalid constraints.'
+                'Could not sample the requested number of rows for tables '
+                f"'{tables_with_dropped_rows}'. Rows were dropped due to invalid constraints."
             )
 
         return sampled_data

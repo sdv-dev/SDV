@@ -2181,8 +2181,8 @@ class TestBaseMultiTableSynthesizer:
 
         # Run
         expected_msg = re.escape(
-            'Could not sample the requested number of rows. Rows were dropped due to '
-            'invalid constraints.'
+            "Could not sample the requested number of rows for tables 'table1', 'table2'. "
+            'Rows were dropped due to invalid constraints.'
         )
         with pytest.warns(match=expected_msg):
             reverse_transformed = BaseMultiTableSynthesizer._reverse_transform_constraints(
