@@ -30,7 +30,7 @@ from sdv._utils import (
 )
 from sdv.errors import InvalidDataError
 from sdv.logging import get_sdv_logger
-from sdv.metadata.errors import InvalidMetadataError
+from sdv.metadata.errors import InvalidMetadataError, RegexFormatWarning
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.utils import (
     _format_column_metadata,
@@ -1539,6 +1539,30 @@ class _SingleTableMetadata:
 
         return invalid
 
+    def _handle_regex_format_mismatch(self, message, regex_format):
+        """Warn about a regex mismatch."""
+        warnings.warn(message, category=RegexFormatWarning)
+
+    def _validate_regex_format(self, column, regex_format):
+        """Warn when non-null IDs do not fully match the regex format."""
+        string_values = column.astype('string')
+        regex_matches = column.isna() | string_values.str.fullmatch(regex_format, na=False)
+        invalid_rows = column[~regex_matches]
+        if invalid_rows.empty:
+            return
+
+        examples = invalid_rows.iloc[:5].tolist()
+        formatted_examples = ', '.join(repr(value) for value in examples)
+        remaining = len(invalid_rows) - len(examples)
+        suffix = f' (+{remaining} more)' if remaining else ''
+        message = (
+            f"Some IDs in column '{column.name}' "
+            f'do not match the specified regex format ({regex_format}):\n'
+            f'{formatted_examples}{suffix}'
+        )
+
+        return self._handle_regex_format_mismatch(message, regex_format)
+
     def _validate_column_data(self, column, sdtype_warnings):
         """Validate the values of the given column against its specified sdtype properties.
 
@@ -1575,6 +1599,13 @@ class _SingleTableMetadata:
 
         if sdtype in ('ordinal', 'categorical') and range_values is not None:
             out_of_range_values = set(column.dropna().unique()) - set(range_values)
+
+        if sdtype == 'id':
+            regex_format = column_metadata.get('regex_format')
+            if regex_format:
+                regex_error = self._validate_regex_format(column, regex_format)
+                if regex_error:
+                    errors.append(regex_error)
 
         # numerical values must be int/float, None or missing values
         # str/bool are not allowed
