@@ -35,6 +35,7 @@ PRECISION_LEVELS = {
     '%X': 0,  # Locale-based time
 }
 _DATETIME_UNITS = ('Y', 'M', 'D', 'h', 'm', 's', 'us')
+MAXIMUM_PRECISION = 8
 
 
 def cast_to_datetime64(value, datetime_format=None, ignore_timezone=True):
@@ -382,7 +383,9 @@ def match_chained_datetime_precision(values, datetime_formats, strict_boundaries
             Datetime arrays with matching precision.
     """
     precisions = [
-        get_datetime_format_precision(datetime_format) if datetime_format is not None else 8
+        get_datetime_format_precision(datetime_format)
+        if datetime_format is not None
+        else MAXIMUM_PRECISION
         for datetime_format in datetime_formats
     ]  # If datetime_format is None, assume maximum precision (8)
     target_index = np.argmax(precisions)
