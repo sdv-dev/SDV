@@ -1,5 +1,16 @@
 # Release Notes
 
+## v2.2.0 - 2026-11-6
+
+### New Features
+
+* Metadata's `validate_data` should produce a warning when the real data doesn't match the provided Regex - Issue [#3033](https://github.com/sdv-dev/SDV/issues/3033) by @R-Palazzo
+
+### Bugs Fixed
+
+* `Inequality`/`Range` cannot sample overlapped date/datetime columns - Issue [#3045](https://github.com/sdv-dev/SDV/issues/3045) by @R-Palazzo
+* Multi-table constraints should reject invalid rows after reverse transforming - Issue [#3043](https://github.com/sdv-dev/SDV/issues/3043) by @frances-h
+
 ## v2.1.0 - 2026-10-30
 
 ### Maintenance

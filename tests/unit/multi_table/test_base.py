@@ -3,6 +3,7 @@ import os
 import re
 import warnings
 from collections import defaultdict
+from copy import deepcopy
 from datetime import date, datetime
 from unittest.mock import ANY, Mock, call, patch
 
@@ -29,6 +30,7 @@ from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.ctgan import CTGANSynthesizer
 from tests.utils import (
+    DataFrameDictMatcher,
     catch_sdv_logs,
     get_multi_table_data,
     get_multi_table_metadata,
@@ -2089,9 +2091,25 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         instance = Mock()
         del instance._composite_keys
-        data = {'table1': Mock(), 'table2': Mock()}
+        data = {'table1': pd.DataFrame(index=range(5)), 'table2': pd.DataFrame(index=range(5))}
         constraint1 = Mock()
+        constraint1.reverse_transform.return_value = {
+            'table1': pd.DataFrame(index=range(5)),
+            'table2': pd.DataFrame(index=range(5)),
+        }
+        constraint1.is_valid.return_value = {
+            'table1': pd.Series(True, index=range(5)),
+            'table2': pd.Series(True, index=range(5)),
+        }
         constraint2 = Mock()
+        constraint2.reverse_transform.return_value = {
+            'table1': pd.DataFrame(index=range(5)),
+            'table2': pd.DataFrame(index=range(5)),
+        }
+        constraint2.is_valid.return_value = {
+            'table1': pd.Series(True, index=range(5)),
+            'table2': pd.Series(True, index=range(5)),
+        }
         instance.constraints = [constraint1, constraint2]
         drop_unknown_references.return_value = constraint1.reverse_transform.return_value
 
@@ -2101,14 +2119,93 @@ class TestBaseMultiTableSynthesizer:
         )
 
         # Assert
-        constraint2.reverse_transform.assert_called_once_with(data)
+        constraint2.reverse_transform.assert_called_once_with(DataFrameDictMatcher(data))
         constraint1.reverse_transform.assert_called_once_with(
-            constraint2.reverse_transform.return_value
+            DataFrameDictMatcher(constraint2.reverse_transform.return_value)
         )
         drop_unknown_references.assert_called_once_with(
-            constraint1.reverse_transform.return_value, instance._original_metadata, verbose=False
+            DataFrameDictMatcher(constraint1.reverse_transform.return_value),
+            instance._original_metadata,
+            verbose=False,
         )
-        assert reverse_transformed == constraint1.reverse_transform.return_value
+
+        expected = constraint1.reverse_transform.return_value
+        assert set(reverse_transformed.keys()) == {'table1', 'table2'}
+        pd.testing.assert_frame_equal(reverse_transformed['table1'], expected['table1'])
+        pd.testing.assert_frame_equal(reverse_transformed['table2'], expected['table2'])
+
+    @patch('sdv.utils.utils.drop_unknown_references')
+    def test__reverse_transform_constraints_warns_for_dropped_rows(self, drop_unknown_references):
+        """Test reversing transforming constraints warns if rows were dropped."""
+        # Setup
+        instance = Mock()
+        del instance._composite_keys
+        data = {
+            'table1': pd.DataFrame({
+                'col1': list(range(5)),
+                'col2': ['A', 'A', 'B', 'B', 'C'],
+            }),
+            'table2': pd.DataFrame({
+                'col1': list(range(5)) * 3,
+            }),
+        }
+        constraint = Mock()
+        constraint.reverse_transform.return_value = deepcopy(data)
+        constraint.is_valid.return_value = {
+            'table1': pd.Series([True] * 4 + [False]),
+            'table2': pd.Series([False, False] + [True] * 12 + [False]),
+        }
+        instance.constraints = [constraint]
+
+        valid_constraint_data = {
+            'table1': pd.DataFrame({
+                'col1': list(range(4)),
+                'col2': ['A', 'A', 'B', 'B'],
+            }),
+            'table2': pd.DataFrame(
+                {
+                    'col1': [2, 3, 4] + list(range(5)) + list(range(4)),
+                },
+                index=list(range(2, 14)),
+            ),
+        }
+        drop_unknown_references.return_value = {
+            'table1': pd.DataFrame({
+                'col1': range(4),
+                'col2': ['A', 'A', 'B', 'B'],
+            }),
+            'table2': pd.DataFrame({
+                'col1': [2, 3] + list(range(4)) * 2,
+            }),
+        }
+
+        # Run
+        expected_msg = re.escape(
+            "Could not sample the requested number of rows for tables 'table1', 'table2'. "
+            'Rows were dropped due to invalid constraints.'
+        )
+        with pytest.warns(match=expected_msg):
+            reverse_transformed = BaseMultiTableSynthesizer._reverse_transform_constraints(
+                instance, data
+            )
+
+        # Assert
+        constraint.reverse_transform.assert_called_once_with(DataFrameDictMatcher(data))
+        constraint.is_valid.assert_called_once_with(DataFrameDictMatcher(data))
+        drop_unknown_references.assert_called_once_with(
+            DataFrameDictMatcher(valid_constraint_data), instance._original_metadata, verbose=False
+        )
+        assert set(reverse_transformed.keys()) == {'table1', 'table2'}
+        expected_table1 = pd.DataFrame({
+            'col1': range(4),
+            'col2': ['A', 'A', 'B', 'B'],
+        })
+        expected_table2 = pd.DataFrame({
+            'col1': [2, 3] + list(range(4)) * 2,
+        })
+
+        pd.testing.assert_frame_equal(reverse_transformed['table1'], expected_table1)
+        pd.testing.assert_frame_equal(reverse_transformed['table2'], expected_table2)
 
     @patch('sdv.multi_table.base.version')
     def test_get_info(self, mock_version):

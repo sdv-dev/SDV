@@ -1,5 +1,6 @@
 import json
 import re
+import warnings
 from copy import deepcopy
 from unittest.mock import Mock, patch
 
@@ -8,7 +9,7 @@ import pytest
 
 from sdv.datasets.demo import download_demo
 from sdv.metadata._single_table import _SingleTableMetadata
-from sdv.metadata.errors import InvalidMetadataError
+from sdv.metadata.errors import InvalidMetadataError, RegexFormatWarning
 from sdv.metadata.metadata import Metadata
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from tests.utils import (
@@ -2253,3 +2254,115 @@ def test_add_relationship_mismatched_primary_key(parent_primary_key, child_forei
             parent_primary_key=parent_primary_key,
             child_foreign_key=child_foreign_key,
         )
+
+
+@pytest.mark.parametrize(
+    'regex_format',
+    [
+        pytest.param(
+            '(?P<group1>[A-Z]{2})-[0-9A-Z]{5}',
+            id='named-group',
+        ),
+        pytest.param(
+            '([A-Z]{2})-[0-9A-Z]{5}',
+            id='unnamed-group',
+        ),
+        pytest.param(
+            '[A-Z]{2}-[0-9A-Z]{5}',
+            id='no-group',
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    'values, expected_examples',
+    [
+        pytest.param(
+            ['AB-12345', 'CD-67890', 'EF-54321'],
+            None,
+            id='valid',
+        ),
+        pytest.param(
+            ['123', '134', '145', '100', '199'],
+            "'123', '134', '145', '100', '199'",
+            id='invalid',
+        ),
+        pytest.param(
+            ['123', '134', '145', '100', '199', '203', '405'],
+            "'123', '134', '145', '100', '199' (+2 more)",
+            id='invalid-truncated',
+        ),
+        pytest.param(
+            ['AB-12345', '123', 'CD-67890', '134'],
+            "'123', '134'",
+            id='mixed',
+        ),
+    ],
+)
+def test_validate_data_with_regexes(regex_format, values, expected_examples):
+    """Test `validate_data` with regex warnings."""
+    # Setup
+    data = {'table': pd.DataFrame({'id': values})}
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'columns': {
+                    'id': {'sdtype': 'id', 'regex_format': regex_format},
+                },
+                'primary_key': 'id',
+            },
+        },
+    })
+
+    # Run
+    with warnings.catch_warnings(record=True) as captured_warnings:
+        warnings.simplefilter('always', RegexFormatWarning)
+        metadata.validate_data(data)
+
+    # Assert
+    regex_warnings = [
+        warning for warning in captured_warnings if issubclass(warning.category, RegexFormatWarning)
+    ]
+
+    if expected_examples is None:
+        assert not regex_warnings
+    else:
+        assert len(regex_warnings) == 1
+        expected_warning = (
+            "Table 'table': Some IDs in column 'id' do not match the specified "
+            f'regex format ({regex_format}):\n'
+            f'{expected_examples}'
+        )
+        assert str(regex_warnings[0].message) == expected_warning
+
+
+def test_validate_table_with_regex():
+    """Test `validate_table` with regex warnings."""
+    # Setup
+    data = {'table': pd.DataFrame({'id': ['AB-12345', '123', 'CD-67890', '134']})}
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'columns': {
+                    'id': {'sdtype': 'id', 'regex_format': '[A-Z]{2}-[0-9A-Z]{5}'},
+                },
+                'primary_key': 'id',
+            },
+        },
+    })
+    expected_message = (
+        "Table 'table': Some IDs in column 'id' do not match the specified "
+        'regex format ([A-Z]{2}-[0-9A-Z]{5}):\n'
+        "'123', '134'"
+    )
+
+    # Run
+    with warnings.catch_warnings(record=True) as captured_warnings:
+        warnings.simplefilter('always', RegexFormatWarning)
+        metadata.validate_table(data['table'])
+
+    # Assert
+    regex_warnings = [
+        warning for warning in captured_warnings if issubclass(warning.category, RegexFormatWarning)
+    ]
+    assert len(regex_warnings) == 1
+    assert str(regex_warnings[0].message) == expected_message
