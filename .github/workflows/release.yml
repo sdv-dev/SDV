@@ -2,9 +2,6 @@ name: Release
 on:
   release:
     types: [published]
-    branches:
-      - main
-      - stable
 
   workflow_dispatch:
     inputs:
@@ -23,9 +20,24 @@ jobs:
     permissions:
       id-token: write
     steps:
+      - name: Set main/stable branch targets from tag
+        id: version
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if [[ "$EVENT_NAME" == "release" && "$RELEASE_TAG" == v1* ]]; then
+            echo "main=v1.38.x_main" >> "$GITHUB_OUTPUT"
+            echo "stable=v1.38.x_stable" >> "$GITHUB_OUTPUT"
+          else
+            echo "main=main" >> "$GITHUB_OUTPUT"
+            echo "stable=stable" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.candidate && 'main' || 'stable' }}
+          ref: ${{ inputs.candidate && steps.version.outputs.main || steps.version.outputs.stable }}
 
       - name: Set up latest Python
         uses: actions/setup-python@v6
@@ -72,7 +84,7 @@ jobs:
             sdv/__init__.py
             pyproject.toml
           draft: false
-          base: main
+          base: ${{ steps.version.outputs.main }}
 
       - name: Enable Pull Request Automerge
         if: ${{ steps.cpr.outputs.pull-request-operation == 'created' }}
