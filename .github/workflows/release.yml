@@ -2,9 +2,6 @@ name: Release
 on:
   release:
     types: [published]
-    branches:
-      - main
-      - stable
 
   workflow_dispatch:
     inputs:
@@ -25,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.candidate && 'main' || 'stable' }}
+          ref: ${{ inputs.candidate && 'v1.38.x_main' || 'v1.38.x_stable' }}
 
       - name: Set up latest Python
         uses: actions/setup-python@v6
@@ -72,7 +69,7 @@ jobs:
             sdv/__init__.py
             pyproject.toml
           draft: false
-          base: main
+          base: v1.38.x_main
 
       - name: Enable Pull Request Automerge
         if: ${{ steps.cpr.outputs.pull-request-operation == 'created' }}
