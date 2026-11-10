@@ -171,12 +171,12 @@ publish: dist publish-confirm ## package and upload a release
 	twine upload dist/*
 
 .PHONY: git-merge-main-stable
-git-merge-main-stable: ## Merge main into stable
-	git checkout v1.38.x_stable || git checkout -b stable
-	git merge --no-ff v.1.38.x_main -m "make release-tag: Merge branch 'main' into stable"
+git-merge-main-stable: ## Merge v1 main into v1 stable
+	git checkout v1.38.x_stable || git checkout -b v1.38.x_stable
+	git merge --no-ff v1.38.x_main -m "make release-tag: Merge branch 'v1.38.x_main' into v1.38.x_stable"
 
 .PHONY: git-merge-stable-main
-git-merge-stable-main: ## Merge stable into main
+git-merge-stable-main: ## Merge v1 stable into v1 main
 	git checkout v1.38.x_main
 	git merge v1.38.x_stable
 
