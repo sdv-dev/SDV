@@ -34,60 +34,8 @@ jobs:
             echo "main=main" >> "$GITHUB_OUTPUT"
             echo "stable=stable" >> "$GITHUB_OUTPUT"
           fi
-
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ inputs.candidate && steps.version.outputs.main || steps.version.outputs.stable }}
-
-      - name: Set up latest Python
-        uses: actions/setup-python@v6
-        with:
-          python-version-file: 'pyproject.toml'
-
-      - name: Install dependencies
+      
+      - name: Get stable and main values
         run: |
-            make upgradepip
-            python -m pip install .[dev]
-
-      - name: Create wheel
-        run: |
-          make dist
-
-      - name: Publish a Python distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: ${{ inputs.test_pypi && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
-
-      - name: Bump version to next candidate
-        if: ${{ inputs.candidate && !inputs.test_pypi }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          bump-my-version bump candidate --no-tag --no-commit
-
-      - name: Create pull request
-        if: ${{ inputs.candidate && !inputs.test_pypi }}
-        id: cpr
-        uses: peter-evans/create-pull-request@v8
-        with:
-          token: ${{ secrets.GH_ACCESS_TOKEN }}
-          commit-message: bumpversion-candidate
-          committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
-          author: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>
-          signoff: false
-          delete-branch: true
-          title: Automated Bump Version Candidate
-          body: "This is an auto-generated PR that bumps the version to the next candidate."
-          branch: bumpversion-candidate-update
-          branch-suffix: short-commit-hash
-          add-paths: |
-            sdv/__init__.py
-            pyproject.toml
-          draft: false
-          base: ${{ steps.version.outputs.main }}
-
-      - name: Enable Pull Request Automerge
-        if: ${{ steps.cpr.outputs.pull-request-operation == 'created' }}
-        run: gh pr merge "${{ steps.cpr.outputs.pull-request-number }}" --squash --admin
-        env:
-          GH_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+          echo "main branch is: ${{steps.version.outputs.main }}"
+          echo "stable branch is: ${{ steps.version.outputs.stable }}"
