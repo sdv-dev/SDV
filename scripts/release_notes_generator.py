@@ -3,6 +3,7 @@
 import argparse
 from collections import defaultdict
 
+from packaging.version import Version
 from scripts.github_client import GithubClient
 
 LABEL_TO_HEADER = {
@@ -144,12 +145,22 @@ def update_release_notes(release_notes):
         new_history_file.write(new_notes)
 
 
+def check_release_version(version):
+    """Check that this is a 1.x release."""
+    version = Version(version)
+    if version >= Version('2.0.0'):
+        raise ValueError(
+            'Trying to release a 2.0 version from the 1.38.x_main branch. Use `main` instead.'
+        )
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-v', '--version', type=str, help='Release version number (ie. v1.0.1)')
     parser.add_argument('-d', '--date', type=str, help='Date of release in format YYYY-MM-DD')
     args = parser.parse_args()
     release_number = args.version
+    check_release_version(release_number)
     release_issues = _get_issues_by_milestone(release_number)
     issues_by_category = _get_issues_by_category(release_issues)
     release_notes = _create_release_notes(issues_by_category, release_number, args.date)

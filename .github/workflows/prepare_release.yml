@@ -6,7 +6,7 @@ on:
       branch:
         description: 'Branch to merge release notes and code analysis into.'
         required: true
-        default: 'main'
+        default: 'v1.38.x_main'
       version:
         description:
           'Version to use for the release. Must be in format: X.Y.Z.'

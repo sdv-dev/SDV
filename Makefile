@@ -171,14 +171,14 @@ publish: dist publish-confirm ## package and upload a release
 	twine upload dist/*
 
 .PHONY: git-merge-main-stable
-git-merge-main-stable: ## Merge main into stable
-	git checkout stable || git checkout -b stable
-	git merge --no-ff main -m"make release-tag: Merge branch 'main' into stable"
+git-merge-main-stable: ## Merge v1 main into v1 stable
+	git checkout v1.38.x_stable || git checkout -b v1.38.x_stable
+	git merge --no-ff v1.38.x_main -m "make release-tag: Merge branch 'v1.38.x_main' into v1.38.x_stable"
 
 .PHONY: git-merge-stable-main
-git-merge-stable-main: ## Merge stable into main
-	git checkout main
-	git merge stable
+git-merge-stable-main: ## Merge v1 stable into v1 main
+	git checkout v1.38.x_main
+	git merge v1.38.x_stable
 
 .PHONY: git-push
 git-push: ## Simply push the repository to github
@@ -186,7 +186,7 @@ git-push: ## Simply push the repository to github
 
 .PHONY: git-push-tags-stable
 git-push-tags-stable: ## Push tags and stable to github
-	git push --tags origin stable
+	git push --tags origin v1.38.x_stable
 
 .PHONY: bumpversion-release
 bumpversion-release: ## Bump the version to the next release
@@ -211,12 +211,12 @@ bumpversion-major: ## Bump the version the next major skipping the release
 .PHONY: bumpversion-revert
 bumpversion-revert: ## Undo a previous bumpversion-release
 	git tag --delete $(shell git tag --points-at HEAD)
-	git checkout main
-	git branch -D stable
+	git checkout v1.38.x_main
+	git branch -D v1.38.x_stable
 
 CLEAN_DIR := $(shell git status --short | grep -v ??)
 CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
-CHANGELOG_LINES := $(shell git diff HEAD..origin/stable HISTORY.md 2>&1 | wc -l)
+CHANGELOG_LINES := $(shell git diff HEAD..origin/v1.38.x_stable HISTORY.md 2>&1 | wc -l)
 
 .PHONY: check-clean
 check-clean: ## Check if the directory has uncommitted changes
@@ -226,8 +226,8 @@ endif
 
 .PHONY: check-main
 check-main: ## Check if we are in main branch
-ifneq ($(CURRENT_BRANCH),main)
-	$(error Please make the release from main branch\n)
+ifneq ($(CURRENT_BRANCH),v1.38.x_main)
+	$(error Please make the release from v1.38.x_main branch\n)
 endif
 
 .PHONY: check-history
