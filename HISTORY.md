@@ -1,5 +1,15 @@
 # Release Notes
 
+## v1.39.0 - 2026-11-12
+
+### Bugs Fixed
+
+* [Backport] `Inequality`/`Range` cannot sample overlapped date/datetime columns - Issue [#3052](https://github.com/sdv-dev/SDV/issues/3052) by @R-Palazzo
+
+### Maintenance
+
+* Update release workflow to handle v1.38.x releases - Issue [#3049](https://github.com/sdv-dev/SDV/issues/3049) by @frances-h
+
 ## v1.38.5 - 2026-09-28
 
 ### New Features
