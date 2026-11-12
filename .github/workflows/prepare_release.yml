@@ -6,7 +6,7 @@ on:
       branch:
         description: 'Branch to merge release notes and code analysis into.'
         required: true
-        default: 'main'
+        default: 'v1.38.x_main'
       version:
         description:
           'Version to use for the release. Must be in format: X.Y.Z.'
@@ -26,7 +26,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-            python -m pip install --upgrade pip
+            make upgradepip
             python -m pip install requests==2.31.0
             python -m pip install bandit==1.9.2
             python -m pip install packaging

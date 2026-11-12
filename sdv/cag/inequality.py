@@ -18,6 +18,7 @@ from sdv.cag.base import BaseConstraint
 from sdv.constraints.utils import (
     _warn_if_timezone_aware_formats,
     cast_to_datetime64,
+    chained_reverse_transform,
     compute_nans_column,
     get_datetime_diff,
     match_datetime_precision,
@@ -126,20 +127,16 @@ class Inequality(BaseConstraint):
     def _get_valid_table_data(self, table_data, metadata, table_name):
         low, high = self._get_data(table_data)
         is_datetime = self._get_is_datetime(metadata, table_name)
-        if is_datetime and is_object_dtype(table_data[self._low_column_name]):
+        if is_datetime:
             low_format = self._get_datetime_format(metadata, table_name, self._low_column_name)
             high_format = self._get_datetime_format(metadata, table_name, self._high_column_name)
-            low = cast_to_datetime64(low, low_format)
-            high = cast_to_datetime64(high, high_format)
-
-            format_matches = bool(low_format == high_format)
-            if not format_matches:
-                low, high = match_datetime_precision(
-                    low=low,
-                    high=high,
-                    low_datetime_format=low_format,
-                    high_datetime_format=high_format,
-                )
+            low, high = match_datetime_precision(
+                low=low,
+                high=high,
+                low_datetime_format=low_format,
+                high_datetime_format=high_format,
+                strict_boundaries=self.strict_boundaries,
+            )
 
         return pd.isna(low) | pd.isna(high) | self._operator(high, low)
 
@@ -243,6 +240,7 @@ class Inequality(BaseConstraint):
                 low=low,
                 high_datetime_format=self._high_datetime_format,
                 low_datetime_format=self._low_datetime_format,
+                strict_boundaries=self.strict_boundaries,
             )
         else:
             diff_column = high - low
@@ -292,10 +290,22 @@ class Inequality(BaseConstraint):
             diff_column = _convert_to_timedelta(diff_column)
 
         low = table_data[self._low_column_name].to_numpy()
-        if self._is_datetime and is_object_dtype(self._dtype):
-            table_data[self._low_column_name] = low = cast_to_datetime64(low)
+        if self._is_datetime:
+            (high,) = chained_reverse_transform(
+                low,
+                [diff_column],
+                [self._low_datetime_format, self._high_datetime_format],
+                dtypes=[self._dtype],
+                strict_boundaries=self.strict_boundaries,
+            )
+            if is_object_dtype(self._dtype):
+                table_data[self._low_column_name] = cast_to_datetime64(
+                    low, self._low_datetime_format
+                )
+        else:
+            high = pd.Series(diff_column + low).astype(self._dtype)
 
-        table_data[self._high_column_name] = pd.Series(diff_column + low).astype(self._dtype)
+        table_data[self._high_column_name] = high.to_numpy()
         table_data = revert_nans_columns(table_data, self._nan_column_name)
 
         data[table_name] = table_data.drop(self._diff_column_name, axis=1)

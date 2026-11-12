@@ -14,7 +14,7 @@ The process of releasing a new version involves several steps:
 
 6. [Check the release](#check-the-release)
 
-7. [Update stable branch and bump version](#update-stable-branch-and-bump-version)
+7. [Update v1.38.x_stable branch and bump version](#update-v1.38.x_stable-branch-and-bump-version)
 
 8. [Create the Release on GitHub](#create-the-release-on-github)
 
@@ -29,7 +29,7 @@ Clone the project and install the development requirements before start the rele
 ```bash
 git clone https://github.com/sdv-dev/SDV.git
 cd SDV
-git checkout main
+git checkout v1.38.x_main
 make install-develop
 make install-readme
 ```
@@ -60,7 +60,7 @@ The execution has finished with no errors, 0 test skipped and 7820 warnings.
 
 1. On the SDV GitHub page, navigate to the [Actions][actions] tab.
 2. Select the `Release` action.
-3. Run it on the main branch. Make sure `Release candidate` is checked and `Test PyPI` is not.
+3. Run it on the v1.38.x_main branch. Make sure `Release candidate` is checked and `Test PyPI` is not.
 4. Check on [PyPI][sdv-pypi] to assure the release candidate was successfully uploaded.
   - You should see X.Y.ZdevN PRE-RELEASE
 
@@ -108,36 +108,37 @@ The issue list per milestone can be found [here][milestones].
 
 [milestones]: https://github.com/sdv-dev/SDV/milestones
 
-Put the pull request up for review and get 2 approvals to merge into `main`.
+Put the pull request up for review and get 2 approvals to merge into `v1.38.x_main`.
 
 ## Check the release
-Once HISTORY.md has been updated on `main`, check if the release can be made:
+Once HISTORY.md has been updated on `v1.38.x_main`, check if the release can be made:
 
 ```bash
 make check-release
 ```
 
-## Update stable branch and bump version
-The `stable` branch needs to be updated with the changes from `main` and the version needs to be bumped.
+## Update v1.38.x_stable branch and bump version
+The `v1.38.x_stable` branch needs to be updated with the changes from `v1.38.x_main` and the version needs to be bumped.
 Depending on the type of release, run one of the following:
 
 * `make release`: This will release the version that has already been bumped (patch, minor, or major). By default, this is typically a patch release. Use this when the changes are bugfixes or enhancements that do not modify the existing user API. Changes that modify the user API to add new features but that do not modify the usage of the previous features can also be released as a patch.
 * `make release-minor`: This will bump and release the next minor version. Use this if the changes modify the existing user API in any way, even if it is backwards compatible. Minor backwards incompatible changes can also be released as minor versions while the library is still in beta state. After the major version v1.0.0 has been released, minor version can only be used to add backwards compatible API changes.
 * `make release-major`: This will bump and release the next major version. Use this if the changes modify the user API in a backwards incompatible way after the major version v1.0.0 has been released.
 
-Running one of these will **push commits directly** to `main`.
-At the end, you should see the 3 commits on `main` (from oldest to newest):
-- `make release-tag: Merge branch 'main' into stable`
+Running one of these will **push commits directly** to `v1.38.x_main`.
+At the end, you should see the 3 commits on `v1.38.x_main` (from oldest to newest):
+- `make release-tag: Merge branch 'v1.38.x_main' into v1.38.x_stable`
 - `Bump version: X.Y.Z.devN → X.Y.Z`
 - `Bump version: X.Y.Z -> X.Y.A.dev0`
 
 ## Create the Release on GitHub
 
-After the update to HISTORY.md is merged into `main` and the version is bumped, it is time to [create the release GitHub](https://github.com/sdv-dev/SDV/releases/new).
+After the update to HISTORY.md is merged into `v1.38.x_main` and the version is bumped, it is time to [create the release GitHub](https://github.com/sdv-dev/SDV/releases/new).
 - Create a new tag with the version number with a v prefix (e.g. v0.3.1)
-- The target should be the `stable` branch
+- The target should be the `v1.38.x_stable` branch
 - Release title is the same as the tag (e.g. v0.3.1)
 - This is not a pre-release (`Set as a pre-release` should be unchecked)
+- **This release should NOT be marked as the latest release**
 
 Click `Publish release`, which will kickoff the release workflow and automatically upload the package to [public PyPI](https://pypi.org/project/sdv/).
 
